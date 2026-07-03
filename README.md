@@ -145,7 +145,7 @@ types/course.type.ts
 - Axios
 - ESLint
 - Prettier
-- npm
+- pnpm
 
 ---
 
