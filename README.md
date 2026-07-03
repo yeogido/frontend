@@ -1,4 +1,4 @@
-# [여기도]
+# 여기도
 
 ## 📖 프로젝트 소개
 📍 여기도 : 새로운 로컬 트렌드를 만드는 문화 기록 서비스
@@ -103,8 +103,8 @@
    ┗ 📜 api.type.ts        # 공통 API 응답/에러 타입
 ```
 
-#📝 코딩 컨벤션
-## 네이밍 컨벤션
+## 📝 코딩 컨벤션
+### 네이밍 컨벤션
 - 상수: SNAKE_CASE
 
 - 컴포넌트 및 interface 타입: PascalCase
@@ -125,7 +125,7 @@
 
   - 이미지 import 시: PascalCase 사용
 
-# Prettier 설정
+## Prettier 설정
 ```text
 {
   "printWidth": 80,
@@ -141,7 +141,7 @@
 }
 ```
 
-# 🌿 깃 컨벤션브랜치 전략main / dev / feature 브랜치 전략을 사용합니다.
+## 🌿 깃 컨벤션브랜치 전략main / dev / feature 브랜치 전략을 사용합니다.
 - 브랜치명 형태: type/#Issue-Number/Content
 - 예시: feat/#12/login-page
 - 
@@ -169,7 +169,7 @@
 - PR 제목: [type] #Issue-Number Content1 / Content2 ...
   - 예시: [refactor, style] #23 TaskModal: 마감일 필수 설정 제거 / Card: 카드&댓글 삭제 확인 모달 추가, 제목&내용 공백 검사
 
-# 🚀 실행 방법
+## 🚀 실행 방법
 ```text
 Bash
 
