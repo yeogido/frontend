@@ -154,11 +154,6 @@ types/course.type.ts
 ```text
 
 📂 폴더 구조 (Directory Structure)
-
-
-
-```text
-
 📦 src
  ┣ 📂 apis                 # API 통신 관련 설정 및 도메인별 API 함수
  ┃ ┣ 📜 axios.ts           # Axios 인스턴스 및 인터셉터 설정
@@ -288,7 +283,9 @@ type: 작업 내용
 타입:
 
 ```txt
-| :--- | :--- |
+
+| 타입 | 설명 |
+| :---: | :--- |
 | feat | 새로운 기능 추가 |
 | fix | 버그 수정 |
 | docs | 문서 수정 (README 등) |
