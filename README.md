@@ -14,6 +14,7 @@
 
 ## 👥 팀원 및 프론트엔드 역할 분담
 | 이름 | 역할 | Github |
+| :--- | :--- | :---: |
 | 김태혁 | 공통 기반 + 전체 통합 | [@github](https://github.com/kimtaehyeokkkk) |
 | 윤선민 | 인증 + 마이페이지 + 기록 | [@github](https://github.com/yoonsunmindd) |
 | 이경준 | 홈 + 장소 탐색 + 검색/필터 | [@github](https://github.com/KJun-2) |
@@ -51,7 +52,7 @@
 
 ## 📁 폴더 구조
 ```text
-## 📂 폴더 구조 (Directory Structure)
+📂 폴더 구조 (Directory Structure)
 
 ```text
 📦 src
@@ -104,26 +105,18 @@
 ```
 
 ## 📝 코딩 컨벤션
+
 ### 네이밍 컨벤션
-- 상수: SNAKE_CASE
-
-- 컴포넌트 및 interface 타입: PascalCase
-
-- 변수 및 함수: camelCase
-
-- 폴더명: kebab-case
-
-- 페이지 및 API 파일 (app, api 폴더): kebab-case
-
-- 컴포넌트 파일 (components 폴더): PascalCase
-
-- 유틸리티 파일 (lib, utils, hooks 폴더): camelCase
-
-- 이미지 에셋 처리:
-
-  - public 폴더 내 이미지 파일: _(언더바)로 구분 (예: _logo_main.png)
-
-  - 이미지 import 시: PascalCase 사용
+- **상수**: `SNAKE_CASE`
+- **컴포넌트 및 interface 타입**: `PascalCase`
+- **변수 및 함수**: `camelCase`
+- **폴더명**: `kebab-case`
+- **페이지 및 API 파일**: `kebab-case`
+- **컴포넌트 파일**: `PascalCase`
+- **유틸리티 파일**: `camelCase`
+- **이미지 에셋**: 
+  - public 폴더 내: `_`(언더바)로 구분 (예: `_logo_main.png`)
+  - 이미지 import 시: `PascalCase` 사용
 
 ## Prettier 설정
 ```text
@@ -141,9 +134,12 @@
 }
 ```
 
-## 🌿 깃 컨벤션브랜치 전략main / dev / feature 브랜치 전략을 사용합니다.
-- 브랜치명 형태: type/#Issue-Number/Content
-- 예시: feat/#12/login-page
+## 🌿 깃 컨벤션
+### 브랜치 전략
+`main` / `dev` / `feature` 브랜치 전략을 사용합니다.
+
+- **브랜치명 형태**: `type/#Issue-Number/Content`
+- **예시**: `feat/#12/login-page`
 - 
 ## 📝 커밋 컨벤션 (Commit Convention)
 
@@ -171,7 +167,7 @@
 
 ## 🚀 실행 방법
 ```text
-Bash
+bash
 
 # 1. 의존성 패키지 설치
 $ pnpm install
