@@ -1,60 +1,164 @@
-# 여기도
+# 여기도 Frontend
 
-## 📖 프로젝트 소개
-📍 여기도 : 새로운 로컬 트렌드를 만드는 문화 기록 서비스
-방문하고 싶은 지역의 이유를 만들고, 경험을 하나의 라이프스타일로 기록해 보세요.
+## 프로젝트 소개
 
-✨ 핵심 기능 및 가치
+**여기도**는 사용자가 지역별 장소와 코스를 탐색하고, 추천 코스와 방문 기록을 작성할 수 있는 웹 서비스입니다.
 
-- 위치 기반 기록: 지도 위에 나만의 문화 및 로컬 경험을 차곡차곡 아카이빙합니다.
+주요 기능:
 
-- 취향의 공유: 지도 공유를 통해 나의 경험을 알리고 새로운 로컬 트렌드를 형성합니다.
+- 장소 탐색 및 검색
+- 지역/카테고리 필터
+- 지도 기반 장소 확인
+- 장소 및 코스 상세 조회
+- 코스 등록
+- 방문 기록 작성
+- 로그인/회원가입
+- 마이페이지
 
-- 경험의 확장: 지역 방문과 문화 소비를 자연스럽게 연결하는 새로운 사용자 경험(UX)을 제공합니다.
+---
 
-## 👥 팀원 및 프론트엔드 역할 분담
-| 이름 | 역할 | Github |
-| :--- | :--- | :---: |
-| 김태혁 | 공통 기반 + 전체 통합 | [@github](https://github.com/kimtaehyeokkkk) |
-| 윤선민 | 인증 + 마이페이지 + 기록 | [@github](https://github.com/yoonsunmindd) |
-| 이경준 | 홈 + 장소 탐색 + 검색/필터 | [@github](https://github.com/KJun-2) |
-| 이준혁 | 코스/장소 상세 + 코스 등록 | [@github](https://github.com/junehuk) |
+## 팀원 및 역할 분담
 
-## 🛠 기술 스택
+| 이름 | 역할 | 담당 |
+| --- | --- | --- |
+| 김태혁 | A | 공통 기반 + 홈 |
+| 윤선민 | B | 인증 + 유저 + 기록 |
+| 이경준 | C | 장소 탐색 + 검색 + 필터 + 지도 |
+| 이준혁 | D | 코스/장소 상세 + 코스 등록 |
 
-### Environment
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-339939?style=for-the-badge&logo=Node.js&logoColor=white)
-![pnpm](https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white)
+### A. 공통 기반 + 홈
 
-### Development
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React_19.2-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![React Router Dom](https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white)
+담당자: 김태혁
 
-### State Management & Data Fetching
-![Zustand](https://img.shields.io/badge/Zustand-764ABC?style=for-the-badge&logo=zustand&logoColor=white) (with immer)
-![React Query](https://img.shields.io/badge/React_Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white)
-![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
+담당 업무:
 
-### Styling & UI
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![React Icons](https://img.shields.io/badge/React_Icons-E91E63?style=for-the-badge&logo=react&logoColor=white)
+- 프로젝트 기본 구조 관리
+- 라우팅 설정
+- 공통 레이아웃 구현
+- 공통 UI 컴포넌트 구현
+- 홈 화면 구현
+- 전역 UI 상태 관리
 
-### Form & Validation
-![React Hook Form](https://img.shields.io/badge/React_Hook_Form-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white)
-![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white)
+담당 파일:
 
-### Code Quality & Deployment
-![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white)
-![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=black)
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+```txt
+components/common
+components/layout
+components/ui
+components/home
+pages/HomePage
+router
+styles
+store/ui.store.ts
+```
 
-## 📁 폴더 구조
+### B. 인증 + 유저 + 기록
+
+담당자: 윤선민
+
+담당 업무:
+
+- 로그인
+- 회원가입
+- 프로필 설정
+- 마이페이지
+- 방문 기록 목록
+- 방문 기록 작성
+
+담당 파일:
+
+```txt
+components/auth
+components/record
+pages/auth
+pages/mypage
+pages/records
+store/auth.store.ts
+apis/auth.api.ts
+apis/user.api.ts
+apis/record.api.ts
+```
+
+### C. 장소 탐색 + 검색 + 필터 + 지도
+
+담당자: 이경준
+
+담당 업무:
+
+- 장소 목록
+- 장소 검색
+- 지역 필터
+- 카테고리 필터
+- 지도 화면
+- 장소 좋아요
+
+담당 파일:
+
+```txt
+components/place
+pages/places
+store/placeFilter.store.ts
+apis/place.api.ts
+hooks/usePlaces.ts
+types/place.type.ts
+```
+
+### D. 코스/장소 상세 + 코스 등록
+
+담당자: 이준혁
+
+담당 업무:
+
+- 장소 상세
+- 코스 목록
+- 코스 상세
+- 코스 생성
+- 코스에 장소 추가
+- 사진 및 해시태그 등록
+
+담당 파일:
+
+```txt
+components/course
+pages/courses
+pages/places/PlaceDetailPage
+store/courseCreate.store.ts
+apis/course.api.ts
+apis/image.api.ts
+hooks/useCourses.ts
+types/course.type.ts
+```
+
+---
+
+## 기술 스택
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router DOM
+- TanStack React Query
+- Zustand
+- React Hook Form
+- Zod
+- Axios
+- ESLint
+- Prettier
+- npm
+
+---
+
+## 폴더 구조
+
 ```text
+
 📂 폴더 구조 (Directory Structure)
 
+
+
 ```text
+
 📦 src
  ┣ 📂 apis                 # API 통신 관련 설정 및 도메인별 API 함수
  ┃ ┣ 📜 axios.ts           # Axios 인스턴스 및 인터셉터 설정
@@ -104,46 +208,86 @@
    ┗ 📜 api.type.ts        # 공통 API 응답/에러 타입
 ```
 
-## 📝 코딩 컨벤션
+---
 
-### 네이밍 컨벤션
-- **상수**: `SNAKE_CASE`
-- **컴포넌트 및 interface 타입**: `PascalCase`
-- **변수 및 함수**: `camelCase`
-- **폴더명**: `kebab-case`
-- **페이지 및 API 파일**: `kebab-case`
-- **컴포넌트 파일**: `PascalCase`
-- **유틸리티 파일**: `camelCase`
-- **이미지 에셋**: 
-  - public 폴더 내: `_`(언더바)로 구분 (예: `_logo_main.png`)
-  - 이미지 import 시: `PascalCase` 사용
+## 브랜치 컨벤션
 
-## Prettier 설정
-```text
-{
-  "printWidth": 80,
-  "tabWidth": 2,
-  "useTabs": false,
-  "semi": true,
-  "singleQuote": true,
-  "trailingComma": "es5",
-  "bracketSpacing": true,
-  "arrowParens": "always",
-  "endOfLine": "lf",
-  "plugins": ["prettier-plugin-tailwindcss"]
-}
+브랜치 구조:
+
+```txt
+main
+develop
+feature/*
+fix/*
+refactor/*
+docs/*
+chore/*
 ```
 
-## 🌿 깃 컨벤션
-### 브랜치 전략
-`main` / `dev` / `feature` 브랜치 전략을 사용합니다.
+브랜치 역할:
 
-- **브랜치명 형태**: `type/#Issue-Number/Content`
-- **예시**: `feat/#12/login-page`
-- 
-## 📝 커밋 컨벤션 (Commit Convention)
+```txt
+main      배포/시연 가능한 안정 버전
+develop   개발 통합 브랜치
+feature   기능 개발
+fix       버그 수정
+refactor  리팩토링
+docs      문서 수정
+chore     설정 및 기타 작업
+```
 
-| 타입 | 설명 |
+브랜치 생성:
+
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/기능명
+```
+
+PR 방향:
+
+```txt
+feature/* -> develop
+fix/* -> develop
+refactor/* -> develop
+docs/* -> develop
+chore/* -> develop
+
+develop -> main
+```
+
+브랜치 예시:
+
+```txt
+feature/home-page
+feature/auth-login
+feature/place-search
+feature/course-create
+fix/login-validation
+refactor/common-button
+docs/readme
+```
+
+규칙:
+
+- `main` 직접 push 금지
+- 개인 이름 브랜치 사용 금지
+- 기능 단위로 브랜치 생성
+- PR 전 `main` 최신 반영
+
+---
+
+## 커밋 컨벤션
+
+형식:
+
+```txt
+type: 작업 내용
+```
+
+타입:
+
+```txt
 | :--- | :--- |
 | feat | 새로운 기능 추가 |
 | fix | 버그 수정 |
@@ -159,20 +303,198 @@
 | rename | 파일 혹은 폴더명 수정 |
 | remove | 파일 삭제 |
 
-## 이슈 및 PR 제목 작성 규칙
-- 이슈 제목: [type] Content
-  - 예시: [feat] 로그인 UI 컴포넌트 구현
-- PR 제목: [type] #Issue-Number Content1 / Content2 ...
-  - 예시: [refactor, style] #23 TaskModal: 마감일 필수 설정 제거 / Card: 카드&댓글 삭제 확인 모달 추가, 제목&내용 공백 검사
+예시:
 
-## 🚀 실행 방법
-```text
-bash
-
-# 1. 의존성 패키지 설치
-$ pnpm install
-
-# 2. 로컬 개발 서버 실행
-$ pnpm run dev
+```txt
+feat: 로그인 페이지 구현
+feat: 장소 검색 필터 구현
+fix: 로그인 유효성 검사 오류 수정
+refactor: 공통 Button 컴포넌트 분리
+style: 홈 화면 카드 간격 수정
+chore: React Query Provider 설정
+docs: README 작성
 ```
 
+규칙:
+
+- 한글 사용 가능
+- 끝에 마침표 사용 안 함
+- 한 커밋에는 하나의 의도만 포함
+- `수정`, `작업`, `최종` 같은 모호한 메시지 금지
+
+---
+
+## PR 컨벤션
+
+PR 제목:
+
+```txt
+[타입] 작업 요약
+```
+
+타입:
+
+```txt
+[FEAT] 기능 추가
+[FIX] 버그 수정
+[REFACTOR] 리팩토링
+[STYLE] UI/CSS 수정
+[CHORE] 설정 및 기타 작업
+[DOCS] 문서 수정
+```
+
+예시:
+
+```txt
+[FEAT] 로그인 페이지 구현
+[FEAT] 장소 검색 및 필터 기능 구현
+[FIX] 로그인 유효성 검사 오류 수정
+[REFACTOR] 공통 Button 컴포넌트 분리
+```
+
+PR 템플릿:
+
+```md
+## 작업 내용
+
+- 
+
+## 변경 화면
+
+- 
+
+## 확인 방법
+
+1. 
+
+## 체크리스트
+
+- [ ] 로컬 실행 확인
+- [ ] 콘솔 에러 없음
+- [ ] 반응형 확인
+- [ ] 불필요한 console.log 제거
+- [ ] develop 최신 반영 완료
+- [ ] 관련 없는 파일 변경 없음
+
+## 스크린샷
+
+<!-- UI 변경 시 첨부 -->
+
+## 참고 사항
+
+<!-- 리뷰어가 알아야 할 내용 -->
+```
+
+PR 규칙:
+
+- 하나의 PR에는 하나의 기능 또는 목적만 포함
+- 리뷰어 최소 1명 지정
+- UI 변경 시 스크린샷 첨부
+- 가능하면 `pnpm lint`, `pnpm build` 확인 후 PR 생성
+- Merge 방식은 `Squash and merge`
+
+---
+
+## 실행 방법
+
+패키지 설치:
+
+```bash
+pnpm install
+```
+
+개발 서버 실행:
+
+```bash
+pnpm dev
+```
+
+빌드:
+
+```bash
+pnpm build
+```
+
+린트:
+
+```bash
+pnpm lint
+```
+
+프리뷰:
+
+```bash
+pnpm preview
+```
+
+---
+
+## 화면 목록 및 플로우
+
+라우트:
+
+```txt
+/                  홈
+/login             로그인
+/signup            회원가입
+/profile           프로필 설정
+/places            장소 목록
+/places/search     장소 검색
+/places/map        지도 탐색
+/places/:placeId   장소 상세
+/courses           코스 목록
+/courses/:courseId 코스 상세
+/courses/new       코스 등록
+/records           방문 기록 목록
+/records/new       방문 기록 작성
+/mypage            마이페이지
+```
+
+플로우:
+
+```txt
+인증:
+홈 -> 로그인 -> 회원가입/소셜 로그인 -> 프로필 설정 -> 홈
+
+장소 탐색:
+홈 -> 장소 목록 -> 검색/필터 -> 장소 상세
+
+지도 탐색:
+홈 -> 지도 화면 -> 주변 장소 확인 -> 장소 상세
+
+코스 조회:
+홈 -> 코스 목록 -> 코스 상세
+
+코스 등록:
+코스 등록 -> 장소 검색 -> 장소 선택 -> 코스 정보 입력 -> 사진/해시태그 추가 -> 등록 완료
+
+방문 기록:
+마이페이지 -> 방문 기록 -> 기록 작성 -> 장소 선택 -> 날짜 선택 -> 사진 추가 -> 기록 완료
+```
+
+---
+
+## 상태 관리 기준
+
+```txt
+Zustand
+  클라이언트 전역 상태 관리
+  auth.store.ts
+  placeFilter.store.ts
+  courseCreate.store.ts
+  ui.store.ts
+
+React Query
+  서버 상태 관리
+  장소 목록
+  장소 상세
+  코스 목록
+  코스 상세
+  방문 기록
+  사용자 정보
+```
+
+```txt
+Zustand = 클라이언트 UI 상태
+React Query = 서버에서 받아오는 데이터
+```
