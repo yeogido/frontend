@@ -63,8 +63,9 @@ src/
 ├── utils/            # 유틸 함수
 ├── App.tsx
 └── main.tsx
-📝 코딩 컨벤션
-네이밍 컨벤션
+```
+#📝 코딩 컨벤션
+## 네이밍 컨벤션
 상수: SNAKE_CASE
 
 컴포넌트 및 interface 타입: PascalCase
@@ -85,7 +86,8 @@ public 폴더 내 이미지 파일: _(언더바)로 구분 (예: _logo_main.png)
 
 이미지 import 시: PascalCase 사용
 
-Prettier 설정
+# Prettier 설정
+```text
 {
   "printWidth": 80,
   "tabWidth": 2,
@@ -98,8 +100,26 @@ Prettier 설정
   "endOfLine": "lf",
   "plugins": ["prettier-plugin-tailwindcss"]
 }
-🌿 깃 컨벤션브랜치 전략main / dev / feature 브랜치 전략을 사용합니다.브랜치명 형태: type/#Issue-Number/Content예시: feat/#12/login-page커밋 / PR 타입타입설명feat새로운 기능 추가fix버그 수정docs문서 수정style코드 스타일 변경 (코드 포맷팅, 세미콜론 누락, 코드 변경이 없는 경우 등)design사용자 UI 디자인 변경 (CSS 등)refactor코드 리팩토링test테스트 코드 작성build빌드 파일 수정ciCI 설정 파일 수정perf성능 개선chore빌드 수정, 패키지 매니저 설정, 운영 코드 변경이 없는 경우 등rename파일 혹은 폴더명을 수정한 경우remove파일 삭제만 한 경우이슈 및 PR 제목 작성 규칙이슈 제목: [type] Content예시: [feat] 로그인 UI 컴포넌트 구현PR 제목: [type] #Issue-Number Content1 / Content2 ...예시: [refactor, style] #23 TaskModal: 마감일 필수 설정 제거 / Card: 카드&댓글 삭제 확인 모달 추가, 제목&내용 공백 검사🚀 실행 방법Bash# 1. 의존성 패키지 설치
+```
+# 🌿 깃 컨벤션브랜치 전략main / dev / feature 브랜치 전략을 사용합니다.
+- 브랜치명 형태: type/#Issue-Number/Content
+- 예시: feat/#12/login-page
+## 커밋 / PR 타입
+타입설명feat새로운 기능 추가fix버그 수정docs문서 수정style코드 스타일 변경 (코드 포맷팅, 세미콜론 누락, 코드 변경이 없는 경우 등)design사용자 UI 디자인 변경 (CSS 등)refactor코드 리팩토링test테스트 코드 작성build빌드 파일 수정ciCI 설정 파일 수정perf성능 개선chore빌드 수정, 패키지 매니저 설정, 운영 코드 변경이 없는 경우 등rename파일 혹은 폴더명을 수정한 경우remove파일 삭제만 한 경우
+## 이슈 및 PR 제목 작성 규칙
+- 이슈 제목: [type] Content
+  - 예시: [feat] 로그인 UI 컴포넌트 구현
+- PR 제목: [type] #Issue-Number Content1 / Content2 ...
+  - 예시: [refactor, style] #23 TaskModal: 마감일 필수 설정 제거 / Card: 카드&댓글 삭제 확인 모달 추가, 제목&내용 공백 검사
+
+# 🚀 실행 방법
+```text
+Bash
+
+# 1. 의존성 패키지 설치
 $ pnpm install
 
 # 2. 로컬 개발 서버 실행
 $ pnpm run dev
+```
+
