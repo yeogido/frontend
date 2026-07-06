@@ -1,5 +1,7 @@
+import AppRouter from './router/AppRouter';
+
 function App() {
-  return <div>여기도 Frontend</div>;
+  return <AppRouter />;
 }
 
 export default App;
