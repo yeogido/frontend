@@ -1,18 +1,25 @@
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
-import Header from './Header';
-import Sidebar from './Sidebar';
+import { Header, Sidebar } from './';
 
 function MainLayout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
     <>
-    <Header />
+      <Header
+        onMenuClick={() => setIsSidebarOpen(true)}
+      />
 
-    <main className="pt-14">
+      <main className="pt-14">
         <Outlet />
-    </main>
+      </main>
 
-    <Sidebar />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
     </>
   );
 }
