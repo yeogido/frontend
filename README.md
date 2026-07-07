@@ -155,52 +155,63 @@ types/course.type.ts
 
 📂 폴더 구조 (Directory Structure)
 📦 src
- ┣ 📂 apis                 # API 통신 관련 설정 및 도메인별 API 함수
- ┃ ┣ 📜 axios.ts           # Axios 인스턴스 및 인터셉터 설정
- ┃ ┣ 📜 auth.api.ts        # 인증 관련 API
- ┃ ┣ 📜 user.api.ts        # 사용자 정보 관련 API
- ┃ ┣ 📜 place.api.ts       # 장소 도메인 API
- ┃ ┣ 📜 course.api.ts      # 코스 도메인 API
- ┃ ┣ 📜 record.api.ts      # 기록 도메인 API
- ┃ ┗ 📜 image.api.ts       # 이미지 업로드/처리 API
- ┃
- ┣ 📂 components           # UI 컴포넌트 (도메인 및 역할별 분리)
- ┃ ┣ 📂 common             # 전역에서 재사용되는 공통 컴포넌트 (버튼, 인풋 등)
- ┃ ┣ 📂 layout             # 레이아웃 컴포넌트 (헤더, 푸터, 내비게이션 등)
- ┃ ┣ 📂 ui                 # 기본 UI 요소 컴포넌트
- ┃ ┣ 📂 home               # 메인 홈페이지 전용 컴포넌트
- ┃ ┣ 📂 auth               # 인증 관련 컴포넌트 (로그인/회원가입 폼 등)
- ┃ ┣ 📂 place              # 장소 관련 컴포넌트
- ┃ ┣ 📂 course             # 코스 관련 컴포넌트
- ┃ ┗ 📂 record             # 기록 관련 컴포넌트
- ┃
- ┣ 📂 hooks                # 재사용 가능한 커스텀 훅 (비즈니스 로직, API 패칭 등)
- ┃ ┣ 📜 useAuth.ts
- ┃ ┣ 📜 usePlaces.ts
- ┃ ┣ 📜 useCourses.ts
- ┃ ┗ 📜 useRecords.ts
- ┃
- ┣ 📂 pages                # 라우팅되는 페이지 컴포넌트 (View)
- ┃ ┣ 📂 HomePage           # 메인 페이지
- ┃ ┣ 📂 auth               # 로그인, 회원가입 페이지
- ┃ ┣ 📂 places             # 장소 탐색 및 상세 페이지
- ┃ ┣ 📂 courses            # 코스 탐색 및 상세 페이지
- ┃ ┣ 📂 records            # 기록 목록 및 상세 페이지
- ┃ ┗ 📂 mypage             # 마이페이지
- ┃
- ┣ 📂 store                # 전역 상태 관리 (Zustand, Redux 등)
- ┃ ┣ 📜 auth.store.ts      # 로그인/유저 상태 관리
- ┃ ┣ 📜 placeFilter.store.ts # 장소 필터링 상태 관리
- ┃ ┣ 📜 courseCreate.store.ts# 코스 생성 진행 상태 관리
- ┃ ┗ 📜 ui.store.ts        # 모달, 토스트 등 UI 상태 관리
- ┃
- ┗ 📂 types                # 공통 TypeScript 타입 및 인터페이스 정의
-   ┣ 📜 auth.type.ts
-   ┣ 📜 user.type.ts
-   ┣ 📜 place.type.ts
-   ┣ 📜 course.type.ts
-   ┣ 📜 record.type.ts
-   ┗ 📜 api.type.ts        # 공통 API 응답/에러 타입
+┣ 📂 apis                          # API 통신 관련 설정 및 도메인별 API 함수
+┃ ┣ 📜 axios.ts                    # Axios 인스턴스 및 인터셉터 설정
+┃ ┣ 📜 auth.api.ts                 # 인증 관련 API
+┃ ┣ 📜 user.api.ts                 # 사용자 정보 관련 API
+┃ ┣ 📜 place.api.ts                # 장소 관련 API
+┃ ┣ 📜 course.api.ts               # 로컬 코스 관련 API
+┃ ┣ 📜 record.api.ts               # 방문 기록 관련 API
+┃ ┗ 📜 image.api.ts                # 이미지 업로드 및 처리 API
+┃
+┣ 📂 pages                         # 페이지 단위 (라우트 기준)
+┃ ┣ 📂 home                        # 메인(Home) 페이지
+┃ ┃ ┣ 📜 index.tsx                 # 메인 페이지 진입점
+┃ ┃ ┣ 📂 components                # 메인 페이지에서만 사용하는 컴포넌트
+┃ ┃ ┗ 📂 hooks                     # 메인 페이지 전용 커스텀 훅
+┃ ┃
+┃ ┣ 📂 auth                        # 인증(로그인, 회원가입) 페이지
+┃ ┃ ┣ 📜 index.tsx                 # 인증 페이지 진입점
+┃ ┃ ┣ 📂 components                # 로그인/회원가입 UI 컴포넌트
+┃ ┃ ┗ 📂 hooks                     # 인증 관련 커스텀 훅
+┃ ┃
+┃ ┣ 📂 local-course                # 로컬 코스 탐색 및 생성 페이지
+┃ ┃ ┣ 📜 index.tsx                 # 로컬 코스 페이지 진입점
+┃ ┃ ┣ 📂 components                # 로컬 코스 전용 컴포넌트
+┃ ┃ ┗ 📂 hooks                     # 로컬 코스 관련 커스텀 훅
+┃ ┃
+┃ ┗ 📂 not-found                   # 404(Not Found) 페이지
+┃   ┗ 📜 index.tsx                 # 존재하지 않는 경로 접근 시 표시되는 페이지
+┃
+┣ 📂 components                    # 여러 페이지에서 공통으로 사용하는 UI 컴포넌트
+┃ ┣ 📂 common                      # Button, Input, Card 등 범용 컴포넌트
+┃ ┣ 📂 layout                      # Header, Footer, Navigation 등 레이아웃 컴포넌트
+┃ ┣ 📂 ui                          # Modal, Toast, Spinner 등 기본 UI 요소
+┃ ┗ 📂 icons                       # SVG 및 아이콘 컴포넌트
+┃
+┣ 📂 hooks                         # 여러 페이지에서 재사용되는 공통 커스텀 훅
+┃ ┣ 📜 useAuth.ts                  # 인증 관련 로직
+┃ ┣ 📜 useLocalStorage.ts          # LocalStorage 관리
+┃ ┣ 📜 useModal.ts                 # 모달 상태 관리
+┃ ┗ 📜 useDebounce.ts              # 디바운싱 처리
+┃
+┣ 📂 store                         # 전역 상태 관리 (Zustand)
+┃ ┣ 📜 auth.store.ts               # 로그인 및 사용자 상태 관리
+┃ ┣ 📜 course.store.ts             # 로컬 코스 관련 상태 관리
+┃ ┗ 📜 ui.store.ts                 # 모달, 토스트 등 UI 상태 관리
+┃
+┣ 📂 types                         # 공통 TypeScript 타입 및 인터페이스 정의
+┃ ┣ 📜 auth.type.ts
+┃ ┣ 📜 user.type.ts
+┃ ┣ 📜 course.type.ts
+┃ ┣ 📜 place.type.ts
+┃ ┣ 📜 record.type.ts
+┃ ┗ 📜 api.type.ts                 # 공통 API 응답 및 에러 타입
+┃
+┗ 📂 utils                         # 공통 유틸리티 함수
+  ┣ 📜 constants.ts                # 상수 정의
+  ┣ 📜 formatDate.ts               # 날짜 포맷 함수
+  ┗ 📜 validation.ts               # 입력값 검증 함수
 ```
 
 ---
