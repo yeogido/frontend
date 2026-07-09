@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import star from '../../assets/icons/star.svg';
 
 export interface ReviewCardProps {
@@ -17,27 +18,39 @@ function ReviewCard({
   rating = 5,
   onClick,
 }: ReviewCardProps) {
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (!onClick) return;
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <article
       onClick={onClick}
-      className="
+      onKeyDown={handleKeyDown}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      className={`
         flex
         h-[115px]
         w-[220px]
         shrink-0
-        cursor-pointer
         flex-col
         justify-between
         rounded-xl
         bg-[#F9F9F9]
         p-4
         shadow-[0_1px_5px_rgba(0,0,0,0.07)]
-      "
+        ${onClick ? 'cursor-pointer' : ''}
+      `}
     >
       {/* Review */}
       <p
         className="
-          w-[192px]
+          w-full
           line-clamp-3
           text-[14px]
           font-normal
@@ -61,7 +74,6 @@ function ReviewCard({
         )}
 
         <div className="flex flex-col gap-[2px]">
-          {/* Name */}
           <div className="flex items-center">
             <span
               className="
@@ -98,7 +110,6 @@ function ReviewCard({
             </span>
           </div>
 
-          {/* Rating */}
           <div className="flex items-center gap-[2px]">
             {Array.from({ length: rating }).map((_, index) => (
               <img
@@ -106,7 +117,7 @@ function ReviewCard({
                 src={star}
                 alt=""
                 aria-hidden="true"
-                className="h-3 w-3"
+                className="h-[9px] w-[9px]"
               />
             ))}
           </div>
