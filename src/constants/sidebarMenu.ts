@@ -6,7 +6,7 @@ export interface SidebarMenuItem {
 export const guestSidebarMenu: SidebarMenuItem[] = [
   {
     label: '여기도 추천 코스',
-    path: '/course',
+    path: '/yeogido-course',
   },
   {
     label: '여기도 추천 행사',
