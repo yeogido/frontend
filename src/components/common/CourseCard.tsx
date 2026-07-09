@@ -3,7 +3,7 @@ import heart from '../../assets/icons/heart.svg';
 import location from '../../assets/icons/location.svg';
 import oheart from '../../assets/icons/oheart.svg';
 
-interface CourseCardProps {
+export interface CourseCardProps {
   image: string;
   title: string;
   description: string;
@@ -116,6 +116,7 @@ function CourseCard({
       {/* Like */}
       <button
         type="button"
+        aria-pressed={liked}
         onClick={(e) => {
           e.stopPropagation();
           onLikeClick?.();

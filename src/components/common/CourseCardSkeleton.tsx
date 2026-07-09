@@ -3,6 +3,8 @@ import heart from '../../assets/icons/heart.svg';
 function CourseCardSkeleton() {
   return (
     <article
+      role="status"
+      aria-label="코스 정보를 불러오는 중"
       className="
         relative
         flex
