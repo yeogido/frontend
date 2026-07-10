@@ -9,6 +9,8 @@ interface ContentCardProps {
   firstInfo: string;
   secondInfo: string;
   liked?: boolean;
+  className?: string;
+  imageClassName?: string;
   onClick?: () => void;
   onLikeClick?: () => void;
 }
@@ -16,16 +18,18 @@ interface ContentCardProps {
 function ContentCard({
   image,
   title,
- firstInfo,
+  firstInfo,
   secondInfo,
   liked = false,
+  className = '',
+  imageClassName = 'h-[115px]',
   onClick,
   onLikeClick,
 }: ContentCardProps) {
   return (
     <article
       onClick={onClick}
-      className="
+      className={`
         w-[163px]
         overflow-hidden
         rounded-xl
@@ -33,7 +37,8 @@ function ContentCard({
         shadow-[0_1px_5px_rgba(0,0,0,0.07)]
         cursor-pointer
         shrink-0
-      "
+        ${className}
+      `}
     >
       {/* Image */}
       <div className="relative">
@@ -41,10 +46,10 @@ function ContentCard({
           <img
             src={image}
             alt={title}
-            className="h-[115px] w-full rounded-t-xl object-cover"
+            className={`${imageClassName} w-full rounded-t-xl object-cover`}
           />
         ) : (
-          <div className="h-[115px] w-full rounded-t-xl bg-[#EAEAEA]" />
+          <div className={`${imageClassName} w-full rounded-t-xl bg-[#EAEAEA]`} />
         )}
 
         <button
