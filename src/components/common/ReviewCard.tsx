@@ -8,6 +8,7 @@ export interface ReviewCardProps {
   content: string;
   rating?: number;
   onClick?: () => void;
+  className?: string;
 }
 
 function ReviewCard({
@@ -17,6 +18,7 @@ function ReviewCard({
   content,
   rating = 5,
   onClick,
+  className = '',
 }: ReviewCardProps) {
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!onClick) return;
@@ -45,6 +47,7 @@ function ReviewCard({
         p-4
         shadow-[0_1px_5px_rgba(0,0,0,0.07)]
         ${onClick ? 'cursor-pointer' : ''}
+        ${className}
       `}
     >
       {/* Review */}
