@@ -3,6 +3,7 @@ import {
   ReviewCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
+import { useNavigate } from 'react-router-dom';
 
 const reviews = [
   {
@@ -38,11 +39,14 @@ function ReviewSection() {
   const isLoading = false;
   // const isLoading = true;
 
+  const navigate = useNavigate();
+
   return (
     <section className="mt-8 flex flex-col gap-3 px-6">
       <SectionHeader
         title="최근 여행자들의 후기"
         actionText="전체보기"
+        onActionClick={() => navigate('/review')}
       />
 
       <div

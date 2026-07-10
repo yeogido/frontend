@@ -3,10 +3,13 @@ import {
   ContentCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
+import { useNavigate } from 'react-router-dom';
 
 function FestivalSection() {
   const isLoading = false; // UI 확인용
   //const isLoading = true; // Skeleton 확인용
+
+  const navigate = useNavigate();
 
   return (
     <section className="mt-8">
@@ -14,6 +17,7 @@ function FestivalSection() {
         <SectionHeader
           title="진행 중인 행사"
           actionText="전체보기"
+          onActionClick={() => navigate('/festival')}
         />
       </div>
 

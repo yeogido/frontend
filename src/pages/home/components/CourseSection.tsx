@@ -3,10 +3,13 @@ import {
   CourseCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
+import { useNavigate } from 'react-router-dom';
 
 function CourseSection() {
   const isLoading = false; // UI 확인용
   // const isLoading = true; // Skeleton 확인용
+
+  const navigate = useNavigate();
 
   const courses = [
     {
@@ -33,6 +36,7 @@ function CourseSection() {
         <SectionHeader
           title="여기도 추천 코스"
           actionText="전체보기"
+          onActionClick={() => navigate('/yeogido-course')}
         />
       </div>
 
