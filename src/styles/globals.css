@@ -1,1 +1,36 @@
-@import "tailwindcss";
+/* src/styles/globals.css */
+
+@import 'tailwindcss';
+@import './theme.css';
+@import './font.css';
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background-color: var(--color-background);
+    color: var(--color-black);
+
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100dvh;
+    margin: 0;
+
+    font-family: var(--font-sans);
+    background-color: var(--color-background);
+    color: var(--color-black);
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}
