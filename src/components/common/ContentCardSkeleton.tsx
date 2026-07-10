@@ -1,9 +1,17 @@
 import heart from '../../assets/icons/heart.svg';
 
-function ContentCardSkeleton() {
+interface ContentCardSkeletonProps {
+  className?: string;
+  imageClassName?: string;
+}
+
+function ContentCardSkeleton({
+  className = '',
+  imageClassName = 'h-[115px]',
+}: ContentCardSkeletonProps) {
   return (
     <article
-      className="
+      className={`
         w-[163px]
         shrink-0
         overflow-hidden
@@ -11,11 +19,12 @@ function ContentCardSkeleton() {
         bg-[#F9F9F9]
         shadow-[0_1px_5px_rgba(0,0,0,0.07)]
         animate-pulse
-      "
+        ${className}
+      `}
     >
       {/* Image */}
       <div className="relative">
-        <div className="h-[115px] w-full rounded-t-xl bg-[#EAEAEA]" />
+        <div className={`${imageClassName} w-full rounded-t-xl bg-[#EAEAEA]`} />
 
         {/* Like Icon */}
         <div className="absolute right-2 top-2">
