@@ -16,10 +16,10 @@ function InfoBadgesCard({ badges }: InfoBadgesCardProps) {
           return (
             <div
               key={id}
-              className="flex min-h-[82px] flex-col items-center justify-center gap-2 bg-[#e4e4e4] px-3"
+              className="flex min-h-[82px] flex-col items-center justify-center gap-2 bg-gray-2 px-3"
             >
-              <Icon className="h-[18px] w-[18px] text-[var(--color-text)]" />
-              <span className="text-[12px] leading-none font-semibold text-[var(--color-text-muted)]">
+              <Icon className="h-[18px] w-[18px] text-black" />
+              <span className="text-[12px] leading-none font-semibold text-gray-5">
                 {label}
               </span>
             </div>

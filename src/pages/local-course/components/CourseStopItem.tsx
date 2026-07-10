@@ -13,12 +13,12 @@ function CourseStopItem({ stop, isLast }: CourseStopItemProps) {
   return (
     <article className="relative grid grid-cols-[28px_72px_minmax(0,1fr)_24px] gap-3 py-3">
       <div className="relative flex justify-center">
-        <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[var(--color-primary)] text-[12px] font-semibold leading-none text-[var(--color-surface)]">
+        <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-main-5 text-[12px] font-semibold leading-none text-white">
           {stop.order}
         </span>
 
         {!isLast && (
-          <span className="absolute top-7 h-[58px] border-l border-dashed border-[var(--color-primary)]" />
+          <span className="absolute top-7 h-[58px] border-l border-dashed border-main-5" />
         )}
       </div>
 
@@ -29,18 +29,18 @@ function CourseStopItem({ stop, isLast }: CourseStopItemProps) {
       />
 
       <div className="min-w-0">
-        <h3 className="truncate text-[14px] font-semibold leading-5 text-[var(--color-text)]">
+        <h3 className="truncate text-[14px] font-semibold leading-5 text-black">
           {stop.name}
         </h3>
-        <p className="mt-1 truncate text-[12px] font-normal leading-4 text-[var(--color-text-subtle)]">
+        <p className="mt-1 truncate text-[12px] font-normal leading-4 text-gray-4">
           {stop.address}
         </p>
-        <p className="truncate text-[12px] font-normal leading-4 text-[var(--color-text-disabled)]">
+        <p className="truncate text-[12px] font-normal leading-4 text-gray-3">
           {stop.hours}
         </p>
 
         {stop.transportToNext && (
-          <p className="mt-1 truncate text-[12px] font-normal leading-4 text-[var(--color-text-subtle)]">
+          <p className="mt-1 truncate text-[12px] font-normal leading-4 text-gray-4">
             <span className="font-semibold">{transportType}</span>{' '}
             {transportRest.join(' ')}
           </p>
@@ -50,7 +50,7 @@ function CourseStopItem({ stop, isLast }: CourseStopItemProps) {
       <button
         type="button"
         aria-label={`${stop.name} 좋아요`}
-        className="mt-1 flex h-6 w-6 items-center justify-center text-[var(--color-text-disabled)]"
+        className="mt-1 flex h-6 w-6 items-center justify-center text-gray-3"
       >
         <EmptyHeartIcon className="h-4 w-4" />
       </button>

@@ -8,7 +8,7 @@ interface CourseReviewSectionProps {
 
 function CourseReviewSection({ reviews }: CourseReviewSectionProps) {
   return (
-    <section className="rounded-xl bg-[var(--color-surface)] p-5">
+    <section className="rounded-xl bg-white p-5">
       <SectionHeader title="코스 리뷰" actionText="전체 보기" />
 
       <div className="mt-3 flex gap-3 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
