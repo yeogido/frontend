@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom';
 
 function AuthLayout() {
   return (
-    <main className='bg-[#F1F1F1]'>
+    <main className="min-h-dvh bg-[#F9F9F9]">
       <Outlet />
     </main>
   );
