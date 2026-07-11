@@ -1,14 +1,9 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 
+import type { YeogidoCourse } from '../types';
+
 const PAGE_SIZE = 12;
 const TOTAL_COUNT = 48;
-
-export interface YeogidoCourse {
-  id: number;
-  title: string;
-  duration: string;
-  courseName: string;
-}
 
 interface YeogidoCoursePage {
   content: YeogidoCourse[];
