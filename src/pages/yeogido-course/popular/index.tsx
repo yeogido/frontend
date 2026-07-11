@@ -26,7 +26,7 @@ function YeogidoCoursePopularPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useYeogidoCourses();
+  } = useYeogidoCourses(selectedFilters);
 
   const popularCourses = data?.pages.flatMap((page) => page.content) ?? [];
 

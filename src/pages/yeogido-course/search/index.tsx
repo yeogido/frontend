@@ -26,7 +26,7 @@ function YeogidoCourseSearchPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useYeogidoCourses();
+  } = useYeogidoCourses(selectedFilters);
 
   const yeogidoCourses = data?.pages.flatMap((page) => page.content) ?? [];
 
