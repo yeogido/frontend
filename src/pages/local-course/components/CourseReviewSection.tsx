@@ -8,10 +8,10 @@ interface CourseReviewSectionProps {
 
 function CourseReviewSection({ reviews }: CourseReviewSectionProps) {
   return (
-    <section className="rounded-xl bg-white p-5">
+    <section className="bg-white px-5 sm:px-6 lg:px-8">
       <SectionHeader title="코스 리뷰" actionText="전체 보기" />
 
-      <div className="mt-3 flex gap-3 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
+      <div className="mt-3 flex snap-x gap-3 overflow-x-auto pb-1 min-[360px]:gap-4 lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0">
         {reviews.map((review) => (
           <ReviewCard
             key={review.id}
@@ -20,7 +20,7 @@ function CourseReviewSection({ reviews }: CourseReviewSectionProps) {
             meta={review.meta}
             content={review.content}
             rating={review.rating}
-            className="lg:w-full"
+            className="snap-start lg:w-full"
           />
         ))}
       </div>
