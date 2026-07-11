@@ -26,7 +26,7 @@ function YeogidoCoursePopularPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useYeogidoCourses(selectedFilters);
+  } = useYeogidoCourses({ filters: selectedFilters });
 
   const popularCourses = data?.pages.flatMap((page) => page.content) ?? [];
 
@@ -72,13 +72,13 @@ function YeogidoCoursePopularPage() {
         ))}
       </div>
 
-      <div className="mt-[27px] grid grid-cols-[repeat(auto-fill,minmax(163px,1fr))] gap-x-4 gap-y-[18px]">
+      <div className="mt-[27px] grid grid-cols-2 gap-x-4 gap-y-[18px]">
         {isPending
           ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
               <ContentCardSkeleton
                 key={item}
                 className="w-full"
-                imageClassName="aspect-[174/115] h-auto"
+                imageClassName="aspect-[163/115] h-auto"
               />
             ))
           : popularCourses.map((course) => (
@@ -89,7 +89,7 @@ function YeogidoCoursePopularPage() {
                 firstInfo={course.duration}
                 secondInfo={course.courseName}
                 className="w-full"
-                imageClassName="aspect-[174/115] h-auto"
+                imageClassName="aspect-[163/115] h-auto"
               />
             ))}
 
@@ -98,7 +98,7 @@ function YeogidoCoursePopularPage() {
               <ContentCardSkeleton
                 key={`next-page-${item}`}
                 className="w-full"
-                imageClassName="aspect-[174/115] h-auto"
+                imageClassName="aspect-[163/115] h-auto"
               />
             ))
           : null}
