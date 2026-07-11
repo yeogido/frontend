@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FocusEvent,
   type KeyboardEvent,
 } from 'react';
 import { IoSearch } from 'react-icons/io5';
@@ -79,11 +80,25 @@ function YeogidoCourseSearchBar() {
     }
   };
 
+  const handleBlur = (event: FocusEvent<HTMLFormElement>) => {
+    const nextFocusedElement = event.relatedTarget;
+
+    if (
+      nextFocusedElement &&
+      searchBarRef.current?.contains(nextFocusedElement)
+    ) {
+      return;
+    }
+
+    setIsOpen(false);
+  };
+
   return (
     <form
       ref={searchBarRef}
       role="search"
       onSubmit={(event) => event.preventDefault()}
+      onBlur={handleBlur}
       className="relative w-full max-w-[342px]"
     >
       <label htmlFor={inputId} className="sr-only">
