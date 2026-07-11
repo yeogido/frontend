@@ -12,36 +12,36 @@ const tagToneClassNames = {
   green: 'border-green-3 text-green-3',
   blue: 'border-blue-3 text-blue-3',
   sky: 'border-sky-3 text-blue-3',
-  neutral: 'border-gray-2 text-gray-5',
+  neutral: 'border-gray-4 text-gray-5',
 };
 
 function TitleSection({ title, tags }: TitleSectionProps) {
   return (
-    <section className="rounded-xl px-5 py-5">
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="text-[22px] leading-8 font-bold text-black sm:text-[28px] sm:leading-10">
+    <section className="bg-white px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="min-w-0 text-[18px] leading-7 font-bold break-keep text-black sm:text-[22px] sm:leading-8">
           {title}
         </h1>
 
         <button
           type="button"
           aria-label="코스 공유하기"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-2 bg-white text-black"
+          className="flex h-8 w-8 shrink-0 items-center justify-center bg-white text-black"
         >
-          <ShareIcon className="h-4 w-4" />
+          <ShareIcon className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-1.5">
         {tags.map(({ id, label, icon, tone }) => {
           const Icon = tagIcons[icon];
 
           return (
             <span
               key={id}
-              className={`inline-flex h-7 items-center gap-1 rounded-full border bg-white px-3 text-[12px] leading-none font-semibold ${tagToneClassNames[tone]}`}
+              className={`inline-flex h-6 max-w-full items-center gap-1 rounded-full border bg-white px-2.5 text-[12px] leading-none font-medium whitespace-nowrap ${tagToneClassNames[tone]}`}
             >
-              <Icon className="h-3 w-3" />
+              <Icon className="h-3 w-3 shrink-0" />
               {label}
             </span>
           );

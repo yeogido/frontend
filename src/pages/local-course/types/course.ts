@@ -14,7 +14,13 @@ export interface CourseTag {
   tone: CourseTagTone;
 }
 
-export type CourseBadgeIcon = 'calendar' | 'car' | 'bus' | 'people';
+export type CourseBadgeIcon =
+  | 'calendar'
+  | 'car'
+  | 'bus'
+  | 'people'
+  | 'walk'
+  | 'solo';
 
 export interface CourseInfoBadge {
   id: number;

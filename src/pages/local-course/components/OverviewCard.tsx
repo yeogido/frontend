@@ -4,13 +4,13 @@ interface OverviewCardProps {
 
 function OverviewCard({ overview }: OverviewCardProps) {
   return (
-    <section>
-      <article className="rounded-xl border border-gray-2 bg-main-2 px-5 py-4">
-        <h2 className="text-[16px] font-bold leading-none text-main-5">
+    <section className="mt-4 px-7 sm:px-6">
+      <article className="bg-main-2 rounded-xl px-4 py-4 sm:px-5">
+        <h2 className="text-main-5 text-[13px] leading-none font-bold">
           코스 한눈에 보기
         </h2>
 
-        <p className="mt-3 text-[14px] font-medium leading-6 text-gray-5">
+        <p className="text-gray-5 mt-2 text-[12px] leading-[18px] font-medium break-keep sm:text-[13px] sm:leading-5">
           {overview}
         </p>
       </article>

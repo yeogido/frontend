@@ -5,11 +5,13 @@ import {
   FaCar,
   FaLocationDot,
   FaPeopleGroup,
+  FaPersonWalking,
   FaRegHeart,
-  FaShareNodes,
+  FaUser,
   FaUtensils,
   FaWandMagicSparkles,
 } from 'react-icons/fa6';
+import { RiShare2Fill } from 'react-icons/ri';
 import { MdOutlineNaturePeople } from 'react-icons/md';
 import { PiSunHorizonFill } from 'react-icons/pi';
 
@@ -22,6 +24,8 @@ export const badgeIcons = {
   car: FaCar,
   bus: FaBusSimple,
   people: FaPeopleGroup,
+  walk: FaPersonWalking,
+  solo: FaUser,
 } satisfies Record<CourseBadgeIcon, IconComponent>;
 
 export const tagIcons = {
@@ -34,5 +38,5 @@ export const tagIcons = {
 export {
   FaLocationDot as LocationIcon,
   FaRegHeart as EmptyHeartIcon,
-  FaShareNodes as ShareIcon,
+  RiShare2Fill as ShareIcon,
 };
