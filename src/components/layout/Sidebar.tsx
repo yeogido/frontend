@@ -1,5 +1,6 @@
 import close from '../../assets/icons/close.svg';
 import chevronRight from '../../assets/icons/chevron-right.svg';
+import { useNavigate } from 'react-router-dom';
 
 import { guestSidebarMenu } from '../../constants/sidebarMenu';
 
@@ -11,6 +12,8 @@ interface SidebarProps {
 }
 
 function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const navigate = useNavigate();
+
   return (
     <>
       {/* Overlay */}
@@ -54,6 +57,10 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Login */}
         <button
           type="button"
+          onClick={() => {
+            navigate('/login');
+            onClose();
+          }}
           className="flex items-center gap-[6px] px-6 py-4"
         >
           <span className="text-base font-semibold leading-none">
@@ -75,6 +82,10 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
             <button
               key={menu.path}
               type="button"
+              onClick={() => {
+                navigate(menu.path);
+                onClose();
+              }}
               className="flex h-[51px] items-center justify-between px-6 text-left"
             >
               <span className="text-base font-medium leading-none">
