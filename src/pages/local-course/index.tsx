@@ -10,84 +10,83 @@ import ReviewButton from './components/ReviewButton';
 // Mock data for local course
 const courseImage = '../src/assets/icons/yeogido.svg';
 const course: LocalCourse = {
-  title: '강릉 혼자 여행 코스',
+  title: '제주 동쪽 마을 산책 코스',
   heroImageUrl: courseImage,
   tags: [
-    { id: 1, label: '여름', icon: 'beach', tone: 'primary' },
-    { id: 2, label: '자연', icon: 'nature', tone: 'green' },
+    { id: 1, label: '골목', icon: 'magic', tone: 'primary' },
+    { id: 2, label: '오름', icon: 'nature', tone: 'green' },
     { id: 3, label: '바다', icon: 'beach', tone: 'sky' },
-    { id: 4, label: '카페', icon: 'food', tone: 'neutral' },
-    { id: 5, label: '체험', icon: 'magic', tone: 'blue' },
+    { id: 4, label: '로컬 맛집', icon: 'food', tone: 'neutral' },
+    { id: 5, label: '사진 명소', icon: 'magic', tone: 'blue' },
   ],
   infoBadges: [
-    { id: 1, label: '2박 3일', icon: 'calendar' },
-    { id: 2, label: '뚜벅이 코스', icon: 'walk' },
-    { id: 3, label: '4월 - 10월', icon: 'calendar' },
-    { id: 4, label: '혼자', icon: 'solo' },
+    { id: 1, label: '당일치기', icon: 'calendar' },
+    { id: 2, label: '도보+버스', icon: 'bus' },
+    { id: 3, label: '약 7시간', icon: 'calendar' },
+    { id: 4, label: '친구와 함께', icon: 'people' },
   ],
   overview:
-    '바다를 따라 걷고, 감성 가득한 카페와 로컬 맛집을 즐기는 강릉의 매력을 천천히 느끼는 2박 3일 코스입니다.',
+    '제주의 조용한 동쪽 마을을 천천히 걷는 하루 코스예요. 오름에서 아침 풍경을 감상하고, 세화의 작은 식당과 소품 숍을 지나 월정리 해변에서 노을까지 즐길 수 있어요.',
   stops: [
     {
       id: 1,
       order: 1,
-      name: '주문진 해변',
-      address: '강원특별자치도 강릉시 창해로14번길 28',
-      hours: '평일 10:00 - 23:00',
+      name: '아부오름',
+      address: '제주특별자치도 제주시 구좌읍 금백조로 930',
+      hours: '매일 00:00 - 24:00',
       image: courseImage,
-      transportToNext: '도보 약 30분',
+      transportToNext: '버스 약 35분',
     },
     {
       id: 2,
       order: 2,
-      name: '주문진 해변',
-      address: '강원특별자치도 강릉시 창해로14번길 28',
-      hours: '평일 10:00 - 23:00',
+      name: '세화민속오일시장',
+      address: '제주특별자치도 제주시 구좌읍 세화리 1500-5',
+      hours: '오일장 운영일 08:00 - 14:00',
       image: courseImage,
-      transportToNext: '도보 약 30분',
+      transportToNext: '버스 약 20분',
     },
     {
       id: 3,
       order: 3,
-      name: '주문진 해변',
-      address: '강원특별자치도 강릉시 창해로14번길 28',
-      hours: '평일 10:00 - 23:00',
+      name: '월정리 해변',
+      address: '제주특별자치도 제주시 구좌읍 월정리 33-3',
+      hours: '매일 00:00 - 24:00',
       image: courseImage,
-      transportToNext: '도보 약 30분',
     },
   ],
   reviews: [
     {
       id: 1,
       profileImage: courseImage,
-      nickname: '민지',
-      meta: '20대 여',
+      nickname: '제주산책러',
+      meta: '20대 · 친구',
       content:
-        '지도 동선이 너무 편했어요. 전시 포인트마다 사진 각이 딱 잡혔고, 야경까지 흐름이 좋아서 만족!',
+        '아침 오름부터 저녁 바다까지 분위기가 계속 달라져서 지루하지 않았어요. 이동 시간도 적당하고 중간에 시장 구경하는 재미가 좋았습니다.',
       rating: 5,
     },
     {
       id: 2,
       profileImage: courseImage,
-      nickname: '민지',
-      meta: '20대 여',
+      nickname: '느린여행자',
+      meta: '30대 · 커플',
       content:
-        '지도 동선이 너무 편했어요. 포인트마다 사진 각이 딱 잡혔고, 마지막까지 흐름이 좋아서 만족!',
-      rating: 5,
+        '렌터카 없이 다녀도 부담 없는 코스였어요. 세화에서 점심을 먹고 월정리 카페에서 쉬니 하루 일정으로 딱 좋았습니다.',
+      rating: 4,
     },
   ],
 };
 
 function LocalCoursePage() {
   return (
-    <div className="mx-auto min-h-screen w-full bg-white pb-6 sm:pb-8 lg:overflow-hidden lg:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+    <div className="mx-auto min-h-screen w-full max-w-[430px] bg-white pb-6">
       <HeroSection imageUrl={course.heroImageUrl} title={course.title} />
 
-      <div className="space-y-4 sm:space-y-5 lg:space-y-8 lg:py-2">
+      <div className="space-y-4">
         <TitleSection title={course.title} tags={course.tags} />
 
-        <OverviewCard overview={course.overview} />
         <InfoBadgesCard badges={course.infoBadges} />
+        <OverviewCard overview={course.overview} />
 
         <CourseMap stops={course.stops} />
         <CourseReviewSection reviews={course.reviews} />

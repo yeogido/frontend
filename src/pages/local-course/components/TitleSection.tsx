@@ -17,9 +17,9 @@ const tagToneClassNames = {
 
 function TitleSection({ title, tags }: TitleSectionProps) {
   return (
-    <section className="bg-white px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
+    <section className="bg-white px-5 pt-5 pb-0">
       <div className="flex items-start justify-between gap-3">
-        <h1 className="min-w-0 text-[18px] leading-7 font-bold break-keep text-black sm:text-[22px] sm:leading-8">
+        <h1 className="min-w-0 text-[18px] leading-7 font-bold break-keep text-black">
           {title}
         </h1>
 

@@ -16,10 +16,10 @@ function InfoBadgesCard({ badges }: InfoBadgesCardProps) {
           return (
             <div
               key={id}
-              className="flex min-h-[17.5] min-w-0 flex-col items-center justify-center gap-1.5 px-1.5 py-2 text-center"
+              className="flex min-h-16 min-w-0 flex-col items-center justify-center gap-1.5 px-1.5 py-2 text-center"
             >
               <Icon className="text-gray-5 h-5 w-5 shrink-0" />
-              <span className="text-gray-5 w-full truncate text-[10px] leading-4 font-medium min-[360px]:text-[11px]">
+              <span className="text-gray-5 w-full truncate text-[10px] leading-4 font-medium">
                 {label}
               </span>
             </div>

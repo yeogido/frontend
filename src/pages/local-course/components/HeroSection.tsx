@@ -13,7 +13,7 @@ function HeroSection({ imageUrl, title }: HeroSectionProps) {
       <button
         type="button"
         aria-label={`${title} 좋아요`}
-        className="absolute top-4 right-5 flex h-11 w-11 items-center justify-center text-white drop-shadow-sm sm:top-6 sm:right-6 sm:h-12 sm:w-12"
+        className="absolute top-4 right-5 flex h-11 w-11 items-center justify-center text-white drop-shadow-sm"
       >
         <EmptyHeartIcon className="h-8 w-8 fill-current" />
       </button>
