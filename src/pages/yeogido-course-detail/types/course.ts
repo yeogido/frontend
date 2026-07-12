@@ -44,12 +44,14 @@ export interface CourseStop {
   address: string;
   hours: string;
   image: string;
+  liked: boolean;
   transportToNext?: string;
 }
 
 export interface LocalCourse {
   title: string;
   heroImageUrl: string;
+  liked: boolean;
   tags: CourseTag[];
   infoBadges: CourseInfoBadge[];
   overview: string;

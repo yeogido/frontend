@@ -13,6 +13,7 @@ const courseImage =
 const course: LocalCourse = {
   title: '제주 동쪽 마을 산책 코스',
   heroImageUrl: courseImage,
+  liked: false,
   tags: [
     { id: 1, label: '골목', icon: 'magic', tone: 'primary' },
     { id: 2, label: '오름', icon: 'nature', tone: 'green' },
@@ -36,6 +37,7 @@ const course: LocalCourse = {
       address: '제주특별자치도 제주시 구좌읍 금백조로 930',
       hours: '매일 00:00 - 24:00',
       image: courseImage,
+      liked: false,
       transportToNext: '버스 약 35분',
     },
     {
@@ -45,6 +47,7 @@ const course: LocalCourse = {
       address: '제주특별자치도 제주시 구좌읍 세화리 1500-5',
       hours: '오일장 운영일 08:00 - 14:00',
       image: courseImage,
+      liked: true,
       transportToNext: '버스 약 20분',
     },
     {
@@ -54,6 +57,7 @@ const course: LocalCourse = {
       address: '제주특별자치도 제주시 구좌읍 월정리 33-3',
       hours: '매일 00:00 - 24:00',
       image: courseImage,
+      liked: false,
     },
   ],
   reviews: [
@@ -80,8 +84,12 @@ const course: LocalCourse = {
 
 function LocalCoursePage() {
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[430px] bg-white pb-6">
-      <HeroSection imageUrl={course.heroImageUrl} title={course.title} />
+    <div className="mx-auto min-h-screen w-full max-w-[430px] bg-white pb-[104px]">
+      <HeroSection
+        imageUrl={course.heroImageUrl}
+        title={course.title}
+        initialLiked={course.liked}
+      />
 
       <div className="space-y-4">
         <TitleSection title={course.title} tags={course.tags} />
