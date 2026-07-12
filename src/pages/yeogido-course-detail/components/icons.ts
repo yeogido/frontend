@@ -7,6 +7,7 @@ import {
   FaPeopleGroup,
   FaPersonWalking,
   FaRegHeart,
+  FaHeart,
   FaUser,
   FaUtensils,
   FaWandMagicSparkles,
@@ -36,6 +37,7 @@ export const tagIcons = {
 } satisfies Record<CourseTagIcon, IconComponent>;
 
 export {
+  FaHeart as FilledHeartIcon,
   FaLocationDot as LocationIcon,
   FaRegHeart as EmptyHeartIcon,
   RiShare2Fill as ShareIcon,
