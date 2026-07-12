@@ -11,6 +11,7 @@ import FestivalPage from '../pages/festival';
 import ReviewPage from '../pages/review';
 import YeogidoCoursePage from '../pages/yeogido-course';
 import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
+import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
 import NotFoundPage from '../pages/not-found';
@@ -44,6 +45,11 @@ function AppRouter() {
         <Route
           path="/yeogido-course/popular"
           element={<YeogidoCoursePopularPage />}
+        />
+
+        <Route
+          path="/yeogido-course/recent"
+          element={<YeogidoCourseRecentPage />}
         />
 
         <Route

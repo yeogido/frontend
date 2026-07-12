@@ -56,6 +56,10 @@ function YeogidoCoursePage() {
     navigate('/yeogido-course/popular');
   };
 
+  const goToRecentCourses = () => {
+    navigate('/yeogido-course/recent');
+  };
+
   return (
     <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-4 pb-10">
       <div>
@@ -120,7 +124,7 @@ function YeogidoCoursePage() {
         <SectionHeader
           title="최근 본 코스"
           actionText="전체 보기"
-          onActionClick={goToCourseSearch}
+          onActionClick={goToRecentCourses}
         />
 
         <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(342px,1fr))] gap-4">
