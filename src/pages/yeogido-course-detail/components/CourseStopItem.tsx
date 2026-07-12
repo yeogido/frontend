@@ -60,7 +60,6 @@ function CourseStopItem({ stop, isLast }: CourseStopItemProps) {
         aria-label={`${stop.name} 좋아요 ${liked ? '취소' : '추가'}`}
         aria-pressed={liked}
         aria-busy={isPending}
-        disabled={isPending}
         onClick={toggle}
         className={`mt-1 flex h-6 w-6 items-center justify-center disabled:cursor-wait ${liked ? 'text-main-5' : 'text-gray-2'}`}
       >
