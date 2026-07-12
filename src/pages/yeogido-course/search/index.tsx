@@ -62,7 +62,6 @@ function YeogidoCourseSearchPage() {
     <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-4 pb-10">
       <div className="w-full">
         <YeogidoCourseSearchBar
-          key={keyword}
           initialQuery={keyword}
           onSearch={handleSearch}
         />

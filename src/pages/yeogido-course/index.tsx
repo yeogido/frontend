@@ -8,31 +8,10 @@ import {
 
 import courseMapImage from './assets/courseimage.svg';
 import { YeogidoCourseSearchBar } from './components';
-
-const popularCourses = [
-  {
-    id: 1,
-    title: '강릉 혼자 여행 코스',
-    duration: '2박 3일',
-    courseName: '뚜벅이 코스',
-  },
-  {
-    id: 2,
-    title: '강릉 혼자 여행 코스',
-    duration: '2박 3일',
-    courseName: '뚜벅이 코스',
-  },
-];
-
-const recentCourses = Array.from({ length: 3 }, (_, index) => ({
-  id: index + 1,
-  image: courseMapImage,
-  title: '강릉 혼자 여행 코스',
-  description: '바다를 따라 걷고, 감성 가득한 코스를 둘러보세요.',
-  duration: '2박 3일',
-  courseType: '뚜벅이 코스',
-  liked: index === 0,
-}));
+import {
+  yeogidoCoursePopularPreviews,
+  yeogidoCourseRecentPreviews,
+} from './constants/coursePreviews';
 
 function YeogidoCoursePage() {
   const navigate = useNavigate();
@@ -54,6 +33,10 @@ function YeogidoCoursePage() {
 
   const goToPopularCourses = () => {
     navigate('/yeogido-course/popular');
+  };
+
+  const goToRecentCourses = () => {
+    navigate('/yeogido-course/recent');
   };
 
   return (
@@ -104,7 +87,7 @@ function YeogidoCoursePage() {
         />
 
         <div className="mt-4 flex [scrollbar-width:none] gap-4 overflow-x-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {popularCourses.map((course) => (
+          {yeogidoCoursePopularPreviews.map((course) => (
             <ContentCard
               key={course.id}
               image={courseMapImage}
@@ -120,11 +103,11 @@ function YeogidoCoursePage() {
         <SectionHeader
           title="최근 본 코스"
           actionText="전체 보기"
-          onActionClick={goToCourseSearch}
+          onActionClick={goToRecentCourses}
         />
 
         <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(342px,1fr))] gap-4">
-          {recentCourses.map((course) => (
+          {yeogidoCourseRecentPreviews.map((course) => (
             <div key={course.id} className="w-[342px] max-w-full">
               <CourseCard {...course} onClick={goToCourseSearch} />
             </div>
