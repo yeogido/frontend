@@ -41,8 +41,30 @@ function YeogidoCourseSearchBar({
   const inputId = useId();
   const listboxId = useId();
   const searchBarRef = useRef<HTMLFormElement | null>(null);
-  const [query, setQuery] = useState(initialQuery);
+  const [queryState, setQueryState] = useState({
+    value: initialQuery,
+    syncedInitialQuery: initialQuery,
+  });
   const [isOpen, setIsOpen] = useState(false);
+
+  if (queryState.syncedInitialQuery !== initialQuery) {
+    setQueryState({
+      value: initialQuery,
+      syncedInitialQuery: initialQuery,
+    });
+  }
+
+  const query =
+    queryState.syncedInitialQuery === initialQuery
+      ? queryState.value
+      : initialQuery;
+
+  const updateQuery = (value: string) => {
+    setQueryState({
+      value,
+      syncedInitialQuery: initialQuery,
+    });
+  };
 
   const filteredSuggestions = useMemo(() => {
     const normalizedQuery = query.trim();
@@ -81,8 +103,11 @@ function YeogidoCourseSearchBar({
   }, [isOpen]);
 
   const handleSuggestionSelect = (suggestion: string) => {
-    setQuery(suggestion);
+    const trimmedSuggestion = suggestion.trim();
+
+    updateQuery(trimmedSuggestion);
     setIsOpen(false);
+    onSearch?.(trimmedSuggestion);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -134,7 +159,7 @@ function YeogidoCourseSearchBar({
           value={query}
           onFocus={() => setIsOpen(true)}
           onChange={(event) => {
-            setQuery(event.target.value);
+            updateQuery(event.target.value);
             setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
