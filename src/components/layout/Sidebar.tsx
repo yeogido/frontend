@@ -1,11 +1,10 @@
 import close from '../../assets/icons/close.svg';
 import chevronRight from '../../assets/icons/chevron-right.svg';
+import { useNavigate } from 'react-router-dom';
 
 import { guestSidebarMenu } from '../../constants/sidebarMenu';
 
 import { Divider } from '../ui';
-
-import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,7 +12,6 @@ interface SidebarProps {
 }
 
 function Sidebar({ isOpen, onClose }: SidebarProps) {
-
   const navigate = useNavigate();
 
   return (
