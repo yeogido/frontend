@@ -8,6 +8,7 @@ export interface ReviewCardProps {
   content: string;
   rating?: number;
   onClick?: () => void;
+  className?: string;
 }
 
 function ReviewCard({
@@ -17,6 +18,7 @@ function ReviewCard({
   content,
   rating = 5,
   onClick,
+  className = '',
 }: ReviewCardProps) {
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!onClick) return;
@@ -36,7 +38,7 @@ function ReviewCard({
       className={`
         flex
         h-[115px]
-        w-[220px]
+        w-[min(78vw,220px)]
         shrink-0
         flex-col
         justify-between
@@ -44,68 +46,39 @@ function ReviewCard({
         bg-[#F9F9F9]
         p-4
         shadow-[0_1px_5px_rgba(0,0,0,0.07)]
+        sm:w-[220px]
+        lg:h-[132px]
+        lg:w-full
         ${onClick ? 'cursor-pointer' : ''}
+        ${className}
       `}
     >
-      {/* Review */}
-      <p
-        className="
-          w-full
-          line-clamp-3
-          text-[14px]
-          font-normal
-          leading-[100%]
-          text-[#1C1C1C]
-        "
-      >
+      <p className="line-clamp-3 w-full text-[14px] leading-[18px] font-normal text-[#1C1C1C] lg:leading-5">
         {content}
       </p>
 
-      {/* Footer */}
       <div className="flex items-end gap-2">
         {profileImage ? (
           <img
             src={profileImage}
             alt={`${nickname} 프로필`}
-            className="h-6 w-6 rounded-full object-cover"
+            className="h-6 w-6 rounded-full object-cover lg:h-8 lg:w-8"
           />
         ) : (
-          <div className="h-6 w-6 rounded-full bg-[#EAEAEA]" />
+          <div className="h-6 w-6 rounded-full bg-[#EAEAEA] lg:h-8 lg:w-8" />
         )}
 
-        <div className="flex flex-col gap-[2px]">
-          <div className="flex items-center">
-            <span
-              className="
-                text-[12px]
-                font-semibold
-                leading-none
-                text-[#1C1C1C]
-              "
-            >
+        <div className="flex min-w-0 flex-col gap-[2px]">
+          <div className="flex min-w-0 items-center">
+            <span className="truncate text-[12px] leading-none font-semibold text-[#1C1C1C]">
               {nickname}
             </span>
 
-            <span
-              className="
-                mx-[2px]
-                text-[10px]
-                font-normal
-                leading-none
-                text-[#7F7F7F]
-              "
-            >
+            <span className="mx-[4px] text-[10px] leading-none font-normal text-[#7F7F7F]">
               ·
             </span>
 
-            <span
-              className="
-                text-[10px]
-                font-normal
-                leading-none
-                text-[#7F7F7F]
-              "
-            >
+            <span className="truncate text-[10px] leading-none font-normal text-[#7F7F7F]">
               {meta}
             </span>
           </div>
