@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SiKakaotalk, SiNaver } from 'react-icons/si';
@@ -7,7 +7,7 @@ import { SiKakaotalk, SiNaver } from 'react-icons/si';
 import {
   loginSchema,
   type LoginFormValues,
-} from '../../pages/auth/login/schema';
+} from '../schema';
 
 interface LoginFormProps {
   onSubmit: (values: LoginFormValues) => Promise<void>;
@@ -55,10 +55,6 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
                 type="email"
                 autoComplete="email"
                 placeholder="이메일"
-                aria-invalid={!!errors.email}
-                aria-describedby={
-                  errors.email ? 'login-email-error' : undefined
-                }
                 className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
               />
             </Field>
@@ -74,12 +70,6 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
                 type="password"
                 autoComplete="current-password"
                 placeholder="비밀번호"
-                aria-invalid={!!errors.password}
-                aria-describedby={
-                  errors.password
-                    ? 'login-password-error'
-                    : undefined
-                }
                 className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
               />
             </Field>
@@ -176,11 +166,7 @@ function Field({ id, label, error, children }: FieldProps) {
       {children}
 
       {error && (
-        <p
-          id={`${id}-error`}
-          role="alert"
-          className="mt-1 text-xs font-medium text-[#FF6B4A]"
-        >
+        <p className="mt-1 text-xs font-medium text-[#FF6B4A]">
           {error}
         </p>
       )}

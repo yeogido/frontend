@@ -3,7 +3,7 @@ import { useState } from 'react';
 import {
   SignupForm,
   SignupStart,
-} from '../../../components/auth';
+} from './components';
 
 function SignUpPage() {
   const [step, setStep] = useState<'start' | 'email'>('start');

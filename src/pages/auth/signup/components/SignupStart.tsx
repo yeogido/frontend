@@ -8,7 +8,7 @@ interface SignupStartProps {
 function SignupStart({ onEmailStart }: SignupStartProps) {
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
-      <div className="flex-1 flex flex-col justify-center pb-2">
+      <div className="flex flex-1 flex-col justify-center pb-2">
         <div className="mb-8 flex justify-center sm:mb-10">
           <div className="h-40 w-40 rounded-lg bg-[linear-gradient(45deg,#F0F0F0_25%,transparent_25%),linear-gradient(-45deg,#F0F0F0_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#F0F0F0_75%),linear-gradient(-45deg,transparent_75%,#F0F0F0_75%)] bg-[length:18px_18px] bg-[position:0_0,0_9px,9px_-9px,-9px_0] bg-white sm:h-44 sm:w-44" />
         </div>
