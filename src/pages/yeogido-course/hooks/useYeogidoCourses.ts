@@ -15,18 +15,26 @@ interface YeogidoCoursePage {
 interface FetchYeogidoCoursesParams {
   page: number;
   filters: YeogidoCourseSelectedFilters;
+  keyword?: string;
+}
+
+interface UseYeogidoCoursesParams {
+  filters: YeogidoCourseSelectedFilters;
+  keyword?: string;
 }
 
 function createMockCourse(
   id: number,
-  filters: YeogidoCourseSelectedFilters
+  filters: YeogidoCourseSelectedFilters,
+  keyword = ''
 ): YeogidoCourse {
   const companionPrefix =
     filters.companion === '전체' ? '강릉' : filters.companion;
+  const titlePrefix = keyword || companionPrefix;
 
   return {
     id,
-    title: `${companionPrefix} 여행 코스`,
+    title: `${titlePrefix} 여행 코스`,
     duration: filters.duration === '전체' ? '2박 3일' : filters.duration,
     courseName:
       filters.transport === '전체'
@@ -38,6 +46,7 @@ function createMockCourse(
 async function fetchYeogidoCourses({
   page,
   filters,
+  keyword,
 }: FetchYeogidoCoursesParams): Promise<YeogidoCoursePage> {
   await new Promise((resolve) => {
     window.setTimeout(resolve, 500);
@@ -46,7 +55,7 @@ async function fetchYeogidoCourses({
   const start = page * PAGE_SIZE;
   const end = Math.min(start + PAGE_SIZE, TOTAL_COUNT);
   const content = Array.from({ length: end - start }, (_, index) =>
-    createMockCourse(start + index + 1, filters)
+    createMockCourse(start + index + 1, filters, keyword)
   );
 
   return {
@@ -56,11 +65,17 @@ async function fetchYeogidoCourses({
   };
 }
 
-function useYeogidoCourses(filters: YeogidoCourseSelectedFilters) {
+function useYeogidoCourses({ filters, keyword = '' }: UseYeogidoCoursesParams) {
+  const normalizedKeyword = keyword.trim();
+
   return useInfiniteQuery({
-    queryKey: ['yeogidoCourses', filters],
+    queryKey: ['yeogidoCourses', { filters, keyword: normalizedKeyword }],
     queryFn: ({ pageParam }) =>
-      fetchYeogidoCourses({ page: pageParam, filters }),
+      fetchYeogidoCourses({
+        page: pageParam,
+        filters,
+        keyword: normalizedKeyword,
+      }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.last ? undefined : lastPage.page + 1,

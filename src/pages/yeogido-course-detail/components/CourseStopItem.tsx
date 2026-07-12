@@ -1,6 +1,9 @@
 import type { CourseStop } from '../types/course';
 
-import { EmptyHeartIcon } from './icons';
+import { mockLikeRequest } from '../api/mockLikeRequest';
+import { useOptimisticLiked } from '../hooks/useOptimisticLiked';
+
+import { EmptyHeartIcon, FilledHeartIcon } from './icons';
 
 interface CourseStopItemProps {
   stop: CourseStop;
@@ -8,6 +11,11 @@ interface CourseStopItemProps {
 }
 
 function CourseStopItem({ stop, isLast }: CourseStopItemProps) {
+  const { liked, isPending, toggle } = useOptimisticLiked(
+    stop.liked,
+    mockLikeRequest,
+  );
+  const HeartIcon = liked ? FilledHeartIcon : EmptyHeartIcon;
   const [transportType, ...transportRest] = (stop.transportToNext ?? '').split(' ');
 
   return (
@@ -49,10 +57,14 @@ function CourseStopItem({ stop, isLast }: CourseStopItemProps) {
 
       <button
         type="button"
-        aria-label={`${stop.name} 좋아요`}
-        className="mt-1 flex h-6 w-6 items-center justify-center text-gray-2"
+        aria-label={`${stop.name} 좋아요 ${liked ? '취소' : '추가'}`}
+        aria-pressed={liked}
+        aria-busy={isPending}
+        disabled={isPending}
+        onClick={toggle}
+        className={`mt-1 flex h-6 w-6 items-center justify-center disabled:cursor-wait ${liked ? 'text-main-5' : 'text-gray-2'}`}
       >
-        <EmptyHeartIcon className="h-4 w-4 fill-current" />
+        <HeartIcon className="h-4 w-4 fill-current" />
       </button>
     </article>
   );

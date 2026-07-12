@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { IoSearch } from 'react-icons/io5';
 
 import {
   ContentCard,
@@ -8,6 +7,7 @@ import {
 } from '../../components/common';
 
 import courseMapImage from './assets/courseimage.svg';
+import { YeogidoCourseSearchBar } from './components';
 
 const popularCourses = [
   {
@@ -41,6 +41,17 @@ function YeogidoCoursePage() {
     navigate('/yeogido-course/search');
   };
 
+  const handleCourseSearch = (query: string) => {
+    const trimmedQuery = query.trim();
+
+    navigate({
+      pathname: '/yeogido-course/search',
+      search: trimmedQuery
+        ? `?keyword=${encodeURIComponent(trimmedQuery)}`
+        : '',
+    });
+  };
+
   const goToPopularCourses = () => {
     navigate('/yeogido-course/popular');
   };
@@ -56,17 +67,10 @@ function YeogidoCoursePage() {
         </p>
       </div>
 
-      <button
-        type="button"
-        aria-label="코스명 또는 지역명 검색"
-        onClick={goToCourseSearch}
-        className="border-gray-2 bg-pure-white text-gray-4 mt-[11px] flex h-[47px] w-full max-w-[342px] items-center gap-2 overflow-hidden rounded-xl border px-3.5 text-left"
-      >
-        <IoSearch aria-hidden="true" className="shrink-0 text-[18px]" />
-        <span className="min-w-0 flex-1 text-[12px] leading-none font-medium">
-          코스명 또는 지역명을 검색해 주세요
-        </span>
-      </button>
+      <YeogidoCourseSearchBar
+        className="mt-[11px]"
+        onSearch={handleCourseSearch}
+      />
 
       <button
         type="button"

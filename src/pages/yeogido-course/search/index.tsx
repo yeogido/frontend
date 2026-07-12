@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { ContentCard, ContentCardSkeleton } from '../../../components/common';
 
@@ -11,6 +12,9 @@ import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
 import useYeogidoCourses from '../hooks/useYeogidoCourses';
 
 function YeogidoCourseSearchPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const keyword = searchParams.get('keyword') ?? '';
+
   const {
     filterContainerRef,
     openFilterKey,
@@ -26,7 +30,7 @@ function YeogidoCourseSearchPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useYeogidoCourses(selectedFilters);
+  } = useYeogidoCourses({ filters: selectedFilters, keyword });
 
   const yeogidoCourses = data?.pages.flatMap((page) => page.content) ?? [];
 
@@ -41,10 +45,27 @@ function YeogidoCourseSearchPage() {
     onIntersect: handleIntersect,
   });
 
+  const handleSearch = (query: string) => {
+    const trimmedQuery = query.trim();
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    if (trimmedQuery) {
+      nextSearchParams.set('keyword', trimmedQuery);
+    } else {
+      nextSearchParams.delete('keyword');
+    }
+
+    setSearchParams(nextSearchParams);
+  };
+
   return (
     <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-4 pb-10">
       <div className="w-full">
-        <YeogidoCourseSearchBar />
+        <YeogidoCourseSearchBar
+          key={keyword}
+          initialQuery={keyword}
+          onSearch={handleSearch}
+        />
 
         <div
           ref={filterContainerRef}
@@ -66,13 +87,13 @@ function YeogidoCourseSearchPage() {
           ))}
         </div>
 
-        <div className="mt-[27px] grid grid-cols-[repeat(auto-fill,minmax(163px,1fr))] gap-x-4 gap-y-[18px]">
+        <div className="mt-[27px] grid grid-cols-2 gap-x-4 gap-y-[18px]">
           {isPending
             ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
                 <ContentCardSkeleton
                   key={item}
                   className="w-full"
-                  imageClassName="aspect-[174/115] h-auto"
+                  imageClassName="aspect-[163/115] h-auto"
                 />
               ))
             : yeogidoCourses.map((course) => (
@@ -83,7 +104,7 @@ function YeogidoCourseSearchPage() {
                   firstInfo={course.duration}
                   secondInfo={course.courseName}
                   className="w-full"
-                  imageClassName="aspect-[174/115] h-auto"
+                  imageClassName="aspect-[163/115] h-auto"
                 />
               ))}
 
@@ -92,7 +113,7 @@ function YeogidoCourseSearchPage() {
                 <ContentCardSkeleton
                   key={`next-page-${item}`}
                   className="w-full"
-                  imageClassName="aspect-[174/115] h-auto"
+                  imageClassName="aspect-[163/115] h-auto"
                 />
               ))
             : null}
