@@ -4,6 +4,17 @@ import type {
   Geometry,
 } from 'geojson';
 
-export type KoreaCityFeature = Feature<Geometry>;
+export interface KoreaCityProperties {
+  code: string;
+  name: string;
+}
 
-export type KoreaCityGeoJson = FeatureCollection<Geometry>;
+export type KoreaCityFeature = Feature<
+  Geometry,
+  KoreaCityProperties
+>;
+
+export type KoreaCityGeoJson = FeatureCollection<
+  Geometry,
+  KoreaCityProperties
+>;

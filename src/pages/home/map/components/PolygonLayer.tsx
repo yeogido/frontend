@@ -6,11 +6,18 @@ import type { KoreaCityGeoJson } from '../types/map';
 
 const koreaCity = koreaCityJson as KoreaCityGeoJson;
 
+const MAP_WIDTH = 400;
+const MAP_HEIGHT = 600;
+const MAP_PADDING = 20;
+
 function PolygonLayer() {
-  const projection = geoMercator()
-    .center([127.8, 36.2])
-    .scale(4500)
-    .translate([200, 300]);
+  const projection = geoMercator().fitExtent(
+    [
+      [MAP_PADDING, MAP_PADDING],
+      [MAP_WIDTH - MAP_PADDING, MAP_HEIGHT - MAP_PADDING],
+    ],
+    koreaCity,
+  );
 
   const pathGenerator = geoPath(projection);
 
