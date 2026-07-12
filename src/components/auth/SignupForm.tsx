@@ -29,6 +29,10 @@ const birthYears = Array.from({ length: 80 }, (_, index) =>
 
 function SignupForm() {
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
@@ -41,7 +45,7 @@ function SignupForm() {
           여기도를 시작하기 위해 필요한 정보예요
         </p>
 
-        <div className="mt-9 space-y-5">
+        <div className="mt-9 space-y-4">
           <Field
             id="signup-name"
             label="이름"
@@ -54,133 +58,138 @@ function SignupForm() {
             />
           </Field>
 
-          <Field
-            id="signup-email"
-            label="이메일"
-          >
-            <div className="flex gap-2">
-              <input
-                id="signup-email"
-                type="email"
-                placeholder="이메일"
-                className="block h-12 min-w-0 flex-1 rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
-              />
-
-              <button
-                type="button"
-                onClick={() => setIsCodeSent(true)}
-                className="h-12 w-[76px] shrink-0 rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F]"
-              >
-                인증하기
-              </button>
-            </div>
-          </Field>
-
-          {isCodeSent && (
-            <Field
-              id="signup-code"
-              label="인증번호"
-            >
+          <SectionField label="이메일">
+            <div className="space-y-2">
               <div className="flex gap-2">
                 <input
-                  id="signup-code"
-                  type="text"
-                  placeholder="인증번호"
+                  id="signup-email"
+                  type="email"
+                  placeholder="이메일"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   className="block h-12 min-w-0 flex-1 rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
                 />
 
                 <button
                   type="button"
-                  className="h-12 w-[82px] shrink-0 rounded-[12px] bg-[#FF6B4A] text-[10px] font-bold text-white"
+                  onClick={() => {
+                    if (!isEmailValid) {
+                      return;
+                    }
+
+                    setIsCodeSent(true);
+                  }}
+                  disabled={!isEmailValid}
+                  className="h-12 w-[82px] shrink-0 rounded-[12px] text-xs font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                 >
                   인증번호 전송
                 </button>
               </div>
-            </Field>
-          )}
 
-          <Field
-            id="signup-password"
-            label="비밀번호"
-          >
-            <input
-              id="signup-password"
-              type="password"
-              placeholder="비밀번호"
-              className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
-            />
-          </Field>
+              {isCodeSent && (
+                <div className="flex gap-2">
+                  <input
+                    id="signup-code"
+                    type="text"
+                    placeholder="인증번호"
+                    value={code}
+                    onChange={(event) => setCode(event.target.value)}
+                    className="block h-12 min-w-0 flex-1 rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
+                  />
 
-          <Field
-            id="signup-password-confirm"
-            label="비밀번호 확인"
-          >
-            <input
-              id="signup-password-confirm"
-              type="password"
-              placeholder="비밀번호 확인"
-              className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
-            />
-          </Field>
+                  <button
+                    type="button"
+                    className="h-12 w-[82px] shrink-0 rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F]"
+                  >
+                    인증하기
+                  </button>
+                </div>
+              )}
+            </div>
+          </SectionField>
+
+          <SectionField label="비밀번호">
+            <div className="space-y-2">
+              <input
+                id="signup-password"
+                type="password"
+                placeholder="비밀번호"
+                className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
+              />
+
+              <input
+                id="signup-password-confirm"
+                type="password"
+                placeholder="비밀번호 확인"
+                className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
+              />
+            </div>
+          </SectionField>
 
           <Field
             id="signup-region"
             label="사는 지역"
           >
-            <select
-              id="signup-region"
-              className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
-            >
-              <option value="">거주 중인 지역을 선택해 주세요</option>
-              {regions.map((region) => (
-                <option
-                  key={region}
-                  value={region}
-                >
-                  {region}
-                </option>
-              ))}
-            </select>
+            <SelectField>
+              <select
+                id="signup-region"
+                className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 pr-11 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
+              >
+                <option value="">거주 중인 지역을 선택해 주세요</option>
+                {regions.map((region) => (
+                  <option
+                    key={region}
+                    value={region}
+                  >
+                    {region}
+                  </option>
+                ))}
+              </select>
+            </SelectField>
           </Field>
 
           <Field
             id="signup-gender"
             label="성별"
           >
-            <select
-              id="signup-gender"
-              className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
-            >
-              <option value="">성별을 선택해 주세요</option>
-              {genders.map((gender) => (
-                <option
-                  key={gender}
-                  value={gender}
-                >
-                  {gender}
-                </option>
-              ))}
-            </select>
+            <SelectField>
+              <select
+                id="signup-gender"
+                className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 pr-11 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
+              >
+                <option value="">성별을 선택해 주세요</option>
+                {genders.map((gender) => (
+                  <option
+                    key={gender}
+                    value={gender}
+                  >
+                    {gender}
+                  </option>
+                ))}
+              </select>
+            </SelectField>
           </Field>
 
           <Field
             id="signup-birth-year"
             label="태어난 연도"
           >
-            <select
-              id="signup-birth-year"
-              className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
-            >
-              <option value="">태어난 연도를 선택해 주세요</option>
-              {birthYears.map((year) => (
-                <option
-                  key={year}
-                  value={year}
-                >
-                  {year}
-                </option>
-              ))}
-            </select>
+            <SelectField>
+              <select
+                id="signup-birth-year"
+                className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 pr-11 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
+              >
+                <option value="">태어난 연도를 선택해 주세요</option>
+                {birthYears.map((year) => (
+                  <option
+                    key={year}
+                    value={year}
+                  >
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </SelectField>
           </Field>
         </div>
 
@@ -214,6 +223,47 @@ function Field({ id, label, children }: FieldProps) {
       )}
 
       {children}
+    </div>
+  );
+}
+
+function SectionField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <label className="mb-3 block text-sm font-bold text-[#1C1C1C]">
+        {label}
+      </label>
+
+      {children}
+    </div>
+  );
+}
+
+function SelectField({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative">
+      {children}
+
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 20 20"
+        className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7F7F7F]"
+        fill="none"
+      >
+        <path
+          d="M5 7.5L10 12.5L15 7.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </div>
   );
 }
