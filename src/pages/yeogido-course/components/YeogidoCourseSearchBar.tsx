@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FormEvent,
   type FocusEvent,
   type KeyboardEvent,
 } from 'react';
@@ -26,11 +27,21 @@ const searchSuggestions = [
 
 const normalizeSearchText = (text: string) => text.replace(/\s/g, '');
 
-function YeogidoCourseSearchBar() {
+interface YeogidoCourseSearchBarProps {
+  initialQuery?: string;
+  className?: string;
+  onSearch?: (query: string) => void;
+}
+
+function YeogidoCourseSearchBar({
+  initialQuery = '',
+  className = '',
+  onSearch,
+}: YeogidoCourseSearchBarProps) {
   const inputId = useId();
   const listboxId = useId();
   const searchBarRef = useRef<HTMLFormElement | null>(null);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [isOpen, setIsOpen] = useState(false);
 
   const filteredSuggestions = useMemo(() => {
@@ -74,6 +85,12 @@ function YeogidoCourseSearchBar() {
     setIsOpen(false);
   };
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsOpen(false);
+    onSearch?.(query.trim());
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Escape') {
       setIsOpen(false);
@@ -97,9 +114,9 @@ function YeogidoCourseSearchBar() {
     <form
       ref={searchBarRef}
       role="search"
-      onSubmit={(event) => event.preventDefault()}
+      onSubmit={handleSubmit}
       onBlur={handleBlur}
-      className="relative w-full max-w-[342px]"
+      className={`relative w-full max-w-[342px] ${className}`}
     >
       <label htmlFor={inputId} className="sr-only">
         코스명 또는 지역명 검색
