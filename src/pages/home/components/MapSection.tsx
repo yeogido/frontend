@@ -1,10 +1,12 @@
+import { Map } from "../map/components";
+
 function MapSection() {
   return (
     <section className="mx-6 mt-4">
       <div className="relative h-[342px] overflow-hidden rounded-xl bg-[#F9F9F9]">
         {/* Map */}
         <div className="h-full w-full">
-          {/* 지도 이미지가 들어갈 영역 */}
+          <Map/>
         </div>
 
         {/* Title */}
