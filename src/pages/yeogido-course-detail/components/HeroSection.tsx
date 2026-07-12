@@ -25,7 +25,6 @@ function HeroSection({ imageUrl, title, initialLiked }: HeroSectionProps) {
         aria-label={`${title} 좋아요 ${liked ? '취소' : '추가'}`}
         aria-pressed={liked}
         aria-busy={isPending}
-        disabled={isPending}
         onClick={toggle}
         className="absolute top-4 right-5 flex h-11 w-11 items-center justify-center text-white drop-shadow-sm disabled:cursor-wait"
       >
