@@ -23,6 +23,9 @@ importers:
       axios:
         specifier: ^1.18.1
         version: 1.18.1
+      d3-geo:
+        specifier: ^3.1.1
+        version: 3.1.1
       immer:
         specifier: ^11.1.9
         version: 11.1.9
@@ -41,6 +44,9 @@ importers:
       react-router-dom:
         specifier: ^7.18.1
         version: 7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react-zoom-pan-pinch:
+        specifier: ^4.0.3
+        version: 4.0.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       tailwindcss:
         specifier: ^4.3.2
         version: 4.3.2
@@ -54,6 +60,12 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.6.0(jiti@2.7.0))
+      '@types/d3-geo':
+        specifier: ^3.1.0
+        version: 3.1.0
+      '@types/geojson':
+        specifier: ^7946.0.16
+        version: 7946.0.16
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.2
@@ -476,11 +488,17 @@ packages:
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
 
+  '@types/d3-geo@3.1.0':
+    resolution: {integrity: sha512-856sckF0oP/diXtS4jNsiQw/UuK5fQG8l/a9VVLeSouf1/PPbBE1i1W852zVwKwYCBkFJJB7nCFTbk6UMEXBOQ==}
+
   '@types/esrecurse@4.3.1':
     resolution: {integrity: sha512-xJBAbDifo5hpffDBuHl0Y8ywswbiAp/Wi7Y/GtAgSlZyIABppyurxVueOPE8LUQOxdlgi6Zqce7uoEpqNTeiUw==}
 
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
+
+  '@types/geojson@7946.0.16':
+    resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -633,6 +651,14 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  d3-array@3.2.4:
+    resolution: {integrity: sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg==}
+    engines: {node: '>=12'}
+
+  d3-geo@3.1.1:
+    resolution: {integrity: sha512-637ln3gXKXOwhalDzinUgY83KzNWZRKbYubaG+fGVuc/dxO64RRljtCTnf5ecMyE1RIdtqpkVcq0IbtU2S8j2Q==}
+    engines: {node: '>=12'}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -859,6 +885,10 @@ packages:
   imurmurhash@0.1.4:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
     engines: {node: '>=0.8.19'}
+
+  internmap@2.0.3:
+    resolution: {integrity: sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==}
+    engines: {node: '>=12'}
 
   is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
@@ -1154,6 +1184,13 @@ packages:
     peerDependenciesMeta:
       react-dom:
         optional: true
+
+  react-zoom-pan-pinch@4.0.3:
+    resolution: {integrity: sha512-N2Hi6L78fFmhRra+ORpFSW7WST5x6kxpOPplIvtB0b7b+U2anpo1z1wLgaWRPS2kUSqcraRG+JgBCIlDJnqqAg==}
+    engines: {node: '>=8', npm: '>=5'}
+    peerDependencies:
+      react: '*'
+      react-dom: '*'
 
   react@19.2.7:
     resolution: {integrity: sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==}
@@ -1667,9 +1704,15 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@types/d3-geo@3.1.0':
+    dependencies:
+      '@types/geojson': 7946.0.16
+
   '@types/esrecurse@4.3.1': {}
 
   '@types/estree@1.0.9': {}
+
+  '@types/geojson@7946.0.16': {}
 
   '@types/json-schema@7.0.15': {}
 
@@ -1850,6 +1893,14 @@ snapshots:
       which: 2.0.2
 
   csstype@3.2.3: {}
+
+  d3-array@3.2.4:
+    dependencies:
+      internmap: 2.0.3
+
+  d3-geo@3.1.1:
+    dependencies:
+      d3-array: 3.2.4
 
   debug@4.4.3:
     dependencies:
@@ -2076,6 +2127,8 @@ snapshots:
 
   imurmurhash@0.1.4: {}
 
+  internmap@2.0.3: {}
+
   is-extglob@2.1.1: {}
 
   is-glob@4.0.3:
@@ -2256,6 +2309,11 @@ snapshots:
       react: 19.2.7
       set-cookie-parser: 2.7.2
     optionalDependencies:
+      react-dom: 19.2.7(react@19.2.7)
+
+  react-zoom-pan-pinch@4.0.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+    dependencies:
+      react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
 
   react@19.2.7: {}
