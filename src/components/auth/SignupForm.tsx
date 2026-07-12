@@ -42,17 +42,25 @@ function SignupForm() {
         </p>
 
         <div className="mt-9 space-y-5">
-          <Field label="이름">
+          <Field
+            id="signup-name"
+            label="이름"
+          >
             <input
+              id="signup-name"
               type="text"
               placeholder="이름"
               className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
             />
           </Field>
 
-          <Field label="이메일">
+          <Field
+            id="signup-email"
+            label="이메일"
+          >
             <div className="flex gap-2">
               <input
+                id="signup-email"
                 type="email"
                 placeholder="이메일"
                 className="block h-12 min-w-0 flex-1 rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
@@ -69,9 +77,13 @@ function SignupForm() {
           </Field>
 
           {isCodeSent && (
-            <Field label="인증번호">
+            <Field
+              id="signup-code"
+              label="인증번호"
+            >
               <div className="flex gap-2">
                 <input
+                  id="signup-code"
                   type="text"
                   placeholder="인증번호"
                   className="block h-12 min-w-0 flex-1 rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
@@ -87,24 +99,38 @@ function SignupForm() {
             </Field>
           )}
 
-          <Field label="비밀번호">
+          <Field
+            id="signup-password"
+            label="비밀번호"
+          >
             <input
+              id="signup-password"
               type="password"
               placeholder="비밀번호"
               className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
             />
           </Field>
 
-          <Field>
+          <Field
+            id="signup-password-confirm"
+            label="비밀번호 확인"
+          >
             <input
+              id="signup-password-confirm"
               type="password"
               placeholder="비밀번호 확인"
               className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
             />
           </Field>
 
-          <Field label="사는 지역">
-            <select className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]">
+          <Field
+            id="signup-region"
+            label="사는 지역"
+          >
+            <select
+              id="signup-region"
+              className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
+            >
               <option value="">거주 중인 지역을 선택해 주세요</option>
               {regions.map((region) => (
                 <option
@@ -117,8 +143,14 @@ function SignupForm() {
             </select>
           </Field>
 
-          <Field label="성별">
-            <select className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]">
+          <Field
+            id="signup-gender"
+            label="성별"
+          >
+            <select
+              id="signup-gender"
+              className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
+            >
               <option value="">성별을 선택해 주세요</option>
               {genders.map((gender) => (
                 <option
@@ -131,8 +163,14 @@ function SignupForm() {
             </select>
           </Field>
 
-          <Field label="태어난 연도">
-            <select className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]">
+          <Field
+            id="signup-birth-year"
+            label="태어난 연도"
+          >
+            <select
+              id="signup-birth-year"
+              className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
+            >
               <option value="">태어난 연도를 선택해 주세요</option>
               {birthYears.map((year) => (
                 <option
@@ -158,15 +196,19 @@ function SignupForm() {
 }
 
 interface FieldProps {
+  id: string;
   label?: string;
   children: ReactNode;
 }
 
-function Field({ label, children }: FieldProps) {
+function Field({ id, label, children }: FieldProps) {
   return (
     <div>
       {label && (
-        <label className="mb-2 block text-sm font-bold text-[#1C1C1C]">
+        <label
+          htmlFor={id}
+          className="mb-2 block text-sm font-bold text-[#1C1C1C]"
+        >
           {label}
         </label>
       )}
