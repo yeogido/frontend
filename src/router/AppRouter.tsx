@@ -15,32 +15,20 @@ import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
 import NotFoundPage from '../pages/not-found';
-
+import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
 function AppRouter() {
   return (
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
 
-        <Route
-          path="/local-course"
-          element={<LocalCoursePage />}
-        />
+        <Route path="/local-course" element={<LocalCoursePage />} />
 
-        <Route
-          path="/festival"
-          element={<FestivalPage />}
-        />
+        <Route path="/festival" element={<FestivalPage />} />
 
-        <Route
-          path="/review"
-          element={<ReviewPage />}
-        />
+        <Route path="/review" element={<ReviewPage />} />
 
-        <Route
-          path="/yeogido-course"
-          element={<YeogidoCoursePage />}
-        />
+        <Route path="/yeogido-course" element={<YeogidoCoursePage />} />
 
         <Route
           path="/yeogido-course/popular"
@@ -56,11 +44,12 @@ function AppRouter() {
           path="/yeogido-course/search"
           element={<YeogidoCourseSearchPage />}
         />
-
         <Route
-          path="/local-business"
-          element={<LocalBusinessPage />}
+          path="/yeogido-course/detail/:courseId"
+          element={<YeogidoCourseDetailPage />}
         />
+
+        <Route path="/local-business" element={<LocalBusinessPage />} />
       </Route>
 
       <Route element={<AuthLayout />}>
