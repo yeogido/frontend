@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -31,6 +32,42 @@ function ForgotPasswordForm() {
     setIsCodeVerified(true);
   };
 
+  const handleResetPassword = () => {
+    if (!isResetButtonEnabled) {
+      return;
+    }
+
+    navigate('/forgot-password/reset', {
+      state: { email },
+    });
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+
+    if (target?.tagName === 'BUTTON') {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (!isCodeSent) {
+      handleSendCode();
+      return;
+    }
+
+    if (!isCodeVerified) {
+      handleVerifyCode();
+      return;
+    }
+
+    handleResetPassword();
+  };
+
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
       <div className="flex-1">
@@ -45,6 +82,7 @@ function ForgotPasswordForm() {
         <form
           className="mt-9"
           onSubmit={(event) => event.preventDefault()}
+          onKeyDown={handleKeyDown}
         >
           <div>
             <label
@@ -116,16 +154,12 @@ function ForgotPasswordForm() {
         </form>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-10">
+          <div className="fixed inset-x-0 bottom-0 z-10">
         <div className="mx-auto w-full max-w-[440px] px-6 pb-10 sm:px-8">
           <button
             type="button"
             disabled={!isResetButtonEnabled}
-            onClick={() =>
-              navigate('/forgot-password/reset', {
-                state: { email },
-              })
-            }
+            onClick={handleResetPassword}
             className="h-12 w-full cursor-pointer rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#A1A1A1] enabled:bg-[#FF6B4A] enabled:text-white"
           >
             비밀번호 재설정하기

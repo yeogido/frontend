@@ -20,7 +20,10 @@ function KakaoSignupPage() {
   return (
     <main className="min-h-dvh bg-[#F9F9F9]">
       <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
-        <div className="flex-1">
+        <form
+          className="flex-1"
+          onSubmit={(event) => event.preventDefault()}
+        >
           <div className="mb-8 flex justify-start">
             <Logo />
           </div>
@@ -124,13 +127,13 @@ function KakaoSignupPage() {
           </div>
 
           <button
-            type="button"
+            type="submit"
             disabled={!isFormComplete}
             className="mt-8 h-12 w-full rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#A1A1A1] enabled:bg-[#FF6B4A] enabled:text-white"
           >
             여기도 시작하기
           </button>
-        </div>
+        </form>
       </section>
     </main>
   );
