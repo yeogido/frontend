@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { login } from '../../../apis/auth.api';
-import { LoginForm } from '../../../components/auth';
 import { useAuthStore } from '../../../store/auth.store';
 
+import { LoginForm } from './components';
 import type { LoginFormValues } from './schema';
 
 function LoginPage() {

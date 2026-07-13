@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SiKakaotalk, SiNaver } from 'react-icons/si';
@@ -7,7 +7,7 @@ import { SiKakaotalk, SiNaver } from 'react-icons/si';
 import {
   loginSchema,
   type LoginFormValues,
-} from '../../pages/auth/login/schema';
+} from '../schema';
 
 interface LoginFormProps {
   onSubmit: (values: LoginFormValues) => Promise<void>;
