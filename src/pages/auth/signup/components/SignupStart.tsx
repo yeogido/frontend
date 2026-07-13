@@ -28,7 +28,11 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
         <div className="space-y-4">
           <Link
             to="/signup/kakao"
+<<<<<<< HEAD
             className="flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-xl bg-[#FEE500] text-base font-bold text-[#1C1C1C]"
+=======
+            className="flex h-[58px] w-full items-center justify-center gap-3 rounded-xl bg-[#FEE500] text-base font-bold text-[#1C1C1C]"
+>>>>>>> origin/develop
           >
             <SiKakaotalk
               className="text-[18px]"
@@ -39,7 +43,11 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
 
           <Link
             to="/signup/naver"
+<<<<<<< HEAD
             className="flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-xl bg-[#03C75A] text-base font-bold text-white"
+=======
+            className="flex h-[58px] w-full items-center justify-center gap-3 rounded-xl bg-[#03C75A] text-base font-bold text-white"
+>>>>>>> origin/develop
           >
             <SiNaver
               className="text-[18px]"
