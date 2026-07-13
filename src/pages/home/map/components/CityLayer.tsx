@@ -1,5 +1,7 @@
 import { geoMercator, geoPath } from 'd3-geo';
 
+import { CITY_LAYER_ZOOM } from '../constants/map';
+
 import koreaCityJson from '../assets/korea-city.json';
 
 import type { KoreaCityGeoJson } from '../types/map';
@@ -10,7 +12,11 @@ const MAP_WIDTH = 400;
 const MAP_HEIGHT = 600;
 const MAP_PADDING = 20;
 
-function CityLayer() {
+interface CityLayerProps {
+  zoomLevel: number;
+}
+
+function CityLayer({ zoomLevel }: CityLayerProps) {
   const projection = geoMercator().fitExtent(
     [
       [MAP_PADDING, MAP_PADDING],
@@ -20,6 +26,8 @@ function CityLayer() {
   );
 
   const pathGenerator = geoPath(projection);
+
+  const isVisible = zoomLevel >= CITY_LAYER_ZOOM;
 
   return (
     <>
@@ -32,9 +40,11 @@ function CityLayer() {
           <path
             key={index}
             d={d}
-            fill="#F8F8F8"
+            fill="none"
             stroke="#FF6F41"
             strokeWidth={0.5}
+            strokeOpacity={isVisible ? 1 : 0}
+            pointerEvents="none"
           />
         );
       })}
