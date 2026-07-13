@@ -36,20 +36,25 @@ function SearchBar({
   const searchBarRef = useRef<HTMLFormElement | null>(null);
   const [queryState, setQueryState] = useState({
     value: initialQuery,
-    syncedInitialQuery: initialQuery,
+    previousInitialQuery: initialQuery,
   });
   const [isOpen, setIsOpen] = useState(false);
   const hasSuggestions = suggestions.length > 0;
+  const isInitialQueryChanged =
+    queryState.previousInitialQuery !== initialQuery;
+  const query = isInitialQueryChanged ? initialQuery : queryState.value;
 
-  const query =
-    queryState.syncedInitialQuery === initialQuery
-      ? queryState.value
-      : initialQuery;
+  if (isInitialQueryChanged) {
+    setQueryState({
+      value: initialQuery,
+      previousInitialQuery: initialQuery,
+    });
+  }
 
   const updateQuery = (value: string) => {
     setQueryState({
       value,
-      syncedInitialQuery: initialQuery,
+      previousInitialQuery: initialQuery,
     });
   };
 
