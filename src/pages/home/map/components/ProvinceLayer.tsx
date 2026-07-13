@@ -49,7 +49,7 @@ function ProvinceLayer() {
             d={d}
             fill="none"
             stroke="#FF6F41"
-            strokeWidth={2}
+            strokeWidth={1.3}
           />
         );
       })}
