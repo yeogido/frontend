@@ -113,9 +113,9 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
             aria-hidden="true"
           />
 
-          <button type="button">
+          <Link to="/forgot-password">
             비밀번호 찾기
-          </button>
+          </Link>
         </div>
 
         <div className="mt-14">
