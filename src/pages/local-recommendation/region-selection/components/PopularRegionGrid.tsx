@@ -38,7 +38,7 @@ function PopularRegionGrid({
                 alt={region.imageAlt}
                 className="size-full object-cover transition-transform duration-200 group-active:scale-105"
               />
-              <span className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" />
+              <span className="absolute inset-0 bg-linear-to-t from-black/65 via-black/5 to-transparent" />
               <span className="text-pure-white absolute right-3 bottom-3 left-3">
                 <span className="block text-sm font-bold">
                   {neighborhood.district}
