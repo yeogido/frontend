@@ -10,7 +10,7 @@ const MAP_WIDTH = 400;
 const MAP_HEIGHT = 600;
 const MAP_PADDING = 20;
 
-function PolygonLayer() {
+function CityLayer() {
   const projection = geoMercator().fitExtent(
     [
       [MAP_PADDING, MAP_PADDING],
@@ -42,4 +42,4 @@ function PolygonLayer() {
   );
 }
 
-export default PolygonLayer;
+export default CityLayer;
