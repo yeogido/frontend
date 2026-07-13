@@ -49,7 +49,7 @@ function ForgotPasswordForm() {
                   type="button"
                   disabled={!isEmailValid}
                   onClick={() => setIsCodeSent(true)}
-                  className="h-12 w-[82px] shrink-0 rounded-[12px] text-xs font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
+                  className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] text-xs font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                 >
                   인증번호 전송
                 </button>
@@ -77,7 +77,7 @@ function ForgotPasswordForm() {
                     type="button"
                     disabled={!isCodeFilled}
                     onClick={() => navigate('/forgot-password/reset')}
-                    className="h-12 w-[82px] shrink-0 rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F] disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
+                    className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F] disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                   >
                     인증하기
                   </button>
