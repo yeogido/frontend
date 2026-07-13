@@ -5,6 +5,8 @@ import AuthLayout from '../components/layout/AuthLayout';
 
 import HomePage from '../pages/home';
 import LoginPage from '../pages/auth/login';
+import ForgotPasswordPage from '../pages/auth/forgot-password';
+import ForgotPasswordResetPage from '../pages/auth/forgot-password/reset';
 import SignupPage from '../pages/auth/signup';
 import KakaoSignupPage from '../pages/auth/signup/kakao';
 import NaverSignupPage from '../pages/auth/signup/naver';
@@ -62,6 +64,11 @@ function AppRouter() {
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route
+          path="/forgot-password/reset"
+          element={<ForgotPasswordResetPage />}
+        />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />

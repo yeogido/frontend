@@ -88,7 +88,7 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
           <button
             type="submit"
             disabled={!isValid || isSubmitting}
-            className="mt-4 h-12 w-full rounded-[12px] bg-[#E4E4E4] text-[15px] font-bold text-[#A1A1A1] disabled:cursor-not-allowed enabled:bg-[#FF6B4A] enabled:text-white"
+            className="mt-4 h-12 w-full cursor-pointer rounded-[12px] bg-[#E4E4E4] text-[15px] font-bold text-[#A1A1A1] disabled:cursor-not-allowed enabled:bg-[#FF6B4A] enabled:text-white"
           >
             {isSubmitting ? '로그인 중...' : '로그인'}
           </button>
@@ -103,7 +103,7 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
         <div className="mt-4 flex items-center justify-center gap-3 text-xs font-medium text-[#A1A1A1]">
           <Link
             to="/signup"
-            className="text-[#A1A1A1]"
+            className="cursor-pointer text-[#A1A1A1]"
           >
             회원가입
           </Link>
@@ -113,9 +113,12 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
             aria-hidden="true"
           />
 
-          <button type="button">
+          <Link
+            to="/forgot-password"
+            className="cursor-pointer"
+          >
             비밀번호 찾기
-          </button>
+          </Link>
         </div>
 
         <div className="mt-14">
@@ -131,7 +134,7 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
             <button
               type="button"
               aria-label="카카오로 로그인"
-              className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#FEE500] text-black shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
+              className="flex size-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#FEE500] text-black shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
             >
               <SiKakaotalk
                 className="block size-5"
@@ -142,7 +145,7 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
             <button
               type="button"
               aria-label="네이버로 로그인"
-              className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
+              className="flex size-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
             >
               <SiNaver
                 className="block size-5"

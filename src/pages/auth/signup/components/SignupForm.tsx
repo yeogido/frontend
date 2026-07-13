@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { useState } from 'react';
 
 const regions = [
@@ -31,6 +31,7 @@ function SignupForm() {
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [isCodeVerified, setIsCodeVerified] = useState(false);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -58,9 +59,65 @@ function SignupForm() {
     isGenderFilled &&
     isBirthYearFilled;
 
+  const handleSendCode = () => {
+    if (!isEmailValid) {
+      return;
+    }
+
+    setIsCodeSent(true);
+    setIsCodeVerified(false);
+    setCode('');
+  };
+
+  const handleVerifyCode = () => {
+    if (!isCodeFilled) {
+      return;
+    }
+
+    setIsCodeVerified(true);
+  };
+
+  const handleSignup = () => {
+    if (!isFormComplete) {
+      return;
+    }
+
+    return;
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+
+    if (target?.tagName === 'BUTTON') {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (!isCodeSent) {
+      handleSendCode();
+      return;
+    }
+
+    if (!isCodeVerified) {
+      handleVerifyCode();
+      return;
+    }
+
+    handleSignup();
+  };
+
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
-      <div className="flex-1">
+      <form
+        className="flex-1"
+        onSubmit={(event) => event.preventDefault()}
+        onKeyDown={handleKeyDown}
+      >
         <h1 className="text-[28px] font-bold leading-none text-[#1C1C1C] sm:text-[32px]">
           회원가입
         </h1>
@@ -105,15 +162,9 @@ function SignupForm() {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!isEmailValid) {
-                      return;
-                    }
-
-                    setIsCodeSent(true);
-                  }}
+                  onClick={handleSendCode}
                   disabled={!isEmailValid}
-                  className="h-12 w-[82px] shrink-0 rounded-[12px] text-xs font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
+                  className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] text-xs font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                 >
                   인증번호 전송
                 </button>
@@ -138,8 +189,9 @@ function SignupForm() {
 
                   <button
                     type="button"
+                    onClick={handleVerifyCode}
                     disabled={!isCodeFilled}
-                    className="h-12 w-[82px] shrink-0 rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F] disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
+                    className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F] disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                   >
                     인증하기
                   </button>
@@ -254,12 +306,13 @@ function SignupForm() {
 
         <button
           type="button"
+          onClick={handleSignup}
           disabled={!isFormComplete}
-          className="mt-8 h-12 w-full rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#A1A1A1] enabled:bg-[#FF6B4A] enabled:text-white"
+          className="mt-8 h-12 w-full cursor-pointer rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#A1A1A1] enabled:bg-[#FF6B4A] enabled:text-white"
         >
           여기도 시작하기
         </button>
-      </div>
+      </form>
     </section>
   );
 }
