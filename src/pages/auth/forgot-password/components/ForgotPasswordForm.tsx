@@ -1,4 +1,3 @@
-import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -14,30 +13,22 @@ function ForgotPasswordForm() {
   const isResetButtonEnabled =
     isEmailValid && isCodeFilled && isCodeVerified;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const submitter = event.nativeEvent.submitter as HTMLButtonElement | null;
-
-    if (submitter?.value === 'send-code') {
-      if (!isEmailValid) {
-        return;
-      }
-
-      setIsCodeSent(true);
-      setIsCodeVerified(false);
-      setCode('');
+  const handleSendCode = () => {
+    if (!isEmailValid) {
       return;
     }
 
-    if (submitter?.value === 'verify-code') {
-      if (!isCodeFilled) {
-        return;
-      }
+    setIsCodeSent(true);
+    setIsCodeVerified(false);
+    setCode('');
+  };
 
-      setIsCodeVerified(true);
+  const handleVerifyCode = () => {
+    if (!isCodeFilled) {
       return;
     }
+
+    setIsCodeVerified(true);
   };
 
   return (
@@ -53,7 +44,7 @@ function ForgotPasswordForm() {
 
         <form
           className="mt-9"
-          onSubmit={handleSubmit}
+          onSubmit={(event) => event.preventDefault()}
         >
           <div>
             <label
@@ -80,9 +71,8 @@ function ForgotPasswordForm() {
                 />
 
                 <button
-                  type="submit"
-                  name="forgot-password-action"
-                  value="send-code"
+                  type="button"
+                  onClick={handleSendCode}
                   disabled={!isEmailValid}
                   className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] text-xs font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                 >
@@ -112,9 +102,8 @@ function ForgotPasswordForm() {
                   />
 
                   <button
-                    type="submit"
-                    name="forgot-password-action"
-                    value="verify-code"
+                    type="button"
+                    onClick={handleVerifyCode}
                     disabled={!isCodeFilled}
                     className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F] disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                   >
