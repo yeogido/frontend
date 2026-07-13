@@ -17,21 +17,27 @@ function ForgotPasswordForm() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!isCodeSent) {
+    const submitter = event.nativeEvent.submitter as HTMLButtonElement | null;
+
+    if (submitter?.value === 'send-code') {
       if (!isEmailValid) {
         return;
       }
 
       setIsCodeSent(true);
       setIsCodeVerified(false);
+      setCode('');
       return;
     }
 
-    if (!isCodeFilled) {
+    if (submitter?.value === 'verify-code') {
+      if (!isCodeFilled) {
+        return;
+      }
+
+      setIsCodeVerified(true);
       return;
     }
-
-    setIsCodeVerified(true);
   };
 
   return (
@@ -75,6 +81,8 @@ function ForgotPasswordForm() {
 
                 <button
                   type="submit"
+                  name="forgot-password-action"
+                  value="send-code"
                   disabled={!isEmailValid}
                   className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] text-xs font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                 >
@@ -105,6 +113,8 @@ function ForgotPasswordForm() {
 
                   <button
                     type="submit"
+                    name="forgot-password-action"
+                    value="verify-code"
                     disabled={!isCodeFilled}
                     className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F] disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                   >
