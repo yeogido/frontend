@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { geoMercator, geoPath } from 'd3-geo';
 
 import {
@@ -16,21 +18,38 @@ interface LabelLayerProps {
 }
 
 function LabelLayer({ zoomLevel }: LabelLayerProps) {
-  const isCity = zoomLevel >= CITY_LAYER_ZOOM;
-
-  const geoJson = isCity
-    ? (koreaCityJson as GeoJSON.FeatureCollection)
-    : (koreaProvinceJson as GeoJSON.FeatureCollection);
-
-  const projection = geoMercator().fitExtent(
-    [
-      [MAP_PADDING, MAP_PADDING],
-      [MAP_VIEWBOX_WIDTH - MAP_PADDING, MAP_VIEWBOX_HEIGHT - MAP_PADDING],
-    ],
-    geoJson,
+  const isCity = useMemo(
+    () => zoomLevel >= CITY_LAYER_ZOOM,
+    [zoomLevel],
   );
 
-  const pathGenerator = geoPath(projection);
+  const geoJson = useMemo(
+    () =>
+      isCity
+        ? (koreaCityJson as GeoJSON.FeatureCollection)
+        : (koreaProvinceJson as GeoJSON.FeatureCollection),
+    [isCity],
+  );
+
+  const projection = useMemo(
+    () =>
+      geoMercator().fitExtent(
+        [
+          [MAP_PADDING, MAP_PADDING],
+          [
+            MAP_VIEWBOX_WIDTH - MAP_PADDING,
+            MAP_VIEWBOX_HEIGHT - MAP_PADDING,
+          ],
+        ],
+        geoJson,
+      ),
+    [geoJson],
+  );
+
+  const pathGenerator = useMemo(
+    () => geoPath(projection),
+    [projection],
+  );
 
   return (
     <>
@@ -51,7 +70,7 @@ function LabelLayer({ zoomLevel }: LabelLayerProps) {
             dominantBaseline="middle"
             pointerEvents="none"
           >
-            {(feature.properties as { name: string }).name}
+            {(feature.properties as { name?: string } | null)?.name ?? ''}
           </text>
         );
       })}

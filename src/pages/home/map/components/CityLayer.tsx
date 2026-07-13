@@ -33,7 +33,7 @@ function CityLayer() {
             key={index}
             d={d}
             fill="#F8F8F8"
-            stroke="#D9D9D9"
+            stroke="#FF6F41"
             strokeWidth={0.5}
           />
         );
