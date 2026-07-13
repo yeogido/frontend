@@ -84,7 +84,10 @@ function SignupForm() {
               />
           </Field>
 
-          <SectionField label="이메일">
+          <SectionField
+            label="이메일"
+            htmlFor="signup-email"
+          >
             <div className="space-y-2">
               <div className="flex gap-2">
                 <input
@@ -114,6 +117,12 @@ function SignupForm() {
 
               {isCodeSent && (
                 <div className="flex gap-2">
+                  <label
+                    htmlFor="signup-code"
+                    className="sr-only"
+                  >
+                    인증번호
+                  </label>
                   <input
                     id="signup-code"
                     type="text"
@@ -135,7 +144,10 @@ function SignupForm() {
             </div>
           </SectionField>
 
-          <SectionField label="비밀번호">
+          <SectionField
+            label="비밀번호"
+            htmlFor="signup-password"
+          >
             <div className="space-y-2">
               <input
                 id="signup-password"
@@ -154,6 +166,12 @@ function SignupForm() {
                 onChange={(event) => setPasswordConfirm(event.target.value)}
                 className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
               />
+              <label
+                htmlFor="signup-password-confirm"
+                className="sr-only"
+              >
+                비밀번호 확인
+              </label>
             </div>
           </SectionField>
 
@@ -267,14 +285,19 @@ function Field({ id, label, children }: FieldProps) {
 
 function SectionField({
   label,
+  htmlFor,
   children,
 }: {
   label: string;
+  htmlFor: string;
   children: ReactNode;
 }) {
   return (
     <div>
-      <label className="mb-3 block text-sm font-bold text-[#1C1C1C]">
+      <label
+        htmlFor={htmlFor}
+        className="mb-3 block text-sm font-bold text-[#1C1C1C]"
+      >
         {label}
       </label>
 
