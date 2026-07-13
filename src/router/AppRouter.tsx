@@ -6,6 +6,8 @@ import AuthLayout from '../components/layout/AuthLayout';
 import HomePage from '../pages/home';
 import LoginPage from '../pages/auth/login';
 import SignupPage from '../pages/auth/signup';
+import KakaoSignupPage from '../pages/auth/signup/kakao';
+import NaverSignupPage from '../pages/auth/signup/naver';
 import LocalCoursePage from '../pages/local-course';
 import FestivalPage from '../pages/festival';
 import ReviewPage from '../pages/review';
@@ -55,6 +57,8 @@ function AppRouter() {
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/signup/kakao" element={<KakaoSignupPage />} />
+        <Route path="/signup/naver" element={<NaverSignupPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
