@@ -1,6 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 function ResetPasswordForm() {
+  const navigate = useNavigate();
+  const { state } = useLocation() as {
+    state?: {
+      email?: string;
+    };
+  };
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
 
@@ -8,6 +15,12 @@ function ResetPasswordForm() {
   const isPasswordConfirmFilled = passwordConfirm.trim().length > 0;
   const isPasswordMatched =
     isPasswordFilled && isPasswordConfirmFilled && password === passwordConfirm;
+
+  useEffect(() => {
+    if (!state?.email) {
+      navigate('/forgot-password', { replace: true });
+    }
+  }, [navigate, state?.email]);
 
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
@@ -58,13 +71,19 @@ function ResetPasswordForm() {
           </div>
         </div>
 
-        <button
-          type="button"
-          disabled={!isPasswordMatched}
-          className="mt-8 h-12 w-full cursor-pointer rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#A1A1A1] enabled:bg-[#FF6B4A] enabled:text-white"
-        >
-          재설정 완료
-        </button>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-10">
+        <div className="mx-auto w-full max-w-[440px] px-6 pb-10 sm:px-8">
+          <button
+            type="button"
+            disabled={!isPasswordMatched}
+            onClick={() => navigate('/login')}
+            className="h-12 w-full cursor-pointer rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#A1A1A1] enabled:bg-[#FF6B4A] enabled:text-white"
+          >
+            재설정 완료
+          </button>
+        </div>
       </div>
     </section>
   );
