@@ -53,8 +53,9 @@ function NaverSignupPage() {
           </div>
 
           <div className="mt-8 space-y-4">
-            <Field label="이름">
+            <Field label="이름" htmlFor="naver-name">
               <input
+                id="naver-name"
                 type="text"
                 placeholder="이름"
                 value={name}
@@ -63,9 +64,10 @@ function NaverSignupPage() {
               />
             </Field>
 
-            <Field label="사는 지역">
+            <Field label="사는 지역" htmlFor="naver-region">
               <SelectField>
                 <select
+                  id="naver-region"
                   value={region}
                   onChange={(event) => setRegion(event.target.value)}
                   className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 pr-11 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
@@ -80,9 +82,10 @@ function NaverSignupPage() {
               </SelectField>
             </Field>
 
-            <Field label="성별">
+            <Field label="성별" htmlFor="naver-gender">
               <SelectField>
                 <select
+                  id="naver-gender"
                   value={gender}
                   onChange={(event) => setGender(event.target.value)}
                   className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 pr-11 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
@@ -97,9 +100,10 @@ function NaverSignupPage() {
               </SelectField>
             </Field>
 
-            <Field label="태어난 연도">
+            <Field label="태어난 연도" htmlFor="naver-birth-year">
               <SelectField>
                 <select
+                  id="naver-birth-year"
                   value={birthYear}
                   onChange={(event) => setBirthYear(event.target.value)}
                   className="block h-12 w-full appearance-none rounded-[12px] border border-[#E8E8E8] bg-white px-4 pr-11 text-sm text-[#7F7F7F] outline-none focus:border-[#FF6B4A]"
@@ -134,14 +138,19 @@ function NaverSignupPage() {
 
 function Field({
   label,
+  htmlFor,
   children,
 }: {
   label: string;
+  htmlFor: string;
   children: React.ReactNode;
 }) {
   return (
     <div>
-      <label className="mb-2 block text-[16px] font-bold leading-none text-[#1C1C1C]">
+      <label
+        htmlFor={htmlFor}
+        className="mb-2 block text-[16px] font-bold leading-none text-[#1C1C1C]"
+      >
         {label}
       </label>
       {children}

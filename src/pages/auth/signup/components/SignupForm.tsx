@@ -38,10 +38,12 @@ function SignupForm() {
   const [gender, setGender] = useState('');
   const [birthYear, setBirthYear] = useState('');
 
-  const isEmailFilled = email.trim().length > 0;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isCodeFilled = code.trim().length > 0;
   const isPasswordFilled = password.trim().length > 0;
   const isPasswordConfirmFilled = passwordConfirm.trim().length > 0;
+  const isPasswordMatched =
+    isPasswordFilled && isPasswordConfirmFilled && password === passwordConfirm;
   const isNameFilled = name.trim().length > 0;
   const isRegionFilled = region.trim().length > 0;
   const isGenderFilled = gender.trim().length > 0;
@@ -49,10 +51,9 @@ function SignupForm() {
 
   const isFormComplete =
     isNameFilled &&
-    isEmailFilled &&
+    isEmailValid &&
     isCodeFilled &&
-    isPasswordFilled &&
-    isPasswordConfirmFilled &&
+    isPasswordMatched &&
     isRegionFilled &&
     isGenderFilled &&
     isBirthYearFilled;
@@ -98,13 +99,13 @@ function SignupForm() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!isEmailFilled) {
+                    if (!isEmailValid) {
                       return;
                     }
 
                     setIsCodeSent(true);
                   }}
-                  disabled={!isEmailFilled}
+                  disabled={!isEmailValid}
                   className="h-12 w-[82px] shrink-0 rounded-[12px] text-xs font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
                 >
                   인증번호 전송
