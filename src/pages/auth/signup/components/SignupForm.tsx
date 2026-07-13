@@ -139,11 +139,7 @@ function SignupForm() {
                   <button
                     type="button"
                     disabled={!isCodeFilled}
-<<<<<<< HEAD
                     className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F] disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
-=======
-                    className="h-12 w-[82px] shrink-0 rounded-[12px] bg-[#E4E4E4] text-xs font-bold text-[#7F7F7F] disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#7F7F7F] enabled:bg-[#FF6B4A] enabled:text-white"
->>>>>>> origin/develop
                   >
                     인증하기
                   </button>
@@ -259,11 +255,7 @@ function SignupForm() {
         <button
           type="button"
           disabled={!isFormComplete}
-<<<<<<< HEAD
           className="mt-8 h-12 w-full cursor-pointer rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#A1A1A1] enabled:bg-[#FF6B4A] enabled:text-white"
-=======
-          className="mt-8 h-12 w-full rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#A1A1A1] enabled:bg-[#FF6B4A] enabled:text-white"
->>>>>>> origin/develop
         >
           여기도 시작하기
         </button>
