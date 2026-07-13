@@ -26,8 +26,8 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
         </div>
 
         <div className="space-y-4">
-          <button
-            type="button"
+          <Link
+            to="/signup/kakao"
             className="flex h-[58px] w-full items-center justify-center gap-3 rounded-xl bg-[#FEE500] text-base font-bold text-[#1C1C1C]"
           >
             <SiKakaotalk
@@ -35,10 +35,10 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
               aria-hidden="true"
             />
             카카오로 시작하기
-          </button>
+          </Link>
 
-          <button
-            type="button"
+          <Link
+            to="/signup/naver"
             className="flex h-[58px] w-full items-center justify-center gap-3 rounded-xl bg-[#03C75A] text-base font-bold text-white"
           >
             <SiNaver
@@ -46,7 +46,7 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
               aria-hidden="true"
             />
             네이버로 시작하기
-          </button>
+          </Link>
 
           <button
             type="button"
