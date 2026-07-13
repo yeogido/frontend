@@ -85,7 +85,10 @@ function Map() {
         viewBox={`0 0 ${MAP_VIEWBOX_WIDTH} ${MAP_VIEWBOX_HEIGHT}`}
         preserveAspectRatio="xMidYMid meet"
       >
-        <MapViewport ref={mapViewportRef} />
+        <MapViewport
+          ref={mapViewportRef}
+          zoomLevel={displayZoom}
+        />
       </svg>
 
       <MapControls
