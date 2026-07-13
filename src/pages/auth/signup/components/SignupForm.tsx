@@ -95,7 +95,11 @@ function SignupForm() {
                   type="email"
                   placeholder="이메일"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setIsCodeSent(false);
+                    setCode('');
+                  }}
                   className="block h-12 min-w-0 flex-1 rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
                 />
 
