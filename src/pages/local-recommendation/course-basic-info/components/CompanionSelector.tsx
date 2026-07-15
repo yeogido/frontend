@@ -42,7 +42,7 @@ function CompanionSelector({ value, onChange }: CompanionSelectorProps) {
               className={`flex min-h-14 min-w-0 flex-col items-center justify-center rounded-xl border px-1 py-2 ${
                 selected
                   ? 'border-main-5 bg-main-2 text-main-5'
-                  : 'border-gray-2 bg-pure-white text-gray-4'
+                  : 'border-gray-2 text-gray-4 bg-white'
               }`}
             >
               <Icon aria-hidden="true" className="text-lg" />

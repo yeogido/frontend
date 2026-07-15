@@ -1,10 +1,4 @@
-import {
-  type KeyboardEvent,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from 'react';
+import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
 import { IoCheckmark, IoChevronDown } from 'react-icons/io5';
 
 interface SelectOption<T extends string> {
@@ -34,7 +28,7 @@ function CustomSelect<T extends string>({
   const selectedIndex = options.findIndex((option) => option.value === value);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(
-    selectedIndex >= 0 ? selectedIndex : 0,
+    selectedIndex >= 0 ? selectedIndex : 0
   );
 
   useEffect(() => {
@@ -89,7 +83,7 @@ function CustomSelect<T extends string>({
 
   const handleOptionKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
+    index: number
   ) => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
@@ -118,7 +112,8 @@ function CustomSelect<T extends string>({
     if (event.key === 'Tab') setIsOpen(false);
   };
 
-  const selectedOption = selectedIndex >= 0 ? options[selectedIndex] : undefined;
+  const selectedOption =
+    selectedIndex >= 0 ? options[selectedIndex] : undefined;
 
   return (
     <div ref={rootRef} className="relative min-w-0">
@@ -130,10 +125,12 @@ function CustomSelect<T extends string>({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         onClick={() =>
-          isOpen ? closeListbox() : openListbox(selectedIndex >= 0 ? selectedIndex : 0)
+          isOpen
+            ? closeListbox()
+            : openListbox(selectedIndex >= 0 ? selectedIndex : 0)
         }
         onKeyDown={handleTriggerKeyDown}
-        className={`bg-pure-white focus:border-main-5 flex h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 text-left text-sm outline-none transition-colors ${
+        className={`focus:border-main-5 flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 text-left text-sm transition-colors outline-none ${
           isOpen ? 'border-main-5' : 'border-gray-2'
         }`}
       >
@@ -153,7 +150,7 @@ function CustomSelect<T extends string>({
           id={listboxId}
           role="listbox"
           aria-labelledby={id}
-          className="border-gray-2 bg-pure-white absolute top-full right-0 left-0 z-30 mt-2 max-h-60 overflow-y-auto rounded-xl border p-1.5 shadow-lg"
+          className="border-gray-2 absolute top-full right-0 left-0 z-30 mt-2 max-h-60 overflow-y-auto rounded-xl border bg-white p-1.5 shadow-lg"
         >
           {options.map((option, index) => {
             const isSelected = option.value === value;
@@ -172,7 +169,7 @@ function CustomSelect<T extends string>({
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => selectOption(index)}
                 onKeyDown={(event) => handleOptionKeyDown(event, index)}
-                className={`flex h-11 w-full items-center justify-between rounded-lg px-3 text-left text-sm outline-none transition-colors ${
+                className={`flex h-11 w-full items-center justify-between rounded-lg px-3 text-left text-sm transition-colors outline-none ${
                   isSelected
                     ? 'bg-main-2 text-main-5 font-semibold'
                     : isActive
@@ -182,7 +179,10 @@ function CustomSelect<T extends string>({
               >
                 <span>{option.label}</span>
                 {isSelected ? (
-                  <IoCheckmark aria-hidden="true" className="shrink-0 text-lg" />
+                  <IoCheckmark
+                    aria-hidden="true"
+                    className="shrink-0 text-lg"
+                  />
                 ) : null}
               </button>
             );

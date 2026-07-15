@@ -7,7 +7,7 @@ function CourseBasicInfoPage() {
   };
 
   return (
-    <main className="bg-pure-white mx-auto min-h-dvh w-full max-w-[430px] px-6 pt-12 pb-8">
+    <main className="mx-auto min-h-dvh w-full max-w-[430px] bg-white px-6 pt-12 pb-8">
       <header>
         <h1 className="text-[32px] leading-[1.15] font-bold">
           어떤

@@ -38,7 +38,7 @@ function CourseBasicInfoForm({ onNext }: CourseBasicInfoFormProps) {
             id="course-name"
             type="text"
             placeholder="예) 부산 감성 바다 여행 코스"
-            className="border-gray-2 bg-pure-white placeholder:text-gray-4 focus:border-main-5 h-12 w-full rounded-xl border px-4 text-sm outline-none"
+            className="border-gray-2 bg-white placeholder:text-gray-4 focus:border-main-5 h-12 w-full rounded-xl border px-4 text-sm outline-none"
           />
         </FormField>
 
@@ -48,7 +48,7 @@ function CourseBasicInfoForm({ onNext }: CourseBasicInfoFormProps) {
             id="course-summary"
             type="text"
             placeholder="다른 여행자에게 전하고 싶은 한마디를 적어보세요"
-            className="border-gray-2 bg-pure-white placeholder:text-gray-4 focus:border-main-5 h-12 w-full rounded-xl border px-4 text-sm outline-none"
+            className="border-gray-2 bg-white placeholder:text-gray-4 focus:border-main-5 h-12 w-full rounded-xl border px-4 text-sm outline-none"
           />
         </FormField>
 

@@ -33,7 +33,7 @@ function TransportSelector({ value, onChange }: TransportSelectorProps) {
               className={`flex min-h-25 flex-col items-center justify-center rounded-xl border px-3 py-4 ${
                 selected
                   ? 'border-main-5 bg-main-2 text-main-5'
-                  : 'border-gray-2 bg-pure-white text-gray-4'
+                  : 'border-gray-2 text-gray-4 bg-white'
               }`}
             >
               <Icon aria-hidden="true" className="text-2xl" />
