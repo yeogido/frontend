@@ -53,12 +53,32 @@ function CourseBasicInfoForm({ onNext }: CourseBasicInfoFormProps) {
         </FormField>
 
         <FormField id="course-duration" label="얼마 동안 즐기는 코스인가요?">
-          <DurationSelect registration={register('duration')} />
+          <Controller
+            control={control}
+            name="duration"
+            render={({ field }) => (
+              <DurationSelect value={field.value} onChange={field.onChange} />
+            )}
+          />
         </FormField>
 
-        <VisitMonthRange
-          startRegistration={register('visitStartMonth')}
-          endRegistration={register('visitEndMonth')}
+        <Controller
+          control={control}
+          name="visitStartMonth"
+          render={({ field: startField }) => (
+            <Controller
+              control={control}
+              name="visitEndMonth"
+              render={({ field: endField }) => (
+                <VisitMonthRange
+                  startValue={startField.value}
+                  endValue={endField.value}
+                  onStartChange={startField.onChange}
+                  onEndChange={endField.onChange}
+                />
+              )}
+            />
+          )}
         />
 
         <Controller
