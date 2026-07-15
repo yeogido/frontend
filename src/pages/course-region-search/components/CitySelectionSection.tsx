@@ -25,31 +25,32 @@ function CitySelectionSection({
           const isSelected = selectedCityId === city.id;
 
           return (
-            <button
-              key={city.id}
-              type="button"
-              aria-pressed={isSelected}
-              aria-label={`${city.name} 선택`}
-              onClick={() => onSelect(city)}
-              className="relative h-16 w-16 flex-none overflow-hidden rounded-full bg-gray-2 focus:outline-none"
-            >
-              <img
-                src={city.imageSrc}
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                className="h-full w-full object-cover"
-              />
-              <span
-                aria-hidden="true"
-                className={`absolute inset-0 rounded-full ${
-                  isSelected ? 'bg-main-5/55' : 'bg-black/30'
-                }`}
-              />
-              <span className="text-pure-white absolute inset-0 flex items-center justify-center text-[14px] leading-none font-medium">
-                {city.name}
-              </span>
-            </button>
+            <div key={city.id} role="listitem" className="h-16 w-16 flex-none">
+              <button
+                type="button"
+                aria-pressed={isSelected}
+                aria-label={`${city.name} 선택`}
+                onClick={() => onSelect(city)}
+                className="relative h-16 w-16 overflow-hidden rounded-full bg-gray-2 outline-none focus-visible:ring-2 focus-visible:ring-main-5 focus-visible:ring-offset-2"
+              >
+                <img
+                  src={city.imageSrc}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="h-full w-full object-cover"
+                />
+                <span
+                  aria-hidden="true"
+                  className={`absolute inset-0 rounded-full ${
+                    isSelected ? 'bg-main-5/55' : 'bg-black/30'
+                  }`}
+                />
+                <span className="text-pure-white absolute inset-0 flex items-center justify-center text-[14px] leading-none font-medium">
+                  {city.name}
+                </span>
+              </button>
+            </div>
           );
         })}
       </div>

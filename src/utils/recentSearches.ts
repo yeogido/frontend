@@ -1,7 +1,10 @@
 interface RecentSearchStorageOptions {
   storageKey: string;
   fallbackSearches?: readonly string[];
+  maxItems?: number;
 }
+
+const DEFAULT_RECENT_SEARCH_LIMIT = 10;
 
 export const getUniqueSearches = (searches: readonly string[]) => [
   ...new Set(searches),
@@ -17,13 +20,13 @@ export const getStoredRecentSearches = ({
     return fallbackUniqueSearches;
   }
 
-  const storedSearches = window.localStorage.getItem(storageKey);
-
-  if (!storedSearches) {
-    return fallbackUniqueSearches;
-  }
-
   try {
+    const storedSearches = window.localStorage.getItem(storageKey);
+
+    if (!storedSearches) {
+      return fallbackUniqueSearches;
+    }
+
     const parsedSearches: unknown = JSON.parse(storedSearches);
 
     if (!Array.isArray(parsedSearches)) {
@@ -49,7 +52,11 @@ export const saveRecentSearches = (
     return;
   }
 
-  window.localStorage.setItem(storageKey, JSON.stringify(searches));
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(searches));
+  } catch {
+    return;
+  }
 };
 
 export const addStoredRecentSearch = (
@@ -59,14 +66,17 @@ export const addStoredRecentSearch = (
   const trimmedKeyword = keyword.trim();
 
   if (!trimmedKeyword) {
-    return;
+    return getStoredRecentSearches(options);
   }
 
   const currentSearches = getStoredRecentSearches(options);
+  const maxItems = options.maxItems ?? DEFAULT_RECENT_SEARCH_LIMIT;
   const nextSearches = getUniqueSearches([
     trimmedKeyword,
     ...currentSearches.filter((search) => search !== trimmedKeyword),
-  ]);
+  ]).slice(0, maxItems);
 
   saveRecentSearches(nextSearches, options);
+
+  return nextSearches;
 };

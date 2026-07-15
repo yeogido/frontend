@@ -6,6 +6,7 @@ import {
   courseRegionRecentSearchKeywords,
 } from '../../../constants/recentSearches';
 import {
+  addStoredRecentSearch,
   getStoredRecentSearches,
   getUniqueSearches,
   saveRecentSearches,
@@ -122,12 +123,11 @@ function useCourseRegionSearch() {
       return;
     }
 
-    const nextSearches = getUniqueSearches([
+    const nextSearches = addStoredRecentSearch(
       trimmedKeyword,
-      ...recentSearches.filter((search) => search !== trimmedKeyword),
-    ]);
+      recentSearchStorageOptions
+    );
 
-    saveRecentSearches(nextSearches, recentSearchStorageOptions);
     setRecentSearches(nextSearches);
   };
 

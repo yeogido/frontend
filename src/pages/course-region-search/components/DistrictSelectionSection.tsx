@@ -25,7 +25,7 @@ function DistrictSelectionSection({
             type="button"
             aria-pressed={isSelected}
             onClick={() => onSelect(district)}
-            className="relative flex min-w-0 items-center justify-center rounded-full transition-opacity active:opacity-70 focus-visible:outline-none"
+            className="relative flex min-w-0 items-center justify-center rounded-full transition-opacity active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main-5"
           >
             <span
               className={`min-w-0 text-right text-[14px] leading-normal whitespace-nowrap ${
