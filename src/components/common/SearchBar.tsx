@@ -149,10 +149,10 @@ function SearchBar({
         {label}
       </label>
 
-      <div className="border-gray-2 bg-pure-white flex h-[47px] w-full items-center gap-2 overflow-hidden rounded-xl border px-3.5">
+      <div className="border-gray-2 bg-pure-white flex h-[47px] w-full items-center gap-2.5 overflow-hidden rounded-xl border px-[13px]">
         <IoSearch
           aria-hidden="true"
-          className="text-gray-4 shrink-0 text-[18px]"
+          className="text-gray-4 shrink-0 text-[24px]"
         />
 
         <input
@@ -173,7 +173,7 @@ function SearchBar({
           aria-controls={hasSuggestions ? listboxId : undefined}
           aria-expanded={hasSuggestions ? isOpen : undefined}
           aria-autocomplete={hasSuggestions ? 'list' : undefined}
-          className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-none font-medium outline-none"
+          className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-normal font-medium outline-none"
         />
       </div>
 
@@ -182,7 +182,7 @@ function SearchBar({
           id={listboxId}
           role="listbox"
           aria-label="검색어 추천 목록"
-          className="absolute top-[53px] left-0 z-30 flex w-full flex-col"
+          className="absolute top-[53px] left-0 z-[100] flex w-full flex-col"
         >
           {filteredSuggestions.length > 0 ? (
             filteredSuggestions.map((suggestion, index) => {

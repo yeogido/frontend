@@ -6,18 +6,37 @@ import type { YeogidoCourseSelectedFilters } from '../constants/filters';
 interface UseYeogidoCoursesParams {
   filters: YeogidoCourseSelectedFilters;
   keyword?: string;
+  region?: string;
+  subRegion?: string;
 }
 
-function useYeogidoCourses({ filters, keyword = '' }: UseYeogidoCoursesParams) {
+function useYeogidoCourses({
+  filters,
+  keyword = '',
+  region = '',
+  subRegion = '',
+}: UseYeogidoCoursesParams) {
   const normalizedKeyword = keyword.trim();
+  const normalizedRegion = region.trim();
+  const normalizedSubRegion = subRegion.trim();
 
   return useInfiniteQuery({
-    queryKey: ['yeogidoCourses', { filters, keyword: normalizedKeyword }],
+    queryKey: [
+      'yeogidoCourses',
+      {
+        filters,
+        keyword: normalizedKeyword,
+        region: normalizedRegion,
+        subRegion: normalizedSubRegion,
+      },
+    ],
     queryFn: ({ pageParam }) =>
       fetchYeogidoCourses({
         page: pageParam,
         filters,
         keyword: normalizedKeyword,
+        region: normalizedRegion,
+        subRegion: normalizedSubRegion,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>

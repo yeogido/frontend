@@ -2,9 +2,17 @@ import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { ContentCard, ContentCardSkeleton } from '../../../components/common';
+import {
+  COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
+  courseRegionRecentSearchKeywords,
+} from '../../../constants/recentSearches';
+import { addStoredRecentSearch } from '../../../utils/recentSearches';
 
 import courseMapImage from '../assets/courseimage.svg';
-import { YeogidoCourseFilterChip, YeogidoCourseSearchBar } from '../components';
+import {
+  YeogidoCourseFilterChip,
+  YeogidoCourseSearchBar,
+} from '../components';
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
@@ -14,6 +22,11 @@ import useYeogidoCourses from '../hooks/useYeogidoCourses';
 function YeogidoCourseSearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') ?? '';
+  const region = searchParams.get('region') ?? '';
+  const subRegion = searchParams.get('subRegion') ?? '';
+  const regionSearchQuery =
+    region && subRegion ? `${region} ${subRegion}` : subRegion || region;
+  const displaySearchQuery = keyword || regionSearchQuery;
 
   const {
     filterContainerRef,
@@ -30,7 +43,12 @@ function YeogidoCourseSearchPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useYeogidoCourses({ filters: selectedFilters, keyword });
+  } = useYeogidoCourses({
+    filters: selectedFilters,
+    keyword,
+    region,
+    subRegion,
+  });
 
   const yeogidoCourses = data?.pages.flatMap((page) => page.content) ?? [];
 
@@ -51,8 +69,16 @@ function YeogidoCourseSearchPage() {
 
     if (trimmedQuery) {
       nextSearchParams.set('keyword', trimmedQuery);
+      nextSearchParams.delete('region');
+      nextSearchParams.delete('subRegion');
+      addStoredRecentSearch(trimmedQuery, {
+        storageKey: COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
+        fallbackSearches: courseRegionRecentSearchKeywords,
+      });
     } else {
       nextSearchParams.delete('keyword');
+      nextSearchParams.delete('region');
+      nextSearchParams.delete('subRegion');
     }
 
     setSearchParams(nextSearchParams);
@@ -62,7 +88,7 @@ function YeogidoCourseSearchPage() {
     <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-4 pb-10">
       <div className="w-full">
         <YeogidoCourseSearchBar
-          initialQuery={keyword}
+          initialQuery={displaySearchQuery}
           onSearch={handleSearch}
         />
 

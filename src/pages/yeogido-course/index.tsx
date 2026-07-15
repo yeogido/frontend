@@ -3,32 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import {
   ContentCard,
   CourseCard,
+  SearchTriggerButton,
   SectionHeader,
 } from '../../components/common';
 
 import courseMapImage from './assets/courseimage.svg';
-import { YeogidoCourseSearchBar } from './components';
 import {
   yeogidoCoursePopularPreviews,
   yeogidoCourseRecentPreviews,
 } from './constants/coursePreviews';
 
+const COURSE_REGION_SEARCH_PATH = '/course-region-search';
+const COURSE_REGION_SEARCH_FROM_COURSE = '?from=course';
+
 function YeogidoCoursePage() {
   const navigate = useNavigate();
 
-  const goToCourseSearch = () => {
-    navigate('/yeogido-course/search');
-  };
-
-  const handleCourseSearch = (query: string) => {
-    const trimmedQuery = query.trim();
-
-    navigate({
-      pathname: '/yeogido-course/search',
-      search: trimmedQuery
-        ? `?keyword=${encodeURIComponent(trimmedQuery)}`
-        : '',
-    });
+  const goToCourseRegionSearch = () => {
+    navigate(`${COURSE_REGION_SEARCH_PATH}${COURSE_REGION_SEARCH_FROM_COURSE}`);
   };
 
   const goToPopularCourses = () => {
@@ -50,14 +42,16 @@ function YeogidoCoursePage() {
         </p>
       </div>
 
-      <YeogidoCourseSearchBar
+      <SearchTriggerButton
         className="mt-[11px]"
-        onSearch={handleCourseSearch}
+        label="코스명 또는 지역명 검색 화면으로 이동"
+        placeholder="코스명 또는 지역명을 검색해 주세요"
+        onClick={goToCourseRegionSearch}
       />
 
       <button
         type="button"
-        onClick={goToCourseSearch}
+        onClick={goToCourseRegionSearch}
         className="mt-4 block w-full overflow-hidden rounded-xl text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
       >
         <div className="relative h-[150px] bg-[linear-gradient(180deg,#8EA98C_0%,#507047_100%)]">
@@ -109,7 +103,7 @@ function YeogidoCoursePage() {
         <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(342px,1fr))] gap-4">
           {yeogidoCourseRecentPreviews.map((course) => (
             <div key={course.id} className="w-[342px] max-w-full">
-              <CourseCard {...course} onClick={goToCourseSearch} />
+              <CourseCard {...course} onClick={goToCourseRegionSearch} />
             </div>
           ))}
         </div>
