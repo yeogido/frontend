@@ -15,6 +15,7 @@ import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
 import LocalRecommendationPage from '../pages/local-recommendation';
+import EventSelectionPage from '../pages/local-recommendation/event-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
 function AppRouter() {
@@ -62,6 +63,11 @@ function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
       </Route>
+
+      <Route
+        path="/local-recommendation/event-selection"
+        element={<EventSelectionPage />}
+      />
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

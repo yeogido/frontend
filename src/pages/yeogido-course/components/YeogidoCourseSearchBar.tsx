@@ -31,12 +31,20 @@ interface YeogidoCourseSearchBarProps {
   initialQuery?: string;
   className?: string;
   onSearch?: (query: string) => void;
+  onQueryChange?: (query: string) => void;
+  placeholder?: string;
+  ariaLabel?: string;
+  showSuggestions?: boolean;
 }
 
 function YeogidoCourseSearchBar({
   initialQuery = '',
   className = '',
   onSearch,
+  onQueryChange,
+  placeholder = '코스명 또는 지역명을 검색해 주세요',
+  ariaLabel = '코스명 또는 지역명 검색',
+  showSuggestions = true,
 }: YeogidoCourseSearchBarProps) {
   const inputId = useId();
   const listboxId = useId();
@@ -144,7 +152,7 @@ function YeogidoCourseSearchBar({
       className={`relative w-full max-w-[342px] ${className}`}
     >
       <label htmlFor={inputId} className="sr-only">
-        코스명 또는 지역명 검색
+        {ariaLabel}
       </label>
 
       <div className="border-gray-2 bg-pure-white flex h-[47px] w-full items-center gap-2 overflow-hidden rounded-xl border px-3.5">
@@ -157,22 +165,25 @@ function YeogidoCourseSearchBar({
           id={inputId}
           type="search"
           value={query}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => setIsOpen(showSuggestions)}
           onChange={(event) => {
-            updateQuery(event.target.value);
-            setIsOpen(true);
+            const nextQuery = event.target.value;
+
+            updateQuery(nextQuery);
+            onQueryChange?.(nextQuery);
+            setIsOpen(showSuggestions);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="코스명 또는 지역명을 검색해 주세요"
+          placeholder={placeholder}
           role="combobox"
-          aria-controls={listboxId}
-          aria-expanded={isOpen}
+          aria-controls={showSuggestions ? listboxId : undefined}
+          aria-expanded={showSuggestions && isOpen}
           aria-autocomplete="list"
           className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-none font-medium outline-none"
         />
       </div>
 
-      {isOpen ? (
+      {showSuggestions && isOpen ? (
         <div
           id={listboxId}
           role="listbox"
