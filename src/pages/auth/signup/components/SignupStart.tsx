@@ -26,32 +26,32 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
         </div>
 
         <div className="space-y-4">
-          <button
-            type="button"
-            className="flex h-[58px] w-full items-center justify-center gap-3 rounded-xl bg-[#FEE500] text-base font-bold text-[#1C1C1C]"
+          <Link
+            to="/signup/kakao"
+            className="flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-xl bg-[#FEE500] text-base font-bold text-[#1C1C1C]"
           >
             <SiKakaotalk
               className="text-[18px]"
               aria-hidden="true"
             />
             카카오로 시작하기
-          </button>
+          </Link>
 
-          <button
-            type="button"
-            className="flex h-[58px] w-full items-center justify-center gap-3 rounded-xl bg-[#03C75A] text-base font-bold text-white"
+          <Link
+            to="/signup/naver"
+            className="flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-xl bg-[#03C75A] text-base font-bold text-white"
           >
             <SiNaver
               className="text-[18px]"
               aria-hidden="true"
             />
             네이버로 시작하기
-          </button>
+          </Link>
 
           <button
             type="button"
             onClick={onEmailStart}
-            className="h-[58px] w-full rounded-xl border border-[#E4E4E4] bg-white text-base font-bold text-[#1C1C1C]"
+            className="h-[58px] w-full cursor-pointer rounded-xl border border-[#E4E4E4] bg-white text-base font-bold text-[#1C1C1C]"
           >
             이메일로 시작하기
           </button>
@@ -64,7 +64,7 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
 
           <Link
             to="/login"
-            className="mt-1 inline-block text-xs font-bold text-[#555555] underline underline-offset-2"
+            className="mt-1 inline-block cursor-pointer text-xs font-bold text-[#555555] underline underline-offset-2"
           >
             로그인
           </Link>
