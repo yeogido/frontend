@@ -125,7 +125,10 @@ function useCourseRegionSearch() {
 
     const nextSearches = addStoredRecentSearch(
       trimmedKeyword,
-      recentSearchStorageOptions
+      {
+        ...recentSearchStorageOptions,
+        currentSearches: recentSearches,
+      }
     );
 
     setRecentSearches(nextSearches);

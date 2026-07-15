@@ -4,17 +4,30 @@ interface RecentSearchStorageOptions {
   maxItems?: number;
 }
 
+interface AddRecentSearchOptions extends RecentSearchStorageOptions {
+  currentSearches?: readonly string[];
+}
+
 const DEFAULT_RECENT_SEARCH_LIMIT = 10;
 
 export const getUniqueSearches = (searches: readonly string[]) => [
   ...new Set(searches),
 ];
 
+const limitRecentSearches = (
+  searches: readonly string[],
+  maxItems = DEFAULT_RECENT_SEARCH_LIMIT
+) => getUniqueSearches(searches).slice(0, maxItems);
+
 export const getStoredRecentSearches = ({
   storageKey,
   fallbackSearches = [],
+  maxItems = DEFAULT_RECENT_SEARCH_LIMIT,
 }: RecentSearchStorageOptions) => {
-  const fallbackUniqueSearches = getUniqueSearches(fallbackSearches);
+  const fallbackUniqueSearches = limitRecentSearches(
+    fallbackSearches,
+    maxItems
+  );
 
   if (typeof window === 'undefined') {
     return fallbackUniqueSearches;
@@ -33,11 +46,12 @@ export const getStoredRecentSearches = ({
       return fallbackUniqueSearches;
     }
 
-    return getUniqueSearches(
+    return limitRecentSearches(
       parsedSearches.filter(
         (search): search is string =>
           typeof search === 'string' && search.trim().length > 0
-      )
+      ),
+      maxItems
     );
   } catch {
     return fallbackUniqueSearches;
@@ -61,20 +75,23 @@ export const saveRecentSearches = (
 
 export const addStoredRecentSearch = (
   keyword: string,
-  options: RecentSearchStorageOptions
+  options: AddRecentSearchOptions
 ) => {
   const trimmedKeyword = keyword.trim();
 
   if (!trimmedKeyword) {
-    return getStoredRecentSearches(options);
+    return options.currentSearches
+      ? limitRecentSearches(options.currentSearches, options.maxItems)
+      : getStoredRecentSearches(options);
   }
 
-  const currentSearches = getStoredRecentSearches(options);
   const maxItems = options.maxItems ?? DEFAULT_RECENT_SEARCH_LIMIT;
-  const nextSearches = getUniqueSearches([
+  const currentSearches =
+    options.currentSearches ?? getStoredRecentSearches(options);
+  const nextSearches = limitRecentSearches([
     trimmedKeyword,
     ...currentSearches.filter((search) => search !== trimmedKeyword),
-  ]).slice(0, maxItems);
+  ], maxItems);
 
   saveRecentSearches(nextSearches, options);
 
