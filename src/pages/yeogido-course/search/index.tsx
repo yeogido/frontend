@@ -1,18 +1,20 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { ContentCard, ContentCardSkeleton } from '../../../components/common';
+import {
+  ContentCard,
+  ContentCardSkeleton,
+  SearchBar,
+} from '../../../components/common';
 import {
   COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
   courseRegionRecentSearchKeywords,
 } from '../../../constants/recentSearches';
+import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourseSearch';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 
 import courseMapImage from '../assets/courseimage.svg';
-import {
-  YeogidoCourseFilterChip,
-  YeogidoCourseSearchBar,
-} from '../components';
+import { YeogidoCourseFilterChip } from '../components';
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
@@ -89,8 +91,11 @@ function YeogidoCourseSearchPage() {
   return (
     <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-4 pb-10">
       <div className="w-full">
-        <YeogidoCourseSearchBar
+        <SearchBar
           initialQuery={displaySearchQuery}
+          placeholder="코스명 또는 지역명을 검색해 주세요"
+          label="코스명 또는 지역명 검색"
+          suggestions={yeogidoCourseSearchSuggestions}
           onSearch={handleSearch}
         />
 
