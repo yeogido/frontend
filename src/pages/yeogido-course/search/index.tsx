@@ -51,6 +51,8 @@ function YeogidoCourseSearchPage() {
   });
 
   const yeogidoCourses = data?.pages.flatMap((page) => page.content) ?? [];
+  const hasEmptyResult =
+    !isPending && !isError && yeogidoCourses.length === 0;
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -143,6 +145,12 @@ function YeogidoCourseSearchPage() {
               ))
             : null}
         </div>
+
+        {hasEmptyResult ? (
+          <p className="mt-10 text-center text-[13px] font-medium text-grey-4">
+            검색 결과가 없습니다.
+          </p>
+        ) : null}
 
         {isError ? (
           <p className="text-main-5 mt-6 text-center text-[13px] font-medium">
