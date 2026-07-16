@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   NeighborhoodResultList,
@@ -16,10 +17,10 @@ import type { Neighborhood } from './types';
 import { filterNeighborhoods } from './utils';
 
 function LocalRecommendationPage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] =
     useState<Neighborhood | null>(null);
-  const [, setIsComplete] = useState(false);
 
   const searchResults = useMemo(
     () => filterNeighborhoods(neighborhoods, searchQuery),
@@ -86,7 +87,7 @@ function LocalRecommendationPage() {
       <button
         type="button"
         disabled={!selectedNeighborhood}
-        onClick={() => setIsComplete(true)}
+        onClick={() => navigate('/local-recommendation/course-info')}
         className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 mt-8 h-13 w-full rounded-xl text-sm font-semibold"
       >
         기본 정보 입력하기
