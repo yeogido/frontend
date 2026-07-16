@@ -34,19 +34,28 @@ function SearchBar({
   const inputId = useId();
   const listboxId = useId();
   const searchBarRef = useRef<HTMLFormElement | null>(null);
-  const previousInitialQueryRef = useRef(initialQuery);
-  const [query, setQuery] = useState(initialQuery);
+  const [queryState, setQueryState] = useState({
+    value: initialQuery,
+    initialQuery,
+  });
   const [isOpen, setIsOpen] = useState(false);
   const hasSuggestions = suggestions.length > 0;
+  const isInitialQueryChanged = queryState.initialQuery !== initialQuery;
+  const query = isInitialQueryChanged ? initialQuery : queryState.value;
 
-  useEffect(() => {
-    if (previousInitialQueryRef.current === initialQuery) {
-      return;
-    }
+  if (isInitialQueryChanged) {
+    setQueryState({
+      value: initialQuery,
+      initialQuery,
+    });
+  }
 
-    previousInitialQueryRef.current = initialQuery;
-    setQuery(initialQuery);
-  }, [initialQuery]);
+  const updateQuery = (value: string) => {
+    setQueryState({
+      value,
+      initialQuery,
+    });
+  };
 
   const filteredSuggestions = useMemo(() => {
     if (!hasSuggestions) {
@@ -91,7 +100,7 @@ function SearchBar({
   const handleSuggestionSelect = (suggestion: string) => {
     const trimmedSuggestion = suggestion.trim();
 
-    setQuery(trimmedSuggestion);
+    updateQuery(trimmedSuggestion);
     setIsOpen(false);
     onSearch?.(trimmedSuggestion);
   };
@@ -151,7 +160,7 @@ function SearchBar({
           value={query}
           onFocus={handleFocus}
           onChange={(event) => {
-            setQuery(event.target.value);
+            updateQuery(event.target.value);
 
             if (hasSuggestions) {
               setIsOpen(true);
