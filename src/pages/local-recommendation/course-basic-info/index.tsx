@@ -1,9 +1,14 @@
+import { useNavigate } from 'react-router-dom';
+
 import { CourseBasicInfoForm } from './components';
 import type { CourseBasicInfoValues } from './schema';
 
 function CourseBasicInfoPage() {
+  const navigate = useNavigate();
+
   const handleNext = (values: CourseBasicInfoValues) => {
     void values;
+    navigate('/local-recommendation/tag-selection');
   };
 
   return (

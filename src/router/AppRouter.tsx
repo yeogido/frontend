@@ -69,6 +69,16 @@ function AppRouter() {
         />
       </Route>
 
+      <Route
+        path="/local-recommendation/course-info"
+        element={<CourseBasicInfoPage />}
+      />
+
+      <Route
+        path="/local-recommendation/tag-selection"
+        element={<TagSelectionPage />}
+      />
+
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
