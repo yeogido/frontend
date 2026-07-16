@@ -36,6 +36,20 @@ function LocalRecommendationPage() {
     []
   );
 
+  const neighborhoodSearchSuggestions = useMemo(
+    () => [
+      ...new Set(
+        neighborhoods.flatMap((neighborhood) => [
+          neighborhood.province,
+          neighborhood.city,
+          neighborhood.district,
+          `${neighborhood.city} ${neighborhood.district}`,
+        ])
+      ),
+    ],
+    []
+  );
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setSelectedNeighborhood(null);
@@ -56,7 +70,10 @@ function LocalRecommendationPage() {
   return (
     <div className="bg-background mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 pb-8">
       <main className="flex-1 pt-10">
-        <NeighborhoodSearchSection onSearch={handleSearch} />
+        <NeighborhoodSearchSection
+          suggestions={neighborhoodSearchSuggestions}
+          onSearch={handleSearch}
+        />
         {selectedNeighborhood && !searchQuery ? (
           <SelectedNeighborhoodCard
             neighborhood={selectedNeighborhood}

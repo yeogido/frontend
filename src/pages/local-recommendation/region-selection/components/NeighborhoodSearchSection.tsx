@@ -1,10 +1,12 @@
-import YeogidoCourseSearchBar from '../../../yeogido-course/components/YeogidoCourseSearchBar';
+import { SearchBar } from '../../../../components/common';
 
 interface NeighborhoodSearchSectionProps {
+  suggestions?: readonly string[];
   onSearch: (query: string) => void;
 }
 
 function NeighborhoodSearchSection({
+  suggestions = [],
   onSearch,
 }: NeighborhoodSearchSectionProps) {
   return (
@@ -21,8 +23,11 @@ function NeighborhoodSearchSection({
         코스를 등록할 지역을 검색하거나 선택해주세요.
       </p>
 
-      <YeogidoCourseSearchBar
+      <SearchBar
         className="mt-7 !max-w-none"
+        placeholder="지역명을 검색해 주세요"
+        label="추천 지역 검색"
+        suggestions={suggestions}
         onSearch={onSearch}
       />
     </section>
