@@ -13,6 +13,7 @@ import NaverSignupPage from '../pages/auth/signup/naver';
 import LocalCoursePage from '../pages/local-course';
 import FestivalPage from '../pages/festival';
 import ReviewPage from '../pages/review';
+import CourseRegionSearchPage from '../pages/course-region-search';
 import YeogidoCoursePage from '../pages/yeogido-course';
 import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
 import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
@@ -33,6 +34,11 @@ function AppRouter() {
         <Route path="/festival" element={<FestivalPage />} />
 
         <Route path="/review" element={<ReviewPage />} />
+
+        <Route
+          path="/course-region-search"
+          element={<CourseRegionSearchPage />}
+        />
 
         <Route path="/yeogido-course" element={<YeogidoCoursePage />} />
 
