@@ -160,6 +160,17 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
 
   const visibleLabels = useMemo(() => {
     const candidates: LabelCandidate[] = [];
+    
+    if (isCity && seoulLabelPosition) {
+      candidates.push({
+        index: -1,
+        x: seoulLabelPosition[0],
+        y: seoulLabelPosition[1],
+        name: '서울특별시',
+        area: Number.MAX_SAFE_INTEGER,
+        fontSize: fontSize * 1.4,
+      });
+    }
 
     geoJson.features.forEach((feature, index) => {
       let [x, y] = pathGenerator.centroid(feature);
@@ -198,7 +209,13 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
     });
 
     return pickNonOverlappingLabels(candidates);
-  }, [geoJson, pathGenerator, isCity, fontSize]);
+  }, [
+    geoJson,
+    pathGenerator,
+    isCity,
+    fontSize,
+    seoulLabelPosition,
+  ]);
   return (
     <>
       {visibleLabels.map(
@@ -217,21 +234,6 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
             {name}
           </text>
         ),
-      )}
-
-      {isCity && seoulLabelPosition && (
-        <text
-          x={seoulLabelPosition[0]}
-          y={seoulLabelPosition[1]}
-          fontSize={fontSize * 1.4}
-          fontWeight={700}
-          fill="#FF6F41"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          pointerEvents="none"
-        >
-          서울특별시
-        </text>
       )}
     </>
   );
