@@ -6,8 +6,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 function FestivalSection() {
-  const isLoading = false; // UI 확인용
-  //const isLoading = true; // Skeleton 확인용
+  const isLoading = false;
+  // const isLoading = true;
 
   const navigate = useNavigate();
 
@@ -21,30 +21,34 @@ function FestivalSection() {
         />
       </div>
 
-      <div className="mt-4 flex gap-4 overflow-x-auto px-6">
-        {isLoading ? (
-          <>
-            <ContentCardSkeleton />
-            <ContentCardSkeleton />
-          </>
-        ) : (
-          <>
-            <ContentCard
-              image=""
-              title="양평수박축제"
-              firstInfo="2026.07 ~ 2026.07"
-              secondInfo="경기도 양평군"
-            />
+      <div className="mt-4 px-6">
+        <div className="flex justify-between gap-4 overflow-x-auto pb-2">
+          {isLoading ? (
+            <>
+              <ContentCardSkeleton />
+              <ContentCardSkeleton />
+            </>
+          ) : (
+            <>
+              <ContentCard
+                image=""
+                title="양평수박축제"
+                firstInfo="2026.07 ~ 2026.07"
+                secondInfo="경기도 양평군"
+                tags={['summer', 'nature', 'experience']}
+              />
 
-            <ContentCard
-              image=""
-              title="양평수박축제"
-              firstInfo="2026.07 ~ 2026.07"
-              secondInfo="경기도 양평군"
-              liked
-            />
-          </>
-        )}
+              <ContentCard
+                image=""
+                title="양평수박축제"
+                firstInfo="2026.07 ~ 2026.07"
+                secondInfo="경기도 양평군"
+                liked
+                tags={['summer', 'bakery', 'experience']}
+              />
+            </>
+          )}
+        </div>
       </div>
     </section>
   );
