@@ -88,7 +88,7 @@ function useResponsiveTagCount(tags: TagType[] | undefined) {
     observer.observe(container);
 
     return () => observer.disconnect();
-  }, []);
+  }, [tagsKey]);
 
   const visibleCount = useMemo(() => {
     if (!tags || tags.length === 0) {

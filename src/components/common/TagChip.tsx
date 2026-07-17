@@ -48,11 +48,27 @@ const icons: Record<TagType, string> = {
   'local-attraction': localAttractionSelected,
 };
 
+const labels: Record<TagType, string> = {
+  spring: '봄',
+  summer: '여름',
+  autumn: '가을',
+  winter: '겨울',
+  nature: '자연',
+  sea: '바다',
+  mountain: '산',
+  restaurant: '맛집',
+  cafe: '카페',
+  bakery: '베이커리',
+  experience: '행사',
+  event: '이벤트',
+  'local-attraction': '지역 명소',
+};
+
 function TagChip({ type, className = '' }: TagChipProps) {
   return (
     <img
       src={icons[type]}
-      alt={type}
+      alt={labels[type]}
       className={`shrink-0 ${className}`}
       draggable={false}
     />
