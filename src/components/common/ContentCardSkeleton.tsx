@@ -12,8 +12,12 @@ function ContentCardSkeleton({
   return (
     <article
       className={`
-        w-[163px]
-        shrink-0
+        grow-0
+        shrink
+        basis-[163px]
+        min-w-[140px]
+        max-w-[163px]
+        h-[222px]
         overflow-hidden
         rounded-xl
         bg-[#F9F9F9]
@@ -23,10 +27,9 @@ function ContentCardSkeleton({
       `}
     >
       {/* Image */}
-      <div className="relative">
-        <div className={`${imageClassName} w-full rounded-t-xl bg-[#EAEAEA]`} />
+      <div className="relative overflow-hidden rounded-[8px]">
+        <div className={`${imageClassName} w-full bg-[#EAEAEA]`} />
 
-        {/* Like Icon */}
         <div className="absolute right-2 top-2">
           <img
             src={heart}
@@ -38,21 +41,28 @@ function ContentCardSkeleton({
       </div>
 
       {/* Content */}
-      <div className="p-2">
+      <div className="flex h-[107px] flex-col p-2">
         {/* Title */}
         <div className="h-[14px] w-[88px] rounded bg-[#EAEAEA]" />
 
+        {/* Info */}
         <div className="mt-2 flex flex-col gap-1">
-          {/* First Info */}
           <div className="flex items-center gap-1">
             <div className="h-[14px] w-[14px] rounded-full bg-[#EAEAEA]" />
             <div className="h-[12px] w-[72px] rounded bg-[#EAEAEA]" />
           </div>
 
-          {/* Second Info */}
           <div className="flex items-center gap-1">
             <div className="h-[14px] w-[14px] rounded-full bg-[#EAEAEA]" />
             <div className="h-[12px] w-[96px] rounded bg-[#EAEAEA]" />
+          </div>
+        </div>
+
+        {/* Tags */}
+        <div className="mt-auto border-t border-[#E4E4E4] pt-2">
+          <div className="flex gap-1">
+            <div className="h-5 w-12 rounded-full bg-[#EAEAEA]" />
+            <div className="h-5 w-14 rounded-full bg-[#EAEAEA]" />
           </div>
         </div>
       </div>
