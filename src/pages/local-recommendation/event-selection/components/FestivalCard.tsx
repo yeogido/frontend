@@ -43,7 +43,7 @@ function FestivalCard({
         disabled={disabled}
         onClick={() => onAction(festival)}
         aria-label={`${festival.title} 행사 ${isAddAction ? '추가' : '삭제'}`}
-        className="border-gray-2 bg-pure-white text-gray-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border disabled:cursor-default disabled:opacity-40"
+        className="border-gray-2 text-gray-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border bg-white disabled:cursor-default disabled:opacity-40"
       >
         {isAddAction ? (
           <IoAdd aria-hidden="true" className="text-base" />

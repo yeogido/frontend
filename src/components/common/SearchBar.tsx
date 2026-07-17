@@ -20,10 +20,6 @@ export interface SearchBarProps {
   noResultsText?: string;
   className?: string;
   onSearch?: (query: string) => void;
-  onQueryChange?: (query: string) => void;
-  placeholder?: string;
-  ariaLabel?: string;
-  showSuggestions?: boolean;
 }
 
 function SearchBar({

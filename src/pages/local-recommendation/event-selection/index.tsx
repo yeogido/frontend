@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import YeogidoCourseSearchBar from '../../yeogido-course/components/YeogidoCourseSearchBar';
+import { SearchBar } from '../../../components/common';
 import {
   DraggableBottomSheet,
   FestivalSearchResults,
@@ -42,7 +42,7 @@ function EventSelectionPage() {
 
   return (
     <div className="bg-background min-h-dvh w-full">
-      <main className="bg-pure-white mx-auto min-h-dvh w-full max-w-[430px] px-6 pt-24 pb-[32dvh]">
+      <main className="bg-white mx-auto min-h-dvh w-full max-w-[430px] px-6 pt-24 pb-[32dvh]">
         <h1 className="text-[30px] leading-[1.28] font-bold tracking-[-0.02em] text-black">
           코스에
           <br />
@@ -53,13 +53,11 @@ function EventSelectionPage() {
           코스에 등록할 행사 및 페스티벌을 검색해 보세요
         </p>
 
-        <YeogidoCourseSearchBar
+        <SearchBar
           className="mt-8 max-w-none"
           placeholder="행사명을 검색해 주세요"
-          ariaLabel="행사명 검색"
-          showSuggestions={false}
+          label="행사명 검색"
           onSearch={setQuery}
-          onQueryChange={setQuery}
         />
 
         <section className="mt-[22px]" aria-labelledby="festival-results-title">
@@ -91,8 +89,7 @@ function EventSelectionPage() {
             <button
               type="button"
               onClick={() => setSelectedFestivals([])}
-              disabled={selectedFestivals.length === 0}
-              className="text-main-5 text-xs font-medium disabled:opacity-40"
+              className="text-main-5 text-xs font-medium"
             >
               전체 삭제
             </button>

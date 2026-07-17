@@ -10,7 +10,7 @@ export const filterFestivalApiItems = (
   const normalizedQuery = normalizeFestivalTag(query);
 
   if (!normalizedQuery) {
-    return [...festivals];
+    return [];
   }
 
   return festivals.filter((festival) =>
