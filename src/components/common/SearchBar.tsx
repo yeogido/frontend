@@ -4,31 +4,20 @@ import {
   useMemo,
   useRef,
   useState,
-  type FormEvent,
   type FocusEvent,
+  type FormEvent,
   type KeyboardEvent,
 } from 'react';
 import { IoSearch } from 'react-icons/io5';
 
-const searchSuggestions = [
-  '강릉 혼자 여행 코스',
-  '강릉 바다 산책 코스',
-  '강릉 카페 투어',
-  '부산 감성 여행',
-  '부산 바다 코스',
-  '제주 힐링 여행',
-  '제주 오름 산책',
-  '순천 힐링 여행',
-  '보령 바다 여행',
-  '뚜벅이 당일치기',
-  '혼자 떠나는 여행',
-  '가족과 함께하는 코스',
-];
-
 const normalizeSearchText = (text: string) => text.replace(/\s/g, '');
 
-interface YeogidoCourseSearchBarProps {
+export interface SearchBarProps {
   initialQuery?: string;
+  placeholder?: string;
+  label?: string;
+  suggestions?: readonly string[];
+  noResultsText?: string;
   className?: string;
   onSearch?: (query: string) => void;
   onQueryChange?: (query: string) => void;
@@ -37,58 +26,60 @@ interface YeogidoCourseSearchBarProps {
   showSuggestions?: boolean;
 }
 
-function YeogidoCourseSearchBar({
+function SearchBar({
   initialQuery = '',
+  placeholder = '검색어를 입력해 주세요',
+  label = '검색어 입력',
+  suggestions = [],
+  noResultsText = '검색 결과가 없습니다',
   className = '',
   onSearch,
-  onQueryChange,
-  placeholder = '코스명 또는 지역명을 검색해 주세요',
-  ariaLabel = '코스명 또는 지역명 검색',
-  showSuggestions = true,
-}: YeogidoCourseSearchBarProps) {
+}: SearchBarProps) {
   const inputId = useId();
   const listboxId = useId();
   const searchBarRef = useRef<HTMLFormElement | null>(null);
   const [queryState, setQueryState] = useState({
     value: initialQuery,
-    syncedInitialQuery: initialQuery,
+    initialQuery,
   });
   const [isOpen, setIsOpen] = useState(false);
+  const hasSuggestions = suggestions.length > 0;
+  const isInitialQueryChanged = queryState.initialQuery !== initialQuery;
+  const query = isInitialQueryChanged ? initialQuery : queryState.value;
 
-  if (queryState.syncedInitialQuery !== initialQuery) {
+  if (isInitialQueryChanged) {
     setQueryState({
       value: initialQuery,
-      syncedInitialQuery: initialQuery,
+      initialQuery,
     });
   }
-
-  const query =
-    queryState.syncedInitialQuery === initialQuery
-      ? queryState.value
-      : initialQuery;
 
   const updateQuery = (value: string) => {
     setQueryState({
       value,
-      syncedInitialQuery: initialQuery,
+      initialQuery,
     });
   };
 
   const filteredSuggestions = useMemo(() => {
-    const normalizedQuery = query.trim();
-
-    if (!normalizedQuery) {
-      return searchSuggestions.slice(0, 4);
+    if (!hasSuggestions) {
+      return [];
     }
 
-    const normalizedSearchQuery = normalizeSearchText(normalizedQuery);
+    const trimmedQuery = query.trim();
 
-    return searchSuggestions
+    if (!trimmedQuery) {
+      return suggestions.slice(0, 4);
+    }
+
+    const normalizedSearchQuery = normalizeSearchText(trimmedQuery);
+
+    return suggestions
       .filter((suggestion) =>
         normalizeSearchText(suggestion).includes(normalizedSearchQuery)
       )
       .slice(0, 4);
-  }, [query]);
+  }, [hasSuggestions, query, suggestions]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -124,6 +115,12 @@ function YeogidoCourseSearchBar({
     onSearch?.(query.trim());
   };
 
+  const handleFocus = () => {
+    if (hasSuggestions) {
+      setIsOpen(true);
+    }
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Escape') {
       setIsOpen(false);
@@ -152,43 +149,43 @@ function YeogidoCourseSearchBar({
       className={`relative w-full max-w-[342px] ${className}`}
     >
       <label htmlFor={inputId} className="sr-only">
-        {ariaLabel}
+        {label}
       </label>
 
-      <div className="border-gray-2 bg-pure-white flex h-[47px] w-full items-center gap-2 overflow-hidden rounded-xl border px-3.5">
+      <div className="border-gray-2 bg-pure-white flex h-[47px] w-full items-center gap-2.5 overflow-hidden rounded-xl border px-[13px]">
         <IoSearch
           aria-hidden="true"
-          className="text-gray-4 shrink-0 text-[18px]"
+          className="text-gray-4 shrink-0 text-[24px]"
         />
 
         <input
           id={inputId}
           type="search"
           value={query}
-          onFocus={() => setIsOpen(showSuggestions)}
+          onFocus={handleFocus}
           onChange={(event) => {
-            const nextQuery = event.target.value;
+            updateQuery(event.target.value);
 
-            updateQuery(nextQuery);
-            onQueryChange?.(nextQuery);
-            setIsOpen(showSuggestions);
+            if (hasSuggestions) {
+              setIsOpen(true);
+            }
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          role="combobox"
-          aria-controls={showSuggestions ? listboxId : undefined}
-          aria-expanded={showSuggestions && isOpen}
-          aria-autocomplete="list"
-          className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-none font-medium outline-none"
+          role={hasSuggestions ? 'combobox' : undefined}
+          aria-controls={hasSuggestions ? listboxId : undefined}
+          aria-expanded={hasSuggestions ? isOpen : undefined}
+          aria-autocomplete={hasSuggestions ? 'list' : undefined}
+          className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-normal font-medium outline-none"
         />
       </div>
 
-      {showSuggestions && isOpen ? (
+      {hasSuggestions && isOpen ? (
         <div
           id={listboxId}
           role="listbox"
           aria-label="검색어 추천 목록"
-          className="absolute top-[53px] left-0 z-30 flex w-full flex-col"
+          className="absolute top-[53px] left-0 z-[100] flex w-full flex-col"
         >
           {filteredSuggestions.length > 0 ? (
             filteredSuggestions.map((suggestion, index) => {
@@ -224,7 +221,7 @@ function YeogidoCourseSearchBar({
               aria-selected="false"
               className="border-gray-2 bg-pure-white text-gray-4 flex h-[47px] w-full items-center rounded-xl border px-[34px] text-[12px] leading-none font-medium whitespace-nowrap"
             >
-              검색 결과가 없습니다
+              {noResultsText}
             </div>
           )}
         </div>
@@ -233,4 +230,4 @@ function YeogidoCourseSearchBar({
   );
 }
 
-export default YeogidoCourseSearchBar;
+export default SearchBar;
