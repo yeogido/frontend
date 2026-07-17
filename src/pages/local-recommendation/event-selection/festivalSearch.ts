@@ -16,7 +16,6 @@ export const filterFestivalApiItems = (
   return festivals.filter((festival) =>
     [festival.tag, festival.title, festival.address]
       .map(normalizeFestivalTag)
-      .join(' ')
-      .includes(normalizedQuery)
+      .some((field) => field.includes(normalizedQuery))
   );
 };
