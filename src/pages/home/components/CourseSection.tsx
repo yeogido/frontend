@@ -1,9 +1,11 @@
+import { useNavigate } from 'react-router-dom';
+
 import {
   CourseCard,
   CourseCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
-import { useNavigate } from 'react-router-dom';
+import type { TagType } from '../../../components/common/TagChip';
 
 function CourseSection() {
   const isLoading = false; // UI 확인용
@@ -11,21 +13,31 @@ function CourseSection() {
 
   const navigate = useNavigate();
 
-  const courses = [
+  const courses: {
+    image: string;
+    title: string;
+    duration: string;
+    courseType: string;
+    companion: string;
+    tags: TagType[];
+    liked: boolean;
+  }[] = [
     {
       image: '',
       title: '강릉 혼자 여행 코스',
-      description: '바다를 따라 걷고, 감성 가득한 카페와 로컬 맛집을 즐겨보세요.',
       duration: '2박 3일',
-      courseType: '뚜벅이 코스',
+      courseType: '뚜벅이',
+      companion: '혼자',
+      tags: ['summer', 'nature', 'sea'],
       liked: false,
     },
     {
       image: '',
-      title: '제주 힐링 여행 코스',
-      description: '푸른 바다와 오름을 따라 여유로운 제주 여행을 즐겨보세요.',
+      title: '서울에서 출발하는 3박 4일 여름 바다 여행 추천 코스',
       duration: '3박 4일',
-      courseType: '드라이브 코스',
+      courseType: '드라이브',
+      companion: '친구',
+      tags: ['summer', 'sea', 'cafe'],
       liked: true,
     },
   ];
