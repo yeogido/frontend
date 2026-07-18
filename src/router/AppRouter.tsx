@@ -11,6 +11,9 @@ import SignupPage from '../pages/auth/signup';
 import KakaoSignupPage from '../pages/auth/signup/kakao';
 import NaverSignupPage from '../pages/auth/signup/naver';
 import LocalCoursePage from '../pages/local-course';
+import LocalCoursePopularPage from '../pages/local-course/popular';
+import LocalCourseRecentPage from '../pages/local-course/recent';
+import LocalCourseSearchPage from '../pages/local-course/search';
 import FestivalPage from '../pages/festival';
 import ReviewPage from '../pages/review';
 import CourseRegionSearchPage from '../pages/course-region-search';
@@ -31,6 +34,21 @@ function AppRouter() {
         <Route path="/" element={<HomePage />} />
 
         <Route path="/local-course" element={<LocalCoursePage />} />
+
+        <Route
+          path="/local-course/popular"
+          element={<LocalCoursePopularPage />}
+        />
+
+        <Route
+          path="/local-course/recent"
+          element={<LocalCourseRecentPage />}
+        />
+
+        <Route
+          path="/local-course/search"
+          element={<LocalCourseSearchPage />}
+        />
 
         <Route path="/festival" element={<FestivalPage />} />
 
@@ -63,11 +81,6 @@ function AppRouter() {
         />
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
-
-        <Route
-          path="/local-recommendation"
-          element={<LocalRecommendationPage />}
-        />
 
         <Route
           path="/local-recommendation"

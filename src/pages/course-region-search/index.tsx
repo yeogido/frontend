@@ -32,7 +32,7 @@ function CourseRegionSearchPage() {
 
   return (
     <section
-      className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col items-center bg-background pt-14 pb-8"
+      className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col items-center bg-background pt-3 pb-8"
       aria-label="검색 및 지역 선택"
     >
       <SearchBar

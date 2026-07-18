@@ -16,12 +16,15 @@ export const courseRegionSearchTargets: Record<
   course: {
     pathname: '/yeogido-course/search',
   },
+  'local-course': {
+    pathname: '/local-course/search',
+  },
 };
 
 export const getCourseRegionSearchTarget = (
   target: string | null
 ): CourseRegionSearchTarget => {
-  if (target === 'course') {
+  if (target === 'course' || target === 'local-course') {
     return target;
   }
 

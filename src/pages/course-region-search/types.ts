@@ -10,4 +10,4 @@ export interface CityOption {
   districts: readonly DistrictOption[];
 }
 
-export type CourseRegionSearchTarget = 'course';
+export type CourseRegionSearchTarget = 'course' | 'local-course';
