@@ -8,9 +8,8 @@ function CourseCardSkeleton() {
       className="
         relative
         flex
-        h-[100px]
-        w-[342px]
-        shrink-0
+        min-h-[100px]
+        w-full
         overflow-hidden
         rounded-xl
         bg-[#F9F9F9]
@@ -19,30 +18,36 @@ function CourseCardSkeleton() {
       "
     >
       {/* Image */}
-      <div className="h-full w-[136px] rounded-l-xl bg-[#EAEAEA]" />
+      <div className="w-[136px] shrink-0 self-stretch rounded-[8px] bg-[#EAEAEA]" />
 
       {/* Content */}
-      <div className="flex flex-1 flex-col justify-between px-4 py-4">
-        {/* Title & Description */}
-        <div>
-          <div className="h-[16px] w-[158px] rounded bg-[#EAEAEA]" />
+      <div className="flex min-w-0 flex-1 flex-col px-4 py-4">
+        {/* Title */}
+        <div className="h-[16px] w-[150px] rounded bg-[#EAEAEA]" />
 
-          <div className="mt-1 h-[12px] w-[140px] rounded bg-[#EAEAEA]" />
+        {/* Meta */}
+        <div className="mt-2 flex items-center gap-2">
+          <div className="flex items-center gap-[2px]">
+            <div className="h-[14px] w-[14px] rounded bg-[#EAEAEA]" />
+            <div className="h-[12px] w-[36px] rounded bg-[#EAEAEA]" />
+          </div>
+
+          <div className="flex items-center gap-[2px]">
+            <div className="h-[14px] w-[14px] rounded bg-[#EAEAEA]" />
+            <div className="h-[12px] w-[36px] rounded bg-[#EAEAEA]" />
+          </div>
+
+          <div className="flex items-center gap-[2px]">
+            <div className="h-[14px] w-[14px] rounded bg-[#EAEAEA]" />
+            <div className="h-[12px] w-[36px] rounded bg-[#EAEAEA]" />
+          </div>
         </div>
 
-        {/* Info */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <div className="h-[14px] w-[14px] rounded bg-[#EAEAEA]" />
-
-            <div className="h-[12px] w-[48px] rounded bg-[#EAEAEA]" />
-          </div>
-
-          <div className="flex items-center gap-1">
-            <div className="h-[14px] w-[14px] rounded bg-[#EAEAEA]" />
-
-            <div className="h-[12px] w-[64px] rounded bg-[#EAEAEA]" />
-          </div>
+        {/* Tags */}
+        <div className="mt-3 flex items-center gap-2">
+          <div className="h-[24px] w-[48px] rounded-full bg-[#EAEAEA]" />
+          <div className="h-[24px] w-[56px] rounded-full bg-[#EAEAEA]" />
+          <div className="h-[24px] w-[44px] rounded-full bg-[#EAEAEA]" />
         </div>
       </div>
 
@@ -52,7 +57,7 @@ function CourseCardSkeleton() {
           src={heart}
           alt=""
           aria-hidden="true"
-          className="h-5 w-5"
+          className="h-5 w-5 opacity-30"
         />
       </div>
     </article>
