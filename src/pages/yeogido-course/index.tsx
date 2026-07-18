@@ -87,7 +87,7 @@ function YeogidoCoursePage() {
               image={courseMapImage}
               title={course.title}
               firstInfo={course.duration}
-              secondInfo={course.courseName}
+              secondInfo={course.courseType}
             />
           ))}
         </div>
