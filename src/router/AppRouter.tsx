@@ -15,6 +15,9 @@ import LocalCoursePopularPage from '../pages/local-course/popular';
 import LocalCourseRecentPage from '../pages/local-course/recent';
 import LocalCourseSearchPage from '../pages/local-course/search';
 import FestivalPage from '../pages/festival';
+import FestivalOngoingPage from '../pages/festival/ongoing';
+import FestivalRecentPage from '../pages/festival/recent';
+import FestivalSearchPage from '../pages/festival/search';
 import ReviewPage from '../pages/review';
 import CourseRegionSearchPage from '../pages/course-region-search';
 import YeogidoCoursePage from '../pages/yeogido-course';
@@ -51,6 +54,12 @@ function AppRouter() {
         />
 
         <Route path="/festival" element={<FestivalPage />} />
+
+        <Route path="/festival/ongoing" element={<FestivalOngoingPage />} />
+
+        <Route path="/festival/recent" element={<FestivalRecentPage />} />
+
+        <Route path="/festival/search" element={<FestivalSearchPage />} />
 
         <Route path="/review" element={<ReviewPage />} />
 

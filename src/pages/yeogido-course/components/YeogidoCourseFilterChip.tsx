@@ -44,7 +44,7 @@ function YeogidoCourseFilterChip({
           id={listboxId}
           role="listbox"
           aria-labelledby={buttonId}
-          className="absolute top-[33px] left-0 z-20 flex min-w-full flex-col"
+          className="absolute top-[33px] left-0 z-40 flex min-w-full flex-col"
         >
           {options.map((option, index) => {
             const isFirst = index === 0;

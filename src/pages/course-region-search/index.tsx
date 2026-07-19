@@ -22,6 +22,8 @@ function CourseRegionSearchPage() {
     selectedDistrict,
     selectedParentDistrict,
     visibleDistricts,
+    searchLabel,
+    searchPlaceholder,
     clearRecentSearches,
     removeRecentSearch,
     selectCity,
@@ -38,8 +40,8 @@ function CourseRegionSearchPage() {
       <SearchBar
         initialQuery={initialKeyword}
         className="z-20"
-        placeholder="코스명 또는 지역명을 검색해 주세요"
-        label="코스명 또는 지역명 검색"
+        placeholder={searchPlaceholder}
+        label={searchLabel}
         suggestions={searchSuggestions}
         onSearch={submitSearch}
       />
