@@ -14,10 +14,30 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
     const { response } = error;
 
     if (response) {
+      const responseCode = response.data?.code;
+      const responseMessage = response.data?.message;
+
       return {
-        code: response.data?.code ?? `HTTP_${response.status}`,
-        message: response.data?.message ?? error.message,
+        code:
+          typeof responseCode === 'string'
+            ? responseCode
+            : `HTTP_${response.status}`,
+        message:
+          typeof responseMessage === 'string'
+            ? responseMessage
+            : error.message,
         status: response.status,
+      };
+    }
+
+    if (
+      error.code === 'ERR_CANCELED' ||
+      error.code === 'ECONNABORTED' ||
+      error.code === 'ETIMEDOUT'
+    ) {
+      return {
+        code: error.code,
+        message: error.message,
       };
     }
 
