@@ -1,4 +1,4 @@
-import businessImage from '../pages/yeogido-course/assets/courseimage.svg';
+import businessImage from '../pages/local-business/assets/cafe.png';
 
 import type {
   BusinessCategory,

@@ -13,16 +13,24 @@ function BusinessGridCard({ business, onClick }: BusinessGridCardProps) {
     <button
       type="button"
       onClick={onClick}
-      <div className="flex min-h-0 flex-1 flex-col px-3 pt-2.5 pb-3">
-        <h2 className="line-clamp-1 text-[14px] font-medium leading-[18px] text-[`#1C1C1C`]">
+      className="flex h-[222px] w-full cursor-pointer flex-col overflow-hidden rounded-xl bg-pure-white text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+    >
+      <img
+        src={business.image}
+        alt={business.title}
+        className="h-[115px] w-full rounded-b-lg object-cover"
+      />
+
+      <div className="flex min-h-0 flex-1 flex-col px-2 pt-2 pb-2">
+        <h2 className="truncate text-[14px] font-medium leading-[16px] text-[#1C1C1C]">
           {business.title}
         </h2>
 
-        <p className="mt-0.5 h-[16px] truncate text-[11px] leading-[16px] font-normal text-[`#7F7F7F`]">
+        <p className="mt-1 truncate text-[10px] font-normal leading-[11px] text-[#7F7F7F]">
           {business.description}
         </p>
 
-        <div className="mt-3.5 flex items-center gap-1">
+        <div className="mt-3 flex items-center gap-1">
           <img
             src={location}
             alt=""
@@ -37,7 +45,7 @@ function BusinessGridCard({ business, onClick }: BusinessGridCardProps) {
 
         <div className="mt-2 border-t border-[#E4E4E4]" />
 
-        <div className="mt-2.5 flex w-full flex-nowrap justify-center gap-1">
+        <div className="mt-2 flex w-full flex-nowrap justify-center gap-1">
           {business.tags.map((tag) => (
             <TagChip
               key={`${business.id}-${tag}`}
