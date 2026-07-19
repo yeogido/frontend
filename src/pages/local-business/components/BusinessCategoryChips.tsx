@@ -25,7 +25,7 @@ function BusinessCategoryChips({
             className={`h-[29px] rounded-full border px-3 py-1.5 text-[14px] leading-none font-normal whitespace-nowrap cursor-pointer ${
               isSelected
                 ? 'border-[#FF6F41] bg-[#FFEBE5] text-[#FF6F41]'
-                : 'border-gray-2 bg-pure-white text-gray-4'
+                : 'border-gray-2 bg-white text-gray-4'
             }`}
           >
             {category}

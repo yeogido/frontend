@@ -13,7 +13,7 @@ function BusinessListCard({ business, onClick }: BusinessListCardProps) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full cursor-pointer flex-col overflow-hidden rounded-xl bg-pure-white text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+      className="flex w-full cursor-pointer flex-col overflow-hidden rounded-xl bg-white text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
     >
       <BusinessCardHeader business={business} />
 
