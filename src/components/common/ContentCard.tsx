@@ -137,10 +137,23 @@ function ContentCard({
 }: ContentCardProps) {
   const { visibleContainerRef, hiddenContainerRef, visibleCount } =
     useResponsiveTagCount(tags);
+  const isClickable = Boolean(onClick);
 
   return (
     <article
       onClick={onClick}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={
+        isClickable
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onClick?.();
+              }
+            }
+          : undefined
+      }
       className={`
         grow-0
         shrink
@@ -152,7 +165,7 @@ function ContentCard({
         rounded-xl
         bg-[#F9F9F9]
         shadow-[0_1px_5px_rgba(0,0,0,0.07)]
-        cursor-pointer
+        ${isClickable ? 'cursor-pointer' : ''}
         ${className}
       `}
     >

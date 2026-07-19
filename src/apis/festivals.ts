@@ -75,10 +75,10 @@ function hasMockSearchResult(keyword: string) {
 function createMockFestival(
   id: number,
   filters: FestivalSelectedFilters,
+  festivals: readonly FestivalPreview[],
   searchLabel = ''
 ): FestivalPreview {
-  const baseFestival =
-    festivalSearchResults[(id - 1) % festivalSearchResults.length];
+  const baseFestival = festivals[(id - 1) % festivals.length];
   const titlePrefix =
     searchLabel && !baseFestival.title.includes(searchLabel)
       ? searchLabel
@@ -90,10 +90,6 @@ function createMockFestival(
     title: titlePrefix
       ? `${titlePrefix} ${baseFestival.title}`
       : baseFestival.title,
-    category:
-      filters.category === DEFAULT_FILTERS.category
-        ? baseFestival.category
-        : filters.category,
     liked:
       filters.sort === DEFAULT_FILTERS.sort ? baseFestival.liked : id % 2 === 0,
   };
@@ -133,14 +129,21 @@ export async function fetchFestivals({
     };
   }
 
-  const start = page * PAGE_SIZE;
-  const end = Math.min(start + PAGE_SIZE, TOTAL_COUNT);
-  const content = Array.from({ length: end - start }, (_, index) =>
-    createMockFestival(start + index + 1, filters, searchLabel)
-  ).filter(
+  const filteredFestivals = festivalSearchResults.filter(
     (festival) =>
       filters.category === DEFAULT_FILTERS.category ||
       festival.category === filters.category
+  );
+  const totalCount = filteredFestivals.length > 0 ? TOTAL_COUNT : 0;
+  const start = page * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, totalCount);
+  const content = Array.from({ length: end - start }, (_, index) =>
+    createMockFestival(
+      start + index + 1,
+      filters,
+      filteredFestivals,
+      searchLabel
+    )
   );
 
   return {

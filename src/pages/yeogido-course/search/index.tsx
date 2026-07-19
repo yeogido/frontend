@@ -171,7 +171,7 @@ function YeogidoCourseSearchPage() {
         </div>
 
         {hasEmptyResult ? (
-          <p className="mt-10 text-center text-[13px] font-medium text-grey-4">
+          <p className="mt-10 text-center text-[13px] font-medium text-gray-4">
             검색 결과가 없습니다.
           </p>
         ) : null}
