@@ -19,6 +19,7 @@ import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
 import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
+import LocalBusinessDetailPage from '../pages/local-business/detail';
 import LocalRecommendationPage from '../pages/local-recommendation';
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
@@ -63,6 +64,11 @@ function AppRouter() {
         />
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
+        
+        <Route
+        path="/local-business/detail/:id"
+        element={<LocalBusinessDetailPage />}
+        />
 
         <Route
           path="/local-recommendation"
