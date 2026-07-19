@@ -45,7 +45,9 @@ function LocalBusinessPage() {
       />
 
       <div className="mt-4">
-        {viewMode === 'grid' ? (
+        {businesses.length === 0 ? (
+          <p>조건에 맞는 소상공인이 없습니다.</p>
+        ) : viewMode === 'grid' ? (
           <BusinessGrid businesses={businesses} onCardClick={handleCardClick} />
         ) : (
           <BusinessList businesses={businesses} onCardClick={handleCardClick} />
