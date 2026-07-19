@@ -10,7 +10,10 @@ import {
   recentFestivalPreviews,
 } from '../pages/festival/constants/festivals';
 import { festivalSearchSuggestions } from '../pages/festival/constants/search';
-import type { FestivalPreview } from '../pages/festival/types';
+import type {
+  FestivalPreview,
+  FestivalStatus,
+} from '../pages/festival/types';
 
 const PAGE_SIZE = 6;
 const TOTAL_COUNT = 18;
@@ -50,6 +53,7 @@ interface FetchFestivalsParams {
   keyword?: string;
   region?: string;
   subRegion?: string;
+  status?: FestivalStatus;
 }
 
 interface FetchRecentFestivalsParams {
@@ -112,6 +116,7 @@ export async function fetchFestivals({
   keyword = '',
   region = '',
   subRegion = '',
+  status,
 }: FetchFestivalsParams): Promise<FestivalPage> {
   await new Promise((resolve) => {
     window.setTimeout(resolve, 500);
@@ -129,7 +134,10 @@ export async function fetchFestivals({
     };
   }
 
-  const filteredFestivals = festivalSearchResults.filter(
+  const statusFilteredFestivals = status
+    ? festivalSearchResults.filter((festival) => festival.status === status)
+    : festivalSearchResults;
+  const filteredFestivals = statusFilteredFestivals.filter(
     (festival) =>
       filters.category === DEFAULT_FILTERS.category ||
       festival.category === filters.category

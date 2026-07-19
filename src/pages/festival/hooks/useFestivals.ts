@@ -2,12 +2,14 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 
 import { fetchFestivals } from '../../../apis/festivals';
 import type { FestivalSelectedFilters } from '../constants/filters';
+import type { FestivalStatus } from '../types';
 
 interface UseFestivalsParams {
   filters: FestivalSelectedFilters;
   keyword?: string;
   region?: string;
   subRegion?: string;
+  status?: FestivalStatus;
   enabled?: boolean;
 }
 
@@ -16,6 +18,7 @@ function useFestivals({
   keyword = '',
   region = '',
   subRegion = '',
+  status,
   enabled = true,
 }: UseFestivalsParams) {
   const normalizedKeyword = keyword.trim();
@@ -30,6 +33,7 @@ function useFestivals({
         keyword: normalizedKeyword,
         region: normalizedRegion,
         subRegion: normalizedSubRegion,
+        status,
       },
     ],
     queryFn: ({ pageParam }) =>
@@ -39,6 +43,7 @@ function useFestivals({
         keyword: normalizedKeyword,
         region: normalizedRegion,
         subRegion: normalizedSubRegion,
+        status,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>

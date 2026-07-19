@@ -24,7 +24,10 @@ function FestivalOngoingPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useFestivals({ filters: selectedFilters });
+  } = useFestivals({
+    filters: selectedFilters,
+    status: 'ONGOING',
+  });
 
   const festivals = data?.pages.flatMap((page) => page.content) ?? [];
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;

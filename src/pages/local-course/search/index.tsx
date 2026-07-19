@@ -12,7 +12,9 @@ import {
 } from '../../../constants/recentSearches';
 import {
   COURSE_FILTER_CONTAINER_CLASS_NAME,
+  getCourseFilterColumnClassName,
   getCourseFilterGridClassName,
+  isExtendedTransportFilterLabel,
 } from '../../../constants/courseFilterLayout';
 import { localCourseSearchSuggestions } from '../../../constants/localCourseSearch';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
@@ -57,10 +59,10 @@ function LocalCourseSearchPage() {
 
   const courses = data?.pages.flatMap((page) => page.content) ?? [];
   const hasEmptyResult = !isPending && !isError && courses.length === 0;
-  const isTransportLabelLong =
-    selectedFilters.transport === localCourseFilterGroups[0].options[2];
   const filterGridClassName =
-    getCourseFilterGridClassName(isTransportLabelLong);
+    getCourseFilterGridClassName(
+      isExtendedTransportFilterLabel(selectedFilters.transport)
+    );
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -113,15 +115,7 @@ function LocalCourseSearchPage() {
             {localCourseFilterGroups.map((filter) => (
               <div
                 key={filter.key}
-                className={
-                  filter.key === 'duration'
-                    ? 'col-start-3'
-                    : filter.key === 'companion'
-                      ? 'col-start-5'
-                      : filter.key === 'sort'
-                        ? 'col-start-7'
-                        : 'col-start-1'
-                }
+                className={getCourseFilterColumnClassName(filter.key)}
               >
                 <YeogidoCourseFilterChip
                   label={selectedFilters[filter.key]}

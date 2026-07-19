@@ -83,14 +83,11 @@ function getFilteredCourses(
       filters.transport === ALL_FILTER_LABEL ||
       course.courseType.includes(
         TRANSPORT_COURSE_TYPE_LABELS[filters.transport] ?? filters.transport
-      );
+    );
     const matchesDuration =
-      filters.duration === DEFAULT_FILTER_LABELS.duration ||
       filters.duration === ALL_FILTER_LABEL ||
       course.duration === filters.duration;
-    const matchesCompanion =
-      filters.companion === DEFAULT_FILTER_LABELS.companion ||
-      course.companion === filters.companion;
+    const matchesCompanion = course.companion === filters.companion;
 
     return matchesTransport && matchesDuration && matchesCompanion;
   });
@@ -146,6 +143,7 @@ export async function fetchLocalRecentCourses({
     region,
     subRegion,
     courses: localCourseRecentPreviews,
+    applyFilters: false,
   });
 }
 
@@ -156,8 +154,10 @@ async function fetchLocalCoursePage({
   region = '',
   subRegion = '',
   courses,
+  applyFilters = true,
 }: FetchLocalCoursesParams & {
   courses: readonly LocalCourse[];
+  applyFilters?: boolean;
 }): Promise<LocalCoursePage> {
   await new Promise((resolve) => {
     window.setTimeout(resolve, 500);
@@ -175,7 +175,9 @@ async function fetchLocalCoursePage({
     };
   }
 
-  const filteredCourses = getFilteredCourses(courses, filters);
+  const filteredCourses = applyFilters
+    ? getFilteredCourses(courses, filters)
+    : [...courses];
   const sourceCourses =
     filteredCourses.length > 0 ? filteredCourses : courses;
   const totalCount = filteredCourses.length > 0 ? TOTAL_COUNT : 0;

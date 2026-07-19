@@ -3,7 +3,9 @@ import { useCallback } from 'react';
 import { ContentCard, ContentCardSkeleton } from '../../../components/common';
 import {
   COURSE_FILTER_CONTAINER_CLASS_NAME,
+  getCourseFilterColumnClassName,
   getCourseFilterGridClassName,
+  isExtendedTransportFilterLabel,
 } from '../../../constants/courseFilterLayout';
 
 import courseMapImage from '../assets/courseimage.svg';
@@ -33,10 +35,10 @@ function YeogidoCoursePopularPage() {
   } = useYeogidoCourses({ filters: selectedFilters });
 
   const popularCourses = data?.pages.flatMap((page) => page.content) ?? [];
-  const isTransportLabelLong =
-    selectedFilters.transport === yeogidoCourseFilterGroups[0].options[2];
   const filterGridClassName =
-    getCourseFilterGridClassName(isTransportLabelLong);
+    getCourseFilterGridClassName(
+      isExtendedTransportFilterLabel(selectedFilters.transport)
+    );
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -68,15 +70,7 @@ function YeogidoCoursePopularPage() {
           {yeogidoCourseFilterGroups.map((filter) => (
             <div
               key={filter.key}
-              className={
-                filter.key === 'duration'
-                  ? 'col-start-3'
-                  : filter.key === 'companion'
-                    ? 'col-start-5'
-                    : filter.key === 'sort'
-                      ? 'col-start-7'
-                      : 'col-start-1'
-              }
+              className={getCourseFilterColumnClassName(filter.key)}
             >
               <YeogidoCourseFilterChip
                 label={selectedFilters[filter.key]}

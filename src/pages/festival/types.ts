@@ -1,6 +1,8 @@
 import type { TagId } from '../../types/tag.type';
 import type { FestivalCategoryValue } from './constants/filters';
 
+export type FestivalStatus = 'ONGOING';
+
 export interface FestivalPreview {
   id: number;
   image: string;
@@ -8,6 +10,7 @@ export interface FestivalPreview {
   period: string;
   location: string;
   category: FestivalCategoryValue;
+  status: FestivalStatus;
   tags: TagId[];
   liked: boolean;
 }

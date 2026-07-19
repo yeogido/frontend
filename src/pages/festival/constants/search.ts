@@ -4,11 +4,10 @@ export const FESTIVAL_RECENT_SEARCH_STORAGE_KEY =
   'festival-search:recent-searches';
 
 export const festivalRecentSearchKeywords = [
-  '전주',
-  '제주도',
   '제주도',
   '전주',
-  '전주',
+  '양평',
+  '부여',
 ] as const;
 
 export const festivalSearchSuggestions = [
