@@ -16,7 +16,6 @@ import type {
 } from '../pages/festival/types';
 
 const PAGE_SIZE = 6;
-const TOTAL_COUNT = 18;
 const DEFAULT_FILTERS: FestivalSelectedFilters = {
   sort: festivalSortOptions[0].value,
   category: festivalCategoryOptions[0].value,
@@ -142,7 +141,7 @@ export async function fetchFestivals({
       filters.category === DEFAULT_FILTERS.category ||
       festival.category === filters.category
   );
-  const totalCount = filteredFestivals.length > 0 ? TOTAL_COUNT : 0;
+  const totalCount = filteredFestivals.length;
   const start = page * PAGE_SIZE;
   const end = Math.min(start + PAGE_SIZE, totalCount);
   const content = Array.from({ length: end - start }, (_, index) =>
@@ -158,7 +157,7 @@ export async function fetchFestivals({
     content:
       filters.sort === DEFAULT_FILTERS.sort ? content : [...content].reverse(),
     page,
-    last: end >= TOTAL_COUNT,
+    last: end >= totalCount,
   };
 }
 
@@ -169,8 +168,9 @@ export async function fetchRecentFestivals({
     window.setTimeout(resolve, 500);
   });
 
+  const totalCount = recentFestivalPreviews.length;
   const start = page * PAGE_SIZE;
-  const end = Math.min(start + PAGE_SIZE, TOTAL_COUNT);
+  const end = Math.min(start + PAGE_SIZE, totalCount);
   const content = Array.from({ length: end - start }, (_, index) =>
     createMockRecentFestival(start + index + 1)
   );
@@ -178,6 +178,6 @@ export async function fetchRecentFestivals({
   return {
     content,
     page,
-    last: end >= TOTAL_COUNT,
+    last: end >= totalCount,
   };
 }

@@ -10,7 +10,6 @@ import {
 import type { LocalCourse } from '../types/localCourse.type';
 
 const PAGE_SIZE = 6;
-const TOTAL_COUNT = 18;
 const DEFAULT_FILTER_LABELS = {
   transport: localCourseFilterGroups[0].defaultLabel,
   duration: localCourseFilterGroups[1].defaultLabel,
@@ -178,9 +177,8 @@ async function fetchLocalCoursePage({
   const filteredCourses = applyFilters
     ? getFilteredCourses(courses, filters)
     : [...courses];
-  const sourceCourses =
-    filteredCourses.length > 0 ? filteredCourses : courses;
-  const totalCount = filteredCourses.length > 0 ? TOTAL_COUNT : 0;
+  const sourceCourses = filteredCourses;
+  const totalCount = sourceCourses.length;
   const start = page * PAGE_SIZE;
   const end = Math.min(start + PAGE_SIZE, totalCount);
   const content = Array.from({ length: end - start }, (_, index) =>
@@ -193,6 +191,6 @@ async function fetchLocalCoursePage({
         ? content
         : [...content].reverse(),
     page,
-    last: end >= TOTAL_COUNT,
+    last: end >= totalCount,
   };
 }
