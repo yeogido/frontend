@@ -13,20 +13,12 @@ function BusinessGridCard({ business, onClick }: BusinessGridCardProps) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-[222px] w-full cursor-pointer flex-col overflow-hidden rounded-xl bg-pure-white text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
-    >
-      <img
-        src={business.image}
-        alt={business.title}
-        className="h-[96px] w-full rounded-b-lg object-cover"
-      />
-
       <div className="flex min-h-0 flex-1 flex-col px-3 pt-2.5 pb-3">
-        <h2 className="text-[14px] font-medium leading-[18px] text-[#1C1C1C]">
+        <h2 className="line-clamp-1 text-[14px] font-medium leading-[18px] text-[`#1C1C1C`]">
           {business.title}
         </h2>
 
-        <p className="mt-0.5 h-[16px] truncate text-[11px] leading-[16px] font-normal text-[#7F7F7F]">
+        <p className="mt-0.5 h-[16px] truncate text-[11px] leading-[16px] font-normal text-[`#7F7F7F`]">
           {business.description}
         </p>
 
