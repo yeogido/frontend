@@ -17,7 +17,7 @@ function FestivalSection() {
         <SectionHeader
           title="진행 중인 행사"
           actionText="전체보기"
-          onActionClick={() => navigate('/festival')}
+          onActionClick={() => navigate('/festival/search')}
         />
       </div>
 
