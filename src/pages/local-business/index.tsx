@@ -9,7 +9,7 @@ function LocalBusinessPage() {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] =
     useState<BusinessCategory>('전체');
-  const [sortBy, setSortBy] = useState<BusinessSort>('추천순');
+  const [sortBy, setSortBy] = useState<BusinessSort>('최신순');
   const [viewMode, setViewMode] = useState<BusinessViewMode>('grid');
 
   const businesses = useLocalBusinesses({

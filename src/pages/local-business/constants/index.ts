@@ -7,4 +7,4 @@ export const businessCategories = [
   '전시',
 ] as const;
 
-export const businessSortOptions = ['추천순', '저장순', '후기순'] as const;
+export const businessSortOptions = ['최신순', '저장순', '후기순'] as const;
