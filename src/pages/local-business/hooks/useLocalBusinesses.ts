@@ -1,9 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import {
-  createLocalBusinessItems,
-  fetchLocalBusinesses,
-} from '../../../apis/localBusiness';
+import {createLocalBusinessItems} from '../../../apis/localBusiness';
 import type { BusinessCategory, BusinessSort } from '../types';
 
 interface UseLocalBusinessesParams {
@@ -23,13 +20,6 @@ function useLocalBusinesses({
       }),
     [selectedCategory, sortBy],
   );
-
-  useEffect(() => {
-    void fetchLocalBusinesses({
-      category: selectedCategory,
-      sortBy,
-    });
-  }, [selectedCategory, sortBy]);
 
   return businesses;
 }
