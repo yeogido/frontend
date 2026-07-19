@@ -14,18 +14,17 @@ import {
   COURSE_FILTER_CONTAINER_CLASS_NAME,
   getCourseFilterGridClassName,
 } from '../../../constants/courseFilterLayout';
-import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourseSearch';
-import { addStoredRecentSearch } from '../../../utils/recentSearches';
-
-import courseMapImage from '../assets/courseimage.svg';
-import { YeogidoCourseFilterChip } from '../components';
-import { yeogidoCourseFilterGroups } from '../constants/filters';
-import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
+import { localCourseSearchSuggestions } from '../../../constants/localCourseSearch';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
-import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
-import useYeogidoCourses from '../hooks/useYeogidoCourses';
+import { addStoredRecentSearch } from '../../../utils/recentSearches';
+import { YeogidoCourseFilterChip } from '../../yeogido-course/components';
 
-function YeogidoCourseSearchPage() {
+import { localCourseFilterGroups } from '../constants/filters';
+import { LOCAL_COURSE_SKELETON_ITEMS } from '../constants/ui';
+import useLocalCourseFilters from '../hooks/useLocalCourseFilters';
+import useLocalCourses from '../hooks/useLocalCourses';
+
+function LocalCourseSearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
@@ -40,7 +39,7 @@ function YeogidoCourseSearchPage() {
     selectedFilters,
     handleFilterToggle,
     handleFilterSelect,
-  } = useYeogidoCourseFilters();
+  } = useLocalCourseFilters();
 
   const {
     data,
@@ -49,18 +48,17 @@ function YeogidoCourseSearchPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useYeogidoCourses({
+  } = useLocalCourses({
     filters: selectedFilters,
     keyword,
     region,
     subRegion,
   });
 
-  const yeogidoCourses = data?.pages.flatMap((page) => page.content) ?? [];
-  const hasEmptyResult =
-    !isPending && !isError && yeogidoCourses.length === 0;
+  const courses = data?.pages.flatMap((page) => page.content) ?? [];
+  const hasEmptyResult = !isPending && !isError && courses.length === 0;
   const isTransportLabelLong =
-    selectedFilters.transport === yeogidoCourseFilterGroups[0].options[2];
+    selectedFilters.transport === localCourseFilterGroups[0].options[2];
   const filterGridClassName =
     getCourseFilterGridClassName(isTransportLabelLong);
 
@@ -101,9 +99,9 @@ function YeogidoCourseSearchPage() {
       <div className="w-full">
         <SearchBar
           initialQuery={displaySearchQuery}
-          placeholder="코스명 또는 지역명을 검색해 주세요"
-          label="코스명 또는 지역명 검색"
-          suggestions={yeogidoCourseSearchSuggestions}
+          placeholder="지역명 또는 도시명을 검색해 주세요"
+          label="지역명 또는 도시명 검색"
+          suggestions={localCourseSearchSuggestions}
           onSearch={handleSearch}
         />
 
@@ -112,7 +110,7 @@ function YeogidoCourseSearchPage() {
           className={`mt-3 ${COURSE_FILTER_CONTAINER_CLASS_NAME}`}
         >
           <div className={filterGridClassName}>
-            {yeogidoCourseFilterGroups.map((filter) => (
+            {localCourseFilterGroups.map((filter) => (
               <div
                 key={filter.key}
                 className={
@@ -139,20 +137,21 @@ function YeogidoCourseSearchPage() {
 
         <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4">
           {isPending
-            ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
+            ? LOCAL_COURSE_SKELETON_ITEMS.map((item) => (
                 <ContentCardSkeleton
                   key={item}
                   className="w-full"
                   imageClassName="aspect-[163/115] h-auto"
                 />
               ))
-            : yeogidoCourses.map((course) => (
+            : courses.map((course) => (
                 <ContentCard
                   key={course.id}
-                  image={courseMapImage}
+                  image={course.image}
                   title={course.title}
                   firstInfo={course.duration}
-                  secondInfo={course.courseName}
+                  secondInfo={course.courseType}
+                  liked={course.liked}
                   tags={course.tags}
                   className="w-full"
                   imageClassName="aspect-[163/115] h-auto"
@@ -160,7 +159,7 @@ function YeogidoCourseSearchPage() {
               ))}
 
           {isFetchingNextPage
-            ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
+            ? LOCAL_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
                 <ContentCardSkeleton
                   key={`next-page-${item}`}
                   className="w-full"
@@ -188,4 +187,4 @@ function YeogidoCourseSearchPage() {
   );
 }
 
-export default YeogidoCourseSearchPage;
+export default LocalCourseSearchPage;

@@ -1,28 +1,29 @@
 import { useCallback } from 'react';
 
-import { ContentCard, ContentCardSkeleton } from '../../../components/common';
+import {
+  ContentCard,
+  ContentCardSkeleton,
+} from '../../../components/common';
 import {
   COURSE_FILTER_CONTAINER_CLASS_NAME,
   getCourseFilterGridClassName,
 } from '../../../constants/courseFilterLayout';
-
-import courseMapImage from '../assets/courseimage.svg';
-import { YeogidoCourseFilterChip } from '../components';
-import { yeogidoCourseFilterGroups } from '../constants/filters';
-import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
-import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
-import useYeogidoCourses from '../hooks/useYeogidoCourses';
+import { YeogidoCourseFilterChip } from '../../yeogido-course/components';
 
-function YeogidoCoursePopularPage() {
+import { localCourseFilterGroups } from '../constants/filters';
+import { LOCAL_COURSE_SKELETON_ITEMS } from '../constants/ui';
+import useLocalCourseFilters from '../hooks/useLocalCourseFilters';
+import useLocalCourses from '../hooks/useLocalCourses';
+
+function LocalCoursePopularPage() {
   const {
     filterContainerRef,
     openFilterKey,
     selectedFilters,
     handleFilterToggle,
     handleFilterSelect,
-  } = useYeogidoCourseFilters();
-
+  } = useLocalCourseFilters();
   const {
     data,
     fetchNextPage,
@@ -30,11 +31,11 @@ function YeogidoCoursePopularPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useYeogidoCourses({ filters: selectedFilters });
+  } = useLocalCourses({ filters: selectedFilters });
 
-  const popularCourses = data?.pages.flatMap((page) => page.content) ?? [];
+  const courses = data?.pages.flatMap((page) => page.content) ?? [];
   const isTransportLabelLong =
-    selectedFilters.transport === yeogidoCourseFilterGroups[0].options[2];
+    selectedFilters.transport === localCourseFilterGroups[0].options[2];
   const filterGridClassName =
     getCourseFilterGridClassName(isTransportLabelLong);
 
@@ -45,7 +46,7 @@ function YeogidoCoursePopularPage() {
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const loadMoreRef = useInfiniteScroll({
-    enabled: Boolean(hasNextPage) && !isPending,
+    enabled: hasNextPage && !isPending,
     onIntersect: handleIntersect,
   });
 
@@ -65,7 +66,7 @@ function YeogidoCoursePopularPage() {
         className={`mt-[15px] ${COURSE_FILTER_CONTAINER_CLASS_NAME}`}
       >
         <div className={filterGridClassName}>
-          {yeogidoCourseFilterGroups.map((filter) => (
+          {localCourseFilterGroups.map((filter) => (
             <div
               key={filter.key}
               className={
@@ -92,20 +93,21 @@ function YeogidoCoursePopularPage() {
 
       <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4">
         {isPending
-          ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
+          ? LOCAL_COURSE_SKELETON_ITEMS.map((item) => (
               <ContentCardSkeleton
                 key={item}
                 className="w-full"
                 imageClassName="aspect-[163/115] h-auto"
               />
             ))
-          : popularCourses.map((course) => (
+          : courses.map((course) => (
               <ContentCard
                 key={course.id}
-                image={courseMapImage}
+                image={course.image}
                 title={course.title}
                 firstInfo={course.duration}
-                secondInfo={course.courseName}
+                secondInfo={course.courseType}
+                liked={course.liked}
                 tags={course.tags}
                 className="w-full"
                 imageClassName="aspect-[163/115] h-auto"
@@ -113,7 +115,7 @@ function YeogidoCoursePopularPage() {
             ))}
 
         {isFetchingNextPage
-          ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
+          ? LOCAL_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
               <ContentCardSkeleton
                 key={`next-page-${item}`}
                 className="w-full"
@@ -134,4 +136,4 @@ function YeogidoCoursePopularPage() {
   );
 }
 
-export default YeogidoCoursePopularPage;
+export default LocalCoursePopularPage;

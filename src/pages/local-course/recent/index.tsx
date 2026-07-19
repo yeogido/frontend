@@ -1,14 +1,13 @@
 import { useCallback } from 'react';
 
 import { CourseCard, CourseCardSkeleton } from '../../../components/common';
-
-import { initialYeogidoCourseSelectedFilters } from '../constants/filters';
-import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
-import useYeogidoCourses from '../hooks/useYeogidoCourses';
-import { toRecentCourseCardProps } from './constants/recentCourses';
 
-function YeogidoCourseRecentPage() {
+import { initialLocalCourseSelectedFilters } from '../constants/filters';
+import { LOCAL_COURSE_SKELETON_ITEMS } from '../constants/ui';
+import useLocalRecentCourses from '../hooks/useLocalRecentCourses';
+
+function LocalCourseRecentPage() {
   const {
     data,
     fetchNextPage,
@@ -16,11 +15,9 @@ function YeogidoCourseRecentPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useYeogidoCourses({ filters: initialYeogidoCourseSelectedFilters });
+  } = useLocalRecentCourses({ filters: initialLocalCourseSelectedFilters });
 
-  const recentCourses =
-    data?.pages.flatMap((page) => page.content).map(toRecentCourseCardProps) ??
-    [];
+  const recentCourses = data?.pages.flatMap((page) => page.content) ?? [];
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -40,13 +37,13 @@ function YeogidoCourseRecentPage() {
           최근 본 코스
         </h1>
         <p className="text-gray-5 mt-1.5 text-[14px] leading-none font-normal">
-          최근 확인한 코스를 다시 둘러보세요
+          최근 확인한 동네 코스를 다시 둘러보세요
         </p>
       </div>
 
       <div className="mt-[30px] flex flex-col gap-4">
         {isPending
-          ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
+          ? LOCAL_COURSE_SKELETON_ITEMS.map((item) => (
               <CourseCardSkeleton key={item} />
             ))
           : recentCourses.map((course) => (
@@ -54,7 +51,7 @@ function YeogidoCourseRecentPage() {
             ))}
 
         {isFetchingNextPage
-          ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
+          ? LOCAL_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
               <CourseCardSkeleton key={`next-page-${item}`} />
             ))
           : null}
@@ -71,4 +68,4 @@ function YeogidoCourseRecentPage() {
   );
 }
 
-export default YeogidoCourseRecentPage;
+export default LocalCourseRecentPage;

@@ -54,7 +54,7 @@ import cardSpringSelected from '../assets/card-tag-chip/selected/spring.svg';
 import cardSummerSelected from '../assets/card-tag-chip/selected/summer.svg';
 import cardWinterSelected from '../assets/card-tag-chip/selected/winter.svg';
 
-import type { TagDefinition } from '../types/tag.type';
+import type { ApiTagCode, TagDefinition, TagId } from '../types/tag.type';
 
 export const MAX_SELECTED_TAGS = 5;
 
@@ -206,3 +206,45 @@ export const tagDefinitions = [
     },
   },
 ] as const satisfies readonly TagDefinition[];
+
+export const tagDefinitionMap = tagDefinitions.reduce(
+  (definitions, tag) => {
+    definitions[tag.id] = tag;
+    return definitions;
+  },
+  {} as Record<TagId, TagDefinition>
+);
+
+export const apiTagCodeMap: Record<ApiTagCode, TagId> = {
+  SPRING: 'spring',
+  SUMMER: 'summer',
+  AUTUMN: 'autumn',
+  WINTER: 'winter',
+  NATURE: 'nature',
+  MOUNTAIN: 'mountain',
+  SEA: 'sea',
+  RESTAURANT: 'restaurant',
+  CAFE: 'cafe',
+  BAKERY: 'bakery',
+  EXPERIENCE: 'experience',
+  EVENT: 'event',
+  LOCAL_ATTRACTION: 'local-attraction',
+};
+
+export const defaultCardTagIds: TagId[] = [
+  'summer',
+  'nature',
+  'experience',
+];
+
+export const defaultApiTagCodes: ApiTagCode[] = [
+  'SUMMER',
+  'NATURE',
+  'EXPERIENCE',
+];
+
+export const toTagId = (tagCode: ApiTagCode): TagId =>
+  apiTagCodeMap[tagCode];
+
+export const toTagIds = (tagCodes: readonly ApiTagCode[]): TagId[] =>
+  tagCodes.map(toTagId);

@@ -185,9 +185,9 @@ function ContentCard({
       </div>
 
       {/* Content */}
-      <div className="flex h-[107px] flex-col p-2">
+      <div className="flex h-[107px] min-w-0 flex-col p-2">
         {/* Title */}
-        <h3 className="text-[14px] font-medium leading-none text-[#1C1C1C]">
+        <h3 className="truncate text-[14px] font-medium leading-none text-[#1C1C1C]">
           {title}
         </h3>
 
@@ -201,7 +201,7 @@ function ContentCard({
               className="h-[14px] w-[14px] shrink-0"
             />
 
-            <span className="text-[12px] font-medium leading-none text-[#7F7F7F]">
+            <span className="min-w-0 truncate text-[12px] font-medium leading-none text-[#7F7F7F]">
               {firstInfo}
             </span>
           </div>
@@ -214,7 +214,7 @@ function ContentCard({
               className="h-[14px] w-[14px] shrink-0"
             />
 
-            <span className="text-[12px] font-medium leading-none text-[#7F7F7F]">
+            <span className="min-w-0 truncate text-[12px] font-medium leading-none text-[#7F7F7F]">
               {secondInfo}
             </span>
           </div>

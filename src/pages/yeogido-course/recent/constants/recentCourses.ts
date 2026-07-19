@@ -1,8 +1,6 @@
 import courseMapImage from '../../assets/courseimage.svg';
-import type { TagType } from '../../../../components/common/TagChip';
+import { defaultCardTagIds } from '../../../../constants/tags';
 import type { YeogidoCourse } from '../../types';
-
-const defaultTags: TagType[] = ['sea', 'nature', 'summer'];
 
 export const toRecentCourseCardProps = (course: YeogidoCourse) => ({
   id: course.id,
@@ -11,6 +9,6 @@ export const toRecentCourseCardProps = (course: YeogidoCourse) => ({
   duration: course.duration,
   courseType: course.courseName,
   companion: '혼자',
-  tags: defaultTags,
+  tags: course.tags ?? defaultCardTagIds,
   liked: false,
 });
