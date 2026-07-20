@@ -11,7 +11,13 @@ import SignupPage from '../pages/auth/signup';
 import KakaoSignupPage from '../pages/auth/signup/kakao';
 import NaverSignupPage from '../pages/auth/signup/naver';
 import LocalCoursePage from '../pages/local-course';
+import LocalCoursePopularPage from '../pages/local-course/popular';
+import LocalCourseRecentPage from '../pages/local-course/recent';
+import LocalCourseSearchPage from '../pages/local-course/search';
 import FestivalPage from '../pages/festival';
+import FestivalOngoingPage from '../pages/festival/ongoing';
+import FestivalRecentPage from '../pages/festival/recent';
+import FestivalSearchPage from '../pages/festival/search';
 import ReviewPage from '../pages/review';
 import CourseRegionSearchPage from '../pages/course-region-search';
 import YeogidoCoursePage from '../pages/yeogido-course';
@@ -19,6 +25,8 @@ import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
 import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
+import LocalBusinessDetailPage from '../pages/local-business/detail';
+import LocalRecommendationPage from '../pages/local-recommendation';
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import LocalRecommendationPage from '../pages/local-recommendation';
@@ -33,7 +41,28 @@ function AppRouter() {
 
         <Route path="/local-course" element={<LocalCoursePage />} />
 
+        <Route
+          path="/local-course/popular"
+          element={<LocalCoursePopularPage />}
+        />
+
+        <Route
+          path="/local-course/recent"
+          element={<LocalCourseRecentPage />}
+        />
+
+        <Route
+          path="/local-course/search"
+          element={<LocalCourseSearchPage />}
+        />
+
         <Route path="/festival" element={<FestivalPage />} />
+
+        <Route path="/festival/ongoing" element={<FestivalOngoingPage />} />
+
+        <Route path="/festival/recent" element={<FestivalRecentPage />} />
+
+        <Route path="/festival/search" element={<FestivalSearchPage />} />
 
         <Route path="/review" element={<ReviewPage />} />
 
@@ -64,10 +93,10 @@ function AppRouter() {
         />
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
-
+        
         <Route
-          path="/local-recommendation"
-          element={<LocalRecommendationPage />}
+        path="/local-business/detail/:id"
+        element={<LocalBusinessDetailPage />}
         />
       </Route>
 

@@ -10,6 +10,12 @@ import {
   COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
   courseRegionRecentSearchKeywords,
 } from '../../../constants/recentSearches';
+import {
+  COURSE_FILTER_CONTAINER_CLASS_NAME,
+  getCourseFilterColumnClassName,
+  getCourseFilterGridClassName,
+  isExtendedTransportFilterLabel,
+} from '../../../constants/courseFilterLayout';
 import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourseSearch';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 
@@ -17,7 +23,7 @@ import courseMapImage from '../assets/courseimage.svg';
 import { YeogidoCourseFilterChip } from '../components';
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
-import useInfiniteScroll from '../hooks/useInfiniteScroll';
+import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
 import useYeogidoCourses from '../hooks/useYeogidoCourses';
 
@@ -55,6 +61,10 @@ function YeogidoCourseSearchPage() {
   const yeogidoCourses = data?.pages.flatMap((page) => page.content) ?? [];
   const hasEmptyResult =
     !isPending && !isError && yeogidoCourses.length === 0;
+  const filterGridClassName =
+    getCourseFilterGridClassName(
+      isExtendedTransportFilterLabel(selectedFilters.transport)
+    );
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -89,7 +99,7 @@ function YeogidoCourseSearchPage() {
   };
 
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-4 pb-10">
+    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-3 pb-10">
       <div className="w-full">
         <SearchBar
           initialQuery={displaySearchQuery}
@@ -101,25 +111,27 @@ function YeogidoCourseSearchPage() {
 
         <div
           ref={filterContainerRef}
-          className="mt-[14px] flex flex-wrap items-start gap-2"
+          className={`mt-3 ${COURSE_FILTER_CONTAINER_CLASS_NAME}`}
         >
-          {yeogidoCourseFilterGroups.map((filter) => (
-            <div
-              key={filter.key}
-              className={filter.key === 'sort' ? 'ml-auto' : ''}
-            >
-              <YeogidoCourseFilterChip
-                label={selectedFilters[filter.key]}
-                options={[...filter.options]}
-                isOpen={openFilterKey === filter.key}
-                onToggle={() => handleFilterToggle(filter.key)}
-                onSelect={(option) => handleFilterSelect(filter.key, option)}
-              />
-            </div>
-          ))}
+          <div className={filterGridClassName}>
+            {yeogidoCourseFilterGroups.map((filter) => (
+              <div
+                key={filter.key}
+                className={getCourseFilterColumnClassName(filter.key)}
+              >
+                <YeogidoCourseFilterChip
+                  label={selectedFilters[filter.key]}
+                  options={[...filter.options]}
+                  isOpen={openFilterKey === filter.key}
+                  onToggle={() => handleFilterToggle(filter.key)}
+                  onSelect={(option) => handleFilterSelect(filter.key, option)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-[27px] grid grid-cols-2 gap-x-4 gap-y-[18px]">
+        <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4">
           {isPending
             ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
                 <ContentCardSkeleton
@@ -135,6 +147,7 @@ function YeogidoCourseSearchPage() {
                   title={course.title}
                   firstInfo={course.duration}
                   secondInfo={course.courseName}
+                  tags={course.tags}
                   className="w-full"
                   imageClassName="aspect-[163/115] h-auto"
                 />
@@ -152,7 +165,7 @@ function YeogidoCourseSearchPage() {
         </div>
 
         {hasEmptyResult ? (
-          <p className="mt-10 text-center text-[13px] font-medium text-grey-4">
+          <p className="mt-10 text-center text-[13px] font-medium text-gray-4">
             검색 결과가 없습니다.
           </p>
         ) : null}
