@@ -1,4 +1,5 @@
 import { regionSearchKeywords } from '../constants/regions';
+import { defaultApiTagCodes, toTagIds } from '../constants/tags';
 import { yeogidoCourseSearchKeywords } from '../constants/yeogidoCourseSearch';
 import type { YeogidoCourseSelectedFilters } from '../pages/yeogido-course/constants/filters';
 import type { YeogidoCourse } from '../pages/yeogido-course/types';
@@ -9,8 +10,8 @@ const MOCK_SEARCH_KEYWORDS = [
   ...yeogidoCourseSearchKeywords,
   ...regionSearchKeywords,
 ] as const;
-const NORMALIZED_MOCK_SEARCH_KEYWORDS = new Set(
-  MOCK_SEARCH_KEYWORDS.map((keyword) => normalizeSearchText(keyword))
+const NORMALIZED_MOCK_SEARCH_KEYWORDS = MOCK_SEARCH_KEYWORDS.map((keyword) =>
+  normalizeSearchText(keyword)
 );
 
 export interface YeogidoCoursePage {
@@ -38,18 +39,8 @@ function hasMockSearchResult(keyword: string) {
     return true;
   }
 
-  if (NORMALIZED_MOCK_SEARCH_KEYWORDS.has(normalizedKeyword)) {
-    return true;
-  }
-
-  const normalizedTokens = keyword
-    .trim()
-    .split(/\s+/)
-    .map((token) => normalizeSearchText(token));
-
-  return (
-    normalizedTokens.length > 1 &&
-    normalizedTokens.every((token) => NORMALIZED_MOCK_SEARCH_KEYWORDS.has(token))
+  return NORMALIZED_MOCK_SEARCH_KEYWORDS.some((mockKeyword) =>
+    mockKeyword.includes(normalizedKeyword)
   );
 }
 
@@ -70,6 +61,7 @@ function createMockCourse(
       filters.transport === '전체'
         ? '뚜벅이 코스'
         : `${filters.transport} 코스`,
+    tags: toTagIds(defaultApiTagCodes),
   };
 }
 

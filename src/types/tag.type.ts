@@ -13,6 +13,21 @@ export type TagId =
   | 'event'
   | 'local-attraction';
 
+export type ApiTagCode =
+  | 'SPRING'
+  | 'SUMMER'
+  | 'AUTUMN'
+  | 'WINTER'
+  | 'NATURE'
+  | 'MOUNTAIN'
+  | 'SEA'
+  | 'RESTAURANT'
+  | 'CAFE'
+  | 'BAKERY'
+  | 'EXPERIENCE'
+  | 'EVENT'
+  | 'LOCAL_ATTRACTION';
+
 export interface TagAssetState {
   inactive: string;
   selected: string;

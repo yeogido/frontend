@@ -22,6 +22,8 @@ function CourseRegionSearchPage() {
     selectedDistrict,
     selectedParentDistrict,
     visibleDistricts,
+    searchLabel,
+    searchPlaceholder,
     clearRecentSearches,
     removeRecentSearch,
     selectCity,
@@ -32,14 +34,14 @@ function CourseRegionSearchPage() {
 
   return (
     <section
-      className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col items-center bg-background pt-14 pb-8"
+      className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col items-center bg-background pt-3 pb-8"
       aria-label="검색 및 지역 선택"
     >
       <SearchBar
         initialQuery={initialKeyword}
         className="z-20"
-        placeholder="코스명 또는 지역명을 검색해 주세요"
-        label="코스명 또는 지역명 검색"
+        placeholder={searchPlaceholder}
+        label={searchLabel}
         suggestions={searchSuggestions}
         onSearch={submitSearch}
       />

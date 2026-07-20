@@ -4,7 +4,7 @@ import { CourseCard, CourseCardSkeleton } from '../../../components/common';
 
 import { initialYeogidoCourseSelectedFilters } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
-import useInfiniteScroll from '../hooks/useInfiniteScroll';
+import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import useYeogidoCourses from '../hooks/useYeogidoCourses';
 import { toRecentCourseCardProps } from './constants/recentCourses';
 

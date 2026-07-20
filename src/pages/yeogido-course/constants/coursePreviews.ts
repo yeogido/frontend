@@ -1,8 +1,6 @@
 import courseMapImage from '../assets/courseimage.svg';
 
-import type { TagType } from '../../../components/common/TagChip';
-
-const defaultTags: TagType[] = ['sea', 'nature', 'summer'];
+import { defaultCardTagIds } from '../../../constants/tags';
 
 export const yeogidoCoursePopularPreviews = [
   {
@@ -12,7 +10,7 @@ export const yeogidoCoursePopularPreviews = [
     duration: '2박 3일',
     courseType: '뚜벅이 코스',
     companion: '혼자',
-    tags: defaultTags,
+    tags: defaultCardTagIds,
     liked: false,
   },
   {
@@ -22,13 +20,13 @@ export const yeogidoCoursePopularPreviews = [
     duration: '2박 3일',
     courseType: '뚜벅이 코스',
     companion: '혼자',
-    tags: defaultTags,
+    tags: defaultCardTagIds,
     liked: false,
   },
 ];
 
 export const yeogidoCourseRecentPreviews = Array.from(
-  { length: 3 },
+  { length: 2 },
   (_, index) => ({
     id: index + 1,
     image: courseMapImage,
@@ -36,7 +34,7 @@ export const yeogidoCourseRecentPreviews = Array.from(
     duration: '2박 3일',
     courseType: '뚜벅이 코스',
     companion: '혼자',
-    tags: defaultTags,
+    tags: defaultCardTagIds,
     liked: index === 0,
   })
 );
