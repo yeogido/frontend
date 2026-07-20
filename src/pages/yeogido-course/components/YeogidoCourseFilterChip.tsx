@@ -20,7 +20,7 @@ function YeogidoCourseFilterChip({
   const listboxId = useId();
 
   return (
-    <div className="relative">
+    <div className="relative w-full min-w-0">
       <button
         id={buttonId}
         type="button"
@@ -28,7 +28,7 @@ function YeogidoCourseFilterChip({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         onClick={onToggle}
-        className="border-gray-2 bg-pure-white text-gray-4 flex h-[29px] min-w-[73px] items-center justify-between gap-1 rounded-full border px-2.5 py-1.5 text-[14px] leading-none font-normal whitespace-nowrap"
+        className="border-gray-2 bg-pure-white text-gray-4 flex h-[29px] w-full items-center justify-between gap-1 rounded-full border px-2.5 py-1.5 text-[14px] leading-none font-normal whitespace-nowrap"
       >
         <span>{label}</span>
         <IoChevronDown
@@ -44,7 +44,7 @@ function YeogidoCourseFilterChip({
           id={listboxId}
           role="listbox"
           aria-labelledby={buttonId}
-          className="absolute top-[33px] left-0 z-20 flex min-w-full flex-col"
+          className="absolute top-[33px] left-0 z-40 flex min-w-full flex-col"
         >
           {options.map((option, index) => {
             const isFirst = index === 0;
@@ -65,11 +65,11 @@ function YeogidoCourseFilterChip({
                 role="option"
                 aria-selected={option === label}
                 onClick={() => onSelect(option)}
-                className={`border-gray-2 bg-pure-white text-gray-4 flex h-[29px] w-full items-center border px-2.5 py-1.5 text-left text-[14px] leading-none font-normal whitespace-nowrap ${optionRadius} ${
+                className={`border-gray-2 bg-pure-white text-gray-4 flex h-[29px] w-full min-w-max items-center border px-2.5 py-1.5 text-left text-[14px] leading-none font-normal whitespace-nowrap ${optionRadius} ${
                   index > 0 ? '-mt-px' : ''
                 } ${option === label ? 'text-black' : ''}`}
               >
-                {option}
+                <span>{option}</span>
               </button>
             );
           })}

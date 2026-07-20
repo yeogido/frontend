@@ -137,10 +137,27 @@ function ContentCard({
 }: ContentCardProps) {
   const { visibleContainerRef, hiddenContainerRef, visibleCount } =
     useResponsiveTagCount(tags);
+  const isClickable = Boolean(onClick);
 
   return (
     <article
       onClick={onClick}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={
+        isClickable
+          ? (event) => {
+              if (event.target !== event.currentTarget) {
+                return;
+              }
+
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onClick?.();
+              }
+            }
+          : undefined
+      }
       className={`
         grow-0
         shrink
@@ -152,7 +169,7 @@ function ContentCard({
         rounded-xl
         bg-[#F9F9F9]
         shadow-[0_1px_5px_rgba(0,0,0,0.07)]
-        cursor-pointer
+        ${isClickable ? 'cursor-pointer' : ''}
         ${className}
       `}
     >
@@ -185,9 +202,9 @@ function ContentCard({
       </div>
 
       {/* Content */}
-      <div className="flex h-[107px] flex-col p-2">
+      <div className="flex h-[107px] min-w-0 flex-col p-2">
         {/* Title */}
-        <h3 className="text-[14px] font-medium leading-none text-[#1C1C1C]">
+        <h3 className="truncate text-[14px] font-medium leading-none text-[#1C1C1C]">
           {title}
         </h3>
 
@@ -201,7 +218,7 @@ function ContentCard({
               className="h-[14px] w-[14px] shrink-0"
             />
 
-            <span className="text-[12px] font-medium leading-none text-[#7F7F7F]">
+            <span className="min-w-0 truncate text-[12px] font-medium leading-none text-[#7F7F7F]">
               {firstInfo}
             </span>
           </div>
@@ -214,7 +231,7 @@ function ContentCard({
               className="h-[14px] w-[14px] shrink-0"
             />
 
-            <span className="text-[12px] font-medium leading-none text-[#7F7F7F]">
+            <span className="min-w-0 truncate text-[12px] font-medium leading-none text-[#7F7F7F]">
               {secondInfo}
             </span>
           </div>

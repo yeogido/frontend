@@ -1,12 +1,18 @@
 import { useCallback } from 'react';
 
 import { ContentCard, ContentCardSkeleton } from '../../../components/common';
+import {
+  COURSE_FILTER_CONTAINER_CLASS_NAME,
+  getCourseFilterColumnClassName,
+  getCourseFilterGridClassName,
+  isExtendedTransportFilterLabel,
+} from '../../../constants/courseFilterLayout';
 
 import courseMapImage from '../assets/courseimage.svg';
 import { YeogidoCourseFilterChip } from '../components';
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
-import useInfiniteScroll from '../hooks/useInfiniteScroll';
+import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
 import useYeogidoCourses from '../hooks/useYeogidoCourses';
 
@@ -29,6 +35,10 @@ function YeogidoCoursePopularPage() {
   } = useYeogidoCourses({ filters: selectedFilters });
 
   const popularCourses = data?.pages.flatMap((page) => page.content) ?? [];
+  const filterGridClassName =
+    getCourseFilterGridClassName(
+      isExtendedTransportFilterLabel(selectedFilters.transport)
+    );
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -42,37 +52,39 @@ function YeogidoCoursePopularPage() {
   });
 
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-4 pb-10">
+    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-3 pb-10">
       <div>
-        <h1 className="text-[18px] leading-none font-semibold text-black">
+        <h1 className="text-[18px] leading-[22px] font-semibold text-black">
           인기 추천 코스
         </h1>
-        <p className="text-gray-4 mt-2 text-[12px] leading-none font-normal">
+        <p className="text-gray-4 mt-[5px] text-[12px] leading-[17px] font-normal">
           여행자들이 가장 많이 찾는 추천 코스
         </p>
       </div>
 
       <div
         ref={filterContainerRef}
-        className="mt-[18px] flex flex-wrap items-start gap-2"
+        className={`mt-[15px] ${COURSE_FILTER_CONTAINER_CLASS_NAME}`}
       >
-        {yeogidoCourseFilterGroups.map((filter) => (
-          <div
-            key={filter.key}
-            className={filter.key === 'sort' ? 'ml-auto' : ''}
-          >
-            <YeogidoCourseFilterChip
-              label={selectedFilters[filter.key]}
-              options={[...filter.options]}
-              isOpen={openFilterKey === filter.key}
-              onToggle={() => handleFilterToggle(filter.key)}
-              onSelect={(option) => handleFilterSelect(filter.key, option)}
-            />
-          </div>
-        ))}
+        <div className={filterGridClassName}>
+          {yeogidoCourseFilterGroups.map((filter) => (
+            <div
+              key={filter.key}
+              className={getCourseFilterColumnClassName(filter.key)}
+            >
+              <YeogidoCourseFilterChip
+                label={selectedFilters[filter.key]}
+                options={[...filter.options]}
+                isOpen={openFilterKey === filter.key}
+                onToggle={() => handleFilterToggle(filter.key)}
+                onSelect={(option) => handleFilterSelect(filter.key, option)}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-[27px] grid grid-cols-2 gap-x-4 gap-y-[18px]">
+      <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4">
         {isPending
           ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
               <ContentCardSkeleton
@@ -88,6 +100,7 @@ function YeogidoCoursePopularPage() {
                 title={course.title}
                 firstInfo={course.duration}
                 secondInfo={course.courseName}
+                tags={course.tags}
                 className="w-full"
                 imageClassName="aspect-[163/115] h-auto"
               />
