@@ -1,4 +1,4 @@
-import type { FestivalApiItem } from './types.ts';
+import type { FestivalApiItem } from './types';
 
 export const normalizeFestivalTag = (tag: string) =>
   tag.trim().toLocaleLowerCase('ko-KR');
