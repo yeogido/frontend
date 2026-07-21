@@ -35,8 +35,8 @@ export function VisitEventCard({
       <span className="bg-main-5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white">
         {order}
       </span>
-      <article className="flex h-[72px] min-w-0 flex-1 items-center rounded-xl bg-background px-2">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gray-2">
+      <article className="bg-background flex h-[72px] min-w-0 flex-1 items-center rounded-xl px-2">
+        <div className="bg-gray-2 h-14 w-14 shrink-0 overflow-hidden rounded-xl">
           <img
             src={event.imageSrc}
             alt=""
@@ -47,12 +47,12 @@ export function VisitEventCard({
           <h2 className="truncate text-sm leading-5 font-semibold text-black">
             {event.name}
           </h2>
-          <p className="mt-1 truncate text-xs leading-4 text-gray-5">
+          <p className="text-gray-5 mt-1 truncate text-xs leading-4">
             {event.address}
           </p>
         </div>
         {dragHandle ?? (
-          <span className="p-2 text-gray-3">
+          <span className="text-gray-3 p-2">
             <DragDots />
           </span>
         )}
@@ -61,7 +61,7 @@ export function VisitEventCard({
   );
 }
 
-function VisitEventlsItem({ event, order }: SortableVisitEventItemProps) {
+function VisitEventItem({ event, order }: SortableVisitEventItemProps) {
   const {
     attributes,
     isDragging,
@@ -82,7 +82,7 @@ function VisitEventlsItem({ event, order }: SortableVisitEventItemProps) {
       aria-label="순서 변경"
       {...attributes}
       {...listeners}
-      className="touch-none flex cursor-grab items-center justify-center p-2 text-gray-3 active:cursor-grabbing"
+      className="text-gray-3 flex cursor-grab touch-none items-center justify-center p-2 active:cursor-grabbing"
     >
       <DragDots />
     </button>
@@ -94,11 +94,7 @@ function VisitEventlsItem({ event, order }: SortableVisitEventItemProps) {
       style={style}
       className={isDragging ? 'opacity-0' : undefined}
     >
-      <VisitEventCard
-        event={event}
-        order={order}
-        dragHandle={dragHandle}
-      />
+      <VisitEventCard event={event} order={order} dragHandle={dragHandle} />
     </li>
   );
 }
