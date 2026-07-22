@@ -63,7 +63,7 @@ function SignupForm() {
   const isEmailValid = SIGNUP_EMAIL_PATTERN.test(email.trim());
   const isCodeFilled = code.trim().length > 0;
 
-  const isFormComplete = isValid && isCodeFilled;
+  const isFormComplete = isValid && isCodeFilled && isCodeVerified;
 
   const handleSendCode = () => {
     if (!isEmailValid) {
@@ -158,6 +158,7 @@ function SignupForm() {
                   {...register('email', {
                     onChange: () => {
                       setIsCodeSent(false);
+                      setIsCodeVerified(false);
                       setCode('');
                     },
                   })}
