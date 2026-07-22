@@ -2,6 +2,8 @@ import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { AuthField } from '../../../../components/auth';
+
 function ResetPasswordForm() {
   const navigate = useNavigate();
   const { state } = useLocation() as {
@@ -36,11 +38,11 @@ function ResetPasswordForm() {
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
       <div className="flex-1">
-        <h1 className="text-[28px] font-bold leading-none text-[#1C1C1C] sm:text-[32px]">
+        <h1 className="text-[28px] font-bold leading-none text-black sm:text-[32px]">
           비밀번호 재설정
         </h1>
 
-        <p className="mt-3 text-xs font-medium text-[#7F7F7F]">
+        <p className="mt-3 text-xs font-medium text-gray-4">
           새로운 비밀번호를 입력하고 변경을 완료해 주세요
         </p>
 
@@ -49,41 +51,33 @@ function ResetPasswordForm() {
           onSubmit={handleSubmit}
         >
           <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="reset-password"
-                className="mb-2 block text-sm font-bold text-[#1C1C1C]"
-              >
-                비밀번호
-              </label>
-
+            <AuthField
+              id="reset-password"
+              label="비밀번호"
+            >
               <input
                 id="reset-password"
                 type="password"
                 placeholder="비밀번호"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
+                className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
-            </div>
+            </AuthField>
 
-            <div>
-              <label
-                htmlFor="reset-password-confirm"
-                className="mb-2 block text-sm font-bold text-[#1C1C1C]"
-              >
-                비밀번호 확인
-              </label>
-
+            <AuthField
+              id="reset-password-confirm"
+              label="비밀번호 확인"
+            >
               <input
                 id="reset-password-confirm"
                 type="password"
                 placeholder="비밀번호 확인"
                 value={passwordConfirm}
                 onChange={(event) => setPasswordConfirm(event.target.value)}
-                className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
+                className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
-            </div>
+            </AuthField>
           </div>
 
           <div className="fixed inset-x-0 bottom-0 z-10">
@@ -91,7 +85,7 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={!isPasswordMatched}
-                className="h-12 w-full cursor-pointer rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-[#E4E4E4] disabled:text-[#A1A1A1] enabled:bg-[#FF6B4A] enabled:text-white"
+                className="h-12 w-full cursor-pointer rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-gray-2 disabled:text-gray-3 enabled:bg-main-5 enabled:text-white"
               >
                 재설정 완료
               </button>
