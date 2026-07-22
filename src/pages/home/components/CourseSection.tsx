@@ -7,11 +7,19 @@ import {
 } from '../../../components/common';
 import type { TagType } from '../../../components/common/TagChip';
 
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+
+const SECTION_MARGIN_TOP = 32;
+const SECTION_PADDING_X = 24;
+const LIST_MARGIN_TOP = 16;
+const CARD_GAP = 16;
+
 function CourseSection() {
-  const isLoading = false; // UI 확인용
-  // const isLoading = true; // Skeleton 확인용
+  const isLoading = false;
+  // const isLoading = true; // 스켈레톤 확인용
 
   const navigate = useNavigate();
+  const scale = useGlobalScale();
 
   const courses: {
     image: string;
@@ -43,8 +51,13 @@ function CourseSection() {
   ];
 
   return (
-    <section className="mt-8">
-      <div className="px-6">
+    <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
+      <div
+        style={{
+          paddingLeft: SECTION_PADDING_X * scale,
+          paddingRight: SECTION_PADDING_X * scale,
+        }}
+      >
         <SectionHeader
           title="여기도 추천 코스"
           actionText="전체보기"
@@ -52,7 +65,15 @@ function CourseSection() {
         />
       </div>
 
-      <div className="mt-4 flex flex-col gap-4 px-6">
+      <div
+        className="flex flex-col"
+        style={{
+          marginTop: LIST_MARGIN_TOP * scale,
+          gap: CARD_GAP * scale,
+          paddingLeft: SECTION_PADDING_X * scale,
+          paddingRight: SECTION_PADDING_X * scale,
+        }}
+      >
         {isLoading ? (
           <>
             <CourseCardSkeleton />

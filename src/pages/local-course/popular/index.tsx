@@ -104,7 +104,6 @@ function LocalCoursePopularPage() {
                 liked={course.liked}
                 tags={course.tags}
                 className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
               />
             ))}
 

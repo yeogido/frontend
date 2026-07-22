@@ -64,7 +64,6 @@ function FestivalRecentPage() {
                 liked={festival.liked}
                 tags={festival.tags}
                 className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
               />
             ))}
 

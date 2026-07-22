@@ -7,17 +7,16 @@ interface ContentCardSkeletonProps {
 
 function ContentCardSkeleton({
   className = '',
-  imageClassName = 'h-[115px]',
+  imageClassName = 'aspect-[163/115]',
 }: ContentCardSkeletonProps) {
   return (
     <article
       className={`
-        grow-0
-        shrink
-        basis-[163px]
-        min-w-[140px]
-        max-w-[163px]
-        h-[222px]
+        flex
+        w-[41.79vw]
+        shrink-0
+        aspect-[163/222]
+        flex-col
         overflow-hidden
         rounded-xl
         bg-[#F9F9F9]
@@ -30,39 +29,39 @@ function ContentCardSkeleton({
       <div className="relative overflow-hidden rounded-[8px]">
         <div className={`${imageClassName} w-full bg-[#EAEAEA]`} />
 
-        <div className="absolute right-2 top-2">
+        <div className="absolute right-[2.05vw] top-[2.05vw]">
           <img
             src={heart}
             alt=""
             aria-hidden="true"
-            className="h-4 w-4"
+            className="h-[4.10vw] w-[4.10vw]"
           />
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex h-[107px] flex-col p-2">
+      <div className="flex min-h-0 flex-1 flex-col p-[2.05vw]">
         {/* Title */}
-        <div className="h-[14px] w-[88px] rounded bg-[#EAEAEA]" />
+        <div className="h-[3.59vw] w-[22.56vw] rounded bg-[#EAEAEA]" />
 
         {/* Info */}
-        <div className="mt-2 flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <div className="h-[14px] w-[14px] rounded-full bg-[#EAEAEA]" />
-            <div className="h-[12px] w-[72px] rounded bg-[#EAEAEA]" />
+        <div className="mt-[2.05vw] flex flex-col gap-[1.03vw]">
+          <div className="flex items-center gap-[1.03vw]">
+            <div className="h-[3.59vw] w-[3.59vw] rounded-full bg-[#EAEAEA]" />
+            <div className="h-[3.08vw] w-[18.46vw] rounded bg-[#EAEAEA]" />
           </div>
 
-          <div className="flex items-center gap-1">
-            <div className="h-[14px] w-[14px] rounded-full bg-[#EAEAEA]" />
-            <div className="h-[12px] w-[96px] rounded bg-[#EAEAEA]" />
+          <div className="flex items-center gap-[1.03vw]">
+            <div className="h-[3.59vw] w-[3.59vw] rounded-full bg-[#EAEAEA]" />
+            <div className="h-[3.08vw] w-[24.62vw] rounded bg-[#EAEAEA]" />
           </div>
         </div>
 
         {/* Tags */}
-        <div className="mt-auto border-t border-[#E4E4E4] pt-2">
-          <div className="flex gap-1">
-            <div className="h-5 w-12 rounded-full bg-[#EAEAEA]" />
-            <div className="h-5 w-14 rounded-full bg-[#EAEAEA]" />
+        <div className="mt-auto border-t border-[#E4E4E4] pt-[2.05vw]">
+          <div className="flex gap-[1.03vw]">
+            <div className="h-[5.13vw] w-[12.31vw] rounded-full bg-[#EAEAEA]" />
+            <div className="h-[5.13vw] w-[14.36vw] rounded-full bg-[#EAEAEA]" />
           </div>
         </div>
       </div>
