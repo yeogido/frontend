@@ -41,7 +41,11 @@ function SignupForm() {
   const [code, setCode] = useState('');
   const [isCodeVerified, setIsCodeVerified] = useState(false);
 
-  const { register, control, formState: { isValid } } = useForm<SignupFormValues>({
+  const {
+    register,
+    control,
+    formState: { isValid, errors },
+  } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     mode: 'onChange',
     defaultValues: {
@@ -56,7 +60,7 @@ function SignupForm() {
   });
 
   const email = useWatch({ control, name: 'email' });
-  const isEmailValid = SIGNUP_EMAIL_PATTERN.test(email);
+  const isEmailValid = SIGNUP_EMAIL_PATTERN.test(email.trim());
   const isCodeFilled = code.trim().length > 0;
 
   const isFormComplete = isValid && isCodeFilled;
@@ -132,6 +136,7 @@ function SignupForm() {
           <AuthField
             id="signup-name"
             label="이름"
+            error={errors.name?.message}
           >
               <input
                 {...register('name')}
@@ -145,6 +150,7 @@ function SignupForm() {
           <SectionField
             label="이메일"
             htmlFor="signup-email"
+            error={errors.email?.message}
           >
             <div className="space-y-2">
               <div className="flex gap-2">
@@ -214,6 +220,15 @@ function SignupForm() {
                 className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
 
+              {errors.password && (
+                <p
+                  role="alert"
+                  className="text-xs font-medium text-main-5"
+                >
+                  {errors.password.message}
+                </p>
+              )}
+
               <input
                 {...register('passwordConfirm')}
                 id="signup-password-confirm"
@@ -227,12 +242,22 @@ function SignupForm() {
               >
                 비밀번호 확인
               </label>
+
+              {errors.passwordConfirm && (
+                <p
+                  role="alert"
+                  className="text-xs font-medium text-main-5"
+                >
+                  {errors.passwordConfirm.message}
+                </p>
+              )}
             </div>
           </SectionField>
 
           <AuthField
             id="signup-region"
             label="사는 지역"
+            error={errors.region?.message}
           >
             <SelectField>
               <select
@@ -256,6 +281,7 @@ function SignupForm() {
           <AuthField
             id="signup-gender"
             label="성별"
+            error={errors.gender?.message}
           >
             <SelectField>
               <select
@@ -279,6 +305,7 @@ function SignupForm() {
           <AuthField
             id="signup-birth-year"
             label="태어난 연도"
+            error={errors.birthYear?.message}
           >
             <SelectField>
               <select
@@ -316,10 +343,12 @@ function SignupForm() {
 function SectionField({
   label,
   htmlFor,
+  error,
   children,
 }: {
   label: string;
   htmlFor: string;
+  error?: string;
   children: ReactNode;
 }) {
   return (
@@ -332,6 +361,16 @@ function SectionField({
       </label>
 
       {children}
+
+      {error && (
+        <p
+          id={`${htmlFor}-error`}
+          role="alert"
+          className="mt-1 text-xs font-medium text-main-5"
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }
