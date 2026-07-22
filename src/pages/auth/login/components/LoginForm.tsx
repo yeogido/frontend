@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SiKakaotalk, SiNaver } from 'react-icons/si';
 
+import { AuthField } from '../../../../components/auth';
 import {
   loginSchema,
   type LoginFormValues,
@@ -35,7 +35,7 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
       <div className="flex-1">
-        <h1 className="text-[28px] font-bold leading-none text-[#1C1C1C] sm:text-[32px]">
+        <h1 className="text-[28px] font-bold leading-none text-black sm:text-[32px]">
           로그인
         </h1>
 
@@ -44,7 +44,7 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
           className="mt-9"
         >
           <div className="space-y-5">
-            <Field
+            <AuthField
               id="login-email"
               label="이메일"
               error={errors.email?.message}
@@ -59,11 +59,11 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
                 aria-describedby={
                   errors.email ? 'login-email-error' : undefined
                 }
-                className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
+                className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
-            </Field>
+            </AuthField>
 
-            <Field
+            <AuthField
               id="login-password"
               label="비밀번호"
               error={errors.password?.message}
@@ -80,36 +80,36 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
                     ? 'login-password-error'
                     : undefined
                 }
-                className="block h-12 w-full rounded-[12px] border border-[#E8E8E8] bg-white px-4 text-sm outline-none placeholder:text-[#A1A1A1] focus:border-[#FF6B4A]"
+                className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
-            </Field>
+            </AuthField>
           </div>
 
           <button
             type="submit"
             disabled={!isValid || isSubmitting}
-            className="mt-4 h-12 w-full cursor-pointer rounded-[12px] bg-[#E4E4E4] text-[15px] font-bold text-[#A1A1A1] disabled:cursor-not-allowed enabled:bg-[#FF6B4A] enabled:text-white"
+            className="mt-4 h-12 w-full cursor-pointer rounded-[12px] bg-gray-2 text-[15px] font-bold text-gray-3 disabled:cursor-not-allowed enabled:bg-main-5 enabled:text-white"
           >
             {isSubmitting ? '로그인 중...' : '로그인'}
           </button>
 
           {submitError && (
-            <p className="mt-3 text-center text-xs font-medium text-[#FF6B4A]">
+            <p className="mt-3 text-center text-xs font-medium text-main-5">
               {submitError}
             </p>
           )}
         </form>
 
-        <div className="mt-4 flex items-center justify-center gap-3 text-xs font-medium text-[#A1A1A1]">
+        <div className="mt-4 flex items-center justify-center gap-3 text-xs font-medium text-gray-3">
           <Link
             to="/signup"
-            className="cursor-pointer text-[#A1A1A1]"
+            className="cursor-pointer text-gray-3"
           >
             회원가입
           </Link>
 
           <span
-            className="h-3 w-px bg-[#D5D5D5]"
+            className="h-3 w-px bg-gray-2"
             aria-hidden="true"
           />
 
@@ -123,11 +123,11 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
 
         <div className="mt-14">
           <div className="flex items-center gap-4">
-            <span className="h-px min-w-0 flex-1 bg-[#E4E4E4]" />
-            <p className="shrink-0 text-xs font-medium text-[#A1A1A1]">
+            <span className="h-px min-w-0 flex-1 bg-gray-2" />
+            <p className="shrink-0 text-xs font-medium text-gray-3">
               SNS로 간편하게 로그인하세요
             </p>
-            <span className="h-px min-w-0 flex-1 bg-[#E4E4E4]" />
+            <span className="h-px min-w-0 flex-1 bg-gray-2" />
           </div>
 
           <div className="mt-6 flex justify-center gap-5">
@@ -156,38 +156,6 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
         </div>
       </div>
     </section>
-  );
-}
-
-interface FieldProps {
-  id: string;
-  label: string;
-  error?: string;
-  children: ReactNode;
-}
-
-function Field({ id, label, error, children }: FieldProps) {
-  return (
-    <div>
-      <label
-        htmlFor={id}
-        className="mb-2 block text-sm font-bold text-[#1C1C1C]"
-      >
-        {label}
-      </label>
-
-      {children}
-
-      {error && (
-        <p
-          id={`${id}-error`}
-          role="alert"
-          className="mt-1 text-xs font-medium text-[#FF6B4A]"
-        >
-          {error}
-        </p>
-      )}
-    </div>
   );
 }
 
