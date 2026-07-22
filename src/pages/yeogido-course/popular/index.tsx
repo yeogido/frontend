@@ -102,7 +102,6 @@ function YeogidoCoursePopularPage() {
                 secondInfo={course.courseName}
                 tags={course.tags}
                 className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
               />
             ))}
 

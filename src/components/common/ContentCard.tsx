@@ -1,6 +1,5 @@
 import {
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -10,7 +9,24 @@ import heart from '../../assets/icons/heart.svg';
 import location from '../../assets/icons/location.svg';
 import oheart from '../../assets/icons/oheart.svg';
 
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+
 import TagChip, { type TagType } from './TagChip';
+
+// 모든 수치는 Figma 390 디자인 기준(카드 자체 폭 163 기준) 리터럴 px
+const CARD_DESIGN_WIDTH = 163;
+const CARD_HEIGHT = 222;
+const IMAGE_HEIGHT = 115;
+const CONTENT_HEIGHT = 107;
+const CONTENT_PADDING = 8;
+const TITLE_SIZE = 14;
+const INFO_SIZE = 12;
+const ICON_SIZE = 14;
+const HEART_SIZE = 16;
+const HEART_TOP = 8;
+const HEART_RIGHT = 8;
+const TAG_HEIGHT = 20;
+const TAG_GAP = 4;
 
 interface ContentCardProps {
   image: string;
@@ -19,7 +35,6 @@ interface ContentCardProps {
   secondInfo: string;
   liked?: boolean;
   className?: string;
-  imageClassName?: string;
   tags?: TagType[];
   onClick?: () => void;
   onLikeClick?: () => void;
@@ -29,96 +44,63 @@ function useResponsiveTagCount(tags: TagType[] | undefined) {
   const visibleContainerRef = useRef<HTMLDivElement>(null);
   const hiddenContainerRef = useRef<HTMLDivElement>(null);
 
-  const [tagWidths, setTagWidths] = useState<number[]>([]);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [gap, setGap] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(0);
 
   const tagsKey = tags?.join('|') ?? '';
 
   useLayoutEffect(() => {
+    const container = visibleContainerRef.current;
     const hidden = hiddenContainerRef.current;
 
-    if (!hidden || !tags || tags.length === 0) {
+    if (!container || !hidden || !tags || tags.length === 0) {
+      setVisibleCount(0);
       return;
     }
 
-    const elements = Array.from(hidden.children) as HTMLElement[];
-    const widths = new Array(elements.length).fill(0);
+    const recalculate = () => {
+      const elements = Array.from(hidden.children) as HTMLElement[];
+      const widths = elements.map(
+        (el) => el.getBoundingClientRect().width,
+      );
 
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const index = elements.indexOf(entry.target as HTMLElement);
-
-        if (index !== -1) {
-          widths[index] = entry.contentRect.width;
-        }
+      if (widths.length === 0 || widths.some((w) => w === 0)) {
+        return;
       }
 
-      setTagWidths([...widths]);
-    });
+      const style = getComputedStyle(container);
+      const gap =
+        Number.parseFloat(style.columnGap || style.gap || '0') || 0;
 
-    elements.forEach((el) => observer.observe(el));
+      const containerWidth = container.getBoundingClientRect().width;
+      const EPSILON = 0.5;
+
+      let total = 0;
+      let count = 0;
+
+      for (let i = 0; i < widths.length; i++) {
+        const width = widths[i];
+        const next = count === 0 ? width : total + gap + width;
+
+        if (next > containerWidth + EPSILON) {
+          break;
+        }
+
+        total = next;
+        count++;
+      }
+
+      setVisibleCount(count);
+    };
+
+    recalculate();
+
+    const observer = new ResizeObserver(recalculate);
+    observer.observe(container);
+    observer.observe(hidden);
 
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tagsKey]);
-
-  // 카드 폭 자체가 반응형으로 바뀌므로, 여기서도 실시간으로 재측정된다.
-  useLayoutEffect(() => {
-    const container = visibleContainerRef.current;
-
-    if (!container) {
-      return;
-    }
-
-    const update = () => {
-      setContainerWidth(container.clientWidth);
-
-      const style = getComputedStyle(container);
-      const parsedGap = Number.parseFloat(
-        style.columnGap || style.gap || '0',
-      );
-
-      setGap(Number.isNaN(parsedGap) ? 0 : parsedGap);
-    };
-
-    update();
-
-    const observer = new ResizeObserver(update);
-    observer.observe(container);
-
-    return () => observer.disconnect();
-  }, [tagsKey]);
-
-  const visibleCount = useMemo(() => {
-    if (!tags || tags.length === 0) {
-      return 0;
-    }
-
-    const allMeasured =
-      tagWidths.length === tags.length && tagWidths.every((w) => w > 0);
-
-    if (!allMeasured) {
-      return 0;
-    }
-
-    let totalWidth = 0;
-    let count = 0;
-
-    for (let i = 0; i < tagWidths.length; i++) {
-      const width = tagWidths[i];
-      const nextWidth = count === 0 ? width : totalWidth + gap + width;
-
-      if (nextWidth > containerWidth) {
-        break;
-      }
-
-      totalWidth = nextWidth;
-      count++;
-    }
-
-    return count;
-  }, [tags, tagWidths, containerWidth, gap]);
 
   return { visibleContainerRef, hiddenContainerRef, visibleCount };
 }
@@ -130,140 +112,168 @@ function ContentCard({
   secondInfo,
   liked = false,
   className = '',
-  imageClassName = 'h-[115px]',
   tags,
   onClick,
   onLikeClick,
 }: ContentCardProps) {
+  const scale = useGlobalScale();
+
   const { visibleContainerRef, hiddenContainerRef, visibleCount } =
     useResponsiveTagCount(tags);
+
   const isClickable = Boolean(onClick);
 
   return (
-    <article
-      onClick={onClick}
-      role={isClickable ? 'button' : undefined}
-      tabIndex={isClickable ? 0 : undefined}
-      onKeyDown={
-        isClickable
-          ? (event) => {
-              if (event.target !== event.currentTarget) {
-                return;
-              }
-
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                onClick?.();
-              }
-            }
-          : undefined
-      }
-      className={`
-        grow-0
-        shrink
-        basis-[163px]
-        min-w-[140px]
-        max-w-[163px]
-        h-[222px]
-        overflow-hidden
-        rounded-xl
-        bg-[#F9F9F9]
-        shadow-[0_1px_5px_rgba(0,0,0,0.07)]
-        ${isClickable ? 'cursor-pointer' : ''}
-        ${className}
-      `}
+    <div
+      className={`shrink-0 overflow-hidden ${className}`}
+      style={{
+        width: CARD_DESIGN_WIDTH * scale,
+        height: CARD_HEIGHT * scale,
+      }}
     >
-      {/* Image */}
-      <div className="relative overflow-hidden rounded-[8px]">
-        {image ? (
-          <img
-            src={image}
-            alt={title}
-            className={`${imageClassName} w-full object-cover`}
-          />
-        ) : (
-          <div className={`${imageClassName} w-full bg-[#EAEAEA]`} />
-        )}
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onLikeClick?.();
-          }}
-          className="absolute right-2 top-2"
-        >
-          <img
-            src={liked ? oheart : heart}
-            alt="좋아요"
-            className="h-4 w-4"
-          />
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="flex h-[107px] min-w-0 flex-col p-2">
-        {/* Title */}
-        <h3 className="truncate text-[14px] font-medium leading-none text-[#1C1C1C]">
-          {title}
-        </h3>
-
-        {/* Info */}
-        <div className="mt-2 flex flex-col gap-1">
-          <div className="flex items-center gap-1">
+      <div
+        onClick={onClick}
+        role={isClickable ? 'button' : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        className={`
+          flex
+          flex-col
+          overflow-hidden
+          rounded-xl
+          bg-[#F9F9F9]
+          shadow-[0_1px_5px_rgba(0,0,0,0.07)]
+          ${isClickable ? 'cursor-pointer' : ''}
+        `}
+        style={{
+          width: CARD_DESIGN_WIDTH,
+          height: CARD_HEIGHT,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
+      >
+        {/* Image */}
+        <div className="relative overflow-hidden rounded-[8px]">
+          {image ? (
             <img
-              src={calendar}
-              alt=""
-              aria-hidden="true"
-              className="h-[14px] w-[14px] shrink-0"
+              src={image}
+              alt={title}
+              className="w-full object-cover"
+              style={{ height: IMAGE_HEIGHT }}
             />
+          ) : (
+            <div
+              className="w-full bg-[#EAEAEA]"
+              style={{ height: IMAGE_HEIGHT }}
+            />
+          )}
 
-            <span className="min-w-0 truncate text-[12px] font-medium leading-none text-[#7F7F7F]">
-              {firstInfo}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onLikeClick?.();
+            }}
+            className="absolute"
+            style={{ right: HEART_RIGHT, top: HEART_TOP }}
+          >
             <img
-              src={location}
-              alt=""
-              aria-hidden="true"
-              className="h-[14px] w-[14px] shrink-0"
+              src={liked ? oheart : heart}
+              alt="좋아요"
+              style={{ height: HEART_SIZE, width: HEART_SIZE }}
             />
-
-            <span className="min-w-0 truncate text-[12px] font-medium leading-none text-[#7F7F7F]">
-              {secondInfo}
-            </span>
-          </div>
+          </button>
         </div>
 
-        {/* Tags */}
-        {tags && tags.length > 0 && (
-          <>
-            <div
-              ref={hiddenContainerRef}
-              className="absolute invisible flex gap-1"
-              aria-hidden="true"
-            >
-              {tags.map((tag, index) => (
-                <TagChip key={`measure-${tag}-${index}`} type={tag} />
-              ))}
+        {/* Content */}
+        <div
+          className="flex min-w-0 flex-col"
+          style={{ height: CONTENT_HEIGHT, padding: CONTENT_PADDING }}
+        >
+          {/* Title */}
+          <h3
+            className="truncate font-medium leading-none text-[#1C1C1C]"
+            style={{ fontSize: TITLE_SIZE }}
+          >
+            {title}
+          </h3>
+
+          {/* Info */}
+          <div className="mt-2 flex flex-col gap-1">
+            <div className="flex items-center gap-1">
+              <img
+                src={calendar}
+                alt=""
+                aria-hidden="true"
+                className="shrink-0"
+                style={{ height: ICON_SIZE, width: ICON_SIZE }}
+              />
+
+              <span
+                className="min-w-0 truncate font-medium leading-none text-[#7F7F7F]"
+                style={{ fontSize: INFO_SIZE }}
+              >
+                {firstInfo}
+              </span>
             </div>
 
-            <div className="mt-auto border-t border-[#E4E4E4] pt-2">
-              <div
-                ref={visibleContainerRef}
-                className="flex flex-nowrap items-center gap-1 overflow-hidden"
+            <div className="flex items-center gap-1">
+              <img
+                src={location}
+                alt=""
+                aria-hidden="true"
+                className="shrink-0"
+                style={{ height: ICON_SIZE, width: ICON_SIZE }}
+              />
+
+              <span
+                className="min-w-0 truncate font-medium leading-none text-[#7F7F7F]"
+                style={{ fontSize: INFO_SIZE }}
               >
-                {tags.slice(0, visibleCount).map((tag, index) => (
-                  <TagChip key={`${tag}-${index}`} type={tag} />
+                {secondInfo}
+              </span>
+            </div>
+          </div>
+
+          {/* Tags */}
+          {tags && tags.length > 0 && (
+            <>
+              <div
+                ref={hiddenContainerRef}
+                className="absolute invisible flex"
+                style={{ gap: TAG_GAP }}
+                aria-hidden="true"
+              >
+                {tags.map((tag, index) => (
+                  <TagChip
+                    key={`measure-${tag}-${index}`}
+                    type={tag}
+                    className="w-auto"
+                    style={{ height: TAG_HEIGHT }}
+                  />
                 ))}
               </div>
-            </div>
-          </>
-        )}
+
+              <div className="mt-auto border-t border-[#E4E4E4] pt-2">
+                <div
+                  ref={visibleContainerRef}
+                  className="flex flex-nowrap items-center overflow-hidden"
+                  style={{ gap: TAG_GAP }}
+                >
+                  {tags.slice(0, visibleCount).map((tag, index) => (
+                    <TagChip
+                      key={`${tag}-${index}`}
+                      type={tag}
+                      className="w-auto"
+                      style={{ height: TAG_HEIGHT }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </article>
+    </div>
   );
 }
 
