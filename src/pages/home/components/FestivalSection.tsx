@@ -13,8 +13,8 @@ const LIST_MARGIN_TOP = 16;
 const CARD_GAP = 16;
 
 function FestivalSection() {
-  // const isLoading = false;
-  const isLoading = true; // 스켈레톤 확인용
+  const isLoading = false;
+  // const isLoading = true; // 스켈레톤 확인용
 
   const navigate = useNavigate();
   const scale = useGlobalScale();
