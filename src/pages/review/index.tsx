@@ -49,7 +49,7 @@ function ReviewPage() {
     searchParams.get('courseId');
 
   const [courseData, setCourseData] = useState<CourseData | null>(null);
-  const [isLoadingCourse, setIsLoadingCourse] = useState(false);
+  const [isLoadingCourse, setIsLoadingCourse] = useState(Boolean(targetId));
 
   const [rating, setRating] = useState(3);
   const [review, setReview] = useState('');
@@ -65,7 +65,6 @@ function ReviewPage() {
   useEffect(() => {
     if (!targetId) return;
 
-    setIsLoadingCourse(true);
     // TODO: 백엔드 API 연동 시 targetType별 분기 처리
     // 예: targetType === 'local-recommendation' ? fetchLocalRecommendation(targetId) : fetchYeogidoCourse(targetId)
     const timer = setTimeout(() => {

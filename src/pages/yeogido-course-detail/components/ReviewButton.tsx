@@ -17,11 +17,14 @@ function ReviewButton({
   const currentId = propId ?? propCourseId ?? params.courseId ?? params.id;
 
   const handleNavigate = () => {
-    if (currentId) {
-      navigate(`/review?type=${type}&id=${currentId}`);
-    } else {
-      navigate(`/review?type=${type}`);
+    const searchParams = new URLSearchParams();
+    if (type !== undefined) {
+      searchParams.set('type', String(type));
     }
+    if (currentId !== undefined) {
+      searchParams.set('id', String(currentId));
+    }
+    navigate(`/review?${searchParams.toString()}`);
   };
 
   return (
