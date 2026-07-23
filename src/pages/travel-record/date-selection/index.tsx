@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import backIcon from './assets/back-icon.svg';
@@ -15,8 +15,8 @@ function TravelRecordDateSelectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as TravelDateSelectionLocationState | null;
-  const selectedRegion =
-    locationState?.selectedRegion ?? getTravelRecordDraftRegion();
+  const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
+  const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const photoInputRef = useRef<HTMLInputElement>(null);
   const {
     canAddPhoto,

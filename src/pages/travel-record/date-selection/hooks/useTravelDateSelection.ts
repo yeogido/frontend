@@ -12,12 +12,6 @@ import {
 } from '../utils/calendar';
 
 const createToday = () => getStartOfDay(new Date());
-const getPastOrToday = (date: Date) => {
-  const today = createToday();
-
-  return date.getTime() > today.getTime() ? today : date;
-};
-
 const getStartOfWeek = (date: Date) => {
   const dayOfWeek = date.getDay();
   const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -32,7 +26,7 @@ const getAdjacentMonth = (
 ) => new Date(year, monthIndex + offset, 1);
 
 const getPresetRange = (
-  preset: TravelDatePreset,
+  preset: Exclude<TravelDatePreset, 'custom'>,
   baseDate: Date,
 ): TravelDateRange => {
   const startDate = getStartOfDay(baseDate);
@@ -50,23 +44,6 @@ const getPresetRange = (
 
       return { startDate: startOfWeek, endDate: startDate };
     }
-    case 'custom':
-      return { startDate, endDate: startDate };
-  }
-};
-
-const getCalendarDateRange = (
-  preset: Exclude<TravelDatePreset, 'custom'>,
-  baseDate: Date,
-): TravelDateRange => {
-  const startDate = getStartOfDay(baseDate);
-
-  switch (preset) {
-    case 'today':
-    case 'yesterday':
-      return { startDate, endDate: startDate };
-    case 'this-week':
-      return { startDate, endDate: getPastOrToday(addDays(startDate, 6)) };
   }
 };
 
@@ -113,30 +90,15 @@ function useTravelDateSelection() {
 
     const selectedDate = getStartOfDay(date);
 
-    if (selectedPreset === 'custom') {
-      if (
-        !selectedRange ||
-        !isSameDate(selectedRange.startDate, selectedRange.endDate)
-      ) {
-        setSelectedRange({
-          startDate: selectedDate,
-          endDate: selectedDate,
-        });
-        setVisibleYear(date.getFullYear());
-        setVisibleMonthIndex(date.getMonth());
-
-        return;
-      }
-
-      const startDate = selectedRange.startDate;
-      const [nextStartDate, nextEndDate] =
-        selectedDate.getTime() < startDate.getTime()
-          ? [selectedDate, startDate]
-          : [startDate, selectedDate];
-
+    if (
+      selectedPreset !== 'custom' ||
+      !selectedRange ||
+      !isSameDate(selectedRange.startDate, selectedRange.endDate)
+    ) {
+      setSelectedPreset('custom');
       setSelectedRange({
-        startDate: nextStartDate,
-        endDate: nextEndDate,
+        startDate: selectedDate,
+        endDate: selectedDate,
       });
       setVisibleYear(date.getFullYear());
       setVisibleMonthIndex(date.getMonth());
@@ -144,9 +106,16 @@ function useTravelDateSelection() {
       return;
     }
 
-    const range = getCalendarDateRange(selectedPreset, selectedDate);
+    const startDate = selectedRange.startDate;
+    const [nextStartDate, nextEndDate] =
+      selectedDate.getTime() < startDate.getTime()
+        ? [selectedDate, startDate]
+        : [startDate, selectedDate];
 
-    setSelectedRange(range);
+    setSelectedRange({
+      startDate: nextStartDate,
+      endDate: nextEndDate,
+    });
     setVisibleYear(date.getFullYear());
     setVisibleMonthIndex(date.getMonth());
   };

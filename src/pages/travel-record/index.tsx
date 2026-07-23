@@ -27,11 +27,10 @@ function TravelRecordPage() {
 
   return (
     <section className="relative mx-auto min-h-screen w-full max-w-[390px] px-6 pt-3 pb-28">
-      <div className="flex items-center gap-[30px]" role="tablist">
+      <div className="flex items-center gap-[30px]">
         <button
           type="button"
-          role="tab"
-          aria-selected={activeView === 'folder'}
+          aria-pressed={activeView === 'folder'}
           onClick={() => setActiveView('folder')}
           className={`text-[20px] leading-none font-semibold whitespace-nowrap ${
             activeView === 'folder' ? 'text-black' : 'text-gray-3'
@@ -41,8 +40,7 @@ function TravelRecordPage() {
         </button>
         <button
           type="button"
-          role="tab"
-          aria-selected={activeView === 'map'}
+          aria-pressed={activeView === 'map'}
           onClick={() => setActiveView('map')}
           className={`text-[20px] leading-none font-semibold whitespace-nowrap ${
             activeView === 'map' ? 'text-black' : 'text-gray-3'

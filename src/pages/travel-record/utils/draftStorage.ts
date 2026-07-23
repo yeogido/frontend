@@ -26,10 +26,14 @@ export const saveTravelRecordDraftRegion = (
     return;
   }
 
-  window.sessionStorage.setItem(
-    TRAVEL_RECORD_DRAFT_REGION_KEY,
-    JSON.stringify(region),
-  );
+  try {
+    window.sessionStorage.setItem(
+      TRAVEL_RECORD_DRAFT_REGION_KEY,
+      JSON.stringify(region),
+    );
+  } catch {
+    // Storage can be blocked or full. Continue without a persisted draft.
+  }
 };
 
 export const getTravelRecordDraftRegion = () => {
@@ -37,15 +41,21 @@ export const getTravelRecordDraftRegion = () => {
     return null;
   }
 
-  const storedRegion = window.sessionStorage.getItem(
-    TRAVEL_RECORD_DRAFT_REGION_KEY,
-  );
+  let storedRegion: string | null;
 
-  if (!storedRegion) {
+  try {
+    storedRegion = window.sessionStorage.getItem(
+      TRAVEL_RECORD_DRAFT_REGION_KEY,
+    );
+  } catch {
     return null;
   }
 
   try {
+    if (!storedRegion) {
+      return null;
+    }
+
     const parsedRegion: unknown = JSON.parse(storedRegion);
 
     return isTravelRecordDraftRegion(parsedRegion) ? parsedRegion : null;

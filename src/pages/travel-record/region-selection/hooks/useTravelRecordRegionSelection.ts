@@ -109,8 +109,17 @@ function useTravelRecordRegionSelection() {
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (filteredRegions.length > 0) {
-      selectRegion(filteredRegions[0]);
+    const firstRegion = filteredRegions[0];
+
+    if (firstRegion) {
+      selectRegion(firstRegion);
+      return;
+    }
+
+    const firstSuggestion = visibleSuggestions[0];
+
+    if (firstSuggestion) {
+      selectRegionName(firstSuggestion);
     }
   };
 

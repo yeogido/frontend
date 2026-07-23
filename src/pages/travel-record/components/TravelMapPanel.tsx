@@ -21,7 +21,7 @@ function TravelMapPanel({ folders }: TravelMapPanelProps) {
 
       accumulator.push({
         regionCode: folder.regionCode,
-        regionName: folder.title,
+        regionName: folder.regionName,
         count: 1,
       });
 

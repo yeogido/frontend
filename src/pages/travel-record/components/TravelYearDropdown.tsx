@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IoChevronDown } from 'react-icons/io5';
 
 interface TravelYearDropdownProps {
@@ -12,8 +12,6 @@ function TravelYearDropdown({
   years,
   onChange,
 }: TravelYearDropdownProps) {
-  const buttonId = useId();
-  const listboxId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -37,11 +35,8 @@ function TravelYearDropdown({
   return (
     <div ref={rootRef} className="relative mt-4 h-8 w-[86px]">
       <button
-        id={buttonId}
         type="button"
-        aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-controls={listboxId}
         aria-label={`여행 기록 연도 선택, 현재 ${value}년`}
         onClick={() => setIsOpen((current) => !current)}
         className="flex h-8 w-[86px] items-center justify-center gap-0.5 rounded-full bg-gray-2 px-2 py-1 text-[18px] leading-none font-medium text-gray-4"
@@ -57,9 +52,6 @@ function TravelYearDropdown({
 
       {isOpen ? (
         <div
-          id={listboxId}
-          role="listbox"
-          aria-labelledby={buttonId}
           className="absolute top-9 left-0 z-50 flex w-[86px] flex-col items-start"
         >
           {years.map((year, index) => {
@@ -70,8 +62,7 @@ function TravelYearDropdown({
               <button
                 key={year}
                 type="button"
-                role="option"
-                aria-selected={year === value}
+                aria-pressed={year === value}
                 onClick={() => handleSelect(year)}
                 className={`h-8 w-full bg-gray-2 px-2 text-left text-[18px] leading-none font-medium whitespace-nowrap text-gray-4 ${
                   isFirst ? 'rounded-t-xl' : ''
