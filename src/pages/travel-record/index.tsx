@@ -30,7 +30,7 @@ function TravelRecordPage() {
       <div className="flex items-center gap-[30px]">
         <button
           type="button"
-          aria-pressed={activeView === 'folder'}
+          aria-current={activeView === 'folder' ? 'page' : undefined}
           onClick={() => setActiveView('folder')}
           className={`text-[20px] leading-none font-semibold whitespace-nowrap ${
             activeView === 'folder' ? 'text-black' : 'text-gray-3'
@@ -40,7 +40,7 @@ function TravelRecordPage() {
         </button>
         <button
           type="button"
-          aria-pressed={activeView === 'map'}
+          aria-current={activeView === 'map' ? 'page' : undefined}
           onClick={() => setActiveView('map')}
           className={`text-[20px] leading-none font-semibold whitespace-nowrap ${
             activeView === 'map' ? 'text-black' : 'text-gray-3'

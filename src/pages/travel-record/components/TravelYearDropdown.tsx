@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { IoChevronDown } from 'react-icons/io5';
 
 interface TravelYearDropdownProps {
@@ -32,6 +32,12 @@ function TravelYearDropdown({
     setIsOpen(false);
   };
 
+  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Escape') {
+      setIsOpen(false);
+    }
+  };
+
   return (
     <div ref={rootRef} className="relative mt-4 h-8 w-[86px]">
       <button
@@ -39,6 +45,7 @@ function TravelYearDropdown({
         aria-expanded={isOpen}
         aria-label={`여행 기록 연도 선택, 현재 ${value}년`}
         onClick={() => setIsOpen((current) => !current)}
+        onKeyDown={handleTriggerKeyDown}
         className="flex h-8 w-[86px] items-center justify-center gap-0.5 rounded-full bg-gray-2 px-2 py-1 text-[18px] leading-none font-medium text-gray-4"
       >
         <span>{value}</span>
@@ -62,7 +69,7 @@ function TravelYearDropdown({
               <button
                 key={year}
                 type="button"
-                aria-pressed={year === value}
+                aria-current={year === value ? 'true' : undefined}
                 onClick={() => handleSelect(year)}
                 className={`h-8 w-full bg-gray-2 px-2 text-left text-[18px] leading-none font-medium whitespace-nowrap text-gray-4 ${
                   isFirst ? 'rounded-t-xl' : ''
