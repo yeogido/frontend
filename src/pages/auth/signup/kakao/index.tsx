@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { KakaoIcon } from '../../../../components/auth';
 import { Logo } from '../../../../components/common';
 
 const regions = ['서울', '경기', '인천', '강원', '충북', '충남', '대전', '세종', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주'];
@@ -40,9 +41,10 @@ function KakaoSignupPage() {
 
           <div className="mt-8 rounded-[12px] bg-[#FEE500] px-5 py-4">
             <div className="flex items-start gap-4">
-              <div className="mt-[2px] flex size-10 shrink-0 items-center justify-center rounded-full bg-black text-white">
-                <span className="text-[18px] leading-none">●</span>
-              </div>
+              <KakaoIcon
+                className="mt-[2px] size-5 shrink-0 text-black"
+                aria-hidden="true"
+              />
 
               <div>
                 <p className="text-[16px] font-bold leading-[1.35] text-black">

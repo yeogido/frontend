@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SiKakaotalk, SiNaver } from 'react-icons/si';
+import { SiNaver } from 'react-icons/si';
 
-import { AuthField } from '../../../../components/auth';
+import { AuthField, KakaoIcon } from '../../../../components/auth';
 import {
   loginSchema,
   type LoginFormValues,
@@ -136,7 +136,7 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
               aria-label="카카오로 로그인"
               className="flex size-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#FEE500] text-black shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
             >
-              <SiKakaotalk
+              <KakaoIcon
                 className="block size-5"
                 aria-hidden="true"
               />

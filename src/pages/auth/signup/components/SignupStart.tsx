@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
-import { SiKakaotalk, SiNaver } from 'react-icons/si';
+import { SiNaver } from 'react-icons/si';
+
+import { KakaoIcon } from '../../../../components/auth';
 
 interface SignupStartProps {
   onEmailStart: () => void;
@@ -30,8 +32,8 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
             to="/signup/kakao"
             className="flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-xl bg-[#FEE500] text-base font-bold text-black"
           >
-            <SiKakaotalk
-              className="text-[18px]"
+            <KakaoIcon
+              className="h-[18px] w-[18px]"
               aria-hidden="true"
             />
             카카오로 시작하기
