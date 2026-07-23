@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { NaverIcon } from '../../../../components/auth';
 import { Logo } from '../../../../components/common';
 
 const regions = ['서울', '경기', '인천', '강원', '충북', '충남', '대전', '세종', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주'];
@@ -40,9 +41,12 @@ function NaverSignupPage() {
 
           <div className="mt-8 rounded-[12px] bg-[#03C75A] px-5 py-4">
             <div className="flex items-start gap-4 text-white">
-              <div className="mt-[2px] flex size-10 shrink-0 items-center justify-center rounded-full bg-white text-[#03C75A]">
-                <span className="text-[26px] font-black leading-none">N</span>
-              </div>
+              <NaverIcon
+                width={24}
+                height={24}
+                className="mt-0.5 shrink-0"
+                aria-hidden="true"
+              />
 
               <div>
                 <p className="text-[16px] font-bold leading-[1.35]">

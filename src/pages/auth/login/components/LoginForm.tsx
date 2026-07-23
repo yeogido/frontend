@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SiNaver } from 'react-icons/si';
+import { AuthField, KakaoIcon, NaverIcon } from '../../../../components/auth';
 
-import { AuthField, KakaoIcon } from '../../../../components/auth';
 import {
   loginSchema,
   type LoginFormValues,
@@ -33,7 +32,7 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
   });
 
   return (
-    <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
+    <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col bg-background px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
       <div className="flex-1">
         <h1 className="text-[28px] font-bold leading-none text-black sm:text-[32px]">
           로그인
@@ -134,10 +133,12 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
             <button
               type="button"
               aria-label="카카오로 로그인"
-              className="flex size-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#FEE500] text-black shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
+              className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#FEE500] text-black shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
             >
               <KakaoIcon
-                className="block size-5"
+                width={24}
+                height={24}
+                className="block"
                 aria-hidden="true"
               />
             </button>
@@ -145,10 +146,12 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
             <button
               type="button"
               aria-label="네이버로 로그인"
-              className="flex size-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
+              className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
             >
-              <SiNaver
-                className="block size-5"
+              <NaverIcon
+                width={20}
+                height={20}
+                className="block"
                 aria-hidden="true"
               />
             </button>

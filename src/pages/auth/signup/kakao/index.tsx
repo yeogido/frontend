@@ -42,7 +42,9 @@ function KakaoSignupPage() {
           <div className="mt-8 rounded-[12px] bg-[#FEE500] px-5 py-4">
             <div className="flex items-start gap-4">
               <KakaoIcon
-                className="mt-[2px] size-5 shrink-0 text-black"
+                width={24}
+                height={24}
+                className="mt-0.5 shrink-0 text-black"
                 aria-hidden="true"
               />
 
