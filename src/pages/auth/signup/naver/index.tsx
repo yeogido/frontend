@@ -20,7 +20,7 @@ function NaverSignupPage() {
 
   return (
     <main className="min-h-dvh bg-white">
-      <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
+      <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
         <form
           className="flex-1"
           onSubmit={(event) => event.preventDefault()}
@@ -29,7 +29,7 @@ function NaverSignupPage() {
             <Logo />
           </div>
 
-          <h1 className="text-[28px] font-bold leading-[1.25] text-black sm:text-[32px]">
+          <h1 className="text-[28px] font-bold leading-[1.25] text-black">
             프로필을
             <br />
             완성해 주세요
@@ -40,11 +40,11 @@ function NaverSignupPage() {
           </p>
 
           <div className="mt-8 rounded-[12px] bg-[#03C75A] px-5 py-4">
-            <div className="flex items-start gap-4 text-white">
+            <div className="flex items-center gap-4 text-white">
               <NaverIcon
                 width={24}
                 height={24}
-                className="mt-0.5 shrink-0"
+                className="shrink-0"
                 aria-hidden="true"
               />
 
