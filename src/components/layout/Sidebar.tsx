@@ -7,6 +7,7 @@ import { guestSidebarMenu } from '../../constants/sidebarMenu';
 import { Divider } from '../ui';
 
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { APP_MAX_WIDTH } from '../../constants/layout';
 
 const DRAWER_MAX_WIDTH = 280;
 const DRAWER_HEADER_HEIGHT = 67;
@@ -29,107 +30,128 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
   const scale = useGlobalScale();
 
   return (
-    <>
-      {/* Overlay */}
+    // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
+    // 이 레이어 자체는 뷰포트 전체 폭(fixed inset-0)이므로 여기에
+    // overflow-x-hidden을 걸어도 소용없다 — 실제로 잘라야 할 경계는
+    // 안쪽 500px 컬럼이다.
+    <div
+      className={`fixed inset-0 z-[60] ${isOpen ? '' : 'pointer-events-none'}`}
+    >
+      {/* App.tsx의 500px 중앙 정렬 컬럼과 동일한 폭/정렬을 재현.
+          overflow-x-hidden을 반드시 이 500px 컬럼에 걸어야, 드로어가
+          translate-x-full로 컬럼 밖으로 나갔을 때 실제로 잘려서 안 보인다. */}
       <div
-        onClick={onClose}
-        className={`
-          fixed inset-0 z-[60]
-          bg-black/40
-          transition-opacity duration-300
-          ${
-            isOpen
-              ? 'visible opacity-100'
-              : 'invisible pointer-events-none opacity-0'
-          }
-        `}
-      />
-
-      {/* Drawer */}
-      <aside
-        className={`
-          fixed top-0 right-0 z-[70]
-          flex h-full w-[72%] flex-col
-          overflow-y-auto
-          bg-white
-          transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-        `}
-        style={{ maxWidth: DRAWER_MAX_WIDTH * scale }}
+        className="relative mx-auto h-full w-full overflow-x-hidden"
+        style={{ maxWidth: APP_MAX_WIDTH }}
       >
-        {/* Header */}
-        <div className="relative" style={{ height: DRAWER_HEADER_HEIGHT * scale }}>
+        {/* Overlay */}
+        <div
+          onClick={onClose}
+          className={`
+            absolute inset-0
+            bg-black/40
+            transition-opacity duration-300
+            ${
+              isOpen
+                ? 'visible opacity-100'
+                : 'invisible pointer-events-none opacity-0'
+            }
+          `}
+        />
+
+        {/* Drawer */}
+        <aside
+          className={`
+            absolute top-0 right-0
+            flex h-full w-[72%] flex-col
+            overflow-y-auto
+            bg-white
+            transition-transform duration-300 ease-in-out
+            ${
+              isOpen
+                ? 'translate-x-0 pointer-events-auto'
+                : 'translate-x-full'
+            }
+          `}
+          style={{ maxWidth: DRAWER_MAX_WIDTH * scale }}
+        >
+          {/* Header */}
+          <div
+            className="relative"
+            style={{ height: DRAWER_HEADER_HEIGHT * scale }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="사이드바 닫기"
+              className="absolute"
+              style={{ right: CLOSE_RIGHT * scale, top: CLOSE_TOP * scale }}
+            >
+              <img src={close} alt="닫기" />
+            </button>
+          </div>
+
+          {/* Login */}
           <button
             type="button"
-            onClick={onClose}
-            aria-label="사이드바 닫기"
-            className="absolute"
-            style={{ right: CLOSE_RIGHT * scale, top: CLOSE_TOP * scale }}
+            onClick={() => {
+              navigate('/login');
+              onClose();
+            }}
+            className="flex items-center"
+            style={{
+              gap: LOGIN_GAP * scale,
+              paddingLeft: LOGIN_PADDING_X * scale,
+              paddingRight: LOGIN_PADDING_X * scale,
+              paddingTop: LOGIN_PADDING_Y * scale,
+              paddingBottom: LOGIN_PADDING_Y * scale,
+            }}
           >
-            <img src={close} alt="닫기" />
-          </button>
-        </div>
-
-        {/* Login */}
-        <button
-          type="button"
-          onClick={() => {
-            navigate('/login');
-            onClose();
-          }}
-          className="flex items-center"
-          style={{
-            gap: LOGIN_GAP * scale,
-            paddingLeft: LOGIN_PADDING_X * scale,
-            paddingRight: LOGIN_PADDING_X * scale,
-            paddingTop: LOGIN_PADDING_Y * scale,
-            paddingBottom: LOGIN_PADDING_Y * scale,
-          }}
-        >
-          <span
-            className="font-semibold leading-none"
-            style={{ fontSize: TEXT_BASE * scale }}
-          >
-            로그인
-          </span>
-
-          <img
-            src={chevronRight}
-            alt=""
-            aria-hidden="true"
-          />
-        </button>
-
-        <Divider />
-
-        {/* Menu */}
-        <nav className="flex flex-col">
-          {guestSidebarMenu.map((menu) => (
-            <button
-              key={menu.path}
-              type="button"
-              onClick={() => {
-                navigate(menu.path);
-                onClose();
-              }}
-              className="flex items-center justify-between text-left"
-              style={{
-                height: MENU_ITEM_HEIGHT * scale,
-                paddingLeft: MENU_PADDING_X * scale,
-                paddingRight: MENU_PADDING_X * scale,
-              }}
+            <span
+              className="font-semibold leading-none"
+              style={{ fontSize: TEXT_BASE * scale }}
             >
-              <span
-                className="font-medium leading-none"
-                style={{ fontSize: TEXT_BASE * scale }}
+              로그인
+            </span>
+
+            <img
+              src={chevronRight}
+              alt=""
+              aria-hidden="true"
+            />
+          </button>
+
+          <Divider />
+
+          {/* Menu */}
+          <nav className="flex flex-col">
+            {guestSidebarMenu.map((menu) => (
+              <button
+                key={menu.path}
+                type="button"
+                onClick={() => {
+                  navigate(menu.path);
+                  onClose();
+                }}
+                className="flex items-center justify-between text-left"
+                style={{
+                  height: MENU_ITEM_HEIGHT * scale,
+                  paddingLeft: MENU_PADDING_X * scale,
+                  paddingRight: MENU_PADDING_X * scale,
+                }}
               >
-                {menu.label}
-              </span>
-            </button>
-          ))}
-        </nav>
-      </aside>
-    </>
+                <span
+                  className="font-medium leading-none"
+                  style={{ fontSize: TEXT_BASE * scale }}
+                >
+                  {menu.label}
+                </span>
+              </button>
+            ))}
+          </nav>
+        </aside>
+      </div>
+    </div>
   );
 }
 

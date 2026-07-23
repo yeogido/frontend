@@ -88,7 +88,7 @@ function ReviewCard({
           {/* Images: 카드 내부 가로 스크롤, 다음 이미지가 살짝 보이는 peek 효과 */}
           {images.length > 0 && (
             <div
-              className="flex overflow-x-auto"
+              className="flex overflow-x-auto scrollbar-hide"
               style={{
                 gap: IMAGE_GAP,
                 paddingTop: CARD_PADDING,
