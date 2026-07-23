@@ -20,15 +20,31 @@ import {
 import MapControls from './MapControls';
 import MapViewport from './MapViewport';
 
-function Map() {
+import type { MapMarker } from '../types/map';
+
+interface MapProps {
+  baseScale?: number;
+  labelBaseScale?: number;
+  minZoom?: number;
+  initialZoom?: number;
+  markers?: readonly MapMarker[];
+}
+
+function Map({
+  baseScale = BASE_ZOOM_SCALE,
+  labelBaseScale = baseScale,
+  minZoom = MIN_ZOOM,
+  initialZoom = minZoom,
+  markers = [],
+}: MapProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const mapViewportRef = useRef<SVGGElement | null>(null);
 
   const zoomBehaviorRef =
     useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
-  const [zoomLevel, setZoomLevel] = useState(MIN_ZOOM);
-  const [rawScale, setRawScale] = useState(MIN_ZOOM * BASE_ZOOM_SCALE);
+  const [zoomLevel, setZoomLevel] = useState(initialZoom);
+  const [rawScale, setRawScale] = useState(initialZoom * baseScale);
 
   useEffect(() => {
     if (!svgRef.current || !mapViewportRef.current) return;
@@ -38,12 +54,12 @@ function Map() {
 
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([
-        MIN_ZOOM * BASE_ZOOM_SCALE,
-        MAX_ZOOM * BASE_ZOOM_SCALE,
+        minZoom * baseScale,
+        MAX_ZOOM * baseScale,
       ])
       .on('zoom', (event) => {
         viewport.attr('transform', event.transform.toString());
-        setZoomLevel(event.transform.k / BASE_ZOOM_SCALE);
+        setZoomLevel(event.transform.k / baseScale);
         setRawScale(event.transform.k);
       });
 
@@ -53,7 +69,7 @@ function Map() {
 
     const centerX = MAP_VIEWBOX_WIDTH / 2;
     const centerY = MAP_VIEWBOX_HEIGHT / 2;
-    const initialScale = MIN_ZOOM * BASE_ZOOM_SCALE;
+    const initialScale = initialZoom * baseScale;
 
     svg.call(
       zoomBehavior.transform,
@@ -66,14 +82,14 @@ function Map() {
     return () => {
       svg.on('.zoom', null);
     };
-  }, []);
+  }, [baseScale, initialZoom, minZoom]);
 
   const zoomTo = (targetLabelScale: number) => {
     if (!svgRef.current || !zoomBehaviorRef.current) return;
 
     select(svgRef.current).call(
       zoomBehaviorRef.current.scaleTo,
-      targetLabelScale * BASE_ZOOM_SCALE,
+      targetLabelScale * baseScale,
       [MAP_VIEWBOX_WIDTH / 2, MAP_VIEWBOX_HEIGHT / 2],
     );
   };
@@ -82,7 +98,7 @@ function Map() {
     if (!svgRef.current) return;
 
     const currentLabelScale =
-      zoomTransform(svgRef.current).k / BASE_ZOOM_SCALE;
+      zoomTransform(svgRef.current).k / baseScale;
     const snappedScale = Math.round(currentLabelScale * 2) / 2;
     const nextScale = Math.min(MAX_ZOOM, snappedScale + ZOOM_STEP);
 
@@ -93,9 +109,9 @@ function Map() {
     if (!svgRef.current) return;
 
     const currentLabelScale =
-      zoomTransform(svgRef.current).k / BASE_ZOOM_SCALE;
+      zoomTransform(svgRef.current).k / baseScale;
     const snappedScale = Math.round(currentLabelScale * 2) / 2;
-    const nextScale = Math.max(MIN_ZOOM, snappedScale - ZOOM_STEP);
+    const nextScale = Math.max(minZoom, snappedScale - ZOOM_STEP);
 
     zoomTo(nextScale);
   };
@@ -114,6 +130,8 @@ function Map() {
           ref={mapViewportRef}
           zoomLevel={displayZoom}
           renderScale={rawScale}
+          labelRenderScale={zoomLevel * labelBaseScale}
+          markers={markers}
         />
       </svg>
 

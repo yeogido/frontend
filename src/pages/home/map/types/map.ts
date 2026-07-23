@@ -18,3 +18,9 @@ export type KoreaCityGeoJson = FeatureCollection<
   Geometry,
   KoreaCityProperties
 >;
+
+export interface MapMarker {
+  regionCode: string;
+  regionName: string;
+  count: number;
+}
