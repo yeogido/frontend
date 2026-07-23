@@ -78,6 +78,7 @@ function DraggableBottomSheet({
               aria-valuemin={Math.round(SHEET_SNAP_RATIOS[0] * 100)}
               aria-valuemax={Math.round(SHEET_SNAP_RATIOS.at(-1)! * 100)}
               aria-valuenow={percentage}
+              aria-hidden={false}
               onKeyDown={handleKeyDown}
               className="!my-3 !h-1 !w-8 !bg-black !opacity-100 focus-visible:outline focus-visible:outline-2"
             />
