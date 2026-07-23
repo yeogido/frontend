@@ -36,9 +36,9 @@ function ResetPasswordForm() {
   };
 
   return (
-    <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
+    <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
       <div className="flex-1">
-        <h1 className="text-[28px] font-bold leading-none text-black sm:text-[32px]">
+        <h1 className="text-[28px] font-bold leading-none text-black">
           비밀번호 재설정
         </h1>
 
@@ -81,7 +81,7 @@ function ResetPasswordForm() {
           </div>
 
           <div className="fixed inset-x-0 bottom-0 z-10">
-            <div className="mx-auto w-full max-w-[440px] px-6 pb-10 sm:px-8">
+            <div className="mx-auto w-full max-w-[440px] px-6 pb-10">
               <button
                 type="submit"
                 disabled={!isPasswordMatched}

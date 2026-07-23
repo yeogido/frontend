@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { KakaoIcon } from '../../../../components/auth';
 import { Logo } from '../../../../components/common';
 
 const regions = ['서울', '경기', '인천', '강원', '충북', '충남', '대전', '세종', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주'];
@@ -19,7 +20,7 @@ function KakaoSignupPage() {
 
   return (
     <main className="min-h-dvh bg-white">
-      <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
+      <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
         <form
           className="flex-1"
           onSubmit={(event) => event.preventDefault()}
@@ -28,7 +29,7 @@ function KakaoSignupPage() {
             <Logo />
           </div>
 
-          <h1 className="text-[28px] font-bold leading-[1.25] text-black sm:text-[32px]">
+          <h1 className="text-[28px] font-bold leading-[1.25] text-black">
             프로필을
             <br />
             완성해 주세요
@@ -38,11 +39,14 @@ function KakaoSignupPage() {
             더 좋은 여행을 위해 정보를 입력해 주세요
           </p>
 
-          <div className="mt-8 rounded-[12px] bg-[#FEE500] px-5 py-4">
-            <div className="flex items-start gap-4">
-              <div className="mt-[2px] flex size-10 shrink-0 items-center justify-center rounded-full bg-black text-white">
-                <span className="text-[18px] leading-none">●</span>
-              </div>
+          <div className="mt-8 w-full rounded-[12px] bg-[#FEE500] pt-4.5 pr-21.25 pb-4.25 pl-8">
+            <div className="flex items-center gap-5">
+              <KakaoIcon
+                width={24}
+                height={24}
+                className="shrink-0 text-black"
+                aria-hidden="true"
+              />
 
               <div>
                 <p className="text-[16px] font-bold leading-[1.35] text-black">
