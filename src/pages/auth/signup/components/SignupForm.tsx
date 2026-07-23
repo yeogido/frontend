@@ -118,13 +118,13 @@ function SignupForm() {
   };
 
   return (
-    <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px] sm:px-8 sm:pt-24">
+    <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
       <form
         className="flex-1"
         onSubmit={(event) => event.preventDefault()}
         onKeyDown={handleKeyDown}
       >
-        <h1 className="text-[28px] font-bold leading-none text-black sm:text-[32px]">
+        <h1 className="text-[28px] font-bold leading-none text-black">
           회원가입
         </h1>
 
