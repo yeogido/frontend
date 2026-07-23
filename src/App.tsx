@@ -7,7 +7,7 @@ function App() {
   return (
     <div className="min-h-dvh bg-[#FFEBE5]">
       <div
-        className="relative mx-auto min-h-dvh w-full overflow-x-hidden bg-white"
+        className="relative mx-auto min-h-dvh w-full bg-white"
         style={{ maxWidth: APP_MAX_WIDTH }}
       >
         <ScrollToTop />
