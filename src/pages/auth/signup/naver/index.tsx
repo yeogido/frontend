@@ -39,8 +39,8 @@ function NaverSignupPage() {
             더 좋은 여행을 위해 정보를 입력해 주세요
           </p>
 
-          <div className="mt-8 rounded-[12px] bg-[#03C75A] px-5 py-4">
-            <div className="flex items-center gap-4 text-white">
+          <div className="mt-8 w-full rounded-[12px] bg-[#03C75A] pt-4.5 pr-21.25 pb-4.25 pl-8">
+            <div className="flex items-center gap-5 text-white">
               <NaverIcon
                 width={24}
                 height={24}
