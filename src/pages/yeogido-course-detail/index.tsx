@@ -1,3 +1,5 @@
+import { useParams } from 'react-router-dom';
+
 import CourseMap from './components/CourseMap';
 import CourseReviewSection from './components/CourseReviewSection';
 import HeroSection from './components/HeroSection';
@@ -83,6 +85,8 @@ const course: LocalCourse = {
 };
 
 function LocalCoursePage() {
+  const { courseId } = useParams<{ courseId?: string }>();
+
   return (
     <div className="mx-auto min-h-screen w-full max-w-[430px] bg-white pb-[104px]">
       <HeroSection
@@ -99,7 +103,7 @@ function LocalCoursePage() {
 
         <CourseMap stops={course.stops} />
         <CourseReviewSection reviews={course.reviews} />
-        <ReviewButton />
+        <ReviewButton courseId={courseId} />
       </div>
     </div>
   );

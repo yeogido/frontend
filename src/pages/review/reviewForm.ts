@@ -16,6 +16,10 @@ export function appendSelectedReviewPhotos(
   return [...existingFiles, ...newFiles].slice(0, MAX_REVIEW_PHOTOS);
 }
 
+export function removeSelectedReviewPhoto<T>(photos: T[], targetIndex: number): T[] {
+  return photos.filter((_, index) => index !== targetIndex);
+}
+
 export function isReviewFormValid({ rating, review }: ReviewFormValues): boolean {
   return Number.isInteger(rating) && rating >= 1 && rating <= 5 && review.trim().length > 0;
 }
