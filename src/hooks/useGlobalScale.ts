@@ -1,25 +1,29 @@
 import { useLayoutEffect, useState } from 'react';
 
+import { APP_MAX_WIDTH } from '../constants/layout';
+
 export const GLOBAL_DESIGN_WIDTH = 390;
 
 /**
- * 앱 전체가 공유하는 단일 스케일 값 (viewport 폭 / 390).
- * Header, Sidebar, SectionHeader, Section 여백처럼
- * 자체 측정 로직이 필요 없는 단순 요소들에 사용한다.
+ * 앱 전체가 공유하는 단일 스케일 값.
+ * (min(viewport 폭, APP_MAX_WIDTH)) / 390
  *
- * CourseCard/ContentCard는 각자 useScaleFrame으로 자기 렌더 폭을 직접
- * 측정하지만, 컨테이너 padding도 이 전역 scale을 따르기 때문에
- * 두 값은 항상 수학적으로 일치한다.
+ * APP_MAX_WIDTH(500)보다 좁은 화면(모바일)에서는 Math.min이
+ * window.innerWidth를 그대로 통과시키므로 기존 동작과 동일하다.
+ * 500px를 넘는 화면(데스크탑)에서만 scale이 500/390에서 멈춘다.
  */
 export function useGlobalScale() {
   const [scale, setScale] = useState(() =>
     typeof window === 'undefined'
       ? 1
-      : window.innerWidth / GLOBAL_DESIGN_WIDTH,
+      : Math.min(window.innerWidth, APP_MAX_WIDTH) / GLOBAL_DESIGN_WIDTH,
   );
 
   useLayoutEffect(() => {
-    const update = () => setScale(window.innerWidth / GLOBAL_DESIGN_WIDTH);
+    const update = () =>
+      setScale(
+        Math.min(window.innerWidth, APP_MAX_WIDTH) / GLOBAL_DESIGN_WIDTH,
+      );
 
     update();
     window.addEventListener('resize', update);

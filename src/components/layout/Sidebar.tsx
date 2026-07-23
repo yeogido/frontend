@@ -34,7 +34,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div
         onClick={onClose}
         className={`
-          fixed inset-0 z-[60]
+          absolute inset-0 z-[60]
           bg-black/40
           transition-opacity duration-300
           ${
@@ -48,7 +48,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Drawer */}
       <aside
         className={`
-          fixed top-0 right-0 z-[70]
+          absolute top-0 right-0 z-[70]
           flex h-full w-[72%] flex-col
           overflow-y-auto
           bg-white
