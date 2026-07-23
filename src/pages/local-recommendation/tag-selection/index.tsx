@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   KeywordSelectionSection,
   RepresentativePhotoSection,
 } from './components';
+import { completeTagSelection } from './navigation';
 import type { PhotoSelection, TagId, TagSelectionResult } from './types';
 import { isTagSelectionReady, toggleTag } from './utils';
 
@@ -12,6 +14,7 @@ interface TagSelectionPageProps {
 }
 
 function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
+  const navigate = useNavigate();
   const [photo, setPhoto] = useState<PhotoSelection | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(new Set());
   const [limitMessage, setLimitMessage] = useState('');
@@ -40,9 +43,11 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const handleComplete = () => {
     if (!photo || !isReady) return;
 
-    onComplete?.({
-      photo: photo.file,
-      tagIds: Array.from(selectedTagIds),
+    completeTagSelection({
+      photo,
+      selectedTagIds,
+      onComplete,
+      navigate,
     });
   };
 
