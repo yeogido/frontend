@@ -12,7 +12,7 @@ function SelectedFestivalList({
 }: SelectedFestivalListProps) {
   if (festivals.length === 0) {
     return (
-      <p className="text-gray-5 flex min-h-full items-center justify-center pb-2 text-base font-medium">
+      <p className="text-gray-5 py-8 text-center text-base font-medium">
         아직 추가된 장소가 없어요
       </p>
     );
