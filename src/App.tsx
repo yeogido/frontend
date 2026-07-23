@@ -7,8 +7,13 @@ function App() {
   return (
     <div className="min-h-dvh bg-[#FFEBE5]">
       <div
+<<<<<<< HEAD
         className="relative mx-auto min-h-dvh w-full bg-white"
         style={{ maxWidth: APP_MAX_WIDTH }}
+=======
+        className="relative mx-auto min-h-dvh w-full bg-[#F1F1F1]"
+        style={{ maxWidth: APP_MAX_WIDTH, display: 'flow-root' }}
+>>>>>>> origin/develop
       >
         <ScrollToTop />
         <AppRouter />
