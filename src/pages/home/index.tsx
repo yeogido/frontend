@@ -1,4 +1,5 @@
 import {
+  AdvertisementSection,
   CourseSection,
   FestivalSection,
   MapSection,
@@ -9,9 +10,10 @@ function HomePage() {
   return (
     <>
       <MapSection />
-      <FestivalSection />      
+      <FestivalSection />
       <CourseSection />
       <ReviewSection />
+      <AdvertisementSection />
     </>
   );
 }

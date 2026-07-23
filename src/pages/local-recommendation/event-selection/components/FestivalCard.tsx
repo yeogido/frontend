@@ -9,17 +9,22 @@ interface FestivalCardProps {
   onAction: (festival: FestivalItem) => void;
 }
 
-function FestivalCard({
-  festival,
-  action,
-  disabled = false,
-  onAction,
-}: FestivalCardProps) {
+function FestivalCard({ festival, action, disabled = false, onAction }: FestivalCardProps) {
   const isAddAction = action === 'add';
 
   return (
-    <article className="flex min-w-0 items-center gap-6">
-      <div className="bg-gray-2 h-[68px] w-[68px] shrink-0 overflow-hidden rounded-xl">
+    <article
+      className={
+        isAddAction
+          ? 'flex min-w-0 items-center gap-6'
+          : 'flex h-[72px] w-full min-w-0 items-center gap-3 rounded-xl bg-white p-2'
+      }
+    >
+      <div
+        className={`bg-gray-2 shrink-0 overflow-hidden rounded-xl ${
+          isAddAction ? 'h-[68px] w-[68px]' : 'h-14 w-14'
+        }`}
+      >
         {festival.imageSrc ? (
           <img
             src={festival.imageSrc}

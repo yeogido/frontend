@@ -7,12 +7,12 @@ function MainLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className='bg-[#F1F1F1]'>
+    <div className="bg-[#F1F1F1]">
       <Header
         onMenuClick={() => setIsSidebarOpen(true)}
       />
 
-      <main className="pt-14">
+      <main>
         <Outlet />
       </main>
 

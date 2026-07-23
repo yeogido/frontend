@@ -1,16 +1,19 @@
 import { useMemo, useState } from 'react';
+import { IoChevronBack } from 'react-icons/io5';
+import { useNavigate } from 'react-router-dom';
 
 import { SearchBar } from '../../../components/common';
-import {
-  DraggableBottomSheet,
-  FestivalSearchResults,
-  SelectedFestivalList,
-} from './components';
+import { FestivalSearchResults, SelectedEventSheet } from './components';
 import { referenceFestivalRecords } from './constants/referenceFestivals';
 import type { FestivalItem } from './types';
 import { filterFestivals } from './utils';
 
+const festivalSearchSuggestions = referenceFestivalRecords
+  .map(({ tag }) => tag)
+  .slice(0, 3);
+
 function EventSelectionPage() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [selectedFestivals, setSelectedFestivals] = useState<FestivalItem[]>(
     []
@@ -40,9 +43,23 @@ function EventSelectionPage() {
     );
   };
 
+  const handleRemoveAllFestivals = () => {
+    setSelectedFestivals([]);
+  };
+
   return (
     <div className="bg-background min-h-dvh w-full">
-      <main className="bg-white mx-auto min-h-dvh w-full max-w-[430px] px-6 pt-24 pb-[32dvh]">
+      <main className="mx-auto min-h-dvh w-full max-w-[430px] bg-white px-6 pt-12 pb-[32dvh]">
+        <button
+          type="button"
+          aria-label="뒤로가기"
+          onClick={() =>
+            navigate('/local-recommendation/tag-selection', { replace: true })
+          }
+          className="text-gray-5 mb-4 -ml-2 flex h-8 w-8 items-center justify-center"
+        >
+          <IoChevronBack aria-hidden="true" className="text-3xl" />
+        </button>
         <h1 className="text-[30px] leading-[1.28] font-bold tracking-[-0.02em] text-black">
           코스에
           <br />
@@ -54,9 +71,10 @@ function EventSelectionPage() {
         </p>
 
         <SearchBar
-          className="mt-8 max-w-none"
+          className="mt-8 max-w-none [&:has(input:placeholder-shown)_[role=listbox]]:hidden"
           placeholder="행사명을 검색해 주세요"
           label="행사명 검색"
+          suggestions={festivalSearchSuggestions}
           onSearch={setQuery}
         />
 
@@ -76,40 +94,11 @@ function EventSelectionPage() {
         </section>
       </main>
 
-      <DraggableBottomSheet
-        labelledBy="selected-festivals-title"
-        header={
-          <div className="flex items-center justify-between">
-            <h2
-              id="selected-festivals-title"
-              className="text-base font-semibold text-black"
-            >
-              추가된 행사
-            </h2>
-            <button
-              type="button"
-              onClick={() => setSelectedFestivals([])}
-              className="text-main-5 text-xs font-medium"
-            >
-              전체 삭제
-            </button>
-          </div>
-        }
-        footer={
-          <button
-            type="button"
-            disabled={selectedFestivals.length === 0}
-            className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 h-[53px] w-full rounded-xl text-lg font-semibold"
-          >
-            행사 등록하기
-          </button>
-        }
-      >
-        <SelectedFestivalList
-          festivals={selectedFestivals}
-          onRemove={handleRemoveFestival}
-        />
-      </DraggableBottomSheet>
+      <SelectedEventSheet
+        selectedEvents={selectedFestivals}
+        onRemoveAll={handleRemoveAllFestivals}
+        onRemove={handleRemoveFestival}
+      />
     </div>
   );
 }

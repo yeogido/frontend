@@ -1,4 +1,4 @@
-import type { PhotoSelection, TagId, TagSelectionResult } from './types.ts';
+import type { PhotoSelection, TagId, TagSelectionResult } from './types';
 
 export const EVENT_SELECTION_PATH =
   '/local-recommendation/event-selection' as const;
