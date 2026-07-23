@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import backIcon from './assets/back-icon.svg';
@@ -17,9 +17,7 @@ function TravelRecordDateSelectionPage() {
   const locationState = location.state as TravelDateSelectionLocationState | null;
   const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
   const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const {
-    canAddPhoto,
     canGoToNextMonth,
     canGoToPreviousMonth,
     selectedPreset,
@@ -39,14 +37,6 @@ function TravelRecordDateSelectionPage() {
       navigate('/travel-record/new', { replace: true });
     }
   }, [navigate, selectedRegion]);
-
-  const handleAddPhoto = () => {
-    if (!canAddPhoto) {
-      return;
-    }
-
-    photoInputRef.current?.click();
-  };
 
   return (
     <main className="relative mx-auto h-[844px] w-full max-w-[390px] bg-[#f9f9f9]">
@@ -79,18 +69,10 @@ function TravelRecordDateSelectionPage() {
         onSelectMonth={selectMonth}
       />
 
-      <input
-        ref={photoInputRef}
-        type="file"
-        accept="image/*"
-        aria-label="사진 선택"
-        className="sr-only"
-      />
-
       <button
         type="button"
-        onClick={handleAddPhoto}
-        disabled={!canAddPhoto}
+        disabled
+        aria-label="사진 추가하기, 다음 작업에서 지원 예정"
         className="absolute top-[759px] left-6 flex h-[53px] w-[342px] items-center justify-center rounded-xl bg-[#e4e4e4] text-[18px] leading-none font-semibold text-[#7f7f7f] enabled:bg-[#ff6f41] enabled:text-[#f9f9f9]"
       >
         사진 추가하기
