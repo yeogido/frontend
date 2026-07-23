@@ -10,3 +10,5 @@ export { default as ReviewCardSkeleton } from './ReviewCardSkeleton';
 export { default as SearchBar } from './SearchBar';
 export { default as SearchTriggerButton } from './SearchTriggerButton';
 export { default as TagChip } from './TagChip';
+export { default as AdvertisementCard } from './AdvertisementCard';
+export { default as AdvertisementCardSkeleton } from './AdvertisementCardSkeleton';
