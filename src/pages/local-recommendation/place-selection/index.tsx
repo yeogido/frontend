@@ -51,7 +51,7 @@ function PlaceSelectionPage() {
         selectedPlaces={selectedPlaces}
         onItemRemove={removeSelectedPlace}
         onRemoveAll={removeAllSelectedPlaces}
-        onSubmit={() => undefined}
+        onSubmit={() => navigate('/local-recommendation/visit-order-selection')}
       />
       {isImageModalOpen && pendingPlace ? (
         <PlacePhotoModal

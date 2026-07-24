@@ -22,7 +22,7 @@ function VisitOrderSelectionPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[500px] flex-col overflow-x-hidden bg-white px-6 pt-[60px] pb-[30px]">
-      <VisitOrderHeader onBack={() => navigate(-1)} />
+      <VisitOrderHeader onBack={() => navigate('/local-recommendation/place-selection')} />
 
       <SortableVisitEventList
         visitEvents={visitEvents}

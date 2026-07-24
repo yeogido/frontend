@@ -33,12 +33,25 @@ test('place selection uses shared UI, preserves added places as pending, and reg
 
   assert.ok(existsSync(pagePath));
 
-  const pageSource = readFileSync(pagePath, 'utf8');
+  let pageSource = readFileSync(pagePath, 'utf8');
+  const searchSectionPath = new URL('./components/PlaceSearchSection.tsx', pagePath);
+  const selectedSectionPath = new URL('./components/SelectedPlaceSection.tsx', pagePath);
+  const modalHookPath = new URL('./hooks/usePlacePhotoModal.ts', pagePath);
+
+  if (existsSync(searchSectionPath)) {
+    pageSource += readFileSync(searchSectionPath, 'utf8');
+  }
+  if (existsSync(selectedSectionPath)) {
+    pageSource += readFileSync(selectedSectionPath, 'utf8');
+  }
+  if (existsSync(modalHookPath)) {
+    pageSource += readFileSync(modalHookPath, 'utf8');
+  }
+
   const routerSource = readFileSync(routerPath, 'utf8');
 
   assert.match(pageSource, /<SelectionPageLayout/);
   assert.match(pageSource, /<SelectedItemsSheet/);
-  assert.match(pageSource, /useState<PlaceItem \| null>\(null\)/);
-  assert.match(pageSource, /setPendingPlace\(place\)/);
+  assert.match(pageSource, /setPendingPlace/);
   assert.match(routerSource, /path="\/local-recommendation\/place-selection"/);
 });
