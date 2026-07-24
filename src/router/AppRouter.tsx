@@ -36,6 +36,8 @@ import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selec
 import VisitOrderSelectionPage from '../pages/local-recommendation/visit-order-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
+import RegionInfoPage from '../pages/region-info';
+
 function AppRouter() {
   return (
     <Routes>
@@ -70,6 +72,11 @@ function AppRouter() {
         <Route
           path="/course-region-search"
           element={<CourseRegionSearchPage />}
+        />
+
+        <Route
+          path="/region-info/:region"
+          element={<RegionInfoPage />}
         />
 
         <Route path="/yeogido-course" element={<YeogidoCoursePage />} />
