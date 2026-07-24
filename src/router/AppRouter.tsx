@@ -28,6 +28,7 @@ import LocalBusinessPage from '../pages/local-business';
 import LocalBusinessDetailPage from '../pages/local-business/detail';
 import LocalRecommendationPage from '../pages/local-recommendation';
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
+import EventSelectionPage from '../pages/local-recommendation/event-selection';
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TravelRecordPage from '../pages/travel-record';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
@@ -139,6 +140,11 @@ function AppRouter() {
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />
       </Route>
+
+      <Route
+        path="/local-recommendation/event-selection"
+        element={<EventSelectionPage />}
+      />
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
