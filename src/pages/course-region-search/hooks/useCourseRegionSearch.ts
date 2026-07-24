@@ -87,7 +87,8 @@ function useCourseRegionSearch() {
   const searchTarget = getCourseRegionSearchTarget(
     searchParams.get(COURSE_REGION_SEARCH_TARGET_PARAM)
   );
-  const searchTargetPathname = courseRegionSearchTargets[searchTarget].pathname;
+  const searchTargetConfig = courseRegionSearchTargets[searchTarget];
+  const searchTargetPathname = searchTargetConfig.pathname;
   const [selectedCityId, setSelectedCityId] = useState(defaultCityId);
   const [selectedDistrict, setSelectedDistrict] = useState('전체');
   const [recentSearches, setRecentSearches] = useState<string[]>(
@@ -251,6 +252,8 @@ function useCourseRegionSearch() {
     selectedDistrict,
     selectedParentDistrict,
     visibleDistricts,
+    searchLabel: searchTargetConfig.searchLabel,
+    searchPlaceholder: searchTargetConfig.searchPlaceholder,
     clearRecentSearches,
     removeRecentSearch,
     selectCity,

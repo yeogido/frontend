@@ -10,6 +10,10 @@ import {
   PROVINCE_LABEL_FONT_SIZE,
 } from '../constants/map';
 import { LABEL_OFFSETS } from '../constants/labelOffsets';
+import {
+  METRO_PROVINCE_CODES,
+  isMetroCityCode,
+} from '../utils/metroCityCodes';
 
 import koreaCityJson from '../assets/korea-city.json';
 import koreaProvinceJson from '../assets/korea-province.json';
@@ -30,7 +34,6 @@ interface LabelCandidate {
   fontSize: number;
 }
 
-// 대략적인 한글 라벨의 가로 폭 추정치 (글자 하나당 폰트 크기의 약 0.95배)
 function estimateLabelWidth(text: string, fontSize: number) {
   return text.length * fontSize * 0.95;
 }
@@ -50,7 +53,6 @@ function isOverlapping(
 function pickNonOverlappingLabels(
   candidates: LabelCandidate[],
 ): LabelCandidate[] {
-  // 면적이 큰 지역(=더 중요한 지역)의 라벨을 우선 배치
   const sorted = [...candidates].sort((a, b) => b.area - a.area);
 
   const placedRects: { x: number; y: number; w: number; h: number }[] = [];
@@ -123,18 +125,10 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
     return Math.max(base / renderScale, 1.5);
   }, [isCity, renderScale]);
 
-  // 서울특별시 라벨 전용
-  const seoulLabelPosition = useMemo(() => {
+  // 광역시/특별시 전용 라벨: 구 단위 대신 도 단위(하나로 합쳐진) 이름 하나만 표시
+  const metroLabelPositions = useMemo(() => {
     const provinceGeoJson =
       koreaProvinceJson as GeoJSON.FeatureCollection;
-
-    const seoulFeature = provinceGeoJson.features.find(
-      (feature) =>
-        (feature.properties as { name?: string } | null)?.name ===
-        '서울특별시',
-    );
-
-    if (!seoulFeature) return null;
 
     const provinceProjection = geoMercator().fitExtent(
       [
@@ -149,26 +143,46 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
 
     const provincePath = geoPath(provinceProjection);
 
-    const [x, y] = provincePath.centroid(seoulFeature);
+    return provinceGeoJson.features
+      .filter((feature) => {
+        const properties = feature.properties as {
+          code?: string;
+        } | null;
 
-    const offset = LABEL_OFFSETS['서울특별시'];
+        return (
+          properties?.code && METRO_PROVINCE_CODES.has(properties.code)
+        );
+      })
+      .map((feature) => {
+        const properties = feature.properties as {
+          name?: string;
+        } | null;
 
-    return offset
-      ? [x + offset.x, y + offset.y]
-      : [x, y];
+        const name = properties?.name ?? '';
+        const [x, y] = provincePath.centroid(feature);
+        const offset = LABEL_OFFSETS[name];
+
+        return {
+          name,
+          x: offset ? x + offset.x : x,
+          y: offset ? y + offset.y : y,
+        };
+      });
   }, []);
 
   const visibleLabels = useMemo(() => {
     const candidates: LabelCandidate[] = [];
-    
-    if (isCity && seoulLabelPosition) {
-      candidates.push({
-        index: -1,
-        x: seoulLabelPosition[0],
-        y: seoulLabelPosition[1],
-        name: '서울특별시',
-        area: Number.MAX_SAFE_INTEGER,
-        fontSize: fontSize * 1.4,
+
+    if (isCity) {
+      metroLabelPositions.forEach((metro, i) => {
+        candidates.push({
+          index: -(i + 1),
+          x: metro.x,
+          y: metro.y,
+          name: metro.name,
+          area: Number.MAX_SAFE_INTEGER,
+          fontSize: fontSize * 1.4,
+        });
       });
     }
 
@@ -184,10 +198,9 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
 
       const name = properties?.name ?? '';
 
-      const isSeoulDistrict =
-        properties?.code?.startsWith('11') ?? false;
-
-      if (isCity && isSeoulDistrict) return;
+      // 광역시/특별시 소속 구 라벨은 표시하지 않는다.
+      // (해당 지역은 metroLabelPositions로 이미 하나의 라벨만 표시됨)
+      if (isCity && isMetroCityCode(properties?.code)) return;
 
       const offset = LABEL_OFFSETS[name];
 
@@ -214,8 +227,9 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
     pathGenerator,
     isCity,
     fontSize,
-    seoulLabelPosition,
+    metroLabelPositions,
   ]);
+
   return (
     <>
       {visibleLabels.map(

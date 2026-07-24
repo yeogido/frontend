@@ -12,7 +12,9 @@ import {
 } from '../../../constants/recentSearches';
 import {
   COURSE_FILTER_CONTAINER_CLASS_NAME,
+  getCourseFilterColumnClassName,
   getCourseFilterGridClassName,
+  isExtendedTransportFilterLabel,
 } from '../../../constants/courseFilterLayout';
 import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourseSearch';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
@@ -59,10 +61,10 @@ function YeogidoCourseSearchPage() {
   const yeogidoCourses = data?.pages.flatMap((page) => page.content) ?? [];
   const hasEmptyResult =
     !isPending && !isError && yeogidoCourses.length === 0;
-  const isTransportLabelLong =
-    selectedFilters.transport === yeogidoCourseFilterGroups[0].options[2];
   const filterGridClassName =
-    getCourseFilterGridClassName(isTransportLabelLong);
+    getCourseFilterGridClassName(
+      isExtendedTransportFilterLabel(selectedFilters.transport)
+    );
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -115,15 +117,7 @@ function YeogidoCourseSearchPage() {
             {yeogidoCourseFilterGroups.map((filter) => (
               <div
                 key={filter.key}
-                className={
-                  filter.key === 'duration'
-                    ? 'col-start-3'
-                    : filter.key === 'companion'
-                      ? 'col-start-5'
-                      : filter.key === 'sort'
-                        ? 'col-start-7'
-                        : 'col-start-1'
-                }
+                className={getCourseFilterColumnClassName(filter.key)}
               >
                 <YeogidoCourseFilterChip
                   label={selectedFilters[filter.key]}
@@ -155,7 +149,6 @@ function YeogidoCourseSearchPage() {
                   secondInfo={course.courseName}
                   tags={course.tags}
                   className="w-full"
-                  imageClassName="aspect-[163/115] h-auto"
                 />
               ))}
 
@@ -171,7 +164,7 @@ function YeogidoCourseSearchPage() {
         </div>
 
         {hasEmptyResult ? (
-          <p className="mt-10 text-center text-[13px] font-medium text-grey-4">
+          <p className="mt-10 text-center text-[13px] font-medium text-gray-4">
             검색 결과가 없습니다.
           </p>
         ) : null}
