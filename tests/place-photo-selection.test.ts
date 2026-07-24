@@ -33,7 +33,7 @@ test('place add opens the photo modal without mutating selected places', () => {
   );
   assert.match(source, /setPendingPlace\(place\)/);
   assert.match(source, /setIsImageModalOpen\(true\)/);
-  assert.match(source, /setSelectedPlaces\(\(items\) => \[\s+\.\.\.items,/);
+  assert.match(source, /setSelectedPlaces\(\(items\) => \{[\s\S]*\.\.\.items,/);
 });
 
 test('photo modal provides a preview upload flow and disables confirmation without one', () => {
@@ -63,4 +63,22 @@ test('selected places keep their confirmed image file and preview URL', () => {
   assert.match(source, /export interface SelectedPlace extends PlaceItem/);
   assert.match(source, /imageFile: File/);
   assert.match(source, /imagePreviewUrl: string/);
+});
+
+test('selected places revoke the latest preview URLs on unmount cleanup', () => {
+  const placesHookPath = new URL(
+    '../src/pages/local-recommendation/place-selection/hooks/useSelectedPlaces.ts',
+    import.meta.url
+  );
+  const source = readFileSync(placesHookPath, 'utf8');
+
+  assert.match(source, /const selectedPlacesRef = useRef\(selectedPlaces\)/);
+  assert.match(
+    source,
+    /useEffect\(\(\) => \{\s+selectedPlacesRef\.current = selectedPlaces;\s+\}, \[selectedPlaces\]\);/
+  );
+  assert.match(
+    source,
+    /useEffect\(\(\) => \{[\s\S]*return \(\) => \{[\s\S]*selectedPlacesRef\.current\.forEach\(\(place\) =>[\s\S]*URL\.revokeObjectURL\(place\.imagePreviewUrl\)/
+  );
 });

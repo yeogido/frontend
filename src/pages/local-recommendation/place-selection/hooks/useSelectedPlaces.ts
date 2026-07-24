@@ -1,9 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { PlaceItem, SelectedPlace } from '../types';
 
 export function useSelectedPlaces() {
   const [selectedPlaces, setSelectedPlaces] = useState<SelectedPlace[]>([]);
+  const selectedPlacesRef = useRef<SelectedPlace[]>([]);
+
+  useEffect(() => {
+    selectedPlacesRef.current = selectedPlaces;
+  }, [selectedPlaces]);
+
+  useEffect(() => {
+    return () => {
+      selectedPlacesRef.current.forEach((place) => {
+        URL.revokeObjectURL(place.imagePreviewUrl);
+      });
+    };
+  }, []);
 
   const selectedPlaceIds = useMemo(
     () => new Set(selectedPlaces.map((place) => place.id)),
@@ -15,24 +28,45 @@ export function useSelectedPlaces() {
     imageFile: File,
     imagePreviewUrl: string
   ) => {
-    setSelectedPlaces((items) => [
-      ...items,
-      {
-        ...place,
-        imageFile,
-        imagePreviewUrl,
-      },
-    ]);
+    setSelectedPlaces((items) => {
+      const alreadyExists = items.some((item) => item.id === place.id);
+
+      if (alreadyExists) {
+        URL.revokeObjectURL(imagePreviewUrl);
+        return items;
+      }
+
+      return [
+        ...items,
+        {
+          ...place,
+          imageFile,
+          imagePreviewUrl,
+        },
+      ];
+    });
   };
 
   const removeSelectedPlace = (place: SelectedPlace) => {
-    URL.revokeObjectURL(place.imagePreviewUrl);
-    setSelectedPlaces((items) => items.filter((item) => item.id !== place.id));
+    setSelectedPlaces((items) => {
+      const target = items.find((item) => item.id === place.id);
+
+      if (target) {
+        URL.revokeObjectURL(target.imagePreviewUrl);
+      }
+
+      return items.filter((item) => item.id !== place.id);
+    });
   };
 
   const removeAllSelectedPlaces = () => {
-    selectedPlaces.forEach((place) => URL.revokeObjectURL(place.imagePreviewUrl));
-    setSelectedPlaces([]);
+    setSelectedPlaces((items) => {
+      items.forEach((place) => {
+        URL.revokeObjectURL(place.imagePreviewUrl);
+      });
+
+      return [];
+    });
   };
 
   return {
