@@ -31,6 +31,8 @@ import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TravelRecordPage from '../pages/travel-record';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
+import TravelRecordFolderDecorationPage from '../pages/travel-record/folder-decoration';
+import TravelRecordPhotoSelectionPage from '../pages/travel-record/photo-selection';
 import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
@@ -126,6 +128,16 @@ function AppRouter() {
       <Route
         path="/travel-record/date-selection"
         element={<TravelRecordDateSelectionPage />}
+      />
+
+      <Route
+        path="/travel-record/photo-selection"
+        element={<TravelRecordPhotoSelectionPage />}
+      />
+
+      <Route
+        path="/travel-record/folder-decoration"
+        element={<TravelRecordFolderDecorationPage />}
       />
 
       <Route element={<AuthLayout />}>

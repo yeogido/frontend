@@ -17,3 +17,8 @@ export interface TravelDateRange {
 export interface TravelDateSelectionLocationState {
   selectedRegion?: TravelRecordDraftRegion;
 }
+
+export interface TravelPhotoSelectionLocationState {
+  selectedRegion?: TravelRecordDraftRegion;
+  selectedDateRange?: TravelDateRange;
+}
