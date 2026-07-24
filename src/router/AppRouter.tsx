@@ -28,12 +28,13 @@ import LocalBusinessPage from '../pages/local-business';
 import LocalBusinessDetailPage from '../pages/local-business/detail';
 import LocalRecommendationPage from '../pages/local-recommendation';
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
+import EventSelectionPage from '../pages/local-recommendation/event-selection';
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TravelRecordPage from '../pages/travel-record';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
+import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
 import TravelRecordFolderDecorationPage from '../pages/travel-record/folder-decoration';
 import TravelRecordPhotoSelectionPage from '../pages/travel-record/photo-selection';
-import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
 function AppRouter() {
@@ -67,8 +68,6 @@ function AppRouter() {
 
         <Route path="/festival/search" element={<FestivalSearchPage />} />
 
-        <Route path="/review" element={<ReviewPage />} />
-
         <Route
           path="/course-region-search"
           element={<CourseRegionSearchPage />}
@@ -96,10 +95,10 @@ function AppRouter() {
         />
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
-        
+
         <Route
-        path="/local-business/detail/:id"
-        element={<LocalBusinessDetailPage />}
+          path="/local-business/detail/:id"
+          element={<LocalBusinessDetailPage />}
         />
 
         <Route
@@ -129,7 +128,6 @@ function AppRouter() {
         path="/travel-record/date-selection"
         element={<TravelRecordDateSelectionPage />}
       />
-
       <Route
         path="/travel-record/photo-selection"
         element={<TravelRecordPhotoSelectionPage />}
@@ -139,6 +137,7 @@ function AppRouter() {
         path="/travel-record/folder-decoration"
         element={<TravelRecordFolderDecorationPage />}
       />
+
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
@@ -151,6 +150,12 @@ function AppRouter() {
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />
       </Route>
+      <Route path="/review" element={<ReviewPage />} />
+
+      <Route
+        path="/local-recommendation/event-selection"
+        element={<EventSelectionPage />}
+      />
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
