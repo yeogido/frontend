@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { KakaoIcon } from '../../../../components/auth';
 import { Logo } from '../../../../components/common';
@@ -7,6 +8,7 @@ const regions = ['서울', '경기', '인천', '강원', '충북', '충남', '�
 const genders = ['여성', '남성', '선택 안 함'];
 
 function KakaoSignupPage() {
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [region, setRegion] = useState('');
   const [gender, setGender] = useState('');
@@ -23,7 +25,15 @@ function KakaoSignupPage() {
       <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
         <form
           className="flex-1"
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={(event) => {
+            event.preventDefault();
+
+            if (!isFormComplete) {
+              return;
+            }
+
+            navigate('/login');
+          }}
         >
           <div className="mb-8 flex justify-start">
             <Logo />

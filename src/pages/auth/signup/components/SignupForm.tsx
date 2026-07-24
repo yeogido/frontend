@@ -1,5 +1,6 @@
 import type { KeyboardEvent, ReactNode } from 'react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -37,6 +38,7 @@ const birthYears = Array.from({ length: 80 }, (_, index) =>
 );
 
 function SignupForm() {
+  const navigate = useNavigate();
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [code, setCode] = useState('');
   const [isCodeVerified, setIsCodeVerified] = useState(false);
@@ -88,7 +90,7 @@ function SignupForm() {
       return;
     }
 
-    return;
+    navigate('/login');
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {

@@ -1,8 +1,13 @@
-import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import { AuthField } from '../../../../components/auth';
+import {
+  resetPasswordSchema,
+  type ResetPasswordFormValues,
+} from '../schema';
 
 function ResetPasswordForm() {
   const navigate = useNavigate();
@@ -11,13 +16,23 @@ function ResetPasswordForm() {
       email?: string;
     };
   };
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
 
-  const isPasswordFilled = password.trim().length > 0;
-  const isPasswordConfirmFilled = passwordConfirm.trim().length > 0;
-  const isPasswordMatched =
-    isPasswordFilled && isPasswordConfirmFilled && password === passwordConfirm;
+  const {
+    register,
+    handleSubmit,
+    formState: {
+      errors,
+      isValid,
+      isSubmitting,
+    },
+  } = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    mode: 'onChange',
+    defaultValues: {
+      password: '',
+      passwordConfirm: '',
+    },
+  });
 
   useEffect(() => {
     if (!state?.email) {
@@ -25,13 +40,7 @@ function ResetPasswordForm() {
     }
   }, [navigate, state?.email]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!isPasswordMatched) {
-      return;
-    }
-
+  const onSubmit = () => {
     navigate('/login');
   };
 
@@ -48,19 +57,19 @@ function ResetPasswordForm() {
 
         <form
           className="mt-9"
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
         >
           <div className="space-y-4">
             <AuthField
               id="reset-password"
               label="비밀번호"
+              error={errors.password?.message}
             >
               <input
+                {...register('password')}
                 id="reset-password"
                 type="password"
                 placeholder="비밀번호"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
                 className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
             </AuthField>
@@ -68,13 +77,13 @@ function ResetPasswordForm() {
             <AuthField
               id="reset-password-confirm"
               label="비밀번호 확인"
+              error={errors.passwordConfirm?.message}
             >
               <input
+                {...register('passwordConfirm')}
                 id="reset-password-confirm"
                 type="password"
                 placeholder="비밀번호 확인"
-                value={passwordConfirm}
-                onChange={(event) => setPasswordConfirm(event.target.value)}
                 className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
             </AuthField>
@@ -84,7 +93,7 @@ function ResetPasswordForm() {
             <div className="mx-auto w-full max-w-[440px] px-6 pb-10">
               <button
                 type="submit"
-                disabled={!isPasswordMatched}
+                disabled={!isValid || isSubmitting}
                 className="h-12 w-full cursor-pointer rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-gray-2 disabled:text-gray-3 enabled:bg-main-5 enabled:text-white"
               >
                 재설정 완료
