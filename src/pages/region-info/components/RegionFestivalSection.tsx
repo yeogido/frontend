@@ -71,7 +71,7 @@ function RegionFestivalSection({
                 <ContentCard
                   image=""
                   title={`${regionName} 야시장 축제`}
-                  firstInfo="2026.08 ~ 2026.08"
+                  firstInfo="2026.07 ~ 2026.07"
                   secondInfo={`${regionName}`}
                   liked
                   tags={['summer', 'restaurant', 'event']}
