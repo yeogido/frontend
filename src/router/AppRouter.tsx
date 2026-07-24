@@ -66,8 +66,6 @@ function AppRouter() {
 
         <Route path="/festival/search" element={<FestivalSearchPage />} />
 
-        <Route path="/review" element={<ReviewPage />} />
-
         <Route
           path="/course-region-search"
           element={<CourseRegionSearchPage />}
@@ -95,10 +93,10 @@ function AppRouter() {
         />
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
-        
+
         <Route
-        path="/local-business/detail/:id"
-        element={<LocalBusinessDetailPage />}
+          path="/local-business/detail/:id"
+          element={<LocalBusinessDetailPage />}
         />
 
         <Route
@@ -140,6 +138,7 @@ function AppRouter() {
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />
       </Route>
+      <Route path="/review" element={<ReviewPage />} />
 
       <Route
         path="/local-recommendation/event-selection"
