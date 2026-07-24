@@ -35,6 +35,14 @@ const formatPeriod = (startDate: Date, endDate: Date) => {
   return `${formatDate(startDate)} - ${formatDate(endDate)}`;
 };
 
+const formatStartDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
 const createSavedTravelRecordFolder = (
   savedTravelRecord: SavedTravelRecordResult | undefined,
 ): TravelRecordFolder | null => {
@@ -56,6 +64,7 @@ const createSavedTravelRecordFolder = (
     regionName: title,
     title,
     year: selectedDateRange.startDate.getFullYear(),
+    startDate: formatStartDate(selectedDateRange.startDate),
     period: formatPeriod(
       selectedDateRange.startDate,
       selectedDateRange.endDate,
@@ -93,7 +102,12 @@ function TravelRecordPage() {
   const [selectedYear, setSelectedYear] = useState(years[0]);
 
   const visibleFolders = useMemo(
-    () => folders.filter((folder) => folder.year === selectedYear),
+    () =>
+      folders
+        .filter((folder) => folder.year === selectedYear)
+        .sort((currentFolder, nextFolder) =>
+          nextFolder.startDate.localeCompare(currentFolder.startDate),
+        ),
     [folders, selectedYear],
   );
 
