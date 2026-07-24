@@ -1,8 +1,11 @@
 import location from '../../assets/icons/location.svg';
 
-import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useScaleFrame } from '../../hooks/useScaleFrame';
 
-// Figma 390 디자인 기준 리터럴 px
+// 모든 수치는 Figma 390 디자인 기준 리터럴 px.
+// 개별 scale 계산 대신 useScaleFrame이 전체를 한 번에 scale한다.
+const CARD_DESIGN_WIDTH = 342;
+
 const AVATAR_SIZE = 40;
 const PROFILE_GAP = 8;
 const HEADER_PADDING_X = 12;
@@ -24,8 +27,6 @@ const LOCATION_GAP = 12;
 const LOCATION_ICON_GAP = 6;
 const LOCATION_ICON_SIZE = 14;
 const LOCATION_TEXT_SIZE = 13;
-
-const CARD_RADIUS = 12;
 
 export interface PromotionCardProps {
   avatarUrl: string;
@@ -50,114 +51,121 @@ function PromotionCard({
   onClick,
   className = '',
 }: PromotionCardProps) {
-  const scale = useGlobalScale();
+  const { outerRef, innerRef, scale, scaledHeight } =
+    useScaleFrame(CARD_DESIGN_WIDTH);
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex w-full cursor-pointer flex-col overflow-hidden bg-white text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)] ${className}`}
-      style={{ borderRadius: CARD_RADIUS * scale }}
+    <div
+      ref={outerRef}
+      className={`w-full overflow-hidden ${className}`}
+      style={{ height: scaledHeight }}
     >
-      {/* Profile header */}
       <div
-        className="flex items-center"
+        ref={innerRef}
+        onClick={onClick}
+        role="button"
+        tabIndex={0}
+        className="flex cursor-pointer flex-col overflow-hidden rounded-xl bg-white text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
         style={{
-          gap: PROFILE_GAP * scale,
-          paddingLeft: HEADER_PADDING_X * scale,
-          paddingRight: HEADER_PADDING_X * scale,
-          paddingTop: HEADER_PADDING_TOP * scale,
-          paddingBottom: HEADER_PADDING_BOTTOM * scale,
+          width: CARD_DESIGN_WIDTH,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
         }}
       >
-        <img
-          src={avatarUrl}
-          alt=""
-          aria-hidden="true"
-          className="shrink-0 rounded-full object-cover"
-          style={{ width: AVATAR_SIZE * scale, height: AVATAR_SIZE * scale }}
-        />
-
-        <div className="min-w-0">
-          <p
-            className="truncate font-semibold leading-none text-[#1C1C1C]"
-            style={{ fontSize: NAME_SIZE * scale }}
-          >
-            {profileName}
-          </p>
-
-          <p
-            className="font-normal leading-none text-[#7F7F7F]"
-            style={{
-              fontSize: DATE_SIZE * scale,
-              marginTop: DATE_GAP * scale,
-            }}
-          >
-            {date}
-          </p>
-        </div>
-      </div>
-
-      {/* Image */}
-      <img
-        src={imageUrl}
-        alt={title}
-        className="w-full object-cover"
-        style={{ height: IMAGE_HEIGHT * scale }}
-      />
-
-      {/* Body */}
-      <div
-        style={{
-          paddingLeft: BODY_PADDING_X * scale,
-          paddingRight: BODY_PADDING_X * scale,
-          paddingTop: BODY_PADDING_TOP * scale,
-          paddingBottom: BODY_PADDING_BOTTOM * scale,
-        }}
-      >
-        <h2
-          className="font-semibold leading-[1.25] text-[#1C1C1C]"
-          style={{ fontSize: TITLE_SIZE * scale }}
-        >
-          {title}
-        </h2>
-
-        <p
-          className="line-clamp-2 font-normal leading-[1.45] text-[#7F7F7F]"
+        {/* Profile header */}
+        <div
+          className="flex items-center"
           style={{
-            fontSize: DESCRIPTION_SIZE * scale,
-            marginTop: DESCRIPTION_GAP * scale,
+            gap: PROFILE_GAP,
+            paddingLeft: HEADER_PADDING_X,
+            paddingRight: HEADER_PADDING_X,
+            paddingTop: HEADER_PADDING_TOP,
+            paddingBottom: HEADER_PADDING_BOTTOM,
           }}
         >
-          {description}
-        </p>
+          <img
+            src={avatarUrl}
+            alt=""
+            aria-hidden="true"
+            className="shrink-0 rounded-full object-cover"
+            style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
+          />
 
-        <div style={{ marginTop: LOCATION_GAP * scale }}>
-          <div
-            className="flex items-center"
-            style={{ gap: LOCATION_ICON_GAP * scale }}
-          >
-            <img
-              src={location}
-              alt=""
-              aria-hidden="true"
-              className="shrink-0"
-              style={{
-                width: LOCATION_ICON_SIZE * scale,
-                height: LOCATION_ICON_SIZE * scale,
-              }}
-            />
-
-            <span
-              className="font-medium leading-none text-[#7F7F7F]"
-              style={{ fontSize: LOCATION_TEXT_SIZE * scale }}
+          <div className="min-w-0">
+            <p
+              className="truncate font-semibold leading-none text-[#1C1C1C]"
+              style={{ fontSize: NAME_SIZE }}
             >
-              {locationText}
-            </span>
+              {profileName}
+            </p>
+
+            <p
+              className="font-normal leading-none text-[#7F7F7F]"
+              style={{ fontSize: DATE_SIZE, marginTop: DATE_GAP }}
+            >
+              {date}
+            </p>
+          </div>
+        </div>
+
+        {/* Image */}
+        <img
+          src={imageUrl}
+          alt={title}
+          className="w-full object-cover"
+          style={{ height: IMAGE_HEIGHT }}
+        />
+
+        {/* Body */}
+        <div
+          style={{
+            paddingLeft: BODY_PADDING_X,
+            paddingRight: BODY_PADDING_X,
+            paddingTop: BODY_PADDING_TOP,
+            paddingBottom: BODY_PADDING_BOTTOM,
+          }}
+        >
+          <h2
+            className="font-semibold leading-tight text-[#1C1C1C]"
+            style={{ fontSize: TITLE_SIZE }}
+          >
+            {title}
+          </h2>
+
+          <p
+            className="line-clamp-2 font-normal leading-[1.45] text-[#7F7F7F]"
+            style={{ fontSize: DESCRIPTION_SIZE, marginTop: DESCRIPTION_GAP }}
+          >
+            {description}
+          </p>
+
+          <div style={{ marginTop: LOCATION_GAP }}>
+            <div
+              className="flex items-center"
+              style={{ gap: LOCATION_ICON_GAP }}
+            >
+              <img
+                src={location}
+                alt=""
+                aria-hidden="true"
+                className="shrink-0"
+                style={{
+                  width: LOCATION_ICON_SIZE,
+                  height: LOCATION_ICON_SIZE,
+                }}
+              />
+
+              <span
+                className="font-medium leading-none text-[#7F7F7F]"
+                style={{ fontSize: LOCATION_TEXT_SIZE }}
+              >
+                {locationText}
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
