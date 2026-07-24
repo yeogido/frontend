@@ -16,7 +16,16 @@ const placeTypesPath = new URL(
 );
 
 test('place add opens the photo modal without mutating selected places', () => {
-  const source = readFileSync(placePagePath, 'utf8');
+  let source = readFileSync(placePagePath, 'utf8');
+  const modalHookPath = new URL('./hooks/usePlacePhotoModal.ts', placePagePath);
+  const placesHookPath = new URL('./hooks/useSelectedPlaces.ts', placePagePath);
+
+  if (existsSync(modalHookPath)) {
+    source += readFileSync(modalHookPath, 'utf8');
+  }
+  if (existsSync(placesHookPath)) {
+    source += readFileSync(placesHookPath, 'utf8');
+  }
 
   assert.match(
     source,
@@ -30,7 +39,16 @@ test('place add opens the photo modal without mutating selected places', () => {
 test('photo modal provides a preview upload flow and disables confirmation without one', () => {
   assert.ok(existsSync(photoModalPath));
 
-  const source = readFileSync(photoModalPath, 'utf8');
+  let source = readFileSync(photoModalPath, 'utf8');
+  const uploaderPath = new URL('./PlacePhotoUploader.tsx', photoModalPath);
+  const footerPath = new URL('./PlacePhotoModalFooter.tsx', photoModalPath);
+
+  if (existsSync(uploaderPath)) {
+    source += readFileSync(uploaderPath, 'utf8');
+  }
+  if (existsSync(footerPath)) {
+    source += readFileSync(footerPath, 'utf8');
+  }
 
   assert.match(source, /type="file"/);
   assert.match(source, /accept="image\/\*"/);
