@@ -33,6 +33,7 @@ import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TravelRecordPage from '../pages/travel-record';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
 import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
+import VisitOrderSelectionPage from '../pages/local-recommendation/visit-order-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
 function AppRouter() {
@@ -125,6 +126,11 @@ function AppRouter() {
       <Route
         path="/travel-record/date-selection"
         element={<TravelRecordDateSelectionPage />}
+      />
+
+      <Route
+        path="/local-recommendation/visit-order-selection"
+        element={<VisitOrderSelectionPage />}
       />
 
       <Route element={<AuthLayout />}>
