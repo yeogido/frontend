@@ -22,6 +22,11 @@ function Header({ onMenuClick }: HeaderProps) {
   const scale = useGlobalScale();
   const navigate = useNavigate();
 
+  const iconFrameSize = Math.max(
+    ICON_FRAME_SIZE,
+    ICON_FRAME_SIZE * scale,
+  );
+
   const handleSearchClick = () => {
     navigate('/course-region-search?from=course');
   };
@@ -52,8 +57,8 @@ function Header({ onMenuClick }: HeaderProps) {
             aria-label="검색"
             className="flex items-center justify-center"
             style={{
-              width: ICON_FRAME_SIZE * scale,
-              height: ICON_FRAME_SIZE * scale,
+              width: iconFrameSize,
+              height: iconFrameSize,
             }}
           >
             <img
@@ -72,8 +77,8 @@ function Header({ onMenuClick }: HeaderProps) {
             aria-label="메뉴 열기"
             className="flex items-center justify-center"
             style={{
-              width: ICON_FRAME_SIZE * scale,
-              height: ICON_FRAME_SIZE * scale,
+              width: iconFrameSize,
+              height: iconFrameSize,
             }}
           >
             <img
