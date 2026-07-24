@@ -30,6 +30,28 @@ test('persistent event sheet is non-modal and cannot dismiss below its minimum s
   assert.doesNotMatch(source, /<Sheet\.Backdrop/);
 });
 
+test('event selection uses the shared selection UI and submits to place selection', () => {
+  const eventPagePath = new URL(
+    '../src/pages/local-recommendation/event-selection/index.tsx',
+    import.meta.url
+  );
+  const layoutPath = new URL(
+    '../src/pages/local-recommendation/components/SelectionPageLayout.tsx',
+    import.meta.url
+  );
+  const sheetPath = new URL(
+    '../src/pages/local-recommendation/components/SelectedItemsSheet.tsx',
+    import.meta.url
+  );
+  const eventPageSource = readFileSync(eventPagePath, 'utf8');
+
+  assert.ok(existsSync(layoutPath));
+  assert.ok(existsSync(sheetPath));
+  assert.match(eventPageSource, /<SelectionPageLayout/);
+  assert.match(eventPageSource, /<SelectedItemsSheet/);
+  assert.match(eventPageSource, /navigate\('\/local-recommendation\/place-selection'\)/);
+});
+
 test('festival tags are normalized regardless of whitespace and case', () => {
   assert.equal(normalizeFestivalTag('  BUSAN Festival  '), 'busan festival');
 });
