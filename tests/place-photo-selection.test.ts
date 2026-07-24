@@ -18,7 +18,10 @@ const placeTypesPath = new URL(
 test('place add opens the photo modal without mutating selected places', () => {
   const source = readFileSync(placePagePath, 'utf8');
 
-  assert.match(source, /const \[selectedPlaces, setSelectedPlaces\] = useState<SelectedPlace\[\]>\(\[\]\)/);
+  assert.match(
+    source,
+    /const \[selectedPlaces, setSelectedPlaces\] = useState<SelectedPlace\[\]>\(\[\]\)/
+  );
   assert.match(source, /setPendingPlace\(place\)/);
   assert.match(source, /setIsImageModalOpen\(true\)/);
   assert.match(source, /setSelectedPlaces\(\(items\) => \[\s+\.\.\.items,/);
@@ -32,6 +35,7 @@ test('photo modal provides a preview upload flow and disables confirmation witho
   assert.match(source, /type="file"/);
   assert.match(source, /accept="image\/\*"/);
   assert.match(source, /disabled=\{!previewUrl\}/);
+  assert.match(source, /z-\[10000\]/);
   assert.match(source, /사진 추가하기/);
 });
 

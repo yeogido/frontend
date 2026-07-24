@@ -31,7 +31,7 @@ function PlacePhotoModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 px-6"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -61,7 +61,7 @@ function PlacePhotoModal({
             type="button"
             onClick={onClose}
             aria-label="사진 등록 닫기"
-            className="text-gray-5 -mr-1 -mt-1 flex size-8 shrink-0 items-center justify-center rounded-full"
+            className="text-gray-5 -mt-1 -mr-1 flex size-8 shrink-0 items-center justify-center rounded-full"
           >
             <IoClose aria-hidden="true" className="text-2xl" />
           </button>
