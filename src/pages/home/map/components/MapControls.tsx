@@ -4,34 +4,16 @@ interface MapControlsProps {
   onZoomOut: () => void;
 }
 
-function MapControls({
-  zoom,
-  onZoomIn,
-  onZoomOut,
-}: MapControlsProps) {
+function MapControls({ zoom, onZoomIn, onZoomOut }: MapControlsProps) {
   return (
-    <div
-      className="
-        absolute
-        bottom-4
-        right-4
-        flex
-        items-center
-        gap-[10px]
-        rounded
-        border
-        border-[#D9D9D9]
-        bg-white
-        px-[5px]
-        py-1
-      "
-    >
+    <div className="absolute right-4 bottom-4 flex items-center gap-[10px] rounded border border-[#D9D9D9] bg-white px-[5px] py-1">
       <button
         type="button"
         onClick={onZoomOut}
+        aria-label="지도 축소"
         className="flex h-6 w-6 items-center justify-center text-2xl"
       >
-        −
+        -
       </button>
 
       <span className="w-10 text-center text-base font-medium">
@@ -41,6 +23,7 @@ function MapControls({
       <button
         type="button"
         onClick={onZoomIn}
+        aria-label="지도 확대"
         className="flex h-6 w-6 items-center justify-center text-2xl"
       >
         +

@@ -26,10 +26,13 @@ import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
 import LocalBusinessDetailPage from '../pages/local-business/detail';
-import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
-import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import LocalRecommendationPage from '../pages/local-recommendation';
+import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
 import EventSelectionPage from '../pages/local-recommendation/event-selection';
+import TagSelectionPage from '../pages/local-recommendation/tag-selection';
+import TravelRecordPage from '../pages/travel-record';
+import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
+import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
 import VisitOrderSelectionPage from '../pages/local-recommendation/visit-order-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
@@ -63,8 +66,6 @@ function AppRouter() {
         <Route path="/festival/recent" element={<FestivalRecentPage />} />
 
         <Route path="/festival/search" element={<FestivalSearchPage />} />
-
-        <Route path="/review" element={<ReviewPage />} />
 
         <Route
           path="/course-region-search"
@@ -103,6 +104,8 @@ function AppRouter() {
           path="/local-recommendation"
           element={<LocalRecommendationPage />}
         />
+
+        <Route path="/travel-record" element={<TravelRecordPage />} />
       </Route>
 
       <Route
@@ -113,6 +116,16 @@ function AppRouter() {
       <Route
         path="/local-recommendation/tag-selection"
         element={<TagSelectionPage />}
+      />
+
+      <Route
+        path="/travel-record/new"
+        element={<TravelRecordRegionSelectionPage />}
+      />
+
+      <Route
+        path="/travel-record/date-selection"
+        element={<TravelRecordDateSelectionPage />}
       />
 
       <Route
@@ -131,6 +144,7 @@ function AppRouter() {
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />
       </Route>
+      <Route path="/review" element={<ReviewPage />} />
 
       <Route
         path="/local-recommendation/event-selection"
