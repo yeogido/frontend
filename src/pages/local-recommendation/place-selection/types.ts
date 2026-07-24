@@ -4,3 +4,8 @@ export interface PlaceItem {
   address: string;
   imageSrc: string | null;
 }
+
+export interface SelectedPlace extends PlaceItem {
+  imageFile: File;
+  imagePreviewUrl: string;
+}
