@@ -20,6 +20,9 @@
   --color-main-4: #ff9a79;
   --color-main-5: #ff6f41;
 
+  /* Filled-star color from src/assets/icons/star.svg */
+  --color-rating-star: #ffdc69;
+
   /* ========================================
    * Green
    * ======================================== */
