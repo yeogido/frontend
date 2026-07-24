@@ -26,10 +26,13 @@ import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
 import LocalBusinessDetailPage from '../pages/local-business/detail';
-import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
-import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import LocalRecommendationPage from '../pages/local-recommendation';
+import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
 import EventSelectionPage from '../pages/local-recommendation/event-selection';
+import TagSelectionPage from '../pages/local-recommendation/tag-selection';
+import TravelRecordPage from '../pages/travel-record';
+import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
+import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
 function AppRouter() {
@@ -102,6 +105,8 @@ function AppRouter() {
           path="/local-recommendation"
           element={<LocalRecommendationPage />}
         />
+
+        <Route path="/travel-record" element={<TravelRecordPage />} />
       </Route>
 
       <Route
@@ -112,6 +117,16 @@ function AppRouter() {
       <Route
         path="/local-recommendation/tag-selection"
         element={<TagSelectionPage />}
+      />
+
+      <Route
+        path="/travel-record/new"
+        element={<TravelRecordRegionSelectionPage />}
+      />
+
+      <Route
+        path="/travel-record/date-selection"
+        element={<TravelRecordDateSelectionPage />}
       />
 
       <Route element={<AuthLayout />}>
