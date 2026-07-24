@@ -1,14 +1,10 @@
 import { IoClose } from 'react-icons/io5';
 
 interface PlacePhotoModalHeaderProps {
-  placeTitle: string;
   onClose: () => void;
 }
 
-function PlacePhotoModalHeader({
-  placeTitle,
-  onClose,
-}: PlacePhotoModalHeaderProps) {
+function PlacePhotoModalHeader({ onClose }: PlacePhotoModalHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
@@ -16,10 +12,10 @@ function PlacePhotoModalHeader({
           id="place-photo-modal-title"
           className="text-lg leading-6 font-semibold text-black"
         >
-          장소 사진 등록
+          장소에 <br /> 사진을 추가해 주세요
         </h2>
         <p className="text-gray-5 mt-2 text-sm leading-5">
-          {placeTitle}의 사진을 추가해 주세요
+          장소를 더 매력적으로 소개할 수 있어요!
         </p>
       </div>
       <button

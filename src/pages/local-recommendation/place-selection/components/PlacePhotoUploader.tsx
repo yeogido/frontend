@@ -52,10 +52,10 @@ function PlacePhotoUploader({
               <IoImageOutline aria-hidden="true" className="text-2xl" />
             </span>
             <strong className="mt-4 text-sm font-semibold text-black">
-              사진을 선택해 주세요
+              사진을 추가해 주세요.
             </strong>
             <span className="text-gray-5 mt-2 text-xs leading-4">
-              탭해서 사진을 업로드할 수 있어요
+              여기를 탭해서 사진을 업로드할 수 있어요.
             </span>
           </>
         )}

@@ -33,7 +33,7 @@ function PlacePhotoModal({
         aria-labelledby="place-photo-modal-title"
         className="bg-pure-white w-full max-w-[342px] rounded-3xl p-6 shadow-[0_12px_40px_rgba(28,28,28,0.2)]"
       >
-        <PlacePhotoModalHeader placeTitle={placeTitle} onClose={onClose} />
+        <PlacePhotoModalHeader onClose={onClose} />
         <PlacePhotoUploader
           placeTitle={placeTitle}
           previewUrl={previewUrl}
