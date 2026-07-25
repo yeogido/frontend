@@ -22,7 +22,10 @@ function PhotoSelectionTip() {
         <p>{tipDescription}</p>
         <div className="flex items-center gap-2 whitespace-nowrap">
           {photoTips.map((tip) => (
-            <span key={tip} className="before:mr-1 before:content-['\2022']">
+            <span key={tip}>
+              <span aria-hidden="true" className="mr-1">
+                &bull;
+              </span>
               {tip}
             </span>
           ))}
