@@ -117,9 +117,7 @@ function CourseFilterBar<TKey extends string>({
   onSelect,
 }: CourseFilterBarProps<TKey>) {
   const scale = useGlobalScale();
-  const filterGridClassName = getCourseFilterGridClassName(
-    isExtendedTransport
-  );
+  const filterGridClassName = getCourseFilterGridClassName(isExtendedTransport);
 
   return (
     <div
@@ -135,6 +133,7 @@ function CourseFilterBar<TKey extends string>({
         style={{
           width: FILTER_DESIGN_WIDTH,
           transform: `scale(${scale})`,
+          transformOrigin: 'top left',
         }}
       >
         {filterGroups.map((filter) => (

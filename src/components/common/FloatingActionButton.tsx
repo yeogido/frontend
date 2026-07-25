@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom';
+
 import addIcon from '../../assets/icons/material-symbols_add-2-rounded.svg';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 
@@ -18,8 +20,7 @@ function FloatingActionButton({
   className = '',
 }: FloatingActionButtonProps) {
   const scale = useGlobalScale();
-
-  return (
+  const button = (
     <button
       type="button"
       aria-label={ariaLabel}
@@ -40,6 +41,10 @@ function FloatingActionButton({
       />
     </button>
   );
+
+  return typeof document === 'undefined'
+    ? button
+    : createPortal(button, document.body);
 }
 
 export default FloatingActionButton;
