@@ -6,8 +6,9 @@ export interface TravelRecordFolder {
   regionName: string;
   title: string;
   year: number;
+  startDate: string;
   period: string;
-  photos: [string, string];
+  photos: [string, ...string[]];
 }
 
 export interface TravelRecordDraftRegion {

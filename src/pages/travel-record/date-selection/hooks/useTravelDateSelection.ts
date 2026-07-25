@@ -65,7 +65,7 @@ function useTravelDateSelection() {
   const canAddPhoto = selectedRange !== null;
 
   const visibleMonthLabel = useMemo(
-    () => `${visibleYear}년 ${visibleMonthIndex + 1}월`,
+    () => `${visibleYear}\uB144 ${visibleMonthIndex + 1}\uC6D4`,
     [visibleMonthIndex, visibleYear],
   );
 
