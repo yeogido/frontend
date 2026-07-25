@@ -30,6 +30,7 @@ export function isCourseDetailDto(dto: unknown): dto is CourseDetailDto {
   return (
     typeof candidate.title === 'string' &&
     typeof candidate.heroImageUrl === 'string' &&
+    Array.isArray(candidate.infoBadges) &&
     Array.isArray(candidate.stops)
   );
 }
@@ -42,7 +43,7 @@ export function mapToCourseInfoBadgeTuple(
   const b2 = badges[2];
   const b3 = badges[3];
 
-  if (!b0 || !b1 || !b2 || !b3 || badges.length < 4) {
+  if (!b0 || !b1 || !b2 || !b3 || badges.length !== 4) {
     throw new Error(
       `CourseInfoBadgesCard에는 정확히 4개의 배지가 필요합니다. (전달된 배지 개수: ${badges.length})`
     );
