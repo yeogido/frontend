@@ -1,17 +1,20 @@
 import { ReviewCard, SectionHeader } from '../../../components/common';
-
-import type { CourseReview } from '../types/course';
+import type { CourseReview } from '../../../features/course-detail/types/courseDetail';
 
 interface CourseReviewSectionProps {
-  reviews: CourseReview[];
+  readonly reviews: readonly CourseReview[];
+  readonly className?: string;
 }
 
-function CourseReviewSection({ reviews }: CourseReviewSectionProps) {
+export function CourseReviewSection({
+  reviews,
+  className = '',
+}: CourseReviewSectionProps) {
   return (
-    <section className="bg-white px-5">
-      <SectionHeader title="코스 리뷰" actionText="전체 보기" />
+    <section className={`bg-white ${className}`}>
+      <SectionHeader title="최근 여행자들의 후기" actionText="전체보기" />
 
-      <div className="mt-3 flex snap-x gap-3 overflow-x-auto pb-1">
+      <div className="scrollbar-hide mt-3.5 flex snap-x gap-3 overflow-x-auto pb-1">
         {reviews.map((review) => (
           <ReviewCard
             key={review.id}
