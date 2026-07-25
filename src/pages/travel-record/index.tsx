@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import addIcon from '../../assets/icons/material-symbols_add-2-rounded.svg';
+import { FloatingActionButton } from '../../components/common';
 
 import {
   TravelFolderGrid,
   TravelMapPanel,
+  TravelRecordPageFrame,
   TravelYearDropdown,
 } from './components';
 import { TRAVEL_RECORD_FOLDERS } from './constants/travelRecords';
@@ -28,15 +29,15 @@ function TravelRecordPage() {
   const location = useLocation();
   const locationState = location.state as TravelRecordLocationState | null;
   const [folders, setFolders] = useState<TravelRecordFolder[]>(
-    TRAVEL_RECORD_FOLDERS,
+    TRAVEL_RECORD_FOLDERS
   );
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
   const years = useMemo(
     () =>
       Array.from(new Set(folders.map((folder) => folder.year))).sort(
-        (currentYear, nextYear) => nextYear - currentYear,
+        (currentYear, nextYear) => nextYear - currentYear
       ),
-    [folders],
+    [folders]
   );
   const [selectedYear, setSelectedYear] = useState(years[0]);
 
@@ -52,10 +53,11 @@ function TravelRecordPage() {
           setFolders([...TRAVEL_RECORD_FOLDERS, ...folders]);
 
           const savedFolder = folders.find(
-            (folder) => folder.id === locationState?.savedTravelRecordId,
+            (folder) => folder.id === locationState?.savedTravelRecordId
           );
-          const latestSavedFolder = [...folders].sort((currentFolder, nextFolder) =>
-            nextFolder.startDate.localeCompare(currentFolder.startDate),
+          const latestSavedFolder = [...folders].sort(
+            (currentFolder, nextFolder) =>
+              nextFolder.startDate.localeCompare(currentFolder.startDate)
           )[0];
           const defaultSelectedYear = (savedFolder ?? latestSavedFolder)?.year;
 
@@ -83,16 +85,16 @@ function TravelRecordPage() {
       folders
         .filter((folder) => folder.year === selectedYear)
         .sort((currentFolder, nextFolder) =>
-          nextFolder.startDate.localeCompare(currentFolder.startDate),
+          nextFolder.startDate.localeCompare(currentFolder.startDate)
         ),
-    [folders, selectedYear],
+    [folders, selectedYear]
   );
   const handleFolderClick = (folder: TravelRecordFolder) => {
     navigate(`/travel-record/${folder.id}`, { state: { folder } });
   };
 
   return (
-    <section className="relative mx-auto min-h-screen w-full max-w-[390px] px-6 pt-3 pb-28">
+    <TravelRecordPageFrame scrollable className="bg-[#f1f1f1] px-6 pt-3 pb-28">
       <div className="flex items-center gap-[30px]">
         <button
           type="button"
@@ -131,15 +133,11 @@ function TravelRecordPage() {
         <TravelMapPanel folders={visibleFolders} />
       )}
 
-      <button
-        type="button"
-        aria-label={addTravelRecordLabel}
+      <FloatingActionButton
+        ariaLabel={addTravelRecordLabel}
         onClick={() => navigate('/travel-record/new')}
-        className="absolute right-6 bottom-10 z-40 flex size-14 items-center justify-center rounded-full bg-black"
-      >
-        <img src={addIcon} alt="" className="size-8" />
-      </button>
-    </section>
+      />
+    </TravelRecordPageFrame>
   );
 }
 

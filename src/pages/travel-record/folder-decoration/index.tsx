@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { TravelFolderArtwork } from '../components';
+import { TravelFolderArtwork, TravelRecordPageFrame } from '../components';
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
 import {
   getTravelRecordDraftDateRange,
@@ -46,7 +46,7 @@ function TravelRecordFolderDecorationPage() {
   const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
   const storedSelectedDateRange = useMemo(
     () => getTravelRecordDraftDateRange(),
-    [],
+    []
   );
   const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const selectedDateRange =
@@ -146,7 +146,7 @@ function TravelRecordFolderDecorationPage() {
   }, [navigate, selectedDateRange, selectedPhotos, selectedRegion]);
 
   return (
-    <main className="relative mx-auto h-[844px] w-full max-w-[390px] overflow-hidden bg-[#f9f9f9]">
+    <TravelRecordPageFrame className="bg-[#f9f9f9]">
       <button
         type="button"
         onClick={() => navigate(-1)}
@@ -202,7 +202,7 @@ function TravelRecordFolderDecorationPage() {
           {saveRecordLabel}
         </button>
       </section>
-    </main>
+    </TravelRecordPageFrame>
   );
 }
 
