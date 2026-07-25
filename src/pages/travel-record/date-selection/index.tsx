@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { TravelRecordPageFrame } from '../components';
+
 import backIcon from './assets/back-icon.svg';
 import {
   TravelDateCalendarSection,
@@ -17,7 +19,8 @@ import {
 function TravelRecordDateSelectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as TravelDateSelectionLocationState | null;
+  const locationState =
+    location.state as TravelDateSelectionLocationState | null;
   const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
   const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const {
@@ -58,7 +61,7 @@ function TravelRecordDateSelectionPage() {
   };
 
   return (
-    <main className="relative mx-auto h-[844px] w-full max-w-[390px] bg-[#f9f9f9]">
+    <TravelRecordPageFrame className="bg-[#f9f9f9]">
       <button
         type="button"
         onClick={() => navigate(-1)}
@@ -96,7 +99,7 @@ function TravelRecordDateSelectionPage() {
       >
         사진 추가하기
       </button>
-    </main>
+    </TravelRecordPageFrame>
   );
 }
 

@@ -10,6 +10,10 @@ import {
 } from 'react';
 import { IoSearch } from 'react-icons/io5';
 
+import { useScaleFrame } from '../../hooks/useScaleFrame';
+
+const SEARCH_BAR_DESIGN_WIDTH = 342;
+
 const normalizeSearchText = (text: string) => text.replace(/\s/g, '');
 
 export interface SearchBarProps {
@@ -31,32 +35,24 @@ function SearchBar({
   className = '',
   onSearch,
 }: SearchBarProps) {
+  const { outerRef, innerRef, scale, scaledHeight } = useScaleFrame(
+    SEARCH_BAR_DESIGN_WIDTH
+  );
   const inputId = useId();
   const listboxId = useId();
   const searchBarRef = useRef<HTMLFormElement | null>(null);
   const [queryState, setQueryState] = useState({
     value: initialQuery,
-    initialQuery,
+    source: initialQuery,
   });
   const [isOpen, setIsOpen] = useState(false);
   const hasSuggestions = suggestions.length > 0;
-  const isInitialQueryChanged = queryState.initialQuery !== initialQuery;
-  const query = isInitialQueryChanged ? initialQuery : queryState.value;
-
-  if (isInitialQueryChanged) {
-    setQueryState({
-      value: initialQuery,
-      initialQuery,
-    });
-  }
+  const query =
+    queryState.source === initialQuery ? queryState.value : initialQuery;
 
   const updateQuery = (value: string) => {
-    setQueryState({
-      value,
-      initialQuery,
-    });
+    setQueryState({ value, source: initialQuery });
   };
-
   const filteredSuggestions = useMemo(() => {
     if (!hasSuggestions) {
       return [];
@@ -137,92 +133,105 @@ function SearchBar({
   };
 
   return (
-    <form
-      ref={searchBarRef}
-      role="search"
-      onSubmit={handleSubmit}
-      onBlur={handleBlur}
-      className={`relative w-full max-w-[342px] ${className}`}
+    <div
+      ref={outerRef}
+      className={`relative w-full overflow-visible ${className}`}
+      style={{ height: scaledHeight, zIndex: isOpen ? 100 : undefined }}
     >
-      <label htmlFor={inputId} className="sr-only">
-        {label}
-      </label>
-
-      <div className="border-gray-2 bg-pure-white flex h-[47px] w-full items-center gap-2.5 overflow-hidden rounded-xl border px-[13px]">
-        <IoSearch
-          aria-hidden="true"
-          className="text-gray-4 shrink-0 text-[24px]"
-        />
-
-        <input
-          id={inputId}
-          type="search"
-          value={query}
-          onFocus={handleFocus}
-          onChange={(event) => {
-            updateQuery(event.target.value);
-
-            if (hasSuggestions) {
-              setIsOpen(true);
-            }
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          role={hasSuggestions ? 'combobox' : undefined}
-          aria-controls={hasSuggestions ? listboxId : undefined}
-          aria-expanded={hasSuggestions ? isOpen : undefined}
-          aria-autocomplete={hasSuggestions ? 'list' : undefined}
-          className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-normal font-medium outline-none"
-        />
-      </div>
-
-      {hasSuggestions && isOpen ? (
-        <div
-          id={listboxId}
-          role="listbox"
-          aria-label="검색어 추천 목록"
-          className="absolute top-[53px] left-0 z-[100] flex w-full flex-col"
+      <div
+        ref={innerRef}
+        style={{
+          width: SEARCH_BAR_DESIGN_WIDTH,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
+      >
+        <form
+          ref={searchBarRef}
+          role="search"
+          onSubmit={handleSubmit}
+          onBlur={handleBlur}
+          className="relative w-full"
         >
-          {filteredSuggestions.length > 0 ? (
-            filteredSuggestions.map((suggestion, index) => {
-              const isFirst = index === 0;
-              const isLast = index === filteredSuggestions.length - 1;
-              const optionRadius =
-                isFirst && isLast
-                  ? 'rounded-xl'
-                  : isFirst
-                    ? 'rounded-t-xl'
-                    : isLast
-                      ? 'rounded-b-xl'
-                      : '';
+          <label htmlFor={inputId} className="sr-only">
+            {label}
+          </label>
+          <div className="border-gray-2 bg-pure-white flex h-[47px] w-full items-center gap-2.5 overflow-hidden rounded-xl border px-[13px]">
+            <IoSearch
+              aria-hidden="true"
+              className="text-gray-4 shrink-0 text-[24px]"
+            />
 
-              return (
-                <button
-                  key={suggestion}
-                  type="button"
-                  role="option"
-                  aria-selected={query === suggestion}
-                  onClick={() => handleSuggestionSelect(suggestion)}
-                  className={`border-gray-2 bg-pure-white text-gray-4 relative h-[47px] w-full border px-[34px] text-left text-[12px] leading-none font-medium whitespace-nowrap ${optionRadius} ${
-                    index > 0 ? '-mt-px' : ''
-                  }`}
-                >
-                  {suggestion}
-                </button>
-              );
-            })
-          ) : (
+            <input
+              id={inputId}
+              type="search"
+              value={query}
+              onFocus={handleFocus}
+              onChange={(event) => {
+                updateQuery(event.target.value);
+
+                if (hasSuggestions) {
+                  setIsOpen(true);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              role={hasSuggestions ? 'combobox' : undefined}
+              aria-controls={hasSuggestions ? listboxId : undefined}
+              aria-expanded={hasSuggestions ? isOpen : undefined}
+              aria-autocomplete={hasSuggestions ? 'list' : undefined}
+              className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-normal font-medium outline-none"
+            />
+          </div>
+          {hasSuggestions && isOpen ? (
             <div
-              role="option"
-              aria-selected="false"
-              className="border-gray-2 bg-pure-white text-gray-4 flex h-[47px] w-full items-center rounded-xl border px-[34px] text-[12px] leading-none font-medium whitespace-nowrap"
+              id={listboxId}
+              role="listbox"
+              aria-label="검색어 추천 목록"
+              className="absolute top-[53px] left-0 z-[100] flex w-full flex-col"
             >
-              {noResultsText}
+              {filteredSuggestions.length > 0 ? (
+                filteredSuggestions.map((suggestion, index) => {
+                  const isFirst = index === 0;
+                  const isLast = index === filteredSuggestions.length - 1;
+                  const optionRadius =
+                    isFirst && isLast
+                      ? 'rounded-xl'
+                      : isFirst
+                        ? 'rounded-t-xl'
+                        : isLast
+                          ? 'rounded-b-xl'
+                          : '';
+
+                  return (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      role="option"
+                      aria-selected={query === suggestion}
+                      onClick={() => handleSuggestionSelect(suggestion)}
+                      className={`border-gray-2 bg-pure-white text-gray-4 relative h-[47px] w-full border px-[34px] text-left text-[12px] leading-none font-medium whitespace-nowrap ${optionRadius} ${
+                        index > 0 ? '-mt-px' : ''
+                      }`}
+                    >
+                      {suggestion}
+                    </button>
+                  );
+                })
+              ) : (
+                <div
+                  role="option"
+                  aria-selected="false"
+                  className="border-gray-2 bg-pure-white text-gray-4 flex h-[47px] w-full items-center rounded-xl border px-[34px] text-[12px] leading-none font-medium whitespace-nowrap"
+                >
+                  {noResultsText}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      ) : null}
-    </form>
+          ) : null}{' '}
+        </form>
+      </div>
+    </div>
   );
 }
 

@@ -1,21 +1,48 @@
+import type { RefObject } from 'react';
 import { useId } from 'react';
 import { IoChevronDown } from 'react-icons/io5';
 
-interface YeogidoCourseFilterChipProps {
+import {
+  COURSE_FILTER_CONTAINER_CLASS_NAME,
+  getCourseFilterColumnClassName,
+  getCourseFilterGridClassName,
+} from '../../constants/courseFilterLayout';
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+
+const FILTER_DESIGN_WIDTH = 342;
+const FILTER_HEIGHT = 29;
+
+export interface CourseFilterGroup<TKey extends string> {
+  key: TKey;
+  options: readonly string[];
+}
+
+interface CourseFilterBarProps<TKey extends string> {
+  filterGroups: readonly CourseFilterGroup<TKey>[];
+  selectedFilters: Record<TKey, string>;
+  openFilterKey: TKey | null;
+  filterContainerRef: RefObject<HTMLDivElement | null>;
+  isExtendedTransport: boolean;
+  marginTop: number;
+  onToggle: (filterKey: TKey) => void;
+  onSelect: (filterKey: TKey, option: string) => void;
+}
+
+interface CourseFilterChipProps {
   label: string;
-  options: string[];
+  options: readonly string[];
   isOpen: boolean;
   onToggle: () => void;
   onSelect: (option: string) => void;
 }
 
-function YeogidoCourseFilterChip({
+function CourseFilterChip({
   label,
   options,
   isOpen,
   onToggle,
   onSelect,
-}: YeogidoCourseFilterChipProps) {
+}: CourseFilterChipProps) {
   const buttonId = useId();
   const listboxId = useId();
 
@@ -79,4 +106,53 @@ function YeogidoCourseFilterChip({
   );
 }
 
-export default YeogidoCourseFilterChip;
+function CourseFilterBar<TKey extends string>({
+  filterGroups,
+  selectedFilters,
+  openFilterKey,
+  filterContainerRef,
+  isExtendedTransport,
+  marginTop,
+  onToggle,
+  onSelect,
+}: CourseFilterBarProps<TKey>) {
+  const scale = useGlobalScale();
+  const filterGridClassName = getCourseFilterGridClassName(isExtendedTransport);
+
+  return (
+    <div
+      ref={filterContainerRef}
+      className={COURSE_FILTER_CONTAINER_CLASS_NAME}
+      style={{
+        marginTop: marginTop * scale,
+        height: FILTER_HEIGHT * scale,
+      }}
+    >
+      <div
+        className={filterGridClassName}
+        style={{
+          width: FILTER_DESIGN_WIDTH,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
+      >
+        {filterGroups.map((filter) => (
+          <div
+            key={filter.key}
+            className={getCourseFilterColumnClassName(filter.key)}
+          >
+            <CourseFilterChip
+              label={selectedFilters[filter.key]}
+              options={filter.options}
+              isOpen={openFilterKey === filter.key}
+              onToggle={() => onToggle(filter.key)}
+              onSelect={(option) => onSelect(filter.key, option)}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default CourseFilterBar;

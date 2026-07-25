@@ -2,6 +2,8 @@ import { useEffect, useMemo } from 'react';
 import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { TravelRecordPageFrame } from '../components';
+
 import {
   DraggingPhotoPreview,
   PhotoSelectionTip,
@@ -9,10 +11,7 @@ import {
   PhotoUploadBox,
   SelectedPhotoStrip,
 } from './components';
-import {
-  useDraggablePhotoOrder,
-  useTravelRecordPhotoSelection,
-} from './hooks';
+import { useDraggablePhotoOrder, useTravelRecordPhotoSelection } from './hooks';
 import type { TravelPhotoSelectionLocationState } from '../date-selection/types';
 import {
   getTravelRecordDraftDateRange,
@@ -34,11 +33,12 @@ const decorateFolderLabel = '\uD3F4\uB354 \uAFB8\uBBF8\uAE30';
 function TravelRecordPhotoSelectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as TravelPhotoSelectionLocationState | null;
+  const locationState =
+    location.state as TravelPhotoSelectionLocationState | null;
   const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
   const storedSelectedDateRange = useMemo(
     () => getTravelRecordDraftDateRange(),
-    [],
+    []
   );
   const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const selectedDateRange =
@@ -92,7 +92,7 @@ function TravelRecordPhotoSelectionPage() {
   }, [navigate, selectedDateRange, selectedRegion]);
 
   return (
-    <main className="relative mx-auto h-[844px] w-full max-w-[390px] bg-[#f9f9f9]">
+    <TravelRecordPageFrame className="bg-[#f9f9f9]">
       <button
         type="button"
         onClick={() => navigate(-1)}
@@ -108,9 +108,7 @@ function TravelRecordPhotoSelectionPage() {
           <br />
           {titleSecondLine}
         </h1>
-        <p className="text-[14px] leading-none text-[#505050]">
-          {description}
-        </p>
+        <p className="text-[14px] leading-none text-[#505050]">{description}</p>
       </section>
 
       <PhotoUploadBox
@@ -142,7 +140,7 @@ function TravelRecordPhotoSelectionPage() {
       >
         {decorateFolderLabel}
       </button>
-    </main>
+    </TravelRecordPageFrame>
   );
 }
 

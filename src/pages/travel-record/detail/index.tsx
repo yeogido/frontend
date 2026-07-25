@@ -11,7 +11,7 @@ import {
 } from 'motion/react';
 import { IoEllipsisVertical } from 'react-icons/io5';
 
-import { TravelFolderArtwork } from '../components';
+import { TravelFolderArtwork, TravelRecordPageFrame } from '../components';
 import { TRAVEL_RECORD_FOLDERS } from '../constants/travelRecords';
 import type { TravelRecordFolder } from '../types';
 import {
@@ -58,7 +58,9 @@ function TravelRecordDetailPage() {
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
   const [isPhotoTransitioning, setIsPhotoTransitioning] = useState(false);
-  const [transitionTargetIndex, setTransitionTargetIndex] = useState<number | null>(null);
+  const [transitionTargetIndex, setTransitionTargetIndex] = useState<
+    number | null
+  >(null);
   const [savedFolderState, setSavedFolderState] =
     useState<SavedFolderState | null>(null);
   const locationState =
@@ -145,27 +147,31 @@ function TravelRecordDetailPage() {
 
   if (isSavedFolder && savedFolder === undefined) {
     return (
-      <main
-        aria-busy="true"
-        className="mx-auto flex min-h-dvh w-full max-w-[390px] items-center justify-center bg-[#f1f1f1]"
-      />
+      <TravelRecordPageFrame className="bg-[#f1f1f1]">
+        <div
+          aria-busy="true"
+          className="flex h-full items-center justify-center"
+        />
+      </TravelRecordPageFrame>
     );
   }
 
   if (!folder) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col items-center justify-center bg-[#f1f1f1] px-6 text-center">
-        <p className="text-base font-medium text-[#7f7f7f]">
-          {missingRecordLabel}
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate('/travel-record')}
-          className="mt-4 text-sm font-semibold text-[#1c1c1c]"
-        >
-          {backToArchiveLabel}
-        </button>
-      </main>
+      <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
+        <div className="flex h-full flex-col items-center justify-center text-center">
+          <p className="text-base font-medium text-[#7f7f7f]">
+            {missingRecordLabel}
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/travel-record')}
+            className="mt-4 text-sm font-semibold text-[#1c1c1c]"
+          >
+            {backToArchiveLabel}
+          </button>
+        </div>
+      </TravelRecordPageFrame>
     );
   }
 
@@ -206,7 +212,7 @@ function TravelRecordDetailPage() {
     const transitionControls = animate(
       dragX,
       -direction * cardDistance,
-      transition,
+      transition
     );
 
     transitionControlsRef.current = transitionControls;
@@ -268,7 +274,7 @@ function TravelRecordDetailPage() {
   };
 
   return (
-    <main className="relative mx-auto min-h-dvh w-full max-w-[390px] bg-[#f1f1f1] px-6 pt-[60px] pb-14">
+    <TravelRecordPageFrame className="bg-[#f1f1f1] px-6 pt-[60px]">
       <header className="relative h-[146px]">
         <div className="absolute top-0 left-6 h-[152px] w-[132px] origin-top-left scale-[0.83]">
           <TravelFolderArtwork photos={folder.photos} title={folder.title} />
@@ -301,10 +307,13 @@ function TravelRecordDetailPage() {
             return (
               <motion.article
                 key={`${photo}-${index}`}
-                drag={isActive && cardWidth > 0 && !isPhotoTransitioning ? 'x' : false}
+                drag={
+                  isActive && cardWidth > 0 && !isPhotoTransitioning
+                    ? 'x'
+                    : false
+                }
                 dragConstraints={{
-                  left:
-                    activePhotoIndex < lastPhotoIndex ? -cardDistance : 0,
+                  left: activePhotoIndex < lastPhotoIndex ? -cardDistance : 0,
                   right: activePhotoIndex > 0 ? cardDistance : 0,
                 }}
                 dragElastic={0}
@@ -345,7 +354,7 @@ function TravelRecordDetailPage() {
           </button>
         ))}
       </div>
-    </main>
+    </TravelRecordPageFrame>
   );
 }
 

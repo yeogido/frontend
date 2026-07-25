@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 
 import { LoadingSpinner, SearchBar } from '../../components/common';
+import { useGlobalScale } from '../../hooks/useGlobalScale';
 
 import {
   CitySelectionSection,
@@ -9,7 +10,14 @@ import {
 } from './components';
 import useCourseRegionSearch from './hooks/useCourseRegionSearch';
 
+const PAGE_PADDING_X = 24;
+const PAGE_PADDING_TOP = 12;
+const PAGE_PADDING_BOTTOM = 32;
+const LOADING_MARGIN_TOP = 96;
+const MESSAGE_TEXT_SIZE = 13;
+
 function CourseRegionSearchPage() {
+  const scale = useGlobalScale();
   const [searchParams] = useSearchParams();
   const initialKeyword = searchParams.get('keyword') ?? '';
   const {
@@ -34,17 +42,23 @@ function CourseRegionSearchPage() {
 
   return (
     <section
-      className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col items-center bg-background pt-3 pb-8"
+      className="mx-auto flex min-h-screen w-full flex-col bg-background"
+      style={{
+        paddingLeft: PAGE_PADDING_X * scale,
+        paddingRight: PAGE_PADDING_X * scale,
+        paddingTop: PAGE_PADDING_TOP * scale,
+        paddingBottom: PAGE_PADDING_BOTTOM * scale,
+      }}
       aria-label="검색 및 지역 선택"
     >
-      <SearchBar
-        initialQuery={initialKeyword}
-        className="z-20"
-        placeholder={searchPlaceholder}
-        label={searchLabel}
-        suggestions={searchSuggestions}
-        onSearch={submitSearch}
-      />
+        <SearchBar
+            initialQuery={initialKeyword}
+            placeholder={searchPlaceholder}
+            label={searchLabel}
+            suggestions={searchSuggestions}
+            onSearch={submitSearch}
+          />
+
 
       <RecentSearchSection
         searches={recentSearches}
@@ -54,11 +68,19 @@ function CourseRegionSearchPage() {
       />
 
       {isRegionLoading ? (
-        <LoadingSpinner className="mt-24" label="지역 정보를 불러오는 중" />
+        <div style={{ marginTop: LOADING_MARGIN_TOP * scale }}>
+          <LoadingSpinner label="지역 정보를 불러오는 중" />
+        </div>
       ) : null}
 
       {!isRegionLoading && isRegionError ? (
-        <p className="text-main-5 mt-24 text-center text-[13px] leading-normal font-medium">
+        <p
+          className="text-main-5 text-center font-medium leading-normal"
+          style={{
+            marginTop: LOADING_MARGIN_TOP * scale,
+            fontSize: MESSAGE_TEXT_SIZE * scale,
+          }}
+        >
           지역 정보를 불러오지 못했습니다.
         </p>
       ) : null}

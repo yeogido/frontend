@@ -1,22 +1,37 @@
 import { useCallback } from 'react';
 
-import { ContentCard, ContentCardSkeleton } from '../../../components/common';
 import {
-  COURSE_FILTER_CONTAINER_CLASS_NAME,
-  getCourseFilterColumnClassName,
-  getCourseFilterGridClassName,
-  isExtendedTransportFilterLabel,
-} from '../../../constants/courseFilterLayout';
+  ContentCard,
+  ContentCardSkeleton,
+  CourseFilterBar,
+} from '../../../components/common';
+import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 import courseMapImage from '../assets/courseimage.svg';
-import { YeogidoCourseFilterChip } from '../components';
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
 import useYeogidoCourses from '../hooks/useYeogidoCourses';
 
+const PAGE_PADDING_X = 24;
+const PAGE_PADDING_TOP = 12;
+const PAGE_PADDING_BOTTOM = 40;
+const TITLE_SIZE = 18;
+const TITLE_LINE_HEIGHT = 22;
+const DESCRIPTION_MARGIN_TOP = 5;
+const DESCRIPTION_SIZE = 12;
+const DESCRIPTION_LINE_HEIGHT = 17;
+const FILTER_MARGIN_TOP = 15;
+const LIST_MARGIN_TOP = 24;
+const LIST_GAP = 16;
+const ERROR_MARGIN_TOP = 24;
+const ERROR_TEXT_SIZE = 13;
+const LOAD_MORE_HEIGHT = 40;
+
 function YeogidoCoursePopularPage() {
+  const scale = useGlobalScale();
   const {
     filterContainerRef,
     openFilterKey,
@@ -35,10 +50,6 @@ function YeogidoCoursePopularPage() {
   } = useYeogidoCourses({ filters: selectedFilters });
 
   const popularCourses = data?.pages.flatMap((page) => page.content) ?? [];
-  const filterGridClassName =
-    getCourseFilterGridClassName(
-      isExtendedTransportFilterLabel(selectedFilters.transport)
-    );
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -52,39 +63,54 @@ function YeogidoCoursePopularPage() {
   });
 
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-3 pb-10">
+    <section
+      className="mx-auto flex min-h-screen w-full flex-col"
+      style={{
+        paddingLeft: PAGE_PADDING_X * scale,
+        paddingRight: PAGE_PADDING_X * scale,
+        paddingTop: PAGE_PADDING_TOP * scale,
+        paddingBottom: PAGE_PADDING_BOTTOM * scale,
+      }}
+    >
       <div>
-        <h1 className="text-[18px] leading-[22px] font-semibold text-black">
+        <h1
+          className="font-semibold text-black"
+          style={{
+            fontSize: TITLE_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+          }}
+        >
           인기 추천 코스
         </h1>
-        <p className="text-gray-4 mt-[5px] text-[12px] leading-[17px] font-normal">
+        <p
+          className="text-gray-4 font-normal"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: DESCRIPTION_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+          }}
+        >
           여행자들이 가장 많이 찾는 추천 코스
         </p>
       </div>
-
+      <CourseFilterBar
+        filterGroups={yeogidoCourseFilterGroups}
+        selectedFilters={selectedFilters}
+        openFilterKey={openFilterKey}
+        filterContainerRef={filterContainerRef}
+        isExtendedTransport={isExtendedTransportFilterLabel(selectedFilters.transport)}
+        marginTop={FILTER_MARGIN_TOP}
+        onToggle={handleFilterToggle}
+        onSelect={handleFilterSelect}
+      />
       <div
-        ref={filterContainerRef}
-        className={`mt-[15px] ${COURSE_FILTER_CONTAINER_CLASS_NAME}`}
+        className="grid grid-cols-2"
+        style={{
+          marginTop: LIST_MARGIN_TOP * scale,
+          columnGap: LIST_GAP * scale,
+          rowGap: LIST_GAP * scale,
+        }}
       >
-        <div className={filterGridClassName}>
-          {yeogidoCourseFilterGroups.map((filter) => (
-            <div
-              key={filter.key}
-              className={getCourseFilterColumnClassName(filter.key)}
-            >
-              <YeogidoCourseFilterChip
-                label={selectedFilters[filter.key]}
-                options={[...filter.options]}
-                isOpen={openFilterKey === filter.key}
-                onToggle={() => handleFilterToggle(filter.key)}
-                onSelect={(option) => handleFilterSelect(filter.key, option)}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4">
         {isPending
           ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
               <ContentCardSkeleton
@@ -117,12 +143,22 @@ function YeogidoCoursePopularPage() {
       </div>
 
       {isError ? (
-        <p className="text-main-5 mt-6 text-center text-[13px] font-medium">
+        <p
+          className="text-main-5 text-center font-medium"
+          style={{
+            marginTop: ERROR_MARGIN_TOP * scale,
+            fontSize: ERROR_TEXT_SIZE * scale,
+          }}
+        >
           코스 목록을 불러오지 못했어요.
         </p>
       ) : null}
 
-      <div ref={loadMoreRef} className="h-10" aria-hidden="true" />
+      <div
+        ref={loadMoreRef}
+        style={{ height: LOAD_MORE_HEIGHT * scale }}
+        aria-hidden="true"
+      />
     </section>
   );
 }

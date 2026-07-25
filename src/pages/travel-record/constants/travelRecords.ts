@@ -52,8 +52,8 @@ export const TRAVEL_RECORD_FOLDERS: TravelRecordFolder[] = [
   {
     id: 'boryeong',
     regionCode: '4418',
-    regionName: '보령군',
-    title: '보령군',
+    regionName: '보령시',
+    title: '보령시',
     year: 2026,
     startDate: '2026-05-14',
     period: '05.14 - 05.16',
