@@ -8,7 +8,7 @@ interface TravelFolderCardProps {
 }
 
 interface TravelFolderArtworkProps {
-  photos: [string, string, ...string[]];
+  photos: [string, ...string[]];
   title: string;
 }
 
@@ -85,7 +85,7 @@ export function TravelFolderArtwork({
         <FolderPhoto
           key={`${title}-${index}`}
           folderTitle={title}
-          imageSrc={photos[index]}
+          imageSrc={photos[index] ?? photos[0]}
           order={index + 1}
           slot={slot}
         />
@@ -116,16 +116,18 @@ function TravelFolderCard({ folder, onClick }: TravelFolderCardProps) {
         type="button"
         onClick={() => onClick(folder)}
         aria-label={`${folder.title} \uC5EC\uD589 \uAE30\uB85D \uC0C1\uC138 \uBCF4\uAE30`}
-        className="flex w-full flex-col items-center"
+        className="flex w-full justify-center"
       >
         <TravelFolderArtwork photos={folder.photos} title={folder.title} />
+      </button>
+      <div className="flex flex-col items-center">
         <h2 className="mt-3 text-center text-[16px] leading-none font-medium text-black">
           {folder.title}
         </h2>
         <time className="bg-gray-2 text-gray-4 mt-1.5 rounded-full px-2 py-1 text-[14px] leading-none font-normal">
           {folder.period}
         </time>
-      </button>
+      </div>
     </article>
   );
 }

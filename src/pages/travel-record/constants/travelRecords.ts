@@ -64,5 +64,3 @@ export const TRAVEL_RECORD_FOLDERS: TravelRecordFolder[] = [
 export const TRAVEL_RECORD_YEARS = Array.from(
   new Set(TRAVEL_RECORD_FOLDERS.map((folder) => folder.year))
 ).sort((currentYear, nextYear) => nextYear - currentYear);
-
-export type TravelRecordView = 'folder' | 'map';

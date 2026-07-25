@@ -9,7 +9,9 @@ import {
   getTravelRecordDraftRegion,
 } from '../utils/draftStorage';
 import {
+  clearTravelRecordPhotoDraft,
   createTravelRecordDraftPayload,
+  getTravelRecordPhotoDraft,
   saveTravelRecord,
 } from '../utils/travelRecordSave';
 
@@ -21,10 +23,9 @@ const titleSecondLine =
 const description =
   '\uC2A4\uD2F0\uCEE4\uB97C \uCD94\uAC00\uD574 \uB098\uB9CC\uC758 \uD3F4\uB354\uB97C \uB9CC\uB4E4\uC5B4 \uBCF4\uC138\uC694. (\uC120\uD0DD)';
 const saveRecordLabel = '\uAE30\uB85D \uC800\uC7A5\uD558\uAE30';
-const emptySelectedPhotos: File[] = [];
 
 const createObjectUrls = (files: File[]) =>
-  files.map((file) => URL.createObjectURL(file));
+  files.slice(0, 2).map((file) => URL.createObjectURL(file));
 
 const formatPeriod = (startDate: Date, endDate: Date) => {
   const formatDate = (date: Date) => {
@@ -50,10 +51,9 @@ function TravelRecordFolderDecorationPage() {
   const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const selectedDateRange =
     locationState?.selectedDateRange ?? storedSelectedDateRange;
-  const selectedPhotos = locationState?.selectedPhotos ?? emptySelectedPhotos;
-  const [previewPhotoUrls] = useState(() =>
-    createObjectUrls(selectedPhotos.slice(0, 2)),
-  );
+  const previewPhotoUrlsRef = useRef<string[]>([]);
+  const [selectedPhotos, setSelectedPhotos] = useState<File[] | null>(null);
+  const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const folderPhotos = useMemo<[string, string] | null>(() => {
@@ -71,11 +71,41 @@ function TravelRecordFolderDecorationPage() {
     ? formatPeriod(selectedDateRange.startDate, selectedDateRange.endDate)
     : '';
 
+  useEffect(() => {
+    let isMounted = true;
+    let previewPhotoUrls: string[] = [];
+
+    void getTravelRecordPhotoDraft()
+      .then((photos) => {
+        previewPhotoUrls = createObjectUrls(photos);
+
+        if (!isMounted) {
+          previewPhotoUrls.forEach((url) => URL.revokeObjectURL(url));
+          return;
+        }
+
+        previewPhotoUrlsRef.current = previewPhotoUrls;
+        setSelectedPhotos(photos);
+        setPreviewPhotoUrls(previewPhotoUrls);
+      })
+      .catch(() => {
+        if (isMounted) {
+          setSelectedPhotos([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      previewPhotoUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
   const handleSaveRecord = async () => {
     if (
       isSavingRef.current ||
       !selectedRegion ||
       !selectedDateRange ||
+      !selectedPhotos ||
       selectedPhotos.length === 0
     ) {
       return;
@@ -91,19 +121,13 @@ function TravelRecordFolderDecorationPage() {
         selectedPhotos,
       });
       await saveTravelRecord(payload);
+      await clearTravelRecordPhotoDraft();
       navigate('/travel-record');
     } catch {
       isSavingRef.current = false;
       setIsSaving(false);
     }
   };
-
-  useEffect(
-    () => () => {
-      previewPhotoUrls.forEach((url) => URL.revokeObjectURL(url));
-    },
-    [previewPhotoUrls],
-  );
 
   useEffect(() => {
     if (!selectedRegion) {
@@ -116,15 +140,10 @@ function TravelRecordFolderDecorationPage() {
       return;
     }
 
-    if (selectedPhotos.length === 0) {
+    if (selectedPhotos !== null && selectedPhotos.length === 0) {
       navigate('/travel-record/photo-selection', { replace: true });
     }
-  }, [
-    navigate,
-    selectedDateRange,
-    selectedPhotos.length,
-    selectedRegion,
-  ]);
+  }, [navigate, selectedDateRange, selectedPhotos, selectedRegion]);
 
   return (
     <main className="relative mx-auto h-[844px] w-full max-w-[390px] overflow-hidden bg-[#f9f9f9]">
@@ -175,7 +194,7 @@ function TravelRecordFolderDecorationPage() {
 
         <button
           type="button"
-          disabled={isSaving}
+          disabled={isSaving || !selectedPhotos?.length}
           aria-busy={isSaving}
           onClick={handleSaveRecord}
           className="absolute bottom-8 left-6 flex h-[53px] w-[342px] items-center justify-center rounded-xl bg-[#ff6f41] text-[18px] leading-none font-semibold text-[#f9f9f9] disabled:cursor-default disabled:bg-[#e4e4e4] disabled:text-[#7f7f7f]"

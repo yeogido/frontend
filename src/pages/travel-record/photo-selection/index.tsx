@@ -18,6 +18,10 @@ import {
   getTravelRecordDraftDateRange,
   getTravelRecordDraftRegion,
 } from '../utils/draftStorage';
+import {
+  saveTravelRecordPhotoDraft,
+  TRAVEL_RECORD_PHOTO_DRAFT_ID,
+} from '../utils/travelRecordSave';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -61,16 +65,17 @@ function TravelRecordPhotoSelectionPage() {
     onReorderPhotos: reorderPhotos,
   });
 
-  const handleDecorateFolder = () => {
+  const handleDecorateFolder = async () => {
     if (!hasSelectedPhotos || !selectedRegion || !selectedDateRange) {
       return;
     }
 
+    await saveTravelRecordPhotoDraft(photos.map((photo) => photo.file));
     navigate('/travel-record/folder-decoration', {
       state: {
         selectedRegion,
         selectedDateRange,
-        selectedPhotos: photos.map((photo) => photo.file),
+        photoDraftId: TRAVEL_RECORD_PHOTO_DRAFT_ID,
       },
     });
   };

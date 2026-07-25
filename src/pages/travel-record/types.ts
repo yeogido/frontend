@@ -8,7 +8,7 @@ export interface TravelRecordFolder {
   year: number;
   startDate: string;
   period: string;
-  photos: [string, string, ...string[]];
+  photos: [string, ...string[]];
 }
 
 export interface TravelRecordDraftRegion {

@@ -63,20 +63,12 @@ function useTravelRecordPhotoSelection() {
     setMessage(message);
 
     if (photosToAdd.length > 0) {
-      setPhotos((currentPhotos) => {
-        const availableCount = MAX_PHOTO_COUNT - currentPhotos.length;
-        const nextPhotosToAdd = photosToAdd.slice(0, availableCount);
-        const unusedPhotos = photosToAdd.slice(availableCount);
+      const availableCount = MAX_PHOTO_COUNT - photosRef.current.length;
+      const nextPhotosToAdd = photosToAdd.slice(0, availableCount);
+      const unusedPhotos = photosToAdd.slice(availableCount);
 
-        unusedPhotos.forEach((photo) => URL.revokeObjectURL(photo.url));
-
-        const nextPhotos = [...currentPhotos, ...nextPhotosToAdd];
-
-        photosRef.current = nextPhotos;
-        photoUrlsRef.current = nextPhotos.map((photo) => photo.url);
-
-        return nextPhotos;
-      });
+      unusedPhotos.forEach((photo) => URL.revokeObjectURL(photo.url));
+      setPhotos((currentPhotos) => [...currentPhotos, ...nextPhotosToAdd]);
     }
 
     event.target.value = '';
@@ -84,16 +76,9 @@ function useTravelRecordPhotoSelection() {
 
   const removePhoto = (targetPhoto: SelectedPhoto) => {
     URL.revokeObjectURL(targetPhoto.url);
-    setPhotos((currentPhotos) => {
-      const nextPhotos = currentPhotos.filter(
-        (photo) => photo.id !== targetPhoto.id,
-      );
-
-      photosRef.current = nextPhotos;
-      photoUrlsRef.current = nextPhotos.map((photo) => photo.url);
-
-      return nextPhotos;
-    });
+    setPhotos((currentPhotos) =>
+      currentPhotos.filter((photo) => photo.id !== targetPhoto.id),
+    );
     setMessage('');
   };
 
@@ -114,8 +99,6 @@ function useTravelRecordPhotoSelection() {
       const [movedPhoto] = nextPhotos.splice(sourceIndex, 1);
 
       nextPhotos.splice(targetIndex, 0, movedPhoto);
-      photosRef.current = nextPhotos;
-      photoUrlsRef.current = nextPhotos.map((photo) => photo.url);
 
       return nextPhotos;
     });

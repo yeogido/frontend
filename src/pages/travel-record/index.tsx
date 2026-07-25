@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import addIcon from '../../assets/icons/material-symbols_add-2-rounded.svg';
 
@@ -19,8 +19,14 @@ const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
 const addTravelRecordLabel = '\uC5EC\uD589 \uAE30\uB85D \uCD94\uAC00';
 
+interface TravelRecordLocationState {
+  savedTravelRecordId?: string;
+}
+
 function TravelRecordPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as TravelRecordLocationState | null;
   const [folders, setFolders] = useState<TravelRecordFolder[]>(
     TRAVEL_RECORD_FOLDERS,
   );
@@ -57,7 +63,7 @@ function TravelRecordPage() {
       isMounted = false;
       savedFolders.forEach(revokeTravelRecordFolderPhotoUrls);
     };
-  }, []);
+  }, [locationState?.savedTravelRecordId]);
 
   const visibleFolders = useMemo(
     () =>

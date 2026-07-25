@@ -17,6 +17,7 @@ import type { TravelRecordFolder } from '../types';
 import {
   getSavedTravelRecordFolder,
   revokeTravelRecordFolderPhotoUrls,
+  SAVED_TRAVEL_RECORD_ID_PREFIX,
 } from '../utils/travelRecordSave';
 
 interface TravelRecordDetailLocationState {
@@ -51,6 +52,8 @@ function TravelRecordDetailPage() {
   const location = useLocation();
   const photoStackRef = useRef<HTMLDivElement>(null);
   const dragX = useMotionValue(0);
+  const isMountedRef = useRef(true);
+  const transitionControlsRef = useRef<{ stop: () => void } | null>(null);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
@@ -60,7 +63,8 @@ function TravelRecordDetailPage() {
     useState<SavedFolderState | null>(null);
   const locationState =
     location.state as TravelRecordDetailLocationState | null;
-  const isSavedFolder = folderId?.startsWith('saved-') ?? false;
+  const isSavedFolder =
+    folderId?.startsWith(SAVED_TRAVEL_RECORD_ID_PREFIX) ?? false;
   const staticFolder =
     locationState?.folder ??
     TRAVEL_RECORD_FOLDERS.find((record) => record.id === folderId);
@@ -77,6 +81,15 @@ function TravelRecordDetailPage() {
   const nextCardScale = useTransform(dragX, [-motionRange, 0], [1, 0.98]);
   const previousCardOpacity = useTransform(dragX, [0, motionRange], [0.92, 1]);
   const nextCardOpacity = useTransform(dragX, [-motionRange, 0], [1, 0.92]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      transitionControlsRef.current?.stop();
+    };
+  }, []);
 
   useEffect(() => {
     if (!isSavedFolder || !folderId) {
@@ -166,6 +179,7 @@ function TravelRecordDetailPage() {
 
   const finishPhotoTransition = (nextPhotoIndex: number) => {
     setActivePhotoIndex(nextPhotoIndex);
+    setTransitionTargetIndex(null);
     dragX.set(0);
     setIsPhotoTransitioning(false);
   };
@@ -188,8 +202,18 @@ function TravelRecordDetailPage() {
     setSelectedThumbnailIndex(nextPhotoIndex);
     setTransitionTargetIndex(nextPhotoIndex);
     setIsPhotoTransitioning(true);
-    animate(dragX, -direction * cardDistance, transition).then(() => {
-      finishPhotoTransition(nextPhotoIndex);
+    transitionControlsRef.current?.stop();
+    const transitionControls = animate(
+      dragX,
+      -direction * cardDistance,
+      transition,
+    );
+
+    transitionControlsRef.current = transitionControls;
+    transitionControls.then(() => {
+      if (isMountedRef.current) {
+        finishPhotoTransition(nextPhotoIndex);
+      }
     });
   };
 
@@ -206,8 +230,10 @@ function TravelRecordDetailPage() {
       return;
     }
 
+    const isDistanceSwipe =
+      Math.abs(info.offset.x) > cardWidth * dragDistanceRatio;
     const nextPhotoIndex =
-      info.offset.x < 0 || info.velocity.x < 0
+      (isDistanceSwipe ? info.offset.x : info.velocity.x) < 0
         ? activePhotoIndex + 1
         : activePhotoIndex - 1;
 

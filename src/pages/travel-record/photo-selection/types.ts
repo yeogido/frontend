@@ -10,5 +10,5 @@ export interface SelectedPhoto {
 export interface TravelFolderDecorationLocationState {
   selectedRegion?: TravelRecordDraftRegion;
   selectedDateRange?: TravelDateRange;
-  selectedPhotos?: File[];
+  photoDraftId?: string;
 }

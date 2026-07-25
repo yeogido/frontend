@@ -1,5 +1,5 @@
 import {
-  type MutableRefObject,
+  type RefObject,
   type PointerEvent,
   useRef,
   useState,
@@ -18,7 +18,7 @@ interface DraggingPhoto {
 }
 
 interface UseDraggablePhotoOrderParams {
-  photosRef: MutableRefObject<SelectedPhoto[]>;
+  photosRef: RefObject<SelectedPhoto[]>;
   onReorderPhotos: (sourcePhotoId: string, targetPhotoId: string) => void;
 }
 
@@ -69,7 +69,7 @@ function useDraggablePhotoOrder({
         return null;
       }
 
-      const targetPhoto = photosRef.current.find((photo) => {
+      const targetPhoto = photosRef.current?.find((photo) => {
         if (photo.id === currentDraggingPhoto.id) {
           return false;
         }
