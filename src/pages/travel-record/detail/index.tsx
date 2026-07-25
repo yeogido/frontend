@@ -14,9 +14,18 @@ import { IoEllipsisVertical } from 'react-icons/io5';
 import { TravelFolderArtwork } from '../components';
 import { TRAVEL_RECORD_FOLDERS } from '../constants/travelRecords';
 import type { TravelRecordFolder } from '../types';
+import {
+  getSavedTravelRecordFolder,
+  revokeTravelRecordFolderPhotoUrls,
+} from '../utils/travelRecordSave';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
+}
+
+interface SavedFolderState {
+  id: string;
+  folder: TravelRecordFolder | null;
 }
 
 const missingRecordLabel = '여행 기록을 찾을 수 없어요';
@@ -47,11 +56,19 @@ function TravelRecordDetailPage() {
   const [cardWidth, setCardWidth] = useState(0);
   const [isPhotoTransitioning, setIsPhotoTransitioning] = useState(false);
   const [transitionTargetIndex, setTransitionTargetIndex] = useState<number | null>(null);
+  const [savedFolderState, setSavedFolderState] =
+    useState<SavedFolderState | null>(null);
   const locationState =
     location.state as TravelRecordDetailLocationState | null;
-  const folder =
+  const isSavedFolder = folderId?.startsWith('saved-') ?? false;
+  const staticFolder =
     locationState?.folder ??
     TRAVEL_RECORD_FOLDERS.find((record) => record.id === folderId);
+  const savedFolder =
+    savedFolderState && savedFolderState.id === folderId
+      ? savedFolderState.folder
+      : undefined;
+  const folder = isSavedFolder ? savedFolder : staticFolder;
   const motionRange = Math.max(cardWidth, 1);
   const cardDistance = cardWidth + cardStackOffset;
   const previousCardX = useTransform(dragX, (value) => -cardDistance + value);
@@ -60,6 +77,42 @@ function TravelRecordDetailPage() {
   const nextCardScale = useTransform(dragX, [-motionRange, 0], [1, 0.98]);
   const previousCardOpacity = useTransform(dragX, [0, motionRange], [0.92, 1]);
   const nextCardOpacity = useTransform(dragX, [-motionRange, 0], [1, 0.92]);
+
+  useEffect(() => {
+    if (!isSavedFolder || !folderId) {
+      return;
+    }
+
+    let isMounted = true;
+    let loadedFolder: TravelRecordFolder | null = null;
+
+    void getSavedTravelRecordFolder(folderId)
+      .then((folder) => {
+        loadedFolder = folder;
+
+        if (isMounted) {
+          setSavedFolderState({ id: folderId, folder });
+          return;
+        }
+
+        if (folder) {
+          revokeTravelRecordFolderPhotoUrls(folder);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setSavedFolderState({ id: folderId, folder: null });
+        }
+      });
+
+    return () => {
+      isMounted = false;
+
+      if (loadedFolder) {
+        revokeTravelRecordFolderPhotoUrls(loadedFolder);
+      }
+    };
+  }, [folderId, isSavedFolder]);
 
   useEffect(() => {
     const photoStack = photoStackRef.current;
@@ -76,6 +129,15 @@ function TravelRecordDetailPage() {
 
     return () => resizeObserver.disconnect();
   }, [folder?.id]);
+
+  if (isSavedFolder && savedFolder === undefined) {
+    return (
+      <main
+        aria-busy="true"
+        className="mx-auto flex min-h-dvh w-full max-w-[390px] items-center justify-center bg-[#f1f1f1]"
+      />
+    );
+  }
 
   if (!folder) {
     return (

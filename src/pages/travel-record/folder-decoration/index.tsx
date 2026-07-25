@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -54,6 +54,8 @@ function TravelRecordFolderDecorationPage() {
   const [previewPhotoUrls] = useState(() =>
     createObjectUrls(selectedPhotos.slice(0, 2)),
   );
+  const isSavingRef = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
   const folderPhotos = useMemo<[string, string] | null>(() => {
     const firstPhoto = previewPhotoUrls[0];
 
@@ -70,25 +72,30 @@ function TravelRecordFolderDecorationPage() {
     : '';
 
   const handleSaveRecord = async () => {
-    if (!selectedRegion || !selectedDateRange || selectedPhotos.length === 0) {
+    if (
+      isSavingRef.current ||
+      !selectedRegion ||
+      !selectedDateRange ||
+      selectedPhotos.length === 0
+    ) {
       return;
     }
 
-    const payload = createTravelRecordDraftPayload({
-      selectedRegion,
-      selectedDateRange,
-      selectedPhotos,
-    });
-    const savedTravelRecord = await saveTravelRecord(payload, {
-      selectedRegion,
-      selectedDateRange,
-    });
+    isSavingRef.current = true;
+    setIsSaving(true);
 
-    navigate('/travel-record', {
-      state: {
-        savedTravelRecord,
-      },
-    });
+    try {
+      const payload = createTravelRecordDraftPayload({
+        selectedRegion,
+        selectedDateRange,
+        selectedPhotos,
+      });
+      await saveTravelRecord(payload);
+      navigate('/travel-record');
+    } catch {
+      isSavingRef.current = false;
+      setIsSaving(false);
+    }
   };
 
   useEffect(
@@ -168,8 +175,10 @@ function TravelRecordFolderDecorationPage() {
 
         <button
           type="button"
+          disabled={isSaving}
+          aria-busy={isSaving}
           onClick={handleSaveRecord}
-          className="absolute bottom-8 left-6 flex h-[53px] w-[342px] items-center justify-center rounded-xl bg-[#ff6f41] text-[18px] leading-none font-semibold text-[#f9f9f9]"
+          className="absolute bottom-8 left-6 flex h-[53px] w-[342px] items-center justify-center rounded-xl bg-[#ff6f41] text-[18px] leading-none font-semibold text-[#f9f9f9] disabled:cursor-default disabled:bg-[#e4e4e4] disabled:text-[#7f7f7f]"
         >
           {saveRecordLabel}
         </button>

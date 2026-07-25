@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import addIcon from '../../assets/icons/material-symbols_add-2-rounded.svg';
 
@@ -10,118 +10,67 @@ import {
 } from './components';
 import { TRAVEL_RECORD_FOLDERS } from './constants/travelRecords';
 import type { TravelRecordFolder, TravelRecordView } from './types';
-import type { SavedTravelRecordResult } from './utils/travelRecordSave';
-
-interface TravelRecordLocationState {
-  savedTravelRecord?: SavedTravelRecordResult;
-}
+import {
+  getSavedTravelRecordFolders,
+  revokeTravelRecordFolderPhotoUrls,
+} from './utils/travelRecordSave';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
 const addTravelRecordLabel = '\uC5EC\uD589 \uAE30\uB85D \uCD94\uAC00';
 
-const formatPeriod = (startDate: Date, endDate: Date) => {
-  const formatDate = (date: Date) => {
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${month}.${day}`;
-  };
-
-  return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-};
-
-const formatStartDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-};
-
-const createSavedTravelRecordFolder = (
-  savedTravelRecord: SavedTravelRecordResult | undefined
-): TravelRecordFolder | null => {
-  const selectedRegion = savedTravelRecord?.selectedRegion;
-  const selectedDateRange = savedTravelRecord?.selectedDateRange;
-  const selectedPhotoUrls = savedTravelRecord?.selectedPhotoUrls ?? [];
-  const firstPhotoUrl = selectedPhotoUrls[0];
-
-  if (!selectedRegion || !selectedDateRange || !firstPhotoUrl) {
-    return null;
-  }
-
-  const secondPhotoUrl = selectedPhotoUrls[1] ?? firstPhotoUrl;
-  const title = selectedRegion.selectionName || selectedRegion.name;
-
-  return {
-    id: `saved-${selectedRegion.id}-${Date.now()}`,
-    regionCode: selectedRegion.id,
-    regionName: title,
-    title,
-    year: selectedDateRange.startDate.getFullYear(),
-    startDate: formatStartDate(selectedDateRange.startDate),
-    period: formatPeriod(
-      selectedDateRange.startDate,
-      selectedDateRange.endDate
-    ),
-    photos: [firstPhotoUrl, secondPhotoUrl, ...selectedPhotoUrls.slice(2)],
-  };
-};
-
 function TravelRecordPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const locationState = location.state as TravelRecordLocationState | null;
-  const generatedPhotoUrlsRef = useRef(
-    Array.from(
-      new Set(locationState?.savedTravelRecord?.selectedPhotoUrls ?? [])
-    )
+  const [folders, setFolders] = useState<TravelRecordFolder[]>(
+    TRAVEL_RECORD_FOLDERS,
   );
-  const [folders] = useState<TravelRecordFolder[]>(() => {
-    const savedFolder = createSavedTravelRecordFolder(
-      locationState?.savedTravelRecord
-    );
-
-    return savedFolder
-      ? [...TRAVEL_RECORD_FOLDERS, savedFolder]
-      : TRAVEL_RECORD_FOLDERS;
-  });
+  const [activeView, setActiveView] = useState<TravelRecordView>('folder');
   const years = useMemo(
     () =>
       Array.from(new Set(folders.map((folder) => folder.year))).sort(
-        (currentYear, nextYear) => nextYear - currentYear
+        (currentYear, nextYear) => nextYear - currentYear,
       ),
-    [folders]
+    [folders],
   );
-  const [activeView, setActiveView] = useState<TravelRecordView>('folder');
-  const handleFolderClick = (folder: TravelRecordFolder) => {
-    navigate(`/travel-record/${folder.id}`, { state: { folder } });
-  };
   const [selectedYear, setSelectedYear] = useState(years[0]);
+
+  useEffect(() => {
+    let isMounted = true;
+    let savedFolders: TravelRecordFolder[] = [];
+
+    void getSavedTravelRecordFolders()
+      .then((folders) => {
+        savedFolders = folders;
+
+        if (isMounted) {
+          setFolders([...TRAVEL_RECORD_FOLDERS, ...folders]);
+          return;
+        }
+
+        folders.forEach(revokeTravelRecordFolderPhotoUrls);
+      })
+      .catch(() => {
+        // Keep the mock records available when browser storage is unavailable.
+      });
+
+    return () => {
+      isMounted = false;
+      savedFolders.forEach(revokeTravelRecordFolderPhotoUrls);
+    };
+  }, []);
 
   const visibleFolders = useMemo(
     () =>
       folders
         .filter((folder) => folder.year === selectedYear)
         .sort((currentFolder, nextFolder) =>
-          nextFolder.startDate.localeCompare(currentFolder.startDate)
+          nextFolder.startDate.localeCompare(currentFolder.startDate),
         ),
-    [folders, selectedYear]
+    [folders, selectedYear],
   );
-
-  useEffect(() => {
-    if (locationState?.savedTravelRecord) {
-      navigate('/travel-record', { replace: true, state: null });
-    }
-  }, [locationState?.savedTravelRecord, navigate]);
-
-  useEffect(
-    () => () => {
-      generatedPhotoUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-    },
-    []
-  );
+  const handleFolderClick = (folder: TravelRecordFolder) => {
+    navigate(`/travel-record/${folder.id}`, { state: { folder } });
+  };
 
   return (
     <section className="relative mx-auto min-h-screen w-full max-w-[390px] px-6 pt-3 pb-28">
