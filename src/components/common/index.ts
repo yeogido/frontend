@@ -12,3 +12,5 @@ export { default as SearchTriggerButton } from './SearchTriggerButton';
 export { default as TagChip } from './TagChip';
 export { default as AdvertisementCard } from './AdvertisementCard';
 export { default as AdvertisementCardSkeleton } from './AdvertisementCardSkeleton';
+export { default as RegionHero } from './RegionHero';
+export { default as PromotionCard } from './PromotionCard';

@@ -33,11 +33,14 @@ import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TravelRecordPage from '../pages/travel-record';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
 import TravelRecordDetailPage from '../pages/travel-record/detail';
-import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
 import TravelRecordFolderDecorationPage from '../pages/travel-record/folder-decoration';
 import TravelRecordPhotoSelectionPage from '../pages/travel-record/photo-selection';
+import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
+import VisitOrderSelectionPage from '../pages/local-recommendation/visit-order-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
+import RegionInfoPage from '../pages/region-info';
+
 function AppRouter() {
   return (
     <Routes>
@@ -72,6 +75,11 @@ function AppRouter() {
         <Route
           path="/course-region-search"
           element={<CourseRegionSearchPage />}
+        />
+
+        <Route
+          path="/region-info/:region"
+          element={<RegionInfoPage />}
         />
 
         <Route path="/yeogido-course" element={<YeogidoCoursePage />} />
@@ -121,10 +129,6 @@ function AppRouter() {
       />
 
       <Route
-        path="/travel-record/:folderId"
-        element={<TravelRecordDetailPage />}
-      />
-      <Route
         path="/travel-record/new"
         element={<TravelRecordRegionSelectionPage />}
       />
@@ -134,13 +138,20 @@ function AppRouter() {
         element={<TravelRecordDateSelectionPage />}
       />
       <Route
+        path="/travel-record/:folderId"
+        element={<TravelRecordDetailPage />}
+      />
+      <Route
         path="/travel-record/photo-selection"
         element={<TravelRecordPhotoSelectionPage />}
       />
-
       <Route
         path="/travel-record/folder-decoration"
         element={<TravelRecordFolderDecorationPage />}
+      />
+      <Route
+        path="/local-recommendation/visit-order-selection"
+        element={<VisitOrderSelectionPage />}
       />
 
       <Route element={<AuthLayout />}>

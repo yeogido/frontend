@@ -6,4 +6,3 @@ export { default as BusinessGrid } from './BusinessGrid';
 export { default as BusinessGridCard } from './BusinessGridCard';
 export { default as BusinessList } from './BusinessList';
 export { default as BusinessListCard } from './BusinessListCard';
-export { default as BusinessCardHeader } from './BusinessCardHeader';
