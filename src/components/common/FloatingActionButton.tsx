@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 
 import addIcon from '../../assets/icons/material-symbols_add-2-rounded.svg';
+import { APP_MAX_WIDTH, GLOBAL_DESIGN_WIDTH } from '../../constants/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 
 const BUTTON_SIZE = 56;
@@ -27,7 +28,7 @@ function FloatingActionButton({
       onClick={onClick}
       className={`fixed z-30 flex items-center justify-center rounded-full bg-[#1C1C1C] ${className}`}
       style={{
-        right: `max(${BUTTON_RIGHT * scale}px, calc((100vw - 500px) / 2 + ${BUTTON_RIGHT * (500 / 390)}px))`,
+        right: `max(${BUTTON_RIGHT * scale}px, calc((100% - ${APP_MAX_WIDTH}px) / 2 + ${BUTTON_RIGHT * (APP_MAX_WIDTH / GLOBAL_DESIGN_WIDTH)}px))`,
         bottom: BUTTON_BOTTOM * scale,
         width: BUTTON_SIZE * scale,
         height: BUTTON_SIZE * scale,

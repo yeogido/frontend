@@ -28,7 +28,7 @@ function RegionImageCarousel<T extends RegionImageOption>({
 
   return (
     <div
-      className="flex items-center overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      className="flex touch-pan-x [scrollbar-width:none] items-center overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       role="list"
       aria-label={ariaLabel}
       style={{
@@ -55,7 +55,7 @@ function RegionImageCarousel<T extends RegionImageOption>({
               aria-pressed={isSelected}
               aria-label={`${option.name} 선택`}
               onClick={() => onSelect(option)}
-              className="relative h-full w-full overflow-hidden rounded-full bg-gray-2 outline-none focus-visible:ring-2 focus-visible:ring-main-5 focus-visible:ring-offset-2"
+              className="bg-gray-2 focus-visible:ring-main-5 relative h-full w-full overflow-hidden rounded-full outline-none focus-visible:ring-2 focus-visible:ring-inset"
             >
               <img
                 src={option.imageSrc}

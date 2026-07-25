@@ -1,8 +1,6 @@
 import { useLayoutEffect, useState } from 'react';
 
-import { APP_MAX_WIDTH } from '../constants/layout';
-
-export const GLOBAL_DESIGN_WIDTH = 390;
+import { APP_MAX_WIDTH, GLOBAL_DESIGN_WIDTH } from '../constants/layout';
 
 /**
  * 앱 전체가 공유하는 단일 스케일 값.
@@ -16,13 +14,13 @@ export function useGlobalScale() {
   const [scale, setScale] = useState(() =>
     typeof window === 'undefined'
       ? 1
-      : Math.min(window.innerWidth, APP_MAX_WIDTH) / GLOBAL_DESIGN_WIDTH,
+      : Math.min(window.innerWidth, APP_MAX_WIDTH) / GLOBAL_DESIGN_WIDTH
   );
 
   useLayoutEffect(() => {
     const update = () =>
       setScale(
-        Math.min(window.innerWidth, APP_MAX_WIDTH) / GLOBAL_DESIGN_WIDTH,
+        Math.min(window.innerWidth, APP_MAX_WIDTH) / GLOBAL_DESIGN_WIDTH
       );
 
     update();

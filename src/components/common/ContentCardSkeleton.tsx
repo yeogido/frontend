@@ -28,17 +28,21 @@ function ContentCardSkeleton({
   imageClassName = '',
 }: ContentCardSkeletonProps) {
   const scale = useGlobalScale();
+  const hasCustomWidth = /(?:^|\s)(?:w-|min-w|max-w)/.test(className);
+  const hasCustomImageHeight = /(?:^|\s)(?:h-|min-h|max-h|aspect-)/.test(
+    imageClassName
+  );
 
   return (
     <div
       className={`shrink-0 overflow-hidden ${className}`}
       style={{
-        width: CARD_WIDTH * scale,
+        width: hasCustomWidth ? undefined : CARD_WIDTH * scale,
         height: CARD_HEIGHT * scale,
       }}
     >
       <article
-        className="flex h-full w-full flex-col overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)] animate-pulse"
+        className="flex h-full w-full animate-pulse flex-col overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
         style={{
           width: CARD_WIDTH,
           height: CARD_HEIGHT,
@@ -49,7 +53,7 @@ function ContentCardSkeleton({
         <div className="relative overflow-hidden rounded-[8px]">
           <div
             className={`w-full bg-[#EAEAEA] ${imageClassName}`}
-            style={{ height: IMAGE_HEIGHT }}
+            style={{ height: hasCustomImageHeight ? undefined : IMAGE_HEIGHT }}
           />
           <div
             className="absolute"
