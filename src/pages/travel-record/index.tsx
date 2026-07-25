@@ -9,10 +9,7 @@ import {
   TravelYearDropdown,
 } from './components';
 import { TRAVEL_RECORD_FOLDERS } from './constants/travelRecords';
-import type {
-  TravelRecordFolder,
-  TravelRecordView,
-} from './types';
+import type { TravelRecordFolder, TravelRecordView } from './types';
 import type { SavedTravelRecordResult } from './utils/travelRecordSave';
 
 interface TravelRecordLocationState {
@@ -21,8 +18,7 @@ interface TravelRecordLocationState {
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
-const addTravelRecordLabel =
-  '\uC5EC\uD589 \uAE30\uB85D \uCD94\uAC00';
+const addTravelRecordLabel = '\uC5EC\uD589 \uAE30\uB85D \uCD94\uAC00';
 
 const formatPeriod = (startDate: Date, endDate: Date) => {
   const formatDate = (date: Date) => {
@@ -44,7 +40,7 @@ const formatStartDate = (date: Date) => {
 };
 
 const createSavedTravelRecordFolder = (
-  savedTravelRecord: SavedTravelRecordResult | undefined,
+  savedTravelRecord: SavedTravelRecordResult | undefined
 ): TravelRecordFolder | null => {
   const selectedRegion = savedTravelRecord?.selectedRegion;
   const selectedDateRange = savedTravelRecord?.selectedDateRange;
@@ -67,9 +63,9 @@ const createSavedTravelRecordFolder = (
     startDate: formatStartDate(selectedDateRange.startDate),
     period: formatPeriod(
       selectedDateRange.startDate,
-      selectedDateRange.endDate,
+      selectedDateRange.endDate
     ),
-    photos: [firstPhotoUrl, secondPhotoUrl],
+    photos: [firstPhotoUrl, secondPhotoUrl, ...selectedPhotoUrls.slice(2)],
   };
 };
 
@@ -79,12 +75,12 @@ function TravelRecordPage() {
   const locationState = location.state as TravelRecordLocationState | null;
   const generatedPhotoUrlsRef = useRef(
     Array.from(
-      new Set(locationState?.savedTravelRecord?.selectedPhotoUrls ?? []),
-    ),
+      new Set(locationState?.savedTravelRecord?.selectedPhotoUrls ?? [])
+    )
   );
   const [folders] = useState<TravelRecordFolder[]>(() => {
     const savedFolder = createSavedTravelRecordFolder(
-      locationState?.savedTravelRecord,
+      locationState?.savedTravelRecord
     );
 
     return savedFolder
@@ -94,11 +90,14 @@ function TravelRecordPage() {
   const years = useMemo(
     () =>
       Array.from(new Set(folders.map((folder) => folder.year))).sort(
-        (currentYear, nextYear) => nextYear - currentYear,
+        (currentYear, nextYear) => nextYear - currentYear
       ),
-    [folders],
+    [folders]
   );
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
+  const handleFolderClick = (folder: TravelRecordFolder) => {
+    navigate(`/travel-record/${folder.id}`, { state: { folder } });
+  };
   const [selectedYear, setSelectedYear] = useState(years[0]);
 
   const visibleFolders = useMemo(
@@ -106,9 +105,9 @@ function TravelRecordPage() {
       folders
         .filter((folder) => folder.year === selectedYear)
         .sort((currentFolder, nextFolder) =>
-          nextFolder.startDate.localeCompare(currentFolder.startDate),
+          nextFolder.startDate.localeCompare(currentFolder.startDate)
         ),
-    [folders, selectedYear],
+    [folders, selectedYear]
   );
 
   useEffect(() => {
@@ -121,7 +120,7 @@ function TravelRecordPage() {
     () => () => {
       generatedPhotoUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
     },
-    [],
+    []
   );
 
   return (
@@ -156,7 +155,10 @@ function TravelRecordPage() {
       />
 
       {activeView === 'folder' ? (
-        <TravelFolderGrid folders={visibleFolders} />
+        <TravelFolderGrid
+          folders={visibleFolders}
+          onFolderClick={handleFolderClick}
+        />
       ) : (
         <TravelMapPanel folders={visibleFolders} />
       )}

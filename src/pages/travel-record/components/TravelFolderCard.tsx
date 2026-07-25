@@ -4,10 +4,11 @@ import type { TravelRecordFolder } from '../types';
 
 interface TravelFolderCardProps {
   folder: TravelRecordFolder;
+  onClick: (folder: TravelRecordFolder) => void;
 }
 
 interface TravelFolderArtworkProps {
-  photos: [string, string];
+  photos: [string, string, ...string[]];
   title: string;
 }
 
@@ -67,7 +68,10 @@ function FolderPhoto({
   );
 }
 
-export function TravelFolderArtwork({ photos, title }: TravelFolderArtworkProps) {
+export function TravelFolderArtwork({
+  photos,
+  title,
+}: TravelFolderArtworkProps) {
   return (
     <div className="relative h-[183px] w-[159px]">
       <img
@@ -105,16 +109,23 @@ export function TravelFolderArtwork({ photos, title }: TravelFolderArtworkProps)
   );
 }
 
-function TravelFolderCard({ folder }: TravelFolderCardProps) {
+function TravelFolderCard({ folder, onClick }: TravelFolderCardProps) {
   return (
-    <article className="flex w-[159px] flex-col items-center">
-      <TravelFolderArtwork photos={folder.photos} title={folder.title} />
-      <h2 className="mt-3 text-center text-[16px] leading-none font-medium text-black">
-        {folder.title}
-      </h2>
-      <time className="mt-1.5 rounded-full bg-gray-2 px-2 py-1 text-[14px] leading-none font-normal text-gray-4">
-        {folder.period}
-      </time>
+    <article className="w-[159px]">
+      <button
+        type="button"
+        onClick={() => onClick(folder)}
+        aria-label={`${folder.title} \uC5EC\uD589 \uAE30\uB85D \uC0C1\uC138 \uBCF4\uAE30`}
+        className="flex w-full flex-col items-center"
+      >
+        <TravelFolderArtwork photos={folder.photos} title={folder.title} />
+        <h2 className="mt-3 text-center text-[16px] leading-none font-medium text-black">
+          {folder.title}
+        </h2>
+        <time className="bg-gray-2 text-gray-4 mt-1.5 rounded-full px-2 py-1 text-[14px] leading-none font-normal">
+          {folder.period}
+        </time>
+      </button>
     </article>
   );
 }
