@@ -50,6 +50,19 @@ function TravelRecordPage() {
 
         if (isMounted) {
           setFolders([...TRAVEL_RECORD_FOLDERS, ...folders]);
+
+          const savedFolder = folders.find(
+            (folder) => folder.id === locationState?.savedTravelRecordId,
+          );
+          const latestSavedFolder = [...folders].sort((currentFolder, nextFolder) =>
+            nextFolder.startDate.localeCompare(currentFolder.startDate),
+          )[0];
+          const defaultSelectedYear = (savedFolder ?? latestSavedFolder)?.year;
+
+          if (defaultSelectedYear) {
+            setSelectedYear(defaultSelectedYear);
+          }
+
           return;
         }
 
