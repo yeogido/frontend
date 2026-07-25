@@ -4,29 +4,37 @@ import { useSearchParams } from 'react-router-dom';
 import {
   ContentCard,
   ContentCardSkeleton,
+  CourseFilterBar,
   SearchBar,
 } from '../../../components/common';
 import {
   COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
   courseRegionRecentSearchKeywords,
 } from '../../../constants/recentSearches';
-import {
-  COURSE_FILTER_CONTAINER_CLASS_NAME,
-  getCourseFilterColumnClassName,
-  getCourseFilterGridClassName,
-  isExtendedTransportFilterLabel,
-} from '../../../constants/courseFilterLayout';
+import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
 import { localCourseSearchSuggestions } from '../../../constants/localCourseSearch';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
-import { YeogidoCourseFilterChip } from '../../yeogido-course/components';
 
 import { localCourseFilterGroups } from '../constants/filters';
 import { LOCAL_COURSE_SKELETON_ITEMS } from '../constants/ui';
 import useLocalCourseFilters from '../hooks/useLocalCourseFilters';
 import useLocalCourses from '../hooks/useLocalCourses';
 
+const PAGE_PADDING_X = 24;
+const PAGE_PADDING_TOP = 12;
+const PAGE_PADDING_BOTTOM = 40;
+const FILTER_MARGIN_TOP = 12;
+const LIST_MARGIN_TOP = 24;
+const LIST_GAP = 16;
+const EMPTY_MARGIN_TOP = 40;
+const ERROR_MARGIN_TOP = 24;
+const MESSAGE_TEXT_SIZE = 13;
+const LOAD_MORE_HEIGHT = 40;
+
 function LocalCourseSearchPage() {
+  const scale = useGlobalScale();
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
@@ -59,10 +67,6 @@ function LocalCourseSearchPage() {
 
   const courses = data?.pages.flatMap((page) => page.content) ?? [];
   const hasEmptyResult = !isPending && !isError && courses.length === 0;
-  const filterGridClassName =
-    getCourseFilterGridClassName(
-      isExtendedTransportFilterLabel(selectedFilters.transport)
-    );
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -97,39 +101,41 @@ function LocalCourseSearchPage() {
   };
 
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-3 pb-10">
+    <section
+      className="mx-auto flex min-h-screen w-full flex-col"
+      style={{
+        paddingLeft: PAGE_PADDING_X * scale,
+        paddingRight: PAGE_PADDING_X * scale,
+        paddingTop: PAGE_PADDING_TOP * scale,
+        paddingBottom: PAGE_PADDING_BOTTOM * scale,
+      }}
+    >
       <div className="w-full">
         <SearchBar
-          initialQuery={displaySearchQuery}
-          placeholder="지역명 또는 도시명을 검색해 주세요"
-          label="지역명 또는 도시명 검색"
-          suggestions={localCourseSearchSuggestions}
-          onSearch={handleSearch}
-        />
-
+              initialQuery={displaySearchQuery}
+              placeholder="지역명 또는 도시명을 검색해 주세요"
+              label="지역명 또는 도시명 검색"
+              suggestions={localCourseSearchSuggestions}
+              onSearch={handleSearch}
+            />
+      <CourseFilterBar
+        filterGroups={localCourseFilterGroups}
+        selectedFilters={selectedFilters}
+        openFilterKey={openFilterKey}
+        filterContainerRef={filterContainerRef}
+        isExtendedTransport={isExtendedTransportFilterLabel(selectedFilters.transport)}
+        marginTop={FILTER_MARGIN_TOP}
+        onToggle={handleFilterToggle}
+        onSelect={handleFilterSelect}
+      />
         <div
-          ref={filterContainerRef}
-          className={`mt-3 ${COURSE_FILTER_CONTAINER_CLASS_NAME}`}
+          className="grid grid-cols-2"
+          style={{
+            marginTop: LIST_MARGIN_TOP * scale,
+            columnGap: LIST_GAP * scale,
+            rowGap: LIST_GAP * scale,
+          }}
         >
-          <div className={filterGridClassName}>
-            {localCourseFilterGroups.map((filter) => (
-              <div
-                key={filter.key}
-                className={getCourseFilterColumnClassName(filter.key)}
-              >
-                <YeogidoCourseFilterChip
-                  label={selectedFilters[filter.key]}
-                  options={[...filter.options]}
-                  isOpen={openFilterKey === filter.key}
-                  onToggle={() => handleFilterToggle(filter.key)}
-                  onSelect={(option) => handleFilterSelect(filter.key, option)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4">
           {isPending
             ? LOCAL_COURSE_SKELETON_ITEMS.map((item) => (
                 <ContentCardSkeleton
@@ -139,17 +145,17 @@ function LocalCourseSearchPage() {
                 />
               ))
             : courses.map((course) => (
-                <ContentCard
-                  key={course.id}
-                  image={course.image}
-                  title={course.title}
-                  firstInfo={course.duration}
-                  secondInfo={course.courseType}
-                  liked={course.liked}
-                  tags={course.tags}
-                  className="w-full"
-                />
-              ))}
+              <ContentCard
+                key={course.id}
+                image={course.image}
+                title={course.title}
+                firstInfo={course.duration}
+                secondInfo={course.courseType}
+                liked={course.liked}
+                tags={course.tags}
+                className="w-full"
+              />
+            ))}
 
           {isFetchingNextPage
             ? LOCAL_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
@@ -163,18 +169,34 @@ function LocalCourseSearchPage() {
         </div>
 
         {hasEmptyResult ? (
-          <p className="mt-10 text-center text-[13px] font-medium text-gray-4">
+          <p
+            className="text-center font-medium text-gray-4"
+            style={{
+              marginTop: EMPTY_MARGIN_TOP * scale,
+              fontSize: MESSAGE_TEXT_SIZE * scale,
+            }}
+          >
             검색 결과가 없습니다.
           </p>
         ) : null}
 
         {isError ? (
-          <p className="text-main-5 mt-6 text-center text-[13px] font-medium">
+          <p
+            className="text-main-5 text-center font-medium"
+            style={{
+              marginTop: ERROR_MARGIN_TOP * scale,
+              fontSize: MESSAGE_TEXT_SIZE * scale,
+            }}
+          >
             코스 목록을 불러오지 못했어요.
           </p>
         ) : null}
 
-        <div ref={loadMoreRef} className="h-10" aria-hidden="true" />
+        <div
+          ref={loadMoreRef}
+          style={{ height: LOAD_MORE_HEIGHT * scale }}
+          aria-hidden="true"
+        />
       </div>
     </section>
   );

@@ -1,9 +1,4 @@
-import boryeongFirstImage from '../../course-region-search/assets/cities/chungnam.webp';
-import boryeongSecondImage from '../../course-region-search/assets/cities/daejeon.webp';
-import wandoFirstImage from '../../course-region-search/assets/cities/jeonnam.webp';
-import wandoSecondImage from '../../course-region-search/assets/cities/jeju.webp';
-import yeosuFirstImage from '../../course-region-search/assets/cities/busan.webp';
-import yeosuSecondImage from '../../course-region-search/assets/cities/gyeongnam.webp';
+import { regionCityImages } from '../../../constants/regionImages';
 
 import type { TravelRecordFolder } from '../types';
 
@@ -15,7 +10,7 @@ export const TRAVEL_RECORD_FOLDERS: TravelRecordFolder[] = [
     title: '여수시',
     year: 2026,
     period: '11.25 - 11.30',
-    photos: [yeosuFirstImage, yeosuSecondImage],
+    photos: [regionCityImages.busan, regionCityImages.gyeongnam],
   },
   {
     id: 'wando',
@@ -24,7 +19,7 @@ export const TRAVEL_RECORD_FOLDERS: TravelRecordFolder[] = [
     title: '완도군',
     year: 2026,
     period: '09.11 - 09.13',
-    photos: [wandoFirstImage, wandoSecondImage],
+    photos: [regionCityImages.jeonnam, regionCityImages.jeju],
   },
   {
     id: 'boryeong',
@@ -33,7 +28,7 @@ export const TRAVEL_RECORD_FOLDERS: TravelRecordFolder[] = [
     title: '보령시',
     year: 2026,
     period: '05.14 - 05.16',
-    photos: [boryeongFirstImage, boryeongSecondImage],
+    photos: [regionCityImages.chungnam, regionCityImages.daejeon],
   },
 ];
 

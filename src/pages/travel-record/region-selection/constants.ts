@@ -1,9 +1,4 @@
-import busanImage from '../../course-region-search/assets/cities/busan.webp';
-import gangwonImage from '../../course-region-search/assets/cities/gangwon.webp';
-import gyeongbukImage from '../../course-region-search/assets/cities/gyeongbuk.webp';
-import jejuImage from '../../course-region-search/assets/cities/jeju.webp';
-import jeonbukImage from '../../course-region-search/assets/cities/jeonbuk.webp';
-import seoulImage from '../../course-region-search/assets/cities/seoul.webp';
+import { regionCityImages } from '../../../constants/regionImages';
 
 import type { TravelRecordRegion } from './types';
 
@@ -20,42 +15,42 @@ export const popularRegions: readonly TravelRecordRegion[] = [
     name: '전주',
     province: '전라북도',
     selectionName: '전주시',
-    imageSrc: jeonbukImage,
+    imageSrc: regionCityImages.jeonbuk,
   },
   {
     id: 'busan',
     name: '부산',
     province: '부산광역시',
     selectionName: '부산광역시',
-    imageSrc: busanImage,
+    imageSrc: regionCityImages.busan,
   },
   {
     id: 'jeju',
     name: '제주도',
     province: '제주특별자치도',
     selectionName: '제주특별자치도',
-    imageSrc: jejuImage,
+    imageSrc: regionCityImages.jeju,
   },
   {
     id: 'gangneung',
     name: '강릉',
     province: '강원특별자치도',
     selectionName: '강릉시',
-    imageSrc: gangwonImage,
+    imageSrc: regionCityImages.gangwon,
   },
   {
     id: 'seoul',
     name: '서울',
     province: '서울특별시',
     selectionName: '서울특별시',
-    imageSrc: seoulImage,
+    imageSrc: regionCityImages.seoul,
   },
   {
     id: 'gyeongju',
     name: '경주',
     province: '경상북도',
     selectionName: '경주시',
-    imageSrc: gyeongbukImage,
+    imageSrc: regionCityImages.gyeongbuk,
   },
 ];
 

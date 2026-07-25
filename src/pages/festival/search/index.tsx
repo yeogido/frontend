@@ -6,20 +6,32 @@ import {
   ContentCardSkeleton,
   SearchBar,
 } from '../../../components/common';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import { addStoredRecentSearch } from '../../../utils/recentSearches';
+
+import { FestivalFilterBar } from '../components';
 import {
   FESTIVAL_RECENT_SEARCH_STORAGE_KEY,
   festivalRecentSearchKeywords,
   festivalSearchSuggestions,
 } from '../constants/search';
-import { addStoredRecentSearch } from '../../../utils/recentSearches';
-
-import { FestivalFilterBar } from '../components';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
 import useFestivalFilters from '../hooks/useFestivalFilters';
 import useFestivals from '../hooks/useFestivals';
 
+const PAGE_PADDING_X = 24;
+const PAGE_PADDING_TOP = 12;
+const PAGE_PADDING_BOTTOM = 40;
+const LIST_MARGIN_TOP = 20;
+const LIST_GAP = 16;
+const EMPTY_MARGIN_TOP = 40;
+const ERROR_MARGIN_TOP = 24;
+const MESSAGE_TEXT_SIZE = 13;
+const LOAD_MORE_HEIGHT = 40;
+
 function FestivalSearchPage() {
+  const scale = useGlobalScale();
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
@@ -84,17 +96,23 @@ function FestivalSearchPage() {
 
   return (
     <section
-      className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col items-center bg-background pt-3 pb-10"
+      className="mx-auto flex min-h-screen w-full flex-col bg-background"
+      style={{
+        paddingLeft: PAGE_PADDING_X * scale,
+        paddingRight: PAGE_PADDING_X * scale,
+        paddingTop: PAGE_PADDING_TOP * scale,
+        paddingBottom: PAGE_PADDING_BOTTOM * scale,
+      }}
       aria-label="추천 행사 검색"
     >
-      <SearchBar
-        initialQuery={displaySearchQuery}
-        className="z-20"
-        placeholder="행사명 또는 지역명을 검색해 주세요"
-        label="행사명 또는 지역명 검색"
-        suggestions={festivalSearchSuggestions}
-        onSearch={handleSearch}
-      />
+        <SearchBar
+            initialQuery={displaySearchQuery}
+            placeholder="행사명 또는 지역명을 검색해 주세요"
+            label="행사명 또는 지역명 검색"
+            suggestions={festivalSearchSuggestions}
+            onSearch={handleSearch}
+          />
+
 
       <FestivalFilterBar
         selectedSort={selectedFilters.sort}
@@ -103,7 +121,14 @@ function FestivalSearchPage() {
         onCategorySelect={handleCategorySelect}
       />
 
-      <div className="mt-5 grid w-[342px] grid-cols-2 gap-x-4 gap-y-4">
+      <div
+        className="grid grid-cols-2"
+        style={{
+          marginTop: LIST_MARGIN_TOP * scale,
+          columnGap: LIST_GAP * scale,
+          rowGap: LIST_GAP * scale,
+        }}
+      >
         {isPending
           ? FESTIVAL_SKELETON_ITEMS.map((item) => (
               <ContentCardSkeleton
@@ -137,18 +162,34 @@ function FestivalSearchPage() {
       </div>
 
       {hasEmptyResult ? (
-        <p className="text-gray-4 mt-10 text-center text-[13px] font-medium">
+        <p
+          className="text-center font-medium text-gray-4"
+          style={{
+            marginTop: EMPTY_MARGIN_TOP * scale,
+            fontSize: MESSAGE_TEXT_SIZE * scale,
+          }}
+        >
           검색 결과가 없습니다.
         </p>
       ) : null}
 
       {isError ? (
-        <p className="text-main-5 mt-6 text-center text-[13px] font-medium">
+        <p
+          className="text-main-5 text-center font-medium"
+          style={{
+            marginTop: ERROR_MARGIN_TOP * scale,
+            fontSize: MESSAGE_TEXT_SIZE * scale,
+          }}
+        >
           행사 목록을 불러오지 못했어요.
         </p>
       ) : null}
 
-      <div ref={loadMoreRef} className="h-10" aria-hidden="true" />
+      <div
+        ref={loadMoreRef}
+        style={{ height: LOAD_MORE_HEIGHT * scale }}
+        aria-hidden="true"
+      />
     </section>
   );
 }
