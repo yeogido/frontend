@@ -44,8 +44,11 @@ function CourseBasicInfoForm({ onNext }: CourseBasicInfoFormProps) {
     },
   });
 
+  const inputHeight = Math.max(44, INPUT_HEIGHT * scale);
+  const submitHeight = Math.max(44, SUBMIT_HEIGHT * scale);
+
   const inputStyle = {
-    height: INPUT_HEIGHT * scale,
+    height: inputHeight,
     paddingLeft: INPUT_PADDING_X * scale,
     paddingRight: INPUT_PADDING_X * scale,
     fontSize: INPUT_FONT_SIZE * scale,
@@ -132,7 +135,7 @@ function CourseBasicInfoForm({ onNext }: CourseBasicInfoFormProps) {
         className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full font-semibold disabled:cursor-not-allowed"
         style={{
           marginTop: SUBMIT_MARGIN_TOP * scale,
-          height: SUBMIT_HEIGHT * scale,
+          height: submitHeight,
           fontSize: SUBMIT_FONT_SIZE * scale,
           borderRadius: LARGE_BORDER_RADIUS * scale,
         }}

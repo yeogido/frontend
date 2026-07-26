@@ -20,6 +20,8 @@ function ShareButton({ onClick }: ShareButtonProps) {
       style={{
         height: BUTTON_SIZE * scale,
         width: BUTTON_SIZE * scale,
+        minHeight: 44,
+        minWidth: 44,
       }}
     >
       <svg

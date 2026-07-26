@@ -42,6 +42,8 @@ function CustomSelect<T extends string>({
   onChange,
 }: CustomSelectProps<T>) {
   const scale = useGlobalScale();
+  const triggerHeight = Math.max(44, TRIGGER_HEIGHT * scale);
+  const optionHeight = Math.max(44, OPTION_HEIGHT * scale);
   const listboxId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -214,7 +216,7 @@ function CustomSelect<T extends string>({
           isOpen ? 'border-main-5' : 'border-gray-2'
         }`}
         style={{
-          height: TRIGGER_HEIGHT * scale,
+          height: triggerHeight,
           gap: TRIGGER_GAP * scale,
           paddingLeft: TRIGGER_PADDING_X * scale,
           paddingRight: TRIGGER_PADDING_X * scale,
@@ -285,7 +287,7 @@ function CustomSelect<T extends string>({
                       : 'text-gray-5 hover:bg-main-1 focus:bg-main-1'
                 }`}
                 style={{
-                  height: OPTION_HEIGHT * scale,
+                  height: optionHeight,
                   paddingLeft: OPTION_PADDING_X * scale,
                   paddingRight: OPTION_PADDING_X * scale,
                   fontSize: FONT_SIZE * scale,

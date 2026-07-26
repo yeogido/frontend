@@ -17,9 +17,8 @@ interface PlacePhotoModalHeaderProps {
 
 function PlacePhotoModalHeader({ onClose }: PlacePhotoModalHeaderProps) {
   const scale = useGlobalScale();
-  const closeButtonSize = 
-    CLOSE_VISUAL_SIZE * scale;
   const closeVisualSize = CLOSE_VISUAL_SIZE * scale;
+  const closeButtonSize = Math.max(44, closeVisualSize);
   const closeOverlap = (closeButtonSize - closeVisualSize) / -2;
 
   return (
