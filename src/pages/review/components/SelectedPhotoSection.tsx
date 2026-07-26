@@ -1,5 +1,4 @@
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 import PhotoSlot from './PhotoSlot';
 import { MAX_REVIEW_PHOTOS } from '../reviewForm';
@@ -42,8 +41,8 @@ function SelectedPhotoSection({
           id="selected-photo-title"
           className="font-medium"
           style={{
-            fontSize: scaleValue(TITLE_FONT_SIZE, scale, 14),
-            lineHeight: `${scaleValue(TITLE_LINE_HEIGHT, scale, 20)}px`,
+            fontSize: TITLE_FONT_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
           선택된 사진{' '}
@@ -54,8 +53,8 @@ function SelectedPhotoSection({
         <p
           className="text-gray-3"
           style={{
-            fontSize: scaleValue(HELPER_FONT_SIZE, scale, 10),
-            lineHeight: `${scaleValue(HELPER_LINE_HEIGHT, scale, 14)}px`,
+            fontSize: HELPER_FONT_SIZE * scale,
+            lineHeight: `${HELPER_LINE_HEIGHT * scale}px`,
           }}
         >
           최대 {MAX_REVIEW_PHOTOS}장까지 선택할 수 있어요.

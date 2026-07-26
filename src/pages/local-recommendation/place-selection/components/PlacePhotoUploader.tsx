@@ -2,7 +2,6 @@ import { useId, useRef, type ChangeEvent } from 'react';
 import { IoImageOutline } from 'react-icons/io5';
 
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 
 const UPLOADER_MARGIN_TOP = 24;
 const UPLOADER_PADDING_X = 16;
@@ -74,8 +73,8 @@ function PlacePhotoUploader({
             <span
               className="bg-main-2 text-main-5 flex items-center justify-center rounded-full"
               style={{
-                width: scaleValue(IMAGE_ICON_CONTAINER_SIZE, scale, 44),
-                height: scaleValue(IMAGE_ICON_CONTAINER_SIZE, scale, 44),
+                width: IMAGE_ICON_CONTAINER_SIZE * scale,
+                height: IMAGE_ICON_CONTAINER_SIZE * scale,
               }}
             >
               <IoImageOutline
@@ -87,7 +86,7 @@ function PlacePhotoUploader({
               className="font-semibold text-black"
               style={{
                 marginTop: TITLE_MARGIN_TOP * scale,
-                fontSize: scaleValue(TITLE_FONT_SIZE, scale, 12),
+                fontSize: TITLE_FONT_SIZE * scale,
               }}
             >
               사진을 추가해 주세요.
@@ -96,12 +95,9 @@ function PlacePhotoUploader({
               className="text-gray-5"
               style={{
                 marginTop: DESCRIPTION_MARGIN_TOP * scale,
-                fontSize: scaleValue(DESCRIPTION_FONT_SIZE, scale, 11),
-                lineHeight: `${scaleValue(
-                  DESCRIPTION_LINE_HEIGHT,
-                  scale,
-                  15
-                )}px`,
+                fontSize: DESCRIPTION_FONT_SIZE * scale,
+                lineHeight: `${
+                  DESCRIPTION_LINE_HEIGHT * scale}px`,
               }}
             >
               여기를 탭해서 사진을 업로드할 수 있어요.

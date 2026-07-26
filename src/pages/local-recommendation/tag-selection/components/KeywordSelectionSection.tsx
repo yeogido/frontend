@@ -1,6 +1,5 @@
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 import { tagDefinitions } from '../../../../constants/tags';
 import type { TagId } from '../types';
 import TagChip from './TagChip';
@@ -45,13 +44,13 @@ function KeywordSelectionSection({
         <h2
           id="keyword-title"
           className="font-semibold"
-          style={{ fontSize: scaleValue(TITLE_SIZE, scale, 14) }}
+          style={{ fontSize: TITLE_SIZE * scale }}
         >
           키워드 등록
         </h2>
         <span
           className="text-gray-4"
-          style={{ fontSize: scaleValue(LIMIT_TEXT_SIZE, scale, 11) }}
+          style={{ fontSize: LIMIT_TEXT_SIZE * scale }}
         >
           (최대 5개)
         </span>

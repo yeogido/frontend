@@ -1,8 +1,6 @@
 import { IoAdd, IoClose } from 'react-icons/io5';
 
-import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const ADD_GAP = 24;
@@ -47,22 +45,16 @@ function SelectionResultCard<T>({
   const scale = useGlobalScale();
   const isAddAction = action === 'add';
   const onAction = isAddAction ? onItemAdd : onItemRemove;
-  const cardHeight = scaleValue(REMOVE_CARD_HEIGHT, scale, 56);
+  const cardHeight = REMOVE_CARD_HEIGHT * scale;
   const cardPadding = REMOVE_CARD_PADDING * scale;
-  const imageSize = scaleValue(
-    isAddAction ? ADD_IMAGE_SIZE : REMOVE_IMAGE_SIZE,
-    scale,
-    44
-  );
-  const actionButtonSize = scaleValue(
-    ACTION_BUTTON_SIZE,
-    scale,
-    MIN_TOUCH_TARGET
-  );
+  const imageSize = 
+    isAddAction ? ADD_IMAGE_SIZE : REMOVE_IMAGE_SIZE * scale;
+  const actionButtonSize = 
+    ACTION_BUTTON_SIZE * scale;
   const actionVisualSize = ACTION_BUTTON_SIZE * scale;
   const actionOverlap = (actionButtonSize - actionVisualSize) / -2;
-  const titleSize = scaleValue(TITLE_FONT_SIZE, scale, 14);
-  const descriptionSize = scaleValue(DESCRIPTION_FONT_SIZE, scale, 12);
+  const titleSize = TITLE_FONT_SIZE * scale;
+  const descriptionSize = DESCRIPTION_FONT_SIZE * scale;
 
   return (
     <article
@@ -98,7 +90,7 @@ function SelectionResultCard<T>({
           className="truncate font-semibold text-black"
           style={{
             fontSize: titleSize,
-            lineHeight: `${scaleValue(TITLE_LINE_HEIGHT, scale, 18)}px`,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
           {title}
@@ -108,7 +100,7 @@ function SelectionResultCard<T>({
           style={{
             marginTop: DESCRIPTION_MARGIN_TOP * scale,
             fontSize: descriptionSize,
-            lineHeight: `${scaleValue(DESCRIPTION_LINE_HEIGHT, scale, 18)}px`,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
           }}
         >
           {description}

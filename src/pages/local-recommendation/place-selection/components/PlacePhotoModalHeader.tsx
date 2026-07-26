@@ -1,8 +1,6 @@
 import { IoClose } from 'react-icons/io5';
 
-import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 
 const HEADER_GAP = 16;
 const TITLE_FONT_SIZE = 18;
@@ -19,11 +17,8 @@ interface PlacePhotoModalHeaderProps {
 
 function PlacePhotoModalHeader({ onClose }: PlacePhotoModalHeaderProps) {
   const scale = useGlobalScale();
-  const closeButtonSize = scaleValue(
-    CLOSE_VISUAL_SIZE,
-    scale,
-    MIN_TOUCH_TARGET
-  );
+  const closeButtonSize = 
+    CLOSE_VISUAL_SIZE * scale;
   const closeVisualSize = CLOSE_VISUAL_SIZE * scale;
   const closeOverlap = (closeButtonSize - closeVisualSize) / -2;
 
@@ -37,8 +32,8 @@ function PlacePhotoModalHeader({ onClose }: PlacePhotoModalHeaderProps) {
           id="place-photo-modal-title"
           className="font-semibold text-black"
           style={{
-            fontSize: scaleValue(TITLE_FONT_SIZE, scale, 16),
-            lineHeight: `${scaleValue(TITLE_LINE_HEIGHT, scale, 21)}px`,
+            fontSize: TITLE_FONT_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
           장소에 <br /> 사진을 추가해 주세요
@@ -47,8 +42,8 @@ function PlacePhotoModalHeader({ onClose }: PlacePhotoModalHeaderProps) {
           className="text-gray-5"
           style={{
             marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: scaleValue(DESCRIPTION_FONT_SIZE, scale, 12),
-            lineHeight: `${scaleValue(DESCRIPTION_LINE_HEIGHT, scale, 18)}px`,
+            fontSize: DESCRIPTION_FONT_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
           }}
         >
           장소를 더 매력적으로 소개할 수 있어요!

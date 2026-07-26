@@ -6,9 +6,7 @@ import {
   FaUser,
 } from 'react-icons/fa6';
 
-import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 
 import { companionOptions } from '../constants/options';
 import type { CourseBasicInfoValues } from '../schema';
@@ -47,7 +45,7 @@ function CompanionSelector({ value, onChange }: CompanionSelectorProps) {
         className="font-semibold"
         style={{
           marginBottom: LEGEND_MARGIN_BOTTOM * scale,
-          fontSize: scaleValue(LEGEND_FONT_SIZE, scale, 12),
+          fontSize: LEGEND_FONT_SIZE * scale,
         }}
       >
         누구와 함께 즐기기 좋은 코스인가요?
@@ -69,7 +67,7 @@ function CompanionSelector({ value, onChange }: CompanionSelectorProps) {
                   : 'border-gray-2 text-gray-4 bg-white'
               }`}
               style={{
-                minHeight: scaleValue(CARD_MIN_HEIGHT, scale, MIN_TOUCH_TARGET),
+                minHeight: CARD_MIN_HEIGHT * scale,
                 paddingLeft: CARD_PADDING_X * scale,
                 paddingRight: CARD_PADDING_X * scale,
                 paddingTop: CARD_PADDING_Y * scale,
@@ -85,7 +83,7 @@ function CompanionSelector({ value, onChange }: CompanionSelectorProps) {
                 className="w-full truncate"
                 style={{
                   marginTop: LABEL_MARGIN_TOP * scale,
-                  fontSize: scaleValue(LABEL_FONT_SIZE, scale, 10),
+                  fontSize: LABEL_FONT_SIZE * scale,
                 }}
               >
                 {option.label}

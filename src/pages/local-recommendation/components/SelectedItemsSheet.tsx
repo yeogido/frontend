@@ -4,7 +4,6 @@ import { Sheet, type SheetRef } from 'react-modal-sheet';
 
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 const EXPANDED_SNAP_POINT = 0.82;
 const MINIMUM_SNAP_POINT = 0.36;
@@ -53,11 +52,8 @@ function SelectedItemsSheet<T>({
   renderItem,
 }: SelectedItemsSheetProps<T>) {
   const scale = useGlobalScale();
-  const actionHeight = scaleValue(
-    SUBMIT_BUTTON_HEIGHT,
-    scale,
-    MIN_TOUCH_TARGET
-  );
+  const actionHeight = 
+    SUBMIT_BUTTON_HEIGHT * scale;
   const sheetRef = useRef<SheetRef>(null);
   const fallbackSheetY = useMotionValue(0);
   const [sheetY, setSheetY] = useState(fallbackSheetY);
@@ -123,8 +119,8 @@ function SelectedItemsSheet<T>({
             id="selected-items-title"
             className="font-semibold text-black"
             style={{
-              fontSize: scaleValue(HEADER_TITLE_FONT_SIZE, scale, 14),
-              lineHeight: `${scaleValue(20, scale, 18)}px`,
+              fontSize: HEADER_TITLE_FONT_SIZE * scale,
+              lineHeight: `${20 * scale}px`,
             }}
           >
             {selectedSectionTitle}
@@ -139,7 +135,7 @@ function SelectedItemsSheet<T>({
               marginTop: (MIN_TOUCH_TARGET - 20 * scale) / -2,
               marginBottom: (MIN_TOUCH_TARGET - 20 * scale) / -2,
               paddingLeft: 8 * scale,
-              fontSize: scaleValue(REMOVE_ALL_FONT_SIZE, scale, 12),
+              fontSize: REMOVE_ALL_FONT_SIZE * scale,
             }}
           >
             전체 삭제
@@ -164,7 +160,7 @@ function SelectedItemsSheet<T>({
                 style={{
                   paddingTop: EMPTY_MESSAGE_PADDING_Y * scale,
                   paddingBottom: EMPTY_MESSAGE_PADDING_Y * scale,
-                  fontSize: scaleValue(EMPTY_MESSAGE_FONT_SIZE, scale, 14),
+                  fontSize: EMPTY_MESSAGE_FONT_SIZE * scale,
                 }}
               >
                 {emptyMessage}
@@ -204,7 +200,7 @@ function SelectedItemsSheet<T>({
             style={{
               height: actionHeight,
               borderRadius: 12 * scale,
-              fontSize: scaleValue(SUBMIT_BUTTON_FONT_SIZE, scale, 16),
+              fontSize: SUBMIT_BUTTON_FONT_SIZE * scale,
             }}
           >
             {submitButtonLabel}

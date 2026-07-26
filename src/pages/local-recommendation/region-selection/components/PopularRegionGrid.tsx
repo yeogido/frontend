@@ -1,5 +1,4 @@
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 import type { Neighborhood, PopularRegion } from '../types';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -36,7 +35,7 @@ function PopularRegionGrid({
       <h3
         id="popular-region-heading"
         className="font-bold"
-        style={{ fontSize: scaleValue(HEADING_SIZE, scale, 14) }}
+        style={{ fontSize: HEADING_SIZE * scale }}
       >
         인기 지역
       </h3>
@@ -81,7 +80,7 @@ function PopularRegionGrid({
                 <span
                   className="block font-bold"
                   style={{
-                    fontSize: scaleValue(CARD_DISTRICT_SIZE, scale, 14),
+                    fontSize: CARD_DISTRICT_SIZE * scale,
                   }}
                 >
                   {neighborhood.district}
@@ -90,7 +89,7 @@ function PopularRegionGrid({
                   className="block opacity-90"
                   style={{
                     marginTop: CARD_META_MARGIN_TOP * scale,
-                    fontSize: scaleValue(CARD_META_SIZE, scale, 11),
+                    fontSize: CARD_META_SIZE * scale,
                   }}
                 >
                   {neighborhood.province} {neighborhood.city}

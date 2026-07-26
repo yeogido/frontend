@@ -1,9 +1,7 @@
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 
 import { courseBasicInfoSchema, type CourseBasicInfoValues } from '../schema';
 import CompanionSelector from './CompanionSelector';
@@ -47,10 +45,10 @@ function CourseBasicInfoForm({ onNext }: CourseBasicInfoFormProps) {
   });
 
   const inputStyle = {
-    height: scaleValue(INPUT_HEIGHT, scale, MIN_TOUCH_TARGET),
+    height: INPUT_HEIGHT * scale,
     paddingLeft: INPUT_PADDING_X * scale,
     paddingRight: INPUT_PADDING_X * scale,
-    fontSize: scaleValue(INPUT_FONT_SIZE, scale, 12),
+    fontSize: INPUT_FONT_SIZE * scale,
     borderRadius: LARGE_BORDER_RADIUS * scale,
   };
 
@@ -134,8 +132,8 @@ function CourseBasicInfoForm({ onNext }: CourseBasicInfoFormProps) {
         className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full font-semibold disabled:cursor-not-allowed"
         style={{
           marginTop: SUBMIT_MARGIN_TOP * scale,
-          height: scaleValue(SUBMIT_HEIGHT, scale, MIN_TOUCH_TARGET),
-          fontSize: scaleValue(SUBMIT_FONT_SIZE, scale, 14),
+          height: SUBMIT_HEIGHT * scale,
+          fontSize: SUBMIT_FONT_SIZE * scale,
           borderRadius: LARGE_BORDER_RADIUS * scale,
         }}
       >

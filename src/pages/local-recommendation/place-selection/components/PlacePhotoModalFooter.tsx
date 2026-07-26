@@ -1,6 +1,4 @@
-import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 
 const FOOTER_MARGIN_TOP = 24;
 const BUTTON_HEIGHT = 53;
@@ -26,9 +24,9 @@ function PlacePhotoModalFooter({
       className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full shrink-0 font-semibold disabled:cursor-not-allowed"
       style={{
         marginTop: FOOTER_MARGIN_TOP * scale,
-        height: scaleValue(BUTTON_HEIGHT, scale, MIN_TOUCH_TARGET),
+        height: BUTTON_HEIGHT * scale,
         borderRadius: BUTTON_RADIUS * scale,
-        fontSize: scaleValue(BUTTON_FONT_SIZE, scale, 16),
+        fontSize: BUTTON_FONT_SIZE * scale,
       }}
     >
       사진 추가하기

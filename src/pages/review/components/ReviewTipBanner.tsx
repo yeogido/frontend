@@ -1,7 +1,6 @@
 import { IoBulb } from 'react-icons/io5';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const BANNER_MARGIN_TOP = 32;
@@ -40,8 +39,8 @@ function ReviewTipBanner() {
       <p
         style={{
           marginLeft: TEXT_MARGIN_LEFT * scale,
-          fontSize: scaleValue(TEXT_FONT_SIZE, scale, 10),
-          lineHeight: `${scaleValue(TEXT_LINE_HEIGHT, scale, 13)}px`,
+          fontSize: TEXT_FONT_SIZE * scale,
+          lineHeight: `${TEXT_LINE_HEIGHT * scale}px`,
         }}
       >
         다른 여행자에게 도움이 되는 후기를 작성해 보세요!

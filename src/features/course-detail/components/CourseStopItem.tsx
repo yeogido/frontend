@@ -1,6 +1,4 @@
-import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 import type { CourseStop } from '../types/courseDetail';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -47,7 +45,7 @@ export function CourseStopItem({
       style={{
         gridTemplateColumns: `${GRID_COL_ORDER * scale}px ${GRID_COL_IMAGE * scale}px minmax(0,1fr) ${
           onLikeToggle
-            ? scaleValue(GRID_COL_ACTION, scale, MIN_TOUCH_TARGET)
+            ? GRID_COL_ACTION * scale
             : GRID_COL_ACTION * scale
         }px`,
         gap: ROW_GAP * scale,
@@ -64,7 +62,7 @@ export function CourseStopItem({
           style={{
             height: ORDER_BADGE_SIZE * scale,
             width: ORDER_BADGE_SIZE * scale,
-            fontSize: scaleValue(ORDER_BADGE_FONT_SIZE, scale, 10),
+            fontSize: ORDER_BADGE_FONT_SIZE * scale,
           }}
         >
           {stop.order}
@@ -98,7 +96,7 @@ export function CourseStopItem({
       >
         <h3
           className="truncate leading-tight font-bold text-[#1C1C1C]"
-          style={{ fontSize: scaleValue(NAME_FONT_SIZE, scale, 12) }}
+          style={{ fontSize: NAME_FONT_SIZE * scale }}
         >
           {stop.name}
         </h3>
@@ -106,8 +104,8 @@ export function CourseStopItem({
           className="truncate font-normal text-[#888888]"
           style={{
             marginTop: META_MARGIN_TOP * scale,
-            fontSize: scaleValue(META_FONT_SIZE, scale, 11),
-            lineHeight: `${scaleValue(META_LINE_HEIGHT, scale, 14)}px`,
+            fontSize: META_FONT_SIZE * scale,
+            lineHeight: `${META_LINE_HEIGHT * scale}px`,
           }}
         >
           {stop.address}
@@ -116,8 +114,8 @@ export function CourseStopItem({
           <p
             className="truncate font-normal text-[#888888]"
             style={{
-              fontSize: scaleValue(META_FONT_SIZE, scale, 11),
-              lineHeight: `${scaleValue(META_LINE_HEIGHT, scale, 14)}px`,
+              fontSize: META_FONT_SIZE * scale,
+              lineHeight: `${META_LINE_HEIGHT * scale}px`,
             }}
           >
             {stop.hours}
@@ -129,8 +127,8 @@ export function CourseStopItem({
             className="truncate font-normal text-[#888888]"
             style={{
               marginTop: TRANSPORT_MARGIN_TOP * scale,
-              fontSize: scaleValue(META_FONT_SIZE, scale, 11),
-              lineHeight: `${scaleValue(META_LINE_HEIGHT, scale, 14)}px`,
+              fontSize: META_FONT_SIZE * scale,
+              lineHeight: `${META_LINE_HEIGHT * scale}px`,
             }}
           >
             <span className="font-semibold text-[#666666]">
@@ -152,8 +150,8 @@ export function CourseStopItem({
           }`}
           style={{
             marginTop: LIKE_BUTTON_MARGIN_TOP * scale,
-            height: scaleValue(LIKE_BUTTON_SIZE, scale, MIN_TOUCH_TARGET),
-            width: scaleValue(LIKE_BUTTON_SIZE, scale, MIN_TOUCH_TARGET),
+            height: LIKE_BUTTON_SIZE * scale,
+            width: LIKE_BUTTON_SIZE * scale,
           }}
         >
           <svg

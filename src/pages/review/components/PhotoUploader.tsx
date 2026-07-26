@@ -2,7 +2,6 @@ import type { ChangeEvent, RefObject } from 'react';
 import { IoImage } from 'react-icons/io5';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 31;
@@ -39,8 +38,8 @@ function PhotoUploader({ inputRef, onChange, disabled }: PhotoUploaderProps) {
         id="photo-upload-title"
         className="font-semibold"
         style={{
-          fontSize: scaleValue(TITLE_FONT_SIZE, scale, 14),
-          lineHeight: `${scaleValue(TITLE_LINE_HEIGHT, scale, 20)}px`,
+          fontSize: TITLE_FONT_SIZE * scale,
+          lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
         }}
       >
         후기 사진 등록
@@ -72,8 +71,8 @@ function PhotoUploader({ inputRef, onChange, disabled }: PhotoUploaderProps) {
             disabled ? 'bg-gray-2' : 'bg-main-3'
           }`}
           style={{
-            width: scaleValue(ICON_CIRCLE_SIZE, scale, 44),
-            height: scaleValue(ICON_CIRCLE_SIZE, scale, 44),
+            width: ICON_CIRCLE_SIZE * scale,
+            height: ICON_CIRCLE_SIZE * scale,
           }}
         >
           <IoImage
@@ -86,8 +85,8 @@ function PhotoUploader({ inputRef, onChange, disabled }: PhotoUploaderProps) {
           className="font-semibold"
           style={{
             marginTop: STRONG_MARGIN_TOP * scale,
-            fontSize: scaleValue(STRONG_FONT_SIZE, scale, 14),
-            lineHeight: `${scaleValue(STRONG_LINE_HEIGHT, scale, 18)}px`,
+            fontSize: STRONG_FONT_SIZE * scale,
+            lineHeight: `${STRONG_LINE_HEIGHT * scale}px`,
           }}
         >
           {disabled
@@ -97,8 +96,8 @@ function PhotoUploader({ inputRef, onChange, disabled }: PhotoUploaderProps) {
         <span
           style={{
             marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: scaleValue(DESCRIPTION_FONT_SIZE, scale, 11),
-            lineHeight: `${scaleValue(DESCRIPTION_LINE_HEIGHT, scale, 16)}px`,
+            fontSize: DESCRIPTION_FONT_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
           }}
         >
           {disabled

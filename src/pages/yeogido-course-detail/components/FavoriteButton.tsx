@@ -1,8 +1,6 @@
 import { FaHeart as FilledHeartIcon } from 'react-icons/fa6';
 
-import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const BUTTON_SIZE = 44;
@@ -25,8 +23,8 @@ function FavoriteButton({ isActive, label, onClick }: FavoriteButtonProps) {
       onClick={onClick}
       className="flex items-center justify-center text-white drop-shadow-sm"
       style={{
-        height: scaleValue(BUTTON_SIZE, scale, MIN_TOUCH_TARGET),
-        width: scaleValue(BUTTON_SIZE, scale, MIN_TOUCH_TARGET),
+        height: BUTTON_SIZE * scale,
+        width: BUTTON_SIZE * scale,
       }}
     >
       <FilledHeartIcon

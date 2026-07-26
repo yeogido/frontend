@@ -3,7 +3,6 @@ import { IoImage, IoTrashOutline } from 'react-icons/io5';
 
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 import type { PhotoSelection } from '../types';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -69,7 +68,7 @@ function RepresentativePhotoSection({
       <h2
         id="photo-title"
         className="font-semibold"
-        style={{ fontSize: scaleValue(TITLE_SIZE, scale, 14) }}
+        style={{ fontSize: TITLE_SIZE * scale }}
       >
         대표 사진 등록
       </h2>
@@ -115,7 +114,7 @@ function RepresentativePhotoSection({
                   paddingBottom: REPLACE_PADDING_Y * scale,
                   minHeight: MIN_TOUCH_TARGET,
                   minWidth: MIN_TOUCH_TARGET,
-                  fontSize: scaleValue(REPLACE_TEXT_SIZE, scale, 10),
+                  fontSize: REPLACE_TEXT_SIZE * scale,
                   borderRadius: ACTION_RADIUS * scale,
                 }}
               >
@@ -159,7 +158,7 @@ function RepresentativePhotoSection({
               className="font-semibold"
               style={{
                 marginTop: TITLE_TEXT_MARGIN_TOP * scale,
-                fontSize: scaleValue(TITLE_TEXT_SIZE, scale, 12),
+                fontSize: TITLE_TEXT_SIZE * scale,
               }}
             >
               사진을 추가해 주세요.
@@ -167,7 +166,7 @@ function RepresentativePhotoSection({
             <span
               style={{
                 marginTop: SUBTEXT_MARGIN_TOP * scale,
-                fontSize: scaleValue(SUBTEXT_SIZE, scale, 10),
+                fontSize: SUBTEXT_SIZE * scale,
               }}
             >
               여기를 탭해서 업로드 할 수 있어요.
@@ -181,7 +180,7 @@ function RepresentativePhotoSection({
           className="text-main-5"
           style={{
             marginTop: ERROR_MARGIN_TOP * scale,
-            fontSize: scaleValue(ERROR_TEXT_SIZE, scale, 11),
+            fontSize: ERROR_TEXT_SIZE * scale,
           }}
           aria-live="polite"
         >

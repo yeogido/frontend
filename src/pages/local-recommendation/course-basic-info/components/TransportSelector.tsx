@@ -1,8 +1,6 @@
 import { FaCar, FaPersonWalking } from 'react-icons/fa6';
 
-import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 
 import { transportOptions } from '../constants/options';
 import type { CourseBasicInfoValues } from '../schema';
@@ -40,7 +38,7 @@ function TransportSelector({ value, onChange }: TransportSelectorProps) {
         className="font-semibold"
         style={{
           marginBottom: LEGEND_MARGIN_BOTTOM * scale,
-          fontSize: scaleValue(LEGEND_FONT_SIZE, scale, 12),
+          fontSize: LEGEND_FONT_SIZE * scale,
         }}
       >
         어떻게 이동하는 코스인가요?
@@ -62,7 +60,7 @@ function TransportSelector({ value, onChange }: TransportSelectorProps) {
                   : 'border-gray-2 text-gray-4 bg-white'
               }`}
               style={{
-                minHeight: scaleValue(CARD_MIN_HEIGHT, scale, MIN_TOUCH_TARGET),
+                minHeight: CARD_MIN_HEIGHT * scale,
                 paddingLeft: CARD_PADDING_X * scale,
                 paddingRight: CARD_PADDING_X * scale,
                 paddingTop: CARD_PADDING_Y * scale,
@@ -78,7 +76,7 @@ function TransportSelector({ value, onChange }: TransportSelectorProps) {
                 className="font-medium"
                 style={{
                   marginTop: LABEL_MARGIN_TOP * scale,
-                  fontSize: scaleValue(LABEL_FONT_SIZE, scale, 14),
+                  fontSize: LABEL_FONT_SIZE * scale,
                 }}
               >
                 {option.label}
@@ -86,7 +84,7 @@ function TransportSelector({ value, onChange }: TransportSelectorProps) {
               <span
                 style={{
                   marginTop: DESCRIPTION_MARGIN_TOP * scale,
-                  fontSize: scaleValue(DESCRIPTION_FONT_SIZE, scale, 10),
+                  fontSize: DESCRIPTION_FONT_SIZE * scale,
                 }}
               >
                 {option.description}

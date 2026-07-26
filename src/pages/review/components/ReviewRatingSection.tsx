@@ -1,5 +1,4 @@
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 import RatingStars from './RatingStars';
 
@@ -28,8 +27,8 @@ function ReviewRatingSection({ value, onChange }: ReviewRatingSectionProps) {
         id="rating-title"
         className="font-semibold"
         style={{
-          fontSize: scaleValue(TITLE_FONT_SIZE, scale, 14),
-          lineHeight: `${scaleValue(TITLE_LINE_HEIGHT, scale, 20)}px`,
+          fontSize: TITLE_FONT_SIZE * scale,
+          lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
         }}
       >
         별점을 남겨주세요
@@ -39,8 +38,8 @@ function ReviewRatingSection({ value, onChange }: ReviewRatingSectionProps) {
         className="text-gray-3"
         style={{
           marginTop: HELPER_MARGIN_TOP * scale,
-          fontSize: scaleValue(HELPER_FONT_SIZE, scale, 10),
-          lineHeight: `${scaleValue(HELPER_LINE_HEIGHT, scale, 14)}px`,
+          fontSize: HELPER_FONT_SIZE * scale,
+          lineHeight: `${HELPER_LINE_HEIGHT * scale}px`,
         }}
       >
         이 코스를 얼마나 만족하셨나요?

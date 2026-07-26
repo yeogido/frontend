@@ -1,9 +1,7 @@
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
 import { IoCheckmark, IoChevronDown } from 'react-icons/io5';
 
-import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const TRIGGER_HEIGHT = 48;
@@ -213,11 +211,11 @@ function CustomSelect<T extends string>({
           isOpen ? 'border-main-5' : 'border-gray-2'
         }`}
         style={{
-          height: scaleValue(TRIGGER_HEIGHT, scale, MIN_TOUCH_TARGET),
+          height: TRIGGER_HEIGHT * scale,
           gap: TRIGGER_GAP * scale,
           paddingLeft: TRIGGER_PADDING_X * scale,
           paddingRight: TRIGGER_PADDING_X * scale,
-          fontSize: scaleValue(FONT_SIZE, scale, 14),
+          fontSize: FONT_SIZE * scale,
           borderRadius: LARGE_BORDER_RADIUS * scale,
         }}
       >
@@ -284,10 +282,10 @@ function CustomSelect<T extends string>({
                       : 'text-gray-5 hover:bg-main-1 focus:bg-main-1'
                 }`}
                 style={{
-                  height: scaleValue(OPTION_HEIGHT, scale, MIN_TOUCH_TARGET),
+                  height: OPTION_HEIGHT * scale,
                   paddingLeft: OPTION_PADDING_X * scale,
                   paddingRight: OPTION_PADDING_X * scale,
-                  fontSize: scaleValue(FONT_SIZE, scale, 14),
+                  fontSize: FONT_SIZE * scale,
                   borderRadius: SMALL_BORDER_RADIUS * scale,
                 }}
               >

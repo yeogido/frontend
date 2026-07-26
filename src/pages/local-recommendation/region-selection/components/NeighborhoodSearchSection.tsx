@@ -1,6 +1,5 @@
 import { SearchBar } from '../../../../components/common';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const TITLE_SIZE = 22;
@@ -25,7 +24,7 @@ function NeighborhoodSearchSection({
       <h2
         id="neighborhood-heading"
         className="leading-[1.35] font-bold"
-        style={{ fontSize: scaleValue(TITLE_SIZE, scale, 14) }}
+        style={{ fontSize: TITLE_SIZE * scale }}
       >
         어디를
         <br />
@@ -35,8 +34,8 @@ function NeighborhoodSearchSection({
         className="text-gray-4"
         style={{
           marginTop: DESCRIPTION_MARGIN_TOP * scale,
-          fontSize: scaleValue(DESCRIPTION_SIZE, scale, 12),
-          lineHeight: `${scaleValue(DESCRIPTION_LINE_HEIGHT, scale, 16)}px`,
+          fontSize: DESCRIPTION_SIZE * scale,
+          lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
         }}
       >
         코스를 등록할 지역을 검색하거나 선택해주세요.

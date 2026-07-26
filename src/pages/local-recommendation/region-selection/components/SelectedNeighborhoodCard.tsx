@@ -1,8 +1,6 @@
 import { IoClose, IoLocationOutline } from 'react-icons/io5';
 
-import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 import type { Neighborhood } from '../types';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -39,7 +37,7 @@ function SelectedNeighborhoodCard({
         className="font-semibold"
         style={{
           marginBottom: HEADING_MARGIN_BOTTOM * scale,
-          fontSize: scaleValue(HEADING_SIZE, scale, 14),
+          fontSize: HEADING_SIZE * scale,
         }}
       >
         선택한 지역
@@ -50,7 +48,7 @@ function SelectedNeighborhoodCard({
         onClick={onClear}
         className="border-main-5 bg-main-1 flex w-full items-center border text-left"
         style={{
-          minHeight: scaleValue(CARD_MIN_HEIGHT, scale, MIN_TOUCH_TARGET),
+          minHeight: CARD_MIN_HEIGHT * scale,
           gap: CARD_GAP * scale,
           borderRadius: CARD_RADIUS * scale,
           paddingLeft: CARD_PADDING_X * scale,
@@ -67,7 +65,7 @@ function SelectedNeighborhoodCard({
         <span className="min-w-0 flex-1">
           <span
             className="block font-semibold"
-            style={{ fontSize: scaleValue(DISTRICT_SIZE, scale, 14) }}
+            style={{ fontSize: DISTRICT_SIZE * scale }}
           >
             {neighborhood.district}
           </span>
@@ -75,7 +73,7 @@ function SelectedNeighborhoodCard({
             className="text-gray-4 block"
             style={{
               marginTop: META_MARGIN_TOP * scale,
-              fontSize: scaleValue(META_SIZE, scale, 12),
+              fontSize: META_SIZE * scale,
             }}
           >
             {neighborhood.province} {neighborhood.city}

@@ -1,5 +1,4 @@
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 
 import { monthOptions } from '../constants/options';
 import type { CourseBasicInfoValues } from '../schema';
@@ -59,7 +58,7 @@ function VisitMonthRange({
         className="font-semibold"
         style={{
           marginBottom: LEGEND_MARGIN_BOTTOM * scale,
-          fontSize: scaleValue(LEGEND_FONT_SIZE, scale, 12),
+          fontSize: LEGEND_FONT_SIZE * scale,
         }}
       >
         언제 방문하기 좋은 코스인가요?

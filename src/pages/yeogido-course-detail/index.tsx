@@ -20,7 +20,7 @@ import ShareButton from './components/ShareButton';
 import { mapCourseDetailDtoToViewModel } from '../../features/course-detail/mappers/courseDetailMapper';
 import type { CourseDetail } from '../../features/course-detail/types/courseDetail';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { getGutter, scaleValue } from '../../utils/responsiveLayout';
+import { getGutter} from '../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 44;
@@ -250,7 +250,7 @@ function YeogidoCourseDetailPage() {
               paddingRight: TOAST_TEXT_PADDING_X * scale,
               paddingTop: TOAST_TEXT_PADDING_Y * scale,
               paddingBottom: TOAST_TEXT_PADDING_Y * scale,
-              fontSize: scaleValue(TOAST_TEXT_FONT_SIZE, scale, 12),
+              fontSize: TOAST_TEXT_FONT_SIZE * scale,
               borderRadius: 999 * scale,
             }}
           >

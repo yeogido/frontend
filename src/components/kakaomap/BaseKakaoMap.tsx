@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadKakaoMapsSdk } from './utils/kakaoMap';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { scaleValue } from '../../utils/responsiveLayout';
 import type { GeoPoint } from './types';
 
 const EMPTY_MARKERS: readonly GeoPoint[] = [];
@@ -179,7 +178,7 @@ export function BaseKakaoMap({
           style={{
             paddingLeft: OVERLAY_PADDING_X * scale,
             paddingRight: OVERLAY_PADDING_X * scale,
-            fontSize: scaleValue(OVERLAY_FONT_SIZE, scale, 12),
+            fontSize: OVERLAY_FONT_SIZE * scale,
           }}
         >
           {status === 'loading' && '지도를 불러오는 중입니다...'}

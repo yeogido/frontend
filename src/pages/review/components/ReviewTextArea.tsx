@@ -1,7 +1,6 @@
 import type { ChangeEvent } from 'react';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 31;
@@ -36,8 +35,8 @@ function ReviewTextArea({
         id="review-title"
         className="font-semibold"
         style={{
-          fontSize: scaleValue(TITLE_FONT_SIZE, scale, 14),
-          lineHeight: `${scaleValue(TITLE_LINE_HEIGHT, scale, 20)}px`,
+          fontSize: TITLE_FONT_SIZE * scale,
+          lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
         }}
       >
         총평을 남겨주세요
@@ -56,8 +55,8 @@ function ReviewTextArea({
           height: TEXTAREA_HEIGHT * scale,
           borderRadius: TEXTAREA_RADIUS * scale,
           padding: TEXTAREA_PADDING * scale,
-          fontSize: scaleValue(TEXTAREA_FONT_SIZE, scale, 12),
-          lineHeight: `${scaleValue(TEXTAREA_LINE_HEIGHT, scale, 16)}px`,
+          fontSize: TEXTAREA_FONT_SIZE * scale,
+          lineHeight: `${TEXTAREA_LINE_HEIGHT * scale}px`,
         }}
       />
     </section>

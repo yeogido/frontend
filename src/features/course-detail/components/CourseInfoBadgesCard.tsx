@@ -1,6 +1,5 @@
 import { badgeDefinitionMap } from '../../../constants/badges';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 import type { CourseInfoBadgeTuple } from '../types/courseDetail';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -54,8 +53,8 @@ export function CourseInfoBadgesCard({
             <span
               className="w-full truncate font-medium text-[#505050]"
               style={{
-                fontSize: scaleValue(LABEL_FONT_SIZE, scale, 11),
-                lineHeight: `${scaleValue(LABEL_LINE_HEIGHT, scale, 11)}px`,
+                fontSize: LABEL_FONT_SIZE * scale,
+                lineHeight: `${LABEL_LINE_HEIGHT * scale}px`,
               }}
             >
               {label}

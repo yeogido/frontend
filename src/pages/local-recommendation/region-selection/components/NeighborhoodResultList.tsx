@@ -1,8 +1,6 @@
 import { IoCheckmark, IoLocationOutline } from 'react-icons/io5';
 
-import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 import type { Neighborhood } from '../types';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -58,7 +56,7 @@ function NeighborhoodResultList({
       >
         <p
           className="font-semibold"
-          style={{ fontSize: scaleValue(EMPTY_TITLE_SIZE, scale, 14) }}
+          style={{ fontSize: EMPTY_TITLE_SIZE * scale }}
         >
           검색 결과가 없어요
         </p>
@@ -66,7 +64,7 @@ function NeighborhoodResultList({
           className="text-gray-4"
           style={{
             marginTop: EMPTY_DESC_MARGIN_TOP * scale,
-            fontSize: scaleValue(EMPTY_DESC_SIZE, scale, 12),
+            fontSize: EMPTY_DESC_SIZE * scale,
           }}
         >
           다른 지역명으로 다시 검색해 주세요.
@@ -81,7 +79,7 @@ function NeighborhoodResultList({
         className="font-semibold"
         style={{
           marginBottom: HEADING_MARGIN_BOTTOM * scale,
-          fontSize: scaleValue(HEADING_SIZE, scale, 14),
+          fontSize: HEADING_SIZE * scale,
         }}
       >
         검색 결과 <span className="text-main-5">{results.length}</span>
@@ -102,7 +100,7 @@ function NeighborhoodResultList({
                     : 'border-gray-2 bg-pure-white'
                 }`}
                 style={{
-                  minHeight: scaleValue(ITEM_MIN_HEIGHT, scale, MIN_TOUCH_TARGET),
+                  minHeight: ITEM_MIN_HEIGHT * scale,
                   gap: ITEM_GAP * scale,
                   borderRadius: ITEM_RADIUS * scale,
                   paddingLeft: ITEM_PADDING_X * scale,
@@ -119,7 +117,7 @@ function NeighborhoodResultList({
                 <span className="min-w-0 flex-1">
                   <span
                     className="block font-semibold"
-                    style={{ fontSize: scaleValue(DISTRICT_SIZE, scale, 14) }}
+                    style={{ fontSize: DISTRICT_SIZE * scale }}
                   >
                     {neighborhood.district}
                   </span>
@@ -127,7 +125,7 @@ function NeighborhoodResultList({
                     className="text-gray-4 block"
                     style={{
                       marginTop: META_MARGIN_TOP * scale,
-                      fontSize: scaleValue(META_SIZE, scale, 12),
+                      fontSize: META_SIZE * scale,
                     }}
                   >
                     {neighborhood.province} {neighborhood.city}

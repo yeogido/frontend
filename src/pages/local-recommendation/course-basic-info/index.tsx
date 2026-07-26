@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../components/layout/ResponsivePageShell';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 import { CourseBasicInfoForm } from './components';
 import type { CourseBasicInfoValues } from './schema';
@@ -43,7 +42,7 @@ function CourseBasicInfoPage() {
           className="text-gray-4"
           style={{
             marginTop: SUBTITLE_MARGIN_TOP * scale,
-            fontSize: scaleValue(SUBTITLE_FONT_SIZE, scale, 12),
+            fontSize: SUBTITLE_FONT_SIZE * scale,
           }}
         >
           코스의 기본 정보를 입력해주세요

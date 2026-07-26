@@ -2,7 +2,6 @@ import { IoTimeOutline } from 'react-icons/io5';
 
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../../utils/responsiveLayout';
 import type { Neighborhood } from '../types';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -40,7 +39,7 @@ function RecentSearchSection({
       <h3
         id="recent-search-heading"
         className="font-bold"
-        style={{ fontSize: scaleValue(HEADING_SIZE, scale, 14) }}
+        style={{ fontSize: HEADING_SIZE * scale }}
       >
         최근 검색
       </h3>
@@ -69,7 +68,7 @@ function RecentSearchSection({
                 gap: CHIP_GAP * scale,
                 paddingLeft: CHIP_PADDING_X * scale,
                 paddingRight: CHIP_PADDING_X * scale,
-                fontSize: scaleValue(CHIP_TEXT_SIZE, scale, 14),
+                fontSize: CHIP_TEXT_SIZE * scale,
               }}
             >
               <IoTimeOutline

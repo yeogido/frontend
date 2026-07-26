@@ -6,7 +6,6 @@ import {
 } from 'react-icons/io5';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const CARD_MARGIN_TOP = 29;
@@ -83,7 +82,7 @@ function ReviewCourseCard({
           />
           <span
             className="font-medium"
-            style={{ fontSize: scaleValue(NO_IMAGE_TEXT_SIZE, scale, 10) }}
+            style={{ fontSize: NO_IMAGE_TEXT_SIZE * scale }}
           >
             이미지 없음
           </span>
@@ -96,8 +95,8 @@ function ReviewCourseCard({
         <h2
           className="truncate font-semibold tracking-[-0.02em]"
           style={{
-            fontSize: scaleValue(TITLE_FONT_SIZE, scale, 14),
-            lineHeight: `${scaleValue(TITLE_LINE_HEIGHT, scale, 18)}px`,
+            fontSize: TITLE_FONT_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
           {title}
@@ -108,8 +107,8 @@ function ReviewCourseCard({
             marginTop: META_MARGIN_TOP * scale,
             columnGap: 9 * scale,
             rowGap: 4 * scale,
-            fontSize: scaleValue(META_FONT_SIZE, scale, 11),
-            lineHeight: `${scaleValue(META_LINE_HEIGHT, scale, 14)}px`,
+            fontSize: META_FONT_SIZE * scale,
+            lineHeight: `${META_LINE_HEIGHT * scale}px`,
           }}
         >
           {duration && (

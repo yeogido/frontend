@@ -6,7 +6,6 @@ import {
   type GeoPoint,
 } from '../../../components/kakaomap/types';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 import type { CourseStop } from '../types/courseDetail';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -50,7 +49,7 @@ export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
           style={{
             height: MAP_HEIGHT * scale,
             borderRadius: MAP_RADIUS * scale,
-            fontSize: scaleValue(EMPTY_STATE_FONT_SIZE, scale, 12),
+            fontSize: EMPTY_STATE_FONT_SIZE * scale,
           }}
         >
           등록된 코스 위치 정보가 없습니다.

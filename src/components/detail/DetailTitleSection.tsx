@@ -2,7 +2,6 @@ import React from 'react';
 import TagChip from '../common/TagChip';
 import type { DetailTag } from '../../types/detail';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { scaleValue } from '../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const HEADER_GAP = 12;
@@ -37,8 +36,8 @@ export function DetailTitleSection({
         <h1
           className="min-w-0 font-bold break-keep text-[#1C1C1C]"
           style={{
-            fontSize: scaleValue(TITLE_FONT_SIZE, scale, 16),
-            lineHeight: `${scaleValue(TITLE_LINE_HEIGHT, scale, 22)}px`,
+            fontSize: TITLE_FONT_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
           {title}

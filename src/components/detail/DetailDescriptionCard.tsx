@@ -1,5 +1,4 @@
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { scaleValue } from '../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const CARD_RADIUS = 14;
@@ -36,7 +35,7 @@ export function DetailDescriptionCard({
     >
       <h2
         className="text-main-5 leading-none font-bold"
-        style={{ fontSize: scaleValue(TITLE_FONT_SIZE, scale, 12) }}
+        style={{ fontSize: TITLE_FONT_SIZE * scale }}
       >
         {title}
       </h2>
@@ -44,8 +43,8 @@ export function DetailDescriptionCard({
         className="text-gray-4 font-normal break-keep whitespace-pre-line"
         style={{
           marginTop: CONTENT_MARGIN_TOP * scale,
-          fontSize: scaleValue(CONTENT_FONT_SIZE, scale, 12),
-          lineHeight: `${scaleValue(CONTENT_LINE_HEIGHT, scale, 16)}px`,
+          fontSize: CONTENT_FONT_SIZE * scale,
+          lineHeight: `${CONTENT_LINE_HEIGHT * scale}px`,
         }}
       >
         {content}

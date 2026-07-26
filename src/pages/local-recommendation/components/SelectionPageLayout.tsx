@@ -3,9 +3,7 @@ import { IoChevronBack } from 'react-icons/io5';
 
 import { SearchBar } from '../../../components/common';
 import ResponsivePageShell from '../../../components/layout/ResponsivePageShell';
-import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_TOP = 48;
@@ -60,7 +58,7 @@ function SelectionPageLayout<T>({
   renderItem,
 }: SelectionPageLayoutProps<T>) {
   const scale = useGlobalScale();
-  const backButtonSize = scaleValue(BACK_BUTTON_SIZE, scale, MIN_TOUCH_TARGET);
+  const backButtonSize = BACK_BUTTON_SIZE * scale;
   const scaledBackButtonSize = BACK_BUTTON_SIZE * scale;
   const backButtonMarginLeft =
     BACK_BUTTON_MARGIN_LEFT * scale -
@@ -69,9 +67,9 @@ function SelectionPageLayout<T>({
     0,
     BACK_BUTTON_MARGIN_BOTTOM * scale - (backButtonSize - scaledBackButtonSize)
   );
-  const titleSize = scaleValue(TITLE_FONT_SIZE, scale, 24);
-  const descriptionSize = scaleValue(DESCRIPTION_FONT_SIZE, scale, 12);
-  const resultsTitleSize = scaleValue(RESULTS_TITLE_FONT_SIZE, scale, 14);
+  const titleSize = TITLE_FONT_SIZE * scale;
+  const descriptionSize = DESCRIPTION_FONT_SIZE * scale;
+  const resultsTitleSize = RESULTS_TITLE_FONT_SIZE * scale;
 
   return (
     <div className="bg-background min-h-dvh w-full">
@@ -115,7 +113,7 @@ function SelectionPageLayout<T>({
           style={{
             marginTop: DESCRIPTION_MARGIN_TOP * scale,
             fontSize: descriptionSize,
-            lineHeight: `${scaleValue(DESCRIPTION_LINE_HEIGHT, scale, 18)}px`,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
           }}
         >
           {description}
@@ -140,11 +138,8 @@ function SelectionPageLayout<T>({
             className="font-semibold text-black"
             style={{
               fontSize: resultsTitleSize,
-              lineHeight: `${scaleValue(
-                RESULTS_TITLE_LINE_HEIGHT,
-                scale,
-                18
-              )}px`,
+              lineHeight: `${
+                RESULTS_TITLE_LINE_HEIGHT * scale}px`,
             }}
           >
             검색 결과

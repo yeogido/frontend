@@ -4,9 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IoChevronBack } from 'react-icons/io5';
 
 import { ResponsivePageShell } from '../../components/layout';
-import { MIN_TOUCH_TARGET } from '../../constants/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { scaleValue } from '../../utils/responsiveLayout';
 
 import {
   PhotoUploader,
@@ -173,7 +171,7 @@ function ReviewPage() {
 
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const backButtonSize = scaleValue(BACK_BUTTON_SIZE, scale, MIN_TOUCH_TARGET);
+  const backButtonSize = BACK_BUTTON_SIZE * scale;
   const scaledBackButtonSize = BACK_BUTTON_SIZE * scale;
   const backButtonOverlap = (backButtonSize - scaledBackButtonSize) / -2;
 
@@ -242,9 +240,9 @@ function ReviewPage() {
           }`}
           style={{
             marginTop: SUBMIT_BUTTON_MARGIN_TOP * scale,
-            height: scaleValue(SUBMIT_BUTTON_HEIGHT, scale, MIN_TOUCH_TARGET),
+            height: SUBMIT_BUTTON_HEIGHT * scale,
             borderRadius: SUBMIT_BUTTON_RADIUS * scale,
-            fontSize: scaleValue(SUBMIT_BUTTON_FONT_SIZE, scale, 14),
+            fontSize: SUBMIT_BUTTON_FONT_SIZE * scale,
           }}
         >
           후기 남기기

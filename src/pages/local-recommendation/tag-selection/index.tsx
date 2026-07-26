@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { ResponsivePageShell } from '../../../components/layout';
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { scaleValue } from '../../../utils/responsiveLayout';
 
 import {
   KeywordSelectionSection,
@@ -86,7 +85,7 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
           className="text-gray-5"
           style={{
             marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: scaleValue(DESCRIPTION_SIZE, scale, 12),
+            fontSize: DESCRIPTION_SIZE * scale,
           }}
         >
           코스를 더 매력적으로 소개할 수 있어요!
@@ -110,9 +109,9 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
         className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full shrink-0 font-semibold"
         style={{
           marginTop: BUTTON_MARGIN_TOP * scale,
-          height: scaleValue(BUTTON_HEIGHT, scale, MIN_TOUCH_TARGET),
+          height: BUTTON_HEIGHT * scale,
           minHeight: MIN_TOUCH_TARGET,
-          fontSize: scaleValue(BUTTON_TEXT_SIZE, scale, 14),
+          fontSize: BUTTON_TEXT_SIZE * scale,
           borderRadius: BUTTON_RADIUS * scale,
         }}
       >

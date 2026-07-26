@@ -1,6 +1,4 @@
-import { MIN_TOUCH_TARGET } from '../../constants/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { scaleValue } from '../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const BUTTON_HEIGHT = 52;
@@ -26,9 +24,9 @@ export function ReviewButton({
         type="button"
         className="bg-main-5 w-full font-bold text-white active:scale-[0.99]"
         style={{
-          height: scaleValue(BUTTON_HEIGHT, scale, MIN_TOUCH_TARGET),
+          height: BUTTON_HEIGHT * scale,
           borderRadius: BUTTON_RADIUS * scale,
-          fontSize: scaleValue(BUTTON_FONT_SIZE, scale, 14),
+          fontSize: BUTTON_FONT_SIZE * scale,
         }}
         onClick={onClick}
       >
