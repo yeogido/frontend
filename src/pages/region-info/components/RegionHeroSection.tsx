@@ -1,4 +1,7 @@
-import { RegionHero } from '../../../components/common';
+import {
+  RegionHero,
+  RegionHeroSkeleton,
+} from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 import type { RegionInfo } from '../constants/types';
@@ -17,8 +20,13 @@ interface RegionHeroSectionProps {
   regionInfo: RegionInfo;
 }
 
-function RegionHeroSection({ regionInfo }: RegionHeroSectionProps) {
+function RegionHeroSection({
+  regionInfo,
+}: RegionHeroSectionProps) {
   const scale = useGlobalScale();
+
+  const isLoading = false;
+  // const isLoading = true;
 
   return (
     <>
@@ -28,26 +36,49 @@ function RegionHeroSection({ regionInfo }: RegionHeroSectionProps) {
           paddingRight: PAGE_PADDING_X * scale,
         }}
       >
-        <h1
-          className="font-semibold text-black"
-          style={{
-            fontSize: TITLE_FONT_SIZE * scale,
-            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          {regionInfo.name}의 코스와 장소
-        </h1>
+        {isLoading ? (
+          <>
+            <div
+              className="animate-pulse rounded bg-[#EAEAEA]"
+              style={{
+                width: 180 * scale,
+                height: TITLE_LINE_HEIGHT * scale,
+              }}
+            />
 
-        <p
-          className="text-gray-4 font-normal"
-          style={{
-            marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: DESCRIPTION_FONT_SIZE * scale,
-            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          {regionInfo.description}
-        </p>
+            <div
+              className="animate-pulse rounded bg-[#EAEAEA]"
+              style={{
+                marginTop: DESCRIPTION_MARGIN_TOP * scale,
+                width: 260 * scale,
+                height: DESCRIPTION_LINE_HEIGHT * scale,
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <h1
+              className="font-semibold text-black"
+              style={{
+                fontSize: TITLE_FONT_SIZE * scale,
+                lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+              }}
+            >
+              {regionInfo.name}의 코스와 장소
+            </h1>
+
+            <p
+              className="text-gray-4 font-normal"
+              style={{
+                marginTop: DESCRIPTION_MARGIN_TOP * scale,
+                fontSize: DESCRIPTION_FONT_SIZE * scale,
+                lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+              }}
+            >
+              {regionInfo.description}
+            </p>
+          </>
+        )}
       </div>
 
       <div
@@ -57,11 +88,15 @@ function RegionHeroSection({ regionInfo }: RegionHeroSectionProps) {
           paddingRight: PAGE_PADDING_X * scale,
         }}
       >
-        <RegionHero
-          image={regionInfo.heroImage}
-          title={`${regionInfo.name} 대표 이미지`}
-          alt={`${regionInfo.name} 대표 이미지`}
-        />
+        {isLoading ? (
+          <RegionHeroSkeleton />
+        ) : (
+          <RegionHero
+            image={regionInfo.heroImage}
+            title={`${regionInfo.name} 대표 이미지`}
+            alt={`${regionInfo.name} 대표 이미지`}
+          />
+        )}
       </div>
     </>
   );

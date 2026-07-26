@@ -4,6 +4,7 @@ import RegionCourseSection from './components/RegionCourseSection';
 import RegionFestivalSection from './components/RegionFestivalSection';
 import RegionHeroSection from './components/RegionHeroSection';
 import { regionInfoMap } from './constants/mock';
+import RegionReviewSection from './components/RegionReviewSection';
 
 function RegionInfoPage() {
   const { region } = useParams();
@@ -22,6 +23,10 @@ function RegionInfoPage() {
       />
 
       <RegionFestivalSection
+        regionName={regionInfo.name}
+      />
+
+      <RegionReviewSection
         regionName={regionInfo.name}
       />
     </main>

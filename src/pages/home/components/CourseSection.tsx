@@ -61,7 +61,7 @@ function CourseSection() {
         <SectionHeader
           title="여기도 추천 코스"
           actionText="전체보기"
-          onActionClick={() => navigate('/yeogido-course')}
+          onActionClick={() => navigate('/yeogido-course/search')}
         />
       </div>
 
