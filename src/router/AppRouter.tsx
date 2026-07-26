@@ -78,10 +78,7 @@ function AppRouter() {
           element={<CourseRegionSearchPage />}
         />
 
-        <Route
-          path="/region-info/:region"
-          element={<RegionInfoPage />}
-        />
+        <Route path="/region-info/:region" element={<RegionInfoPage />} />
 
         <Route path="/yeogido-course" element={<YeogidoCoursePage />} />
 
@@ -98,10 +95,6 @@ function AppRouter() {
         <Route
           path="/yeogido-course/search"
           element={<YeogidoCourseSearchPage />}
-        />
-        <Route
-          path="/yeogido-course/detail/:courseId"
-          element={<YeogidoCourseDetailPage />}
         />
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
@@ -166,6 +159,10 @@ function AppRouter() {
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />
       </Route>
+      <Route
+        path="/yeogido-course/detail/:courseId"
+        element={<YeogidoCourseDetailPage />}
+      />
       <Route path="/review" element={<ReviewPage />} />
 
       <Route
