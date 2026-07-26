@@ -4,11 +4,21 @@ import BusinessGridCard from './BusinessGridCard';
 interface BusinessGridProps {
   businesses: BusinessItem[];
   onCardClick: (businessId: string) => void;
+  gapX?: number;
+  gapY?: number;
 }
 
-function BusinessGrid({ businesses, onCardClick }: BusinessGridProps) {
+function BusinessGrid({
+  businesses,
+  onCardClick,
+  gapX = 16,
+  gapY = 18,
+}: BusinessGridProps) {
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-[18px]">
+    <div
+      className="grid grid-cols-2"
+      style={{ columnGap: gapX, rowGap: gapY }}
+    >
       {businesses.map((business) => (
         <BusinessGridCard
           key={business.id}

@@ -16,7 +16,7 @@ function BusinessViewToggle({ mode, onToggle }: BusinessViewToggleProps) {
       type="button"
       aria-label={isGridMode ? '카드 보기로 전환' : '그리드 보기로 전환'}
       onClick={onToggle}
-      className="border-gray-2 bg-pure-white text-gray-4 flex h-[29px] min-w-[102px] items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[14px] leading-none font-normal whitespace-nowrap cursor-pointer"
+      className="border-gray-2 bg-white text-gray-4 flex h-[29px] min-w-[102px] items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[14px] leading-none font-normal whitespace-nowrap cursor-pointer"
     >
       {isGridMode ? <CardViewIcon /> : <GridViewIcon />}
       <span className="text-[14px] leading-none">
