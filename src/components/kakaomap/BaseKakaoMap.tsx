@@ -1,8 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadKakaoMapsSdk } from './utils/kakaoMap';
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { scaleValue } from '../../utils/responsiveLayout';
 import type { GeoPoint } from './types';
 
 const EMPTY_MARKERS: readonly GeoPoint[] = [];
+
+// Figma 390 디자인 기준 리터럴 px
+// 카카오맵 SDK가 컨테이너 DOM에 직접 Map 인스턴스를 붙이므로
+// transform: scale()은 절대 사용하지 않는다. height/border-radius/padding처럼
+// 순수 CSS 크기 값에만 패턴 A(style + scale)를 적용한다.
+const MAP_HEIGHT = 280;
+const MAP_RADIUS = 18;
+const OVERLAY_PADDING_X = 20;
+const OVERLAY_FONT_SIZE = 14;
 
 export type MapSdkStatus = 'loading' | 'ready' | 'sdk-error';
 
@@ -12,11 +23,18 @@ export interface BaseKakaoMapProps {
   readonly className?: string;
 }
 
+type ResizableKakaoMap = kakao.maps.Map & {
+  getCenter(): kakao.maps.LatLng;
+  relayout(): void;
+  setCenter(center: kakao.maps.LatLng): void;
+};
+
 export function BaseKakaoMap({
   center,
   markers = EMPTY_MARKERS,
   className = '',
 }: BaseKakaoMapProps) {
+  const scale = useGlobalScale();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<kakao.maps.Map | null>(null);
   const markersRef = useRef<kakao.maps.Marker[]>([]);
@@ -80,7 +98,59 @@ export function BaseKakaoMap({
     markersRef.current = newMarkers;
   }, [markers, status]);
 
-  // 3. unmount 시 marker 및 container 정리
+  // 3. Keep the rendered map aligned with its responsive container.
+  useEffect(() => {
+    const container = containerRef.current;
+    const map = mapRef.current as ResizableKakaoMap | null;
+
+    if (status !== 'ready' || !container || !map) {
+      return;
+    }
+
+    let previousWidth = container.clientWidth;
+    let previousHeight = container.clientHeight;
+    let animationFrame: number | undefined;
+
+    const scheduleRelayout = () => {
+      const nextWidth = container.clientWidth;
+      const nextHeight = container.clientHeight;
+
+      if (nextWidth === previousWidth && nextHeight === previousHeight) {
+        return;
+      }
+
+      previousWidth = nextWidth;
+      previousHeight = nextHeight;
+
+      if (animationFrame !== undefined) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = undefined;
+        const currentCenter = map.getCenter();
+
+        map.relayout();
+        map.setCenter(currentCenter);
+      });
+    };
+
+    const observer = new ResizeObserver(scheduleRelayout);
+
+    observer.observe(container);
+    window.addEventListener('resize', scheduleRelayout);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', scheduleRelayout);
+
+      if (animationFrame !== undefined) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [status]);
+
+  // 4. unmount 시 marker 및 container 정리
   useEffect(() => {
     const container = containerRef.current;
 
@@ -96,7 +166,8 @@ export function BaseKakaoMap({
 
   return (
     <div
-      className={`bg-gray-2 relative h-[280px] w-full overflow-hidden rounded-[18px] ${className}`}
+      className={`bg-gray-2 relative w-full overflow-hidden ${className}`}
+      style={{ height: MAP_HEIGHT * scale, borderRadius: MAP_RADIUS * scale }}
     >
       <div ref={containerRef} className="absolute inset-0" />
 
@@ -104,7 +175,12 @@ export function BaseKakaoMap({
         <div
           role={status === 'sdk-error' ? 'alert' : 'status'}
           aria-live={status === 'sdk-error' ? 'assertive' : 'polite'}
-          className="bg-background text-gray-5 absolute inset-0 flex items-center justify-center px-5 text-center text-[14px]"
+          className="bg-background text-gray-5 absolute inset-0 flex items-center justify-center text-center"
+          style={{
+            paddingLeft: OVERLAY_PADDING_X * scale,
+            paddingRight: OVERLAY_PADDING_X * scale,
+            fontSize: scaleValue(OVERLAY_FONT_SIZE, scale, 12),
+          }}
         >
           {status === 'loading' && '지도를 불러오는 중입니다...'}
           {status === 'sdk-error' &&

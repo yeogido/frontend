@@ -3,6 +3,11 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IoChevronBack } from 'react-icons/io5';
 
+import { ResponsivePageShell } from '../../components/layout';
+import { MIN_TOUCH_TARGET } from '../../constants/layout';
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { scaleValue } from '../../utils/responsiveLayout';
+
 import {
   PhotoUploader,
   ReviewCourseCard,
@@ -19,6 +24,16 @@ import {
   MAX_REVIEW_PHOTOS,
   removeSelectedReviewPhoto,
 } from './reviewForm';
+
+// Figma 390 디자인 기준 리터럴 px
+const PAGE_PADDING_TOP = 16;
+const PAGE_PADDING_BOTTOM = 32;
+const BACK_BUTTON_SIZE = 24;
+const BACK_ICON_SIZE = 24;
+const SUBMIT_BUTTON_MARGIN_TOP = 90;
+const SUBMIT_BUTTON_HEIGHT = 53;
+const SUBMIT_BUTTON_FONT_SIZE = 16;
+const SUBMIT_BUTTON_RADIUS = 12;
 
 export type ReviewTargetType =
   | 'yeogido-course'
@@ -51,7 +66,7 @@ function ReviewPage() {
   const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [isLoadingCourse, setIsLoadingCourse] = useState(Boolean(targetId));
 
-  const [rating, setRating] = useState(3);
+  const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
   const [selectedPhotos, setSelectedPhotos] = useState<
     Array<{ file: File; previewUrl: string }>
@@ -157,16 +172,34 @@ function ReviewPage() {
   };
 
   const navigate = useNavigate();
+  const scale = useGlobalScale();
+  const backButtonSize = scaleValue(BACK_BUTTON_SIZE, scale, MIN_TOUCH_TARGET);
+  const scaledBackButtonSize = BACK_BUTTON_SIZE * scale;
+  const backButtonOverlap = (backButtonSize - scaledBackButtonSize) / -2;
 
   return (
-    <main className="relative z-[60] mx-auto -mt-14 min-h-dvh w-full max-w-[500px] bg-white px-6 pt-[59px] pb-8">
+    <ResponsivePageShell
+      mode="standalone"
+      topPadding={PAGE_PADDING_TOP}
+      bottomPadding={PAGE_PADDING_BOTTOM}
+      className="bg-white"
+    >
       <button
         type="button"
         aria-label="이전 페이지로 이동"
         onClick={() => navigate(-1)}
-        className="text-gray-5 mt-15 flex size-6 items-center justify-center"
+        className="text-gray-5 flex items-center justify-center"
+        style={{
+          width: backButtonSize,
+          height: backButtonSize,
+          marginLeft: backButtonOverlap,
+          marginTop: backButtonOverlap,
+        }}
       >
-        <IoChevronBack aria-hidden="true" className="text-[24px]" />
+        <IoChevronBack
+          aria-hidden="true"
+          style={{ fontSize: BACK_ICON_SIZE * scale }}
+        />
       </button>
       <form onSubmit={handleSubmit}>
         <ReviewHeader />
@@ -202,14 +235,22 @@ function ReviewPage() {
         <button
           type="submit"
           disabled={!canSubmit || isLoadingCourse}
-          className={`mt-[90px] h-[53px] w-full rounded-xl text-base font-semibold transition-colors disabled:cursor-not-allowed ${
-            canSubmit && !isLoadingCourse ? 'bg-main-5 text-white' : 'bg-gray-2 text-gray-4'
+          className={`w-full font-semibold transition-colors disabled:cursor-not-allowed ${
+            canSubmit && !isLoadingCourse
+              ? 'bg-main-5 text-white'
+              : 'bg-gray-2 text-gray-4'
           }`}
+          style={{
+            marginTop: SUBMIT_BUTTON_MARGIN_TOP * scale,
+            height: scaleValue(SUBMIT_BUTTON_HEIGHT, scale, MIN_TOUCH_TARGET),
+            borderRadius: SUBMIT_BUTTON_RADIUS * scale,
+            fontSize: scaleValue(SUBMIT_BUTTON_FONT_SIZE, scale, 14),
+          }}
         >
           후기 남기기
         </button>
       </form>
-    </main>
+    </ResponsivePageShell>
   );
 }
 

@@ -1,7 +1,31 @@
 import { useId, useRef, useState } from 'react';
 import { IoImage, IoTrashOutline } from 'react-icons/io5';
 
+import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
+import { useGlobalScale } from '../../../../hooks/useGlobalScale';
+import { scaleValue } from '../../../../utils/responsiveLayout';
 import type { PhotoSelection } from '../types';
+
+// Figma 390 디자인 기준 리터럴 px
+const SECTION_MARGIN_TOP = 35;
+const TITLE_SIZE = 16;
+const PHOTO_MARGIN_TOP = 12;
+const PHOTO_RADIUS = 12;
+const ACTION_RIGHT = 12;
+const ACTION_BOTTOM = 12;
+const ACTION_GAP = 8;
+const ACTION_RADIUS = 8;
+const REPLACE_PADDING_X = 12;
+const REPLACE_PADDING_Y = 8;
+const REPLACE_TEXT_SIZE = 12;
+const ICON_CIRCLE_SIZE = 51;
+const ICON_SIZE = 27;
+const TITLE_TEXT_MARGIN_TOP = 20;
+const TITLE_TEXT_SIZE = 14;
+const SUBTEXT_MARGIN_TOP = 12;
+const SUBTEXT_SIZE = 12;
+const ERROR_MARGIN_TOP = 8;
+const ERROR_TEXT_SIZE = 12;
 
 interface RepresentativePhotoSectionProps {
   photo: PhotoSelection | null;
@@ -15,6 +39,7 @@ function RepresentativePhotoSection({
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const scale = useGlobalScale();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
@@ -37,8 +62,15 @@ function RepresentativePhotoSection({
   };
 
   return (
-    <section className="mt-[35px]" aria-labelledby="photo-title">
-      <h2 id="photo-title" className="text-base font-semibold">
+    <section
+      style={{ marginTop: SECTION_MARGIN_TOP * scale }}
+      aria-labelledby="photo-title"
+    >
+      <h2
+        id="photo-title"
+        className="font-semibold"
+        style={{ fontSize: scaleValue(TITLE_SIZE, scale, 14) }}
+      >
         대표 사진 등록
       </h2>
 
@@ -51,7 +83,13 @@ function RepresentativePhotoSection({
         className="sr-only"
       />
 
-      <div className="relative mt-3 aspect-[342/213] overflow-hidden rounded-xl">
+      <div
+        className="relative aspect-[342/213] overflow-hidden"
+        style={{
+          marginTop: PHOTO_MARGIN_TOP * scale,
+          borderRadius: PHOTO_RADIUS * scale,
+        }}
+      >
         {photo ? (
           <>
             <img
@@ -59,10 +97,27 @@ function RepresentativePhotoSection({
               alt="등록한 대표 사진 미리보기"
               className="size-full object-cover"
             />
-            <div className="absolute right-3 bottom-3 flex gap-2">
+            <div
+              className="absolute flex"
+              style={{
+                right: ACTION_RIGHT * scale,
+                bottom: ACTION_BOTTOM * scale,
+                gap: ACTION_GAP * scale,
+              }}
+            >
               <label
                 htmlFor={inputId}
-                className="bg-pure-white/90 cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold"
+                className="bg-pure-white/90 inline-flex cursor-pointer items-center justify-center font-semibold"
+                style={{
+                  paddingLeft: REPLACE_PADDING_X * scale,
+                  paddingRight: REPLACE_PADDING_X * scale,
+                  paddingTop: REPLACE_PADDING_Y * scale,
+                  paddingBottom: REPLACE_PADDING_Y * scale,
+                  minHeight: MIN_TOUCH_TARGET,
+                  minWidth: MIN_TOUCH_TARGET,
+                  fontSize: scaleValue(REPLACE_TEXT_SIZE, scale, 10),
+                  borderRadius: ACTION_RADIUS * scale,
+                }}
               >
                 사진 교체
               </label>
@@ -70,7 +125,12 @@ function RepresentativePhotoSection({
                 type="button"
                 onClick={handleDelete}
                 aria-label="대표 사진 삭제"
-                className="bg-pure-white/90 flex size-8 items-center justify-center rounded-lg"
+                className="bg-pure-white/90 flex items-center justify-center"
+                style={{
+                  width: MIN_TOUCH_TARGET,
+                  height: MIN_TOUCH_TARGET,
+                  borderRadius: ACTION_RADIUS * scale,
+                }}
               >
                 <IoTrashOutline aria-hidden="true" />
               </button>
@@ -79,15 +139,37 @@ function RepresentativePhotoSection({
         ) : (
           <label
             htmlFor={inputId}
-            className="border-main-5 bg-main-1 flex size-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed text-center"
+            className="border-main-5 bg-main-1 flex size-full cursor-pointer flex-col items-center justify-center border border-dashed text-center"
+            style={{ borderRadius: PHOTO_RADIUS * scale }}
           >
-            <span className="bg-main-3 flex size-[51px] items-center justify-center rounded-full">
-              <IoImage aria-hidden="true" className="text-main-5 text-[27px]" />
+            <span
+              className="bg-main-3 flex items-center justify-center rounded-full"
+              style={{
+                width: ICON_CIRCLE_SIZE * scale,
+                height: ICON_CIRCLE_SIZE * scale,
+              }}
+            >
+              <IoImage
+                aria-hidden="true"
+                className="text-main-5"
+                style={{ fontSize: ICON_SIZE * scale }}
+              />
             </span>
-            <strong className="mt-5 text-sm font-semibold">
+            <strong
+              className="font-semibold"
+              style={{
+                marginTop: TITLE_TEXT_MARGIN_TOP * scale,
+                fontSize: scaleValue(TITLE_TEXT_SIZE, scale, 12),
+              }}
+            >
               사진을 추가해 주세요.
             </strong>
-            <span className="mt-3 text-xs">
+            <span
+              style={{
+                marginTop: SUBTEXT_MARGIN_TOP * scale,
+                fontSize: scaleValue(SUBTEXT_SIZE, scale, 10),
+              }}
+            >
               여기를 탭해서 업로드 할 수 있어요.
             </span>
           </label>
@@ -95,7 +177,14 @@ function RepresentativePhotoSection({
       </div>
 
       {errorMessage ? (
-        <p className="text-main-5 mt-2 text-xs" aria-live="polite">
+        <p
+          className="text-main-5"
+          style={{
+            marginTop: ERROR_MARGIN_TOP * scale,
+            fontSize: scaleValue(ERROR_TEXT_SIZE, scale, 11),
+          }}
+          aria-live="polite"
+        >
           {errorMessage}
         </p>
       ) : null}

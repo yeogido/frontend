@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ResponsivePageShell } from '../../../components/layout';
+import { MIN_TOUCH_TARGET } from '../../../constants/layout';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { scaleValue } from '../../../utils/responsiveLayout';
+
 import {
   KeywordSelectionSection,
   RepresentativePhotoSection,
@@ -9,12 +14,23 @@ import { completeTagSelection } from './navigation';
 import type { PhotoSelection, TagId, TagSelectionResult } from './types';
 import { isTagSelectionReady, toggleTag } from './utils';
 
+// Figma 390 디자인 기준 리터럴 px
+const PAGE_PADDING_TOP = 48;
+const TITLE_SIZE = 28;
+const DESCRIPTION_MARGIN_TOP = 12;
+const DESCRIPTION_SIZE = 14;
+const BUTTON_MARGIN_TOP = 32;
+const BUTTON_HEIGHT = 53;
+const BUTTON_TEXT_SIZE = 14;
+const BUTTON_RADIUS = 12;
+
 interface TagSelectionPageProps {
   onComplete?: (result: TagSelectionResult) => void;
 }
 
 function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const navigate = useNavigate();
+  const scale = useGlobalScale();
   const [photo, setPhoto] = useState<PhotoSelection | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(new Set());
   const [limitMessage, setLimitMessage] = useState('');
@@ -52,14 +68,27 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   };
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-white px-6 pt-12 pb-[max(2rem,env(safe-area-inset-bottom))]">
+    <ResponsivePageShell
+      className="bg-white"
+      topPadding={PAGE_PADDING_TOP}
+      bottomPadding={32}
+    >
       <main className="flex-1">
-        <h1 className="text-[28px] leading-[1.3] font-bold">
+        <h1
+          className="leading-[1.3] font-bold"
+          style={{ fontSize: TITLE_SIZE * scale }}
+        >
           사진과 키워드를
           <br />
           추가해 주세요
         </h1>
-        <p className="text-gray-5 mt-3 text-sm">
+        <p
+          className="text-gray-5"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: scaleValue(DESCRIPTION_SIZE, scale, 12),
+          }}
+        >
           코스를 더 매력적으로 소개할 수 있어요!
         </p>
 
@@ -78,11 +107,18 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
         type="button"
         disabled={!isReady}
         onClick={handleComplete}
-        className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 mt-8 h-[53px] w-full shrink-0 rounded-xl text-sm font-semibold"
+        className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full shrink-0 font-semibold"
+        style={{
+          marginTop: BUTTON_MARGIN_TOP * scale,
+          height: scaleValue(BUTTON_HEIGHT, scale, MIN_TOUCH_TARGET),
+          minHeight: MIN_TOUCH_TARGET,
+          fontSize: scaleValue(BUTTON_TEXT_SIZE, scale, 14),
+          borderRadius: BUTTON_RADIUS * scale,
+        }}
       >
         코스 선택하기
       </button>
-    </div>
+    </ResponsivePageShell>
   );
 }
 

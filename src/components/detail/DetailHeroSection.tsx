@@ -1,5 +1,11 @@
 import React from 'react';
 
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+
+// Figma 390 디자인 기준 리터럴 px
+const HERO_HEIGHT = 230;
+const ACTION_OFFSET = 16;
+
 export interface DetailHeroSectionProps {
   readonly imageUrl: string;
   readonly title: string;
@@ -13,12 +19,20 @@ export function DetailHeroSection({
   rightAction,
   className = '',
 }: DetailHeroSectionProps) {
+  const scale = useGlobalScale();
+
   return (
-    <section className={`relative h-[230px] w-full overflow-hidden bg-gray-2 ${className}`}>
+    <section
+      className={`bg-gray-2 relative w-full overflow-hidden ${className}`}
+      style={{ height: HERO_HEIGHT * scale }}
+    >
       <img src={imageUrl} alt={title} className="h-full w-full object-cover" />
 
       {rightAction && (
-        <div className="absolute top-4 right-4 z-10 flex items-center justify-center">
+        <div
+          className="absolute z-10 flex items-center justify-center"
+          style={{ top: ACTION_OFFSET * scale, right: ACTION_OFFSET * scale }}
+        >
           {rightAction}
         </div>
       )}
