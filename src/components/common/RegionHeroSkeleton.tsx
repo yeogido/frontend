@@ -2,6 +2,7 @@ function RegionHeroSkeleton() {
   return (
     <section
       className="relative aspect-[342/129] w-full overflow-hidden rounded-xl bg-[#F9F9F9] animate-pulse"
+      role="status"
       aria-label="지역 대표 이미지 로딩"
     >
       <div className="absolute inset-0 bg-[#EAEAEA]" />
