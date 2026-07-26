@@ -21,6 +21,7 @@ import MapControls from './MapControls';
 import MapViewport from './MapViewport';
 
 import type { MapMarker } from '../types/map';
+import type { RegionPhotoMap } from '../types/regionPhoto';
 
 interface MapProps {
   baseScale?: number;
@@ -28,6 +29,8 @@ interface MapProps {
   minZoom?: number;
   initialZoom?: number;
   markers?: readonly MapMarker[];
+  /** 여행 기록 페이지에서 받아온 지역별 대표 사진. 없으면 빈 객체 */
+  regionPhotos?: RegionPhotoMap;
 }
 
 function Map({
@@ -36,6 +39,7 @@ function Map({
   minZoom = MIN_ZOOM,
   initialZoom = minZoom,
   markers = [],
+  regionPhotos = {},
 }: MapProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const mapViewportRef = useRef<SVGGElement | null>(null);
@@ -132,6 +136,7 @@ function Map({
           renderScale={rawScale}
           labelRenderScale={zoomLevel * labelBaseScale}
           markers={markers}
+          regionPhotos={regionPhotos}
         />
       </svg>
 
