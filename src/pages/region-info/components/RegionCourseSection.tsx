@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
   CourseCard,
   CourseCardSkeleton,
@@ -23,6 +24,8 @@ function RegionCourseSection({
 
   const isLoading = false;
   // const isLoading = true;
+
+  const navigate = useNavigate();
 
   const courses: {
     image: string;
@@ -64,6 +67,7 @@ function RegionCourseSection({
         <SectionHeader
           title={`${regionName}의 인기 코스`}
           actionText="전체보기"
+          onActionClick={() => navigate('/yeogido-course/search')}
         />
       </div>
 
