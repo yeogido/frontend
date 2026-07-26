@@ -24,7 +24,7 @@ function PhotoSlot({ label, previewUrl, onClick, onRemove }: PhotoSlotProps) {
   const removeOverlap = (removeButtonSize - removeVisualSize) / -2;
 
   return (
-    <div className="relative aspect-square w-full max-w-14">
+    <div className="relative aspect-square w-full" style={{ maxWidth: 56 * scale }}>
       <button
         type="button"
         aria-label={previewUrl ? `선택한 ${label}` : label}

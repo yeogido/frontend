@@ -100,9 +100,12 @@ function CustomSelect<T extends string>({
 
       setListboxPlacement(placement);
       setListboxMaxHeight(
-        Math.min(
-          LISTBOX_MAX_HEIGHT * scale,
-          placement === 'below' ? spaceBelow : spaceAbove
+        Math.max(
+          OPTION_HEIGHT * scale,
+          Math.min(
+            LISTBOX_MAX_HEIGHT * scale,
+            placement === 'below' ? spaceBelow : spaceAbove
+          )
         )
       );
     };

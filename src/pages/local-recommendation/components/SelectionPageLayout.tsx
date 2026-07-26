@@ -138,8 +138,7 @@ function SelectionPageLayout<T>({
             className="font-semibold text-black"
             style={{
               fontSize: resultsTitleSize,
-              lineHeight: `${
-                RESULTS_TITLE_LINE_HEIGHT * scale}px`,
+              lineHeight: `${RESULTS_TITLE_LINE_HEIGHT * scale}px`,
             }}
           >
             검색 결과
