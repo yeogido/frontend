@@ -17,6 +17,7 @@ export type CourseInfoBadgeTuple = readonly [
 
 export interface CourseReview {
   readonly id: number;
+  readonly images: string[];
   readonly profileImage: string;
   readonly nickname: string;
   readonly meta: string;

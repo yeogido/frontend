@@ -1,5 +1,17 @@
+import { useEffect, useRef, useState } from 'react';
+
 import { ReviewCard, SectionHeader } from '../../../components/common';
 import type { CourseReview } from '../../../features/course-detail/types/courseDetail';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { getCourseReviewIndex } from '../utils/courseReviewCarousel';
+
+const SECTION_GAP = 12;
+const SECTION_PADDING_X = 24;
+
+const DOT_GAP = 4;
+const DOT_SIZE = 4;
+const DOT_ACTIVE_WIDTH = 20;
+const DOT_RADIUS = 100;
 
 interface CourseReviewSectionProps {
   readonly reviews: readonly CourseReview[];
@@ -10,23 +22,112 @@ export function CourseReviewSection({
   reviews,
   className = '',
 }: CourseReviewSectionProps) {
+  const scale = useGlobalScale();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    let rafId: number;
+
+    const handleScroll = () => {
+      cancelAnimationFrame(rafId);
+
+      rafId = requestAnimationFrame(() => {
+        setActiveIndex(
+          getCourseReviewIndex(
+            container.scrollLeft,
+            container.clientWidth,
+            reviews.length
+          )
+        );
+      });
+    };
+
+    container.addEventListener('scroll', handleScroll);
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, [reviews.length]);
+
+  const scrollToIndex = (index: number) => {
+    const container = scrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    container.scrollTo({
+      left: container.clientWidth * index,
+      behavior: 'smooth',
+    });
+  };
+
   return (
-    <section className={`bg-white ${className}`}>
+    <section
+      className={`flex flex-col bg-white ${className}`}
+      style={{
+        gap: SECTION_GAP * scale,
+        paddingLeft: SECTION_PADDING_X * scale,
+        paddingRight: SECTION_PADDING_X * scale,
+      }}
+    >
       <SectionHeader title="최근 여행자들의 후기" actionText="전체보기" />
 
-      <div className="scrollbar-hide mt-3.5 flex snap-x gap-3 overflow-x-auto pb-1">
+      <div
+        ref={scrollRef}
+        className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto"
+      >
         {reviews.map((review) => (
-          <ReviewCard
+          <div
             key={review.id}
-            profileImage={review.profileImage}
-            nickname={review.nickname}
-            meta={review.meta}
-            content={review.content}
-            rating={review.rating}
-            className="snap-start"
-          />
+            className="w-full shrink-0 snap-start snap-always"
+          >
+            <ReviewCard
+              images={review.images}
+              profileImage={review.profileImage}
+              nickname={review.nickname}
+              meta={review.meta}
+              content={review.content}
+              rating={review.rating}
+              className="[&>div>article]:!bg-background"
+            />
+          </div>
         ))}
       </div>
+
+      {reviews.length > 1 && (
+        <div
+          className="flex items-center justify-center"
+          style={{ gap: DOT_GAP * scale }}
+        >
+          {reviews.map((review, index) => (
+            <button
+              key={review.id}
+              type="button"
+              aria-label={`${index + 1}번째 후기로 이동`}
+              aria-current={index === activeIndex}
+              onClick={() => scrollToIndex(index)}
+              className="shrink-0"
+              style={{
+                width:
+                  (index === activeIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE) * scale,
+                height: DOT_SIZE * scale,
+                borderRadius: DOT_RADIUS,
+                backgroundColor: index === activeIndex ? '#FF6F41' : '#A1A1A1',
+                transition: 'width 0.2s ease, background-color 0.2s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

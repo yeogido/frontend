@@ -81,6 +81,7 @@ const rawMockDto = {
   reviews: [
     {
       id: 1,
+      images: ['', '', ''],
       profileImage: courseImage,
       nickname: '민지',
       meta: '20대 여',
@@ -90,6 +91,7 @@ const rawMockDto = {
     },
     {
       id: 2,
+      images: ['', ''],
       profileImage: courseImage,
       nickname: '느린여행자',
       meta: '30대 남',
@@ -230,7 +232,7 @@ function YeogidoCourseDetailPage() {
       <CourseStopList stops={course.stops} className="mt-5 px-5" />
 
       {/* 7. 최근 여행자들의 후기 */}
-      <CourseReviewSection reviews={course.reviews} className="mt-[42px] px-5" />
+      <CourseReviewSection reviews={course.reviews} className="mt-[42px]" />
 
       {/* 8. 하단 고정 리뷰 작성 버튼 */}
       <ReviewButton className="mt-6 px-5" onClick={handleNavigateReview} />
