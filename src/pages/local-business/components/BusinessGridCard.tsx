@@ -63,7 +63,7 @@ function BusinessGridCard({ business, onClick }: BusinessGridCardProps) {
         <img
           src={business.image}
           alt={business.title}
-          className="w-full rounded-b-lg object-cover"
+          className="w-full rounded-t-lg object-cover"
           style={{ height: IMAGE_HEIGHT }}
         />
 
