@@ -1,5 +1,6 @@
 import {
   CourseCard,
+  CourseCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
 import type { TagType } from '../../../components/common/TagChip';
@@ -19,6 +20,9 @@ function RegionCourseSection({
   regionName,
 }: RegionCourseSectionProps) {
   const scale = useGlobalScale();
+
+  const isLoading = false;
+  // const isLoading = true;
 
   const courses: {
     image: string;
@@ -72,12 +76,19 @@ function RegionCourseSection({
           paddingRight: SECTION_PADDING_X * scale,
         }}
       >
-        {courses.map((course) => (
-          <CourseCard
-            key={course.title}
-            {...course}
-          />
-        ))}
+        {isLoading ? (
+          <>
+            <CourseCardSkeleton />
+            <CourseCardSkeleton />
+          </>
+        ) : (
+          courses.map((course) => (
+            <CourseCard
+              key={course.title}
+              {...course}
+            />
+          ))
+        )}
       </div>
     </section>
   );
