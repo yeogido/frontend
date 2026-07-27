@@ -4,14 +4,13 @@ import { localBusinessMockData } from '../../../apis/localBusiness';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 import {
-  DetailAuthorCard,
   DetailHeroImage,
-  DetailInfoCard,
   DetailIntroCard,
   DetailMapPlaceholder,
   DetailRelatedPostCard,
   DetailTitleSection,
 } from './components';
+import { DetailAuthorCard, DetailInfoCard } from '../../detail/components';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 16; // 추정값, 실측 필요
@@ -37,10 +36,7 @@ function LocalBusinessDetailPage() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full flex-col bg-white">
-      <DetailHeroImage
-        imageUrl={business.image}
-        title={business.title}
-      />
+      <DetailHeroImage imageUrl={business.image} title={business.title} />
 
       <div
         className="flex flex-col"
@@ -52,10 +48,7 @@ function LocalBusinessDetailPage() {
           gap: SECTION_GAP * scale,
         }}
       >
-        <DetailTitleSection
-          title={business.title}
-          tags={business.tags}
-        />
+        <DetailTitleSection title={business.title} tags={business.tags} />
 
         <DetailIntroCard description={business.description} />
 
@@ -75,11 +68,14 @@ function LocalBusinessDetailPage() {
           hours={MOCK_HOURS}
         />
 
-        <DetailAuthorCard
-          avatarUrl={business.image}
-          name={business.author}
-          date={business.date}
-        />
+        {/* DetailAuthorCard가 자체 상하 24px 여백을 가지므로 부모 flex gap을 상쇄 */}
+        <div style={{ marginTop: -SECTION_GAP * scale }}>
+          <DetailAuthorCard
+            avatarUrl={business.image}
+            name={business.author}
+            date={business.date}
+          />
+        </div>
       </div>
     </div>
   );

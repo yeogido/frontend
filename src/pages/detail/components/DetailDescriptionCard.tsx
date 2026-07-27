@@ -3,7 +3,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 // Figma 390 디자인 기준 리터럴 px
 const CARD_RADIUS = 14;
 const CARD_PADDING_X = 16;
-const CARD_PADDING_Y = 14;
+const CARD_PADDING_Y = 17;
 const TITLE_FONT_SIZE = 12;
 const CONTENT_MARGIN_TOP = 8;
 const CONTENT_FONT_SIZE = 12;

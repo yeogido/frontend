@@ -5,7 +5,7 @@ import type { CourseInfoBadgeTuple } from '../types/courseDetail';
 // Figma 390 디자인 기준 리터럴 px
 const CARD_RADIUS = 14;
 const CARD_PADDING_X = 8;
-const CARD_PADDING_Y = 12;
+const CARD_PADDING_Y = 14;
 const ITEM_GAP = 4;
 const ICON_SIZE = 20;
 const LABEL_FONT_SIZE = 11;
@@ -24,7 +24,7 @@ export function CourseInfoBadgesCard({
 
   return (
     <div
-      className={`grid grid-cols-4 items-center justify-items-center bg-[#F6F7F8] ${className}`}
+      className={`bg-background grid grid-cols-4 items-center justify-items-center ${className}`}
       style={{
         borderRadius: CARD_RADIUS * scale,
         paddingLeft: CARD_PADDING_X * scale,

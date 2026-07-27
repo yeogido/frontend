@@ -1,8 +1,8 @@
-import call from '../../../../assets/icons/call.svg';
-import language from '../../../../assets/icons/language.svg';
-import locationPin from '../../../../assets/icons/location-pin.svg';
-import schedule from '../../../../assets/icons/schedule.svg';
-import { useScaleFrame } from '../../../../hooks/useScaleFrame';
+import call from '../../../assets/icons/call.svg';
+import language from '../../../assets/icons/language.svg';
+import locationPin from '../../../assets/icons/location-pin.svg';
+import schedule from '../../../assets/icons/schedule.svg';
+import { useScaleFrame } from '../../../hooks/useScaleFrame';
 
 const CARD_DESIGN_WIDTH = 342;
 const CARD_PADDING_X = 20;
