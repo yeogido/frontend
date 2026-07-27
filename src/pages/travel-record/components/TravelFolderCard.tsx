@@ -1,6 +1,9 @@
 import folderFrontLayerImage from '../assets/travel-folder-front-layer.svg';
 import folderShadowLayerImage from '../assets/travel-folder-shadow-layer.svg';
 import type { TravelRecordFolder } from '../types';
+import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
+
+import { FolderDecorationRenderer } from './FolderDecorationRenderer';
 
 interface TravelFolderCardProps {
   folder: TravelRecordFolder;
@@ -10,6 +13,7 @@ interface TravelFolderCardProps {
 interface TravelFolderArtworkProps {
   photos: [string, ...string[]];
   title: string;
+  decorations: TravelFolderDecoration[];
 }
 
 interface FolderPhotoSlot {
@@ -71,6 +75,7 @@ function FolderPhoto({
 export function TravelFolderArtwork({
   photos,
   title,
+  decorations,
 }: TravelFolderArtworkProps) {
   return (
     <div className="relative h-[183px] w-[159px]">
@@ -105,6 +110,9 @@ export function TravelFolderArtwork({
         className="pointer-events-none absolute top-[53px] left-0 z-30 h-[130px] w-[159px]"
         aria-hidden="true"
       />
+      <div className="pointer-events-none absolute inset-0 z-60 overflow-hidden">
+        <FolderDecorationRenderer decorations={decorations} />
+      </div>
     </div>
   );
 }
@@ -118,7 +126,11 @@ function TravelFolderCard({ folder, onClick }: TravelFolderCardProps) {
         aria-label={`${folder.title} \uC5EC\uD589 \uAE30\uB85D \uC0C1\uC138 \uBCF4\uAE30`}
         className="flex w-full justify-center"
       >
-        <TravelFolderArtwork photos={folder.photos} title={folder.title} />
+        <TravelFolderArtwork
+          photos={folder.photos}
+          title={folder.title}
+          decorations={folder.decorations}
+        />
       </button>
       <div className="flex flex-col items-center">
         <h2 className="mt-3 text-center text-[16px] leading-none font-medium text-black">

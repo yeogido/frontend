@@ -277,7 +277,11 @@ function TravelRecordDetailPage() {
     <TravelRecordPageFrame className="bg-[#f1f1f1] px-6 pt-[60px]">
       <header className="relative h-[146px]">
         <div className="absolute top-0 left-6 h-[152px] w-[132px] origin-top-left scale-[0.83]">
-          <TravelFolderArtwork photos={folder.photos} title={folder.title} />
+          <TravelFolderArtwork
+            photos={folder.photos}
+            title={folder.title}
+            decorations={folder.decorations}
+          />
         </div>
         <div className="absolute top-[76px] right-[17px] flex w-[110px] flex-col items-center gap-1.5">
           <h1 className="text-center text-[20px] leading-none font-semibold text-[#1c1c1c]">

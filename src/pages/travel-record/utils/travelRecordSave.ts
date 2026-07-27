@@ -1,8 +1,9 @@
 import type { TravelDateRange } from '../date-selection/types';
+import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
 import type { TravelRecordDraftRegion, TravelRecordFolder } from '../types';
 
 const databaseName = 'yeogido-travel-records';
-const databaseVersion = 2;
+const databaseVersion = 3;
 const recordStoreName = 'travel-records';
 const photoDraftStoreName = 'travel-record-photo-drafts';
 
@@ -15,6 +16,7 @@ export interface CreateTravelRecordPayload {
   startDate: Date;
   endDate: Date;
   photos: File[];
+  decorations: TravelFolderDecoration[];
 }
 
 export interface SavedTravelRecordResult {
@@ -25,6 +27,7 @@ interface CreateTravelRecordDraftPayloadParams {
   selectedRegion: TravelRecordDraftRegion;
   selectedDateRange: TravelDateRange;
   selectedPhotos: File[];
+  decorations: TravelFolderDecoration[];
 }
 
 interface StoredTravelRecord {
@@ -34,6 +37,7 @@ interface StoredTravelRecord {
   startDate: string;
   endDate: string;
   photos: File[];
+  decorations?: TravelFolderDecoration[];
 }
 
 interface StoredPhotoDraft {
@@ -128,8 +132,13 @@ const createFolder = (record: StoredTravelRecord): TravelRecordFolder | null => 
     startDate: record.startDate,
     period: formatPeriod(record.startDate, record.endDate),
     photos: photoUrls as [string, ...string[]],
+    decorations: normalizeStoredDecorations(record.decorations),
   };
 };
+
+export const normalizeStoredDecorations = (
+  decorations: TravelFolderDecoration[] | undefined,
+) => decorations ?? [];
 
 export const revokeTravelRecordFolderPhotoUrls = (folder: TravelRecordFolder) => {
   Array.from(new Set(folder.photos)).forEach((photoUrl) =>
@@ -141,12 +150,14 @@ export const createTravelRecordDraftPayload = ({
   selectedRegion,
   selectedDateRange,
   selectedPhotos,
+  decorations,
 }: CreateTravelRecordDraftPayloadParams): CreateTravelRecordPayload => ({
   regionCode: selectedRegion.id,
   regionName: selectedRegion.selectionName || selectedRegion.name,
   startDate: selectedDateRange.startDate,
   endDate: selectedDateRange.endDate,
   photos: selectedPhotos,
+  decorations,
 });
 
 export const saveTravelRecordPhotoDraft = (photos: File[]) =>
@@ -186,6 +197,7 @@ export const saveTravelRecord = async (
     startDate: formatDate(payload.startDate),
     endDate: formatDate(payload.endDate),
     photos: payload.photos,
+    decorations: payload.decorations,
   };
 
   await withTravelRecordDatabase((database) =>

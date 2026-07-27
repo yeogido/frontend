@@ -2,8 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { TravelFolderArtwork, TravelRecordPageFrame } from '../components';
+import { TravelRecordPageFrame } from '../components';
+import { PhotoToast } from '../photo-selection/components';
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
+import {
+  createFolderDecoration,
+  validateFolderDecorationFiles,
+  type TravelFolderDecoration,
+} from './folderDecoration';
+import {
+  FolderDecorationCanvas,
+  FolderDecorationPalette,
+} from './components';
 import {
   getTravelRecordDraftDateRange,
   getTravelRecordDraftRegion,
@@ -54,6 +64,8 @@ function TravelRecordFolderDecorationPage() {
   const previewPhotoUrlsRef = useRef<string[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<File[] | null>(null);
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
+  const [decorations, setDecorations] = useState<TravelFolderDecoration[]>([]);
+  const [toastMessage, setToastMessage] = useState('');
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const folderPhotos = useMemo<[string, string] | null>(() => {
@@ -119,10 +131,11 @@ function TravelRecordFolderDecorationPage() {
         selectedRegion,
         selectedDateRange,
         selectedPhotos,
+        decorations,
       });
-      await saveTravelRecord(payload);
+      const result = await saveTravelRecord(payload);
       await clearTravelRecordPhotoDraft();
-      navigate('/travel-record');
+      navigate('/travel-record', { state: { savedTravelRecordId: result.id } });
     } catch {
       isSavingRef.current = false;
       setIsSaving(false);
@@ -170,7 +183,12 @@ function TravelRecordFolderDecorationPage() {
           aria-label={`${regionName} \uC5EC\uD589 \uD3F4\uB354 \uBBF8\uB9AC\uBCF4\uAE30`}
           className="absolute top-[237px] left-1/2 flex w-[159px] -translate-x-1/2 flex-col items-center"
         >
-          <TravelFolderArtwork photos={folderPhotos} title={regionName} />
+          <FolderDecorationCanvas
+            photos={folderPhotos}
+            title={regionName}
+            decorations={decorations}
+            onChange={setDecorations}
+          />
           <h2 className="mt-3 text-center text-[16px] leading-none font-medium text-[#1c1c1c]">
             {regionName}
           </h2>
@@ -181,16 +199,39 @@ function TravelRecordFolderDecorationPage() {
       ) : null}
 
       <section className="absolute top-[503px] left-0 h-[341px] w-full bg-[#f9f9f9] shadow-[0_-1px_5px_rgba(0,0,0,0.07)]">
-        <div className="absolute top-7 left-1/2 grid w-[344px] -translate-x-1/2 grid-cols-5 gap-4">
-          {Array.from({ length: 15 }).map((_, index) => (
-            <button
-              key={`sticker-slot-${index}`}
-              type="button"
-              aria-label={`\uC2A4\uD2F0\uCEE4 ${index + 1}`}
-              className="size-14 rounded-xl bg-[#e4e4e4]"
-            />
-          ))}
-        </div>
+        <FolderDecorationPalette
+          decorations={decorations}
+          onLimitReached={() =>
+            setToastMessage(
+              '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
+            )
+          }
+          onAddSticker={(stickerId) => {
+            setDecorations((currentDecorations) => [
+              ...currentDecorations,
+              createFolderDecoration(
+                { source: 'sticker', stickerId },
+                currentDecorations,
+              ),
+            ]);
+          }}
+          onAddUploads={(files) => {
+            const result = validateFolderDecorationFiles(
+              files,
+              10 - decorations.length,
+            );
+            setToastMessage(result.message);
+            setDecorations((currentDecorations) => [
+              ...currentDecorations,
+              ...result.files.map((imageFile) =>
+                createFolderDecoration(
+                  { source: 'upload', imageFile },
+                  currentDecorations,
+                ),
+              ),
+            ]);
+          }}
+        />
 
         <button
           type="button"
@@ -201,6 +242,7 @@ function TravelRecordFolderDecorationPage() {
         >
           {saveRecordLabel}
         </button>
+        <PhotoToast message={toastMessage} />
       </section>
     </TravelRecordPageFrame>
   );
