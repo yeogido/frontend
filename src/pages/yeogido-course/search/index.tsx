@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   ContentCard,
@@ -35,7 +35,12 @@ const MESSAGE_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
 
 function YeogidoCourseSearchPage() {
+  const navigate = useNavigate();
   const scale = useGlobalScale();
+
+  const handleCourseClick = (courseId: number | string) => {
+    navigate(`/yeogido-course/detail/${courseId}`);
+  };
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
@@ -155,6 +160,7 @@ function YeogidoCourseSearchPage() {
                   secondInfo={course.courseName}
                   tags={course.tags}
                   className="w-full"
+                  onClick={() => handleCourseClick(course.id)}
                 />
               ))}
 

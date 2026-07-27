@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   ContentCard,
@@ -31,7 +32,12 @@ const ERROR_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
 
 function YeogidoCoursePopularPage() {
+  const navigate = useNavigate();
   const scale = useGlobalScale();
+
+  const handleCourseClick = (courseId: number | string) => {
+    navigate(`/yeogido-course/detail/${courseId}`);
+  };
   const {
     filterContainerRef,
     openFilterKey,
@@ -128,6 +134,7 @@ function YeogidoCoursePopularPage() {
                 secondInfo={course.courseName}
                 tags={course.tags}
                 className="w-full"
+                onClick={() => handleCourseClick(course.id)}
               />
             ))}
 

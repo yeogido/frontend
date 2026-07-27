@@ -1,26 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { DetailHeroSection } from '../../components/detail/DetailHeroSection';
-import { DetailTitleSection } from '../../components/detail/DetailTitleSection';
-import { DetailDescriptionCard } from '../../components/detail/DetailDescriptionCard';
-import { ReviewButton } from '../../components/detail/ReviewButton';
+import {
+  DetailDescriptionCard,
+  DetailHeroSection,
+  DetailReviewSection,
+  DetailTitleSection,
+  FavoriteButton,
+  ReviewButton,
+  ShareButton,
+} from '../components';
 import {
   ResponsiveFullBleed,
   ResponsivePageShell,
-} from '../../components/layout/ResponsivePageShell';
+} from '../../../components/layout/ResponsivePageShell';
 
-import { CourseInfoBadgesCard } from '../../features/course-detail/components/CourseInfoBadgesCard';
-import { CourseRouteMap } from '../../features/course-detail/components/CourseRouteMap';
-import { CourseStopList } from '../../features/course-detail/components/CourseStopList';
-import CourseReviewSection from './components/CourseReviewSection';
-import FavoriteButton from './components/FavoriteButton';
-import ShareButton from './components/ShareButton';
+import { CourseInfoBadgesCard } from '../../../features/course-detail/components/CourseInfoBadgesCard';
+import { CourseRouteMap } from '../../../features/course-detail/components/CourseRouteMap';
+import { CourseStopList } from '../../../features/course-detail/components/CourseStopList';
 
-import { mapCourseDetailDtoToViewModel } from '../../features/course-detail/mappers/courseDetailMapper';
-import type { CourseDetail } from '../../features/course-detail/types/courseDetail';
-import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { getGutter} from '../../utils/responsiveLayout';
+import { mapCourseDetailDtoToViewModel } from '../../../features/course-detail/mappers/courseDetailMapper';
+import type { CourseDetail } from '../../../features/course-detail/types/courseDetail';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { getGutter} from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 44;
@@ -297,7 +299,7 @@ function YeogidoCourseDetailPage() {
 
       {/* 7. 최근 여행자들의 후기 */}
       <div style={{ marginTop: REVIEW_MARGIN_TOP * scale }}>
-        <CourseReviewSection reviews={course.reviews} />
+        <DetailReviewSection reviews={course.reviews} />
       </div>
 
       {/* 8. 하단 고정 리뷰 작성 버튼 */}

@@ -1,4 +1,4 @@
-import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // Figma 390 디자인 기준 리터럴 px
 const CARD_RADIUS = 14;
