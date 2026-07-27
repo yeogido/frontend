@@ -69,6 +69,10 @@ function YeogidoCoursePage() {
     navigate('/yeogido-course/recent');
   };
 
+  const goToCourseDetail = (courseId: number | string) => {
+    navigate(`/yeogido-course/detail/${courseId}`);
+  };
+
   return (
     <section
       className="mx-auto flex min-h-screen w-full flex-col"
@@ -220,6 +224,7 @@ function YeogidoCoursePage() {
               firstInfo={course.duration}
               secondInfo={course.courseType}
               tags={course.tags}
+              onClick={() => goToCourseDetail(course.id)}
             />
           ))}
         </div>
@@ -241,7 +246,7 @@ function YeogidoCoursePage() {
         >
           {yeogidoCourseRecentPreviews.map((course) => (
             <div key={course.id} className="w-full">
-              <CourseCard {...course} onClick={goToCourseRegionSearch} />
+              <CourseCard {...course} onClick={() => goToCourseDetail(course.id)} />
             </div>
           ))}
         </div>

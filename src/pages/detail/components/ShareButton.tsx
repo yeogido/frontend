@@ -4,11 +4,11 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 const BUTTON_SIZE = 32;
 const ICON_SIZE = 20;
 
-interface ShareButtonProps {
+export interface ShareButtonProps {
   onClick: () => void;
 }
 
-function ShareButton({ onClick }: ShareButtonProps) {
+export function ShareButton({ onClick }: ShareButtonProps) {
   const scale = useGlobalScale();
 
   return (
@@ -40,4 +40,5 @@ function ShareButton({ onClick }: ShareButtonProps) {
   );
 }
 
+export const DetailShareButton = ShareButton;
 export default ShareButton;

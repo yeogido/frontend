@@ -1,7 +1,7 @@
 import React from 'react';
-import TagChip from '../common/TagChip';
-import type { DetailTag } from '../../types/detail';
-import { useGlobalScale } from '../../hooks/useGlobalScale';
+import TagChip from '../../../components/common/TagChip';
+import type { DetailTag } from '../../../types/detail';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // Figma 390 디자인 기준 리터럴 px
 const HEADER_GAP = 12;

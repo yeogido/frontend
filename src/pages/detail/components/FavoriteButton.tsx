@@ -6,13 +6,13 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 const BUTTON_SIZE = 44;
 const ICON_SIZE = 32;
 
-interface FavoriteButtonProps {
+export interface FavoriteButtonProps {
   isActive: boolean;
   label: string;
   onClick: () => void;
 }
 
-function FavoriteButton({ isActive, label, onClick }: FavoriteButtonProps) {
+export function FavoriteButton({ isActive, label, onClick }: FavoriteButtonProps) {
   const scale = useGlobalScale();
 
   return (
@@ -35,4 +35,5 @@ function FavoriteButton({ isActive, label, onClick }: FavoriteButtonProps) {
   );
 }
 
+export const DetailFavoriteButton = FavoriteButton;
 export default FavoriteButton;

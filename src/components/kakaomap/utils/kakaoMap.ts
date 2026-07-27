@@ -1,5 +1,41 @@
+export interface MapCoordinates {
+  readonly latitude: number;
+  readonly longitude: number;
+}
+
+export const SEOUL_CITY_HALL: MapCoordinates = Object.freeze({
+  latitude: 37.5665,
+  longitude: 126.978,
+});
+
 const KAKAO_MAP_SCRIPT_ID = 'kakao-maps-sdk';
 let sdkPromise: Promise<void> | null = null;
+
+export function getCurrentMapCoordinates(
+  geolocation: Geolocation | undefined =
+    typeof navigator === 'undefined' ? undefined : navigator.geolocation,
+): Promise<MapCoordinates> {
+  if (!geolocation) {
+    return Promise.resolve({ ...SEOUL_CITY_HALL });
+  }
+
+  return new Promise((resolve) => {
+    geolocation.getCurrentPosition(
+      ({ coords }) => {
+        resolve({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        });
+      },
+      () => resolve({ ...SEOUL_CITY_HALL }),
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 60000,
+      },
+    );
+  });
+}
 
 export function loadKakaoMapsSdk(appKey: string): Promise<void> {
   if (!appKey.trim()) {

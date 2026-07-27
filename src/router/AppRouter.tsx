@@ -40,7 +40,7 @@ import TravelRecordPhotoSelectionPage from '../pages/travel-record/photo-selecti
 import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
 import VisitOrderSelectionPage from '../pages/local-recommendation/visit-order-selection';
 import NotFoundPage from '../pages/not-found';
-import YeogidoCourseDetailPage from '../pages/yeogido-course-detail';
+import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import RegionInfoPage from '../pages/region-info';
 
 function AppRouter() {

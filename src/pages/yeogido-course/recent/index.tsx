@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { CourseCard, CourseCardSkeleton } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
@@ -22,7 +23,12 @@ const ERROR_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
 
 function YeogidoCourseRecentPage() {
+  const navigate = useNavigate();
   const scale = useGlobalScale();
+
+  const handleCourseClick = (courseId: number | string) => {
+    navigate(`/yeogido-course/detail/${courseId}`);
+  };
   const {
     data,
     fetchNextPage,
@@ -87,7 +93,7 @@ function YeogidoCourseRecentPage() {
               <CourseCardSkeleton key={item} />
             ))
           : recentCourses.map((course) => (
-              <CourseCard key={course.id} {...course} />
+              <CourseCard key={course.id} {...course} onClick={() => handleCourseClick(course.id)} />
             ))}
 
         {isFetchingNextPage
