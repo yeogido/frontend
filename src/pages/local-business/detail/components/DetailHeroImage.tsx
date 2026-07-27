@@ -1,7 +1,6 @@
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
-// 추정값, 실측 필요 (피그마 모바일 목업 기준 눈대중)
-const HERO_HEIGHT = 240;
+const HERO_HEIGHT = 230;
 
 interface DetailHeroImageProps {
   imageUrl: string;

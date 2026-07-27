@@ -3,11 +3,11 @@ import { TagChip } from '../../../../components/common';
 import type { TagType } from '../../../../components/common/TagChip';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
-const TITLE_SIZE = 18; // 추정값, 실측 필요
+const TITLE_SIZE = 18;
 const SHARE_ICON_SIZE = 24;
-const TAG_MARGIN_TOP = 12; // 추정값, 실측 필요
-const TAG_GAP = 8; // 추정값, 실측 필요
-const TAG_HEIGHT = 28; // 추정값, 실측 필요
+const TAG_MARGIN_TOP = 12;
+const TAG_GAP = 8;
+const TAG_HEIGHT = 25;
 
 interface DetailTitleSectionProps {
   title: string;

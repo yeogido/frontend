@@ -7,8 +7,8 @@ const CARD_PADDING_BOTTOM = 20;
 const CARD_PADDING_LEFT = 20;
 const AVATAR_SIZE = 64; // 추정값, 실측 필요
 const CONTENT_GAP = 12; // 추정값, 실측 필요
-const NAME_SIZE = 18; // 추정값, 실측 필요
-const DATE_SIZE = 14; // 추정값, 실측 필요
+const NAME_SIZE = 18;
+const DATE_SIZE = 14;
 const DATE_MARGIN_TOP = 2; // 추정값, 실측 필요
 
 interface DetailAuthorCardProps {

@@ -4,8 +4,8 @@ const CARD_DESIGN_WIDTH = 342;
 const CARD_PADDING_X = 14;
 const CARD_PADDING_Y = 20;
 const CARD_GAP = 4;
-const TITLE_SIZE = 14; // 추정값, 실측 필요
-const DESCRIPTION_SIZE = 12; // 추정값, 실측 필요
+const TITLE_SIZE = 14;
+const DESCRIPTION_SIZE = 12;
 const DESCRIPTION_LINE_HEIGHT = 14; // 추정값, 실측 필요
 
 interface DetailIntroCardProps {

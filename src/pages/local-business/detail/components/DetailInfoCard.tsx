@@ -7,10 +7,10 @@ import { useScaleFrame } from '../../../../hooks/useScaleFrame';
 const CARD_DESIGN_WIDTH = 342;
 const CARD_PADDING_X = 20;
 const CARD_PADDING_Y = 16;
-const ROW_GAP = 10;
+const ROW_GAP = 5; // 피그마 스펙은 8이지만, 실제 렌더링 시 시각적으로 맞춰본 값(스케일적용)
 const ICON_SIZE = 16;
-const ICON_TEXT_GAP = 8; // 추정값, 실측 필요
-const TEXT_SIZE = 14; // 추정값, 실측 필요
+const ICON_TEXT_GAP = 12;
+const TEXT_SIZE = 14;
 
 interface DetailInfoCardProps {
   address: string;
@@ -65,7 +65,7 @@ function DetailInfoCard({ address, hours, phone, website }: DetailInfoCardProps)
             />
 
             <span
-              className="font-medium text-gray-4"
+              className="font-regular text-gray-5"
               style={{ fontSize: TEXT_SIZE }}
             >
               {row.label}

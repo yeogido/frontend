@@ -6,10 +6,10 @@ const CARD_HEIGHT = 97;
 const CARD_PADDING = 12; // 추정값, 실측 필요
 const THUMBNAIL_SIZE = 67; // 추정값, 실측 필요 (97 - 12*2)
 const CONTENT_GAP = 12; // 추정값, 실측 필요
-const TITLE_SIZE = 14; // 추정값, 실측 필요
-const META_SIZE = 12; // 추정값, 실측 필요
+const TITLE_SIZE = 14;
+const META_SIZE = 12;
 const META_GAP = 2; // 추정값, 실측 필요
-const HEART_SIZE = 20; // 추정값, 실측 필요
+const HEART_SIZE = 20;
 
 interface DetailRelatedPostCardProps {
   imageUrl: string;
