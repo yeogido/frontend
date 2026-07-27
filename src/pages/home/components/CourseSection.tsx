@@ -22,6 +22,7 @@ function CourseSection() {
   const scale = useGlobalScale();
 
   const courses: {
+    id: number;
     image: string;
     title: string;
     duration: string;
@@ -31,6 +32,7 @@ function CourseSection() {
     liked: boolean;
   }[] = [
     {
+      id: 1,
       image: '',
       title: '강릉 혼자 여행 코스',
       duration: '2박 3일',
@@ -40,6 +42,7 @@ function CourseSection() {
       liked: false,
     },
     {
+      id: 2,
       image: '',
       title: '서울에서 출발하는 3박 4일 여름 바다 여행 추천 코스',
       duration: '3박 4일',
@@ -83,8 +86,9 @@ function CourseSection() {
           <>
             {courses.map((course) => (
               <CourseCard
-                key={course.title}
+                key={course.id}
                 {...course}
+                onClick={() => navigate(`/yeogido-course/detail/${course.id}`)}
               />
             ))}
           </>
