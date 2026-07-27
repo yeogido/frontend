@@ -1,5 +1,7 @@
+import { useNavigate } from 'react-router-dom';
 import {
   CourseCard,
+  CourseCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
 import type { TagType } from '../../../components/common/TagChip';
@@ -19,6 +21,11 @@ function RegionCourseSection({
   regionName,
 }: RegionCourseSectionProps) {
   const scale = useGlobalScale();
+
+  const isLoading = false;
+  // const isLoading = true;
+
+  const navigate = useNavigate();
 
   const courses: {
     image: string;
@@ -60,6 +67,7 @@ function RegionCourseSection({
         <SectionHeader
           title={`${regionName}의 인기 코스`}
           actionText="전체보기"
+          onActionClick={() => navigate('/yeogido-course/search')}
         />
       </div>
 
@@ -72,12 +80,19 @@ function RegionCourseSection({
           paddingRight: SECTION_PADDING_X * scale,
         }}
       >
-        {courses.map((course) => (
-          <CourseCard
-            key={course.title}
-            {...course}
-          />
-        ))}
+        {isLoading ? (
+          <>
+            <CourseCardSkeleton />
+            <CourseCardSkeleton />
+          </>
+        ) : (
+          courses.map((course) => (
+            <CourseCard
+              key={course.title}
+              {...course}
+            />
+          ))
+        )}
       </div>
     </section>
   );

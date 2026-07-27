@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { IoChevronDown } from 'react-icons/io5';
 
 import { businessSortOptions } from '../constants';
@@ -93,7 +94,7 @@ function BusinessSortDropdown({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         onClick={() => setIsOpen((current) => !current)}
-        className="border-gray-2 bg-pure-white text-gray-4 flex h-[29px] w-[73px] items-center justify-between gap-1 rounded-full border px-2.5 py-1.5 text-[14px] leading-none font-normal whitespace-nowrap cursor-pointer"
+        className="border-gray-2 bg-white text-gray-4 flex h-[29px] w-[73px] items-center justify-between gap-1 rounded-full border px-2.5 py-1.5 text-[14px] leading-none font-normal whitespace-nowrap cursor-pointer"
       >
         <span>{value}</span>
 
@@ -105,40 +106,43 @@ function BusinessSortDropdown({
         />
       </button>
 
-      {isOpen && panelStyle ? (
-        <div
-          id={listboxId}
-          ref={listboxRef}
-          role="listbox"
-          aria-labelledby={buttonId}
-          className="border-gray-2 fixed z-50 flex flex-col overflow-hidden rounded-xl border bg-pure-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-          style={{
-            top: panelStyle.top,
-            left: panelStyle.left,
-            width: panelStyle.width,
-          }}
-        >
-          {businessSortOptions.map((option, index) => {
-            const isSelected = option === value;
-            const isLast = index === businessSortOptions.length - 1;
+      {isOpen && panelStyle
+        ? createPortal(
+            <div
+              id={listboxId}
+              ref={listboxRef}
+              role="listbox"
+              aria-labelledby={buttonId}
+              className="border-gray-2 fixed z-50 flex flex-col overflow-hidden rounded-xl border bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+              style={{
+                top: panelStyle.top,
+                left: panelStyle.left,
+                width: panelStyle.width,
+              }}
+            >
+              {businessSortOptions.map((option, index) => {
+                const isSelected = option === value;
+                const isLast = index === businessSortOptions.length - 1;
 
-            return (
-              <button
-                key={option}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => handleSelect(option)}
-                className={`border-gray-2 bg-pure-white text-gray-4 flex h-[29px] w-full items-center border-b px-2.5 py-1.5 text-left text-[14px] leading-none font-normal whitespace-nowrap cursor-pointer last:border-b-0 ${
-                  isSelected ? 'bg-main-1 text-black' : ''
-                } ${isLast ? 'rounded-b-xl' : ''}`}
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => handleSelect(option)}
+                    className={`border-gray-2 bg-white text-gray-4 flex h-[29px] w-full items-center border-b px-2.5 py-1.5 text-left text-[14px] leading-none font-normal whitespace-nowrap cursor-pointer last:border-b-0 ${
+                      isSelected ? 'bg-main-1 text-black' : ''
+                    } ${isLast ? 'rounded-b-xl' : ''}`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

@@ -1,8 +1,12 @@
 import { useMemo } from 'react';
 
+import { useNavigate } from 'react-router-dom';
 import { geoMercator, geoPath } from 'd3-geo';
 
 import koreaProvinceJson from '../assets/korea-province.json';
+import { buildRecordPath, buildSearchPath } from '../constants/cityMeta';
+
+import type { RegionPhotoMap } from '../types/regionPhoto';
 
 const MAP_WIDTH = 400;
 const MAP_HEIGHT = 600;
@@ -11,7 +15,13 @@ const MAP_PADDING = 20;
 const koreaProvince =
   koreaProvinceJson as GeoJSON.FeatureCollection;
 
-function ProvinceLayer() {
+interface ProvinceLayerProps {
+  regionPhotos: RegionPhotoMap;
+}
+
+function ProvinceLayer({ regionPhotos }: ProvinceLayerProps) {
+  const navigate = useNavigate();
+
   const projection = useMemo(
     () =>
       geoMercator().fitExtent(
@@ -31,25 +41,47 @@ function ProvinceLayer() {
 
   const paths = useMemo(
     () =>
-      koreaProvince.features.map((feature, index) => ({
-        index,
-        d: pathGenerator(feature),
-      })),
+      koreaProvince.features.map((feature, index) => {
+        const properties = feature.properties as {
+          name?: string;
+        } | null;
+
+        return {
+          index,
+          name: properties?.name ?? '',
+          d: pathGenerator(feature),
+        };
+      }),
     [pathGenerator],
   );
 
+  const handleClick = (name: string) => {
+    if (!name) return;
+
+    const record = regionPhotos?.[name];
+
+    if (record) {
+      navigate(buildRecordPath(record.folderId));
+      return;
+    }
+
+    navigate(buildSearchPath(name));
+  };
+
   return (
     <>
-      {paths.map(({ index, d }) => {
+      {paths.map(({ index, name, d }) => {
         if (!d) return null;
 
         return (
           <path
             key={index}
             d={d}
-            fill="none"
+            fill="transparent"
             stroke="#FF6F41"
             strokeWidth={1}
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleClick(name)}
           />
         );
       })}

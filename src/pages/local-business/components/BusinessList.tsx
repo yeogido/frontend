@@ -4,11 +4,12 @@ import BusinessListCard from './BusinessListCard';
 interface BusinessListProps {
   businesses: BusinessItem[];
   onCardClick: (businessId: string) => void;
+  gap?: number;
 }
 
-function BusinessList({ businesses, onCardClick }: BusinessListProps) {
+function BusinessList({ businesses, onCardClick, gap = 16 }: BusinessListProps) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col" style={{ gap }}>
       {businesses.map((business) => (
         <BusinessListCard
           key={business.id}
