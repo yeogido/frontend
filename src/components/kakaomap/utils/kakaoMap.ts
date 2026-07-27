@@ -1,12 +1,12 @@
 export interface MapCoordinates {
-  latitude: number;
-  longitude: number;
+  readonly latitude: number;
+  readonly longitude: number;
 }
 
-export const SEOUL_CITY_HALL: MapCoordinates = {
+export const SEOUL_CITY_HALL: MapCoordinates = Object.freeze({
   latitude: 37.5665,
   longitude: 126.978,
-};
+});
 
 const KAKAO_MAP_SCRIPT_ID = 'kakao-maps-sdk';
 let sdkPromise: Promise<void> | null = null;
@@ -16,7 +16,7 @@ export function getCurrentMapCoordinates(
     typeof navigator === 'undefined' ? undefined : navigator.geolocation,
 ): Promise<MapCoordinates> {
   if (!geolocation) {
-    return Promise.resolve(SEOUL_CITY_HALL);
+    return Promise.resolve({ ...SEOUL_CITY_HALL });
   }
 
   return new Promise((resolve) => {
@@ -27,7 +27,7 @@ export function getCurrentMapCoordinates(
           longitude: coords.longitude,
         });
       },
-      () => resolve(SEOUL_CITY_HALL),
+      () => resolve({ ...SEOUL_CITY_HALL }),
       {
         enableHighAccuracy: true,
         timeout: 5000,
