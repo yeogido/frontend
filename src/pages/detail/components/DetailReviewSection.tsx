@@ -13,15 +13,15 @@ const DOT_SIZE = 4;
 const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
 
-interface CourseReviewSectionProps {
+export interface DetailReviewSectionProps {
   readonly reviews: readonly CourseReview[];
   readonly className?: string;
 }
 
-export function CourseReviewSection({
+export function DetailReviewSection({
   reviews,
   className = '',
-}: CourseReviewSectionProps) {
+}: DetailReviewSectionProps) {
   const scale = useGlobalScale();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -141,4 +141,5 @@ export function CourseReviewSection({
   );
 }
 
-export default CourseReviewSection;
+export const CourseReviewSection = DetailReviewSection;
+export default DetailReviewSection;
