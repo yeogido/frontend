@@ -101,11 +101,6 @@ function AppRouter() {
         <Route path="/local-business" element={<LocalBusinessPage />} />
 
         <Route
-          path="/local-business/detail/:id"
-          element={<LocalBusinessDetailPage />}
-        />
-
-        <Route
           path="/local-recommendation"
           element={<LocalRecommendationPage />}
         />
@@ -165,6 +160,10 @@ function AppRouter() {
       <Route
         path="/yeogido-course/detail/:courseId"
         element={<YeogidoCourseDetailPage />}
+      />
+      <Route
+        path="/local-business/detail/:id"
+        element={<LocalBusinessDetailPage />}
       />
       <Route path="/review" element={<ReviewPage />} />
 
