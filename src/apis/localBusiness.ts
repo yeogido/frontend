@@ -113,10 +113,6 @@ function sortLocalBusinesses(
       return right.savedCount - left.savedCount;
     }
 
-    if (sortBy === '후기순') {
-      return right.reviewCount - left.reviewCount;
-    }
-
     return right.recommendationScore - left.recommendationScore;
   });
 }
