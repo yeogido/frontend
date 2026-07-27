@@ -12,8 +12,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
+import { useGlobalScale } from '../../../../hooks/useGlobalScale';
+import { getContentWidth } from '../../../../utils/responsiveLayout';
 import type { VisitEvent } from '../constants';
 import VisitEventItem, { VisitEventCard } from './VisitEventItem';
+
+// Figma 390 디자인 기준 리터럴 px
+const LIST_MARGIN_TOP = 32;
+const LIST_GAP = 8;
 
 interface SortableVisitEventListProps {
   visitEvents: readonly VisitEvent[];
@@ -34,6 +40,8 @@ function SortableVisitEventList({
   onDragCancel,
   onDragEnd,
 }: SortableVisitEventListProps) {
+  const scale = useGlobalScale();
+
   return (
     <DndContext
       sensors={sensors}
@@ -46,7 +54,10 @@ function SortableVisitEventList({
         items={visitEvents.map((event) => event.id)}
         strategy={verticalListSortingStrategy}
       >
-        <ol className="mt-8 flex flex-col gap-2">
+        <ol
+          className="flex min-w-0 flex-col"
+          style={{ marginTop: LIST_MARGIN_TOP * scale, gap: LIST_GAP * scale }}
+        >
           {visitEvents.map((event, index) => (
             <VisitEventItem key={event.id} event={event} order={index + 1} />
           ))}
@@ -55,7 +66,9 @@ function SortableVisitEventList({
 
       <DragOverlay adjustScale={false} dropAnimation={null}>
         {activeEvent ? (
-          <VisitEventCard event={activeEvent} order={activeEventOrder} />
+          <div style={{ width: getContentWidth(scale) }}>
+            <VisitEventCard event={activeEvent} order={activeEventOrder} />
+          </div>
         ) : null}
       </DragOverlay>
     </DndContext>

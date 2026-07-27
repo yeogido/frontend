@@ -1,19 +1,34 @@
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+
+// Figma 390 디자인 기준 리터럴 px
+const BUTTON_SIZE = 32;
+const ICON_SIZE = 20;
+
 interface ShareButtonProps {
   onClick: () => void;
 }
 
 function ShareButton({ onClick }: ShareButtonProps) {
+  const scale = useGlobalScale();
+
   return (
     <button
       type="button"
       aria-label="코스 공유하기"
       onClick={onClick}
-      className="flex h-8 w-8 items-center justify-center bg-white text-[#1C1C1C]"
+      className="flex items-center justify-center bg-white text-[#1C1C1C]"
+      style={{
+        height: BUTTON_SIZE * scale,
+        width: BUTTON_SIZE * scale,
+        minHeight: 44,
+        minWidth: 44,
+      }}
     >
       <svg
         aria-hidden="true"
-        className="h-5 w-5 fill-none stroke-current stroke-2"
+        className="fill-none stroke-current stroke-2"
         viewBox="0 0 24 24"
+        style={{ height: ICON_SIZE * scale, width: ICON_SIZE * scale }}
       >
         <path
           strokeLinecap="round"

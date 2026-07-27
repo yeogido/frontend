@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ResponsivePageShell } from '../../../components/layout';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+
 import {
   NeighborhoodResultList,
   NeighborhoodSearchSection,
@@ -16,8 +19,17 @@ import { neighborhoods } from './constants/neighborhoods';
 import type { Neighborhood } from './types';
 import { filterNeighborhoods } from './utils';
 
+// Figma 390 디자인 기준 리터럴 px
+const PAGE_PADDING_BOTTOM = 32;
+const MAIN_PADDING_TOP = 40;
+const BUTTON_MARGIN_TOP = 32;
+const BUTTON_HEIGHT = 52;
+const BUTTON_RADIUS = 12;
+const BUTTON_TEXT_SIZE = 14;
+
 function LocalRecommendationPage() {
   const navigate = useNavigate();
+  const scale = useGlobalScale();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] =
     useState<Neighborhood | null>(null);
@@ -68,8 +80,13 @@ function LocalRecommendationPage() {
   };
 
   return (
-    <div className="bg-background mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 pb-8">
-      <main className="flex-1 pt-10">
+    <ResponsivePageShell
+      mode="main-layout"
+      topPadding={MAIN_PADDING_TOP}
+      bottomPadding={PAGE_PADDING_BOTTOM}
+      className="bg-background"
+    >
+      <main className="flex-1">
         <NeighborhoodSearchSection
           suggestions={neighborhoodSearchSuggestions}
           onSearch={handleSearch}
@@ -105,11 +122,17 @@ function LocalRecommendationPage() {
         type="button"
         disabled={!selectedNeighborhood}
         onClick={() => navigate('/local-recommendation/course-info')}
-        className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 mt-8 h-13 w-full rounded-xl text-sm font-semibold"
+        className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full font-semibold"
+        style={{
+          marginTop: BUTTON_MARGIN_TOP * scale,
+          height: BUTTON_HEIGHT * scale,
+          borderRadius: BUTTON_RADIUS * scale,
+          fontSize: BUTTON_TEXT_SIZE * scale,
+        }}
       >
         기본 정보 입력하기
       </button>
-    </div>
+    </ResponsivePageShell>
   );
 }
 

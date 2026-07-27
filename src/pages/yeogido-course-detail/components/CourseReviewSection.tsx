@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { ReviewCard, SectionHeader } from '../../../components/common';
+import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import type { CourseReview } from '../../../features/course-detail/types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { getCourseReviewIndex } from '../utils/courseReviewCarousel';
 
 const SECTION_GAP = 12;
-const SECTION_PADDING_X = 24;
 
 const DOT_GAP = 4;
 const DOT_SIZE = 4;
@@ -75,8 +75,6 @@ export function CourseReviewSection({
       className={`flex flex-col bg-white ${className}`}
       style={{
         gap: SECTION_GAP * scale,
-        paddingLeft: SECTION_PADDING_X * scale,
-        paddingRight: SECTION_PADDING_X * scale,
       }}
     >
       <SectionHeader title="최근 여행자들의 후기" actionText="전체보기" />
@@ -115,16 +113,27 @@ export function CourseReviewSection({
               aria-label={`${index + 1}번째 후기로 이동`}
               aria-current={index === activeIndex}
               onClick={() => scrollToIndex(index)}
-              className="shrink-0"
+              className="flex shrink-0 items-center justify-center"
               style={{
-                width:
-                  (index === activeIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE) * scale,
-                height: DOT_SIZE * scale,
-                borderRadius: DOT_RADIUS,
-                backgroundColor: index === activeIndex ? '#FF6F41' : '#A1A1A1',
-                transition: 'width 0.2s ease, background-color 0.2s ease',
+                width: MIN_TOUCH_TARGET,
+                height: MIN_TOUCH_TARGET,
               }}
-            />
+            >
+              <span
+                aria-hidden="true"
+                className="block shrink-0"
+                style={{
+                  width:
+                    (index === activeIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE) *
+                    scale,
+                  height: DOT_SIZE * scale,
+                  borderRadius: DOT_RADIUS,
+                  backgroundColor:
+                    index === activeIndex ? '#FF6F41' : '#A1A1A1',
+                  transition: 'width 0.2s ease, background-color 0.2s ease',
+                }}
+              />
+            </button>
           ))}
         </div>
       )}

@@ -5,6 +5,10 @@ import { DetailHeroSection } from '../../components/detail/DetailHeroSection';
 import { DetailTitleSection } from '../../components/detail/DetailTitleSection';
 import { DetailDescriptionCard } from '../../components/detail/DetailDescriptionCard';
 import { ReviewButton } from '../../components/detail/ReviewButton';
+import {
+  ResponsiveFullBleed,
+  ResponsivePageShell,
+} from '../../components/layout/ResponsivePageShell';
 
 import { CourseInfoBadgesCard } from '../../features/course-detail/components/CourseInfoBadgesCard';
 import { CourseRouteMap } from '../../features/course-detail/components/CourseRouteMap';
@@ -15,6 +19,21 @@ import ShareButton from './components/ShareButton';
 
 import { mapCourseDetailDtoToViewModel } from '../../features/course-detail/mappers/courseDetailMapper';
 import type { CourseDetail } from '../../features/course-detail/types/courseDetail';
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { getGutter} from '../../utils/responsiveLayout';
+
+// Figma 390 디자인 기준 리터럴 px
+const PAGE_PADDING_BOTTOM = 44;
+const TITLE_SECTION_PADDING_TOP = 27;
+const TOAST_BOTTOM = 84;
+const TOAST_TEXT_PADDING_X = 16;
+const TOAST_TEXT_PADDING_Y = 8;
+const TOAST_TEXT_FONT_SIZE = 13;
+const SECTION_MARGIN_TOP = 16;
+const MAP_MARGIN_TOP = 26;
+const STOP_LIST_MARGIN_TOP = 20;
+const REVIEW_MARGIN_TOP = 42;
+const REVIEW_BUTTON_MARGIN_TOP = 24;
 
 // Mock data (시안 이미지 기준 "강릉 혼자 여행 코스" 데이터)
 const courseImage =
@@ -105,6 +124,7 @@ const rawMockDto = {
 function YeogidoCourseDetailPage() {
   const navigate = useNavigate();
   const { courseId } = useParams<{ courseId?: string }>();
+  const scale = useGlobalScale();
 
   // 1. DTO Mapper를 통한 데이터 및 런타임 에러 검증
   const { course, error } = useMemo<{
@@ -159,56 +179,80 @@ function YeogidoCourseDetailPage() {
 
   if (error) {
     return (
-      <div
-        role="alert"
-        className="mx-auto flex min-h-screen w-full max-w-[430px] items-center justify-center p-5 text-center text-red-500"
-      >
+      <ResponsivePageShell mode="main-layout" className="text-red-500">
+        <div role="alert" className="flex flex-1 items-center justify-center text-center">
         {error}
-      </div>
+        </div>
+      </ResponsivePageShell>
     );
   }
 
   if (!course) {
     return (
-      <div
-        role="status"
-        className="text-gray-4 mx-auto flex min-h-screen w-full max-w-[430px] items-center justify-center p-5 text-center"
-      >
+      <ResponsivePageShell mode="main-layout" className="text-gray-4">
+        <div role="status" className="flex flex-1 items-center justify-center text-center">
         불러오는 중...
-      </div>
+        </div>
+      </ResponsivePageShell>
     );
   }
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[430px] bg-white pb-11">
+    <ResponsivePageShell
+      mode="main-layout"
+      bottomPadding={PAGE_PADDING_BOTTOM}
+      className="bg-white"
+    >
       {/* 1. 히어로 세션 (우측 상단 좋아요 버튼 슬롯) */}
-      <DetailHeroSection
-        imageUrl={course.heroImageUrl}
-        title={course.title}
-        rightAction={
-          <FavoriteButton
-            isActive={isLiked}
-            label={course.title}
-            onClick={() => setIsLiked((prev) => !prev)}
-          />
-        }
-      />
+      <ResponsiveFullBleed>
+        <DetailHeroSection
+          imageUrl={course.heroImageUrl}
+          title={course.title}
+          rightAction={
+            <FavoriteButton
+              isActive={isLiked}
+              label={course.title}
+              onClick={() => setIsLiked((prev) => !prev)}
+            />
+          }
+        />
+      </ResponsiveFullBleed>
 
       {/* 2. 타이틀 세션 (우측 공유 버튼 슬롯) */}
-      <DetailTitleSection
-        className="px-5 pt-[27px] pb-0"
-        title={course.title}
-        tags={course.tags}
-        action={<ShareButton onClick={handleShare} />}
-      />
+      <div
+        style={{
+          paddingTop: TITLE_SECTION_PADDING_TOP * scale,
+        }}
+      >
+        <DetailTitleSection
+          title={course.title}
+          tags={course.tags}
+          action={<ShareButton onClick={handleShare} />}
+        />
+      </div>
 
       {copied && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-[84px] z-[60] mx-auto flex w-full max-w-[430px] justify-center px-5">
+        <div
+          className="pointer-events-none fixed bottom-0 left-1/2 z-[60] flex w-full max-w-[500px] -translate-x-1/2 justify-center"
+          style={{
+            bottom: `max(${TOAST_BOTTOM * scale}px, env(safe-area-inset-bottom, 0px))`,
+            paddingLeft: getGutter(scale),
+            paddingRight: getGutter(scale),
+          }}
+        >
           <span
             role="status"
-            className={`rounded-full bg-gray-800 px-4 py-2 text-center text-[13px] font-medium text-white shadow-lg transition-all duration-300 ${
+            className={`bg-gray-800 text-center font-medium text-white shadow-lg transition-all duration-300 ${
               isToastVisible ? 'opacity-100' : 'opacity-0'
             }`}
+            style={{
+              paddingLeft: TOAST_TEXT_PADDING_X * scale,
+              paddingRight: TOAST_TEXT_PADDING_X * scale,
+              paddingTop: TOAST_TEXT_PADDING_Y * scale,
+              paddingBottom: TOAST_TEXT_PADDING_Y * scale,
+              fontSize: TOAST_TEXT_FONT_SIZE * scale,
+              borderRadius: 999 * scale,
+            }}
           >
             복사 됨
           </span>
@@ -216,27 +260,55 @@ function YeogidoCourseDetailPage() {
       )}
 
       {/* 3. 코스 메타 배지 */}
-      <section className="mt-4 px-5">
+      <section
+        style={{
+          marginTop: SECTION_MARGIN_TOP * scale,
+        }}
+      >
         <CourseInfoBadgesCard badges={course.infoBadges} />
       </section>
 
       {/* 4. 코스 소개 카드 */}
-      <section className="mt-4 px-5">
+      <section
+        style={{
+          marginTop: SECTION_MARGIN_TOP * scale,
+        }}
+      >
         <DetailDescriptionCard title="코스 소개" content={course.overview} />
       </section>
 
       {/* 5. 코스 지도 */}
-      <CourseRouteMap stops={course.stops} className="mt-[26px] px-5" />
+      <div
+        style={{
+          marginTop: MAP_MARGIN_TOP * scale,
+        }}
+      >
+        <CourseRouteMap stops={course.stops} />
+      </div>
 
       {/* 6. 코스 장소 리스트 */}
-      <CourseStopList stops={course.stops} className="mt-5 px-5" />
+      <div
+        style={{
+          marginTop: STOP_LIST_MARGIN_TOP * scale,
+        }}
+      >
+        <CourseStopList stops={course.stops} />
+      </div>
 
       {/* 7. 최근 여행자들의 후기 */}
-      <CourseReviewSection reviews={course.reviews} className="mt-[42px]" />
+      <div style={{ marginTop: REVIEW_MARGIN_TOP * scale }}>
+        <CourseReviewSection reviews={course.reviews} />
+      </div>
 
       {/* 8. 하단 고정 리뷰 작성 버튼 */}
-      <ReviewButton className="mt-6 px-5" onClick={handleNavigateReview} />
-    </div>
+      <div
+        style={{
+          marginTop: REVIEW_BUTTON_MARGIN_TOP * scale,
+        }}
+      >
+        <ReviewButton onClick={handleNavigateReview} />
+      </div>
+    </ResponsivePageShell>
   );
 }
 
