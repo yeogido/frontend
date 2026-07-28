@@ -19,3 +19,4 @@ export { default as SearchBar } from './SearchBar';
 export { default as SearchTriggerButton } from './SearchTriggerButton';
 export { default as SectionHeader } from './SectionHeader';
 export { default as TagChip } from './TagChip';
+export { default as LoginRequiredModal } from './LoginRequiredModal';
