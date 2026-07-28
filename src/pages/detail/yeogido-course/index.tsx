@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
+  CourseInfoBadgesCard,
+  CourseRouteMap,
+  CourseStopList,
   DetailDescriptionCard,
   DetailHeroSection,
   DetailReviewSection,
@@ -9,33 +12,32 @@ import {
   FavoriteButton,
   ReviewButton,
   ShareButton,
+  DetailAuthorCard,
 } from '../components';
 import {
   ResponsiveFullBleed,
   ResponsivePageShell,
 } from '../../../components/layout/ResponsivePageShell';
 
-import { CourseInfoBadgesCard } from '../../../features/course-detail/components/CourseInfoBadgesCard';
-import { CourseRouteMap } from '../../../features/course-detail/components/CourseRouteMap';
-import { CourseStopList } from '../../../features/course-detail/components/CourseStopList';
-
-import { mapCourseDetailDtoToViewModel } from '../../../features/course-detail/mappers/courseDetailMapper';
-import type { CourseDetail } from '../../../features/course-detail/types/courseDetail';
+import { mapCourseDetailDtoToViewModel } from '../mappers/courseDetailMapper';
+import type { CourseDetail, CourseStop } from '../types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { getGutter} from '../../../utils/responsiveLayout';
+import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useAuthStore } from '../../../store/auth.store';
+import { getGutter } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
-const PAGE_PADDING_BOTTOM = 44;
-const TITLE_SECTION_PADDING_TOP = 27;
+const PAGE_PADDING_BOTTOM = 25;
+const TITLE_SECTION_PADDING_TOP = 15;
 const TOAST_BOTTOM = 84;
 const TOAST_TEXT_PADDING_X = 16;
 const TOAST_TEXT_PADDING_Y = 8;
 const TOAST_TEXT_FONT_SIZE = 13;
 const SECTION_MARGIN_TOP = 16;
-const MAP_MARGIN_TOP = 26;
-const STOP_LIST_MARGIN_TOP = 20;
-const REVIEW_MARGIN_TOP = 42;
-const REVIEW_BUTTON_MARGIN_TOP = 24;
+const MAP_MARGIN_TOP = 24;
+const STOP_LIST_MARGIN_TOP = 0;
+const REVIEW_MARGIN_TOP = 0;
+const REVIEW_BUTTON_MARGIN_TOP = 12;
 
 // Mock data (시안 이미지 기준 "강릉 혼자 여행 코스" 데이터)
 const courseImage =
@@ -127,6 +129,8 @@ function YeogidoCourseDetailPage() {
   const navigate = useNavigate();
   const { courseId } = useParams<{ courseId?: string }>();
   const scale = useGlobalScale();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
 
   // 1. DTO Mapper를 통한 데이터 및 런타임 에러 검증
   const { course, error } = useMemo<{
@@ -149,8 +153,33 @@ function YeogidoCourseDetailPage() {
 
   // 2. Page Level 좋아요 및 공유/토스트 State
   const [isLiked, setIsLiked] = useState(course?.liked ?? false);
+  const [stops, setStops] = useState<readonly CourseStop[]>(
+    course?.stops ?? []
+  );
   const [copied, setCopied] = useState(false);
   const [isToastVisible, setIsToastVisible] = useState(false);
+
+  const handleStopLikeToggle = (stopId: number) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    setStops((prevStops) =>
+      prevStops.map((stop) =>
+        stop.id === stopId ? { ...stop, liked: !stop.liked } : stop
+      )
+    );
+  };
+
+  const handleFavoriteToggle = () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    setIsLiked((previous) => !previous);
+  };
 
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -175,6 +204,11 @@ function YeogidoCourseDetailPage() {
   };
 
   const handleNavigateReview = () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
     const currentId = courseId ?? course?.id ?? 1;
     navigate(`/review?type=yeogido-course&id=${currentId}`);
   };
@@ -182,8 +216,11 @@ function YeogidoCourseDetailPage() {
   if (error) {
     return (
       <ResponsivePageShell mode="main-layout" className="text-red-500">
-        <div role="alert" className="flex flex-1 items-center justify-center text-center">
-        {error}
+        <div
+          role="alert"
+          className="flex flex-1 items-center justify-center text-center"
+        >
+          {error}
         </div>
       </ResponsivePageShell>
     );
@@ -191,9 +228,12 @@ function YeogidoCourseDetailPage() {
 
   if (!course) {
     return (
-      <ResponsivePageShell mode="main-layout" className="text-gray-4">
-        <div role="status" className="flex flex-1 items-center justify-center text-center">
-        불러오는 중...
+      <ResponsivePageShell mode="standalone" className="text-gray-4">
+        <div
+          role="status"
+          className="flex flex-1 items-center justify-center text-center"
+        >
+          불러오는 중...
         </div>
       </ResponsivePageShell>
     );
@@ -201,6 +241,7 @@ function YeogidoCourseDetailPage() {
 
   return (
     <ResponsivePageShell
+      key={courseId ?? '1'}
       mode="main-layout"
       bottomPadding={PAGE_PADDING_BOTTOM}
       className="bg-white"
@@ -214,7 +255,7 @@ function YeogidoCourseDetailPage() {
             <FavoriteButton
               isActive={isLiked}
               label={course.title}
-              onClick={() => setIsLiked((prev) => !prev)}
+              onClick={handleFavoriteToggle}
             />
           }
         />
@@ -285,7 +326,7 @@ function YeogidoCourseDetailPage() {
           marginTop: MAP_MARGIN_TOP * scale,
         }}
       >
-        <CourseRouteMap stops={course.stops} />
+        <CourseRouteMap stops={stops} />
       </div>
 
       {/* 6. 코스 장소 리스트 */}
@@ -294,9 +335,13 @@ function YeogidoCourseDetailPage() {
           marginTop: STOP_LIST_MARGIN_TOP * scale,
         }}
       >
-        <CourseStopList stops={course.stops} />
+        <CourseStopList stops={stops} onStopLikeToggle={handleStopLikeToggle} />
       </div>
-
+      <DetailAuthorCard /* 6. 코스 장소 리스트 */
+        avatarUrl={course.heroImageUrl}
+        name="여행자"
+        date="2023. 08. 15"
+      />
       {/* 7. 최근 여행자들의 후기 */}
       <div style={{ marginTop: REVIEW_MARGIN_TOP * scale }}>
         <DetailReviewSection reviews={course.reviews} />

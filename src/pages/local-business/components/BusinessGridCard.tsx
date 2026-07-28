@@ -126,7 +126,7 @@ function BusinessGridCard({ business, onClick }: BusinessGridCardProps) {
             className="flex w-full flex-nowrap justify-center"
             style={{ marginTop: TAG_MARGIN_TOP, gap: TAG_GAP }}
           >
-            {business.tags.map((tag) => (
+            {business.tags.slice(0, 3).map((tag) => (
               <TagChip
                 key={`${business.id}-${tag}`}
                 type={tag}

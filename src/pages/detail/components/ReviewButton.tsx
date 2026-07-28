@@ -1,7 +1,7 @@
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // Figma 390 디자인 기준 리터럴 px
-const BUTTON_HEIGHT = 52;
+const BUTTON_HEIGHT = 53;
 const BUTTON_RADIUS = 14;
 const BUTTON_FONT_SIZE = 18;
 
