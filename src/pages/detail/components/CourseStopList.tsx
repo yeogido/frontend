@@ -8,7 +8,7 @@ const LIST_GAP = 4;
 
 export interface CourseStopListProps {
   readonly stops: readonly CourseStop[];
-  readonly onStopLikeToggle?: (stopId: number) => void;
+  readonly onStopLikeToggle: (stopId: number) => void;
   readonly className?: string;
 }
 
@@ -29,9 +29,7 @@ export function CourseStopList({
           key={stop.id}
           stop={stop}
           isLast={index === stops.length - 1}
-          onLikeToggle={
-            onStopLikeToggle ? () => onStopLikeToggle(stop.id) : undefined
-          }
+          onLikeToggle={() => onStopLikeToggle(stop.id)}
         />
       ))}
     </div>

@@ -22,6 +22,8 @@ import {
 import { mapCourseDetailDtoToViewModel } from '../mappers/courseDetailMapper';
 import type { CourseDetail, CourseStop } from '../types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useAuthStore } from '../../../store/auth.store';
 import { getGutter } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -127,6 +129,8 @@ function YeogidoCourseDetailPage() {
   const navigate = useNavigate();
   const { courseId } = useParams<{ courseId?: string }>();
   const scale = useGlobalScale();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
 
   // 1. DTO Mapper를 통한 데이터 및 런타임 에러 검증
   const { course, error } = useMemo<{
@@ -155,18 +159,26 @@ function YeogidoCourseDetailPage() {
   const [copied, setCopied] = useState(false);
   const [isToastVisible, setIsToastVisible] = useState(false);
 
-  useEffect(() => {
-    if (course) {
-      setStops(course.stops);
-    }
-  }, [course]);
-
   const handleStopLikeToggle = (stopId: number) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
     setStops((prevStops) =>
       prevStops.map((stop) =>
         stop.id === stopId ? { ...stop, liked: !stop.liked } : stop
       )
     );
+  };
+
+  const handleFavoriteToggle = () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    setIsLiked((previous) => !previous);
   };
 
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -192,6 +204,11 @@ function YeogidoCourseDetailPage() {
   };
 
   const handleNavigateReview = () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
     const currentId = courseId ?? course?.id ?? 1;
     navigate(`/review?type=yeogido-course&id=${currentId}`);
   };
@@ -224,6 +241,7 @@ function YeogidoCourseDetailPage() {
 
   return (
     <ResponsivePageShell
+      key={courseId ?? '1'}
       mode="main-layout"
       bottomPadding={PAGE_PADDING_BOTTOM}
       className="bg-white"
@@ -237,7 +255,7 @@ function YeogidoCourseDetailPage() {
             <FavoriteButton
               isActive={isLiked}
               label={course.title}
-              onClick={() => setIsLiked((prev) => !prev)}
+              onClick={handleFavoriteToggle}
             />
           }
         />
