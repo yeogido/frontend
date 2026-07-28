@@ -5,6 +5,7 @@ import {
   MAX_PHOTO_COUNT,
   validateTravelRecordPhotos,
 } from '../photoValidation';
+import { useToast } from '../../../../components/toast';
 
 
 function useTravelRecordPhotoSelection() {
@@ -12,7 +13,7 @@ function useTravelRecordPhotoSelection() {
   const photosRef = useRef<SelectedPhoto[]>([]);
   const photoUrlsRef = useRef<string[]>([]);
   const [photos, setPhotos] = useState<SelectedPhoto[]>([]);
-  const [message, setMessage] = useState('');
+  const { showToast } = useToast();
   const hasSelectedPhotos = photos.length > 0;
 
   useEffect(() => {
@@ -26,18 +27,6 @@ function useTravelRecordPhotoSelection() {
     },
     [],
   );
-
-  useEffect(() => {
-    if (!message) {
-      return;
-    }
-
-    const timerId = window.setTimeout(() => {
-      setMessage('');
-    }, 2000);
-
-    return () => window.clearTimeout(timerId);
-  }, [message]);
 
   const openFilePicker = () => {
     fileInputRef.current?.click();
@@ -60,7 +49,9 @@ function useTravelRecordPhotoSelection() {
       };
     });
 
-    setMessage(message);
+    if (message) {
+      showToast(message);
+    }
 
     if (photosToAdd.length > 0) {
       const availableCount = MAX_PHOTO_COUNT - photosRef.current.length;
@@ -79,7 +70,6 @@ function useTravelRecordPhotoSelection() {
     setPhotos((currentPhotos) =>
       currentPhotos.filter((photo) => photo.id !== targetPhoto.id),
     );
-    setMessage('');
   };
 
   const reorderPhotos = (sourcePhotoId: string, targetPhotoId: string) => {
@@ -107,7 +97,6 @@ function useTravelRecordPhotoSelection() {
   return {
     fileInputRef,
     hasSelectedPhotos,
-    message,
     photos,
     photosRef,
     handlePhotoChange,
