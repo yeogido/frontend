@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { FloatingActionButton } from '../../components/common';
+import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
 
 import {
   TravelFolderGrid,
@@ -15,6 +16,7 @@ import {
   getSavedTravelRecordFolders,
   revokeTravelRecordFolderPhotoUrls,
 } from './utils/travelRecordSave';
+import { applyTravelRecordSessionChanges } from './utils/sessionFolders';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
@@ -28,6 +30,12 @@ function TravelRecordPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as TravelRecordLocationState | null;
+  const editedMockFolders = useTravelRecordSessionStore(
+    (state) => state.editedMockFolders,
+  );
+  const deletedMockFolderIds = useTravelRecordSessionStore(
+    (state) => state.deletedMockFolderIds,
+  );
   const [folders, setFolders] = useState<TravelRecordFolder[]>(
     TRAVEL_RECORD_FOLDERS
   );
@@ -80,14 +88,25 @@ function TravelRecordPage() {
     };
   }, [locationState?.savedTravelRecordId]);
 
+  const displayedFolders = useMemo(
+    () => [
+      ...applyTravelRecordSessionChanges(
+        TRAVEL_RECORD_FOLDERS,
+        editedMockFolders,
+        new Set(deletedMockFolderIds),
+      ),
+      ...folders.filter((folder) => folder.id.startsWith('saved-')),
+    ],
+    [deletedMockFolderIds, editedMockFolders, folders],
+  );
   const visibleFolders = useMemo(
     () =>
-      folders
+      displayedFolders
         .filter((folder) => folder.year === selectedYear)
         .sort((currentFolder, nextFolder) =>
           nextFolder.startDate.localeCompare(currentFolder.startDate)
         ),
-    [folders, selectedYear]
+    [displayedFolders, selectedYear]
   );
   const handleFolderClick = (folder: TravelRecordFolder) => {
     navigate(`/travel-record/${folder.id}`, { state: { folder } });

@@ -13,6 +13,7 @@ import { useTravelDateSelection } from './hooks';
 import type { TravelDateSelectionLocationState } from './types';
 import {
   getTravelRecordDraftRegion,
+  getTravelRecordDraftDateRange,
   saveTravelRecordDraftDateRange,
 } from '../utils/draftStorage';
 
@@ -37,7 +38,7 @@ function TravelRecordDateSelectionPage() {
     selectDate,
     selectMonth,
     selectPreset,
-  } = useTravelDateSelection();
+  } = useTravelDateSelection(getTravelRecordDraftDateRange());
 
   useEffect(() => {
     if (!selectedRegion) {

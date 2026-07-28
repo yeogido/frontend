@@ -11,14 +11,23 @@ import {
 } from 'motion/react';
 import { IoEllipsisVertical } from 'react-icons/io5';
 
+import { useToast } from '../../../components/toast';
+import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import { TravelFolderArtwork, TravelRecordPageFrame } from '../components';
 import { TRAVEL_RECORD_FOLDERS } from '../constants/travelRecords';
 import type { TravelRecordFolder } from '../types';
 import {
   getSavedTravelRecordFolder,
+  getSavedTravelRecordPhotos,
   revokeTravelRecordFolderPhotoUrls,
   SAVED_TRAVEL_RECORD_ID_PREFIX,
+  deleteTravelRecord,
+  saveTravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
+import {
+  saveTravelRecordDraftDateRange,
+  saveTravelRecordDraftRegion,
+} from '../utils/draftStorage';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
@@ -51,6 +60,7 @@ function TravelRecordDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const photoStackRef = useRef<HTMLDivElement>(null);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
   const dragX = useMotionValue(0);
   const isMountedRef = useRef(true);
   const transitionControlsRef = useRef<{ stop: () => void } | null>(null);
@@ -58,6 +68,16 @@ function TravelRecordDetailPage() {
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
   const [isPhotoTransitioning, setIsPhotoTransitioning] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { showToast } = useToast();
+  const editedMockFolders = useTravelRecordSessionStore(
+    (state) => state.editedMockFolders,
+  );
+  const deleteMockFolder = useTravelRecordSessionStore(
+    (state) => state.deleteMockFolder,
+  );
+  const beginEdit = useTravelRecordSessionStore((state) => state.beginEdit);
   const [transitionTargetIndex, setTransitionTargetIndex] = useState<
     number | null
   >(null);
@@ -74,7 +94,9 @@ function TravelRecordDetailPage() {
     savedFolderState && savedFolderState.id === folderId
       ? savedFolderState.folder
       : undefined;
-  const folder = isSavedFolder ? savedFolder : staticFolder;
+  const folder = isSavedFolder
+    ? savedFolder
+    : editedMockFolders[folderId ?? ''] ?? staticFolder;
   const motionRange = Math.max(cardWidth, 1);
   const cardDistance = cardWidth + cardStackOffset;
   const previousCardX = useTransform(dragX, (value) => -cardDistance + value);
@@ -144,6 +166,24 @@ function TravelRecordDetailPage() {
 
     return () => resizeObserver.disconnect();
   }, [folder?.id]);
+
+  useEffect(() => {
+    if (!isActionMenuOpen) {
+      return;
+    }
+
+    const closeActionMenuOnOutsideClick = (event: PointerEvent) => {
+      if (!actionMenuRef.current?.contains(event.target as Node)) {
+        setIsActionMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', closeActionMenuOnOutsideClick);
+
+    return () => {
+      document.removeEventListener('pointerdown', closeActionMenuOnOutsideClick);
+    };
+  }, [isActionMenuOpen]);
 
   if (isSavedFolder && savedFolder === undefined) {
     return (
@@ -273,6 +313,64 @@ function TravelRecordDetailPage() {
     };
   };
 
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      showToast('여행 기록 주소를 복사했어요.');
+    } catch {
+      showToast('주소를 복사하지 못했어요.');
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!folder) {
+      return;
+    }
+
+    const photos = isSavedFolder
+      ? await getSavedTravelRecordPhotos(folder.id)
+      : await Promise.all(
+          folder.photos.map(async (url, index) => {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new File([blob], `travel-record-${index + 1}.webp`, {
+              type: blob.type || 'image/webp',
+            });
+          }),
+        );
+
+    const startDate = new Date(`${folder.startDate}T00:00:00`);
+    const endDate = new Date(`${folder.endDate ?? folder.startDate}T00:00:00`);
+    saveTravelRecordDraftRegion({
+      id: folder.regionCode,
+      name: folder.regionName,
+      province: folder.regionName,
+      selectionName: folder.regionName,
+    });
+    saveTravelRecordDraftDateRange({ startDate, endDate });
+    await saveTravelRecordPhotoDraft(photos);
+    beginEdit({
+      id: folder.id,
+      source: isSavedFolder ? 'saved' : 'mock',
+      decorations: folder.decorations,
+    });
+    navigate('/travel-record/new');
+  };
+
+  const handleDelete = async () => {
+    if (!folder) {
+      return;
+    }
+
+    if (isSavedFolder) {
+      await deleteTravelRecord(folder.id);
+    } else {
+      deleteMockFolder(folder.id);
+    }
+
+    navigate('/travel-record');
+  };
+
   return (
     <TravelRecordPageFrame className="bg-[#f1f1f1] px-6 pt-[60px]">
       <header className="relative h-[146px]">
@@ -291,11 +389,67 @@ function TravelRecordDetailPage() {
             {folder.period}
           </time>
         </div>
-        <IoEllipsisVertical
-          aria-hidden="true"
-          className="absolute top-0 right-0 text-[24px] text-[#1c1c1c]"
-        />
+        <div ref={actionMenuRef} className="absolute top-0 right-0 z-20">
+          <button
+            type="button"
+            aria-label="여행 기록 메뉴"
+            aria-controls="travel-record-action-menu"
+            aria-expanded={isActionMenuOpen}
+            onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
+            className="flex size-8 items-center justify-center text-[#1c1c1c]"
+          >
+            <IoEllipsisVertical aria-hidden="true" className="text-[24px]" />
+          </button>
+
+          {isActionMenuOpen && (
+            <div
+              id="travel-record-action-menu"
+              role="menu"
+              aria-label="여행 기록 작업"
+              className="absolute top-9 right-0 w-[84px] overflow-hidden rounded-xl border border-[#e4e4e4] bg-[#f9f9f9] py-1 shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+            >
+              {[
+                { label: '수정', onClick: () => void handleEdit() },
+                { label: '삭제', onClick: () => setIsDeleteDialogOpen(true) },
+                { label: '공유', onClick: () => void handleShare() },
+              ].map(({ label, onClick }) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setIsActionMenuOpen(false);
+                    onClick();
+                  }}
+                  className="flex h-9 w-full items-center px-3 text-left text-sm text-[#7f7f7f] hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
+
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="travel-record-delete-title"
+            className="w-full max-w-[342px] rounded-2xl bg-[#f9f9f9] p-6"
+          >
+            <h2 id="travel-record-delete-title" className="text-xl font-semibold text-[#1c1c1c]">
+              여행 기록을 삭제할까요?
+            </h2>
+            <p className="mt-3 text-sm text-[#7f7f7f]">삭제한 기록은 되돌릴 수 없어요.</p>
+            <div className="mt-6 flex gap-2">
+              <button type="button" onClick={() => setIsDeleteDialogOpen(false)} className="h-11 flex-1 rounded-xl bg-[#e4e4e4] text-sm font-semibold text-[#505050]">취소</button>
+              <button type="button" onClick={() => void handleDelete()} className="h-11 flex-1 rounded-xl bg-[#ff6f41] text-sm font-semibold text-white">삭제</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <div
         ref={photoStackRef}

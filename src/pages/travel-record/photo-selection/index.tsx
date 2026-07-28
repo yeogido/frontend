@@ -3,6 +3,7 @@ import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
+import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 
 import {
   DraggingPhotoPreview,
@@ -42,6 +43,7 @@ function TravelRecordPhotoSelectionPage() {
   const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const selectedDateRange =
     locationState?.selectedDateRange ?? storedSelectedDateRange;
+  const isEditing = useTravelRecordSessionStore((state) => state.editSession !== null);
   const {
     fileInputRef,
     hasSelectedPhotos,
@@ -51,7 +53,7 @@ function TravelRecordPhotoSelectionPage() {
     openFilePicker,
     removePhoto,
     reorderPhotos,
-  } = useTravelRecordPhotoSelection();
+  } = useTravelRecordPhotoSelection(isEditing);
   const {
     draggingPhoto,
     handlePhotoPointerDown,

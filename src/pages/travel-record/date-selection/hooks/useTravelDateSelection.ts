@@ -47,14 +47,14 @@ const getPresetRange = (
   }
 };
 
-function useTravelDateSelection() {
-  const [visibleYear, setVisibleYear] = useState(INITIAL_YEAR);
+function useTravelDateSelection(initialRange: TravelDateRange | null = null) {
+  const [visibleYear, setVisibleYear] = useState(initialRange?.startDate.getFullYear() ?? INITIAL_YEAR);
   const [visibleMonthIndex, setVisibleMonthIndex] =
-    useState(INITIAL_MONTH_INDEX);
+    useState(initialRange?.startDate.getMonth() ?? INITIAL_MONTH_INDEX);
   const [selectedPreset, setSelectedPreset] =
     useState<TravelDatePreset>('custom');
   const [selectedRange, setSelectedRange] = useState<TravelDateRange | null>(
-    null,
+    initialRange,
   );
 
   const previousMonth = getAdjacentMonth(visibleYear, visibleMonthIndex, -1);

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
 import { useToast } from '../../../components/toast';
+import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
 import {
   appendFolderDecoration,
@@ -26,6 +27,7 @@ import {
   createTravelRecordDraftPayload,
   getTravelRecordPhotoDraft,
   saveTravelRecord,
+  updateTravelRecord,
 } from '../utils/travelRecordSave';
 
 const previousPageLabel =
@@ -67,7 +69,12 @@ function TravelRecordFolderDecorationPage() {
   const previewPhotoUrlsRef = useRef<string[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<File[] | null>(null);
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
-  const [decorations, setDecorations] = useState<TravelFolderDecoration[]>([]);
+  const editSession = useTravelRecordSessionStore((state) => state.editSession);
+  const saveMockFolder = useTravelRecordSessionStore((state) => state.saveMockFolder);
+  const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
+  const [decorations, setDecorations] = useState<TravelFolderDecoration[]>(
+    () => editSession?.decorations ?? [],
+  );
   const [uploadedStickers, setUploadedStickers] = useState<UploadedFolderSticker[]>([]);
   const decorationsRef = useRef<TravelFolderDecoration[]>([]);
   const uploadedStickersRef = useRef<UploadedFolderSticker[]>([]);
@@ -158,8 +165,28 @@ function TravelRecordFolderDecorationPage() {
         selectedPhotos,
         decorations,
       });
-      const result = await saveTravelRecord(payload);
+      const result = editSession?.source === 'saved'
+        ? await updateTravelRecord(editSession.id, payload)
+        : editSession?.source === 'mock'
+          ? { id: editSession.id }
+        : await saveTravelRecord(payload);
+      if (editSession?.source === 'mock') {
+        const photos = createObjectUrls(selectedPhotos) as [string, ...string[]];
+        saveMockFolder({
+          id: editSession.id,
+          regionCode: selectedRegion.id,
+          regionName: selectedRegion.selectionName || selectedRegion.name,
+          title: selectedRegion.selectionName || selectedRegion.name,
+          year: selectedDateRange.startDate.getFullYear(),
+          startDate: selectedDateRange.startDate.toISOString().slice(0, 10),
+          endDate: selectedDateRange.endDate.toISOString().slice(0, 10),
+          period: formatPeriod(selectedDateRange.startDate, selectedDateRange.endDate),
+          photos,
+          decorations,
+        });
+      }
       await clearTravelRecordPhotoDraft();
+      clearEdit();
       navigate('/travel-record', { state: { savedTravelRecordId: result.id } });
     } catch {
       isSavingRef.current = false;

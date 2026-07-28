@@ -6,9 +6,10 @@ import {
   validateTravelRecordPhotos,
 } from '../photoValidation';
 import { useToast } from '../../../../components/toast';
+import { getTravelRecordPhotoDraft } from '../../utils/travelRecordSave';
 
 
-function useTravelRecordPhotoSelection() {
+function useTravelRecordPhotoSelection(restoreDraft = false) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photosRef = useRef<SelectedPhoto[]>([]);
   const photoUrlsRef = useRef<string[]>([]);
@@ -27,6 +28,28 @@ function useTravelRecordPhotoSelection() {
     },
     [],
   );
+
+  useEffect(() => {
+    if (!restoreDraft) {
+      return;
+    }
+
+    let isMounted = true;
+    void getTravelRecordPhotoDraft().then((files) => {
+      if (!isMounted) {
+        return;
+      }
+      setPhotos(files.map((file) => ({
+        id: `${file.name}-${file.lastModified}-draft`,
+        file,
+        url: URL.createObjectURL(file),
+      })));
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [restoreDraft]);
 
   const openFilePicker = () => {
     fileInputRef.current?.click();
