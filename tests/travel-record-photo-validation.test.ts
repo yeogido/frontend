@@ -27,12 +27,17 @@ test('여행 기록 사진은 이미지 형식과 파일 용량을 검증한다'
     [createFile('application/pdf', 100)],
     5,
   );
+  const svgResult = validateTravelRecordPhotos(
+    [createFile('image/svg+xml', 100)],
+    5,
+  );
   const oversizedResult = validateTravelRecordPhotos(
     [createFile('image/jpeg', MAX_PHOTO_FILE_SIZE + 1)],
     5,
   );
 
   assert.equal(invalidTypeResult.files.length, 0);
+  assert.equal(svgResult.files.length, 0);
   assert.equal(invalidTypeResult.message, '이미지 파일만 추가할 수 있어요');
   assert.equal(oversizedResult.files.length, 0);
   assert.equal(oversizedResult.message, '사진은 100MB 이하만 추가할 수 있어요');

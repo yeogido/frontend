@@ -1,7 +1,7 @@
 import type { PointerEvent } from 'react';
 
 import addIcon from '../assets/photo-add-icon.svg';
-import removeIcon from '../../region-selection/assets/material-symbols_close-rounded.svg';
+import removeIcon from '../../../../assets/icons/close-rounded.svg';
 import type { SelectedPhoto } from '../types';
 import { MAX_PHOTO_COUNT } from '../photoValidation';
 

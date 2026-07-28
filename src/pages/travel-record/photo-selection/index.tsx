@@ -7,7 +7,6 @@ import { TravelRecordPageFrame } from '../components';
 import {
   DraggingPhotoPreview,
   PhotoSelectionTip,
-  PhotoToast,
   PhotoUploadBox,
   SelectedPhotoStrip,
 } from './components';
@@ -46,7 +45,6 @@ function TravelRecordPhotoSelectionPage() {
   const {
     fileInputRef,
     hasSelectedPhotos,
-    message,
     photos,
     photosRef,
     handlePhotoChange,
@@ -129,7 +127,6 @@ function TravelRecordPhotoSelectionPage() {
       />
 
       <PhotoSelectionTip />
-      <PhotoToast message={message} />
       <DraggingPhotoPreview draggingPhoto={draggingPhoto} />
 
       <button

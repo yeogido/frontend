@@ -31,7 +31,7 @@ function PhotoUploadBox({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         multiple
         onChange={onPhotoChange}
         className="sr-only"

@@ -2,8 +2,21 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { TravelFolderArtwork, TravelRecordPageFrame } from '../components';
+import { TravelRecordPageFrame } from '../components';
+import { useToast } from '../../../components/toast';
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
+import {
+  appendFolderDecoration,
+  createUploadedFolderSticker,
+  removeUploadedFolderSticker,
+  validateFolderDecorationFiles,
+  type TravelFolderDecoration,
+  type UploadedFolderSticker,
+} from './folderDecoration';
+import {
+  FolderDecorationCanvas,
+  FolderDecorationPalette,
+} from './components';
 import {
   getTravelRecordDraftDateRange,
   getTravelRecordDraftRegion,
@@ -54,22 +67,46 @@ function TravelRecordFolderDecorationPage() {
   const previewPhotoUrlsRef = useRef<string[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<File[] | null>(null);
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
+  const [decorations, setDecorations] = useState<TravelFolderDecoration[]>([]);
+  const [uploadedStickers, setUploadedStickers] = useState<UploadedFolderSticker[]>([]);
+  const decorationsRef = useRef<TravelFolderDecoration[]>([]);
+  const uploadedStickersRef = useRef<UploadedFolderSticker[]>([]);
+  const { showToast } = useToast();
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
-  const folderPhotos = useMemo<[string, string] | null>(() => {
+  const folderPhotos = useMemo<[string, ...string[]] | null>(() => {
     const firstPhoto = previewPhotoUrls[0];
 
     if (!firstPhoto) {
       return null;
     }
 
-    return [firstPhoto, previewPhotoUrls[1] ?? firstPhoto];
+    return previewPhotoUrls.slice(0, 2) as [string, ...string[]];
   }, [previewPhotoUrls]);
   const regionName =
     selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
   const periodLabel = selectedDateRange
     ? formatPeriod(selectedDateRange.startDate, selectedDateRange.endDate)
     : '';
+
+  const replaceDecorations = (nextDecorations: TravelFolderDecoration[]) => {
+    decorationsRef.current = nextDecorations;
+    setDecorations(nextDecorations);
+  };
+
+  const appendDecoration = (seed: Parameters<typeof appendFolderDecoration>[1]) => {
+    const result = appendFolderDecoration(decorationsRef.current, seed);
+
+    if (!result.added) {
+      showToast(
+        '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
+      );
+      return false;
+    }
+
+    replaceDecorations(result.decorations);
+    return true;
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -119,10 +156,11 @@ function TravelRecordFolderDecorationPage() {
         selectedRegion,
         selectedDateRange,
         selectedPhotos,
+        decorations,
       });
-      await saveTravelRecord(payload);
+      const result = await saveTravelRecord(payload);
       await clearTravelRecordPhotoDraft();
-      navigate('/travel-record');
+      navigate('/travel-record', { state: { savedTravelRecordId: result.id } });
     } catch {
       isSavingRef.current = false;
       setIsSaving(false);
@@ -170,7 +208,12 @@ function TravelRecordFolderDecorationPage() {
           aria-label={`${regionName} \uC5EC\uD589 \uD3F4\uB354 \uBBF8\uB9AC\uBCF4\uAE30`}
           className="absolute top-[237px] left-1/2 flex w-[159px] -translate-x-1/2 flex-col items-center"
         >
-          <TravelFolderArtwork photos={folderPhotos} title={regionName} />
+          <FolderDecorationCanvas
+            photos={folderPhotos}
+            title={regionName}
+            decorations={decorations}
+            onChange={replaceDecorations}
+          />
           <h2 className="mt-3 text-center text-[16px] leading-none font-medium text-[#1c1c1c]">
             {regionName}
           </h2>
@@ -181,16 +224,76 @@ function TravelRecordFolderDecorationPage() {
       ) : null}
 
       <section className="absolute top-[503px] left-0 h-[341px] w-full bg-[#f9f9f9] shadow-[0_-1px_5px_rgba(0,0,0,0.07)]">
-        <div className="absolute top-7 left-1/2 grid w-[344px] -translate-x-1/2 grid-cols-5 gap-4">
-          {Array.from({ length: 15 }).map((_, index) => (
-            <button
-              key={`sticker-slot-${index}`}
-              type="button"
-              aria-label={`\uC2A4\uD2F0\uCEE4 ${index + 1}`}
-              className="size-14 rounded-xl bg-[#e4e4e4]"
-            />
-          ))}
-        </div>
+        <FolderDecorationPalette
+          decorations={decorations}
+          uploadedStickers={uploadedStickers}
+          onLimitReached={() =>
+            showToast(
+              '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
+            )
+          }
+          onAddSticker={(stickerId) => {
+            appendDecoration({ source: 'sticker', stickerId });
+          }}
+          onAddUpload={(imageFile) => {
+            if (uploadedStickersRef.current.length >= 10) {
+              showToast(
+                '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
+              );
+              return;
+            }
+
+            const result = validateFolderDecorationFiles(
+              [imageFile],
+              10 - decorationsRef.current.length,
+            );
+            if (!result.files.length) {
+              showToast(result.message);
+              return;
+            }
+
+            const uploadedSticker = createUploadedFolderSticker(imageFile);
+            if (!appendDecoration({
+              source: 'upload',
+              imageFile,
+              uploadedStickerId: uploadedSticker.id,
+            })) {
+              return;
+            }
+
+            const nextUploadedStickers = [
+              ...uploadedStickersRef.current,
+              uploadedSticker,
+            ];
+            uploadedStickersRef.current = nextUploadedStickers;
+            setUploadedStickers(nextUploadedStickers);
+          }}
+          onAddUploadedSticker={(uploadedStickerId) => {
+            const uploadedSticker = uploadedStickersRef.current.find(
+              (sticker) => sticker.id === uploadedStickerId,
+            );
+
+            if (!uploadedSticker) {
+              return;
+            }
+
+            appendDecoration({
+              source: 'upload',
+              imageFile: uploadedSticker.imageFile,
+              uploadedStickerId,
+            });
+          }}
+          onDeleteUploadedSticker={(uploadedStickerId) => {
+            const result = removeUploadedFolderSticker(
+              uploadedStickersRef.current,
+              decorationsRef.current,
+              uploadedStickerId,
+            );
+            uploadedStickersRef.current = result.uploadedStickers;
+            setUploadedStickers(result.uploadedStickers);
+            replaceDecorations(result.decorations);
+          }}
+        />
 
         <button
           type="button"

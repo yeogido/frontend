@@ -1,3 +1,5 @@
+import type { TravelFolderDecoration } from './folder-decoration/folderDecoration';
+
 export type TravelRecordView = 'folder' | 'map';
 
 export interface TravelRecordFolder {
@@ -9,6 +11,7 @@ export interface TravelRecordFolder {
   startDate: string;
   period: string;
   photos: [string, ...string[]];
+  decorations: TravelFolderDecoration[];
 }
 
 export interface TravelRecordDraftRegion {
