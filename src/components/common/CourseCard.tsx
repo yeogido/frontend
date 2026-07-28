@@ -1,8 +1,4 @@
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import calendar from '../../assets/icons/calendar.svg';
 import heart from '../../assets/icons/heart.svg';
@@ -12,9 +8,7 @@ import people from '../../assets/icons/people.svg';
 
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 
-import TagChip, {
-  type TagType,
-} from './TagChip';
+import TagChip, { type TagType } from './TagChip';
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
 // 개별 vw 계산 대신 useScaleFrame이 전체를 한 번에 scale한다.
@@ -59,17 +53,14 @@ function useVisibleItemCount(itemsKey: string, itemCount: number) {
 
     const recalculate = () => {
       const elements = Array.from(hidden.children) as HTMLElement[];
-      const widths = elements.map(
-        (el) => el.getBoundingClientRect().width,
-      );
+      const widths = elements.map((el) => el.getBoundingClientRect().width);
 
       if (widths.length === 0 || widths.some((w) => w === 0)) {
         return;
       }
 
       const style = getComputedStyle(container);
-      const gap =
-        Number.parseFloat(style.columnGap || style.gap || '0') || 0;
+      const gap = Number.parseFloat(style.columnGap || style.gap || '0') || 0;
 
       const containerWidth = container.getBoundingClientRect().width;
       const EPSILON = 0.5;
@@ -158,20 +149,20 @@ function CourseCard({
           transformOrigin: 'top left',
         }}
       >
-        {/* Image */}
-        {image ? (
-          <img
-            src={image}
-            alt={title}
-            className="shrink-0 self-stretch object-cover"
-            style={{ width: IMAGE_WIDTH, borderRadius: IMAGE_RADIUS }}
-          />
-        ) : (
-          <div
-            className="shrink-0 self-stretch bg-[#EAEAEA]"
-            style={{ width: IMAGE_WIDTH, borderRadius: IMAGE_RADIUS }}
-          />
-        )}
+        {/* Image: 세로형 원본이 들어와도 카드 높이를 밀어올리지 않도록
+            래퍼가 높이를 잡고 img 는 그 안을 채운다. */}
+        <div
+          className="relative shrink-0 self-stretch overflow-hidden bg-[#EAEAEA]"
+          style={{ width: IMAGE_WIDTH, borderRadius: IMAGE_RADIUS }}
+        >
+          {image && (
+            <img
+              src={image}
+              alt={title}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+        </div>
 
         {/* Text column: Figma 스펙대로 제목/메타/태그 모두 동일한 우측 여백(하트 자리) 공유 */}
         <div
@@ -182,14 +173,14 @@ function CourseCard({
           }}
         >
           {/* Title */}
-          <h3 className="truncate text-[16px] font-medium leading-none text-[#1C1C1C]">
+          <h3 className="truncate text-[16px] leading-none font-medium text-[#1C1C1C]">
             {title}
           </h3>
 
           {/* Meta: 측정 전용 hidden 영역 */}
           <div
             ref={hiddenMetaRef}
-            className="absolute invisible flex gap-1"
+            className="invisible absolute flex gap-1"
             aria-hidden="true"
           >
             {metaItems.map((item) => (
@@ -204,7 +195,7 @@ function CourseCard({
                   className="h-[14px] w-[14px] shrink-0"
                 />
 
-                <span className="whitespace-nowrap text-[12px] font-medium leading-none text-[#7F7F7F]">
+                <span className="text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]">
                   {item.label}
                 </span>
               </div>
@@ -228,7 +219,7 @@ function CourseCard({
                   className="h-[14px] w-[14px] shrink-0"
                 />
 
-                <span className="whitespace-nowrap text-[12px] font-medium leading-none text-[#7F7F7F]">
+                <span className="text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]">
                   {item.label}
                 </span>
               </div>
@@ -238,7 +229,7 @@ function CourseCard({
           {/* Tags: 측정 전용 hidden 영역 */}
           <div
             ref={hiddenTagRef}
-            className="absolute invisible flex"
+            className="invisible absolute flex"
             style={{ gap: TAG_GAP }}
             aria-hidden="true"
           >

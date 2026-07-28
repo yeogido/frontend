@@ -41,6 +41,7 @@ import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selec
 import VisitOrderSelectionPage from '../pages/local-recommendation/visit-order-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
+import FestivalDetailPage from '../pages/detail/festival';
 import RegionInfoPage from '../pages/region-info';
 
 function AppRouter() {
@@ -164,6 +165,10 @@ function AppRouter() {
       <Route
         path="/local-business/detail/:id"
         element={<LocalBusinessDetailPage />}
+      />
+      <Route
+        path="/festival/detail/:festivalId"
+        element={<FestivalDetailPage />}
       />
       <Route path="/review" element={<ReviewPage />} />
 

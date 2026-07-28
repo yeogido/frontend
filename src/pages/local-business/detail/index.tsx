@@ -7,10 +7,13 @@ import {
   DetailHeroImage,
   DetailIntroCard,
   DetailMapPlaceholder,
-  DetailRelatedPostCard,
   DetailTitleSection,
 } from './components';
-import { DetailAuthorCard, DetailInfoCard } from '../../detail/components';
+import {
+  DetailAuthorCard,
+  DetailInfoCard,
+  DetailPlaceCard,
+} from '../../detail/components';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 16; // 추정값, 실측 필요
@@ -61,7 +64,7 @@ function LocalBusinessDetailPage() {
 
         <DetailMapPlaceholder />
 
-        <DetailRelatedPostCard
+        <DetailPlaceCard
           imageUrl={relatedPost.image}
           title={relatedPost.title}
           address={relatedPost.location}

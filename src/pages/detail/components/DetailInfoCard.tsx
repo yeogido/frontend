@@ -12,22 +12,38 @@ const ICON_SIZE = 16;
 const ICON_TEXT_GAP = 12;
 const TEXT_SIZE = 14;
 
-interface DetailInfoCardProps {
+export interface DetailInfoCardProps {
   address: string;
   hours: string;
   phone: string;
   website: string;
+  /** 전달하면 전화번호 행이 tel: 링크가 된다. 미전달 시 기존처럼 텍스트로만 표시. */
+  phoneHref?: string;
+  /** 전달하면 홈페이지 행이 외부 링크가 된다. http/https URL만 넘길 것. */
+  websiteHref?: string;
 }
 
-function DetailInfoCard({ address, hours, phone, website }: DetailInfoCardProps) {
+function DetailInfoCard({
+  address,
+  hours,
+  phone,
+  website,
+  phoneHref,
+  websiteHref,
+}: DetailInfoCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
 
-  const rows = [
+  const rows: ReadonlyArray<{
+    key: string;
+    icon: string;
+    label: string;
+    href?: string;
+  }> = [
     { key: 'address', icon: locationPin, label: address },
     { key: 'hours', icon: schedule, label: hours },
-    { key: 'phone', icon: call, label: phone },
-    { key: 'website', icon: language, label: website },
+    { key: 'phone', icon: call, label: phone, href: phoneHref },
+    { key: 'website', icon: language, label: website, href: websiteHref },
   ];
 
   return (
@@ -38,7 +54,7 @@ function DetailInfoCard({ address, hours, phone, website }: DetailInfoCardProps)
     >
       <div
         ref={innerRef}
-        className="flex flex-col rounded-xl border border-gray-2 bg-white"
+        className="border-gray-2 flex flex-col rounded-xl border bg-white"
         style={{
           width: CARD_DESIGN_WIDTH,
           paddingLeft: CARD_PADDING_X,
@@ -64,12 +80,24 @@ function DetailInfoCard({ address, hours, phone, website }: DetailInfoCardProps)
               style={{ width: ICON_SIZE, height: ICON_SIZE }}
             />
 
-            <span
-              className="font-regular text-gray-5"
-              style={{ fontSize: TEXT_SIZE }}
-            >
-              {row.label}
-            </span>
+            {row.href ? (
+              <a
+                href={row.href}
+                target={row.href.startsWith('tel:') ? undefined : '_blank'}
+                rel="noopener noreferrer"
+                className="font-regular text-gray-5 underline"
+                style={{ fontSize: TEXT_SIZE }}
+              >
+                {row.label}
+              </a>
+            ) : (
+              <span
+                className="font-regular text-gray-5"
+                style={{ fontSize: TEXT_SIZE }}
+              >
+                {row.label}
+              </span>
+            )}
           </div>
         ))}
       </div>

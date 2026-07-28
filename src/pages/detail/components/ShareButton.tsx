@@ -6,15 +6,20 @@ const ICON_SIZE = 20;
 
 export interface ShareButtonProps {
   onClick: () => void;
+  /** 접근성 이름. 미전달 시 코스 상세 기준 문구를 유지한다. */
+  label?: string;
 }
 
-export function ShareButton({ onClick }: ShareButtonProps) {
+export function ShareButton({
+  onClick,
+  label = '코스 공유하기',
+}: ShareButtonProps) {
   const scale = useGlobalScale();
 
   return (
     <button
       type="button"
-      aria-label="코스 공유하기"
+      aria-label={label}
       onClick={onClick}
       className="flex items-center justify-center bg-white text-[#1C1C1C]"
       style={{
