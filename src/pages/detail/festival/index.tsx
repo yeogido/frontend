@@ -25,7 +25,10 @@ import {
 } from '../mappers/festivalDetailMapper';
 import type { FestivalDetail } from '../types/festivalDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useAuthStore } from '../../../store/auth.store';
 import { getGutter } from '../../../utils/responsiveLayout';
+import { buildCourseSearchPath } from '../../../utils/routes';
 import watermelonFestivalImage from '../../festival/assets/watermelon-festival.webp';
 
 // Figma 390 디자인 기준 리터럴 px ("여기도 추천 행사 상세뷰" 시안, 캔버스 390x1514)
@@ -104,6 +107,8 @@ const rawMockDto = {
 function FestivalDetailContent({ festivalId }: { festivalId?: string }) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
 
   // 1. DTO Mapper를 통한 데이터 및 런타임 에러 검증
   const { festival, error } = useMemo<{
@@ -158,12 +163,30 @@ function FestivalDetailContent({ festivalId }: { festivalId?: string }) {
     }
   };
 
+  const runAuthAction = (action: () => void) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+    action();
+  };
+
+  const handleFavoriteToggle = () => {
+    runAuthAction(() => setIsLiked((prev) => !prev));
+  };
+
+  const handlePlaceLikeToggle = () => {
+    runAuthAction(() => setIsPlaceLiked((prev) => !prev));
+  };
+
   const handleCourseLikeToggle = (courseId: number) => {
-    setLikedCourseIds((prev) =>
-      prev.includes(courseId)
-        ? prev.filter((id) => id !== courseId)
-        : [...prev, courseId]
-    );
+    runAuthAction(() => {
+      setLikedCourseIds((prev) =>
+        prev.includes(courseId)
+          ? prev.filter((id) => id !== courseId)
+          : [...prev, courseId]
+      );
+    });
   };
 
   if (error) {
@@ -209,7 +232,7 @@ function FestivalDetailContent({ festivalId }: { festivalId?: string }) {
             <FavoriteButton
               isActive={isLiked}
               label={festival.title}
-              onClick={() => setIsLiked((prev) => !prev)}
+              onClick={handleFavoriteToggle}
             />
           }
         />
@@ -301,7 +324,7 @@ function FestivalDetailContent({ festivalId }: { festivalId?: string }) {
           address={festival.place.address}
           hours={festival.place.hours}
           liked={isPlaceLiked}
-          onLikeClick={() => setIsPlaceLiked((prev) => !prev)}
+          onLikeClick={handlePlaceLikeToggle}
         />
       </div>
 
@@ -310,7 +333,9 @@ function FestivalDetailContent({ festivalId }: { festivalId?: string }) {
         <SectionHeader
           title="이 행사가 포함된 코스"
           actionText="전체보기"
-          onActionClick={() => navigate('/yeogido-course')}
+          onActionClick={() =>
+            navigate(buildCourseSearchPath(festival.place.name))
+          }
         />
       </div>
 

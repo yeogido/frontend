@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   ContentCard,
@@ -10,6 +10,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
+import { buildFestivalDetailPath } from '../../../utils/routes';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 
 import { FestivalFilterBar } from '../components';
@@ -34,6 +35,7 @@ const LOAD_MORE_HEIGHT = 40;
 
 function FestivalSearchPage() {
   const scale = useGlobalScale();
+  const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
   const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
@@ -166,6 +168,9 @@ function FestivalSearchPage() {
                 liked={likedOverrides[String(festival.id)] ?? festival.liked}
                 tags={festival.tags}
                 className="w-full"
+                onClick={() =>
+                  navigate(buildFestivalDetailPath(festival.id))
+                }
                 onLikeClick={() =>
                   handleLikeClick(
                     festival.id,
