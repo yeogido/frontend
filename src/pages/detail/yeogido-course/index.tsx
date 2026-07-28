@@ -21,8 +21,6 @@ import {
 
 import { mapCourseDetailDtoToViewModel } from '../mappers/courseDetailMapper';
 import type { CourseDetail, CourseStop } from '../types/courseDetail';
-import { mapCourseDetailDtoToViewModel } from '../mappers/courseDetailMapper';
-import type { CourseDetail, CourseStop } from '../types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
