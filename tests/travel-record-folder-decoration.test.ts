@@ -5,8 +5,10 @@ import * as folderDecoration from '../src/pages/travel-record/folder-decoration/
 import {
   MAX_FOLDER_DECORATION_COUNT,
   createFolderDecoration,
+  createUploadedFolderSticker,
   getDecorationRotation,
   getNormalizedCanvasPoint,
+  removeUploadedFolderSticker,
   validateFolderDecorationFiles,
 } from '../src/pages/travel-record/folder-decoration/folderDecoration.ts';
 import { normalizeStoredDecorations } from '../src/pages/travel-record/utils/travelRecordSave.ts';
@@ -152,6 +154,29 @@ test('creates new decorations in the canvas center above existing layers', () =>
   assert.equal(decoration.rotation, 0);
   assert.equal(decoration.scale, 1);
   assert.equal(decoration.zIndex, 5);
+});
+
+test('removes an uploaded sticker source and its placed decorations together', () => {
+  const uploadedSticker = createUploadedFolderSticker(
+    createFile('image/png', 1),
+  );
+  const placedDecoration = createFolderDecoration(
+    {
+      source: 'upload',
+      imageFile: uploadedSticker.imageFile,
+      uploadedStickerId: uploadedSticker.id,
+    },
+    [],
+  );
+
+  assert.deepEqual(
+    removeUploadedFolderSticker(
+      [uploadedSticker],
+      [placedDecoration],
+      uploadedSticker.id,
+    ),
+    { uploadedStickers: [], decorations: [] },
+  );
 });
 
 test('moves a selected decoration above every other decoration', () => {

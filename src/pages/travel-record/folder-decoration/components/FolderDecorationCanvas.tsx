@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { IoResizeOutline } from 'react-icons/io5';
 
+import closeRoundedIcon from '../../../../assets/icons/close-rounded.svg';
 import { TravelFolderArtwork } from '../../components';
 import { getDecorationLayerStyle } from '../../components/decorationRender';
 import {
@@ -13,7 +14,7 @@ import {
 } from '../folderDecoration';
 
 interface FolderDecorationCanvasProps {
-  photos: [string, string];
+  photos: [string, ...string[]];
   title: string;
   decorations: TravelFolderDecoration[];
   onChange: (decorations: TravelFolderDecoration[]) => void;
@@ -178,14 +179,18 @@ export function FolderDecorationCanvas({
                 <button
                   type="button"
                   aria-label="\uC2A4\uD2F0\uCEE4 \uC0AD\uC81C"
-                  className="absolute -top-3 -right-3 flex size-6 items-center justify-center rounded-full bg-[#7f7f7f] text-base leading-none text-white"
+                  className="absolute -top-3 -right-3 flex size-6 items-center justify-center rounded-full bg-[#7f7f7f]"
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={() => {
                     onChange(decorations.filter(({ id }) => id !== decoration.id));
                     setSelectedId(null);
                   }}
                 >
-                  x
+                  <img
+                    src={closeRoundedIcon}
+                    alt=""
+                    className="size-4 brightness-0 invert"
+                  />
                 </button>
                 <button
                   type="button"

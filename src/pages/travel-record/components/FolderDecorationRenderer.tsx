@@ -1,5 +1,6 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
+import { UploadedStickerImage } from '../../../components/sticker';
 import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
 import { getStickerAsset } from '../folder-decoration/stickers';
 
@@ -11,20 +12,6 @@ interface FolderDecorationRendererProps {
     decorationNode: ReactNode,
     decoration: TravelFolderDecoration,
   ) => ReactNode;
-}
-
-function UploadedDecorationImage({ imageFile }: { imageFile: File }) {
-  const imageUrl = useMemo(() => URL.createObjectURL(imageFile), [imageFile]);
-
-  useEffect(() => () => URL.revokeObjectURL(imageUrl), [imageUrl]);
-
-  return (
-    <img
-      src={imageUrl}
-      alt=""
-      className="pointer-events-none block size-full object-contain"
-    />
-  );
 }
 
 function DecorationImage({
@@ -42,7 +29,11 @@ function DecorationImage({
       style={getDecorationLayerStyle(decoration)}
     >
       {decoration.source === 'upload' && decoration.imageFile ? (
-        <UploadedDecorationImage imageFile={decoration.imageFile} />
+        <UploadedStickerImage
+          imageFile={decoration.imageFile}
+          className="pointer-events-none size-full"
+          imageClassName="object-cover"
+        />
       ) : sticker ? (
         <img
           src={sticker.src}

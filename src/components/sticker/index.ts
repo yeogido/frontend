@@ -1,0 +1,1 @@
+export { UploadedStickerImage } from './UploadedStickerImage';

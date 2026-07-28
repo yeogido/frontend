@@ -3,12 +3,15 @@ import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
-import { PhotoToast } from '../photo-selection/components';
+import { useToast } from '../../../components/toast';
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
 import {
   createFolderDecoration,
+  createUploadedFolderSticker,
+  removeUploadedFolderSticker,
   validateFolderDecorationFiles,
   type TravelFolderDecoration,
+  type UploadedFolderSticker,
 } from './folderDecoration';
 import {
   FolderDecorationCanvas,
@@ -65,17 +68,18 @@ function TravelRecordFolderDecorationPage() {
   const [selectedPhotos, setSelectedPhotos] = useState<File[] | null>(null);
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
   const [decorations, setDecorations] = useState<TravelFolderDecoration[]>([]);
-  const [toastMessage, setToastMessage] = useState('');
+  const [uploadedStickers, setUploadedStickers] = useState<UploadedFolderSticker[]>([]);
+  const { showToast } = useToast();
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
-  const folderPhotos = useMemo<[string, string] | null>(() => {
+  const folderPhotos = useMemo<[string, ...string[]] | null>(() => {
     const firstPhoto = previewPhotoUrls[0];
 
     if (!firstPhoto) {
       return null;
     }
 
-    return [firstPhoto, previewPhotoUrls[1] ?? firstPhoto];
+    return previewPhotoUrls.slice(0, 2) as [string, ...string[]];
   }, [previewPhotoUrls]);
   const regionName =
     selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
@@ -201,8 +205,9 @@ function TravelRecordFolderDecorationPage() {
       <section className="absolute top-[503px] left-0 h-[341px] w-full bg-[#f9f9f9] shadow-[0_-1px_5px_rgba(0,0,0,0.07)]">
         <FolderDecorationPalette
           decorations={decorations}
+          uploadedStickers={uploadedStickers}
           onLimitReached={() =>
-            setToastMessage(
+            showToast(
               '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
             )
           }
@@ -215,21 +220,78 @@ function TravelRecordFolderDecorationPage() {
               ),
             ]);
           }}
-          onAddUploads={(files) => {
+          onAddUpload={(imageFile) => {
+            if (uploadedStickers.length >= 10) {
+              showToast(
+                '\uC2A4\uD2F0\CEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
+              );
+              return;
+            }
+
             const result = validateFolderDecorationFiles(
-              files,
+              [imageFile],
               10 - decorations.length,
             );
-            setToastMessage(result.message);
+            if (!result.files.length) {
+              showToast(result.message);
+              return;
+            }
+
+            const uploadedSticker = createUploadedFolderSticker(imageFile);
+            setUploadedStickers((currentStickers) => [
+              ...currentStickers,
+              uploadedSticker,
+            ]);
             setDecorations((currentDecorations) => [
               ...currentDecorations,
-              ...result.files.map((imageFile) =>
-                createFolderDecoration(
-                  { source: 'upload', imageFile },
-                  currentDecorations,
-                ),
+              createFolderDecoration(
+                {
+                  source: 'upload',
+                  imageFile,
+                  uploadedStickerId: uploadedSticker.id,
+                },
+                currentDecorations,
               ),
             ]);
+          }}
+          onAddUploadedSticker={(uploadedStickerId) => {
+            const uploadedSticker = uploadedStickers.find(
+              (sticker) => sticker.id === uploadedStickerId,
+            );
+
+            if (!uploadedSticker) {
+              return;
+            }
+
+            setDecorations((currentDecorations) => {
+              if (currentDecorations.length >= 10) {
+                showToast(
+                  '\uC2A4\uD2F0\CEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
+                );
+                return currentDecorations;
+              }
+
+              return [
+                ...currentDecorations,
+                createFolderDecoration(
+                  {
+                    source: 'upload',
+                    imageFile: uploadedSticker.imageFile,
+                    uploadedStickerId,
+                  },
+                  currentDecorations,
+                ),
+              ];
+            });
+          }}
+          onDeleteUploadedSticker={(uploadedStickerId) => {
+            const result = removeUploadedFolderSticker(
+              uploadedStickers,
+              decorations,
+              uploadedStickerId,
+            );
+            setUploadedStickers(result.uploadedStickers);
+            setDecorations(result.decorations);
           }}
         />
 
@@ -242,7 +304,6 @@ function TravelRecordFolderDecorationPage() {
         >
           {saveRecordLabel}
         </button>
-        <PhotoToast message={toastMessage} />
       </section>
     </TravelRecordPageFrame>
   );

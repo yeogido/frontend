@@ -1,5 +1,6 @@
 import AppRouter from './router/AppRouter';
 import ScrollToTop from './router/ScrollToTop';
+import { ToastProvider } from './components/toast';
 
 import { APP_MAX_WIDTH } from './constants/layout';
 
@@ -10,8 +11,10 @@ function App() {
         className="relative mx-auto min-h-dvh w-full bg-[#F1F1F1]"
         style={{ maxWidth: APP_MAX_WIDTH, display: 'flow-root' }}
       >
-        <ScrollToTop />
-        <AppRouter />
+        <ToastProvider>
+          <ScrollToTop />
+          <AppRouter />
+        </ToastProvider>
       </div>
     </div>
   );

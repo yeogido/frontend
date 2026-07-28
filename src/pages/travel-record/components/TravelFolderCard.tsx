@@ -6,6 +6,7 @@ import type { TravelRecordFolder } from '../types';
 import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
 
 import { FolderDecorationRenderer } from './FolderDecorationRenderer';
+import { getVisibleFolderPhotos } from './folderPhotos';
 
 interface TravelFolderCardProps {
   folder: TravelRecordFolder;
@@ -127,13 +128,13 @@ export function TravelFolderArtwork({
         aria-hidden="true"
       />
 
-      {folderPhotoSlots.map((slot, index) => (
+      {getVisibleFolderPhotos(photos).map((imageSrc, index) => (
         <FolderPhoto
           key={`${title}-${index}`}
           folderTitle={title}
-          imageSrc={photos[index] ?? photos[0]}
+          imageSrc={imageSrc}
           order={index + 1}
-          slot={slot}
+          slot={folderPhotoSlots[index]}
         />
       ))}
 

@@ -5,6 +5,7 @@ export interface TravelFolderDecoration {
   source: TravelFolderDecorationSource;
   stickerId?: string;
   imageFile?: File;
+  uploadedStickerId?: string;
   x: number;
   y: number;
   rotation: number;
@@ -16,6 +17,12 @@ export interface FolderDecorationSeed {
   source: TravelFolderDecorationSource;
   stickerId?: string;
   imageFile?: File;
+  uploadedStickerId?: string;
+}
+
+export interface UploadedFolderSticker {
+  id: string;
+  imageFile: File;
 }
 
 export interface FolderDecorationLayer {
@@ -125,6 +132,31 @@ const createDecorationId = () =>
   typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
     : `decoration-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const createUploadedStickerId = () =>
+  typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `uploaded-sticker-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+export const createUploadedFolderSticker = (
+  imageFile: File,
+): UploadedFolderSticker => ({
+  id: createUploadedStickerId(),
+  imageFile,
+});
+
+export const removeUploadedFolderSticker = (
+  uploadedStickers: UploadedFolderSticker[],
+  decorations: TravelFolderDecoration[],
+  uploadedStickerId: string,
+) => ({
+  uploadedStickers: uploadedStickers.filter(
+    (sticker) => sticker.id !== uploadedStickerId,
+  ),
+  decorations: decorations.filter(
+    (decoration) => decoration.uploadedStickerId !== uploadedStickerId,
+  ),
+});
 
 const clamp = (value: number, minimum: number, maximum: number) =>
   Math.min(Math.max(value, minimum), maximum);
@@ -265,6 +297,7 @@ export const createFolderDecoration = (
   source: seed.source,
   stickerId: seed.stickerId,
   imageFile: seed.imageFile,
+  uploadedStickerId: seed.uploadedStickerId,
   x: 0.5,
   y: 0.5,
   rotation: 0,
