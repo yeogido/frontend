@@ -37,6 +37,76 @@ export interface CanvasBounds {
   maxY: number;
 }
 
+export const FOLDER_DECORATION_CANVAS_BOUNDS: CanvasBounds = {
+  minX: -3 / 159,
+  maxX: 162 / 159,
+  minY: 0,
+  maxY: 1,
+};
+
+const FOLDER_ARTWORK_WIDTH = 159;
+const FOLDER_ARTWORK_HEIGHT = 183;
+
+const isPointInRoundedRectangle = (
+  point: { x: number; y: number },
+  rectangle: {
+    centerX: number;
+    centerY: number;
+    width: number;
+    height: number;
+    radius: number;
+    rotation?: number;
+  },
+) => {
+  const angle = (-((rectangle.rotation ?? 0) * Math.PI)) / 180;
+  const offsetX = point.x - rectangle.centerX;
+  const offsetY = point.y - rectangle.centerY;
+  const x = offsetX * Math.cos(angle) - offsetY * Math.sin(angle);
+  const y = offsetX * Math.sin(angle) + offsetY * Math.cos(angle);
+  const innerWidth = rectangle.width / 2 - rectangle.radius;
+  const innerHeight = rectangle.height / 2 - rectangle.radius;
+  const nearestX = clamp(x, -innerWidth, innerWidth);
+  const nearestY = clamp(y, -innerHeight, innerHeight);
+
+  return Math.hypot(x - nearestX, y - nearestY) <= rectangle.radius;
+};
+
+export const isPointInFolderDecorationLayout = (point: {
+  x: number;
+  y: number;
+}) => {
+  const canvasPoint = {
+    x: point.x * FOLDER_ARTWORK_WIDTH,
+    y: point.y * FOLDER_ARTWORK_HEIGHT,
+  };
+
+  return (
+    isPointInRoundedRectangle(canvasPoint, {
+      centerX: 49.1865,
+      centerY: 52.1865,
+      width: 88,
+      height: 88,
+      radius: 12,
+      rotation: -12,
+    }) ||
+    isPointInRoundedRectangle(canvasPoint, {
+      centerX: 108.3375,
+      centerY: 72.3375,
+      width: 88,
+      height: 88,
+      radius: 12,
+      rotation: 14,
+    }) ||
+    isPointInRoundedRectangle(canvasPoint, {
+      centerX: 79.5,
+      centerY: 118,
+      width: 159,
+      height: 130,
+      radius: 15,
+    })
+  );
+};
+
 interface FolderDecorationFileValidationResult {
   files: File[];
   message: string;
@@ -111,6 +181,18 @@ export const getNormalizedCanvasPoint = (
   x: clamp((clientX - rect.left) / rect.width, bounds.minX, bounds.maxX),
   y: clamp((clientY - rect.top) / rect.height, bounds.minY, bounds.maxY),
 });
+
+export const getDecorationDragPoint = (
+  rect: CanvasRect,
+  clientX: number,
+  clientY: number,
+) =>
+  getNormalizedCanvasPoint(
+    rect,
+    clientX,
+    clientY,
+    FOLDER_DECORATION_CANVAS_BOUNDS,
+  );
 
 export const getDecorationRotation = (
   center: { x: number; y: number },

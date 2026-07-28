@@ -43,13 +43,13 @@ export function FolderDecorationPalette({
 
   return (
     <section className="absolute inset-0 bg-[#f9f9f9]">
-      <div className="absolute top-7 left-6 flex w-[342px] justify-end gap-4 overflow-hidden">
+      <div className="absolute top-7 left-6 flex w-[342px] gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {categories.map((category) => (
           <button
             key={category.id}
             type="button"
             onClick={() => setActiveCategory(category.id)}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-[16px] leading-normal ${
+            className={`shrink-0 rounded-full border px-3 py-[7px] text-[14px] leading-normal ${
               activeCategory === category.id
                 ? 'border-[#ff6f41] bg-[#ffebe5] text-[#ff6f41]'
                 : 'border-[#e4e4e4] text-[#7f7f7f]'

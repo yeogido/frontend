@@ -5,9 +5,10 @@ import { TravelFolderArtwork } from '../../components';
 import { getDecorationLayerStyle } from '../../components/decorationRender';
 import {
   bringDecorationToFront,
+  getDecorationDragPoint,
   getDecorationRotationFromPointerDelta,
   getDecorationScaleFromPointerDistance,
-  getNormalizedCanvasPoint,
+  isPointInFolderDecorationLayout,
   type TravelFolderDecoration,
 } from '../folderDecoration';
 
@@ -90,14 +91,12 @@ export function FolderDecorationCanvas({
 
     const rect = canvasRef.current.getBoundingClientRect();
     if (editorMode === 'drag') {
+      const point = getDecorationDragPoint(rect, event.clientX, event.clientY);
+      if (!isPointInFolderDecorationLayout(point)) return;
+
       updateDecoration(
         selectedDecoration.id,
-        getNormalizedCanvasPoint(rect, event.clientX, event.clientY, {
-          minX: 0.03,
-          maxX: 0.97,
-          minY: 53 / 183,
-          maxY: 1,
-        }),
+        point,
       );
       return;
     }
@@ -123,14 +122,14 @@ export function FolderDecorationCanvas({
       return;
     }
 
-    updateDecoration(selectedDecoration.id, {
-      scale: getDecorationScaleFromPointerDistance(
-        pointerEditState.initialScale,
-        center,
-        pointerEditState.initialPointer,
-        currentPointer,
-      ),
-    });
+    const scale = getDecorationScaleFromPointerDistance(
+      pointerEditState.initialScale,
+      center,
+      pointerEditState.initialPointer,
+      currentPointer,
+    );
+
+    updateDecoration(selectedDecoration.id, { scale });
   };
 
   const endEditing = (event: React.PointerEvent<HTMLDivElement>) => {

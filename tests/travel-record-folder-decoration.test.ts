@@ -76,6 +76,71 @@ test('clamps pointer coordinates to the visible folder face bounds', () => {
   );
 });
 
+test('defines the combined folder and photo area as the decoration movement bounds', () => {
+  const folderDecorationCanvasBounds = (
+    folderDecoration as {
+      FOLDER_DECORATION_CANVAS_BOUNDS?: {
+        minX: number;
+        maxX: number;
+        minY: number;
+        maxY: number;
+      };
+    }
+  ).FOLDER_DECORATION_CANVAS_BOUNDS;
+
+  assert.deepEqual(folderDecorationCanvasBounds, {
+    minX: -3 / 159,
+    maxX: 162 / 159,
+    minY: 0,
+    maxY: 1,
+  });
+});
+
+test('allows a decoration center to reach the full folder and photo layout bounds', () => {
+  const getDecorationDragPoint = (
+    folderDecoration as {
+      getDecorationDragPoint?: (
+        rect: { left: number; top: number; width: number; height: number },
+        clientX: number,
+        clientY: number,
+      ) => { x: number; y: number };
+    }
+  ).getDecorationDragPoint;
+
+  assert.equal(typeof getDecorationDragPoint, 'function');
+  if (!getDecorationDragPoint) return;
+
+  assert.deepEqual(
+    getDecorationDragPoint(
+      { left: 0, top: 0, width: 159, height: 183 },
+      300,
+      300,
+    ),
+    {
+      x: 162 / 159,
+      y: 1,
+    },
+  );
+});
+
+test('accepts drag positions only inside the folder or either photo frame', () => {
+  const isPointInFolderDecorationLayout = (
+    folderDecoration as {
+      isPointInFolderDecorationLayout?: (point: {
+        x: number;
+        y: number;
+      }) => boolean;
+    }
+  ).isPointInFolderDecorationLayout;
+
+  assert.equal(typeof isPointInFolderDecorationLayout, 'function');
+  if (!isPointInFolderDecorationLayout) return;
+
+  assert.equal(isPointInFolderDecorationLayout({ x: 0.5, y: 0.75 }), true);
+  assert.equal(isPointInFolderDecorationLayout({ x: 0.31, y: 0.2 }), true);
+  assert.equal(isPointInFolderDecorationLayout({ x: 1, y: 0 }), false);
+});
+
 test('creates new decorations in the canvas center above existing layers', () => {
   const decoration = createFolderDecoration(
     { source: 'sticker', stickerId: 'food-noodle' },
