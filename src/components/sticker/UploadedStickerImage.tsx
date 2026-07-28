@@ -8,31 +8,56 @@ interface UploadedStickerImageProps {
   imageClassName?: string;
 }
 
+let nextImageFileId = 1;
+const imageFileIds = new WeakMap<File, number>();
+
+const getImageFileId = (imageFile: File) => {
+  const existingId = imageFileIds.get(imageFile);
+
+  if (existingId) {
+    return existingId;
+  }
+
+  const id = nextImageFileId++;
+  imageFileIds.set(imageFile, id);
+  return id;
+};
+
 export function UploadedStickerImage({
   imageFile,
   className = '',
   imageClassName = '',
 }: UploadedStickerImageProps) {
-  const [imageUrl, setImageUrl] = useState('');
+  return (
+    <UploadedStickerImageResource
+      key={getImageFileId(imageFile)}
+      imageFile={imageFile}
+      className={className}
+      imageClassName={imageClassName}
+    />
+  );
+}
+
+function UploadedStickerImageResource({
+  imageFile,
+  className,
+  imageClassName,
+}: Required<UploadedStickerImageProps>) {
+  const [imageResource] = useState(() => createImageObjectUrl(imageFile, URL));
 
   useEffect(() => {
-    const imageResource = createImageObjectUrl(imageFile, URL);
-    setImageUrl(imageResource.url);
-
     return imageResource.dispose;
-  }, [imageFile]);
+  }, [imageResource]);
 
   return (
     <span
       className={`block overflow-hidden rounded-xl bg-white p-[3px] shadow-[0_2px_5px_rgba(0,0,0,0.2)] ${className}`}
     >
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt=""
-          className={`block size-full rounded-[9px] object-contain ${imageClassName}`}
-        />
-      ) : null}
+      <img
+        src={imageResource.url}
+        alt=""
+        className={`block size-full rounded-[9px] object-contain ${imageClassName}`}
+      />
     </span>
   );
 }

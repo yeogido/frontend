@@ -304,3 +304,17 @@ export const createFolderDecoration = (
   scale: 1,
   zIndex: Math.max(0, ...decorations.map((decoration) => decoration.zIndex)) + 1,
 });
+
+export const appendFolderDecoration = (
+  decorations: TravelFolderDecoration[],
+  seed: FolderDecorationSeed,
+) => {
+  if (decorations.length >= MAX_FOLDER_DECORATION_COUNT) {
+    return { decorations, added: false };
+  }
+
+  return {
+    decorations: [...decorations, createFolderDecoration(seed, decorations)],
+    added: true,
+  };
+};

@@ -4,6 +4,7 @@ import * as folderDecoration from '../src/pages/travel-record/folder-decoration/
 
 import {
   MAX_FOLDER_DECORATION_COUNT,
+  appendFolderDecoration,
   createFolderDecoration,
   createUploadedFolderSticker,
   getDecorationRotation,
@@ -154,6 +155,33 @@ test('creates new decorations in the canvas center above existing layers', () =>
   assert.equal(decoration.rotation, 0);
   assert.equal(decoration.scale, 1);
   assert.equal(decoration.zIndex, 5);
+});
+
+test('keeps the decoration count at ten when an additional sticker is requested', () => {
+  const decorations = Array.from({ length: MAX_FOLDER_DECORATION_COUNT }, (_, index) =>
+    createFolderDecoration(
+      { source: 'sticker', stickerId: `food-sticker-${index}` },
+      [],
+    ),
+  );
+
+  const result = appendFolderDecoration(
+    decorations,
+    { source: 'sticker', stickerId: 'food-extra' },
+  );
+
+  assert.equal(result.added, false);
+  assert.equal(result.decorations, decorations);
+});
+
+test('appends an uploaded sticker only while a decoration slot remains', () => {
+  const result = appendFolderDecoration(
+    [],
+    { source: 'upload', imageFile: createFile('image/png', 1) },
+  );
+
+  assert.equal(result.added, true);
+  assert.equal(result.decorations.length, 1);
 });
 
 test('removes an uploaded sticker source and its placed decorations together', () => {
