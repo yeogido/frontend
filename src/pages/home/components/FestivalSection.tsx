@@ -10,6 +10,7 @@ import {
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
+import { buildFestivalDetailPath } from '../../../utils/routes';
 
 const SECTION_MARGIN_TOP = 32;
 const SECTION_PADDING_X = 24;
@@ -119,6 +120,9 @@ function FestivalSection() {
                       secondInfo={festival.secondInfo}
                       tags={festival.tags}
                       liked={isLoggedIn && festival.liked}
+                      onClick={() =>
+                        navigate(buildFestivalDetailPath(festival.id))
+                      }
                       onLikeClick={() =>
                         handleLikeClick(festival.id)
                       }

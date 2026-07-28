@@ -10,4 +10,7 @@ export * from './CourseRouteMap';
 export * from './CourseStopItem';
 export * from './CourseStopList';
 export { default as DetailInfoCard } from './DetailInfoCard';
+export type { DetailInfoCardProps } from './DetailInfoCard';
 export { default as DetailAuthorCard } from './DetailAuthorCard';
+export { default as DetailPlaceCard } from './DetailPlaceCard';
+export type { DetailPlaceCardProps } from './DetailPlaceCard';

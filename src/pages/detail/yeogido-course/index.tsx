@@ -24,7 +24,7 @@ import type { CourseDetail, CourseStop } from '../types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
-import { getGutter } from '../../../utils/responsiveLayout';
+import { getGutter  } from '../../../utils/responsiveLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 25;
