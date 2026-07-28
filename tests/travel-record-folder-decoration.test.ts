@@ -7,6 +7,7 @@ import {
   appendFolderDecoration,
   createFolderDecoration,
   createUploadedFolderSticker,
+  getUploadStickerSlotState,
   getDecorationRotation,
   getNormalizedCanvasPoint,
   removeUploadedFolderSticker,
@@ -182,6 +183,13 @@ test('appends an uploaded sticker only while a decoration slot remains', () => {
 
   assert.equal(result.added, true);
   assert.equal(result.decorations.length, 1);
+});
+
+test('hides the upload add slot when ten uploaded stickers exist', () => {
+  assert.deepEqual(getUploadStickerSlotState(MAX_FOLDER_DECORATION_COUNT), {
+    canAdd: false,
+    emptySlotCount: 0,
+  });
 });
 
 test('removes an uploaded sticker source and its placed decorations together', () => {

@@ -8,7 +8,7 @@ export const STICKER_CATEGORIES = [
 
 export type StickerCategory = (typeof STICKER_CATEGORIES)[number];
 
-const stickerIds = [
+export const STICKER_IDS = [
   'food-coffee', 'food-cake', 'food-fishbread', 'food-pork', 'food-stew',
   'food-chicken', 'food-kimbap', 'food-bibimbap', 'food-beer', 'food-soju',
   'nature-wave', 'nature-palm', 'nature-starfish', 'nature-sun', 'nature-shell',
@@ -21,7 +21,9 @@ const stickerIds = [
   'object-camera', 'object-umbrella', 'object-bag', 'object-car', 'object-guitar',
 ] as const;
 
-const knownStickerIds = new Set<string>(stickerIds);
+export type StickerId = (typeof STICKER_IDS)[number];
+
+const knownStickerIds = new Set<string>(STICKER_IDS);
 
 export const isKnownStickerId = (stickerId: string) =>
   knownStickerIds.has(stickerId);

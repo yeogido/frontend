@@ -318,3 +318,14 @@ export const appendFolderDecoration = (
     added: true,
   };
 };
+
+export const getUploadStickerSlotState = (uploadedStickerCount: number) => {
+  const canAdd = uploadedStickerCount < MAX_FOLDER_DECORATION_COUNT;
+
+  return {
+    canAdd,
+    emptySlotCount: canAdd
+      ? MAX_FOLDER_DECORATION_COUNT - uploadedStickerCount - 1
+      : 0,
+  };
+};

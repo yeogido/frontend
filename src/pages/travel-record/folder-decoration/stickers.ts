@@ -50,6 +50,7 @@ import personMouth from './assets/person-mouth.webp';
 import personSmile from './assets/person-smile.webp';
 import {
   type StickerCategory,
+  type StickerId,
 } from './stickerCatalog';
 
 export { STICKER_CATEGORIES } from './stickerCatalog';
@@ -64,7 +65,7 @@ export interface FolderSticker {
 
 const createStickers = (
   category: StickerCategory,
-  stickers: Array<[string, string, string]>,
+  stickers: Array<[StickerId, string, string]>,
 ): FolderSticker[] =>
   stickers.map(([id, label, src]) => ({ id, label, src, category }));
 

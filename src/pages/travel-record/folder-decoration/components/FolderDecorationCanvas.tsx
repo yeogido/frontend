@@ -1,4 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import {
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { IoResizeOutline } from 'react-icons/io5';
 
 import closeRoundedIcon from '../../../../assets/icons/close-rounded.svg';
@@ -70,7 +75,7 @@ export function FolderDecorationCanvas({
   }, []);
 
   const beginPointerEditing = (
-    event: React.PointerEvent<HTMLButtonElement>,
+    event: ReactPointerEvent<HTMLButtonElement>,
     decoration: TravelFolderDecoration,
     mode: EditorMode,
   ) => {
@@ -87,7 +92,7 @@ export function FolderDecorationCanvas({
     canvasRef.current?.setPointerCapture(event.pointerId);
   };
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!selectedDecoration || !editorMode || !canvasRef.current) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
@@ -133,7 +138,7 @@ export function FolderDecorationCanvas({
     updateDecoration(selectedDecoration.id, { scale });
   };
 
-  const endEditing = (event: React.PointerEvent<HTMLDivElement>) => {
+  const endEditing = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (editorMode && event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }

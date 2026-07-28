@@ -6,6 +6,7 @@ import addRoundedIcon from '../../../../assets/icons/material-symbols_add-2-roun
 import closeRoundedIcon from '../../../../assets/icons/close-rounded.svg';
 import photoUploadIcon from '../../photo-selection/assets/photo-upload-icon.svg';
 import {
+  getUploadStickerSlotState,
   MAX_FOLDER_DECORATION_COUNT,
   type TravelFolderDecoration,
   type UploadedFolderSticker,
@@ -47,8 +48,9 @@ export function FolderDecorationPalette({
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isFull = decorations.length >= MAX_FOLDER_DECORATION_COUNT;
-  const isUploadListFull =
-    uploadedStickers.length >= MAX_FOLDER_DECORATION_COUNT;
+  const uploadStickerSlotState = getUploadStickerSlotState(
+    uploadedStickers.length,
+  );
   const stickers = activeCategory === 'create' ? [] : STICKERS_BY_CATEGORY[activeCategory];
 
   return (
@@ -101,22 +103,17 @@ export function FolderDecorationPalette({
                 </button>
               </div>
             ))}
-            <button
-              type="button"
-              aria-disabled={isUploadListFull}
-              aria-label="\uC774\uBBF8\uC9C0 \uCD94\uAC00"
-              onClick={() => {
-                if (isUploadListFull) {
-                  onLimitReached();
-                  return;
-                }
-                setIsUploadModalOpen(true);
-              }}
-              className="flex size-14 items-center justify-center rounded-xl bg-[#e4e4e4]"
-            >
-              <img src={addRoundedIcon} alt="" className="size-8" />
-            </button>
-            {Array.from({ length: Math.max(0, 9 - uploadedStickers.length) }).map((_, index) => (
+            {uploadStickerSlotState.canAdd ? (
+              <button
+                type="button"
+                aria-label="\uC774\uBBF8\uC9C0 \uCD94\uAC00"
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex size-14 items-center justify-center rounded-xl bg-[#e4e4e4]"
+              >
+                <img src={addRoundedIcon} alt="" className="size-8" />
+              </button>
+            ) : null}
+            {Array.from({ length: uploadStickerSlotState.emptySlotCount }).map((_, index) => (
               <div key={`empty-upload-slot-${index}`} className="size-14 rounded-xl bg-[#e4e4e4]" />
             ))}
             <input

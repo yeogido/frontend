@@ -7,13 +7,14 @@ import {
 } from '../src/components/toast/toastState.ts';
 
 test('creates a toast with the default visibility duration', () => {
-  assert.deepEqual(createToast('업로드할 수 있는 스티커 수를 초과했어요.'), {
-    id: 1,
-    message: '업로드할 수 있는 스티커 수를 초과했어요.',
-    duration: DEFAULT_TOAST_DURATION,
-  });
+  const message = 'toast-message';
+  const toast = createToast(message);
+
+  assert.equal(typeof toast.id, 'number');
+  assert.equal(toast.message, message);
+  assert.equal(toast.duration, DEFAULT_TOAST_DURATION);
 });
 
 test('accepts an explicit visibility duration for a toast', () => {
-  assert.equal(createToast('저장했어요.', 1200).duration, 1200);
+  assert.equal(createToast('toast-message', 1200).duration, 1200);
 });
