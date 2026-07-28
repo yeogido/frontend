@@ -9,7 +9,7 @@ const EMPTY_MARKERS: readonly GeoPoint[] = [];
 // 카카오맵 SDK가 컨테이너 DOM에 직접 Map 인스턴스를 붙이므로
 // transform: scale()은 절대 사용하지 않는다. height/border-radius/padding처럼
 // 순수 CSS 크기 값에만 패턴 A(style + scale)를 적용한다.
-const MAP_HEIGHT = 280;
+const MAP_HEIGHT = 342;
 const MAP_RADIUS = 18;
 const OVERLAY_PADDING_X = 20;
 const OVERLAY_FONT_SIZE = 14;

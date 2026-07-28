@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ReviewCard, SectionHeader } from '../../../components/common';
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
-import type { CourseReview } from '../../../features/course-detail/types/courseDetail';
+import type { CourseReview } from '../types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { getCourseReviewIndex } from '../utils/courseReviewCarousel';
 
-const SECTION_GAP = 12;
+const SECTION_GAP = 14;
 
 const DOT_GAP = 4;
 const DOT_SIZE = 4;

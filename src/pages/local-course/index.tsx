@@ -8,6 +8,8 @@ import {
   SectionHeader,
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useLoginModal } from '../../hooks/useLoginModal';
+import { useAuthStore } from '../../store/auth.store';
 
 import { CreateCourseBanner } from './components';
 import useLocalCoursePreviews from './hooks/useLocalCoursePreviews';
@@ -29,6 +31,8 @@ const LIST_GAP = 16;
 function LocalCoursePage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
   const { popularCourses, recentCourses } = useLocalCoursePreviews();
 
   const goToRegionSearch = () => {
@@ -37,6 +41,15 @@ function LocalCoursePage() {
 
   const goToCreateCourse = () => {
     navigate('/local-recommendation');
+  };
+
+  const handleCreateCourse = () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    goToCreateCourse();
   };
 
   const goToPopularCourses = () => {
@@ -141,7 +154,7 @@ function LocalCoursePage() {
         </div>
       </section>
 
-      <FloatingActionButton ariaLabel="코스 만들기" onClick={goToCreateCourse} />
+      <FloatingActionButton ariaLabel="코스 만들기" onClick={handleCreateCourse} />
     </section>
   );
 }

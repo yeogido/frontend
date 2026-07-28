@@ -1,17 +1,18 @@
+import { FaHeart as FilledHeartIcon } from 'react-icons/fa6';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import type { CourseStop } from '../types/courseDetail';
 
 // Figma 390 디자인 기준 리터럴 px
 const GRID_COL_ORDER = 20;
-const GRID_COL_IMAGE = 52;
+const GRID_COL_IMAGE = 65;
 const GRID_COL_ACTION = 22;
 const ROW_GAP = 12;
-const ROW_PADDING_Y = 8;
-const ORDER_BADGE_SIZE = 20;
+const ROW_PADDING_Y = 10;
+const ORDER_BADGE_SIZE = 18;
 const ORDER_BADGE_FONT_SIZE = 11;
 const ORDER_ICON_PADDING_TOP = 2;
 const CONNECTOR_MARGIN_Y = 6;
-const IMAGE_SIZE = 52;
+const IMAGE_SIZE = 65;
 const IMAGE_RADIUS = 10;
 const CONTENT_PADDING_TOP = 2;
 const NAME_FONT_SIZE = 14;
@@ -26,7 +27,7 @@ const LIKE_ICON_SIZE = 18;
 export interface CourseStopItemProps {
   readonly stop: CourseStop;
   readonly isLast: boolean;
-  readonly onLikeToggle?: () => void;
+  readonly onLikeToggle: () => void;
 }
 
 export function CourseStopItem({
@@ -38,16 +39,13 @@ export function CourseStopItem({
   const [transportType, ...transportRest] = (stop.transportToNext ?? '').split(
     ' '
   );
+  const isActive = stop.liked;
 
   return (
     <article
       className="relative grid items-start"
       style={{
-        gridTemplateColumns: `${GRID_COL_ORDER * scale}px ${GRID_COL_IMAGE * scale}px minmax(0,1fr) ${
-          onLikeToggle
-            ? GRID_COL_ACTION * scale
-            : GRID_COL_ACTION * scale
-        }px`,
+        gridTemplateColumns: `${GRID_COL_ORDER * scale}px ${GRID_COL_IMAGE * scale}px minmax(0,1fr) ${GRID_COL_ACTION * scale}px`,
         gap: ROW_GAP * scale,
         paddingTop: ROW_PADDING_Y * scale,
         paddingBottom: ROW_PADDING_Y * scale,
@@ -58,7 +56,7 @@ export function CourseStopItem({
         style={{ paddingTop: ORDER_ICON_PADDING_TOP * scale }}
       >
         <span
-          className="flex shrink-0 items-center justify-center rounded-full bg-[#FF5C38] leading-none font-bold text-white shadow-xs"
+          className="bg-main-5 flex shrink-0 items-center justify-center rounded-full leading-none font-bold text-white"
           style={{
             height: ORDER_BADGE_SIZE * scale,
             width: ORDER_BADGE_SIZE * scale,
@@ -70,7 +68,7 @@ export function CourseStopItem({
 
         {!isLast && (
           <span
-            className="w-0 flex-1 border-l border-dashed border-[#FF5C38]/60"
+            className="border-main-5/60 w-0 flex-1 border-l border-dashed"
             style={{
               marginTop: CONNECTOR_MARGIN_Y * scale,
               marginBottom: CONNECTOR_MARGIN_Y * scale,
@@ -95,13 +93,13 @@ export function CourseStopItem({
         style={{ paddingTop: CONTENT_PADDING_TOP * scale }}
       >
         <h3
-          className="truncate leading-tight font-bold text-[#1C1C1C]"
+          className="truncate leading-tight font-bold"
           style={{ fontSize: NAME_FONT_SIZE * scale }}
         >
           {stop.name}
         </h3>
         <p
-          className="truncate font-normal text-[#888888]"
+          className="text-gray-4 truncate font-normal"
           style={{
             marginTop: META_MARGIN_TOP * scale,
             fontSize: META_FONT_SIZE * scale,
@@ -112,7 +110,7 @@ export function CourseStopItem({
         </p>
         {stop.hours && (
           <p
-            className="truncate font-normal text-[#888888]"
+            className="text-gray-3 truncate font-sans"
             style={{
               fontSize: META_FONT_SIZE * scale,
               lineHeight: `${META_LINE_HEIGHT * scale}px`,
@@ -124,48 +122,39 @@ export function CourseStopItem({
 
         {stop.transportToNext && (
           <p
-            className="truncate font-normal text-[#888888]"
+            className="text-gray-4 truncate font-sans"
             style={{
               marginTop: TRANSPORT_MARGIN_TOP * scale,
               fontSize: META_FONT_SIZE * scale,
               lineHeight: `${META_LINE_HEIGHT * scale}px`,
             }}
           >
-            <span className="font-semibold text-[#666666]">
-              {transportType}
-            </span>{' '}
+            <span className="text-gray-4 font-semibold">{transportType}</span>{' '}
             {transportRest.join(' ')}
           </p>
         )}
       </div>
 
-      {onLikeToggle && (
-        <button
-          type="button"
-          aria-label={`${stop.name} 좋아요 ${stop.liked ? '취소' : '추가'}`}
-          aria-pressed={stop.liked}
-          onClick={onLikeToggle}
-          className={`flex items-center justify-center ${
-            stop.liked ? 'text-[#FF5C38]' : 'text-gray-300'
-          }`}
+      <button
+        type="button"
+        aria-label={`${stop.name} 좋아요 ${isActive ? '취소' : '추가'}`}
+        aria-pressed={isActive}
+        onClick={onLikeToggle}
+        className="flex items-center justify-center drop-shadow-xs transition-colors"
+        style={{
+          marginTop: LIKE_BUTTON_MARGIN_TOP * scale,
+          height: LIKE_BUTTON_SIZE * scale,
+          width: LIKE_BUTTON_SIZE * scale,
+        }}
+      >
+        <FilledHeartIcon
+          className={`fill-current ${isActive ? 'text-main-5' : 'text-gray-2'}`}
           style={{
-            marginTop: LIKE_BUTTON_MARGIN_TOP * scale,
-            height: LIKE_BUTTON_SIZE * scale,
-            width: LIKE_BUTTON_SIZE * scale,
+            height: LIKE_ICON_SIZE * scale,
+            width: LIKE_ICON_SIZE * scale,
           }}
-        >
-          <svg
-            className="fill-current"
-            viewBox="0 0 24 24"
-            style={{
-              height: LIKE_ICON_SIZE * scale,
-              width: LIKE_ICON_SIZE * scale,
-            }}
-          >
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-          </svg>
-        </button>
-      )}
+        />
+      </button>
     </article>
   );
 }

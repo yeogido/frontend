@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -8,6 +8,8 @@ import {
 } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useAuthStore } from '../../../store/auth.store';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 
 import { FestivalFilterBar } from '../components';
@@ -32,6 +34,11 @@ const LOAD_MORE_HEIGHT = 40;
 
 function FestivalSearchPage() {
   const scale = useGlobalScale();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
+  const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
+    {}
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
@@ -94,6 +101,18 @@ function FestivalSearchPage() {
     setSearchParams(nextSearchParams);
   };
 
+  const handleLikeClick = (festivalId: number | string, isLiked: boolean) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    setLikedOverrides((previous) => ({
+      ...previous,
+      [String(festivalId)]: !isLiked,
+    }));
+  };
+
   return (
     <section
       className="mx-auto flex min-h-screen w-full flex-col bg-background"
@@ -144,9 +163,15 @@ function FestivalSearchPage() {
                 title={festival.title}
                 firstInfo={festival.period}
                 secondInfo={festival.location}
-                liked={festival.liked}
+                liked={likedOverrides[String(festival.id)] ?? festival.liked}
                 tags={festival.tags}
                 className="w-full"
+                onLikeClick={() =>
+                  handleLikeClick(
+                    festival.id,
+                    likedOverrides[String(festival.id)] ?? festival.liked
+                  )
+                }
               />
             ))}
 

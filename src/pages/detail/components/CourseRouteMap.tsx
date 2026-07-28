@@ -12,7 +12,7 @@ import type { CourseStop } from '../types/courseDetail';
 // (카카오맵 SDK 컨테이너 관련: height/border-radius는 순수 CSS 크기값이라 스케일 적용 가능,
 //  transform: scale()은 절대 사용하지 않음)
 const HEADER_MARGIN_BOTTOM = 15;
-const MAP_HEIGHT = 280;
+const MAP_HEIGHT = 342;
 const MAP_RADIUS = 18;
 const EMPTY_STATE_FONT_SIZE = 14;
 
