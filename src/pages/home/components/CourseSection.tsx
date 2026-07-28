@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import {
   CourseCard,
   CourseCardSkeleton,
-  LoginRequiredModal,
   SectionHeader,
 } from '../../../components/common';
 import type { TagType } from '../../../components/common/TagChip';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useAuthStore } from '../../../store/auth.store';
 
 const SECTION_MARGIN_TOP = 32;
 const SECTION_PADDING_X = 24;
@@ -33,11 +34,8 @@ function CourseSection() {
 
   const navigate = useNavigate();
   const scale = useGlobalScale();
-
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-  // TODO: 로그인 연동 후 실제 로그인 상태로 변경
-  const isLoggedIn = false;
+  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
 
   const [courses, setCourses] = useState<Course[]>([
     {
@@ -64,7 +62,7 @@ function CourseSection() {
 
   const handleLikeClick = (courseId: number) => {
     if (!isLoggedIn) {
-      setIsLoginModalOpen(true);
+      openLoginModal();
       return;
     }
 
@@ -84,8 +82,7 @@ function CourseSection() {
   };
 
   return (
-    <>
-      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
+    <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
         <div
           style={{
             paddingLeft: SECTION_PADDING_X * scale,
@@ -129,17 +126,7 @@ function CourseSection() {
             </>
           )}
         </div>
-      </section>
-
-      <LoginRequiredModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onLogin={() => {
-          setIsLoginModalOpen(false);
-          navigate('/login');
-        }}
-      />
-    </>
+    </section>
   );
 }
 

@@ -27,7 +27,7 @@ const LIKE_ICON_SIZE = 18;
 export interface CourseStopItemProps {
   readonly stop: CourseStop;
   readonly isLast: boolean;
-  readonly onLikeToggle?: () => void;
+  readonly onLikeToggle: () => void;
 }
 
 export function CourseStopItem({

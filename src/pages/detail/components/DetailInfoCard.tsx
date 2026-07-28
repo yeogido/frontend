@@ -54,7 +54,7 @@ function DetailInfoCard({
     >
       <div
         ref={innerRef}
-        className="border-gray-2 flex flex-col rounded-xl border bg-white"
+        className="flex flex-col rounded-xl border border-gray-2 bg-white"
         style={{
           width: CARD_DESIGN_WIDTH,
           paddingLeft: CARD_PADDING_X,
@@ -106,3 +106,4 @@ function DetailInfoCard({
 }
 
 export default DetailInfoCard;
+
