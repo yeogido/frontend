@@ -1,6 +1,12 @@
 export const MAX_PHOTO_COUNT = 5;
 export const MAX_PHOTO_FILE_SIZE = 100 * 1024 * 1024;
 
+const supportedPhotoTypes = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+]);
+
 interface PhotoValidationResult {
   files: File[];
   message: string;
@@ -11,7 +17,7 @@ export const validateTravelRecordPhotos = (
   remainingCount: number,
 ): PhotoValidationResult => {
   const imageFiles = selectedFiles.filter((file) =>
-    file.type.startsWith('image/'),
+    supportedPhotoTypes.has(file.type),
   );
   const sizeValidFiles = imageFiles.filter(
     (file) => file.size <= MAX_PHOTO_FILE_SIZE,
