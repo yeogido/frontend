@@ -36,6 +36,7 @@ function FestivalPage() {
   const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
   const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
+  const [likedRecentIds, setLikedRecentIds] = useState<number[]>([]);
   const { featuredFestival, recentFestivals } =
     useFestivalPreviews();
   const {
@@ -73,6 +74,19 @@ function FestivalPage() {
     );
 
     // TODO: 좋아요 API 연동
+  };
+
+  const handleRecentLikeClick = (festivalId: number) => {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+
+    setLikedRecentIds((previousIds) =>
+      previousIds.includes(festivalId)
+        ? previousIds.filter((id) => id !== festivalId)
+        : [...previousIds, festivalId],
+    );
   };
 
   return (
@@ -188,14 +202,14 @@ function FestivalPage() {
               secondInfo={festival.location}
               liked={
                 isLoggedIn &&
-                (festival.liked || likedContentIds.includes(festival.id))
+                (festival.liked || likedRecentIds.includes(festival.id))
               }
               tags={festival.tags}
               className="w-full"
               onClick={() =>
                 navigate(buildFestivalDetailPath(festival.id))
               }
-              onLikeClick={() => handleLikeClick(festival.id)}
+              onLikeClick={() => handleRecentLikeClick(festival.id)}
             />
           ))}
         </div>

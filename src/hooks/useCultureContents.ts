@@ -18,7 +18,7 @@ export function useCultureContents(
   return useInfiniteQuery<
     GetCultureContentsResponse,
     Error,
-    InfiniteData<GetCultureContentsResponse>,
+    InfiniteData<GetCultureContentsResponse, CultureContentsPageParam>,
     [string, GetCultureContentsParams],
     CultureContentsPageParam
   >({
