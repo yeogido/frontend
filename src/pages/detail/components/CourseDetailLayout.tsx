@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CourseInfoBadgesCard } from './CourseInfoBadgesCard';
@@ -41,6 +41,19 @@ export function CourseDetailLayout({
   course,
   reviewType,
 }: CourseDetailLayoutProps) {
+  return (
+    <CourseDetailLayoutContent
+      key={course.id}
+      course={course}
+      reviewType={reviewType}
+    />
+  );
+}
+
+function CourseDetailLayoutContent({
+  course,
+  reviewType,
+}: CourseDetailLayoutProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -49,11 +62,6 @@ export function CourseDetailLayout({
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
   const { copied, isToastVisible, handleShare } = useShareToast();
-
-  useEffect(() => {
-    setIsLiked(course.liked);
-    setStops(course.stops);
-  }, [course.id]);
 
   const handleStopLikeToggle = (stopId: number) => {
     if (!isAuthenticated) {
