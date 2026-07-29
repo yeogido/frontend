@@ -50,10 +50,14 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
+  const isValidContentId = Number.isInteger(contentId) && contentId > 0;
   const {
     data: content,
-    error: contentError,
+    error: queryError,
   } = useCultureContentDetail(contentId);
+  const contentError = isValidContentId
+    ? queryError
+    : new Error('Invalid content ID');
   const [likedOverride, setLikedOverride] = useState<boolean | null>(null);
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null,
