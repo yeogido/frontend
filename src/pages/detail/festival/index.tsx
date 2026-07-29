@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -6,9 +6,11 @@ import {
   DetailHeroSection,
   DetailInfoCard,
   DetailPlaceCard,
+  DetailStateGuard,
   DetailTitleSection,
   FavoriteButton,
   ShareButton,
+  ShareToast,
 } from '../components';
 import {
   ResponsiveFullBleed,
@@ -24,20 +26,17 @@ import {
   toTelHref,
 } from '../mappers/festivalDetailMapper';
 import type { FestivalDetail } from '../types/festivalDetail';
+import { useMappedData } from '../hooks/useMappedData';
+import { useShareToast } from '../hooks/useShareToast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
-import { getGutter } from '../../../utils/responsiveLayout';
 import { buildCourseSearchPath } from '../../../utils/routes';
 import watermelonFestivalImage from '../../festival/assets/watermelon-festival.webp';
 
 // Figma 390 디자인 기준 리터럴 px ("여기도 추천 행사 상세뷰" 시안, 캔버스 390x1514)
 const PAGE_PADDING_BOTTOM = 32;
 const TITLE_SECTION_PADDING_TOP = 15;
-const TOAST_BOTTOM = 84;
-const TOAST_TEXT_PADDING_X = 16;
-const TOAST_TEXT_PADDING_Y = 8;
-const TOAST_TEXT_FONT_SIZE = 13;
 const SECTION_MARGIN_TOP = 16;
 const INFO_CARD_MARGIN_TOP = 24;
 const MAP_MARGIN_TOP = 24;
@@ -111,26 +110,11 @@ function FestivalDetailContent({ festivalId }: { festivalId?: string }) {
   const { openLoginModal } = useLoginModal();
 
   // 1. DTO Mapper를 통한 데이터 및 런타임 에러 검증
-  const { festival, error } = useMemo<{
-    festival: FestivalDetail | null;
-    error: string | null;
-  }>(() => {
-    try {
-      return {
-        festival: mapFestivalDetailDtoToViewModel(
-          rawMockDto,
-          festivalId ?? '1'
-        ),
-        error: null,
-      };
-    } catch (e) {
-      return {
-        festival: null,
-        error:
-          e instanceof Error ? e.message : '행사 정보를 불러오지 못했습니다.',
-      };
-    }
-  }, [festivalId]);
+  const { data: festival, error } = useMappedData<FestivalDetail>(
+    () => mapFestivalDetailDtoToViewModel(rawMockDto, festivalId ?? '1'),
+    [festivalId],
+    '행사 정보를 불러오지 못했습니다.'
+  );
 
   // 2. Page Level 좋아요 및 공유/토스트 State
   const [isLiked, setIsLiked] = useState(festival?.liked ?? false);
@@ -138,30 +122,7 @@ function FestivalDetailContent({ festivalId }: { festivalId?: string }) {
     festival?.place.liked ?? false
   );
   const [likedCourseIds, setLikedCourseIds] = useState<readonly number[]>([]);
-  const [copied, setCopied] = useState(false);
-  const [isToastVisible, setIsToastVisible] = useState(false);
-
-  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
-      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-    };
-  }, []);
-
-  const handleShare = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setIsToastVisible(true);
-      fadeTimerRef.current = setTimeout(() => setIsToastVisible(false), 1600);
-      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  };
+  const { copied, isToastVisible, handleShare } = useShareToast();
 
   const runAuthAction = (action: () => void) => {
     if (!isAuthenticated) {
@@ -189,179 +150,138 @@ function FestivalDetailContent({ festivalId }: { festivalId?: string }) {
     });
   };
 
-  if (error) {
-    return (
-      <ResponsivePageShell mode="main-layout" className="text-red-500">
-        <div
-          role="alert"
-          className="flex flex-1 items-center justify-center text-center"
-        >
-          {error}
-        </div>
-      </ResponsivePageShell>
-    );
-  }
-
-  if (!festival) {
-    return (
-      <ResponsivePageShell mode="standalone" className="text-gray-4">
-        <div
-          role="status"
-          className="flex flex-1 items-center justify-center text-center"
-        >
-          불러오는 중...
-        </div>
-      </ResponsivePageShell>
-    );
-  }
-
-  const mapCenter = festival.place.location;
-
   return (
-    <ResponsivePageShell
-      mode="main-layout"
-      bottomPadding={PAGE_PADDING_BOTTOM}
-      className="bg-white"
-    >
-      {/* 1. 히어로 영역 (우측 상단 좋아요 버튼 슬롯) */}
-      <ResponsiveFullBleed>
-        <DetailHeroSection
-          imageUrl={festival.heroImageUrl}
-          title={festival.title}
-          rightAction={
-            <FavoriteButton
-              isActive={isLiked}
-              label={festival.title}
-              onClick={handleFavoriteToggle}
-            />
-          }
-        />
-      </ResponsiveFullBleed>
+    <DetailStateGuard error={error} data={festival}>
+      {(festival) => {
+        const mapCenter = festival.place.location;
 
-      {/* 2. 제목 + 공유 버튼, 3. 카테고리 칩 */}
-      <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
-        <DetailTitleSection
-          title={festival.title}
-          tags={festival.tags}
-          action={
-            <ShareButton
-              onClick={handleShare}
-              label={`${festival.title} 공유하기`}
-            />
-          }
-        />
-      </div>
-
-      {copied && (
-        <div
-          className="pointer-events-none fixed bottom-0 left-1/2 z-[60] flex w-full max-w-[500px] -translate-x-1/2 justify-center"
-          style={{
-            bottom: `max(${TOAST_BOTTOM * scale}px, env(safe-area-inset-bottom, 0px))`,
-            paddingLeft: getGutter(scale),
-            paddingRight: getGutter(scale),
-          }}
-        >
-          <span
-            role="status"
-            className={`bg-gray-800 text-center font-medium text-white shadow-lg transition-all duration-300 ${
-              isToastVisible ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{
-              paddingLeft: TOAST_TEXT_PADDING_X * scale,
-              paddingRight: TOAST_TEXT_PADDING_X * scale,
-              paddingTop: TOAST_TEXT_PADDING_Y * scale,
-              paddingBottom: TOAST_TEXT_PADDING_Y * scale,
-              fontSize: TOAST_TEXT_FONT_SIZE * scale,
-              borderRadius: 999 * scale,
-            }}
+        return (
+          <ResponsivePageShell
+            mode="main-layout"
+            bottomPadding={PAGE_PADDING_BOTTOM}
+            className="bg-white"
           >
-            복사 됨
-          </span>
-        </div>
-      )}
+            {/* 1. 히어로 영역 (우측 상단 좋아요 버튼 슬롯) */}
+            <ResponsiveFullBleed>
+              <DetailHeroSection
+                imageUrl={festival.heroImageUrl}
+                title={festival.title}
+                rightAction={
+                  <FavoriteButton
+                    isActive={isLiked}
+                    label={festival.title}
+                    onClick={handleFavoriteToggle}
+                  />
+                }
+              />
+            </ResponsiveFullBleed>
 
-      {/* 4. 행사 소개 */}
-      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
-        <DetailDescriptionCard title="행사 소개" content={festival.overview} />
-      </section>
+            {/* 2. 제목 + 공유 버튼, 3. 카테고리 칩 */}
+            <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
+              <DetailTitleSection
+                title={festival.title}
+                tags={festival.tags}
+                action={
+                  <ShareButton
+                    onClick={handleShare}
+                    label={`${festival.title} 공유하기`}
+                  />
+                }
+              />
+            </div>
 
-      {/* 5. 행사 기본 정보 (주소 / 기간 / 전화번호 / 공식홈페이지) */}
-      <section style={{ marginTop: INFO_CARD_MARGIN_TOP * scale }}>
-        <DetailInfoCard
-          address={festival.address}
-          hours={festival.period}
-          phone={festival.phone}
-          website={festival.homepageLabel}
-          phoneHref={toTelHref(festival.phone)}
-          websiteHref={toSafeExternalUrl(festival.homepageUrl)}
-        />
-      </section>
+            <ShareToast copied={copied} isToastVisible={isToastVisible} />
 
-      {/* 6. 지도 */}
-      <div style={{ marginTop: MAP_MARGIN_TOP * scale }}>
-        {mapCenter ? (
-          <BaseKakaoMap center={mapCenter} markers={[mapCenter]} />
-        ) : (
-          <div
-            role="status"
-            className="bg-gray-2 text-gray-4 flex w-full items-center justify-center"
-            style={{
-              height: MAP_FALLBACK_HEIGHT * scale,
-              borderRadius: MAP_FALLBACK_RADIUS * scale,
-              fontSize: MAP_FALLBACK_FONT_SIZE * scale,
-            }}
-          >
-            등록된 행사 위치 정보가 없습니다.
-          </div>
-        )}
-      </div>
+            {/* 4. 행사 소개 */}
+            <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
+              <DetailDescriptionCard
+                title="행사 소개"
+                content={festival.overview}
+              />
+            </section>
 
-      {/* 7. 행사 장소 카드 */}
-      <div style={{ marginTop: PLACE_CARD_MARGIN_TOP * scale }}>
-        <DetailPlaceCard
-          imageUrl={festival.place.image}
-          title={festival.place.name}
-          address={festival.place.address}
-          hours={festival.place.hours}
-          liked={isPlaceLiked}
-          onLikeClick={handlePlaceLikeToggle}
-        />
-      </div>
+            {/* 5. 행사 기본 정보 (주소 / 기간 / 전화번호 / 공식홈페이지) */}
+            <section style={{ marginTop: INFO_CARD_MARGIN_TOP * scale }}>
+              <DetailInfoCard
+                address={festival.address}
+                hours={festival.period}
+                phone={festival.phone}
+                website={festival.homepageLabel}
+                phoneHref={toTelHref(festival.phone)}
+                websiteHref={toSafeExternalUrl(festival.homepageUrl)}
+              />
+            </section>
 
-      {/* 8. 이 행사가 포함된 코스 */}
-      <div style={{ marginTop: COURSE_SECTION_MARGIN_TOP * scale }}>
-        <SectionHeader
-          title="이 행사가 포함된 코스"
-          actionText="전체보기"
-          onActionClick={() =>
-            navigate(buildCourseSearchPath(festival.place.name))
-          }
-        />
-      </div>
+            {/* 6. 지도 */}
+            <div style={{ marginTop: MAP_MARGIN_TOP * scale }}>
+              {mapCenter ? (
+                <BaseKakaoMap center={mapCenter} markers={[mapCenter]} />
+              ) : (
+                <div
+                  role="status"
+                  className="bg-gray-2 text-gray-4 flex w-full items-center justify-center"
+                  style={{
+                    height: MAP_FALLBACK_HEIGHT * scale,
+                    borderRadius: MAP_FALLBACK_RADIUS * scale,
+                    fontSize: MAP_FALLBACK_FONT_SIZE * scale,
+                  }}
+                >
+                  등록된 행사 위치 정보가 없습니다.
+                </div>
+              )}
+            </div>
 
-      <div
-        className="flex flex-col"
-        style={{
-          marginTop: COURSE_LIST_MARGIN_TOP * scale,
-          gap: COURSE_CARD_GAP * scale,
-        }}
-      >
-        {festival.relatedCourses.map((course) => (
-          <CourseCard
-            key={course.id}
-            image={course.image}
-            title={course.title}
-            duration={course.duration}
-            courseType={course.courseType}
-            companion={course.companion}
-            tags={[...course.tags]}
-            liked={likedCourseIds.includes(course.id)}
-            onClick={() => navigate(`/yeogido-course/detail/${course.id}`)}
-            onLikeClick={() => handleCourseLikeToggle(course.id)}
-          />
-        ))}
-      </div>
-    </ResponsivePageShell>
+            {/* 7. 행사 장소 카드 */}
+            <div style={{ marginTop: PLACE_CARD_MARGIN_TOP * scale }}>
+              <DetailPlaceCard
+                imageUrl={festival.place.image}
+                title={festival.place.name}
+                address={festival.place.address}
+                hours={festival.place.hours}
+                liked={isPlaceLiked}
+                onLikeClick={handlePlaceLikeToggle}
+              />
+            </div>
+
+            {/* 8. 이 행사가 포함된 코스 */}
+            <div style={{ marginTop: COURSE_SECTION_MARGIN_TOP * scale }}>
+              <SectionHeader
+                title="이 행사가 포함된 코스"
+                actionText="전체보기"
+                onActionClick={() =>
+                  navigate(buildCourseSearchPath(festival.place.name))
+                }
+              />
+            </div>
+
+            <div
+              className="flex flex-col"
+              style={{
+                marginTop: COURSE_LIST_MARGIN_TOP * scale,
+                gap: COURSE_CARD_GAP * scale,
+              }}
+            >
+              {festival.relatedCourses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  image={course.image}
+                  title={course.title}
+                  duration={course.duration}
+                  courseType={course.courseType}
+                  companion={course.companion}
+                  tags={[...course.tags]}
+                  liked={likedCourseIds.includes(course.id)}
+                  onClick={() =>
+                    navigate(`/yeogido-course/detail/${course.id}`)
+                  }
+                  onLikeClick={() => handleCourseLikeToggle(course.id)}
+                />
+              ))}
+            </div>
+          </ResponsivePageShell>
+        );
+      }}
+    </DetailStateGuard>
   );
 }
 
