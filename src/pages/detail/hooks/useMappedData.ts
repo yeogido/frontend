@@ -24,7 +24,7 @@ export function useMappedData<T>(
         error: e instanceof Error ? e.message : fallbackErrorMessage,
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo
   }, deps);
 }
 
