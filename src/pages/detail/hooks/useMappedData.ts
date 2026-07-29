@@ -19,9 +19,10 @@ export function useMappedData<T>(
     try {
       return { data: mapFn(), error: null };
     } catch (e) {
+      console.error(e);
       return {
         data: null,
-        error: e instanceof Error ? e.message : fallbackErrorMessage,
+        error: fallbackErrorMessage,
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo
