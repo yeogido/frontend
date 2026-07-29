@@ -22,6 +22,8 @@ export function useShareToast() {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       setIsToastVisible(true);
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
       fadeTimerRef.current = setTimeout(
         () => setIsToastVisible(false),
         TOAST_VISIBLE_DURATION
