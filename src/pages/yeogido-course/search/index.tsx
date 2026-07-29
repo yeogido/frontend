@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -14,7 +14,9 @@ import {
 import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
 import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourseSearch';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLoginModal } from '../../../hooks/useLoginModal';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
+import { useAuthStore } from '../../../store/auth.store';
 
 import courseMapImage from '../assets/courseimage.svg';
 import { yeogidoCourseFilterGroups } from '../constants/filters';
@@ -37,6 +39,11 @@ const LOAD_MORE_HEIGHT = 40;
 function YeogidoCourseSearchPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
+  const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/yeogido-course/detail/${courseId}`);
@@ -107,6 +114,18 @@ function YeogidoCourseSearchPage() {
     setSearchParams(nextSearchParams);
   };
 
+  const handleLikeClick = (courseId: number | string, isLiked: boolean) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    setLikedOverrides((previous) => ({
+      ...previous,
+      [String(courseId)]: !isLiked,
+    }));
+  };
+
   return (
     <section
       className="mx-auto flex min-h-screen w-full flex-col"
@@ -159,8 +178,15 @@ function YeogidoCourseSearchPage() {
                   firstInfo={course.duration}
                   secondInfo={course.courseName}
                   tags={course.tags}
+                  liked={likedOverrides[String(course.id)] ?? false}
                   className="w-full"
                   onClick={() => handleCourseClick(course.id)}
+                  onLikeClick={() =>
+                    handleLikeClick(
+                      course.id,
+                      likedOverrides[String(course.id)] ?? false
+                    )
+                  }
                 />
               ))}
 

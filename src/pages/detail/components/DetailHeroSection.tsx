@@ -3,7 +3,7 @@ import React from 'react';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // Figma 390 디자인 기준 리터럴 px
-const HERO_HEIGHT = 230;
+const HERO_HEIGHT = 296;
 const ACTION_OFFSET = 16;
 
 export interface DetailHeroSectionProps {

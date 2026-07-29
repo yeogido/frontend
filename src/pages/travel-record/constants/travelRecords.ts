@@ -22,6 +22,7 @@ export const TRAVEL_RECORD_FOLDERS: TravelRecordFolder[] = [
     startDate: '2026-11-25',
     period: '11.25 - 11.30',
     photos: [yeosuFirstImage, yeosuSecondImage],
+    decorations: [],
   },
   {
     id: 'wando',
@@ -32,6 +33,7 @@ export const TRAVEL_RECORD_FOLDERS: TravelRecordFolder[] = [
     startDate: '2026-09-11',
     period: '09.11 - 09.13',
     photos: [wandoFirstImage, wandoSecondImage],
+    decorations: [],
   },
   {
     id: 'busan',
@@ -48,6 +50,7 @@ export const TRAVEL_RECORD_FOLDERS: TravelRecordFolder[] = [
       busanFourthImage,
       busanFifthImage,
     ],
+    decorations: [],
   },
   {
     id: 'boryeong',
@@ -58,6 +61,7 @@ export const TRAVEL_RECORD_FOLDERS: TravelRecordFolder[] = [
     startDate: '2026-05-14',
     period: '05.14 - 05.16',
     photos: [boryeongFirstImage, boryeongSecondImage],
+    decorations: [],
   },
 ];
 

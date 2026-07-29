@@ -6,6 +6,7 @@ import {
   SectionHeader,
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { buildFestivalDetailPath } from '../../utils/routes';
 
 import { FeaturedFestivalBanner } from './components';
 import useFestivalPreviews from './hooks/useFestivalPreviews';
@@ -113,7 +114,9 @@ function FestivalPage() {
               liked={festival.liked}
               tags={festival.tags}
               className="w-full"
-              onClick={goToFestivalSearch}
+              onClick={() =>
+                navigate(buildFestivalDetailPath(festival.id))
+              }
             />
           ))}
         </div>
@@ -143,7 +146,9 @@ function FestivalPage() {
               liked={festival.liked}
               tags={festival.tags}
               className="w-full"
-              onClick={goToFestivalSearch}
+              onClick={() =>
+                navigate(buildFestivalDetailPath(festival.id))
+              }
             />
           ))}
         </div>

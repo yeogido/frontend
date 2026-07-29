@@ -8,9 +8,9 @@ const HEADER_GAP = 12;
 const TITLE_FONT_SIZE = 20;
 const TITLE_LINE_HEIGHT = 28;
 const ACTION_PADDING_TOP = 2;
-const TAGS_MARGIN_TOP = 10;
-const TAGS_GAP = 6;
-const TAG_HEIGHT = 26;
+const TAGS_MARGIN_TOP = 0;
+const TAGS_GAP = 9;
+const TAG_HEIGHT = 24;
 
 export interface DetailTitleSectionProps {
   readonly title: string;

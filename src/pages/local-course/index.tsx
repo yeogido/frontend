@@ -8,6 +8,8 @@ import {
   SectionHeader,
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useLoginModal } from '../../hooks/useLoginModal';
+import { useAuthStore } from '../../store/auth.store';
 
 import { CreateCourseBanner } from './components';
 import useLocalCoursePreviews from './hooks/useLocalCoursePreviews';
@@ -29,6 +31,8 @@ const LIST_GAP = 16;
 function LocalCoursePage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
   const { popularCourses, recentCourses } = useLocalCoursePreviews();
 
   const goToRegionSearch = () => {
@@ -39,12 +43,25 @@ function LocalCoursePage() {
     navigate('/local-recommendation');
   };
 
+  const handleCreateCourse = () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    goToCreateCourse();
+  };
+
   const goToPopularCourses = () => {
     navigate('/local-course/popular');
   };
 
   const goToRecentCourses = () => {
     navigate('/local-course/recent');
+  };
+
+  const goToCourseDetail = (courseId: number) => {
+    navigate(`/local-course/detail/${courseId}`);
   };
 
   return (
@@ -114,6 +131,7 @@ function LocalCoursePage() {
               secondInfo={course.courseType}
               liked={course.liked}
               tags={course.tags}
+              onClick={() => goToCourseDetail(course.id)}
             />
           ))}
         </div>
@@ -135,13 +153,19 @@ function LocalCoursePage() {
         >
           {recentCourses.map((course) => (
             <div key={course.id} className="w-full">
-              <CourseCard {...course} />
+              <CourseCard
+                {...course}
+                onClick={() => goToCourseDetail(course.id)}
+              />
             </div>
           ))}
         </div>
       </section>
 
-      <FloatingActionButton ariaLabel="코스 만들기" onClick={goToCreateCourse} />
+      <FloatingActionButton
+        ariaLabel="코스 만들기"
+        onClick={handleCreateCourse}
+      />
     </section>
   );
 }
