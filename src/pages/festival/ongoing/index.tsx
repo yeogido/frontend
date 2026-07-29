@@ -1,16 +1,21 @@
-import { useCallback } from 'react';
+import {
+  useCallback,
+  useState,
+} from 'react';
 
 import {
   ContentCard,
   ContentCardSkeleton,
 } from '../../../components/common';
+import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useAuthStore } from '../../../store/auth.store';
 
 import { FestivalFilterBar } from '../components';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
 import useFestivalFilters from '../hooks/useFestivalFilters';
-import useFestivals from '../hooks/useFestivals';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -27,8 +32,18 @@ const ERROR_MARGIN_TOP = 24;
 const MESSAGE_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
 
+const contentSortByFestivalSort = {
+  RECOMMENDED: 'RECOMMEND',
+  SAVED: 'LIKE',
+  DISTANCE: 'DISTANCE',
+  ENDING_SOON: 'DEADLINE',
+} as const;
+
 function FestivalOngoingPage() {
   const scale = useGlobalScale();
+  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
+  const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
   const {
     selectedFilters,
     handleSortSelect,
@@ -41,12 +56,16 @@ function FestivalOngoingPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useFestivals({
-    filters: selectedFilters,
-    status: 'ONGOING',
+  } = useCultureContents({
+    category:
+      selectedFilters.category === 'ALL'
+        ? undefined
+        : selectedFilters.category,
+    sort: contentSortByFestivalSort[selectedFilters.sort],
+    size: 20,
   });
 
-  const festivals = data?.pages.flatMap((page) => page.content) ?? [];
+  const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
 
   const handleIntersect = useCallback(() => {
@@ -59,6 +78,21 @@ function FestivalOngoingPage() {
     enabled: Boolean(hasNextPage) && !isPending,
     onIntersect: handleIntersect,
   });
+
+  const handleLikeClick = (contentId: number) => {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+
+    setLikedContentIds((previousIds) =>
+      previousIds.includes(contentId)
+        ? previousIds.filter((id) => id !== contentId)
+        : [...previousIds, contentId],
+    );
+
+    // TODO: 좋아요 API 연동
+  };
 
   return (
     <section
@@ -117,14 +151,18 @@ function FestivalOngoingPage() {
             ))
           : festivals.map((festival) => (
               <ContentCard
-                key={festival.id}
-                image={festival.image}
+                key={festival.contentId}
+                image={festival.thumbnailImageUrl}
                 title={festival.title}
-                firstInfo={festival.period}
-                secondInfo={festival.location}
-                liked={festival.liked}
-                tags={festival.tags}
+                firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                secondInfo={festival.regionName}
+                tags={[]}
+                liked={
+                  isLoggedIn &&
+                  likedContentIds.includes(festival.contentId)
+                }
                 className="w-full"
+                onLikeClick={() => handleLikeClick(festival.contentId)}
               />
             ))}
 
