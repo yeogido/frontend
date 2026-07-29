@@ -60,6 +60,10 @@ function LocalCoursePage() {
     navigate('/local-course/recent');
   };
 
+  const goToCourseDetail = (courseId: number) => {
+    navigate(`/local-course/detail/${courseId}`);
+  };
+
   return (
     <section
       className="mx-auto flex min-h-screen w-full flex-col"
@@ -127,6 +131,7 @@ function LocalCoursePage() {
               secondInfo={course.courseType}
               liked={course.liked}
               tags={course.tags}
+              onClick={() => goToCourseDetail(course.id)}
             />
           ))}
         </div>
@@ -148,13 +153,19 @@ function LocalCoursePage() {
         >
           {recentCourses.map((course) => (
             <div key={course.id} className="w-full">
-              <CourseCard {...course} />
+              <CourseCard
+                {...course}
+                onClick={() => goToCourseDetail(course.id)}
+              />
             </div>
           ))}
         </div>
       </section>
 
-      <FloatingActionButton ariaLabel="코스 만들기" onClick={handleCreateCourse} />
+      <FloatingActionButton
+        ariaLabel="코스 만들기"
+        onClick={handleCreateCourse}
+      />
     </section>
   );
 }
