@@ -7,3 +7,7 @@ export function buildCourseSearchPath(keyword: string) {
 
   return `/yeogido-course/search?${searchParams.toString()}`;
 }
+
+export function buildLocalBusinessDetailPath(businessId: number | string) {
+  return `/local-business/detail/${businessId}`;
+}
