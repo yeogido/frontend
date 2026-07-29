@@ -3,7 +3,7 @@ import axios from 'axios';
 import type {
   ApiErrorResponse,
   NormalizedApiError,
-} from './api.types';
+} from './apiTypes';
 
 const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
 const UNKNOWN_ERROR_CODE = 'UNKNOWN_ERROR';
