@@ -18,6 +18,43 @@ export interface CultureContent {
   endDate: string;
 }
 
+export interface CultureContentPlace {
+  placeId: number;
+  name: string;
+  roadAddress: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface CultureContentCourse {
+  courseId: number;
+  title: string;
+  thumbnailImage?: string;
+  thumbnailImageUrl?: string;
+  description: string;
+  durationType?: string;
+  duration?: string;
+  transportType: string;
+  companionType: string;
+  liked: boolean;
+}
+
+export interface CultureContentDetail {
+  contentId: number;
+  title: string;
+  description: string;
+  thumbnailImage?: string;
+  thumbnailImageUrl?: string;
+  hashtags: string[];
+  startDate: string;
+  endDate: string;
+  liked: boolean;
+  phone: string;
+  officialUrl: string;
+  place: CultureContentPlace;
+  courses: CultureContentCourse[];
+}
+
 export interface GetCultureContentsResponse {
   items: CultureContent[];
   cursorValue: string;
