@@ -47,6 +47,21 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
     };
   }
 
+  // throw data; 형태의 ApiErrorResponse 처리
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    'message' in error &&
+    typeof error.code === 'string' &&
+    typeof error.message === 'string'
+  ) {
+    return {
+      code: error.code,
+      message: error.message,
+    };
+  }
+
   if (error instanceof Error) {
     return {
       code: UNKNOWN_ERROR_CODE,
