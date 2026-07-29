@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuthStore } from '../../store/auth.store';
 
 import { normalizeApiError } from './apiError';
-import type { ApiResponse } from './api.types';
+import type { ApiResponse } from './apiTypes';
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
