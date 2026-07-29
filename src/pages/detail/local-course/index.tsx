@@ -21,9 +21,9 @@ function LocalCourseDetailPage() {
 
   const { data: course, error } = useMappedData<CourseDetail>(
     () => {
-      const localCourse =
-        localCourseMockData.find((item) => String(item.id) === courseId) ??
-        localCourseMockData[0];
+      const localCourse = localCourseMockData.find(
+        (item) => String(item.id) === courseId
+      );
 
       if (!localCourse) {
         throw new Error('코스 정보를 찾을 수 없습니다.');
