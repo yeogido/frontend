@@ -67,13 +67,14 @@ function LocalBusinessDetailContent({ businessId }: { businessId?: string }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
 
-  const business = useMemo<BusinessItem>(
-    () =>
-      localBusinessMockData.find((item) => item.id === businessId) ??
-      localBusinessMockData[0],
+  const business = useMemo<BusinessItem | undefined>(
+    () => localBusinessMockData.find((item) => item.id === businessId),
     [businessId]
   );
-  const tags = useMemo(() => toDetailTags(business), [business]);
+  const tags = useMemo(
+    () => (business ? toDetailTags(business) : []),
+    [business]
+  );
 
   // 이 시안에는 히어로에 별도 좋아요 버튼이 없고, 하단 관련 매장 카드의
   // 하트 아이콘만 좋아요 액션을 담당한다.
@@ -94,6 +95,8 @@ function LocalBusinessDetailContent({ businessId }: { businessId?: string }) {
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
       setCopied(true);
       setIsToastVisible(true);
       fadeTimerRef.current = setTimeout(() => setIsToastVisible(false), 1600);
@@ -114,6 +117,19 @@ function LocalBusinessDetailContent({ businessId }: { businessId?: string }) {
   const handlePlaceLikeToggle = () => {
     runAuthAction(() => setIsPlaceLiked((prev) => !prev));
   };
+
+  if (!business) {
+    return (
+      <ResponsivePageShell mode="standalone" className="text-gray-4">
+        <div
+          role="status"
+          className="flex flex-1 items-center justify-center text-center"
+        >
+          업체를 찾을 수 없습니다.
+        </div>
+      </ResponsivePageShell>
+    );
+  }
 
   return (
     <ResponsivePageShell
