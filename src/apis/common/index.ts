@@ -5,4 +5,4 @@ export type {
   ApiResponse,
   CursorResponse,
   NormalizedApiError,
-} from './api.types';
+} from './apiTypes';
