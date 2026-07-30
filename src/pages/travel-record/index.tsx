@@ -102,19 +102,19 @@ function TravelRecordPage() {
     () => getTravelRecordYears(displayedFolders),
     [displayedFolders],
   );
-  useEffect(() => {
-    setSelectedYear((year) =>
-      getValidTravelRecordYear(years, year, new Date().getFullYear()),
-    );
-  }, [years]);
+  const validSelectedYear = getValidTravelRecordYear(
+    years,
+    selectedYear,
+    new Date().getFullYear(),
+  );
   const visibleFolders = useMemo(
     () =>
       displayedFolders
-        .filter((folder) => folder.year === selectedYear)
+        .filter((folder) => folder.year === validSelectedYear)
         .sort((currentFolder, nextFolder) =>
           nextFolder.startDate.localeCompare(currentFolder.startDate)
         ),
-    [displayedFolders, selectedYear]
+    [displayedFolders, validSelectedYear]
   );
   const handleFolderClick = (folder: TravelRecordFolder) => {
     navigate(`/travel-record/${folder.id}`, { state: { folder } });
@@ -146,7 +146,7 @@ function TravelRecordPage() {
       </div>
 
       <TravelYearDropdown
-        value={selectedYear}
+        value={validSelectedYear}
         years={years}
         onChange={setSelectedYear}
       />
