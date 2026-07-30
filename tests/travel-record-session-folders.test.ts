@@ -4,6 +4,8 @@ import test from 'node:test';
 import type { TravelRecordFolder } from '../src/pages/travel-record/types';
 import {
   applyTravelRecordSessionChanges,
+  formatTravelRecordLocalDate,
+  getValidTravelRecordYear,
   getTravelRecordYears,
 } from '../src/pages/travel-record/utils/sessionFolders.ts';
 
@@ -39,4 +41,17 @@ test('uses the session-edited folders to build selectable travel years', () => {
   ];
 
   assert.deepEqual(getTravelRecordYears(folders), [2026, 2025]);
+});
+
+test('formats travel record dates in local calendar time', () => {
+  assert.equal(
+    formatTravelRecordLocalDate(new Date(2026, 6, 1)),
+    '2026-07-01',
+  );
+});
+
+test('selects an available year when the current travel record year disappears', () => {
+  assert.equal(getValidTravelRecordYear([2026, 2025], 2024, 2026), 2026);
+  assert.equal(getValidTravelRecordYear([2026, 2025], 2025, 2026), 2025);
+  assert.equal(getValidTravelRecordYear([], 2025, 2026), 2026);
 });

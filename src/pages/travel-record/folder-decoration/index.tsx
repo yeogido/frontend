@@ -22,6 +22,7 @@ import {
   getTravelRecordDraftDateRange,
   getTravelRecordDraftRegion,
 } from '../utils/draftStorage';
+import { formatTravelRecordLocalDate } from '../utils/sessionFolders';
 import {
   clearTravelRecordPhotoDraft,
   createTravelRecordDraftPayload,
@@ -72,11 +73,12 @@ function TravelRecordFolderDecorationPage() {
   const editSession = useTravelRecordSessionStore((state) => state.editSession);
   const saveMockFolder = useTravelRecordSessionStore((state) => state.saveMockFolder);
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
+  const restoredDecorations = editSession?.decorations ?? [];
   const [decorations, setDecorations] = useState<TravelFolderDecoration[]>(
-    () => editSession?.decorations ?? [],
+    () => restoredDecorations,
   );
   const [uploadedStickers, setUploadedStickers] = useState<UploadedFolderSticker[]>([]);
-  const decorationsRef = useRef<TravelFolderDecoration[]>([]);
+  const decorationsRef = useRef<TravelFolderDecoration[]>(restoredDecorations);
   const uploadedStickersRef = useRef<UploadedFolderSticker[]>([]);
   const { showToast } = useToast();
   const isSavingRef = useRef(false);
@@ -178,8 +180,8 @@ function TravelRecordFolderDecorationPage() {
           regionName: selectedRegion.selectionName || selectedRegion.name,
           title: selectedRegion.selectionName || selectedRegion.name,
           year: selectedDateRange.startDate.getFullYear(),
-          startDate: selectedDateRange.startDate.toISOString().slice(0, 10),
-          endDate: selectedDateRange.endDate.toISOString().slice(0, 10),
+          startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),
+          endDate: formatTravelRecordLocalDate(selectedDateRange.endDate),
           period: formatPeriod(selectedDateRange.startDate, selectedDateRange.endDate),
           photos,
           decorations,

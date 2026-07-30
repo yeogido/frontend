@@ -18,6 +18,7 @@ import {
 } from './utils/travelRecordSave';
 import {
   applyTravelRecordSessionChanges,
+  getValidTravelRecordYear,
   getTravelRecordYears,
 } from './utils/sessionFolders';
 
@@ -101,6 +102,11 @@ function TravelRecordPage() {
     () => getTravelRecordYears(displayedFolders),
     [displayedFolders],
   );
+  useEffect(() => {
+    setSelectedYear((year) =>
+      getValidTravelRecordYear(years, year, new Date().getFullYear()),
+    );
+  }, [years]);
   const visibleFolders = useMemo(
     () =>
       displayedFolders
