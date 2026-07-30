@@ -155,6 +155,7 @@ function TravelRecordPage() {
       <FloatingActionButton
         ariaLabel={addTravelRecordLabel}
         onClick={() => navigate('/travel-record/new')}
+        bottomOffset={40}
       />
     </TravelRecordPageFrame>
   );

@@ -406,7 +406,7 @@ function TravelRecordDetailPage() {
               id="travel-record-action-menu"
               role="menu"
               aria-label="여행 기록 작업"
-              className="absolute top-9 right-0 w-[84px] overflow-hidden rounded-xl border border-[#e4e4e4] bg-[#f9f9f9] py-1 shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+              className="absolute top-9 right-0 w-[104px] overflow-hidden rounded-2xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
             >
               {[
                 { label: '수정', onClick: () => void handleEdit() },
@@ -421,7 +421,7 @@ function TravelRecordDetailPage() {
                     setIsActionMenuOpen(false);
                     onClick();
                   }}
-                  className="flex h-9 w-full items-center px-3 text-left text-sm text-[#7f7f7f] hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none"
+                  className="flex h-[42px] w-full items-center border-b border-[#e4e4e4] px-4 text-left text-sm font-medium text-[#7f7f7f] last:border-b-0 hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none"
                 >
                   {label}
                 </button>

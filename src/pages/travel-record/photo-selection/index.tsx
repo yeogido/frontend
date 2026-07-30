@@ -126,6 +126,7 @@ function TravelRecordPhotoSelectionPage() {
         onPhotoPointerUp={handlePhotoPointerUp}
         onRegisterPhotoItem={registerPhotoItem}
         onRemovePhoto={removePhoto}
+        onAddPhoto={openFilePicker}
       />
 
       <PhotoSelectionTip />

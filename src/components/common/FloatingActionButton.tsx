@@ -5,19 +5,21 @@ import { APP_MAX_WIDTH, GLOBAL_DESIGN_WIDTH } from '../../constants/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 
 const BUTTON_SIZE = 56;
-const BUTTON_BOTTOM = 84;
+const BUTTON_BOTTOM = 40;
 const BUTTON_RIGHT = 24;
 const ICON_SIZE = 32;
 
 interface FloatingActionButtonProps {
   ariaLabel: string;
   onClick: () => void;
+  bottomOffset?: number;
   className?: string;
 }
 
 function FloatingActionButton({
   ariaLabel,
   onClick,
+  bottomOffset = BUTTON_BOTTOM,
   className = '',
 }: FloatingActionButtonProps) {
   const scale = useGlobalScale();
@@ -29,7 +31,7 @@ function FloatingActionButton({
       className={`fixed z-30 flex items-center justify-center rounded-full bg-[#1C1C1C] ${className}`}
       style={{
         right: `max(${BUTTON_RIGHT * scale}px, calc((100% - ${APP_MAX_WIDTH}px) / 2 + ${BUTTON_RIGHT * (APP_MAX_WIDTH / GLOBAL_DESIGN_WIDTH)}px))`,
-        bottom: BUTTON_BOTTOM * scale,
+        bottom: bottomOffset * scale,
         width: BUTTON_SIZE * scale,
         height: BUTTON_SIZE * scale,
       }}

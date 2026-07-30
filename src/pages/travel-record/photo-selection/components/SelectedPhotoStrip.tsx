@@ -21,6 +21,7 @@ interface SelectedPhotoStripProps {
   onPhotoPointerUp: (event: PointerEvent<HTMLDivElement>) => void;
   onRegisterPhotoItem: (photoId: string, node: HTMLDivElement | null) => void;
   onRemovePhoto: (photo: SelectedPhoto) => void;
+  onAddPhoto: () => void;
 }
 
 const selectedPhotosTitle = '\uC120\uD0DD\uB41C \uC0AC\uC9C4';
@@ -35,6 +36,7 @@ function SelectedPhotoStrip({
   onPhotoPointerUp,
   onRegisterPhotoItem,
   onRemovePhoto,
+  onAddPhoto,
 }: SelectedPhotoStripProps) {
   return (
     <section
@@ -95,13 +97,13 @@ function SelectedPhotoStrip({
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={() => onRemovePhoto(photo)}
                   aria-label={`${selectedPhotosTitle} ${photoNumber} \uC0AD\uC81C`}
-                  className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-[#f9f9f9] shadow-[0_2px_8px_rgba(0,0,0,0.16)]"
+                  className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-[#7f7f7f]/80 shadow-[0_2px_8px_rgba(0,0,0,0.16)]"
                 >
                   <img
                     src={removeIcon}
                     alt=""
                     aria-hidden="true"
-                    className="size-4"
+                    className="size-4 brightness-0 invert"
                   />
                 </button>
               </div>
@@ -109,13 +111,15 @@ function SelectedPhotoStrip({
           }
 
           return (
-            <span
+            <button
+              type="button"
               key={`empty-photo-slot-${index}`}
-              aria-hidden="true"
+              aria-label={`${selectedPhotosTitle} ${index + 1} 추가`}
+              onClick={onAddPhoto}
               className="flex size-14 items-center justify-center rounded-xl bg-[#e4e4e4]"
             >
               <img src={addIcon} alt="" aria-hidden="true" className="size-6" />
-            </span>
+            </button>
           );
         })}
       </div>
