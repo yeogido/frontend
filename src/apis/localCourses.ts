@@ -1,3 +1,4 @@
+import { apiClient } from './common';
 import { regionSearchKeywords } from '../constants/regions';
 import {
   localCourseFilterGroups,
@@ -82,7 +83,7 @@ function getFilteredCourses(
       filters.transport === ALL_FILTER_LABEL ||
       course.courseType.includes(
         TRANSPORT_COURSE_TYPE_LABELS[filters.transport] ?? filters.transport
-    );
+      );
     const matchesDuration =
       filters.duration === ALL_FILTER_LABEL ||
       course.duration === filters.duration;
@@ -103,7 +104,9 @@ function createMockCourse(
   return {
     ...baseCourse,
     id,
-    title: searchLabel ? `${searchLabel} ${baseCourse.title}` : baseCourse.title,
+    title: searchLabel
+      ? `${searchLabel} ${baseCourse.title}`
+      : baseCourse.title,
     liked:
       filters.sort === DEFAULT_FILTER_LABELS.sort
         ? baseCourse.liked
@@ -193,4 +196,71 @@ async function fetchLocalCoursePage({
     page,
     last: end >= totalCount,
   };
+}
+
+export interface LocalCourseAuthor {
+  nickname: string;
+  profileImageUrl: string | null;
+}
+
+interface LocalCoursePlaceItem {
+  liked: boolean;
+  order: number;
+  type: 'PLACE';
+  placeId: number;
+  isLiked: boolean;
+  source: string;
+  externalPlaceId: string;
+  name: string;
+  roadAddress: string;
+  lotAddress: string;
+  latitude: number;
+  longitude: number;
+}
+
+interface LocalCourseContentItem {
+  liked: boolean;
+  order: number;
+  type: 'CONTENT';
+  contentId: number;
+  isLiked: boolean;
+  contentStatus: string;
+  source: string;
+  externalPlaceId: string;
+  name: string;
+  roadAddress: string;
+  lotAddress: string;
+  latitude: number;
+  longitude: number;
+}
+
+export type LocalCourseDetailItem =
+  LocalCoursePlaceItem | LocalCourseContentItem;
+
+export interface LocalCourseDetailResult {
+  courseId: number;
+  courseType: string;
+  title: string;
+  thumbnailUrl: string;
+  description: string;
+  tags: string[];
+  durationType: string;
+  transportType: string;
+  startMonth: number;
+  endMonth: number;
+  companionType: string;
+  isLiked: boolean;
+  courseItems: LocalCourseDetailItem[];
+  author: LocalCourseAuthor;
+}
+
+export async function getLocalCourseDetail(
+  courseId: number
+): Promise<LocalCourseDetailResult> {
+  // apiClient's response interceptor already unwraps the envelope.
+  const { data } = await apiClient.get<LocalCourseDetailResult>(
+    `/courses/${courseId}`
+  );
+
+  return data;
 }
