@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import {
+  useEffect,
+  useState,
+} from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import CourseCard from '../../../components/common/CourseCard';
@@ -13,6 +16,7 @@ import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail'
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
 import { buildCourseSearchPath } from '../../../utils/routes';
+import { saveRecentCultureContent } from '../../../utils/recentCultureContents';
 
 import {
   DetailDescriptionCard,
@@ -68,6 +72,22 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const festival = content
     ? mapCultureContentDetailToFestivalDetail(content)
     : null;
+
+  useEffect(() => {
+    if (!content) return;
+
+    saveRecentCultureContent({
+      contentId: content.contentId,
+      title: content.title,
+      thumbnailImageUrl:
+        content.thumbnailImageUrl ?? content.thumbnailImage ?? '',
+      regionName: content.place.name,
+      hashtags: content.hashtags,
+      startDate: content.startDate,
+      endDate: content.endDate,
+      liked: content.liked,
+    });
+  }, [content]);
 
   const runAuthAction = (action: () => void) => {
     if (!isAuthenticated) {

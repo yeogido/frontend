@@ -11,6 +11,7 @@ import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
 import { useCultureContents } from '../../hooks/useCultureContents';
 import { useLoginModal } from '../../hooks/useLoginModal';
+import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
 import { useAuthStore } from '../../store/auth.store';
 import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
@@ -39,8 +40,8 @@ function FestivalPage() {
   const { openLoginModal } = useLoginModal();
   const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
   const [likedRecentIds, setLikedRecentIds] = useState<number[]>([]);
-  const { featuredFestival, recentFestivals } =
-    useFestivalPreviews();
+  const { featuredFestival } = useFestivalPreviews();
+  const recentFestivals = useRecentCultureContents().slice(0, 2);
   const { data: cultureContentBanners } = useCultureContentBanners();
   const {
     data: cultureContents,
@@ -196,7 +197,8 @@ function FestivalPage() {
         </div>
       </section>
 
-      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
+      {recentFestivals.length > 0 ? (
+        <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
         <SectionHeader
           title="최근 본 행사"
           actionText="전체 보기"
@@ -212,25 +214,29 @@ function FestivalPage() {
         >
           {recentFestivals.map((festival) => (
             <ContentCard
-              key={festival.id}
-              image={festival.image}
+              key={festival.contentId}
+              image={festival.thumbnailImageUrl}
               title={festival.title}
-              firstInfo={festival.period}
-              secondInfo={festival.location}
+              firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+              secondInfo={festival.regionName}
               liked={
                 isLoggedIn &&
-                (festival.liked || likedRecentIds.includes(festival.id))
+                (festival.liked ||
+                  likedRecentIds.includes(festival.contentId))
               }
-              tags={festival.tags}
+              tags={toContentTagIds(festival.hashtags)}
               className="w-full"
               onClick={() =>
-                navigate(buildFestivalDetailPath(festival.id))
+                navigate(buildFestivalDetailPath(festival.contentId))
               }
-              onLikeClick={() => handleRecentLikeClick(festival.id)}
+              onLikeClick={() =>
+                handleRecentLikeClick(festival.contentId)
+              }
             />
           ))}
         </div>
       </section>
+      ) : null}
     </section>
   );
 }
