@@ -15,20 +15,26 @@ export interface RegionDetailResponse {
   imageUrl: string;
 }
 
-export interface SubRegionPreview {
+export interface SubRegion {
   subRegionId: number;
   name: string;
 }
 
-export interface SubRegionListResponse {
-  subRegions: SubRegionPreview[];
+export type SubRegionPreview = SubRegion;
+
+export interface GetSubRegionsResponse {
+  subRegions: SubRegion[];
 }
 
-export interface RegionSearchResponse {
+export type SubRegionListResponse = GetSubRegionsResponse;
+
+export interface RegionSearchResult {
   regionId: number;
   name: string;
   fullName: string;
 }
+
+export type RegionSearchResponse = RegionSearchResult;
 
 export interface PopularRegionResponse {
   regionId: number;
