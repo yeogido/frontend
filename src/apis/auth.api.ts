@@ -13,3 +13,7 @@ export async function login(data: LoginRequest): Promise<LoginResult> {
 
   return result;
 }
+
+export async function logout(): Promise<void> {
+  await apiClient.post('/auth/logout');
+}
