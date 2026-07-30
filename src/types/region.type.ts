@@ -7,3 +7,18 @@ export interface Region {
 export interface GetRegionsResponse {
   regions: Region[];
 }
+
+export interface SubRegion {
+  subRegionId: number;
+  name: string;
+}
+
+export interface GetSubRegionsResponse {
+  subRegions: SubRegion[];
+}
+
+export interface RegionSearchResult {
+  regionId: number;
+  name: string;
+  fullName: string;
+}
