@@ -64,6 +64,17 @@ export interface CultureContentDetail {
   courses: CultureContentCourse[];
 }
 
+export interface RecentCultureContent {
+  contentId: number;
+  title: string;
+  thumbnailImageUrl: string;
+  regionName: string;
+  hashtags: string[];
+  startDate: string;
+  endDate: string;
+  liked: boolean;
+}
+
 export interface GetCultureContentsResponse {
   items: CultureContent[];
   cursorValue: string;

@@ -14,7 +14,21 @@ const apiClient = axios.create({
   },
 });
 
+// 인증 없이 호출되는 엔드포인트. 로그인 요청 등에 이전 세션의 토큰이
+// 그대로 붙어 나가는 것을 막기 위해 예외 처리한다.
+const AUTH_EXEMPT_PATHS = ['/auth/login'];
+
+function isAuthExemptPath(url?: string): boolean {
+  if (!url) return false;
+  return AUTH_EXEMPT_PATHS.includes(url);
+}
+
 apiClient.interceptors.request.use((config) => {
+  if (isAuthExemptPath(config.url)) {
+    config.headers.delete('Authorization');
+    return config;
+  }
+
   const accessToken = useAuthStore.getState().accessToken;
 
   if (accessToken) {
