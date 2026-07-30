@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { uploadCourseImage } from '../../../apis/files';
+import { fetchHashtags } from '../../../apis/hashtags';
+import type { Hashtag } from '../../../apis/hashtags';
 import { ResponsivePageShell } from '../../../components/layout';
+import { tagDefinitionMap } from '../../../constants/tags';
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 
 import {
   KeywordSelectionSection,
   RepresentativePhotoSection,
 } from './components';
+import { mapTagIdsToHashtagIds } from './hashtagMapping';
 import { completeTagSelection } from './navigation';
 import type { PhotoSelection, TagId, TagSelectionResult } from './types';
 import { isTagSelectionReady, toggleTag } from './utils';
@@ -22,6 +28,8 @@ const BUTTON_MARGIN_TOP = 32;
 const BUTTON_HEIGHT = 53;
 const BUTTON_TEXT_SIZE = 14;
 const BUTTON_RADIUS = 12;
+const SUBMIT_ERROR_MARGIN_TOP = 8;
+const SUBMIT_ERROR_TEXT_SIZE = 12;
 
 interface TagSelectionPageProps {
   onComplete?: (result: TagSelectionResult) => void;
@@ -30,9 +38,15 @@ interface TagSelectionPageProps {
 function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const setTagSelection = useLocalRecommendationStore(
+    (state) => state.setTagSelection
+  );
   const [photo, setPhoto] = useState<PhotoSelection | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(new Set());
   const [limitMessage, setLimitMessage] = useState('');
+  const [hashtags, setHashtags] = useState<Hashtag[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(
     () => () => {
@@ -40,6 +54,23 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
     },
     [photo]
   );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchHashtags()
+      .then((result) => {
+        if (isMounted) setHashtags(result);
+      })
+      .catch(() => {
+        // 해시태그 목록 조회에 실패해도 진행은 막지 않는다.
+        // 이 경우 mapTagIdsToHashtagIds 결과가 빈 배열이 되어 hashtagIds 없이 다음 단계로 넘어간다.
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handlePhotoChange = (file: File | null) => {
     setPhoto(file ? { file, previewUrl: URL.createObjectURL(file) } : null);
@@ -55,15 +86,38 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
 
   const isReady = isTagSelectionReady(photo, selectedTagIds);
 
-  const handleComplete = () => {
-    if (!photo || !isReady) return;
+  const handleComplete = async () => {
+    if (!photo || !isReady || isSubmitting) return;
 
-    completeTagSelection({
-      photo,
-      selectedTagIds,
-      onComplete,
-      navigate,
-    });
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const photoKey = await uploadCourseImage(photo.file);
+      const hashtagIds = mapTagIdsToHashtagIds(
+        Array.from(selectedTagIds),
+        hashtags,
+        (tagId) => tagDefinitionMap[tagId]?.label
+      );
+
+      setTagSelection({
+        tagIds: Array.from(selectedTagIds),
+        hashtagIds,
+        coverImageKey: photoKey,
+      });
+
+      completeTagSelection({
+        photo,
+        selectedTagIds,
+        photoKey,
+        hashtagIds,
+        onComplete,
+        navigate,
+      });
+    } catch {
+      setSubmitError('사진 업로드에 실패했어요. 다시 시도해 주세요.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -104,7 +158,7 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
 
       <button
         type="button"
-        disabled={!isReady}
+        disabled={!isReady || isSubmitting}
         onClick={handleComplete}
         className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full shrink-0 font-semibold"
         style={{
@@ -115,8 +169,21 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
           borderRadius: BUTTON_RADIUS * scale,
         }}
       >
-        코스 선택하기
+        {isSubmitting ? '업로드 중...' : '코스 선택하기'}
       </button>
+
+      {submitError ? (
+        <p
+          className="text-main-5"
+          style={{
+            marginTop: SUBMIT_ERROR_MARGIN_TOP * scale,
+            fontSize: SUBMIT_ERROR_TEXT_SIZE * scale,
+          }}
+          aria-live="polite"
+        >
+          {submitError}
+        </p>
+      ) : null}
     </ResponsivePageShell>
   );
 }
