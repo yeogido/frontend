@@ -2,6 +2,7 @@ import {
   useCallback,
   useState,
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   ContentCard,
@@ -12,6 +13,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
+import { buildFestivalDetailPath } from '../../../utils/routes';
 
 import { FestivalFilterBar } from '../components';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
@@ -40,6 +42,7 @@ const contentSortByFestivalSort = {
 } as const;
 
 function FestivalOngoingPage() {
+  const navigate = useNavigate();
   const scale = useGlobalScale();
   const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
@@ -162,6 +165,9 @@ function FestivalOngoingPage() {
                   likedContentIds.includes(festival.contentId)
                 }
                 className="w-full"
+                onClick={() =>
+                  navigate(buildFestivalDetailPath(festival.contentId))
+                }
                 onLikeClick={() => handleLikeClick(festival.contentId)}
               />
             ))}
