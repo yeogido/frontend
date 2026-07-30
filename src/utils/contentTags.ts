@@ -17,7 +17,9 @@ const tagIdByHashtag: Record<string, TagId> = {
 };
 
 export function toContentTagId(hashtag: string): TagId | undefined {
-  return tagIdByHashtag[hashtag];
+  return Object.prototype.hasOwnProperty.call(tagIdByHashtag, hashtag)
+    ? tagIdByHashtag[hashtag]
+    : undefined;
 }
 
 export function toContentTagIds(hashtags: readonly string[]): TagId[] {
