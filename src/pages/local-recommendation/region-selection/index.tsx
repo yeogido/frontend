@@ -1,8 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
+import {
+  getRegions,
+  getSubRegions,
+  searchRegions,
+} from '../../../apis/regions.api';
 import { ResponsivePageShell } from '../../../components/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 
 import {
   NeighborhoodResultList,
@@ -11,13 +18,9 @@ import {
   RecentSearchSection,
   SelectedNeighborhoodCard,
 } from './components';
-import {
-  popularRegions,
-  recentNeighborhoodIds,
-} from './constants/featuredRegions';
-import { neighborhoods } from './constants/neighborhoods';
 import type { Neighborhood } from './types';
-import { filterNeighborhoods } from './utils';
+import { useRecentRegions } from './useRecentRegions';
+import { fromRegion, fromSearchResult, fromSubRegion } from './utils';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 32;
@@ -30,54 +33,78 @@ const BUTTON_TEXT_SIZE = 14;
 function LocalRecommendationPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const draftNeighborhood = useLocalRecommendationStore(
+    (state) => state.draft.neighborhood
+  );
+  const setNeighborhood = useLocalRecommendationStore(
+    (state) => state.setNeighborhood
+  );
+  const { recentRegions, addRecentRegion } = useRecentRegions();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] =
-    useState<Neighborhood | null>(null);
+    useState<Neighborhood | null>(draftNeighborhood);
+  // Sub-regions of the last picked node, when it turned out not to be a
+  // leaf — lets picking recurse to any depth the backend later adds.
+  const [drillParent, setDrillParent] = useState<Neighborhood | null>(null);
+  const [drillOptions, setDrillOptions] = useState<Neighborhood[]>([]);
 
-  const searchResults = useMemo(
-    () => filterNeighborhoods(neighborhoods, searchQuery),
-    [searchQuery]
-  );
+  const regionsQuery = useQuery({
+    queryKey: ['regions'],
+    queryFn: getRegions,
+    staleTime: 5 * 60_000,
+  });
 
-  const recentNeighborhoods = useMemo(
-    () =>
-      recentNeighborhoodIds.flatMap((id) => {
-        const neighborhood = neighborhoods.find((item) => item.id === id);
-        return neighborhood ? [neighborhood] : [];
-      }),
-    []
-  );
-
-  const neighborhoodSearchSuggestions = useMemo(
-    () => [
-      ...new Set(
-        neighborhoods.flatMap((neighborhood) => [
-          neighborhood.province,
-          neighborhood.city,
-          neighborhood.district,
-          `${neighborhood.city} ${neighborhood.district}`,
-        ])
-      ),
-    ],
-    []
-  );
+  const trimmedQuery = searchQuery.trim();
+  const searchResultsQuery = useQuery({
+    queryKey: ['regions', 'search', trimmedQuery],
+    queryFn: async () =>
+      (await searchRegions(trimmedQuery)).map(fromSearchResult),
+    enabled: trimmedQuery.length > 0,
+    staleTime: 30_000,
+  });
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setSelectedNeighborhood(null);
+    setDrillParent(null);
+    setDrillOptions([]);
   };
 
-  const handleSelectNeighborhood = (clickedNeighborhood: Neighborhood) => {
-    setSearchQuery(''); // 검색어 초기화
-    // 이미 선택된 동네의 ID와 방금 클릭한 동네의 ID가 같은지 확인
-    if (selectedNeighborhood?.id === clickedNeighborhood.id) {
-      // 같다면 선택 해제 (state를 null로 변경)
+  const handleSelectNeighborhood = async (candidate: Neighborhood) => {
+    setSearchQuery('');
+
+    if (selectedNeighborhood?.id === candidate.id) {
       setSelectedNeighborhood(null);
-    } else {
-      // 다르다면 새로운 동네로 업데이트
-      setSelectedNeighborhood(clickedNeighborhood);
+      setNeighborhood(null);
+      return;
     }
+
+    const subRegions = await getSubRegions(candidate.id);
+
+    if (subRegions.length > 0) {
+      setDrillParent(candidate);
+      setDrillOptions(
+        subRegions.map((subRegion) => fromSubRegion(subRegion, candidate.name))
+      );
+      setSelectedNeighborhood(null);
+      setNeighborhood(null);
+      return;
+    }
+
+    setDrillParent(null);
+    setDrillOptions([]);
+    setSelectedNeighborhood(candidate);
+    setNeighborhood(candidate);
+    addRecentRegion(candidate);
   };
+
+  const handleClearSelection = () => {
+    setSelectedNeighborhood(null);
+    setNeighborhood(null);
+  };
+
+  const isBrowsingResults = trimmedQuery.length > 0 || drillOptions.length > 0;
 
   return (
     <ResponsivePageShell
@@ -87,34 +114,39 @@ function LocalRecommendationPage() {
       className="bg-background"
     >
       <main className="flex-1">
-        <NeighborhoodSearchSection
-          suggestions={neighborhoodSearchSuggestions}
-          onSearch={handleSearch}
-        />
-        {selectedNeighborhood && !searchQuery ? (
+        <NeighborhoodSearchSection onSearch={handleSearch} />
+
+        {selectedNeighborhood && !isBrowsingResults ? (
           <SelectedNeighborhoodCard
             neighborhood={selectedNeighborhood}
-            onClear={() => setSelectedNeighborhood(null)}
+            onClear={handleClearSelection}
           />
-        ) : (
+        ) : drillOptions.length > 0 ? (
           <NeighborhoodResultList
-            query={searchQuery}
-            results={searchResults}
+            heading={`${drillParent?.name ?? ''} 하위 지역`}
+            results={drillOptions}
             selectedNeighborhood={selectedNeighborhood}
             onSelect={handleSelectNeighborhood}
           />
-        )}
-
-        {!searchQuery && !selectedNeighborhood ? (
-          <RecentSearchSection
-            neighborhoods={recentNeighborhoods}
+        ) : trimmedQuery ? (
+          <NeighborhoodResultList
+            heading="검색 결과"
+            results={searchResultsQuery.data ?? []}
+            selectedNeighborhood={selectedNeighborhood}
             onSelect={handleSelectNeighborhood}
           />
         ) : null}
+
+        {!isBrowsingResults && !selectedNeighborhood ? (
+          <RecentSearchSection
+            neighborhoods={recentRegions}
+            onSelect={handleSelectNeighborhood}
+          />
+        ) : null}
+
         <PopularRegionGrid
-          regions={popularRegions}
-          neighborhoods={neighborhoods}
-          onSelect={handleSelectNeighborhood}
+          regions={regionsQuery.data?.regions ?? []}
+          onSelect={(region) => handleSelectNeighborhood(fromRegion(region))}
         />
       </main>
 

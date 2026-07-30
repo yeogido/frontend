@@ -44,7 +44,7 @@ function SelectedNeighborhoodCard({
       </h3>
       <button
         type="button"
-        aria-label={`${neighborhood.district} 선택 해제`}
+        aria-label={`${neighborhood.name} 선택 해제`}
         onClick={onClear}
         className="border-main-5 bg-main-1 flex w-full items-center border text-left"
         style={{
@@ -67,7 +67,7 @@ function SelectedNeighborhoodCard({
             className="block font-semibold"
             style={{ fontSize: DISTRICT_SIZE * scale }}
           >
-            {neighborhood.district}
+            {neighborhood.name}
           </span>
           <span
             className="text-gray-4 block"
@@ -76,7 +76,7 @@ function SelectedNeighborhoodCard({
               fontSize: META_SIZE * scale,
             }}
           >
-            {neighborhood.province} {neighborhood.city}
+            {neighborhood.parentName}
           </span>
         </span>
         <IoClose

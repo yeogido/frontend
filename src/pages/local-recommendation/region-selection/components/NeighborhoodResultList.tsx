@@ -23,25 +23,24 @@ const ICON_SIZE = 20;
 const DISTRICT_SIZE = 14;
 const META_MARGIN_TOP = 2;
 const META_SIZE = 12;
+const VISIBLE_ITEM_COUNT = 3;
+const MAX_LIST_HEIGHT =
+  ITEM_MIN_HEIGHT * VISIBLE_ITEM_COUNT + LIST_GAP * (VISIBLE_ITEM_COUNT - 1);
 
 interface NeighborhoodResultListProps {
-  query: string;
+  heading: string;
   results: Neighborhood[];
   selectedNeighborhood: Neighborhood | null;
   onSelect: (neighborhood: Neighborhood) => void;
 }
 
 function NeighborhoodResultList({
-  query,
+  heading,
   results,
   selectedNeighborhood,
   onSelect,
 }: NeighborhoodResultListProps) {
   const scale = useGlobalScale();
-
-  if (!query) {
-    return null;
-  }
 
   if (results.length === 0) {
     return (
@@ -82,9 +81,18 @@ function NeighborhoodResultList({
           fontSize: HEADING_SIZE * scale,
         }}
       >
-        검색 결과 <span className="text-main-5">{results.length}</span>
+        {heading} <span className="text-main-5">{results.length}</span>
       </h3>
-      <ul className="flex flex-col" style={{ gap: LIST_GAP * scale }}>
+      <ul
+        className="flex flex-col overflow-y-auto"
+        style={{
+          gap: LIST_GAP * scale,
+          maxHeight:
+            results.length > VISIBLE_ITEM_COUNT
+              ? MAX_LIST_HEIGHT * scale
+              : undefined,
+        }}
+      >
         {results.map((neighborhood) => {
           const isSelected = selectedNeighborhood?.id === neighborhood.id;
 
@@ -119,7 +127,7 @@ function NeighborhoodResultList({
                     className="block font-semibold"
                     style={{ fontSize: DISTRICT_SIZE * scale }}
                   >
-                    {neighborhood.district}
+                    {neighborhood.name}
                   </span>
                   <span
                     className="text-gray-4 block"
@@ -128,7 +136,7 @@ function NeighborhoodResultList({
                       fontSize: META_SIZE * scale,
                     }}
                   >
-                    {neighborhood.province} {neighborhood.city}
+                    {neighborhood.parentName}
                   </span>
                 </span>
                 {isSelected ? (
