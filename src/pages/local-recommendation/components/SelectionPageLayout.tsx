@@ -41,6 +41,8 @@ interface SelectionPageLayoutProps<T> {
     isSelected: boolean,
     onItemAdd: (item: T) => void
   ) => ReactNode;
+  /** Optional loading/error/empty message shown above the results list. */
+  statusMessage?: ReactNode;
 }
 
 function SelectionPageLayout<T>({
@@ -56,6 +58,7 @@ function SelectionPageLayout<T>({
   onItemAdd,
   onBack,
   renderItem,
+  statusMessage,
 }: SelectionPageLayoutProps<T>) {
   const scale = useGlobalScale();
   const backButtonSize = BACK_BUTTON_SIZE * scale;
@@ -143,6 +146,12 @@ function SelectionPageLayout<T>({
           >
             검색 결과
           </h2>
+
+          {statusMessage ? (
+            <div style={{ marginTop: RESULTS_LIST_MARGIN_TOP * scale }}>
+              {statusMessage}
+            </div>
+          ) : null}
 
           <div
             className="flex flex-col"

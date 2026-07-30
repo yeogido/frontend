@@ -1,21 +1,21 @@
-import type { FestivalApiItem } from './types';
+import { getCultureContents } from '../../../apis/contents.api';
 
-export const normalizeFestivalTag = (tag: string) =>
-  tag.trim().toLocaleLowerCase('ko-KR');
+import { toFestivalItem } from './festivalTransform';
+import type { FestivalItem } from './types';
 
-export const filterFestivalApiItems = (
-  festivals: readonly FestivalApiItem[],
-  query: string
-): FestivalApiItem[] => {
-  const normalizedQuery = normalizeFestivalTag(query);
+export const searchFestivals = async (
+  keyword: string
+): Promise<FestivalItem[]> => {
+  const trimmedKeyword = keyword.trim();
 
-  if (!normalizedQuery) {
+  if (!trimmedKeyword) {
     return [];
   }
 
-  return festivals.filter((festival) =>
-    [festival.tag, festival.title, festival.address]
-      .map(normalizeFestivalTag)
-      .some((field) => field.includes(normalizedQuery))
-  );
+  const { items } = await getCultureContents({
+    category: 'FESTIVAL',
+    keyword: trimmedKeyword,
+  });
+
+  return items.map(toFestivalItem);
 };
