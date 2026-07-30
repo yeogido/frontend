@@ -18,6 +18,15 @@ export interface CultureContent {
   endDate: string;
 }
 
+export interface CultureContentBanner {
+  contentId: number;
+  title: string;
+  thumbnailImage: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+}
+
 export interface CultureContentPlace {
   placeId: number;
   name: string;

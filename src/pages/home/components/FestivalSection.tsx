@@ -11,6 +11,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
 import { buildFestivalDetailPath } from '../../../utils/routes';
+import { toContentTagIds } from '../../../utils/contentTags';
 
 const SECTION_MARGIN_TOP = 32;
 const SECTION_PADDING_X = 24;
@@ -88,7 +89,7 @@ function FestivalSection() {
                   title={festival.title}
                   firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                   secondInfo={festival.regionName}
-                  tags={[]}
+                  tags={toContentTagIds(festival.hashtags)}
                   liked={
                     isLoggedIn &&
                     likedContentIds.includes(festival.contentId)
