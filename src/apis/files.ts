@@ -30,14 +30,30 @@ async function putFileToPresignedUrl(
   uploadUrl: string,
   file: File
 ): Promise<void> {
-  const response = await fetch(uploadUrl, {
-    method: 'PUT',
-    body: file,
-    headers: { 'Content-Type': file.type },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
-  if (!response.ok) {
+  try {
+    const response = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error('이미지 업로드에 실패했습니다.');
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === '이미지 업로드에 실패했습니다.'
+    ) {
+      throw error;
+    }
     throw new Error('이미지 업로드에 실패했습니다.');
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

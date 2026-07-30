@@ -28,7 +28,8 @@ export async function getSubRegions(regionId: number): Promise<SubRegion[]> {
     if (
       error &&
       typeof error === 'object' &&
-      (error as { status?: number }).status === 404
+      (error as { status?: number; code?: string }).status === 404 &&
+      (error as { status?: number; code?: string }).code === 'REGION4041'
     ) {
       return [];
     }
