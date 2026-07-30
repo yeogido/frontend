@@ -12,8 +12,9 @@ const KAKAO_MAP_SCRIPT_ID = 'kakao-maps-sdk';
 let sdkPromise: Promise<void> | null = null;
 
 export function getCurrentMapCoordinates(
-  geolocation: Geolocation | undefined =
-    typeof navigator === 'undefined' ? undefined : navigator.geolocation,
+  geolocation: Geolocation | undefined = typeof navigator === 'undefined'
+    ? undefined
+    : navigator.geolocation
 ): Promise<MapCoordinates> {
   if (!geolocation) {
     return Promise.resolve({ ...SEOUL_CITY_HALL });
@@ -32,7 +33,7 @@ export function getCurrentMapCoordinates(
         enableHighAccuracy: true,
         timeout: 5000,
         maximumAge: 60000,
-      },
+      }
     );
   });
 }
@@ -85,7 +86,7 @@ export function loadKakaoMapsSdk(appKey: string): Promise<void> {
     const script = document.createElement('script');
     script.id = KAKAO_MAP_SCRIPT_ID;
     script.async = true;
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(appKey)}&autoload=false`;
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(appKey)}&autoload=false&libraries=services`;
     script.addEventListener('load', handleLoad, { once: true });
     script.addEventListener('error', handleError, { once: true });
     document.head.appendChild(script);

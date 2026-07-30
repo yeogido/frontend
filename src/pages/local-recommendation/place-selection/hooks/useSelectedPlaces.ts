@@ -1,8 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { uploadCourseImage } from '../../../../apis/files';
+import { useLocalRecommendationStore } from '../../../../store/localRecommendation.store';
 import type { PlaceItem, SelectedPlace } from '../types';
 
 export function useSelectedPlaces() {
+  // ponytail: store hydration only carries imageKey (File objects aren't
+  // JSON-persistable), so revisiting this page can't restore image previews
+  // for already-selected places. Upgrade path: persist previews via IndexedDB
+  // keyed by imageKey if that gap needs closing.
+  const setPlacesInStore = useLocalRecommendationStore(
+    (state) => state.setPlaces
+  );
   const [selectedPlaces, setSelectedPlaces] = useState<SelectedPlace[]>([]);
   const selectedPlacesRef = useRef<SelectedPlace[]>([]);
 
@@ -23,50 +32,46 @@ export function useSelectedPlaces() {
     [selectedPlaces]
   );
 
-  const addSelectedPlace = (
+  const addSelectedPlace = async (
     place: PlaceItem,
     imageFile: File,
     imagePreviewUrl: string
   ) => {
-    setSelectedPlaces((items) => {
-      const alreadyExists = items.some((item) => item.id === place.id);
+    if (selectedPlacesRef.current.some((item) => item.id === place.id)) {
+      URL.revokeObjectURL(imagePreviewUrl);
+      return;
+    }
 
-      if (alreadyExists) {
-        URL.revokeObjectURL(imagePreviewUrl);
-        return items;
-      }
+    const imageKey = await uploadCourseImage(imageFile);
+    if (selectedPlacesRef.current.some((item) => item.id === place.id)) {
+      URL.revokeObjectURL(imagePreviewUrl);
+      return;
+    }
 
-      return [
-        ...items,
-        {
-          ...place,
-          imageFile,
-          imagePreviewUrl,
-        },
-      ];
-    });
+    const next = [
+      ...selectedPlacesRef.current,
+      { ...place, imageFile, imagePreviewUrl, imageKey },
+    ];
+    setSelectedPlaces(next);
+    setPlacesInStore(next);
   };
 
   const removeSelectedPlace = (place: SelectedPlace) => {
-    setSelectedPlaces((items) => {
-      const target = items.find((item) => item.id === place.id);
-
-      if (target) {
-        URL.revokeObjectURL(target.imagePreviewUrl);
-      }
-
-      return items.filter((item) => item.id !== place.id);
-    });
+    const target = selectedPlaces.find((item) => item.id === place.id);
+    if (target) {
+      URL.revokeObjectURL(target.imagePreviewUrl);
+    }
+    const next = selectedPlaces.filter((item) => item.id !== place.id);
+    setSelectedPlaces(next);
+    setPlacesInStore(next);
   };
 
   const removeAllSelectedPlaces = () => {
-    setSelectedPlaces((items) => {
-      items.forEach((place) => {
-        URL.revokeObjectURL(place.imagePreviewUrl);
-      });
-
-      return [];
+    selectedPlaces.forEach((place) => {
+      URL.revokeObjectURL(place.imagePreviewUrl);
     });
+    setSelectedPlaces([]);
+    setPlacesInStore([]);
   };
 
   return {

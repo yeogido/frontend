@@ -1,9 +1,8 @@
 import SelectionPageLayout from '../../components/SelectionPageLayout';
 import SelectionResultCard from '../../components/SelectionResultCard';
-import { referencePlaces } from '../constants/referencePlaces';
 import type { PlaceItem } from '../types';
 
-const placeSearchSuggestions = referencePlaces.map((place) => place.title);
+const placeSearchSuggestions: readonly string[] = [];
 
 interface PlaceSearchSectionProps {
   searchResults: PlaceItem[];
