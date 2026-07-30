@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../components/layout/ResponsivePageShell';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 
 import { CourseBasicInfoForm } from './components';
 import type { CourseBasicInfoValues } from './schema';
@@ -16,9 +17,15 @@ const SUBTITLE_FONT_SIZE = 14;
 function CourseBasicInfoPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const draftBasicInfo = useLocalRecommendationStore(
+    (state) => state.draft.basicInfo
+  );
+  const updateBasicInfo = useLocalRecommendationStore(
+    (state) => state.updateBasicInfo
+  );
 
   const handleNext = (values: CourseBasicInfoValues) => {
-    void values;
+    updateBasicInfo(values);
     navigate('/local-recommendation/tag-selection');
   };
 
@@ -49,7 +56,10 @@ function CourseBasicInfoPage() {
         </p>
       </header>
 
-      <CourseBasicInfoForm onNext={handleNext} />
+      <CourseBasicInfoForm
+        onNext={handleNext}
+        defaultValues={draftBasicInfo ?? undefined}
+      />
     </ResponsivePageShell>
   );
 }
