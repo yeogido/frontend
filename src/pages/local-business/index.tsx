@@ -5,6 +5,7 @@ import { RegionImageCarousel } from '../../components/common';
 import { DEFAULT_REGION_CITY_ID } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { buildLocalBusinessDetailPath } from '../../utils/routes';
 
 import { BusinessGrid, BusinessList, BusinessToolbar } from './components';
 import { regionImageOptions } from './constants';
@@ -42,7 +43,7 @@ function LocalBusinessPage() {
   });
 
   const handleCardClick = (businessId: string) => {
-    navigate(`/local-business/detail/${businessId}`);
+    navigate(buildLocalBusinessDetailPath(businessId));
   };
 
   // TODO: BusinessItem.location이 자유 텍스트라 현재 필터링 불가.
@@ -73,7 +74,7 @@ function LocalBusinessPage() {
         </h1>
 
         <p
-          className="font-normal text-gray-5"
+          className="text-gray-5 font-normal"
           style={{
             marginTop: DESCRIPTION_MARGIN_TOP * scale,
             fontSize: DESCRIPTION_SIZE * scale,

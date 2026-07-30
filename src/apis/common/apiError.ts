@@ -3,7 +3,7 @@ import axios from 'axios';
 import type {
   ApiErrorResponse,
   NormalizedApiError,
-} from './api.types';
+} from './apiTypes';
 
 const NETWORK_ERROR_CODE = 'NETWORK_ERROR';
 const UNKNOWN_ERROR_CODE = 'UNKNOWN_ERROR';
@@ -43,6 +43,21 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
 
     return {
       code: NETWORK_ERROR_CODE,
+      message: error.message,
+    };
+  }
+
+  // throw data; 형태의 ApiErrorResponse 처리
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    'message' in error &&
+    typeof error.code === 'string' &&
+    typeof error.message === 'string'
+  ) {
+    return {
+      code: error.code,
       message: error.message,
     };
   }
