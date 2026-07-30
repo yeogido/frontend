@@ -13,6 +13,7 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photosRef = useRef<SelectedPhoto[]>([]);
   const photoUrlsRef = useRef<string[]>([]);
+  const hasUserChangedPhotosRef = useRef(false);
   const [photos, setPhotos] = useState<SelectedPhoto[]>([]);
   const { showToast } = useToast();
   const hasSelectedPhotos = photos.length > 0;
@@ -36,7 +37,7 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
 
     let isMounted = true;
     void getTravelRecordPhotoDraft().then((files) => {
-      if (!isMounted) {
+      if (!isMounted || hasUserChangedPhotosRef.current) {
         return;
       }
       setPhotos(files.map((file) => ({
@@ -77,6 +78,7 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
     }
 
     if (photosToAdd.length > 0) {
+      hasUserChangedPhotosRef.current = true;
       const availableCount = MAX_PHOTO_COUNT - photosRef.current.length;
       const nextPhotosToAdd = photosToAdd.slice(0, availableCount);
       const unusedPhotos = photosToAdd.slice(availableCount);
@@ -89,6 +91,7 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
   };
 
   const removePhoto = (targetPhoto: SelectedPhoto) => {
+    hasUserChangedPhotosRef.current = true;
     URL.revokeObjectURL(targetPhoto.url);
     setPhotos((currentPhotos) =>
       currentPhotos.filter((photo) => photo.id !== targetPhoto.id),
@@ -96,6 +99,7 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
   };
 
   const reorderPhotos = (sourcePhotoId: string, targetPhotoId: string) => {
+    hasUserChangedPhotosRef.current = true;
     setPhotos((currentPhotos) => {
       const sourceIndex = currentPhotos.findIndex(
         (photo) => photo.id === sourcePhotoId,

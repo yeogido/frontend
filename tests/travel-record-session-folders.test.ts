@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import type { TravelRecordFolder } from '../src/pages/travel-record/types';
-import { applyTravelRecordSessionChanges } from '../src/pages/travel-record/utils/sessionFolders.ts';
+import {
+  applyTravelRecordSessionChanges,
+  getTravelRecordYears,
+} from '../src/pages/travel-record/utils/sessionFolders.ts';
 
 const createFolder = (id: string, title: string): TravelRecordFolder => ({
   id,
@@ -27,4 +30,13 @@ test('applies session edits and deletions to mock travel folders', () => {
   );
 
   assert.deepEqual(folders, [editedBusan]);
+});
+
+test('uses the session-edited folders to build selectable travel years', () => {
+  const folders = [
+    createFolder('busan', '부산광역시'),
+    { ...createFolder('yeosu', '여수시'), year: 2025 },
+  ];
+
+  assert.deepEqual(getTravelRecordYears(folders), [2026, 2025]);
 });

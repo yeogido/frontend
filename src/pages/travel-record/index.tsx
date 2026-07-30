@@ -16,7 +16,10 @@ import {
   getSavedTravelRecordFolders,
   revokeTravelRecordFolderPhotoUrls,
 } from './utils/travelRecordSave';
-import { applyTravelRecordSessionChanges } from './utils/sessionFolders';
+import {
+  applyTravelRecordSessionChanges,
+  getTravelRecordYears,
+} from './utils/sessionFolders';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
@@ -40,14 +43,9 @@ function TravelRecordPage() {
     TRAVEL_RECORD_FOLDERS
   );
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
-  const years = useMemo(
-    () =>
-      Array.from(new Set(folders.map((folder) => folder.year))).sort(
-        (currentYear, nextYear) => nextYear - currentYear
-      ),
-    [folders]
+  const [selectedYear, setSelectedYear] = useState(
+    () => TRAVEL_RECORD_FOLDERS[0]?.year ?? new Date().getFullYear(),
   );
-  const [selectedYear, setSelectedYear] = useState(years[0]);
 
   useEffect(() => {
     let isMounted = true;
@@ -98,6 +96,10 @@ function TravelRecordPage() {
       ...folders.filter((folder) => folder.id.startsWith('saved-')),
     ],
     [deletedMockFolderIds, editedMockFolders, folders],
+  );
+  const years = useMemo(
+    () => getTravelRecordYears(displayedFolders),
+    [displayedFolders],
   );
   const visibleFolders = useMemo(
     () =>
