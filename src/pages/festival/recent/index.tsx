@@ -94,8 +94,8 @@ function FestivalRecentPage() {
               tags={toContentTagIds(festival.hashtags)}
               liked={
                 isLoggedIn &&
-                (festival.liked ||
-                  likedContentIds.includes(festival.contentId))
+                festival.liked !==
+                  likedContentIds.includes(festival.contentId)
               }
               className="w-full"
               onClick={() =>

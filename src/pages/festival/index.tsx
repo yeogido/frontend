@@ -221,8 +221,8 @@ function FestivalPage() {
               secondInfo={festival.regionName}
               liked={
                 isLoggedIn &&
-                (festival.liked ||
-                  likedRecentIds.includes(festival.contentId))
+                festival.liked !==
+                  likedRecentIds.includes(festival.contentId)
               }
               tags={toContentTagIds(festival.hashtags)}
               className="w-full"
