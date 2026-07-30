@@ -8,9 +8,11 @@ import {
   SectionHeader,
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
 import { useCultureContents } from '../../hooks/useCultureContents';
 import { useLoginModal } from '../../hooks/useLoginModal';
 import { useAuthStore } from '../../store/auth.store';
+import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
 
 import { FeaturedFestivalBanner } from './components';
@@ -39,6 +41,7 @@ function FestivalPage() {
   const [likedRecentIds, setLikedRecentIds] = useState<number[]>([]);
   const { featuredFestival, recentFestivals } =
     useFestivalPreviews();
+  const { data: cultureContentBanners } = useCultureContentBanners();
   const {
     data: cultureContents,
     isPending: isCultureContentsPending,
@@ -48,6 +51,16 @@ function FestivalPage() {
     size: 2,
   });
   const ongoingFestivals = cultureContents?.pages[0]?.items ?? [];
+  const banner = cultureContentBanners?.[0];
+  const displayedBanner = banner
+    ? {
+        id: banner.contentId,
+        image: banner.thumbnailImage,
+        title: banner.title,
+        description: banner.description,
+        period: `${banner.startDate} ~ ${banner.endDate}`,
+      }
+    : featuredFestival;
 
   const goToFestivalSearch = () => {
     navigate('/course-region-search?from=festival');
@@ -131,8 +144,12 @@ function FestivalPage() {
 
       <div style={{ marginTop: BANNER_MARGIN_TOP * scale }}>
         <FeaturedFestivalBanner
-          festival={featuredFestival}
-          onClick={goToFestivalSearch}
+          festival={displayedBanner}
+          onClick={() =>
+            banner
+              ? navigate(buildFestivalDetailPath(banner.contentId))
+              : goToFestivalSearch()
+          }
         />
       </div>
 
@@ -163,7 +180,7 @@ function FestivalPage() {
                 title={festival.title}
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                 secondInfo={festival.regionName}
-                tags={[]}
+                tags={toContentTagIds(festival.hashtags)}
                 liked={
                   isLoggedIn &&
                   likedContentIds.includes(festival.contentId)

@@ -13,6 +13,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
+import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 
 import { FestivalFilterBar } from '../components';
@@ -159,7 +160,7 @@ function FestivalOngoingPage() {
                 title={festival.title}
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                 secondInfo={festival.regionName}
-                tags={[]}
+                tags={toContentTagIds(festival.hashtags)}
                 liked={
                   isLoggedIn &&
                   likedContentIds.includes(festival.contentId)

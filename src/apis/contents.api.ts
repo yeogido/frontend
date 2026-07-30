@@ -4,6 +4,7 @@ import {
 } from './common';
 
 import type {
+  CultureContentBanner,
   CultureContentDetail,
   GetCultureContentsParams,
   GetCultureContentsResponse,
@@ -30,6 +31,20 @@ export async function getCultureContentDetail(
   try {
     const { data } = await apiClient.get<CultureContentDetail>(
       `/contents/${contentId}`,
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function getCultureContentBanners(): Promise<
+  CultureContentBanner[]
+> {
+  try {
+    const { data } = await apiClient.get<CultureContentBanner[]>(
+      '/contents/banner',
     );
 
     return data;
