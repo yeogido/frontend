@@ -5,7 +5,10 @@ import type { TravelRecordFolder } from '../types';
 import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
 
 import { FolderDecorationRenderer } from './FolderDecorationRenderer';
-import { getVisibleFolderPhotos } from './folderPhotos';
+import {
+  getFolderPhotoSlotIndexes,
+  getVisibleFolderPhotos,
+} from './folderPhotos';
 
 interface TravelFolderCardProps {
   folder: TravelRecordFolder;
@@ -48,7 +51,13 @@ const folderClipPathData =
 
 const folderClipPath = `path("${folderClipPathData}")`;
 
-function FolderDecorationClip({ clipId }: { clipId: string }) {
+function FolderDecorationClip({
+  clipId,
+  photoSlotIndexes,
+}: {
+  clipId: string;
+  photoSlotIndexes: number[];
+}) {
   return (
     <svg
       aria-hidden="true"
@@ -59,22 +68,26 @@ function FolderDecorationClip({ clipId }: { clipId: string }) {
     >
       <defs>
         <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
-          <rect
-            x="5.1865"
-            y="8.1865"
-            width="88"
-            height="88"
-            rx="12"
-            transform="rotate(-12 49.1865 52.1865)"
-          />
-          <rect
-            x="64.3375"
-            y="28.3375"
-            width="88"
-            height="88"
-            rx="12"
-            transform="rotate(14 108.3375 72.3375)"
-          />
+          {photoSlotIndexes.includes(0) ? (
+            <rect
+              x="5.1865"
+              y="8.1865"
+              width="88"
+              height="88"
+              rx="12"
+              transform="rotate(-12 49.1865 52.1865)"
+            />
+          ) : null}
+          {photoSlotIndexes.includes(1) ? (
+            <rect
+              x="64.3375"
+              y="28.3375"
+              width="88"
+              height="88"
+              rx="12"
+              transform="rotate(14 108.3375 72.3375)"
+            />
+          ) : null}
           <path d={folderClipPathData} transform="translate(0 53)" />
         </clipPath>
       </defs>
@@ -150,10 +163,15 @@ export function TravelFolderArtwork({
   decorations,
 }: TravelFolderArtworkProps) {
   const decorationClipId = `travel-folder-decoration-${useId().replaceAll(':', '')}`;
+  const visiblePhotos = getVisibleFolderPhotos(photos);
+  const photoSlotIndexes = getFolderPhotoSlotIndexes(visiblePhotos.length);
 
   return (
     <div className="relative h-[183px] w-[159px]">
-      <FolderDecorationClip clipId={decorationClipId} />
+      <FolderDecorationClip
+        clipId={decorationClipId}
+        photoSlotIndexes={photoSlotIndexes}
+      />
       <img
         src={folderShadowLayerImage}
         alt=""
@@ -161,13 +179,13 @@ export function TravelFolderArtwork({
         aria-hidden="true"
       />
 
-      {getVisibleFolderPhotos(photos).map((imageSrc, index) => (
+      {visiblePhotos.map((imageSrc, index) => (
         <FolderPhoto
           key={`${title}-${index}`}
           folderTitle={title}
           imageSrc={imageSrc}
           order={index + 1}
-          slot={folderPhotoSlots[index]}
+          slot={folderPhotoSlots[photoSlotIndexes[index]]}
         />
       ))}
 

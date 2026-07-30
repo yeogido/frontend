@@ -12,9 +12,11 @@ import {
 } from './components';
 import { useTravelRecordRegionSelection } from './hooks';
 import { saveTravelRecordDraftRegion } from '../utils/draftStorage';
+import { getTravelRecordDraftRegion } from '../utils/draftStorage';
 
 function TravelRecordRegionSelectionPage() {
   const navigate = useNavigate();
+  const storedDraftRegion = getTravelRecordDraftRegion();
   const {
     filteredRegions,
     isSuggestionOpen,
@@ -30,7 +32,9 @@ function TravelRecordRegionSelectionPage() {
     selectRegionName,
     submitSearch,
     updateQuery,
-  } = useTravelRecordRegionSelection();
+  } = useTravelRecordRegionSelection(
+    storedDraftRegion ? { ...storedDraftRegion, imageSrc: '' } : null,
+  );
 
   return (
     <TravelRecordPageFrame className="bg-[#f9f9f9] px-6 pt-[60px]">

@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getVisibleFolderPhotos } from '../src/pages/travel-record/components/folderPhotos.ts';
+import {
+  getFolderPhotoSlotIndexes,
+  getVisibleFolderPhotos,
+} from '../src/pages/travel-record/components/folderPhotos.ts';
 
-test('keeps a single travel photo in only the first folder slot', () => {
+test('keeps a single travel photo in the second folder slot', () => {
   assert.deepEqual(getVisibleFolderPhotos(['first-photo']), ['first-photo']);
+  assert.deepEqual(getFolderPhotoSlotIndexes(1), [1]);
 });
 
 test('keeps at most two travel photos in folder slot order', () => {
@@ -12,4 +16,5 @@ test('keeps at most two travel photos in folder slot order', () => {
     getVisibleFolderPhotos(['first-photo', 'second-photo', 'third-photo']),
     ['first-photo', 'second-photo'],
   );
+  assert.deepEqual(getFolderPhotoSlotIndexes(2), [0, 1]);
 });

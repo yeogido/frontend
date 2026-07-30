@@ -130,6 +130,7 @@ const createFolder = (record: StoredTravelRecord): TravelRecordFolder | null => 
     title: record.regionName,
     year: Number(record.startDate.slice(0, 4)),
     startDate: record.startDate,
+    endDate: record.endDate,
     period: formatPeriod(record.startDate, record.endDate),
     photos: photoUrls as [string, ...string[]],
     decorations: normalizeStoredDecorations(record.decorations),
@@ -207,6 +208,49 @@ export const saveTravelRecord = async (
   );
 
   return { id: record.id };
+};
+
+export const updateTravelRecord = async (
+  id: string,
+  payload: CreateTravelRecordPayload,
+): Promise<SavedTravelRecordResult> => {
+  const record: StoredTravelRecord = {
+    id,
+    regionCode: payload.regionCode,
+    regionName: payload.regionName,
+    startDate: formatDate(payload.startDate),
+    endDate: formatDate(payload.endDate),
+    photos: payload.photos,
+    decorations: payload.decorations,
+  };
+
+  await withTravelRecordDatabase((database) =>
+    runTransaction(database, recordStoreName, 'readwrite', (store) =>
+      store.put(record),
+    ),
+  );
+
+  return { id };
+};
+
+export const deleteTravelRecord = (id: string) =>
+  withTravelRecordDatabase((database) =>
+    runTransaction(database, recordStoreName, 'readwrite', (store) =>
+      store.delete(id),
+    ),
+  );
+
+export const getSavedTravelRecordPhotos = async (id: string) => {
+  const record = await withTravelRecordDatabase((database) =>
+    runTransaction<StoredTravelRecord | undefined>(
+      database,
+      recordStoreName,
+      'readonly',
+      (store) => store.get(id),
+    ),
+  );
+
+  return record?.photos ?? [];
 };
 
 export const getSavedTravelRecordFolders = async () => {
