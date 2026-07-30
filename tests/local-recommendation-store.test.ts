@@ -45,8 +45,9 @@ test('merges completed steps and resets a recommendation draft', () => {
 test('persists stable draft data without retaining setter input references', () => {
   const neighborhood = {
     id: 27,
-    name: 'Busan',
-    parentName: '',
+    province: 'Busan',
+    city: 'Haeundae',
+    district: 'U-dong',
   };
   const basicInfo = {
     courseName: 'Beach day',
@@ -98,7 +99,7 @@ test('persists stable draft data without retaining setter input references', () 
   store.setPlaces(places);
   store.setVisitOrder(visitOrder);
 
-  neighborhood.name = 'Changed name';
+  neighborhood.province = 'Changed province';
   tagIds.push('city');
   hashtagIds.push(99);
   festivals[0].title = 'Changed festival';
@@ -113,8 +114,9 @@ test('persists stable draft data without retaining setter input references', () 
   assert.deepEqual(draft, {
     neighborhood: {
       id: 27,
-      name: 'Busan',
-      parentName: '',
+      province: 'Busan',
+      city: 'Haeundae',
+      district: 'U-dong',
     },
     basicInfo,
     tagIds: ['sea'],
