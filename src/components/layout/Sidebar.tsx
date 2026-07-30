@@ -110,7 +110,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
             <button
               type="button"
               onClick={() => {
-                handleLogout();
+                void handleLogout();
                 onClose();
               }}
               style={{
