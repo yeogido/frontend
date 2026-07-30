@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { FloatingActionButton } from '../../components/common';
 import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
+import {
+  getTravelRecordFoldersFromPages,
+  useTravelRecords,
+} from '../../hooks/useTravelRecords';
 
 import {
   TravelFolderGrid,
@@ -13,10 +17,6 @@ import {
 import { TRAVEL_RECORD_FOLDERS } from './constants/travelRecords';
 import type { TravelRecordFolder, TravelRecordView } from './types';
 import {
-  getSavedTravelRecordFolders,
-  revokeTravelRecordFolderPhotoUrls,
-} from './utils/travelRecordSave';
-import {
   applyTravelRecordSessionChanges,
   getValidTravelRecordYear,
   getTravelRecordYears,
@@ -26,66 +26,24 @@ const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
 const addTravelRecordLabel = '\uC5EC\uD589 \uAE30\uB85D \uCD94\uAC00';
 
-interface TravelRecordLocationState {
-  savedTravelRecordId?: string;
-}
-
 function TravelRecordPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const locationState = location.state as TravelRecordLocationState | null;
   const editedMockFolders = useTravelRecordSessionStore(
     (state) => state.editedMockFolders,
   );
   const deletedMockFolderIds = useTravelRecordSessionStore(
     (state) => state.deletedMockFolderIds,
   );
-  const [folders, setFolders] = useState<TravelRecordFolder[]>(
-    TRAVEL_RECORD_FOLDERS
-  );
+  const travelRecordsQuery = useTravelRecords({ size: 50 });
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
   const [selectedYear, setSelectedYear] = useState(
     () => TRAVEL_RECORD_FOLDERS[0]?.year ?? new Date().getFullYear(),
   );
 
-  useEffect(() => {
-    let isMounted = true;
-    let savedFolders: TravelRecordFolder[] = [];
-
-    void getSavedTravelRecordFolders()
-      .then((folders) => {
-        savedFolders = folders;
-
-        if (isMounted) {
-          setFolders([...TRAVEL_RECORD_FOLDERS, ...folders]);
-
-          const savedFolder = folders.find(
-            (folder) => folder.id === locationState?.savedTravelRecordId
-          );
-          const latestSavedFolder = [...folders].sort(
-            (currentFolder, nextFolder) =>
-              nextFolder.startDate.localeCompare(currentFolder.startDate)
-          )[0];
-          const defaultSelectedYear = (savedFolder ?? latestSavedFolder)?.year;
-
-          if (defaultSelectedYear) {
-            setSelectedYear(defaultSelectedYear);
-          }
-
-          return;
-        }
-
-        folders.forEach(revokeTravelRecordFolderPhotoUrls);
-      })
-      .catch(() => {
-        // Keep the mock records available when browser storage is unavailable.
-      });
-
-    return () => {
-      isMounted = false;
-      savedFolders.forEach(revokeTravelRecordFolderPhotoUrls);
-    };
-  }, [locationState?.savedTravelRecordId]);
+  const apiFolders = useMemo(
+    () => getTravelRecordFoldersFromPages(travelRecordsQuery.data?.pages),
+    [travelRecordsQuery.data?.pages],
+  );
 
   const displayedFolders = useMemo(
     () => [
@@ -94,10 +52,11 @@ function TravelRecordPage() {
         editedMockFolders,
         new Set(deletedMockFolderIds),
       ),
-      ...folders.filter((folder) => folder.id.startsWith('saved-')),
+      ...apiFolders,
     ],
-    [deletedMockFolderIds, editedMockFolders, folders],
+    [apiFolders, deletedMockFolderIds, editedMockFolders],
   );
+
   const years = useMemo(
     () => getTravelRecordYears(displayedFolders),
     [displayedFolders],

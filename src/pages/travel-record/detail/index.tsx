@@ -12,6 +12,7 @@ import {
 import { IoEllipsisVertical } from 'react-icons/io5';
 
 import { useToast } from '../../../components/toast';
+import { useTravelRecordDetail } from '../../../hooks/useTravelRecords';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import { TravelFolderArtwork, TravelRecordPageFrame } from '../components';
 import { TRAVEL_RECORD_FOLDERS } from '../constants/travelRecords';
@@ -87,6 +88,11 @@ function TravelRecordDetailPage() {
     location.state as TravelRecordDetailLocationState | null;
   const isSavedFolder =
     folderId?.startsWith(SAVED_TRAVEL_RECORD_ID_PREFIX) ?? false;
+  const serverTravelRecordId =
+    folderId && !isSavedFolder && /^\d+$/.test(folderId)
+      ? Number(folderId)
+      : null;
+  const serverTravelRecordQuery = useTravelRecordDetail(serverTravelRecordId);
   const staticFolder =
     locationState?.folder ??
     TRAVEL_RECORD_FOLDERS.find((record) => record.id === folderId);
@@ -96,7 +102,9 @@ function TravelRecordDetailPage() {
       : undefined;
   const folder = isSavedFolder
     ? savedFolder
-    : editedMockFolders[folderId ?? ''] ?? staticFolder;
+    : editedMockFolders[folderId ?? ''] ??
+      staticFolder ??
+      serverTravelRecordQuery.data;
   const motionRange = Math.max(cardWidth, 1);
   const cardDistance = cardWidth + cardStackOffset;
   const previousCardX = useTransform(dragX, (value) => -cardDistance + value);
@@ -185,7 +193,10 @@ function TravelRecordDetailPage() {
     };
   }, [isActionMenuOpen]);
 
-  if (isSavedFolder && savedFolder === undefined) {
+  if (
+    (isSavedFolder && savedFolder === undefined) ||
+    (serverTravelRecordId && !staticFolder && serverTravelRecordQuery.isLoading)
+  ) {
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1]">
         <div
@@ -327,6 +338,11 @@ function TravelRecordDetailPage() {
       return;
     }
 
+    if (serverTravelRecordId) {
+      showToast('서버 여행 기록 수정은 아직 지원되지 않아요.');
+      return;
+    }
+
     const photos = isSavedFolder
       ? await getSavedTravelRecordPhotos(folder.id)
       : await Promise.all(
@@ -359,6 +375,11 @@ function TravelRecordDetailPage() {
 
   const handleDelete = async () => {
     if (!folder) {
+      return;
+    }
+
+    if (serverTravelRecordId) {
+      showToast('서버 여행 기록 삭제는 아직 지원되지 않아요.');
       return;
     }
 

@@ -1,11 +1,25 @@
 import { Map } from '../map/components';
+import {
+  getTravelRecordFoldersFromPages,
+  useTravelRecords,
+} from '../../../hooks/useTravelRecords';
+import { getTravelRecordRegionPhotoRecords } from '../../travel-record/mappers/travelRecordApiMapper';
+import { toRegionPhotoMap } from '../map/types/regionPhoto';
 
 function MapSection() {
+  const travelRecordsQuery = useTravelRecords({ size: 50 });
+  const travelRecordFolders = getTravelRecordFoldersFromPages(
+    travelRecordsQuery.data?.pages,
+  );
+  const regionPhotos = toRegionPhotoMap(
+    getTravelRecordRegionPhotoRecords(travelRecordFolders),
+  );
+
   return (
     <section className="mx-6 mt-4">
       <div className="relative h-[342px] overflow-hidden rounded-xl bg-[#F9F9F9]">
         <div className="h-full w-full">
-          <Map />
+          <Map regionPhotos={regionPhotos} />
         </div>
 
         <h2 className="absolute left-4 top-4 text-[18px] font-semibold leading-[100%] text-[#1C1C1C]">

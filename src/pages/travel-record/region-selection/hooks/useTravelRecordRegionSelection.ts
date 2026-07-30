@@ -5,20 +5,26 @@ import {
   getStoredRecentSearches,
   saveRecentSearches,
 } from '../../../../utils/recentSearches';
+import { useTravelRecordRegionSearch } from '../../../../hooks/useTravelRecordRegions';
+import {
+  getTravelRecordRegionSuggestions,
+  mapRegionSearchToTravelRecordRegion,
+} from '../../mappers/travelRecordApiMapper';
+import {
+  filterTravelMapSelectableRegions,
+  normalizeTravelMapSelectedRegion,
+} from '../../constants/travelRecordRegionCodes';
 
 import {
-  createSelectedRegionFromSuggestion,
-  findRegionByName,
-  getRegionSearchText,
   MAX_VISIBLE_REGION_SUGGESTIONS,
-  normalizeSearchText,
-  popularRegions,
   recentSearchStorageOptions,
-  searchSuggestions,
 } from '../constants';
 import type { TravelRecordRegion } from '../types';
 
-function useTravelRecordRegionSelection(initialSelectedRegion: TravelRecordRegion | null = null) {
+function useTravelRecordRegionSelection(
+  popularRegions: readonly TravelRecordRegion[],
+  initialSelectedRegion: TravelRecordRegion | null = null,
+) {
   const [query, setQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>(() =>
     getStoredRecentSearches(recentSearchStorageOptions),
@@ -26,32 +32,28 @@ function useTravelRecordRegionSelection(initialSelectedRegion: TravelRecordRegio
   const [selectedRegion, setSelectedRegion] =
     useState<TravelRecordRegion | null>(initialSelectedRegion);
   const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
+  const regionSearchQuery = useTravelRecordRegionSearch(
+    selectedRegion ? '' : query,
+  );
+  const searchedRegions = useMemo(
+    () =>
+      filterTravelMapSelectableRegions(regionSearchQuery.data ?? []).map(
+        mapRegionSearchToTravelRecordRegion,
+      ),
+    [regionSearchQuery.data],
+  );
 
-  const filteredRegions = useMemo(() => {
-    const normalizedQuery = normalizeSearchText(query.trim());
-
-    if (!normalizedQuery || selectedRegion) {
-      return popularRegions;
-    }
-
-    return popularRegions.filter((region) =>
-      getRegionSearchText(region).includes(normalizedQuery),
-    );
-  }, [query, selectedRegion]);
+  const displayedPopularRegions = popularRegions;
 
   const visibleSuggestions = useMemo(() => {
-    const normalizedQuery = normalizeSearchText(query.trim());
-
-    if (!normalizedQuery || selectedRegion) {
-      return [];
-    }
-
-    return searchSuggestions
-      .filter((suggestion) =>
-        normalizeSearchText(suggestion).includes(normalizedQuery),
-      )
+    return getTravelRecordRegionSuggestions({
+      query,
+      popularRegions,
+      searchedRegions,
+      selectedRegion,
+    })
       .slice(0, MAX_VISIBLE_REGION_SUGGESTIONS);
-  }, [query, selectedRegion]);
+  }, [popularRegions, query, searchedRegions, selectedRegion]);
 
   const addRecentSearch = (keyword: string) => {
     const nextSearches = addStoredRecentSearch(keyword, {
@@ -63,17 +65,25 @@ function useTravelRecordRegionSelection(initialSelectedRegion: TravelRecordRegio
   };
 
   const selectRegion = (region: TravelRecordRegion) => {
-    setSelectedRegion(region);
-    setQuery(region.selectionName);
+    const selectedTravelMapRegion = normalizeTravelMapSelectedRegion(region);
+
+    setSelectedRegion(selectedTravelMapRegion);
+    setQuery(selectedTravelMapRegion.selectionName);
     setIsSuggestionOpen(false);
-    addRecentSearch(region.selectionName);
+    addRecentSearch(selectedTravelMapRegion.selectionName);
   };
 
   const selectRegionName = (regionName: string) => {
-    selectRegion(
-      findRegionByName(regionName) ??
-        createSelectedRegionFromSuggestion(regionName),
+    const region = [...searchedRegions, ...popularRegions].find(
+      (region) =>
+        region.name === regionName ||
+        region.province === regionName ||
+        region.selectionName === regionName,
     );
+
+    if (region) {
+      selectRegion(region);
+    }
   };
 
   const updateQuery = (nextQuery: string) => {
@@ -109,13 +119,6 @@ function useTravelRecordRegionSelection(initialSelectedRegion: TravelRecordRegio
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const firstRegion = filteredRegions[0];
-
-    if (firstRegion) {
-      selectRegion(firstRegion);
-      return;
-    }
-
     const firstSuggestion = visibleSuggestions[0];
 
     if (firstSuggestion) {
@@ -124,7 +127,7 @@ function useTravelRecordRegionSelection(initialSelectedRegion: TravelRecordRegio
   };
 
   return {
-    filteredRegions,
+    filteredRegions: displayedPopularRegions,
     isSuggestionOpen,
     query,
     recentSearches,

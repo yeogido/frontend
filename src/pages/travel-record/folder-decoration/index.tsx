@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { TravelRecordPageFrame } from '../components';
 import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
+import { useCreateTravelRecord } from '../../../hooks/useTravelRecords';
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
 import {
   appendFolderDecoration,
@@ -25,10 +26,7 @@ import {
 import { formatTravelRecordLocalDate } from '../utils/sessionFolders';
 import {
   clearTravelRecordPhotoDraft,
-  createTravelRecordDraftPayload,
   getTravelRecordPhotoDraft,
-  saveTravelRecord,
-  updateTravelRecord,
 } from '../utils/travelRecordSave';
 
 const previousPageLabel =
@@ -81,6 +79,7 @@ function TravelRecordFolderDecorationPage() {
   const decorationsRef = useRef<TravelFolderDecoration[]>(restoredDecorations);
   const uploadedStickersRef = useRef<UploadedFolderSticker[]>([]);
   const { showToast } = useToast();
+  const createTravelRecordMutation = useCreateTravelRecord();
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const folderPhotos = useMemo<[string, ...string[]] | null>(() => {
@@ -161,17 +160,22 @@ function TravelRecordFolderDecorationPage() {
     setIsSaving(true);
 
     try {
-      const payload = createTravelRecordDraftPayload({
-        selectedRegion,
-        selectedDateRange,
-        selectedPhotos,
-        decorations,
-      });
-      const result = editSession?.source === 'saved'
-        ? await updateTravelRecord(editSession.id, payload)
-        : editSession?.source === 'mock'
+      const result = editSession?.source === 'mock'
           ? { id: editSession.id }
-        : await saveTravelRecord(payload);
+        : editSession?.source === 'saved'
+          ? { id: editSession.id }
+          : {
+              id: String(
+                (
+                  await createTravelRecordMutation.mutateAsync({
+                    selectedRegion,
+                    selectedDateRange,
+                    selectedPhotos,
+                    decorations,
+                  })
+                ).travelRecordId,
+              ),
+            };
       if (editSession?.source === 'mock') {
         const photos = createObjectUrls(selectedPhotos) as [string, ...string[]];
         saveMockFolder({

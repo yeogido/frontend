@@ -2,6 +2,7 @@ import { IoChevronBack } from 'react-icons/io5';
 import { useNavigate } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
+import { usePopularTravelRecordRegions } from '../../../hooks/useTravelRecordRegions';
 
 import {
   PopularRegionGrid,
@@ -11,12 +12,19 @@ import {
   SelectedRegionSearchBar,
 } from './components';
 import { useTravelRecordRegionSelection } from './hooks';
-import { saveTravelRecordDraftRegion } from '../utils/draftStorage';
+import {
+  clearTravelRecordDraftDateRange,
+  saveTravelRecordDraftRegion,
+} from '../utils/draftStorage';
 import { getTravelRecordDraftRegion } from '../utils/draftStorage';
+import { mapPopularRegionToTravelRecordRegion } from '../mappers/travelRecordApiMapper';
 
 function TravelRecordRegionSelectionPage() {
   const navigate = useNavigate();
   const storedDraftRegion = getTravelRecordDraftRegion();
+  const popularRegionsQuery = usePopularTravelRecordRegions();
+  const popularRegions =
+    popularRegionsQuery.data?.map(mapPopularRegionToTravelRecordRegion) ?? [];
   const {
     filteredRegions,
     isSuggestionOpen,
@@ -33,6 +41,7 @@ function TravelRecordRegionSelectionPage() {
     submitSearch,
     updateQuery,
   } = useTravelRecordRegionSelection(
+    popularRegions,
     storedDraftRegion ? { ...storedDraftRegion, imageSrc: '' } : null,
   );
 
@@ -107,11 +116,13 @@ function TravelRecordRegionSelectionPage() {
 
           const draftRegion = {
             id: selectedRegion.id,
+            regionId: selectedRegion.regionId,
             name: selectedRegion.name,
             province: selectedRegion.province,
             selectionName: selectedRegion.selectionName,
           };
 
+          clearTravelRecordDraftDateRange();
           saveTravelRecordDraftRegion(draftRegion);
 
           navigate('/travel-record/date-selection', {

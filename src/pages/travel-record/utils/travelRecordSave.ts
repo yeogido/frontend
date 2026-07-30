@@ -11,6 +11,7 @@ export const SAVED_TRAVEL_RECORD_ID_PREFIX = 'saved-';
 export const TRAVEL_RECORD_PHOTO_DRAFT_ID = 'current-travel-record';
 
 export interface CreateTravelRecordPayload {
+  regionId?: number;
   regionCode: string;
   regionName: string;
   startDate: Date;
@@ -153,6 +154,7 @@ export const createTravelRecordDraftPayload = ({
   selectedPhotos,
   decorations,
 }: CreateTravelRecordDraftPayloadParams): CreateTravelRecordPayload => ({
+  regionId: selectedRegion.regionId,
   regionCode: selectedRegion.id,
   regionName: selectedRegion.selectionName || selectedRegion.name,
   startDate: selectedDateRange.startDate,

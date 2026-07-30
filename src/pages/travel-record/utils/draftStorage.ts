@@ -135,6 +135,18 @@ export const saveTravelRecordDraftDateRange = (range: TravelDateRange) => {
   }
 };
 
+export const clearTravelRecordDraftDateRange = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(TRAVEL_RECORD_DRAFT_DATE_RANGE_KEY);
+  } catch {
+    // Storage can be blocked. Continue with the new date selection state.
+  }
+};
+
 export const getTravelRecordDraftDateRange = () => {
   if (typeof window === 'undefined') {
     return null;

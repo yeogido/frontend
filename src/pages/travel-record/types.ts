@@ -17,6 +17,7 @@ export interface TravelRecordFolder {
 
 export interface TravelRecordDraftRegion {
   id: string;
+  regionId?: number;
   name: string;
   province: string;
   selectionName: string;
