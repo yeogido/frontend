@@ -1,7 +1,4 @@
-import type {
-  Region,
-  RegionSearchResult,
-} from '../../../types/region.type';
+import type { Region, RegionSearchResult } from '../../../types/region.type';
 import type { Neighborhood } from './types';
 
 export const fromRegion = (region: Region): Neighborhood => ({
