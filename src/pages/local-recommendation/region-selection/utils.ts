@@ -7,11 +7,14 @@ export const fromRegion = (region: Region): Neighborhood => ({
   parentName: '',
 });
 
-export const fromSearchResult = (result: RegionSearchResult): Neighborhood => ({
-  id: result.regionId,
-  name: result.name,
-  parentName: result.fullName.replace(new RegExp(`\\s*${result.name}$`), ''),
-});
+export const fromSearchResult = (result: RegionSearchResult): Neighborhood => {
+  const { fullName, name } = result;
+  const parentName = fullName.endsWith(name)
+    ? fullName.slice(0, fullName.length - name.length).trimEnd()
+    : fullName;
+
+  return { id: result.regionId, name, parentName };
+};
 
 export const getNeighborhoodLabel = (neighborhood: Neighborhood) =>
   [neighborhood.parentName, neighborhood.name].filter(Boolean).join(' ');

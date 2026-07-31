@@ -69,15 +69,17 @@ function SelectedNeighborhoodCard({
           >
             {neighborhood.name}
           </span>
-          <span
-            className="text-gray-4 block"
-            style={{
-              marginTop: META_MARGIN_TOP * scale,
-              fontSize: META_SIZE * scale,
-            }}
-          >
-            {neighborhood.parentName}
-          </span>
+          {neighborhood.parentName.trim() ? (
+            <span
+              className="text-gray-4 block"
+              style={{
+                marginTop: META_MARGIN_TOP * scale,
+                fontSize: META_SIZE * scale,
+              }}
+            >
+              {neighborhood.parentName}
+            </span>
+          ) : null}
         </span>
         <IoClose
           aria-hidden="true"

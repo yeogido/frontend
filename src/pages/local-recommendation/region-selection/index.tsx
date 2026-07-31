@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { getRegions, searchRegions } from '../../../apis/regions.api';
+import { LoadingSpinner } from '../../../components/common';
 import { ResponsivePageShell } from '../../../components/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
@@ -38,6 +39,7 @@ function LocalRecommendationPage() {
   const { recentRegions, addRecentRegion } = useRecentRegions();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [submittedQuery, setSubmittedQuery] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] =
     useState<Neighborhood | null>(draftNeighborhood);
 
@@ -47,22 +49,24 @@ function LocalRecommendationPage() {
     staleTime: 5 * 60_000,
   });
 
-  const trimmedQuery = searchQuery.trim();
   const searchResultsQuery = useQuery({
-    queryKey: ['regions', 'search', trimmedQuery],
+    queryKey: ['regions', 'search', submittedQuery],
     queryFn: async () =>
-      (await searchRegions(trimmedQuery)).map(fromSearchResult),
-    enabled: trimmedQuery.length > 0,
+      (await searchRegions(submittedQuery)).map(fromSearchResult),
+    enabled: submittedQuery.length > 0,
     staleTime: 30_000,
   });
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setSubmittedQuery(query.trim());
     setSelectedNeighborhood(null);
+    setNeighborhood(null);
   };
 
   const handleSelectNeighborhood = (candidate: Neighborhood) => {
     setSearchQuery('');
+    setSubmittedQuery('');
 
     if (selectedNeighborhood?.id === candidate.id) {
       setSelectedNeighborhood(null);
@@ -90,31 +94,56 @@ function LocalRecommendationPage() {
       <main className="flex-1">
         <NeighborhoodSearchSection onSearch={handleSearch} />
 
-        {selectedNeighborhood && !trimmedQuery ? (
+        {selectedNeighborhood && !searchQuery.trim() ? (
           <SelectedNeighborhoodCard
             neighborhood={selectedNeighborhood}
             onClear={handleClearSelection}
           />
-        ) : trimmedQuery ? (
-          <NeighborhoodResultList
-            heading="검색 결과"
-            results={searchResultsQuery.data ?? []}
-            selectedNeighborhood={selectedNeighborhood}
-            onSelect={handleSelectNeighborhood}
-          />
+        ) : searchQuery.trim() ? (
+          searchResultsQuery.isLoading ? (
+            <LoadingSpinner label="검색 결과를 불러오는 중" />
+          ) : searchResultsQuery.isError ? (
+            <section aria-live="polite" className="text-center">
+              <p>검색 결과를 불러오지 못했습니다.</p>
+              <button
+                type="button"
+                onClick={() => searchResultsQuery.refetch()}
+              >
+                다시 시도
+              </button>
+            </section>
+          ) : (
+            <NeighborhoodResultList
+              heading="검색 결과"
+              results={searchResultsQuery.data ?? []}
+              selectedNeighborhood={selectedNeighborhood}
+              onSelect={handleSelectNeighborhood}
+            />
+          )
         ) : null}
 
-        {!trimmedQuery && !selectedNeighborhood ? (
+        {!searchQuery.trim() && !selectedNeighborhood ? (
           <RecentSearchSection
             neighborhoods={recentRegions}
             onSelect={handleSelectNeighborhood}
           />
         ) : null}
 
-        <PopularRegionGrid
-          regions={regionsQuery.data?.regions ?? []}
-          onSelect={(region) => handleSelectNeighborhood(fromRegion(region))}
-        />
+        {regionsQuery.isLoading ? (
+          <LoadingSpinner label="지역 정보를 불러오는 중" />
+        ) : regionsQuery.isError ? (
+          <section aria-live="polite" className="text-center">
+            <p>지역 정보를 불러오지 못했습니다.</p>
+            <button type="button" onClick={() => regionsQuery.refetch()}>
+              다시 시도
+            </button>
+          </section>
+        ) : (
+          <PopularRegionGrid
+            regions={regionsQuery.data?.regions ?? []}
+            onSelect={(region) => handleSelectNeighborhood(fromRegion(region))}
+          />
+        )}
       </main>
 
       <button
