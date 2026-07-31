@@ -51,9 +51,7 @@ async function putFileToPresignedUrl(
     ) {
       throw error;
     }
-    throw new Error('이미지 업로드에 실패했습니다.', {
-      cause: error,
-    });
+    throw new Error('이미지 업로드에 실패했습니다.', { cause: error });
   } finally {
     clearTimeout(timeoutId);
   }
