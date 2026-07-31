@@ -56,14 +56,24 @@ export function DetailTitleSection({
         className="flex flex-wrap items-center"
         style={{ marginTop: TAGS_MARGIN_TOP * scale, gap: TAGS_GAP * scale }}
       >
-        {tags.map((tag) => (
-          <TagChip
-            key={tag.id}
-            type={tag.tagId}
-            className="w-auto"
-            style={{ height: TAG_HEIGHT * scale }}
-          />
-        ))}
+        {tags.map((tag) =>
+          tag.tagId ? (
+            <TagChip
+              key={tag.id}
+              type={tag.tagId}
+              className="w-auto"
+              style={{ height: TAG_HEIGHT * scale }}
+            />
+          ) : (
+            <span
+              key={tag.id}
+              className="bg-gray-1 text-gray-5 inline-flex items-center rounded-full px-2 text-xs font-medium"
+              style={{ height: TAG_HEIGHT * scale }}
+            >
+              {tag.label}
+            </span>
+          )
+        )}
       </div>
     </section>
   );
