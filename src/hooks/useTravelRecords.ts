@@ -4,6 +4,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  useQueries,
 } from '@tanstack/react-query';
 
 import { createPresignedUrl, uploadFileToPresignedUrl } from '../apis/files.api';
@@ -17,6 +18,7 @@ import type { TravelRecordFolder } from '../pages/travel-record/types';
 import {
   createTravelRecordCreateRequest,
   mapTravelRecordDetailToFolder,
+  mapTravelRecordFolder,
   mapTravelRecordSummaryToFolder,
 } from '../pages/travel-record/mappers/travelRecordApiMapper';
 import type { TravelDateRange } from '../pages/travel-record/date-selection/types';
@@ -24,8 +26,10 @@ import type { TravelFolderDecoration } from '../pages/travel-record/folder-decor
 import type { TravelRecordDraftRegion } from '../pages/travel-record/types';
 import type {
   TravelRecordCreateResponse,
+  TravelRecordDetailResponse,
   TravelRecordListParams,
   TravelRecordListResponse,
+  TravelRecordSummary,
   UploadedTravelRecordImage,
 } from '../types/travelRecord.type';
 
@@ -80,6 +84,15 @@ export function useTravelRecordDetail(travelRecordId: number | null) {
   });
 }
 
+export function useTravelRecordDetails(records: TravelRecordSummary[]) {
+  return useQueries({
+    queries: records.map((record) => ({
+      queryKey: ['travelRecord', record.travelRecordId],
+      queryFn: () => getTravelRecordDetail(record.travelRecordId),
+    })),
+  });
+}
+
 export function useCreateTravelRecord() {
   const queryClient = useQueryClient();
 
@@ -127,3 +140,13 @@ export const getTravelRecordFoldersFromPages = (
   pages?.flatMap((page) =>
     page.items.map((record) => mapTravelRecordSummaryToFolder(record)),
   ) ?? [];
+
+export const getTravelRecordSummariesFromPages = (
+  pages: TravelRecordListResponse[] | undefined,
+) => pages?.flatMap((page) => page.items) ?? [];
+
+export const getTravelRecordFolders = (
+  records: TravelRecordSummary[],
+  details: Array<TravelRecordDetailResponse | undefined>,
+) =>
+  records.map((record, index) => mapTravelRecordFolder(record, details[index]));

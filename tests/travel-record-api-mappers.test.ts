@@ -7,6 +7,7 @@ import {
   getTravelRecordRegionPhotoRecords,
   mapPopularRegionToTravelRecordRegion,
   mapRegionSearchToTravelRecordRegion,
+  mapTravelRecordFolder,
   mapTravelRecordSummaryToFolder,
 } from '../src/pages/travel-record/mappers/travelRecordApiMapper.ts';
 import {
@@ -23,6 +24,7 @@ import type {
 import type {
   UploadedTravelRecordImage,
   TravelRecordSummary,
+  TravelRecordDetailResponse,
 } from '../src/types/travelRecord.type.ts';
 
 test('maps Region API responses to travel record selectable regions', () => {
@@ -180,6 +182,48 @@ test('maps travel record summaries to existing folder view model with image fall
     photos: [''],
     decorations: [],
   });
+});
+
+test('maps detail stickers into the folder displayed in the record list', () => {
+  const summary: TravelRecordSummary = {
+    travelRecordId: 10,
+    title: 'Busan',
+    regionId: 27,
+    startDate: '2026-07-20',
+    endDate: '2026-07-22',
+    coverImageKey: 'travel-records/10/image-1.jpg',
+    folderTheme: 'BASIC',
+    createdAt: '2026-07-23T09:00:00',
+  };
+  const detail: TravelRecordDetailResponse = {
+    ...summary,
+    images: [],
+    stickers: [
+      {
+        recordStickerId: 7,
+        stickerId: 21,
+        imageUrl: 'https://example.com/stickers/dog.png',
+        positionX: 0.5,
+        positionY: 0.25,
+        rotation: 15,
+        scale: 1.2,
+        zIndex: 3,
+      },
+    ],
+  };
+
+  assert.deepEqual(mapTravelRecordFolder(summary, detail).decorations, [
+    {
+      id: '7',
+      source: 'sticker',
+      stickerId: 'animal-dog',
+      x: 0.5,
+      y: 0.25,
+      rotation: 15,
+      scale: 1.2,
+      zIndex: 3,
+    },
+  ]);
 });
 
 test('creates travel record create request from draft data and uploaded image keys', () => {

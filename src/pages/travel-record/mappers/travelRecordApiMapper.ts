@@ -159,6 +159,14 @@ export const mapTravelRecordDetailToFolder = (
   }),
 });
 
+export const mapTravelRecordFolder = (
+  summary: TravelRecordSummary,
+  detail?: TravelRecordDetailResponse,
+) =>
+  detail
+    ? mapTravelRecordDetailToFolder(detail)
+    : mapTravelRecordSummaryToFolder(summary);
+
 interface CreateTravelRecordCreateRequestParams {
   selectedRegion: TravelRecordDraftRegion;
   selectedDateRange: TravelDateRange;

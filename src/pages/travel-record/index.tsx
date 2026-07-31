@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { FloatingActionButton } from '../../components/common';
 import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
 import {
-  getTravelRecordFoldersFromPages,
+  getTravelRecordFolders,
+  getTravelRecordSummariesFromPages,
+  useTravelRecordDetails,
   useTravelRecords,
 } from '../../hooks/useTravelRecords';
 
@@ -40,9 +42,18 @@ function TravelRecordPage() {
     () => TRAVEL_RECORD_FOLDERS[0]?.year ?? new Date().getFullYear(),
   );
 
-  const apiFolders = useMemo(
-    () => getTravelRecordFoldersFromPages(travelRecordsQuery.data?.pages),
+  const apiRecordSummaries = useMemo(
+    () => getTravelRecordSummariesFromPages(travelRecordsQuery.data?.pages),
     [travelRecordsQuery.data?.pages],
+  );
+  const travelRecordDetails = useTravelRecordDetails(apiRecordSummaries);
+  const apiFolders = useMemo(
+    () =>
+      getTravelRecordFolders(
+        apiRecordSummaries,
+        travelRecordDetails.map((query) => query.data),
+      ),
+    [apiRecordSummaries, travelRecordDetails],
   );
 
   const displayedFolders = useMemo(
