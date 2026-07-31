@@ -4,6 +4,7 @@ import {
 } from '@tanstack/react-query';
 
 import { getCourses } from '../apis/courses.api';
+import type { NormalizedApiError } from '../apis/common';
 import type {
   GetCoursesParams,
   GetCoursesResponse,
@@ -17,7 +18,7 @@ interface CoursesPageParam {
 export function useCourses(params: GetCoursesParams) {
   return useInfiniteQuery<
     GetCoursesResponse,
-    Error,
+    NormalizedApiError,
     InfiniteData<GetCoursesResponse, CoursesPageParam>,
     [string, GetCoursesParams],
     CoursesPageParam
