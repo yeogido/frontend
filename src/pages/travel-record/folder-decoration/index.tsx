@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IoChevronBack } from 'react-icons/io5';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
 import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
-import { useCreateTravelRecord } from '../../../hooks/useTravelRecords';
+import {
+  useCreateTravelRecord,
+  useUpdateTravelRecord,
+} from '../../../hooks/useTravelRecords';
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
 import {
   appendFolderDecoration,
@@ -27,7 +30,9 @@ import { formatTravelRecordLocalDate } from '../utils/sessionFolders';
 import {
   clearTravelRecordPhotoDraft,
   getTravelRecordPhotoDraft,
+  type TravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
+import { getTravelRecordEditRoute } from '../utils/editRoute';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -38,8 +43,10 @@ const description =
   '\uC2A4\uD2F0\uCEE4\uB97C \uCD94\uAC00\uD574 \uB098\uB9CC\uC758 \uD3F4\uB354\uB97C \uB9CC\uB4E4\uC5B4 \uBCF4\uC138\uC694. (\uC120\uD0DD)';
 const saveRecordLabel = '\uAE30\uB85D \uC800\uC7A5\uD558\uAE30';
 
-const createObjectUrls = (files: File[]) =>
-  files.slice(0, 2).map((file) => URL.createObjectURL(file));
+const createPreviewPhotoUrls = (photos: TravelRecordPhotoDraft[]) =>
+  photos.slice(0, 2).map((photo) =>
+    photo.source === 'server' ? photo.imageUrl : URL.createObjectURL(photo.file),
+  );
 
 const formatPeriod = (startDate: Date, endDate: Date) => {
   const formatDate = (date: Date) => {
@@ -54,6 +61,7 @@ const formatPeriod = (startDate: Date, endDate: Date) => {
 
 function TravelRecordFolderDecorationPage() {
   const navigate = useNavigate();
+  const { travelRecordId } = useParams<{ travelRecordId: string }>();
   const location = useLocation();
   const locationState =
     location.state as TravelFolderDecorationLocationState | null;
@@ -66,7 +74,7 @@ function TravelRecordFolderDecorationPage() {
   const selectedDateRange =
     locationState?.selectedDateRange ?? storedSelectedDateRange;
   const previewPhotoUrlsRef = useRef<string[]>([]);
-  const [selectedPhotos, setSelectedPhotos] = useState<File[] | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<TravelRecordPhotoDraft[] | null>(null);
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
   const editSession = useTravelRecordSessionStore((state) => state.editSession);
   const saveMockFolder = useTravelRecordSessionStore((state) => state.saveMockFolder);
@@ -80,6 +88,7 @@ function TravelRecordFolderDecorationPage() {
   const uploadedStickersRef = useRef<UploadedFolderSticker[]>([]);
   const { showToast } = useToast();
   const createTravelRecordMutation = useCreateTravelRecord();
+  const updateTravelRecordMutation = useUpdateTravelRecord();
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const folderPhotos = useMemo<[string, ...string[]] | null>(() => {
@@ -122,7 +131,7 @@ function TravelRecordFolderDecorationPage() {
 
     void getTravelRecordPhotoDraft()
       .then((photos) => {
-        previewPhotoUrls = createObjectUrls(photos);
+        previewPhotoUrls = createPreviewPhotoUrls(photos);
 
         if (!isMounted) {
           previewPhotoUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -160,24 +169,41 @@ function TravelRecordFolderDecorationPage() {
     setIsSaving(true);
 
     try {
+      const uploadedPhotos = selectedPhotos.flatMap((photo) =>
+        photo.source === 'new' ? [photo.file] : [],
+      );
       const result = editSession?.source === 'mock'
           ? { id: editSession.id }
         : editSession?.source === 'saved'
           ? { id: editSession.id }
+          : editSession?.source === 'server'
+            ? {
+                id: String(
+                  (
+                    await updateTravelRecordMutation.mutateAsync({
+                      travelRecordId: Number(editSession.id),
+                      selectedRegion,
+                      selectedDateRange,
+                      selectedPhotos,
+                      decorations,
+                    })
+                  ).travelRecordId,
+                ),
+              }
           : {
               id: String(
                 (
                   await createTravelRecordMutation.mutateAsync({
                     selectedRegion,
                     selectedDateRange,
-                    selectedPhotos,
+                    selectedPhotos: uploadedPhotos,
                     decorations,
                   })
                 ).travelRecordId,
               ),
             };
       if (editSession?.source === 'mock') {
-        const photos = createObjectUrls(selectedPhotos) as [string, ...string[]];
+        const photos = createPreviewPhotoUrls(selectedPhotos) as [string, ...string[]];
         saveMockFolder({
           id: editSession.id,
           regionCode: selectedRegion.id,
@@ -202,17 +228,32 @@ function TravelRecordFolderDecorationPage() {
 
   useEffect(() => {
     if (!selectedRegion) {
-      navigate('/travel-record/new', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId)
+          : '/travel-record/new',
+        { replace: true },
+      );
       return;
     }
 
     if (!selectedDateRange) {
-      navigate('/travel-record/date-selection', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId, 'date')
+          : '/travel-record/date-selection',
+        { replace: true },
+      );
       return;
     }
 
     if (selectedPhotos !== null && selectedPhotos.length === 0) {
-      navigate('/travel-record/photo-selection', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId, 'photos')
+          : '/travel-record/photo-selection',
+        { replace: true },
+      );
     }
   }, [navigate, selectedDateRange, selectedPhotos, selectedRegion]);
 

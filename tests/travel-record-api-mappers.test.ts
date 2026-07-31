@@ -3,10 +3,12 @@ import test from 'node:test';
 
 import {
   createTravelRecordCreateRequest,
+  createTravelRecordUpdateRequest,
   getTravelRecordRegionSuggestions,
   getTravelRecordRegionPhotoRecords,
   mapPopularRegionToTravelRecordRegion,
   mapRegionSearchToTravelRecordRegion,
+  mapTravelRecordDetailToFolder,
   mapTravelRecordFolder,
   mapTravelRecordSummaryToFolder,
 } from '../src/pages/travel-record/mappers/travelRecordApiMapper.ts';
@@ -158,30 +160,47 @@ test('normalizes a selected popular metropolitan district to its parent region',
   );
 });
 
-test('maps travel record summaries to existing folder view model with image fallback', () => {
+test('maps a travel record summary cover image URL to the folder photo', () => {
   const summary: TravelRecordSummary = {
     travelRecordId: 10,
     title: 'Busan',
     regionId: 27,
     startDate: '2026-07-20',
     endDate: '2026-07-22',
-    coverImageKey: 'travel-records/10/image-1.jpg',
+    coverImageUrl: 'https://example.com/travel-records/10/image-1.jpg',
     folderTheme: 'BASIC',
     createdAt: '2026-07-23T09:00:00',
   };
 
   assert.deepEqual(mapTravelRecordSummaryToFolder(summary), {
     id: '10',
+    regionId: 27,
     regionCode: '26',
     regionName: 'Busan',
     title: 'Busan',
+    folderTheme: 'BASIC',
     year: 2026,
     startDate: '2026-07-20',
     endDate: '2026-07-22',
     period: '07.20 - 07.22',
-    photos: [''],
+    photos: ['https://example.com/travel-records/10/image-1.jpg'],
     decorations: [],
   });
+});
+
+test('keeps the server folder theme in the folder model', () => {
+  const summary: TravelRecordSummary = {
+    travelRecordId: 10,
+    title: 'Busan',
+    regionId: 27,
+    startDate: '2026-07-20',
+    endDate: '2026-07-22',
+    coverImageUrl: 'https://example.com/travel-records/10/image-1.jpg',
+    folderTheme: 'BASIC',
+    createdAt: '2026-07-23T09:00:00',
+  };
+
+  assert.equal(mapTravelRecordSummaryToFolder(summary).folderTheme, 'BASIC');
 });
 
 test('maps detail stickers into the folder displayed in the record list', () => {
@@ -191,7 +210,7 @@ test('maps detail stickers into the folder displayed in the record list', () => 
     regionId: 27,
     startDate: '2026-07-20',
     endDate: '2026-07-22',
-    coverImageKey: 'travel-records/10/image-1.jpg',
+    coverImageUrl: 'https://example.com/travel-records/10/image-1.jpg',
     folderTheme: 'BASIC',
     createdAt: '2026-07-23T09:00:00',
   };
@@ -224,6 +243,142 @@ test('maps detail stickers into the folder displayed in the record list', () => 
       zIndex: 3,
     },
   ]);
+});
+
+test('maps detail image URLs to folder photos in image order', () => {
+  const detail: TravelRecordDetailResponse = {
+    travelRecordId: 10,
+    title: 'Busan',
+    regionId: 27,
+    startDate: '2026-07-20',
+    endDate: '2026-07-22',
+    coverImageUrl: 'https://example.com/travel-records/10/cover.jpg',
+    folderTheme: 'BASIC',
+    images: [
+      {
+        imageId: 2,
+        imageKey: 'travel-records/10/image-2.jpg',
+        imageUrl: 'https://example.com/travel-records/10/image-2.jpg',
+        imageOrder: 2,
+      },
+      {
+        imageId: 1,
+        imageKey: 'travel-records/10/image-1.jpg',
+        imageUrl: 'https://example.com/travel-records/10/image-1.jpg',
+        imageOrder: 1,
+      },
+    ],
+    stickers: [],
+    createdAt: '2026-07-23T09:00:00',
+  };
+
+  assert.deepEqual(mapTravelRecordDetailToFolder(detail).photos, [
+    'https://example.com/travel-records/10/image-1.jpg',
+    'https://example.com/travel-records/10/image-2.jpg',
+  ]);
+  assert.deepEqual(mapTravelRecordDetailToFolder(detail).serverPhotos, [
+    {
+      imageKey: 'travel-records/10/image-1.jpg',
+      imageUrl: 'https://example.com/travel-records/10/image-1.jpg',
+    },
+    {
+      imageKey: 'travel-records/10/image-2.jpg',
+      imageUrl: 'https://example.com/travel-records/10/image-2.jpg',
+    },
+  ]);
+});
+
+test('falls back to the cover image when a detail response omits images', () => {
+  const detail = {
+    travelRecordId: 10,
+    title: 'Busan',
+    regionId: 26,
+    startDate: '2026-07-20',
+    endDate: '2026-07-22',
+    coverImageUrl: 'https://example.com/travel-records/10/cover.jpg',
+    folderTheme: 'BASIC',
+    stickers: [],
+    createdAt: '2026-07-23T09:00:00',
+  } as TravelRecordDetailResponse;
+
+  assert.deepEqual(mapTravelRecordDetailToFolder(detail).photos, [
+    'https://example.com/travel-records/10/cover.jpg',
+  ]);
+});
+
+test('handles a detail response that omits stickers', () => {
+  const detail = {
+    travelRecordId: 10,
+    title: 'Busan',
+    regionId: 26,
+    startDate: '2026-07-20',
+    endDate: '2026-07-22',
+    coverImageUrl: 'https://example.com/travel-records/10/cover.jpg',
+    folderTheme: 'BASIC',
+    images: [],
+    createdAt: '2026-07-23T09:00:00',
+  } as TravelRecordDetailResponse;
+
+  assert.deepEqual(mapTravelRecordDetailToFolder(detail).decorations, []);
+});
+
+test('marks a detail folder with unsupported custom stickers as not editable', () => {
+  const detail: TravelRecordDetailResponse = {
+    travelRecordId: 10,
+    title: 'Busan',
+    regionId: 27,
+    startDate: '2026-07-20',
+    endDate: '2026-07-22',
+    coverImageUrl: 'https://example.com/travel-records/10/cover.jpg',
+    folderTheme: 'BASIC',
+    images: [],
+    stickers: [
+      {
+        recordStickerId: 9,
+        stickerId: 999,
+        imageUrl: 'https://example.com/stickers/custom.png',
+        positionX: 0.5,
+        positionY: 0.25,
+        rotation: 0,
+        scale: 1,
+        zIndex: 1,
+      },
+    ],
+    createdAt: '2026-07-23T09:00:00',
+  };
+
+  assert.equal(mapTravelRecordDetailToFolder(detail).hasUnsupportedStickers, true);
+});
+
+test('creates a travel record update request from the edited draft data', () => {
+  assert.deepEqual(
+    createTravelRecordUpdateRequest({
+      selectedRegion: {
+        id: '27',
+        regionId: 27,
+        name: 'Busan',
+        province: 'Busan Metropolitan City',
+        selectionName: 'Busan',
+      },
+      selectedDateRange: {
+        startDate: new Date(2026, 6, 20),
+        endDate: new Date(2026, 6, 22),
+      },
+      uploadedImages: [{ objectKey: 'travel-records/10/image-1.jpg' }],
+      decorations: [],
+    }),
+    {
+      title: 'Busan',
+      regionId: 27,
+      startDate: '2026-07-20',
+      endDate: '2026-07-22',
+      folderTheme: 'BASIC',
+      images: [
+        { imageKey: 'travel-records/10/image-1.jpg', imageOrder: 1 },
+      ],
+      stickers: [],
+    },
+  );
 });
 
 test('creates travel record create request from draft data and uploaded image keys', () => {

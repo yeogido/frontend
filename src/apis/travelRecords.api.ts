@@ -2,6 +2,7 @@ import {
   apiClient,
   normalizeApiError,
 } from './common';
+import { deleteTravelRecordWithClient } from './travelRecordsClient';
 
 import type {
   TravelRecordCreateRequest,
@@ -9,6 +10,8 @@ import type {
   TravelRecordDetailResponse,
   TravelRecordListParams,
   TravelRecordListResponse,
+  TravelRecordUpdateRequest,
+  TravelRecordUpdateResponse,
   TravelRecordYearListResponse,
 } from '../types/travelRecord.type';
 
@@ -63,6 +66,32 @@ export async function createTravelRecord(
     );
 
     return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function updateTravelRecord(
+  travelRecordId: number,
+  request: TravelRecordUpdateRequest,
+): Promise<TravelRecordUpdateResponse> {
+  try {
+    const { data } = await apiClient.patch<TravelRecordUpdateResponse>(
+      `/travel-records/${travelRecordId}`,
+      request,
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function deleteTravelRecordById(
+  travelRecordId: number,
+): Promise<void> {
+  try {
+    await deleteTravelRecordWithClient(apiClient, travelRecordId);
   } catch (error) {
     throw normalizeApiError(error);
   }

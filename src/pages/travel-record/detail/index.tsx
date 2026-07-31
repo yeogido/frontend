@@ -12,7 +12,10 @@ import {
 import { IoEllipsisVertical } from 'react-icons/io5';
 
 import { useToast } from '../../../components/toast';
-import { useTravelRecordDetail } from '../../../hooks/useTravelRecords';
+import {
+  useDeleteTravelRecord,
+  useTravelRecordDetail,
+} from '../../../hooks/useTravelRecords';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import { TravelFolderArtwork, TravelRecordPageFrame } from '../components';
 import { TRAVEL_RECORD_FOLDERS } from '../constants/travelRecords';
@@ -29,6 +32,7 @@ import {
   saveTravelRecordDraftDateRange,
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
+import { getTravelRecordEditRoute } from '../utils/editRoute';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
@@ -93,6 +97,7 @@ function TravelRecordDetailPage() {
       ? Number(folderId)
       : null;
   const serverTravelRecordQuery = useTravelRecordDetail(serverTravelRecordId);
+  const deleteTravelRecordMutation = useDeleteTravelRecord();
   const staticFolder =
     locationState?.folder ??
     TRAVEL_RECORD_FOLDERS.find((record) => record.id === folderId);
@@ -103,8 +108,9 @@ function TravelRecordDetailPage() {
   const folder = isSavedFolder
     ? savedFolder
     : editedMockFolders[folderId ?? ''] ??
-      staticFolder ??
-      serverTravelRecordQuery.data;
+      (serverTravelRecordId
+        ? serverTravelRecordQuery.data ?? staticFolder
+        : staticFolder);
   const motionRange = Math.max(cardWidth, 1);
   const cardDistance = cardWidth + cardStackOffset;
   const previousCardX = useTransform(dragX, (value) => -cardDistance + value);
@@ -226,7 +232,11 @@ function TravelRecordDetailPage() {
     );
   }
 
-  const lastPhotoIndex = folder.photos.length - 1;
+  const folderPhotos: [string, ...string[]] =
+    Array.isArray(folder.photos) && folder.photos.length > 0
+      ? folder.photos
+      : [''];
+  const lastPhotoIndex = folderPhotos.length - 1;
   const visiblePhotoIndexes =
     isPhotoTransitioning && transitionTargetIndex !== null
       ? [activePhotoIndex, transitionTargetIndex]
@@ -338,39 +348,82 @@ function TravelRecordDetailPage() {
       return;
     }
 
-    if (serverTravelRecordId) {
-      showToast('서버 여행 기록 수정은 아직 지원되지 않아요.');
+    if (serverTravelRecordId && folder.hasUnsupportedStickers) {
+      showToast('커스텀 스티커가 있는 여행 기록은 아직 수정할 수 없어요.');
       return;
     }
 
-    const photos = isSavedFolder
-      ? await getSavedTravelRecordPhotos(folder.id)
-      : await Promise.all(
-          folder.photos.map(async (url, index) => {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            return new File([blob], `travel-record-${index + 1}.webp`, {
-              type: blob.type || 'image/webp',
-            });
-          }),
-        );
+    const editableFolder = serverTravelRecordId
+      ? serverTravelRecordQuery.data
+      : folder;
 
-    const startDate = new Date(`${folder.startDate}T00:00:00`);
-    const endDate = new Date(`${folder.endDate ?? folder.startDate}T00:00:00`);
+    if (!editableFolder) {
+      showToast('여행 기록을 불러오는 중이에요.');
+      return;
+    }
+
+    if (serverTravelRecordId && !editableFolder.serverPhotos?.length) {
+      showToast('사진 정보가 없어 수정할 수 없어요.');
+      return;
+    }
+
+    let photos;
+
+    try {
+      photos = serverTravelRecordId
+        ? editableFolder.serverPhotos!.map((photo) => ({
+            source: 'server' as const,
+            imageKey: photo.imageKey,
+            imageUrl: photo.imageUrl,
+          }))
+        : isSavedFolder
+          ? (await getSavedTravelRecordPhotos(editableFolder.id)).map((file) => ({
+              source: 'new' as const,
+              file,
+            }))
+          : await Promise.all(
+            editableFolder.photos.map(async (url, index) => {
+              const response = await fetch(url);
+
+              if (!response.ok) {
+                throw new Error('Failed to download a travel record image.');
+              }
+
+              const blob = await response.blob();
+              return {
+                source: 'new' as const,
+                file: new File([blob], `travel-record-${index + 1}.webp`, {
+                  type: blob.type || 'image/webp',
+                }),
+              };
+            }),
+          );
+    } catch {
+      showToast('여행 사진을 불러오지 못해 수정할 수 없어요.');
+      return;
+    }
+
+    const startDate = new Date(`${editableFolder.startDate}T00:00:00`);
+    const endDate = new Date(`${editableFolder.endDate ?? editableFolder.startDate}T00:00:00`);
     saveTravelRecordDraftRegion({
-      id: folder.regionCode,
-      name: folder.regionName,
-      province: folder.regionName,
-      selectionName: folder.regionName,
+      id: String(editableFolder.regionId ?? editableFolder.regionCode),
+      regionId: editableFolder.regionId,
+      name: editableFolder.regionName,
+      province: editableFolder.regionName,
+      selectionName: editableFolder.regionName,
     });
     saveTravelRecordDraftDateRange({ startDate, endDate });
     await saveTravelRecordPhotoDraft(photos);
     beginEdit({
-      id: folder.id,
-      source: isSavedFolder ? 'saved' : 'mock',
-      decorations: folder.decorations,
+      id: editableFolder.id,
+      source: isSavedFolder ? 'saved' : serverTravelRecordId ? 'server' : 'mock',
+      decorations: editableFolder.decorations,
     });
-    navigate('/travel-record/new');
+    navigate(
+      serverTravelRecordId
+        ? getTravelRecordEditRoute(String(serverTravelRecordId))
+        : '/travel-record/new',
+    );
   };
 
   const handleDelete = async () => {
@@ -378,15 +431,17 @@ function TravelRecordDetailPage() {
       return;
     }
 
-    if (serverTravelRecordId) {
-      showToast('서버 여행 기록 삭제는 아직 지원되지 않아요.');
+    try {
+      if (serverTravelRecordId) {
+        await deleteTravelRecordMutation.mutateAsync(serverTravelRecordId);
+      } else if (isSavedFolder) {
+        await deleteTravelRecord(folder.id);
+      } else {
+        deleteMockFolder(folder.id);
+      }
+    } catch {
+      showToast('여행 기록을 삭제하지 못했어요.');
       return;
-    }
-
-    if (isSavedFolder) {
-      await deleteTravelRecord(folder.id);
-    } else {
-      deleteMockFolder(folder.id);
     }
 
     navigate('/travel-record');
@@ -397,7 +452,7 @@ function TravelRecordDetailPage() {
       <header className="relative h-[146px]">
         <div className="absolute top-0 left-6 h-[152px] w-[132px] origin-top-left scale-[0.83]">
           <TravelFolderArtwork
-            photos={folder.photos}
+            photos={folderPhotos}
             title={folder.title}
             decorations={folder.decorations}
           />
@@ -466,7 +521,14 @@ function TravelRecordDetailPage() {
             <p className="mt-3 text-sm text-[#7f7f7f]">삭제한 기록은 되돌릴 수 없어요.</p>
             <div className="mt-6 flex gap-2">
               <button type="button" onClick={() => setIsDeleteDialogOpen(false)} className="h-11 flex-1 rounded-xl bg-[#e4e4e4] text-sm font-semibold text-[#505050]">취소</button>
-              <button type="button" onClick={() => void handleDelete()} className="h-11 flex-1 rounded-xl bg-[#ff6f41] text-sm font-semibold text-white">삭제</button>
+              <button
+                type="button"
+                onClick={() => void handleDelete()}
+                disabled={deleteTravelRecordMutation.isPending}
+                className="h-11 flex-1 rounded-xl bg-[#ff6f41] text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                삭제
+              </button>
             </div>
           </section>
         </div>
@@ -480,7 +542,7 @@ function TravelRecordDetailPage() {
       >
         <AnimatePresence initial={false}>
           {visiblePhotoIndexes.map((index) => {
-            const photo = folder.photos[index];
+            const photo = folderPhotos[index];
             const isActive = index === activePhotoIndex;
 
             return (
@@ -501,11 +563,13 @@ function TravelRecordDetailPage() {
                 style={getPhotoCardStyle(index)}
                 className="absolute inset-0 overflow-hidden rounded-[24px] bg-[#e4e4e4]"
               >
-                <img
-                  src={photo}
-                  alt={`${folder.title} 여행 사진 ${index + 1}`}
-                  className="block size-full object-cover"
-                />
+                {photo && (
+                  <img
+                    src={photo}
+                    alt={`${folder.title} 여행 사진 ${index + 1}`}
+                    className="block size-full object-cover"
+                  />
+                )}
               </motion.article>
             );
           })}
@@ -513,7 +577,7 @@ function TravelRecordDetailPage() {
       </div>
 
       <div className="mt-8 flex justify-center gap-[15px] overflow-hidden">
-        {folder.photos.map((photo, index) => (
+        {folderPhotos.map((photo, index) => (
           <button
             key={`${photo}-${index}`}
             type="button"
@@ -523,7 +587,9 @@ function TravelRecordDetailPage() {
             aria-pressed={selectedThumbnailIndex === index}
             className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-[#e4e4e4] disabled:cursor-default"
           >
-            <img src={photo} alt="" className="block size-full object-cover" />
+            {photo && (
+              <img src={photo} alt="" className="block size-full object-cover" />
+            )}
             {selectedThumbnailIndex !== index && (
               <span
                 className="pointer-events-none absolute inset-0 bg-black/45"

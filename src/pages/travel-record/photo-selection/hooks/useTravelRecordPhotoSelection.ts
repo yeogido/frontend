@@ -20,7 +20,9 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
 
   useEffect(() => {
     photosRef.current = photos;
-    photoUrlsRef.current = photos.map((photo) => photo.url);
+    photoUrlsRef.current = photos
+      .filter((photo) => photo.source === 'new')
+      .map((photo) => photo.url);
   }, [photos]);
 
   useEffect(
@@ -36,15 +38,27 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
     }
 
     let isMounted = true;
-    void getTravelRecordPhotoDraft().then((files) => {
+    void getTravelRecordPhotoDraft().then((draftPhotos) => {
       if (!isMounted || hasUserChangedPhotosRef.current) {
         return;
       }
-      setPhotos(files.map((file) => ({
-        id: `${file.name}-${file.lastModified}-draft`,
-        file,
-        url: URL.createObjectURL(file),
-      })));
+      setPhotos(
+        draftPhotos.map((photo, index) =>
+          photo.source === 'server'
+            ? {
+                id: `server-${photo.imageKey}`,
+                source: 'server' as const,
+                imageKey: photo.imageKey,
+                url: photo.imageUrl,
+              }
+            : {
+                id: `${photo.file.name}-${photo.file.lastModified}-draft-${index}`,
+                source: 'new' as const,
+                file: photo.file,
+                url: URL.createObjectURL(photo.file),
+              },
+        ),
+      );
     });
 
     return () => {
@@ -68,6 +82,7 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
 
       return {
         id: `${file.name}-${file.lastModified}-${url}`,
+        source: 'new' as const,
         file,
         url,
       };
@@ -92,7 +107,9 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
 
   const removePhoto = (targetPhoto: SelectedPhoto) => {
     hasUserChangedPhotosRef.current = true;
-    URL.revokeObjectURL(targetPhoto.url);
+    if (targetPhoto.source === 'new') {
+      URL.revokeObjectURL(targetPhoto.url);
+    }
     setPhotos((currentPhotos) =>
       currentPhotos.filter((photo) => photo.id !== targetPhoto.id),
     );

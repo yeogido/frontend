@@ -7,6 +7,7 @@ import type {
   TravelRecordCreateRequest,
   TravelRecordDetailResponse,
   TravelRecordSummary,
+  TravelRecordUpdateRequest,
   UploadedTravelRecordImage,
 } from '../../../types/travelRecord.type';
 import type { TravelDateRange } from '../date-selection/types';
@@ -90,10 +91,10 @@ export const getTravelRecordRegionSuggestions = ({
 };
 
 const getRenderablePhotos = (
-  images: { imageUrl?: string; imageOrder: number }[],
+  images: unknown,
   coverImageUrl?: string,
 ): [string, ...string[]] => {
-  const photos = images
+  const photos = (Array.isArray(images) ? images : [])
     .filter((image) => image.imageUrl)
     .sort(
       (currentImage, nextImage) =>
@@ -116,9 +117,11 @@ export const mapTravelRecordSummaryToFolder = (
   record: TravelRecordSummary,
 ): TravelRecordFolder => ({
   id: String(record.travelRecordId),
+  regionId: record.regionId,
   regionCode: getTravelRecordRegionCode(record.regionId),
   regionName: record.title,
   title: record.title,
+  folderTheme: record.folderTheme,
   year: Number(record.startDate.slice(0, 4)),
   startDate: record.startDate,
   endDate: record.endDate,
@@ -129,35 +132,56 @@ export const mapTravelRecordSummaryToFolder = (
 
 export const mapTravelRecordDetailToFolder = (
   record: TravelRecordDetailResponse,
-): TravelRecordFolder => ({
-  id: String(record.travelRecordId),
-  regionCode: getTravelRecordRegionCode(record.regionId),
-  regionName: record.title,
-  title: record.title,
-  year: Number(record.startDate.slice(0, 4)),
-  startDate: record.startDate,
-  endDate: record.endDate,
-  period: formatPeriod(record.startDate, record.endDate),
-  photos: getRenderablePhotos(record.images, record.coverImageUrl),
-  decorations: record.stickers.flatMap((sticker) => {
-    const stickerId = BACKEND_STICKER_ID_TO_FRONTEND_ID[sticker.stickerId];
+): TravelRecordFolder => {
+  const stickers = Array.isArray(record.stickers) ? record.stickers : [];
+  const images = Array.isArray(record.images) ? record.images : [];
+  const serverPhotos = images
+    .filter((image) => image.imageUrl)
+    .sort(
+      (currentImage, nextImage) =>
+        currentImage.imageOrder - nextImage.imageOrder,
+    )
+    .map((image) => ({
+      imageKey: image.imageKey,
+      imageUrl: image.imageUrl,
+    }));
 
-    if (!stickerId) {
-      return [];
-    }
+  return {
+    id: String(record.travelRecordId),
+    regionId: record.regionId,
+    regionCode: getTravelRecordRegionCode(record.regionId),
+    regionName: record.title,
+    title: record.title,
+    folderTheme: record.folderTheme,
+    year: Number(record.startDate.slice(0, 4)),
+    startDate: record.startDate,
+    endDate: record.endDate,
+    period: formatPeriod(record.startDate, record.endDate),
+    photos: getRenderablePhotos(images, record.coverImageUrl),
+    serverPhotos,
+    hasUnsupportedStickers: stickers.some(
+      (sticker) => !BACKEND_STICKER_ID_TO_FRONTEND_ID[sticker.stickerId],
+    ),
+    decorations: stickers.flatMap((sticker) => {
+      const stickerId = BACKEND_STICKER_ID_TO_FRONTEND_ID[sticker.stickerId];
 
-    return {
-      id: String(sticker.recordStickerId),
-      source: 'sticker' as const,
-      stickerId,
-      x: sticker.positionX,
-      y: sticker.positionY,
-      rotation: sticker.rotation,
-      scale: sticker.scale,
-      zIndex: sticker.zIndex,
-    };
-  }),
-});
+      if (!stickerId) {
+        return [];
+      }
+
+      return {
+        id: String(sticker.recordStickerId),
+        source: 'sticker' as const,
+        stickerId,
+        x: sticker.positionX,
+        y: sticker.positionY,
+        rotation: sticker.rotation,
+        scale: sticker.scale,
+        zIndex: sticker.zIndex,
+      };
+    }),
+  };
+};
 
 export const mapTravelRecordFolder = (
   summary: TravelRecordSummary,
@@ -210,6 +234,10 @@ export const createTravelRecordCreateRequest = ({
     };
   }),
 });
+
+export const createTravelRecordUpdateRequest = (
+  params: CreateTravelRecordCreateRequestParams,
+): TravelRecordUpdateRequest => createTravelRecordCreateRequest(params);
 
 export const getTravelRecordRegionPhotoRecords = (
   folders: readonly TravelRecordFolder[],

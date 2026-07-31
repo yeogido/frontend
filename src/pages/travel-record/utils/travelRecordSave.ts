@@ -10,6 +10,10 @@ const photoDraftStoreName = 'travel-record-photo-drafts';
 export const SAVED_TRAVEL_RECORD_ID_PREFIX = 'saved-';
 export const TRAVEL_RECORD_PHOTO_DRAFT_ID = 'current-travel-record';
 
+export type TravelRecordPhotoDraft =
+  | { source: 'new'; file: File }
+  | { source: 'server'; imageKey: string; imageUrl: string };
+
 export interface CreateTravelRecordPayload {
   regionId?: number;
   regionCode: string;
@@ -43,7 +47,7 @@ interface StoredTravelRecord {
 
 interface StoredPhotoDraft {
   id: string;
-  photos: File[];
+  photos: Array<TravelRecordPhotoDraft | File>;
 }
 
 const formatDate = (date: Date) => {
@@ -163,7 +167,7 @@ export const createTravelRecordDraftPayload = ({
   decorations,
 });
 
-export const saveTravelRecordPhotoDraft = (photos: File[]) =>
+export const saveTravelRecordPhotoDraft = (photos: TravelRecordPhotoDraft[]) =>
   withTravelRecordDatabase((database) =>
     runTransaction(database, photoDraftStoreName, 'readwrite', (store) =>
       store.put({ id: TRAVEL_RECORD_PHOTO_DRAFT_ID, photos } satisfies StoredPhotoDraft),
@@ -180,7 +184,13 @@ export const getTravelRecordPhotoDraft = async () => {
     ),
   );
 
-  return draft?.photos ?? [];
+  return (draft?.photos ?? []).flatMap((photo) => {
+    if (photo instanceof File) {
+      return [{ source: 'new' as const, file: photo }];
+    }
+
+    return photo.source === 'server' || photo.source === 'new' ? [photo] : [];
+  });
 };
 
 export const clearTravelRecordPhotoDraft = () =>

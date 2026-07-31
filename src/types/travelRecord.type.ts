@@ -25,9 +25,9 @@ export interface TravelRecordCreateRequest {
   regionId: number;
   startDate: string;
   endDate: string;
-  folderTheme: string;
+  folderTheme?: string;
   images: TravelRecordImageRequest[];
-  stickers: TravelRecordStickerRequest[];
+  stickers?: TravelRecordStickerRequest[];
 }
 
 export interface TravelRecordCreateResponse {
@@ -37,22 +37,27 @@ export interface TravelRecordCreateResponse {
   createdAt: string;
 }
 
+export type TravelRecordUpdateRequest = TravelRecordCreateRequest;
+
+export interface TravelRecordUpdateResponse {
+  travelRecordId: number;
+}
+
 export interface TravelRecordSummary {
   travelRecordId: number;
   title: string;
   regionId: number;
   startDate: string;
   endDate: string;
-  coverImageKey: string;
-  coverImageUrl?: string;
-  folderTheme: string;
+  coverImageUrl: string;
+  folderTheme?: string;
   createdAt: string;
 }
 
 export interface TravelRecordImageResponse {
   imageId: number;
   imageKey: string;
-  imageUrl?: string;
+  imageUrl: string;
   imageOrder: number;
 }
 
@@ -73,11 +78,10 @@ export interface TravelRecordDetailResponse {
   regionId: number;
   startDate: string;
   endDate: string;
-  coverImageKey: string;
-  coverImageUrl?: string;
-  folderTheme: string;
-  images: TravelRecordImageResponse[];
-  stickers: TravelRecordStickerResponse[];
+  coverImageUrl: string;
+  folderTheme?: string;
+  images?: TravelRecordImageResponse[];
+  stickers?: TravelRecordStickerResponse[];
   createdAt: string;
   updatedAt?: string;
 }

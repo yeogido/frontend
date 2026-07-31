@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { FloatingActionButton } from '../../components/common';
@@ -36,6 +36,7 @@ function TravelRecordPage() {
   const deletedMockFolderIds = useTravelRecordSessionStore(
     (state) => state.deletedMockFolderIds,
   );
+  const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   const travelRecordsQuery = useTravelRecords({ size: 50 });
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
   const [selectedYear, setSelectedYear] = useState(
@@ -142,7 +143,10 @@ function TravelRecordPage() {
 
       <FloatingActionButton
         ariaLabel={addTravelRecordLabel}
-        onClick={() => navigate('/travel-record/new')}
+        onClick={() => {
+          clearEdit();
+          navigate('/travel-record/new');
+        }}
         bottomOffset={40}
       />
     </TravelRecordPageFrame>

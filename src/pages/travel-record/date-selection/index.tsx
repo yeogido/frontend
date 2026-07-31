@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
 
@@ -16,9 +16,11 @@ import {
   getTravelRecordDraftDateRange,
   saveTravelRecordDraftDateRange,
 } from '../utils/draftStorage';
+import { getTravelRecordEditRoute } from '../utils/editRoute';
 
 function TravelRecordDateSelectionPage() {
   const navigate = useNavigate();
+  const { travelRecordId } = useParams<{ travelRecordId: string }>();
   const location = useLocation();
   const locationState =
     location.state as TravelDateSelectionLocationState | null;
@@ -42,7 +44,12 @@ function TravelRecordDateSelectionPage() {
 
   useEffect(() => {
     if (!selectedRegion) {
-      navigate('/travel-record/new', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId)
+          : '/travel-record/new',
+        { replace: true },
+      );
     }
   }, [navigate, selectedRegion]);
 
@@ -53,12 +60,17 @@ function TravelRecordDateSelectionPage() {
 
     saveTravelRecordDraftDateRange(selectedRange);
 
-    navigate('/travel-record/photo-selection', {
+    navigate(
+      travelRecordId
+        ? getTravelRecordEditRoute(travelRecordId, 'photos')
+        : '/travel-record/photo-selection',
+      {
       state: {
         selectedRegion,
         selectedDateRange: selectedRange,
       },
-    });
+      },
+    );
   };
 
   return (

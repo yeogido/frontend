@@ -7,7 +7,7 @@ import { getStickerAsset } from '../folder-decoration/stickers';
 import { getDecorationLayerStyle } from './decorationRender';
 
 interface FolderDecorationRendererProps {
-  decorations: TravelFolderDecoration[];
+  decorations?: TravelFolderDecoration[];
   renderDecoration?: (
     decorationNode: ReactNode,
     decoration: TravelFolderDecoration,
@@ -49,7 +49,7 @@ export function FolderDecorationRenderer({
   decorations,
   renderDecoration,
 }: FolderDecorationRendererProps) {
-  return decorations.map((decoration) => {
+  return (decorations ?? []).map((decoration) => {
     const decorationNode = (
       <DecorationImage key={decoration.id} decoration={decoration} />
     );

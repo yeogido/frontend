@@ -10,13 +10,16 @@ import {
 import { createPresignedUrl, uploadFileToPresignedUrl } from '../apis/files.api';
 import {
   createTravelRecord,
+  deleteTravelRecordById,
   getTravelRecordDetail,
   getTravelRecords,
   getTravelRecordYears,
+  updateTravelRecord,
 } from '../apis/travelRecords.api';
 import type { TravelRecordFolder } from '../pages/travel-record/types';
 import {
   createTravelRecordCreateRequest,
+  createTravelRecordUpdateRequest,
   mapTravelRecordDetailToFolder,
   mapTravelRecordFolder,
   mapTravelRecordSummaryToFolder,
@@ -24,12 +27,14 @@ import {
 import type { TravelDateRange } from '../pages/travel-record/date-selection/types';
 import type { TravelFolderDecoration } from '../pages/travel-record/folder-decoration/folderDecoration';
 import type { TravelRecordDraftRegion } from '../pages/travel-record/types';
+import type { TravelRecordPhotoDraft } from '../pages/travel-record/utils/travelRecordSave';
 import type {
   TravelRecordCreateResponse,
   TravelRecordDetailResponse,
   TravelRecordListParams,
   TravelRecordListResponse,
   TravelRecordSummary,
+  TravelRecordUpdateResponse,
   UploadedTravelRecordImage,
 } from '../types/travelRecord.type';
 
@@ -43,6 +48,51 @@ interface CreateTravelRecordFromDraftParams {
   selectedPhotos: File[];
   decorations: TravelFolderDecoration[];
 }
+
+interface UpdateTravelRecordFromDraftParams {
+  travelRecordId: number;
+  selectedRegion: TravelRecordDraftRegion;
+  selectedDateRange: TravelDateRange;
+  selectedPhotos: TravelRecordPhotoDraft[];
+  decorations: TravelFolderDecoration[];
+}
+
+const uploadTravelRecordImages = async (selectedPhotos: File[]) => {
+  const uploadedImages: UploadedTravelRecordImage[] = [];
+
+  for (const photo of selectedPhotos) {
+    const presignedUrl = await createPresignedUrl({
+      fileName: photo.name,
+      contentType: photo.type || 'application/octet-stream',
+    });
+    await uploadFileToPresignedUrl(presignedUrl.uploadUrl, photo);
+    uploadedImages.push({ objectKey: presignedUrl.objectKey });
+  }
+
+  return uploadedImages;
+};
+
+const uploadTravelRecordDraftImages = async (
+  selectedPhotos: TravelRecordPhotoDraft[],
+) => {
+  const uploadedImages: UploadedTravelRecordImage[] = [];
+
+  for (const photo of selectedPhotos) {
+    if (photo.source === 'server') {
+      uploadedImages.push({ objectKey: photo.imageKey });
+      continue;
+    }
+
+    const presignedUrl = await createPresignedUrl({
+      fileName: photo.file.name,
+      contentType: photo.file.type || 'application/octet-stream',
+    });
+    await uploadFileToPresignedUrl(presignedUrl.uploadUrl, photo.file);
+    uploadedImages.push({ objectKey: presignedUrl.objectKey });
+  }
+
+  return uploadedImages;
+};
 
 export function useTravelRecords(params: TravelRecordListParams = {}) {
   return useInfiniteQuery<
@@ -107,16 +157,7 @@ export function useCreateTravelRecord() {
       selectedPhotos,
       decorations,
     }) => {
-      const uploadedImages: UploadedTravelRecordImage[] = [];
-
-      for (const photo of selectedPhotos) {
-        const presignedUrl = await createPresignedUrl({
-          fileName: photo.name,
-          contentType: photo.type || 'application/octet-stream',
-        });
-        await uploadFileToPresignedUrl(presignedUrl.uploadUrl, photo);
-        uploadedImages.push({ objectKey: presignedUrl.objectKey });
-      }
+      const uploadedImages = await uploadTravelRecordImages(selectedPhotos);
 
       return createTravelRecord(
         createTravelRecordCreateRequest({
@@ -130,6 +171,55 @@ export function useCreateTravelRecord() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
+    },
+  });
+}
+
+export function useUpdateTravelRecord() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    TravelRecordUpdateResponse,
+    Error,
+    UpdateTravelRecordFromDraftParams
+  >({
+    mutationFn: async ({
+      travelRecordId,
+      selectedRegion,
+      selectedDateRange,
+      selectedPhotos,
+      decorations,
+    }) =>
+      updateTravelRecord(
+        travelRecordId,
+        createTravelRecordUpdateRequest({
+          selectedRegion,
+          selectedDateRange,
+          uploadedImages: await uploadTravelRecordDraftImages(selectedPhotos),
+          decorations,
+        }),
+      ),
+    onSuccess: (_, { travelRecordId }) => {
+      void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['travelRecord', travelRecordId],
+      });
+    },
+  });
+}
+
+export function useDeleteTravelRecord() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, number>({
+    mutationFn: deleteTravelRecordById,
+    onSuccess: (_, travelRecordId) => {
+      void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
+      void queryClient.removeQueries({
+        queryKey: ['travelRecord', travelRecordId],
+      });
     },
   });
 }
