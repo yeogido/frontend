@@ -21,7 +21,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           type="button"
           onClick={() => setIsVisible((prev) => !prev)}
           aria-label={isVisible ? '비밀번호 숨기기' : '비밀번호 표시'}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-4"
+          className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-gray-4"
         >
           {isVisible ? (
             <IoEyeOutline size={18} />
