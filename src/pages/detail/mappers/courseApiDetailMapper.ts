@@ -61,7 +61,7 @@ function toCourseStops(
   course: CourseDetailResult
 ): readonly CourseStopDto[] {
   return course.courseItems.map((item) => ({
-    id: item.type === 'PLACE' ? item.placeId : item.contentId,
+    id: item.order,
     placeId: item.type === 'PLACE' ? item.placeId : undefined,
     contentId: item.type === 'CONTENT' ? item.contentId : undefined,
     order: item.order,

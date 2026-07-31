@@ -11,6 +11,7 @@ const ACTION_PADDING_TOP = 2;
 const TAGS_MARGIN_TOP = 0;
 const TAGS_GAP = 9;
 const TAG_HEIGHT = 24;
+const TAG_LABEL_FONT_SIZE = 12;
 
 export interface DetailTitleSectionProps {
   readonly title: string;
@@ -67,8 +68,11 @@ export function DetailTitleSection({
           ) : (
             <span
               key={tag.id}
-              className="bg-gray-1 text-gray-5 inline-flex items-center rounded-full px-2 text-xs font-medium"
-              style={{ height: TAG_HEIGHT * scale }}
+              className="bg-gray-1 text-gray-5 inline-flex items-center rounded-full px-2 font-medium"
+              style={{
+                height: TAG_HEIGHT * scale,
+                fontSize: TAG_LABEL_FONT_SIZE * scale,
+              }}
             >
               {tag.label}
             </span>

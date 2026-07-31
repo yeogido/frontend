@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 
@@ -27,6 +27,19 @@ function isNormalizedApiError(error: unknown): error is NormalizedApiError {
   );
 }
 
+function addPendingId(ids: ReadonlySet<number>, id: number): ReadonlySet<number> {
+  return new Set(ids).add(id);
+}
+
+function removePendingId(
+  ids: ReadonlySet<number>,
+  id: number
+): ReadonlySet<number> {
+  const nextIds = new Set(ids);
+  nextIds.delete(id);
+  return nextIds;
+}
+
 function LocalCourseDetailPage() {
   const { courseId: courseIdParam } = useParams<{ courseId?: string }>();
   const { openLoginModal } = useLoginModal();
@@ -44,6 +57,12 @@ function LocalCourseDetailPage() {
   const likeMutation = useLocalCourseLikeMutation();
   const placeLikeMutation = usePlaceLikeMutation();
   const contentLikeMutation = useContentLikeMutation();
+  const [pendingPlaceIds, setPendingPlaceIds] = useState<ReadonlySet<number>>(
+    () => new Set()
+  );
+  const [pendingContentIds, setPendingContentIds] = useState<
+    ReadonlySet<number>
+  >(() => new Set());
 
   const course = useMemo(() => {
     if (!data || data.courseType !== 'LOCAL') {
@@ -95,6 +114,8 @@ function LocalCourseDetailPage() {
   };
 
   const handlePlaceLikeToggle = async (placeId: number, isLiked: boolean) => {
+    setPendingPlaceIds((ids) => addPendingId(ids, placeId));
+
     try {
       const result = await placeLikeMutation.mutateAsync({ placeId, isLiked });
       updateCachedCourseDetail((current) => ({
@@ -109,6 +130,8 @@ function LocalCourseDetailPage() {
     } catch (error) {
       handleLikeError(error);
       return isLiked;
+    } finally {
+      setPendingPlaceIds((ids) => removePendingId(ids, placeId));
     }
   };
 
@@ -116,6 +139,8 @@ function LocalCourseDetailPage() {
     contentId: number,
     isLiked: boolean
   ) => {
+    setPendingContentIds((ids) => addPendingId(ids, contentId));
+
     try {
       const result = await contentLikeMutation.mutateAsync({
         contentId,
@@ -133,6 +158,8 @@ function LocalCourseDetailPage() {
     } catch (error) {
       handleLikeError(error);
       return isLiked;
+    } finally {
+      setPendingContentIds((ids) => removePendingId(ids, contentId));
     }
   };
 
@@ -146,16 +173,8 @@ function LocalCourseDetailPage() {
           isFavoritePending={likeMutation.isPending}
           onPlaceLikeToggle={handlePlaceLikeToggle}
           onContentLikeToggle={handleContentLikeToggle}
-          pendingPlaceId={
-            placeLikeMutation.isPending
-              ? (placeLikeMutation.variables?.placeId ?? null)
-              : null
-          }
-          pendingContentId={
-            contentLikeMutation.isPending
-              ? (contentLikeMutation.variables?.contentId ?? null)
-              : null
-          }
+          pendingPlaceIds={pendingPlaceIds}
+          pendingContentIds={pendingContentIds}
         />
       )}
     </DetailStateGuard>

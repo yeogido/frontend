@@ -45,8 +45,8 @@ export interface CourseDetailLayoutProps {
     contentId: number,
     isLiked: boolean
   ) => Promise<boolean>;
-  readonly pendingPlaceId?: number | null;
-  readonly pendingContentId?: number | null;
+  readonly pendingPlaceIds?: ReadonlySet<number>;
+  readonly pendingContentIds?: ReadonlySet<number>;
 }
 
 export function CourseDetailLayout({
@@ -56,8 +56,8 @@ export function CourseDetailLayout({
   isFavoritePending = false,
   onPlaceLikeToggle,
   onContentLikeToggle,
-  pendingPlaceId = null,
-  pendingContentId = null,
+  pendingPlaceIds = new Set<number>(),
+  pendingContentIds = new Set<number>(),
 }: CourseDetailLayoutProps) {
   return (
     <CourseDetailLayoutContent
@@ -68,8 +68,8 @@ export function CourseDetailLayout({
       isFavoritePending={isFavoritePending}
       onPlaceLikeToggle={onPlaceLikeToggle}
       onContentLikeToggle={onContentLikeToggle}
-      pendingPlaceId={pendingPlaceId}
-      pendingContentId={pendingContentId}
+      pendingPlaceIds={pendingPlaceIds}
+      pendingContentIds={pendingContentIds}
     />
   );
 }
@@ -81,8 +81,8 @@ function CourseDetailLayoutContent({
   isFavoritePending = false,
   onPlaceLikeToggle,
   onContentLikeToggle,
-  pendingPlaceId = null,
-  pendingContentId = null,
+  pendingPlaceIds = new Set<number>(),
+  pendingContentIds = new Set<number>(),
 }: CourseDetailLayoutProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
@@ -104,8 +104,8 @@ function CourseDetailLayoutContent({
 
     if (
       !stop ||
-      stop.placeId === pendingPlaceId ||
-      stop.contentId === pendingContentId
+      (stop.placeId !== undefined && pendingPlaceIds.has(stop.placeId)) ||
+      (stop.contentId !== undefined && pendingContentIds.has(stop.contentId))
     ) {
       return;
     }
@@ -246,8 +246,8 @@ function CourseDetailLayoutContent({
         <CourseStopList
           stops={stops}
           onStopLikeToggle={handleStopLikeToggle}
-          pendingPlaceId={pendingPlaceId}
-          pendingContentId={pendingContentId}
+          pendingPlaceIds={pendingPlaceIds}
+          pendingContentIds={pendingContentIds}
         />
       </div>
 

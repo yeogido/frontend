@@ -1,4 +1,3 @@
-import { getCourseDetail, type CourseDetailResult } from './courses';
 import { regionSearchKeywords } from '../constants/regions';
 import {
   localCourseFilterGroups,
@@ -196,12 +195,4 @@ async function fetchLocalCoursePage({
     page,
     last: end >= totalCount,
   };
-}
-
-export type LocalCourseDetailResult = CourseDetailResult;
-
-export async function getLocalCourseDetail(
-  courseId: number
-): Promise<LocalCourseDetailResult> {
-  return getCourseDetail(courseId);
 }
