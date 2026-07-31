@@ -103,6 +103,8 @@ function TravelRecordPage() {
     [displayedFolders],
   );
   useEffect(() => {
+    // The available years change after local-storage records are loaded.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedYear((year) =>
       getValidTravelRecordYear(years, year, new Date().getFullYear()),
     );
