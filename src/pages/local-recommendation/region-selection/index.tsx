@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
-import {
-  getRegions,
-  getSubRegions,
-  searchRegions,
-} from '../../../apis/regions.api';
+import { getRegions, searchRegions } from '../../../apis/regions.api';
 import { ResponsivePageShell } from '../../../components/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
@@ -20,7 +16,7 @@ import {
 } from './components';
 import type { Neighborhood } from './types';
 import { useRecentRegions } from './useRecentRegions';
-import { fromRegion, fromSearchResult, fromSubRegion } from './utils';
+import { fromRegion, fromSearchResult } from './utils';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 32;
@@ -44,10 +40,6 @@ function LocalRecommendationPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] =
     useState<Neighborhood | null>(draftNeighborhood);
-  // Sub-regions of the last picked node, when it turned out not to be a
-  // leaf — lets picking recurse to any depth the backend later adds.
-  const [drillParent, setDrillParent] = useState<Neighborhood | null>(null);
-  const [drillOptions, setDrillOptions] = useState<Neighborhood[]>([]);
 
   const regionsQuery = useQuery({
     queryKey: ['regions'],
@@ -67,11 +59,9 @@ function LocalRecommendationPage() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setSelectedNeighborhood(null);
-    setDrillParent(null);
-    setDrillOptions([]);
   };
 
-  const handleSelectNeighborhood = async (candidate: Neighborhood) => {
+  const handleSelectNeighborhood = (candidate: Neighborhood) => {
     setSearchQuery('');
 
     if (selectedNeighborhood?.id === candidate.id) {
@@ -80,20 +70,6 @@ function LocalRecommendationPage() {
       return;
     }
 
-    const subRegions = await getSubRegions(candidate.id);
-
-    if (subRegions.length > 0) {
-      setDrillParent(candidate);
-      setDrillOptions(
-        subRegions.map((subRegion) => fromSubRegion(subRegion, candidate.name))
-      );
-      setSelectedNeighborhood(null);
-      setNeighborhood(null);
-      return;
-    }
-
-    setDrillParent(null);
-    setDrillOptions([]);
     setSelectedNeighborhood(candidate);
     setNeighborhood(candidate);
     addRecentRegion(candidate);
@@ -103,8 +79,6 @@ function LocalRecommendationPage() {
     setSelectedNeighborhood(null);
     setNeighborhood(null);
   };
-
-  const isBrowsingResults = trimmedQuery.length > 0 || drillOptions.length > 0;
 
   return (
     <ResponsivePageShell
@@ -116,17 +90,10 @@ function LocalRecommendationPage() {
       <main className="flex-1">
         <NeighborhoodSearchSection onSearch={handleSearch} />
 
-        {selectedNeighborhood && !isBrowsingResults ? (
+        {selectedNeighborhood && !trimmedQuery ? (
           <SelectedNeighborhoodCard
             neighborhood={selectedNeighborhood}
             onClear={handleClearSelection}
-          />
-        ) : drillOptions.length > 0 ? (
-          <NeighborhoodResultList
-            heading={`${drillParent?.name ?? ''} 하위 지역`}
-            results={drillOptions}
-            selectedNeighborhood={selectedNeighborhood}
-            onSelect={handleSelectNeighborhood}
           />
         ) : trimmedQuery ? (
           <NeighborhoodResultList
@@ -137,7 +104,7 @@ function LocalRecommendationPage() {
           />
         ) : null}
 
-        {!isBrowsingResults && !selectedNeighborhood ? (
+        {!trimmedQuery && !selectedNeighborhood ? (
           <RecentSearchSection
             neighborhoods={recentRegions}
             onSelect={handleSelectNeighborhood}

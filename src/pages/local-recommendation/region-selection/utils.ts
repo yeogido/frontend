@@ -1,7 +1,6 @@
 import type {
   Region,
   RegionSearchResult,
-  SubRegion,
 } from '../../../types/region.type';
 import type { Neighborhood } from './types';
 
@@ -15,15 +14,6 @@ export const fromSearchResult = (result: RegionSearchResult): Neighborhood => ({
   id: result.regionId,
   name: result.name,
   parentName: result.fullName.replace(new RegExp(`\\s*${result.name}$`), ''),
-});
-
-export const fromSubRegion = (
-  subRegion: SubRegion,
-  parentName: string
-): Neighborhood => ({
-  id: subRegion.subRegionId,
-  name: subRegion.name,
-  parentName,
 });
 
 export const getNeighborhoodLabel = (neighborhood: Neighborhood) =>
