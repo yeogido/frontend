@@ -1,7 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AuthField, KakaoIcon, NaverIcon } from '../../../../components/auth';
+import {
+  AuthField,
+  KakaoIcon,
+  NaverIcon,
+  PasswordInput,
+} from '../../../../components/auth';
 
 import {
   loginSchema,
@@ -68,10 +73,9 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
                 label="비밀번호"
                 error={errors.password?.message}
               >
-                <input
+                <PasswordInput
                   {...register('password')}
                   id="login-password"
-                  type="password"
                   autoComplete="current-password"
                   placeholder="비밀번호"
                   aria-invalid={!!errors.password}
