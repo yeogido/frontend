@@ -56,7 +56,7 @@ test('persists stable draft data without retaining setter input references', () 
     visitEndMonth: '8',
     transport: 'walking',
     companion: 'friends',
-  } as const;
+  };
   const tagIds = ['sea'];
   const hashtagIds = [7];
   const festivals = [
@@ -99,6 +99,7 @@ test('persists stable draft data without retaining setter input references', () 
   store.setVisitOrder(visitOrder);
 
   neighborhood.name = 'Changed name';
+  basicInfo.courseName = 'Changed course name';
   tagIds.push('city');
   hashtagIds.push(99);
   festivals[0].title = 'Changed festival';
@@ -116,7 +117,15 @@ test('persists stable draft data without retaining setter input references', () 
       name: 'Busan',
       parentName: '',
     },
-    basicInfo,
+    basicInfo: {
+      courseName: 'Beach day',
+      summary: 'A seaside course',
+      duration: 'day-trip',
+      visitStartMonth: '7',
+      visitEndMonth: '8',
+      transport: 'walking',
+      companion: 'friends',
+    },
     tagIds: ['sea'],
     hashtagIds: [7],
     coverImageKey: 'cover-image-1',

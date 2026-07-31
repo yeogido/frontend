@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { Neighborhood } from './types';
 
@@ -21,23 +21,24 @@ export function useRecentRegions() {
     readStoredRecentRegions
   );
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(recentRegions));
+    } catch {
+      // localStorage unavailable (private mode, quota) — recency just
+      // won't persist across reloads, not worth surfacing an error for.
+    }
+  }, [recentRegions]);
+
   const addRecentRegion = (neighborhood: Neighborhood) => {
-    setRecentRegions((current) => {
-      const next = [
+    setRecentRegions((current) =>
+      [
         neighborhood,
         ...current.filter((item) => item.id !== neighborhood.id),
-      ].slice(0, MAX_RECENT);
-
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // localStorage unavailable (private mode, quota) — recency just
-        // won't persist across reloads, not worth surfacing an error for.
-      }
-
-      return next;
-    });
+      ].slice(0, MAX_RECENT)
+    );
   };
 
   return { recentRegions, addRecentRegion };
 }
+
