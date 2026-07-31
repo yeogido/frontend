@@ -4,38 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { AuthField } from '../../../../components/auth';
+import { AuthField, PasswordInput } from '../../../../components/auth';
+import { BIRTH_YEARS } from '../../../../constants/birthYears';
+import { SIGNUP_REGIONS } from '../../../../constants/signupRegions';
 import {
   signupSchema,
   SIGNUP_EMAIL_PATTERN,
   type SignupFormValues,
 } from '../schema';
 
-const regions = [
-  '서울',
-  '경기',
-  '인천',
-  '강원',
-  '충북',
-  '충남',
-  '대전',
-  '세종',
-  '전북',
-  '전남',
-  '광주',
-  '경북',
-  '경남',
-  '대구',
-  '울산',
-  '부산',
-  '제주',
-];
-
 const genders = ['여성', '남성', '선택 안 함'];
-
-const birthYears = Array.from({ length: 80 }, (_, index) =>
-  String(new Date().getFullYear() - index)
-);
 
 function SignupForm() {
   const navigate = useNavigate();
@@ -215,10 +193,9 @@ function SignupForm() {
             htmlFor="signup-password"
           >
             <div className="space-y-2">
-              <input
+              <PasswordInput
                 {...register('password')}
                 id="signup-password"
-                type="password"
                 placeholder="비밀번호"
                 className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
@@ -232,10 +209,9 @@ function SignupForm() {
                 </p>
               )}
 
-              <input
+              <PasswordInput
                 {...register('passwordConfirm')}
                 id="signup-password-confirm"
-                type="password"
                 placeholder="비밀번호 확인"
                 className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
@@ -269,7 +245,7 @@ function SignupForm() {
                 className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
               >
                 <option value="">거주 중인 지역을 선택해 주세요</option>
-                {regions.map((region) => (
+                {SIGNUP_REGIONS.map((region) => (
                   <option
                     key={region}
                     value={region}
@@ -317,7 +293,7 @@ function SignupForm() {
                 className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
               >
                 <option value="">태어난 연도를 선택해 주세요</option>
-                {birthYears.map((year) => (
+                {BIRTH_YEARS.map((year) => (
                   <option
                     key={year}
                     value={year}
