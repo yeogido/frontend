@@ -15,15 +15,21 @@ import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterL
 import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourseSearch';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useCourses } from '../../../hooks/useCourses';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
+import { toContentTagIds } from '../../../utils/contentTags';
 import { useAuthStore } from '../../../store/auth.store';
 
-import courseMapImage from '../assets/courseimage.svg';
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
-import useYeogidoCourses from '../hooks/useYeogidoCourses';
+import type {
+  CourseCompanionType,
+  CourseDurationType,
+  CourseSort,
+  CourseTransportType,
+} from '../../../types/course.type';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -35,6 +41,40 @@ const EMPTY_MARGIN_TOP = 40;
 const ERROR_MARGIN_TOP = 24;
 const MESSAGE_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
+
+const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
+  도보: 'WALK',
+  대중교통: 'PUBLIC',
+  자차: 'CAR',
+};
+
+const durationTypeByLabel: Record<string, CourseDurationType | undefined> = {
+  당일치기: 'DAY_TRIP',
+  '1박 2일': 'ONE_NIGHT',
+  '2박 3일': 'TWO_NIGHT',
+  '3박 이상': 'THREE_PLUS',
+};
+
+const companionTypeByLabel: Record<string, CourseCompanionType | undefined> = {
+  혼자: 'SOLO',
+  친구와: 'FRIEND',
+  연인과: 'COUPLE',
+  가족과: 'FAMILY',
+  반려동물과: 'PET',
+};
+
+const sortByLabel: Record<string, CourseSort> = {
+  추천순: 'RECOMMEND',
+  저장순: 'SAVED',
+  후기순: 'REVIEW',
+};
+
+const durationLabelByType: Record<CourseDurationType, string> = {
+  DAY_TRIP: '당일치기',
+  ONE_NIGHT: '1박 2일',
+  TWO_NIGHT: '2박 3일',
+  THREE_PLUS: '3박 이상',
+};
 
 function YeogidoCourseSearchPage() {
   const navigate = useNavigate();
@@ -71,14 +111,17 @@ function YeogidoCourseSearchPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useYeogidoCourses({
-    filters: selectedFilters,
-    keyword,
-    region,
-    subRegion,
+  } = useCourses({
+    courseType: 'OFFICIAL',
+    keyword: displaySearchQuery.trim() || undefined,
+    transportType: transportTypeByLabel[selectedFilters.transport],
+    durationType: durationTypeByLabel[selectedFilters.duration],
+    companionType: companionTypeByLabel[selectedFilters.companion],
+    sort: sortByLabel[selectedFilters.sort],
+    size: 20,
   });
 
-  const yeogidoCourses = data?.pages.flatMap((page) => page.content) ?? [];
+  const yeogidoCourses = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult =
     !isPending && !isError && yeogidoCourses.length === 0;
 
@@ -172,19 +215,21 @@ function YeogidoCourseSearchPage() {
               ))
             : yeogidoCourses.map((course) => (
                 <ContentCard
-                  key={course.id}
-                  image={courseMapImage}
+                  key={course.courseId}
+                  image={course.thumbnailUrl}
                   title={course.title}
-                  firstInfo={course.duration}
-                  secondInfo={course.courseName}
-                  tags={course.tags}
-                  liked={likedOverrides[String(course.id)] ?? false}
+                  firstInfo={durationLabelByType[course.durationType]}
+                  secondInfo={course.region}
+                  tags={toContentTagIds(course.tags)}
+                  liked={
+                    likedOverrides[String(course.courseId)] ?? course.isLiked
+                  }
                   className="w-full"
-                  onClick={() => handleCourseClick(course.id)}
+                  onClick={() => handleCourseClick(course.courseId)}
                   onLikeClick={() =>
                     handleLikeClick(
-                      course.id,
-                      likedOverrides[String(course.id)] ?? false
+                      course.courseId,
+                      likedOverrides[String(course.courseId)] ?? course.isLiked
                     )
                   }
                 />
