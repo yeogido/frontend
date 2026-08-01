@@ -39,6 +39,7 @@ interface SelectionPageLayoutProps<T> {
   ) => ReactNode;
   /** Optional loading/error/empty message shown above the results list. */
   statusMessage?: ReactNode;
+  hideEmptySearchSuggestions?: boolean;
 }
 
 function SelectionPageLayout<T>({
@@ -55,6 +56,7 @@ function SelectionPageLayout<T>({
   onBack,
   renderItem,
   statusMessage,
+  hideEmptySearchSuggestions = false,
 }: SelectionPageLayoutProps<T>) {
   const scale = useGlobalScale();
   const titleSize = TITLE_FONT_SIZE * scale;
@@ -99,6 +101,7 @@ function SelectionPageLayout<T>({
             placeholder={searchPlaceholder}
             label={searchLabel}
             suggestions={searchSuggestions}
+            hideEmptySuggestions={hideEmptySearchSuggestions}
             onSearch={onSearchChange}
           />
         </div>

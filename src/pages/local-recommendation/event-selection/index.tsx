@@ -93,6 +93,7 @@ function EventSelectionPage() {
         searchPlaceholder="행사명을 검색해 주세요"
         searchLabel="행사명 검색"
         searchSuggestions={festivalSearchSuggestions}
+        hideEmptySearchSuggestions
         items={searchResults}
         selectedItemIds={selectedFestivalIds}
         getItemId={(festival) => festival.id}
