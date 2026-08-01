@@ -10,9 +10,15 @@ export interface FavoriteButtonProps {
   isActive: boolean;
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 }
 
-export function FavoriteButton({ isActive, label, onClick }: FavoriteButtonProps) {
+export function FavoriteButton({
+  isActive,
+  label,
+  onClick,
+  disabled = false,
+}: FavoriteButtonProps) {
   const scale = useGlobalScale();
 
   return (
@@ -21,7 +27,8 @@ export function FavoriteButton({ isActive, label, onClick }: FavoriteButtonProps
       aria-label={`${label} 좋아요 ${isActive ? '취소' : '추가'}`}
       aria-pressed={isActive}
       onClick={onClick}
-      className="flex items-center justify-center text-white drop-shadow-sm"
+      disabled={disabled}
+      className="flex items-center justify-center text-white drop-shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
       style={{
         height: BUTTON_SIZE * scale,
         width: BUTTON_SIZE * scale,

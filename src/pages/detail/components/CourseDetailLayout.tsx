@@ -35,17 +35,41 @@ const REVIEW_BUTTON_MARGIN_TOP = 12;
 export interface CourseDetailLayoutProps {
   readonly course: CourseDetail;
   readonly reviewType: string;
+  readonly onFavoriteToggle?: (isLiked: boolean) => Promise<boolean>;
+  readonly isFavoritePending?: boolean;
+  readonly onPlaceLikeToggle?: (
+    placeId: number,
+    isLiked: boolean
+  ) => Promise<boolean>;
+  readonly onContentLikeToggle?: (
+    contentId: number,
+    isLiked: boolean
+  ) => Promise<boolean>;
+  readonly pendingPlaceIds?: ReadonlySet<number>;
+  readonly pendingContentIds?: ReadonlySet<number>;
 }
 
 export function CourseDetailLayout({
   course,
   reviewType,
+  onFavoriteToggle,
+  isFavoritePending = false,
+  onPlaceLikeToggle,
+  onContentLikeToggle,
+  pendingPlaceIds = new Set<number>(),
+  pendingContentIds = new Set<number>(),
 }: CourseDetailLayoutProps) {
   return (
     <CourseDetailLayoutContent
       key={course.id}
       course={course}
       reviewType={reviewType}
+      onFavoriteToggle={onFavoriteToggle}
+      isFavoritePending={isFavoritePending}
+      onPlaceLikeToggle={onPlaceLikeToggle}
+      onContentLikeToggle={onContentLikeToggle}
+      pendingPlaceIds={pendingPlaceIds}
+      pendingContentIds={pendingContentIds}
     />
   );
 }
@@ -53,10 +77,17 @@ export function CourseDetailLayout({
 function CourseDetailLayoutContent({
   course,
   reviewType,
+  onFavoriteToggle,
+  isFavoritePending = false,
+  onPlaceLikeToggle,
+  onContentLikeToggle,
+  pendingPlaceIds = new Set<number>(),
+  pendingContentIds = new Set<number>(),
 }: CourseDetailLayoutProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
 
   const [isLiked, setIsLiked] = useState(course.liked);
@@ -64,21 +95,68 @@ function CourseDetailLayoutContent({
   const { copied, isToastVisible, handleShare } = useShareToast();
 
   const handleStopLikeToggle = (stopId: number) => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !accessToken) {
       openLoginModal();
       return;
     }
 
+    const stop = stops.find((item) => item.id === stopId);
+
+    if (
+      !stop ||
+      (stop.placeId !== undefined && pendingPlaceIds.has(stop.placeId)) ||
+      (stop.contentId !== undefined && pendingContentIds.has(stop.contentId))
+    ) {
+      return;
+    }
+
+    if (stop.placeId !== undefined && onPlaceLikeToggle) {
+      void onPlaceLikeToggle(stop.placeId, stop.liked)
+        .then((isLiked) => {
+          setStops((prevStops) =>
+            prevStops.map((item) =>
+              item.id === stopId ? { ...item, liked: isLiked } : item
+            )
+          );
+        })
+        .catch(() => undefined);
+      return;
+    }
+
+    if (stop.contentId !== undefined && onContentLikeToggle) {
+      void onContentLikeToggle(stop.contentId, stop.liked)
+        .then((isLiked) => {
+          setStops((prevStops) =>
+            prevStops.map((item) =>
+              item.id === stopId ? { ...item, liked: isLiked } : item
+            )
+          );
+        })
+        .catch(() => undefined);
+      return;
+    }
+
     setStops((prevStops) =>
-      prevStops.map((stop) =>
-        stop.id === stopId ? { ...stop, liked: !stop.liked } : stop
+      prevStops.map((item) =>
+        item.id === stopId ? { ...item, liked: !item.liked } : item
       )
     );
   };
 
   const handleFavoriteToggle = () => {
-    if (!isAuthenticated) {
+    if (isFavoritePending) {
+      return;
+    }
+
+    if (!isAuthenticated || !accessToken) {
       openLoginModal();
+      return;
+    }
+
+    if (onFavoriteToggle) {
+      void onFavoriteToggle(isLiked)
+        .then(setIsLiked)
+        .catch(() => undefined);
       return;
     }
 
@@ -86,7 +164,7 @@ function CourseDetailLayoutContent({
   };
 
   const handleNavigateReview = () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !accessToken) {
       openLoginModal();
       return;
     }
@@ -111,6 +189,7 @@ function CourseDetailLayoutContent({
               isActive={isLiked}
               label={course.title}
               onClick={handleFavoriteToggle}
+              disabled={isFavoritePending}
             />
           }
         />
@@ -164,7 +243,12 @@ function CourseDetailLayoutContent({
           marginTop: STOP_LIST_MARGIN_TOP * scale,
         }}
       >
-        <CourseStopList stops={stops} onStopLikeToggle={handleStopLikeToggle} />
+        <CourseStopList
+          stops={stops}
+          onStopLikeToggle={handleStopLikeToggle}
+          pendingPlaceIds={pendingPlaceIds}
+          pendingContentIds={pendingContentIds}
+        />
       </div>
 
       {/* 7. 최근 여행자들의 후기 */}
