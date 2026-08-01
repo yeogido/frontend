@@ -8,6 +8,7 @@ import { ResponsivePageShell } from '../../../components/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 
+import BackButton from '../components/BackButton';
 import {
   NeighborhoodResultList,
   NeighborhoodSearchSection,
@@ -21,7 +22,7 @@ import { fromRegion, fromSearchResult } from './utils';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 32;
-const MAIN_PADDING_TOP = 40;
+const MAIN_PADDING_TOP = 48;
 const BUTTON_MARGIN_TOP = 32;
 const BUTTON_HEIGHT = 52;
 const BUTTON_RADIUS = 12;
@@ -91,6 +92,7 @@ function LocalRecommendationPage() {
       bottomPadding={PAGE_PADDING_BOTTOM}
       className="bg-background"
     >
+      <BackButton onClick={() => navigate(-1)} />
       <main className="flex-1">
         <NeighborhoodSearchSection onSearch={handleSearch} />
 

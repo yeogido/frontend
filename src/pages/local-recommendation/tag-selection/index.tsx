@@ -5,6 +5,7 @@ import { ResponsivePageShell } from '../../../components/layout';
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
+import BackButton from '../components/BackButton';
 import {
   KeywordSelectionSection,
   RepresentativePhotoSection,
@@ -72,6 +73,9 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
       topPadding={PAGE_PADDING_TOP}
       bottomPadding={32}
     >
+      <BackButton
+        onClick={() => navigate('/local-recommendation/course-info')}
+      />
       <main className="flex-1">
         <h1
           className="leading-[1.3] font-bold"

@@ -23,9 +23,13 @@ const SUBMIT_FONT_SIZE = 16;
 
 interface CourseBasicInfoFormProps {
   onNext: (values: CourseBasicInfoValues) => void | Promise<void>;
+  defaultValues?: Partial<CourseBasicInfoValues>;
 }
 
-function CourseBasicInfoForm({ onNext }: CourseBasicInfoFormProps) {
+function CourseBasicInfoForm({
+  onNext,
+  defaultValues,
+}: CourseBasicInfoFormProps) {
   const scale = useGlobalScale();
 
   const {
@@ -41,6 +45,7 @@ function CourseBasicInfoForm({ onNext }: CourseBasicInfoFormProps) {
       summary: '',
       transport: 'walking',
       companion: 'solo',
+      ...defaultValues,
     },
   });
 
