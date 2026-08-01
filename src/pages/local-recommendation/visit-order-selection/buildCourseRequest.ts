@@ -2,11 +2,12 @@ import type {
   CourseItem,
   CreateLocalRecommendationRequest,
 } from '../../../apis/localRecommendations';
+import type { CourseBasicInfoValues } from '../course-basic-info/schema';
 import type { LocalRecommendationDraft } from '../../../store/localRecommendation.store';
 import type { VisitEvent } from './constants';
 
 const DURATION_TYPE_MAP: Record<
-  string,
+  CourseBasicInfoValues['duration'],
   CreateLocalRecommendationRequest['durationType']
 > = {
   'day-trip': 'DAY_TRIP',
@@ -17,7 +18,7 @@ const DURATION_TYPE_MAP: Record<
 };
 
 const TRANSPORT_TYPE_MAP: Record<
-  string,
+  CourseBasicInfoValues['transport'],
   CreateLocalRecommendationRequest['transportType']
 > = {
   walking: 'WALK',
@@ -25,7 +26,7 @@ const TRANSPORT_TYPE_MAP: Record<
 };
 
 const COMPANION_TYPE_MAP: Record<
-  string,
+  CourseBasicInfoValues['companion'],
   CreateLocalRecommendationRequest['companionType']
 > = {
   solo: 'SOLO',
@@ -75,13 +76,21 @@ export function buildCourseRequest(
     return null;
   }
 
+  const durationType = DURATION_TYPE_MAP[basicInfo.duration];
+  const transportType = TRANSPORT_TYPE_MAP[basicInfo.transport];
+  const companionType = COMPANION_TYPE_MAP[basicInfo.companion];
+
+  if (!durationType || !transportType || !companionType) {
+    return null;
+  }
+
   return {
     title: basicInfo.courseName,
     regionId: neighborhood.id,
     description: basicInfo.summary,
-    durationType: DURATION_TYPE_MAP[basicInfo.duration],
-    transportType: TRANSPORT_TYPE_MAP[basicInfo.transport],
-    companionType: COMPANION_TYPE_MAP[basicInfo.companion],
+    durationType,
+    transportType,
+    companionType,
     monthStart: Number(basicInfo.visitStartMonth),
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey: coverImageKey,

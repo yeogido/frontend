@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { mapKakaoPlaceToItem } from '../src/pages/local-recommendation/place-selection/placeSearch.ts';
+import {
+  mapKakaoPlaceToItem,
+  searchPlaces,
+} from '../src/pages/local-recommendation/place-selection/placeSearch.ts';
 
 const fakeKakaoPlaceResult = {
   id: '123456',
@@ -42,6 +45,70 @@ test('mapKakaoPlaceToItem falls back to lot address when road address is missing
 
   assert.equal(item.address, fakeKakaoPlaceResult.address_name);
   assert.equal(item.roadAddress, '');
+});
+
+function installKakaoPlacesMock(
+  status: 'OK' | 'ZERO_RESULT' | 'ERROR',
+  data: typeof fakeKakaoPlaceResult[] = [fakeKakaoPlaceResult]
+) {
+  Object.defineProperty(globalThis, 'document', {
+    configurable: true,
+    value: {},
+  });
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: {
+      kakao: {
+        maps: {
+          load: (callback: () => void) => callback(),
+          services: {
+            Places: class {
+              keywordSearch(
+                _query: string,
+                callback: (
+                  results: typeof fakeKakaoPlaceResult[],
+                  resultStatus: 'OK' | 'ZERO_RESULT' | 'ERROR'
+                ) => void
+              ) {
+                callback(data, status);
+              }
+            },
+            Status: { OK: 'OK', ZERO_RESULT: 'ZERO_RESULT', ERROR: 'ERROR' },
+          },
+        },
+      },
+    },
+  });
+}
+
+test.afterEach(() => {
+  Reflect.deleteProperty(globalThis, 'window');
+  Reflect.deleteProperty(globalThis, 'document');
+});
+
+test('searchPlaces maps Kakao OK responses to place items', async () => {
+  installKakaoPlacesMock('OK');
+
+  const results = await searchPlaces('광안리');
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0]?.title, '광안리 해수욕장');
+});
+
+test('searchPlaces returns an empty array for Kakao ZERO_RESULT responses', async () => {
+  installKakaoPlacesMock('ZERO_RESULT', []);
+
+  assert.deepEqual(await searchPlaces('없는 장소'), []);
+});
+
+test('searchPlaces rejects Kakao error responses', async () => {
+  installKakaoPlacesMock('ERROR');
+
+  await assert.rejects(searchPlaces('광안리'));
+});
+
+test('searchPlaces rejects when the Kakao SDK cannot load', async () => {
+  await assert.rejects(searchPlaces('광안리'));
 });
 
 test('place selection uses shared UI, preserves added places as pending, and registers its route', () => {

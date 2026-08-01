@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { fetchHashtags } from '../../../apis/hashtags';
@@ -55,11 +55,14 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const [hashtags, setHashtags] = useState<Hashtag[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const hashtagLoadPromiseRef = useRef<Promise<Hashtag[]> | null>(null);
 
   useEffect(() => {
     let isMounted = true;
+    const hashtagLoadPromise = fetchHashtags().catch(() => []);
+    hashtagLoadPromiseRef.current = hashtagLoadPromise;
 
-    fetchHashtags()
+    hashtagLoadPromise
       .then((result) => {
         if (isMounted) setHashtags(result);
       })
@@ -98,32 +101,40 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
 
   const isReady = isTagSelectionReady(photo, selectedTagIds);
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!photo || !isReady || isSubmitting) return;
 
     setIsSubmitting(true);
     setSubmitError('');
 
-    const hashtagIds = mapTagIdsToHashtagIds(
-      Array.from(selectedTagIds),
-      hashtags,
-      (tagId) => tagDefinitionMap[tagId]?.label
-    );
+    try {
+      const loadedHashtags = await (
+        hashtagLoadPromiseRef.current ?? Promise.resolve(hashtags)
+      );
+      const hashtagIds = mapTagIdsToHashtagIds(
+        Array.from(selectedTagIds),
+        loadedHashtags,
+        (tagId) => tagDefinitionMap[tagId]?.label
+      );
 
-    setTagSelection({
-      tagIds: Array.from(selectedTagIds),
-      hashtagIds,
-      coverImageKey: null,
-    });
+      setTagSelection({
+        tagIds: Array.from(selectedTagIds),
+        hashtagIds,
+        coverImageKey: null,
+      });
 
-    completeTagSelection({
-      photo,
-      selectedTagIds,
-      photoKey: '',
-      hashtagIds,
-      onComplete,
-      navigate,
-    });
+      completeTagSelection({
+        photo,
+        selectedTagIds,
+        photoKey: '',
+        hashtagIds,
+        onComplete,
+        navigate,
+      });
+    } catch {
+      setSubmitError('태그 정보를 저장하지 못했습니다. 다시 시도해 주세요.');
+      setIsSubmitting(false);
+    }
   };
 
   return (

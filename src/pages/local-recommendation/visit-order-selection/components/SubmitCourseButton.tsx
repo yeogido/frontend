@@ -27,7 +27,7 @@ function SubmitCourseButton({
       style={{
         marginTop: BUTTON_MARGIN_TOP * scale,
         height: Math.max(BUTTON_HEIGHT * scale, 44),
-        fontSize: Math.max(BUTTON_TEXT_SIZE * scale, 14),
+        fontSize: BUTTON_TEXT_SIZE * scale,
         borderRadius: BUTTON_RADIUS * scale,
       }}
     >

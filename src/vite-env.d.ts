@@ -50,24 +50,6 @@ declare namespace kakao.maps {
     });
     setMap(map: Map | null): void;
   }
-  export namespace services {
-    export class Places {
-      keywordSearch(
-        keyword: string,
-        callback: (
-          data: KakaoPlacesSearchResult[],
-          status: 'OK' | 'ZERO_RESULT' | 'ERROR',
-          pagination: unknown
-        ) => void,
-        options?: Record<string, unknown>
-      ): void;
-    }
-    export const Status: {
-      OK: 'OK';
-      ZERO_RESULT: 'ZERO_RESULT';
-      ERROR: 'ERROR';
-    };
-  }
   export function load(callback: () => void): void;
 }
 
@@ -75,17 +57,4 @@ interface Window {
   kakao?: {
     maps?: typeof kakao.maps;
   };
-}
-
-interface KakaoPlacesSearchResult {
-  id: string;
-  place_name: string;
-  category_name: string;
-  category_group_code: string;
-  phone: string;
-  address_name: string;
-  road_address_name: string;
-  x: string;
-  y: string;
-  place_url: string;
 }

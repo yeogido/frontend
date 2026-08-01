@@ -39,10 +39,6 @@ export function getCurrentMapCoordinates(
 }
 
 export function loadKakaoMapsSdk(appKey: string): Promise<void> {
-  if (!appKey.trim()) {
-    return Promise.reject(new Error('카카오맵 API 키가 설정되지 않았습니다.'));
-  }
-
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return Promise.reject(
       new Error('브라우저에서만 카카오맵을 불러올 수 있습니다.')
@@ -52,6 +48,10 @@ export function loadKakaoMapsSdk(appKey: string): Promise<void> {
   if (window.kakao?.maps) {
     const kakaoMaps = window.kakao.maps;
     return new Promise((resolve) => kakaoMaps.load(resolve));
+  }
+
+  if (!appKey.trim()) {
+    return Promise.reject(new Error('카카오맵 API 키가 설정되지 않았습니다.'));
   }
 
   if (sdkPromise) {

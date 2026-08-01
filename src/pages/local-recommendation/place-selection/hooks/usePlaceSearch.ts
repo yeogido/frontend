@@ -56,7 +56,9 @@ export function usePlaceSearch() {
       return;
     }
 
-    setIsLoading(true);
+    if (nextQuery !== query) {
+      setIsLoading(true);
+    }
   };
 
   return {

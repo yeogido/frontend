@@ -31,7 +31,7 @@ export const searchPlaces = async (query: string): Promise<PlaceItem[]> => {
     return [];
   }
 
-  await loadKakaoMapsSdk(import.meta.env.VITE_KAKAO_MAP_API_KEY ?? '');
+  await loadKakaoMapsSdk(import.meta.env?.VITE_KAKAO_MAP_API_KEY ?? '');
 
   if (!window.kakao?.maps.services) {
     throw new Error('카카오맵 장소 검색 서비스를 불러오지 못했습니다.');
