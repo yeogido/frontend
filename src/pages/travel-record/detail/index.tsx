@@ -62,6 +62,7 @@ function TravelRecordDetailPage() {
   const [isPhotoTransitioning, setIsPhotoTransitioning] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
   const { showToast } = useToast();
   const beginEdit = useTravelRecordSessionStore((state) => state.beginEdit);
   const [transitionTargetIndex, setTransitionTargetIndex] = useState<
@@ -71,7 +72,9 @@ function TravelRecordDetailPage() {
     location.state as TravelRecordDetailLocationState | null;
   const travelRecordId =
     folderId && /^\d+$/.test(folderId) ? Number(folderId) : null;
-  const serverTravelRecordQuery = useTravelRecordDetail(travelRecordId);
+  const serverTravelRecordQuery = useTravelRecordDetail(
+    isDeleted ? null : travelRecordId,
+  );
   const deleteTravelRecordMutation = useDeleteTravelRecord();
   const folder = serverTravelRecordQuery.data ?? locationState?.folder;
   const motionRange = Math.max(cardWidth, 1);
@@ -313,9 +316,15 @@ function TravelRecordDetailPage() {
       return;
     }
 
+    // Disable this page's detail query before the mutation removes its
+    // cache entry, so react-query doesn't treat it as an active observer
+    // and immediately re-fetch the record we're about to delete.
+    setIsDeleted(true);
+
     try {
       await deleteTravelRecordMutation.mutateAsync(travelRecordId);
     } catch {
+      setIsDeleted(false);
       showToast('여행 기록을 삭제하지 못했어요.');
       return;
     }

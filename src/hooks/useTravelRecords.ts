@@ -229,6 +229,28 @@ export function useDeleteTravelRecord() {
   return useMutation<void, Error, number>({
     mutationFn: deleteTravelRecordById,
     onSuccess: (_, travelRecordId) => {
+      // Strip the deleted record out of every cached list immediately,
+      // instead of relying on invalidateQueries' async refetch. Otherwise
+      // there's a window where the list re-renders with the stale (still
+      // containing the deleted id) data, and useTravelRecordDetails
+      // re-fetches that id's detail, which now 404s on the server.
+      queryClient.setQueriesData<
+        InfiniteData<TravelRecordListResponse, TravelRecordsPageParam>
+      >({ queryKey: ['travelRecords'] }, (data) => {
+        if (!data) {
+          return data;
+        }
+
+        return {
+          ...data,
+          pages: data.pages.map((page) => ({
+            ...page,
+            items: page.items.filter(
+              (item) => item.travelRecordId !== travelRecordId,
+            ),
+          })),
+        };
+      });
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.removeQueries({
