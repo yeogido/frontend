@@ -27,12 +27,20 @@ export async function compressImage(
   const maxSizeBytes = options.maxSizeBytes ?? DEFAULT_MAX_SIZE_BYTES;
   const maxDimension = options.maxDimension ?? DEFAULT_MAX_DIMENSION;
 
-  if (!file.type.startsWith('image/') || file.size <= maxSizeBytes) {
+  if (!file.type.startsWith('image/')) {
     return file;
   }
 
   try {
     const bitmap = await createImageBitmap(file);
+    if (
+      file.size <= maxSizeBytes &&
+      bitmap.width <= maxDimension &&
+      bitmap.height <= maxDimension
+    ) {
+      bitmap.close();
+      return file;
+    }
     const scale = Math.min(
       1,
       maxDimension / Math.max(bitmap.width, bitmap.height)
@@ -67,8 +75,7 @@ export async function compressImage(
 
     const compressedName = file.name.replace(/\.[^./]+$/, '.jpg');
     return new File([blob], compressedName, { type: 'image/jpeg' });
-    } catch (error) {
-    console.warn('Image compression failed, falling back to original file:', error);
+  } catch {
     return file;
   }
 }

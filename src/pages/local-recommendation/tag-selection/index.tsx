@@ -49,6 +49,9 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const removePendingImage = useLocalRecommendationStore(
     (state) => state.removePendingImage
   );
+  const imageRecoveryRequired = useLocalRecommendationStore(
+    (state) => state.imageRecoveryRequired
+  );
   const [photo, setPhoto] = useState<PhotoSelection | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(new Set());
   const [limitMessage, setLimitMessage] = useState('');
@@ -162,6 +165,11 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
           코스를 더 매력적으로 소개할 수 있어요!
         </p>
 
+        {imageRecoveryRequired ? (
+          <p className="text-main-5 mt-2 text-sm" role="alert">
+            새로고침으로 사진이 사라졌습니다. 대표 사진과 장소 사진을 다시 등록해 주세요.
+          </p>
+        ) : null}
         <RepresentativePhotoSection
           photo={photo}
           onPhotoChange={handlePhotoChange}

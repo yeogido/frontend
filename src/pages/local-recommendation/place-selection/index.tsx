@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 import PlacePhotoModal from './components/PlacePhotoModal';
 import PlaceSearchSection from './components/PlaceSearchSection';
 import SelectedPlaceSection from './components/SelectedPlaceSection';
@@ -9,6 +11,9 @@ import { useSelectedPlaces } from './hooks/useSelectedPlaces';
 
 function PlaceSelectionPage() {
   const navigate = useNavigate();
+  const imageRecoveryRequired = useLocalRecommendationStore(
+    (state) => state.imageRecoveryRequired
+  );
   const { setQuery, searchResults } = usePlaceSearch();
   const {
     selectedPlaces,
@@ -27,6 +32,11 @@ function PlaceSelectionPage() {
     handleImageFileChange,
     clearModalState,
   } = usePlacePhotoModal();
+
+  useEffect(() => {
+    if (!imageRecoveryRequired) return;
+    navigate('/local-recommendation/tag-selection', { replace: true });
+  }, [imageRecoveryRequired, navigate]);
 
   const handleConfirmImage = () => {
     if (!pendingPlace || !pendingImageFile || !pendingImagePreviewUrl) return;

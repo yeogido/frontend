@@ -61,18 +61,34 @@ export function buildCourseItemsFromVisitEvents(
   });
 }
 
+export function getCourseRequestValidationError(
+  draft: LocalRecommendationDraft,
+  visitEvents: readonly VisitEvent[]
+): string | null {
+  if (!draft.neighborhood) return '지역 선택 단계에서 지역을 선택해 주세요.';
+  if (!draft.basicInfo) return '기본 정보 입력 단계에서 코스 정보를 입력해 주세요.';
+  if (!draft.coverImageKey) return '대표 사진을 등록해 주세요.';
+  if (visitEvents.length === 0) return '방문할 장소 또는 행사를 하나 이상 추가해 주세요.';
+
+  const { duration, transport, companion } = draft.basicInfo;
+  if (!DURATION_TYPE_MAP[duration] || !TRANSPORT_TYPE_MAP[transport] || !COMPANION_TYPE_MAP[companion]) {
+    return '기본 정보의 여행 기간, 이동 수단, 동행 정보를 다시 선택해 주세요.';
+  }
+
+  return null;
+}
+
 export function buildCourseRequest(
   draft: LocalRecommendationDraft,
   visitEvents: readonly VisitEvent[]
 ): CreateLocalRecommendationRequest | null {
   const { neighborhood, basicInfo, coverImageKey } = draft;
 
-  if (
-    !neighborhood ||
-    !basicInfo ||
-    !coverImageKey ||
-    visitEvents.length === 0
-  ) {
+  if (getCourseRequestValidationError(draft, visitEvents)) {
+    return null;
+  }
+
+  if (!neighborhood || !basicInfo || !coverImageKey || visitEvents.length === 0) {
     return null;
   }
 

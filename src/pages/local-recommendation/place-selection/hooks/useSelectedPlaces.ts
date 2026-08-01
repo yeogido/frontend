@@ -19,6 +19,10 @@ function toPersistedPlace(place: SelectedPlace) {
 }
 
 export function useSelectedPlaces() {
+  const draftPlaces = useLocalRecommendationStore((state) => state.draft.places);
+  const pendingImages = useLocalRecommendationStore(
+    (state) => state.pendingImages
+  );
   const setPlacesInStore = useLocalRecommendationStore(
     (state) => state.setPlaces
   );
@@ -28,11 +32,22 @@ export function useSelectedPlaces() {
   const removePendingImage = useLocalRecommendationStore(
     (state) => state.removePendingImage
   );
-  const clearPendingImages = useLocalRecommendationStore(
-    (state) => state.clearPendingImages
+  const [selectedPlaces, setSelectedPlaces] = useState<SelectedPlace[]>(() =>
+    draftPlaces.flatMap((place) => {
+      const pendingImage = pendingImages[place.id];
+      if (!pendingImage) return [];
+
+      return [
+        {
+          ...place,
+          imageSrc: null,
+          imageFile: pendingImage.originalFile,
+          imagePreviewUrl: pendingImage.previewUrl,
+        },
+      ];
+    })
   );
-  const [selectedPlaces, setSelectedPlaces] = useState<SelectedPlace[]>([]);
-  const selectedPlacesRef = useRef<SelectedPlace[]>([]);
+  const selectedPlacesRef = useRef<SelectedPlace[]>(selectedPlaces);
 
   useEffect(() => {
     selectedPlacesRef.current = selectedPlaces;
@@ -57,6 +72,7 @@ export function useSelectedPlaces() {
       ...selectedPlacesRef.current,
       { ...place, imageFile, imagePreviewUrl },
     ];
+    selectedPlacesRef.current = next;
     setPendingImage(place.id, { file: imageFile, previewUrl: imagePreviewUrl });
     setPlacesInStore(next.map(toPersistedPlace));
     setSelectedPlaces(next);
@@ -66,13 +82,17 @@ export function useSelectedPlaces() {
     const next = selectedPlacesRef.current.filter(
       (item) => item.id !== place.id
     );
+    selectedPlacesRef.current = next;
     removePendingImage(place.id);
     setPlacesInStore(next.map(toPersistedPlace));
     setSelectedPlaces(next);
   };
 
   const removeAllSelectedPlaces = () => {
-    clearPendingImages();
+    selectedPlacesRef.current.forEach((place) => {
+      removePendingImage(place.id);
+    });
+    selectedPlacesRef.current = [];
     setPlacesInStore([]);
     setSelectedPlaces([]);
   };

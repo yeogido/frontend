@@ -7,7 +7,8 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { uploadCourseImages } from '../../../../apis/files';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
@@ -16,12 +17,19 @@ import {
   useLocalRecommendationStore,
 } from '../../../../store/localRecommendation.store';
 import eventThumbnail from '../assets/event-thumbnail.png';
-import { buildCourseRequest } from '../buildCourseRequest';
+import {
+  buildCourseRequest,
+  getCourseRequestValidationError,
+} from '../buildCourseRequest';
 import { buildVisitEvents } from '../buildVisitEvents';
 import type { VisitEvent } from '../constants';
 
 export function useVisitOrderSelection() {
   const draft = useLocalRecommendationStore((state) => state.draft);
+  const imageRecoveryRequired = useLocalRecommendationStore(
+    (state) => state.imageRecoveryRequired
+  );
+  const navigate = useNavigate();
   const setVisitOrder = useLocalRecommendationStore(
     (state) => state.setVisitOrder
   );
@@ -41,6 +49,11 @@ export function useVisitOrderSelection() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  useEffect(() => {
+    if (!imageRecoveryRequired) return;
+    navigate('/local-recommendation/tag-selection', { replace: true });
+  }, [imageRecoveryRequired, navigate]);
 
   const handleDragStart = ({ active }: DragStartEvent) =>
     setActiveEventId(String(active.id));
@@ -110,6 +123,12 @@ export function useVisitOrderSelection() {
             }
           : event
       );
+      const validationError = getCourseRequestValidationError(
+        { ...currentDraft, coverImageKey },
+        eventsWithImageKeys
+      );
+      if (validationError) throw new Error(validationError);
+
       const payload = buildCourseRequest(
         { ...currentDraft, coverImageKey },
         eventsWithImageKeys

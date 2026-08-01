@@ -55,6 +55,8 @@ export interface PendingImage {
 export interface LocalRecommendationState {
   draft: LocalRecommendationDraft;
   pendingImages: Record<string, PendingImage>;
+  hasPendingImages: boolean;
+  imageRecoveryRequired: boolean;
   setNeighborhood: (neighborhood: Neighborhood | null) => void;
   updateBasicInfo: (basicInfo: CourseBasicInfoValues) => void;
   setTagSelection: (selection: {
@@ -86,11 +88,26 @@ export const createEmptyLocalRecommendationDraft =
     visitOrder: [],
   });
 
+function clearImageDependentDraft(
+  draft: LocalRecommendationDraft
+): LocalRecommendationDraft {
+  return {
+    ...draft,
+    tagIds: [],
+    hashtagIds: [],
+    coverImageKey: null,
+    places: [],
+    visitOrder: [],
+  };
+}
+
 export const useLocalRecommendationStore = create<LocalRecommendationState>()(
   persist(
     (set) => ({
       draft: createEmptyLocalRecommendationDraft(),
       pendingImages: {},
+      hasPendingImages: false,
+      imageRecoveryRequired: false,
       setNeighborhood: (neighborhood) =>
         set((state) => ({
           draft: {
@@ -176,6 +193,8 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
         };
         set((state) => ({
           pendingImages: { ...state.pendingImages, [placeId]: pendingImage },
+          hasPendingImages: true,
+          imageRecoveryRequired: false,
         }));
         void compressionPromise.then((compressedFile) => {
           set((state) => {
@@ -203,14 +222,21 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
           URL.revokeObjectURL(pendingImage.previewUrl);
           const pendingImages = { ...state.pendingImages };
           delete pendingImages[placeId];
-          return { pendingImages };
+          return {
+            pendingImages,
+            hasPendingImages: Object.keys(pendingImages).length > 0,
+          };
         }),
       clearPendingImages: () =>
         set((state) => {
           Object.values(state.pendingImages).forEach(({ previewUrl }) => {
             URL.revokeObjectURL(previewUrl);
           });
-          return { pendingImages: {} };
+          return {
+            pendingImages: {},
+            hasPendingImages: false,
+            imageRecoveryRequired: false,
+          };
         }),
       resetDraft: () =>
         set((state) => {
@@ -220,13 +246,42 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
           return {
             draft: createEmptyLocalRecommendationDraft(),
             pendingImages: {},
+            hasPendingImages: false,
+            imageRecoveryRequired: false,
           };
         }),
     }),
     {
       name: 'local-recommendation-draft',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ draft: state.draft }),
+      version: 1,
+      migrate: (persistedState, version) => {
+        if (version < 1) {
+          return {
+            draft: createEmptyLocalRecommendationDraft(),
+            hasPendingImages: false,
+          };
+        }
+
+        return persistedState as LocalRecommendationState;
+      },
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<LocalRecommendationState>;
+        const hasPendingImages = persisted.hasPendingImages === true;
+        const draft = persisted.draft ?? currentState.draft;
+
+        return {
+          ...currentState,
+          ...persisted,
+          draft: hasPendingImages ? clearImageDependentDraft(draft) : draft,
+          pendingImages: {},
+          imageRecoveryRequired: hasPendingImages,
+        };
+      },
+      partialize: (state) => ({
+        draft: state.draft,
+        hasPendingImages: state.hasPendingImages,
+      }),
     }
   )
 );

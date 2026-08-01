@@ -31,7 +31,7 @@ async function putFileToPresignedUrl(
   file: File
 ): Promise<void> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
   try {
     const response = await fetch(uploadUrl, {
@@ -45,6 +45,11 @@ async function putFileToPresignedUrl(
       throw new Error('이미지 업로드에 실패했습니다.');
     }
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('이미지 업로드 시간이 초과되었습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.', {
+        cause: error,
+      });
+    }
     if (
       error instanceof Error &&
       error.message === '이미지 업로드에 실패했습니다.'
