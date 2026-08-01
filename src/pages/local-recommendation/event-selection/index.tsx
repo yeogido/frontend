@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
@@ -9,6 +9,8 @@ import { useLocalRecommendationStore } from '../../../store/localRecommendation.
 import { festivalSearchSuggestions } from './constants/festivalSearchSuggestions';
 import { searchFestivals } from './festivalSearch';
 import type { FestivalItem } from './types';
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 function EventSelectionPage() {
   const navigate = useNavigate();
@@ -24,15 +26,25 @@ function EventSelectionPage() {
   );
 
   const trimmedQuery = query.trim();
+  const [debouncedQuery, setDebouncedQuery] = useState(trimmedQuery);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(
+      () => setDebouncedQuery(trimmedQuery),
+      SEARCH_DEBOUNCE_MS
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [trimmedQuery]);
 
   const {
     data: searchResults = [],
     isFetching,
     isError,
   } = useQuery({
-    queryKey: ['event-selection', 'festival-search', trimmedQuery],
-    queryFn: () => searchFestivals(trimmedQuery),
-    enabled: trimmedQuery.length > 0,
+    queryKey: ['event-selection', 'festival-search', debouncedQuery],
+    queryFn: ({ signal }) => searchFestivals(debouncedQuery, signal),
+    enabled: debouncedQuery.length > 0,
     staleTime: 30_000,
   });
 

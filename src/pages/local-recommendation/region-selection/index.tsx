@@ -92,7 +92,7 @@ function LocalRecommendationPage() {
       bottomPadding={PAGE_PADDING_BOTTOM}
       className="bg-background"
     >
-      <BackButton onClick={() => navigate(-1)} />
+      <BackButton onClick={() => navigate('/local-course')} />
       <main className="flex-1">
         <NeighborhoodSearchSection onSearch={handleSearch} />
 

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import * as contentsApi from '../src/apis/contents.api.ts';
+import { searchFestivals } from '../src/pages/local-recommendation/event-selection/festivalSearch.ts';
 import {
   toFestivalApiItem,
   toFestivalItem,
@@ -57,8 +59,35 @@ test('toFestivalItem carries a null thumbnail through as imageSrc', () => {
   // CultureContent types thumbnailImageUrl as `string`, but the live API can
   // return null for content without a thumbnail — verify the runtime guard.
   const content = buildContent({
-    thumbnailImageUrl: null as unknown as string,
+    thumbnailImageUrl: null,
   });
 
   assert.equal(toFestivalItem(content).imageSrc, null);
+});
+
+test('searchFestivals trims the keyword and forwards the cancellation signal', async (t) => {
+  const controller = new AbortController();
+  const getCultureContents = t.mock.method(
+    contentsApi,
+    'getCultureContents',
+    async () => ({ items: [], cursorValue: '', cursorId: 0, hasNext: false })
+  );
+
+  await searchFestivals('  festival  ', controller.signal);
+
+  assert.deepEqual(getCultureContents.mock.calls[0].arguments, [
+    { category: 'FESTIVAL', keyword: 'festival' },
+    controller.signal,
+  ]);
+});
+
+test('searchFestivals skips requests for an empty trimmed keyword', async (t) => {
+  const getCultureContents = t.mock.method(
+    contentsApi,
+    'getCultureContents',
+    async () => ({ items: [], cursorValue: '', cursorId: 0, hasNext: false })
+  );
+
+  assert.deepEqual(await searchFestivals('   '), []);
+  assert.equal(getCultureContents.mock.callCount(), 0);
 });

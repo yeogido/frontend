@@ -6,6 +6,7 @@ const BACK_BUTTON_SIZE = 32;
 const BACK_BUTTON_MARGIN_BOTTOM = 16;
 const BACK_BUTTON_MARGIN_LEFT = -8;
 const BACK_ICON_SIZE = 30;
+const MIN_TOUCH_TARGET = 44;
 
 interface BackButtonProps {
   onClick: () => void;
@@ -13,7 +14,7 @@ interface BackButtonProps {
 
 function BackButton({ onClick }: BackButtonProps) {
   const scale = useGlobalScale();
-  const buttonSize = BACK_BUTTON_SIZE * scale;
+  const buttonSize = Math.max(MIN_TOUCH_TARGET, BACK_BUTTON_SIZE * scale);
 
   return (
     <button

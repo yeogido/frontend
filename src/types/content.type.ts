@@ -10,7 +10,7 @@ export interface CultureContent {
   contentId: number;
   placeId: number;
   title: string;
-  thumbnailImageUrl: string;
+  thumbnailImageUrl: string | null;
   regionName: string;
   hashtags: string[];
   likeCount: number;

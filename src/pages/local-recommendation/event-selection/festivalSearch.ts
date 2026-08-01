@@ -4,7 +4,8 @@ import { toFestivalItem } from './festivalTransform';
 import type { FestivalItem } from './types';
 
 export const searchFestivals = async (
-  keyword: string
+  keyword: string,
+  signal?: AbortSignal
 ): Promise<FestivalItem[]> => {
   const trimmedKeyword = keyword.trim();
 
@@ -15,7 +16,7 @@ export const searchFestivals = async (
   const { items } = await getCultureContents({
     category: 'FESTIVAL',
     keyword: trimmedKeyword,
-  });
+  }, signal);
 
   return items.map(toFestivalItem);
 };

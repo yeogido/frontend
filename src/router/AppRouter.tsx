@@ -112,12 +112,12 @@ function AppRouter() {
 
       <Route element={<ProtectedRoute />}>
         <Route
-          path="/local-recommendation/course-info"
-          element={<CourseBasicInfoPage />}
-        />
-        <Route
           path="/local-recommendation"
           element={<LocalRecommendationPage />}
+        />
+        <Route
+          path="/local-recommendation/course-info"
+          element={<CourseBasicInfoPage />}
         />
         <Route
           path="/local-recommendation/tag-selection"
