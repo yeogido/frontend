@@ -1,8 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
+import { getRegions, searchRegions } from '../../../apis/regions.api';
+import { LoadingSpinner } from '../../../components/common';
 import { ResponsivePageShell } from '../../../components/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 
 import {
   NeighborhoodResultList,
@@ -11,13 +15,9 @@ import {
   RecentSearchSection,
   SelectedNeighborhoodCard,
 } from './components';
-import {
-  popularRegions,
-  recentNeighborhoodIds,
-} from './constants/featuredRegions';
-import { neighborhoods } from './constants/neighborhoods';
 import type { Neighborhood } from './types';
-import { filterNeighborhoods } from './utils';
+import { useRecentRegions } from './useRecentRegions';
+import { fromRegion, fromSearchResult } from './utils';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 32;
@@ -30,53 +30,58 @@ const BUTTON_TEXT_SIZE = 14;
 function LocalRecommendationPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const draftNeighborhood = useLocalRecommendationStore(
+    (state) => state.draft.neighborhood
+  );
+  const setNeighborhood = useLocalRecommendationStore(
+    (state) => state.setNeighborhood
+  );
+  const { recentRegions, addRecentRegion } = useRecentRegions();
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [submittedQuery, setSubmittedQuery] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] =
-    useState<Neighborhood | null>(null);
+    useState<Neighborhood | null>(draftNeighborhood);
 
-  const searchResults = useMemo(
-    () => filterNeighborhoods(neighborhoods, searchQuery),
-    [searchQuery]
-  );
+  const regionsQuery = useQuery({
+    queryKey: ['regions'],
+    queryFn: getRegions,
+    staleTime: 5 * 60_000,
+  });
 
-  const recentNeighborhoods = useMemo(
-    () =>
-      recentNeighborhoodIds.flatMap((id) => {
-        const neighborhood = neighborhoods.find((item) => item.id === id);
-        return neighborhood ? [neighborhood] : [];
-      }),
-    []
-  );
-
-  const neighborhoodSearchSuggestions = useMemo(
-    () => [
-      ...new Set(
-        neighborhoods.flatMap((neighborhood) => [
-          neighborhood.province,
-          neighborhood.city,
-          neighborhood.district,
-          `${neighborhood.city} ${neighborhood.district}`,
-        ])
-      ),
-    ],
-    []
-  );
+  const searchResultsQuery = useQuery({
+    queryKey: ['regions', 'search', submittedQuery],
+    queryFn: async () =>
+      (await searchRegions(submittedQuery)).map(fromSearchResult),
+    enabled: submittedQuery.length > 0,
+    staleTime: 30_000,
+  });
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setSubmittedQuery(query.trim());
     setSelectedNeighborhood(null);
+    setNeighborhood(null);
   };
 
-  const handleSelectNeighborhood = (clickedNeighborhood: Neighborhood) => {
-    setSearchQuery(''); // 검색어 초기화
-    // 이미 선택된 동네의 ID와 방금 클릭한 동네의 ID가 같은지 확인
-    if (selectedNeighborhood?.id === clickedNeighborhood.id) {
-      // 같다면 선택 해제 (state를 null로 변경)
+  const handleSelectNeighborhood = (candidate: Neighborhood) => {
+    setSearchQuery('');
+    setSubmittedQuery('');
+
+    if (selectedNeighborhood?.id === candidate.id) {
       setSelectedNeighborhood(null);
-    } else {
-      // 다르다면 새로운 동네로 업데이트
-      setSelectedNeighborhood(clickedNeighborhood);
+      setNeighborhood(null);
+      return;
     }
+
+    setSelectedNeighborhood(candidate);
+    setNeighborhood(candidate);
+    addRecentRegion(candidate);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedNeighborhood(null);
+    setNeighborhood(null);
   };
 
   return (
@@ -87,35 +92,58 @@ function LocalRecommendationPage() {
       className="bg-background"
     >
       <main className="flex-1">
-        <NeighborhoodSearchSection
-          suggestions={neighborhoodSearchSuggestions}
-          onSearch={handleSearch}
-        />
-        {selectedNeighborhood && !searchQuery ? (
+        <NeighborhoodSearchSection onSearch={handleSearch} />
+
+        {selectedNeighborhood && !searchQuery.trim() ? (
           <SelectedNeighborhoodCard
             neighborhood={selectedNeighborhood}
-            onClear={() => setSelectedNeighborhood(null)}
+            onClear={handleClearSelection}
           />
-        ) : (
-          <NeighborhoodResultList
-            query={searchQuery}
-            results={searchResults}
-            selectedNeighborhood={selectedNeighborhood}
-            onSelect={handleSelectNeighborhood}
-          />
-        )}
+        ) : searchQuery.trim() ? (
+          searchResultsQuery.isLoading ? (
+            <LoadingSpinner label="검색 결과를 불러오는 중" />
+          ) : searchResultsQuery.isError ? (
+            <section aria-live="polite" className="text-center">
+              <p>검색 결과를 불러오지 못했습니다.</p>
+              <button
+                type="button"
+                onClick={() => searchResultsQuery.refetch()}
+              >
+                다시 시도
+              </button>
+            </section>
+          ) : (
+            <NeighborhoodResultList
+              heading="검색 결과"
+              results={searchResultsQuery.data ?? []}
+              selectedNeighborhood={selectedNeighborhood}
+              onSelect={handleSelectNeighborhood}
+            />
+          )
+        ) : null}
 
-        {!searchQuery && !selectedNeighborhood ? (
+        {!searchQuery.trim() && !selectedNeighborhood ? (
           <RecentSearchSection
-            neighborhoods={recentNeighborhoods}
+            neighborhoods={recentRegions}
             onSelect={handleSelectNeighborhood}
           />
         ) : null}
-        <PopularRegionGrid
-          regions={popularRegions}
-          neighborhoods={neighborhoods}
-          onSelect={handleSelectNeighborhood}
-        />
+
+        {regionsQuery.isLoading ? (
+          <LoadingSpinner label="지역 정보를 불러오는 중" />
+        ) : regionsQuery.isError ? (
+          <section aria-live="polite" className="text-center">
+            <p>지역 정보를 불러오지 못했습니다.</p>
+            <button type="button" onClick={() => regionsQuery.refetch()}>
+              다시 시도
+            </button>
+          </section>
+        ) : (
+          <PopularRegionGrid
+            regions={regionsQuery.data?.regions ?? []}
+            onSelect={(region) => handleSelectNeighborhood(fromRegion(region))}
+          />
+        )}
       </main>
 
       <button

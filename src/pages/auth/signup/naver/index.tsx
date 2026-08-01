@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 
 import { NaverIcon } from '../../../../components/auth';
 import { Logo } from '../../../../components/common';
+import { BIRTH_YEARS } from '../../../../constants/birthYears';
+import { SIGNUP_REGIONS } from '../../../../constants/signupRegions';
 
-const regions = ['서울', '경기', '인천', '강원', '충북', '충남', '대전', '세종', '전북', '전남', '광주', '경북', '경남', '대구', '울산', '부산', '제주'];
 const genders = ['여성', '남성', '선택 안 함'];
 
 function NaverSignupPage() {
@@ -90,7 +91,7 @@ function NaverSignupPage() {
                   className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
                 >
                   <option value="">거주 중인 지역을 선택해 주세요</option>
-                  {regions.map((region) => (
+                  {SIGNUP_REGIONS.map((region) => (
                     <option key={region} value={region}>
                       {region}
                     </option>
@@ -126,15 +127,11 @@ function NaverSignupPage() {
                   className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
                 >
                   <option value="">태어난 연도를 선택해 주세요</option>
-                  {Array.from({ length: 80 }, (_, index) => {
-                    const year = String(new Date().getFullYear() - index);
-
-                    return (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    );
-                  })}
+                  {BIRTH_YEARS.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
                 </select>
               </SelectField>
             </Field>
