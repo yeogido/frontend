@@ -27,7 +27,7 @@ export const transportOptions = [
     label: '뚜벅이',
     description: '대중교통과 도보로 이동',
   },
-  { value: 'car', label: '자차', description: '자동차로 이동' },
+  { value: 'car', label: '자동차', description: '자차 또는 렌트카로 이동' },
 ] as const;
 
 export const companionOptions = [
