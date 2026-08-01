@@ -3,12 +3,19 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalRecommendationStore } from '../../../../store/localRecommendation.store';
 import type { PlaceItem, SelectedPlace } from '../types';
 
-function toPersistedPlace({
-  imageFile: _imageFile,
-  imagePreviewUrl: _imagePreviewUrl,
-  ...place
-}: SelectedPlace) {
-  return { ...place, imageKey: '' };
+function toPersistedPlace(place: SelectedPlace) {
+  return {
+    id: place.id,
+    title: place.title,
+    address: place.address,
+    imageKey: '',
+    externalPlaceId: place.externalPlaceId,
+    categoryGroupCode: place.categoryGroupCode,
+    roadAddress: place.roadAddress,
+    lotAddress: place.lotAddress,
+    latitude: place.latitude,
+    longitude: place.longitude,
+  };
 }
 
 export function useSelectedPlaces() {

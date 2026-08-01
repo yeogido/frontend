@@ -6,7 +6,7 @@ import type { PlaceItem } from '../types';
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function usePlaceSearch() {
-  const [query, setQuery] = useState('');
+  const [query, setQueryState] = useState('');
   const [searchResults, setSearchResults] = useState<PlaceItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -17,13 +17,10 @@ export function usePlaceSearch() {
     }
 
     if (!query.trim()) {
-      setSearchResults([]);
-      setIsLoading(false);
       return;
     }
 
     let isCancelled = false;
-    setIsLoading(true);
 
     debounceTimerRef.current = setTimeout(async () => {
       try {
@@ -49,6 +46,18 @@ export function usePlaceSearch() {
       }
     };
   }, [query]);
+
+  const setQuery = (nextQuery: string) => {
+    setQueryState(nextQuery);
+
+    if (!nextQuery.trim()) {
+      setSearchResults([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+  };
 
   return {
     query,
