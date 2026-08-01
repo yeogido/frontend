@@ -68,3 +68,11 @@ export async function uploadCourseImage(file: File): Promise<string> {
 
   return objectKey;
 }
+
+// Files are compressed when users select them. Upload all prepared files in
+// parallel and retain input ordering in the returned object keys.
+export async function uploadCourseImages(
+  files: readonly File[]
+): Promise<string[]> {
+  return Promise.all(files.map(uploadCourseImage));
+}

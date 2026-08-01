@@ -14,5 +14,4 @@ export interface PlaceItem {
 export interface SelectedPlace extends PlaceItem {
   imageFile: File;
   imagePreviewUrl: string;
-  imageKey: string;
 }
