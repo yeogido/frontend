@@ -1,12 +1,7 @@
+// A single pickable region node at any depth of the backend's region
+// hierarchy (시/도, 구, and whatever deeper level may be added later).
 export interface Neighborhood {
   id: number;
-  province: string;
-  city: string;
-  district: string;
-}
-
-export interface PopularRegion {
-  neighborhoodId: number;
-  image: string;
-  imageAlt: string;
+  name: string;
+  parentName: string;
 }
