@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 
 import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
 
 import HomePage from '../pages/home';
 import LoginPage from '../pages/auth/login';
@@ -102,51 +103,57 @@ function AppRouter() {
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
 
-        <Route
-          path="/local-recommendation"
-          element={<LocalRecommendationPage />}
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/local-recommendation"
+            element={<LocalRecommendationPage />}
+          />
+        </Route>
 
         <Route path="/admin" element={<AdminPage />} />
 
-        <Route path="/travel-record" element={<TravelRecordPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/travel-record" element={<TravelRecordPage />} />
+        </Route>
       </Route>
 
-      <Route
-        path="/local-recommendation/course-info"
-        element={<CourseBasicInfoPage />}
-      />
+      <Route element={<ProtectedRoute />}>
+        <Route
+          path="/local-recommendation/course-info"
+          element={<CourseBasicInfoPage />}
+        />
 
-      <Route
-        path="/local-recommendation/tag-selection"
-        element={<TagSelectionPage />}
-      />
+        <Route
+          path="/local-recommendation/tag-selection"
+          element={<TagSelectionPage />}
+        />
 
-      <Route
-        path="/travel-record/new"
-        element={<TravelRecordRegionSelectionPage />}
-      />
+        <Route
+          path="/travel-record/new"
+          element={<TravelRecordRegionSelectionPage />}
+        />
 
-      <Route
-        path="/travel-record/date-selection"
-        element={<TravelRecordDateSelectionPage />}
-      />
-      <Route
-        path="/travel-record/:folderId"
-        element={<TravelRecordDetailPage />}
-      />
-      <Route
-        path="/travel-record/photo-selection"
-        element={<TravelRecordPhotoSelectionPage />}
-      />
-      <Route
-        path="/travel-record/folder-decoration"
-        element={<TravelRecordFolderDecorationPage />}
-      />
-      <Route
-        path="/local-recommendation/visit-order-selection"
-        element={<VisitOrderSelectionPage />}
-      />
+        <Route
+          path="/travel-record/date-selection"
+          element={<TravelRecordDateSelectionPage />}
+        />
+        <Route
+          path="/travel-record/:folderId"
+          element={<TravelRecordDetailPage />}
+        />
+        <Route
+          path="/travel-record/photo-selection"
+          element={<TravelRecordPhotoSelectionPage />}
+        />
+        <Route
+          path="/travel-record/folder-decoration"
+          element={<TravelRecordFolderDecorationPage />}
+        />
+        <Route
+          path="/local-recommendation/visit-order-selection"
+          element={<VisitOrderSelectionPage />}
+        />
+      </Route>
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
@@ -177,15 +184,17 @@ function AppRouter() {
       />
       <Route path="/review" element={<ReviewPage />} />
 
-      <Route
-        path="/local-recommendation/event-selection"
-        element={<EventSelectionPage />}
-      />
+      <Route element={<ProtectedRoute />}>
+        <Route
+          path="/local-recommendation/event-selection"
+          element={<EventSelectionPage />}
+        />
 
-      <Route
-        path="/local-recommendation/place-selection"
-        element={<PlaceSelectionPage />}
-      />
+        <Route
+          path="/local-recommendation/place-selection"
+          element={<PlaceSelectionPage />}
+        />
+      </Route>
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
