@@ -129,7 +129,13 @@ function TravelRecordDetailPage() {
     };
   }, [isActionMenuOpen]);
 
-  if (travelRecordId && !folder && serverTravelRecordQuery.isLoading) {
+  // 삭제가 성공하면 상세 캐시가 제거되어 folder가 비는데, 목록으로
+  // 이동하기 전 한 프레임 동안 "찾을 수 없어요"가 스치는 것을 막는다.
+  if (
+    travelRecordId &&
+    !folder &&
+    (serverTravelRecordQuery.isLoading || isDeleted)
+  ) {
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1]">
         <div

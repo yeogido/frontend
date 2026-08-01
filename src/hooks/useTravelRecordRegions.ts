@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
-
-import { useQueries, useQuery } from '@tanstack/react-query';
+import {
+  useQueries,
+  useQuery,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 
 import {
   getPopularRegions,
@@ -10,6 +12,22 @@ import {
 import type { RegionDetailResponse } from '../types/region.type';
 
 const trimmedKeyword = (keyword: string) => keyword.trim();
+
+// 모듈 스코프에 두어 참조가 고정되게 한다. combine이 렌더마다 새
+// 함수면 react-query가 결과를 재사용하지 못한다.
+const combineRegionDetails = (
+  results: UseQueryResult<RegionDetailResponse, Error>[],
+) => {
+  const regionInfoByRegionId = new Map<number, RegionDetailResponse>();
+
+  results.forEach(({ data }) => {
+    if (data) {
+      regionInfoByRegionId.set(data.regionId, data);
+    }
+  });
+
+  return regionInfoByRegionId;
+};
 
 export function usePopularTravelRecordRegions() {
   return useQuery({
@@ -35,26 +53,12 @@ export function useTravelRecordRegionSearch(keyword: string) {
 export function useTravelRecordRegionDetails(regionIds: readonly number[]) {
   const uniqueRegionIds = Array.from(new Set(regionIds));
 
-  const queries = useQueries({
+  return useQueries({
     queries: uniqueRegionIds.map((regionId) => ({
       queryKey: ['region', regionId],
       queryFn: () => getRegion(regionId),
       staleTime: Infinity,
     })),
+    combine: combineRegionDetails,
   });
-
-  return useMemo(() => {
-    const regionInfoByRegionId = new Map<number, RegionDetailResponse>();
-
-    uniqueRegionIds.forEach((regionId, index) => {
-      const regionDetail = queries[index]?.data;
-
-      if (regionDetail) {
-        regionInfoByRegionId.set(regionId, regionDetail);
-      }
-    });
-
-    return regionInfoByRegionId;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queries]);
 }

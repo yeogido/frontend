@@ -170,12 +170,14 @@ function TravelRecordFolderDecorationPage() {
       const uploadedPhotos = selectedPhotos.flatMap((photo) =>
         photo.source === 'new' ? [photo.file] : [],
       );
-      const result = editSession
+      // 수정 여부는 URL의 travelRecordId를 기준으로 판단한다. 세션에만
+      // 의존하면 편집 URL로 바로 진입했을 때 수정 대신 새 기록이 생성된다.
+      const result = travelRecordId
         ? {
             id: String(
               (
                 await updateTravelRecordMutation.mutateAsync({
-                  travelRecordId: Number(editSession.id),
+                  travelRecordId: Number(travelRecordId),
                   selectedRegion,
                   selectedDateRange,
                   selectedPhotos,
@@ -202,6 +204,7 @@ function TravelRecordFolderDecorationPage() {
     } catch {
       isSavingRef.current = false;
       setIsSaving(false);
+      showToast('여행 기록을 저장하지 못했어요.');
     }
   };
 

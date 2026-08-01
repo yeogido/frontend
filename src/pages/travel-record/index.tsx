@@ -53,14 +53,20 @@ function TravelRecordPage() {
     new Date().getFullYear(),
   );
 
-  const travelRecordsQuery = useTravelRecords({
+  const {
+    data: travelRecordsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending,
+  } = useTravelRecords({
     size: TRAVEL_RECORD_PAGE_SIZE,
     year: validSelectedYear,
   });
 
   const apiRecordSummaries = useMemo(
-    () => getTravelRecordSummariesFromPages(travelRecordsQuery.data?.pages),
-    [travelRecordsQuery.data?.pages],
+    () => getTravelRecordSummariesFromPages(travelRecordsData?.pages),
+    [travelRecordsData?.pages],
   );
   const travelRecordDetails = useTravelRecordDetails(apiRecordSummaries);
   const regionInfoByRegionId = useTravelRecordRegionDetails(
@@ -85,15 +91,13 @@ function TravelRecordPage() {
   );
 
   const handleLoadMore = useCallback(() => {
-    if (travelRecordsQuery.hasNextPage && !travelRecordsQuery.isFetchingNextPage) {
-      void travelRecordsQuery.fetchNextPage();
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
     }
-  }, [travelRecordsQuery]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const loadMoreRef = useInfiniteScroll({
-    enabled:
-      Boolean(travelRecordsQuery.hasNextPage) &&
-      !travelRecordsQuery.isPending,
+    enabled: Boolean(hasNextPage) && !isPending,
     onIntersect: handleLoadMore,
   });
 
