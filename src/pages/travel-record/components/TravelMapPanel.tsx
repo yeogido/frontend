@@ -3,7 +3,7 @@ import { toRegionPhotoMap } from '../../home/map/types/regionPhoto';
 
 import type { MapMarker } from '../../home/map/types/map';
 import type { TravelRecordFolder } from '../types';
-import { getTravelRecordRegionPhotoRecords } from '../mappers/travelRecordApiMapper';
+import { getTravelRecordRegionPhotoRecords } from '../utils/regionPhotoRecords';
 
 interface TravelMapPanelProps {
   folders: readonly TravelRecordFolder[];

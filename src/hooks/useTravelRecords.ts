@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query';
 
 import { createPresignedUrl, uploadFileToPresignedUrl } from '../apis/files.api';
+import { getRegion } from '../apis/regions.api';
 import {
   createTravelRecord,
   deleteTravelRecordById,
@@ -28,6 +29,7 @@ import type { TravelDateRange } from '../pages/travel-record/date-selection/type
 import type { TravelFolderDecoration } from '../pages/travel-record/folder-decoration/folderDecoration';
 import type { TravelRecordDraftRegion } from '../pages/travel-record/types';
 import type { TravelRecordPhotoDraft } from '../pages/travel-record/utils/travelRecordSave';
+import type { RegionDetailResponse } from '../types/region.type';
 import type {
   TravelRecordCreateResponse,
   TravelRecordDetailResponse,
@@ -37,6 +39,8 @@ import type {
   TravelRecordUpdateResponse,
   UploadedTravelRecordImage,
 } from '../types/travelRecord.type';
+
+type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
 
 interface TravelRecordsPageParam {
   cursor?: number;
@@ -124,12 +128,22 @@ export function useTravelRecordYears() {
 }
 
 export function useTravelRecordDetail(travelRecordId: number | null) {
+  const queryClient = useQueryClient();
+
   return useQuery({
-    queryKey: ['travelRecord', travelRecordId],
-    queryFn: async (): Promise<TravelRecordFolder> =>
-      mapTravelRecordDetailToFolder(
-        await getTravelRecordDetail(travelRecordId as number),
-      ),
+    queryKey: ['travelRecord', travelRecordId, 'folder'],
+    queryFn: async (): Promise<TravelRecordFolder> => {
+      const detail = await getTravelRecordDetail(travelRecordId as number);
+      const regionInfo = await queryClient
+        .fetchQuery({
+          queryKey: ['region', detail.regionId],
+          queryFn: () => getRegion(detail.regionId),
+          staleTime: Infinity,
+        })
+        .catch(() => undefined);
+
+      return mapTravelRecordDetailToFolder(detail, regionInfo);
+    },
     enabled: typeof travelRecordId === 'number' && travelRecordId > 0,
   });
 }
@@ -226,9 +240,15 @@ export function useDeleteTravelRecord() {
 
 export const getTravelRecordFoldersFromPages = (
   pages: TravelRecordListResponse[] | undefined,
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
 ) =>
   pages?.flatMap((page) =>
-    page.items.map((record) => mapTravelRecordSummaryToFolder(record)),
+    page.items.map((record) =>
+      mapTravelRecordSummaryToFolder(
+        record,
+        regionInfoByRegionId.get(record.regionId),
+      ),
+    ),
   ) ?? [];
 
 export const getTravelRecordSummariesFromPages = (
@@ -238,5 +258,12 @@ export const getTravelRecordSummariesFromPages = (
 export const getTravelRecordFolders = (
   records: TravelRecordSummary[],
   details: Array<TravelRecordDetailResponse | undefined>,
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
 ) =>
-  records.map((record, index) => mapTravelRecordFolder(record, details[index]));
+  records.map((record, index) =>
+    mapTravelRecordFolder(
+      record,
+      details[index],
+      regionInfoByRegionId.get(record.regionId),
+    ),
+  );

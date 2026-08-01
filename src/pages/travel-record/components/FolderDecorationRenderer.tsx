@@ -40,6 +40,12 @@ function DecorationImage({
           alt=""
           className="pointer-events-none block size-full object-contain"
         />
+      ) : decoration.imageUrl ? (
+        <img
+          src={decoration.imageUrl}
+          alt=""
+          className="pointer-events-none block size-full object-contain"
+        />
       ) : null}
     </span>
   );

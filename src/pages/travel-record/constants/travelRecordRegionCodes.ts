@@ -1,15 +1,3 @@
-export const REGION_ID_TO_MAP_REGION_CODE: Record<number, string> = {
-  1: '11',
-  27: '26',
-  44: '27',
-  54: '29',
-  60: '28',
-  72: '30',
-};
-
-export const getTravelRecordRegionCode = (regionId: number) =>
-  REGION_ID_TO_MAP_REGION_CODE[regionId] ?? '';
-
 const METROPOLITAN_CITY_NAMES = [
   '서울특별시',
   '부산광역시',

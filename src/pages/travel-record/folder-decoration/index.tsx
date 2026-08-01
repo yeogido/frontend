@@ -26,7 +26,6 @@ import {
   getTravelRecordDraftDateRange,
   getTravelRecordDraftRegion,
 } from '../utils/draftStorage';
-import { formatTravelRecordLocalDate } from '../utils/sessionFolders';
 import {
   clearTravelRecordPhotoDraft,
   getTravelRecordPhotoDraft,
@@ -77,7 +76,6 @@ function TravelRecordFolderDecorationPage() {
   const [selectedPhotos, setSelectedPhotos] = useState<TravelRecordPhotoDraft[] | null>(null);
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
   const editSession = useTravelRecordSessionStore((state) => state.editSession);
-  const saveMockFolder = useTravelRecordSessionStore((state) => state.saveMockFolder);
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   const restoredDecorations = editSession?.decorations ?? [];
   const [decorations, setDecorations] = useState<TravelFolderDecoration[]>(
@@ -172,51 +170,32 @@ function TravelRecordFolderDecorationPage() {
       const uploadedPhotos = selectedPhotos.flatMap((photo) =>
         photo.source === 'new' ? [photo.file] : [],
       );
-      const result = editSession?.source === 'mock'
-          ? { id: editSession.id }
-        : editSession?.source === 'saved'
-          ? { id: editSession.id }
-          : editSession?.source === 'server'
-            ? {
-                id: String(
-                  (
-                    await updateTravelRecordMutation.mutateAsync({
-                      travelRecordId: Number(editSession.id),
-                      selectedRegion,
-                      selectedDateRange,
-                      selectedPhotos,
-                      decorations,
-                    })
-                  ).travelRecordId,
-                ),
-              }
-          : {
-              id: String(
-                (
-                  await createTravelRecordMutation.mutateAsync({
-                    selectedRegion,
-                    selectedDateRange,
-                    selectedPhotos: uploadedPhotos,
-                    decorations,
-                  })
-                ).travelRecordId,
-              ),
-            };
-      if (editSession?.source === 'mock') {
-        const photos = createPreviewPhotoUrls(selectedPhotos) as [string, ...string[]];
-        saveMockFolder({
-          id: editSession.id,
-          regionCode: selectedRegion.id,
-          regionName: selectedRegion.selectionName || selectedRegion.name,
-          title: selectedRegion.selectionName || selectedRegion.name,
-          year: selectedDateRange.startDate.getFullYear(),
-          startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),
-          endDate: formatTravelRecordLocalDate(selectedDateRange.endDate),
-          period: formatPeriod(selectedDateRange.startDate, selectedDateRange.endDate),
-          photos,
-          decorations,
-        });
-      }
+      const result = editSession
+        ? {
+            id: String(
+              (
+                await updateTravelRecordMutation.mutateAsync({
+                  travelRecordId: Number(editSession.id),
+                  selectedRegion,
+                  selectedDateRange,
+                  selectedPhotos,
+                  decorations,
+                })
+              ).travelRecordId,
+            ),
+          }
+        : {
+            id: String(
+              (
+                await createTravelRecordMutation.mutateAsync({
+                  selectedRegion,
+                  selectedDateRange,
+                  selectedPhotos: uploadedPhotos,
+                  decorations,
+                })
+              ).travelRecordId,
+            ),
+          };
       await clearTravelRecordPhotoDraft();
       clearEdit();
       navigate('/travel-record', { state: { savedTravelRecordId: result.id } });

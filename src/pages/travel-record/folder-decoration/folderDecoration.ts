@@ -4,6 +4,10 @@ export interface TravelFolderDecoration {
   id: string;
   source: TravelFolderDecorationSource;
   stickerId?: string;
+  /** 서버 stickerId(number). 프론트 stickerId로 알 수 없는 스티커도 그대로 왕복 저장하기 위해 보관한다. */
+  backendStickerId?: number;
+  /** 서버가 내려준 렌더링용 이미지 URL. 프론트 stickerId 매핑이 없을 때 대체 렌더링에 쓴다. */
+  imageUrl?: string;
   imageFile?: File;
   uploadedStickerId?: string;
   x: number;

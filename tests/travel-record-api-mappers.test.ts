@@ -4,8 +4,6 @@ import test from 'node:test';
 import {
   createTravelRecordCreateRequest,
   createTravelRecordUpdateRequest,
-  getTravelRecordRegionSuggestions,
-  getTravelRecordRegionPhotoRecords,
   mapPopularRegionToTravelRecordRegion,
   mapRegionSearchToTravelRecordRegion,
   mapTravelRecordDetailToFolder,
@@ -17,6 +15,8 @@ import {
   isTravelMapSelectableRegion,
   normalizeTravelMapSelectedRegion,
 } from '../src/pages/travel-record/constants/travelRecordRegionCodes.ts';
+import { getTravelRecordRegionSuggestions } from '../src/pages/travel-record/region-selection/regionSuggestions.ts';
+import { getTravelRecordRegionPhotoRecords } from '../src/pages/travel-record/utils/regionPhotoRecords.ts';
 
 import type { TravelFolderDecoration } from '../src/pages/travel-record/folder-decoration/folderDecoration.ts';
 import type {
@@ -172,20 +172,65 @@ test('maps a travel record summary cover image URL to the folder photo', () => {
     createdAt: '2026-07-23T09:00:00',
   };
 
-  assert.deepEqual(mapTravelRecordSummaryToFolder(summary), {
-    id: '10',
-    regionId: 27,
-    regionCode: '26',
-    regionName: 'Busan',
+  assert.deepEqual(
+    mapTravelRecordSummaryToFolder(summary, {
+      name: '부산',
+      fullName: '부산광역시',
+    }),
+    {
+      id: '10',
+      regionId: 27,
+      regionCode: '26',
+      regionName: '부산광역시',
+      title: 'Busan',
+      folderTheme: 'BASIC',
+      year: 2026,
+      startDate: '2026-07-20',
+      endDate: '2026-07-22',
+      period: '07.20 - 07.22',
+      photos: ['https://example.com/travel-records/10/image-1.jpg'],
+      decorations: [],
+    },
+  );
+});
+
+test('falls back to the record title for the region name when no region info is available', () => {
+  const summary: TravelRecordSummary = {
+    travelRecordId: 10,
     title: 'Busan',
-    folderTheme: 'BASIC',
-    year: 2026,
+    regionId: 27,
     startDate: '2026-07-20',
     endDate: '2026-07-22',
-    period: '07.20 - 07.22',
-    photos: ['https://example.com/travel-records/10/image-1.jpg'],
-    decorations: [],
+    coverImageUrl: 'https://example.com/travel-records/10/image-1.jpg',
+    folderTheme: 'BASIC',
+    createdAt: '2026-07-23T09:00:00',
+  };
+
+  const folder = mapTravelRecordSummaryToFolder(summary);
+
+  assert.equal(folder.regionName, 'Busan');
+  assert.equal(folder.regionCode, '');
+});
+
+test('resolves a district-level region name against the city map shape', () => {
+  const summary: TravelRecordSummary = {
+    travelRecordId: 11,
+    title: 'Yeosu trip',
+    regionId: 4613,
+    startDate: '2026-07-20',
+    endDate: '2026-07-22',
+    coverImageUrl: 'https://example.com/travel-records/11/image-1.jpg',
+    folderTheme: 'BASIC',
+    createdAt: '2026-07-23T09:00:00',
+  };
+
+  const folder = mapTravelRecordSummaryToFolder(summary, {
+    name: '여수시',
+    fullName: '전라남도 여수시',
   });
+
+  assert.equal(folder.regionName, '여수시');
+  assert.equal(folder.regionCode, '4613');
 });
 
 test('keeps the server folder theme in the folder model', () => {
@@ -236,6 +281,8 @@ test('maps detail stickers into the folder displayed in the record list', () => 
       id: '7',
       source: 'sticker',
       stickerId: 'animal-dog',
+      backendStickerId: 21,
+      imageUrl: 'https://example.com/stickers/dog.png',
       x: 0.5,
       y: 0.25,
       rotation: 15,
@@ -322,7 +369,7 @@ test('handles a detail response that omits stickers', () => {
   assert.deepEqual(mapTravelRecordDetailToFolder(detail).decorations, []);
 });
 
-test('marks a detail folder with unsupported custom stickers as not editable', () => {
+test('keeps an unmapped sticker id renderable through its server image URL', () => {
   const detail: TravelRecordDetailResponse = {
     travelRecordId: 10,
     title: 'Busan',
@@ -347,7 +394,20 @@ test('marks a detail folder with unsupported custom stickers as not editable', (
     createdAt: '2026-07-23T09:00:00',
   };
 
-  assert.equal(mapTravelRecordDetailToFolder(detail).hasUnsupportedStickers, true);
+  assert.deepEqual(mapTravelRecordDetailToFolder(detail).decorations, [
+    {
+      id: '9',
+      source: 'sticker',
+      stickerId: undefined,
+      backendStickerId: 999,
+      imageUrl: 'https://example.com/stickers/custom.png',
+      x: 0.5,
+      y: 0.25,
+      rotation: 0,
+      scale: 1,
+      zIndex: 1,
+    },
+  ]);
 });
 
 test('creates a travel record update request from the edited draft data', () => {

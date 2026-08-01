@@ -6,10 +6,7 @@ import {
   saveRecentSearches,
 } from '../../../../utils/recentSearches';
 import { useTravelRecordRegionSearch } from '../../../../hooks/useTravelRecordRegions';
-import {
-  getTravelRecordRegionSuggestions,
-  mapRegionSearchToTravelRecordRegion,
-} from '../../mappers/travelRecordApiMapper';
+import { mapRegionSearchToTravelRecordRegion } from '../../mappers/travelRecordApiMapper';
 import {
   filterTravelMapSelectableRegions,
   normalizeTravelMapSelectedRegion,
@@ -19,6 +16,7 @@ import {
   MAX_VISIBLE_REGION_SUGGESTIONS,
   recentSearchStorageOptions,
 } from '../constants';
+import { getTravelRecordRegionSuggestions } from '../regionSuggestions';
 import type { TravelRecordRegion } from '../types';
 
 function useTravelRecordRegionSelection(

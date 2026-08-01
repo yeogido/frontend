@@ -1,11 +1,13 @@
-import type { RegionRecordPhoto } from '../../home/map/types/regionPhoto';
+import { findMapRegionByNames } from '../../home/map/utils/regionCodeLookup.ts';
 import type {
   PopularRegionResponse,
+  RegionDetailResponse,
   RegionSearchResponse,
 } from '../../../types/region.type';
 import type {
   TravelRecordCreateRequest,
   TravelRecordDetailResponse,
+  TravelRecordImageResponse,
   TravelRecordSummary,
   TravelRecordUpdateRequest,
   UploadedTravelRecordImage,
@@ -20,12 +22,27 @@ import {
   BACKEND_STICKER_ID_TO_FRONTEND_ID,
   FRONTEND_STICKER_ID_TO_BACKEND_ID,
 } from '../constants/travelRecordStickerIds.ts';
-import { getTravelRecordRegionCode } from '../constants/travelRecordRegionCodes.ts';
 import { formatTravelRecordLocalDate } from '../utils/sessionFolders.ts';
+
+type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
+
+const resolveTravelRecordMapRegion = (
+  fallbackName: string,
+  regionInfo?: TravelRecordRegionInfo,
+) => {
+  const match = findMapRegionByNames([
+    regionInfo?.name,
+    regionInfo?.fullName,
+  ]);
+
+  return {
+    regionName: match?.name ?? fallbackName,
+    regionCode: match?.code ?? '',
+  };
+};
 
 const fallbackPhotoUrl = '';
 const defaultFolderTheme = 'BASIC';
-const normalizeRegionSearchText = (text: string) => text.replace(/\s/g, '');
 
 const formatPeriod = (startDate: string, endDate: string) =>
   `${startDate.slice(5).replace('-', '.')} - ${endDate
@@ -57,50 +74,17 @@ export const mapRegionSearchToTravelRecordRegion = (
   imageSrc: '',
 });
 
-interface GetTravelRecordRegionSuggestionsParams {
-  query: string;
-  popularRegions: readonly { selectionName: string }[];
-  searchedRegions: readonly { selectionName: string }[];
-  selectedRegion: unknown;
-}
-
-export const getTravelRecordRegionSuggestions = ({
-  query,
-  popularRegions,
-  searchedRegions,
-  selectedRegion,
-}: GetTravelRecordRegionSuggestionsParams) => {
-  const normalizedQuery = normalizeRegionSearchText(query.trim());
-
-  if (!normalizedQuery || selectedRegion) {
-    return [];
-  }
-
-  const suggestionSource =
-    searchedRegions.length > 0 ? searchedRegions : popularRegions;
-
-  return Array.from(
-    new Set(
-      suggestionSource
-        .map((region) => region.selectionName)
-        .filter((suggestion) =>
-          normalizeRegionSearchText(suggestion).includes(normalizedQuery),
-        ),
-    ),
-  );
-};
-
 const getRenderablePhotos = (
-  images: unknown,
+  images: TravelRecordImageResponse[],
   coverImageUrl?: string,
 ): [string, ...string[]] => {
-  const photos = (Array.isArray(images) ? images : [])
+  const photos = images
     .filter((image) => image.imageUrl)
     .sort(
       (currentImage, nextImage) =>
         currentImage.imageOrder - nextImage.imageOrder,
     )
-    .map((image) => image.imageUrl as string);
+    .map((image) => image.imageUrl);
 
   if (photos.length > 0) {
     return photos as [string, ...string[]];
@@ -115,11 +99,11 @@ const getRenderablePhotos = (
 
 export const mapTravelRecordSummaryToFolder = (
   record: TravelRecordSummary,
+  regionInfo?: TravelRecordRegionInfo,
 ): TravelRecordFolder => ({
   id: String(record.travelRecordId),
   regionId: record.regionId,
-  regionCode: getTravelRecordRegionCode(record.regionId),
-  regionName: record.title,
+  ...resolveTravelRecordMapRegion(record.title, regionInfo),
   title: record.title,
   folderTheme: record.folderTheme,
   year: Number(record.startDate.slice(0, 4)),
@@ -132,6 +116,7 @@ export const mapTravelRecordSummaryToFolder = (
 
 export const mapTravelRecordDetailToFolder = (
   record: TravelRecordDetailResponse,
+  regionInfo?: TravelRecordRegionInfo,
 ): TravelRecordFolder => {
   const stickers = Array.isArray(record.stickers) ? record.stickers : [];
   const images = Array.isArray(record.images) ? record.images : [];
@@ -149,8 +134,7 @@ export const mapTravelRecordDetailToFolder = (
   return {
     id: String(record.travelRecordId),
     regionId: record.regionId,
-    regionCode: getTravelRecordRegionCode(record.regionId),
-    regionName: record.title,
+    ...resolveTravelRecordMapRegion(record.title, regionInfo),
     title: record.title,
     folderTheme: record.folderTheme,
     year: Number(record.startDate.slice(0, 4)),
@@ -159,37 +143,29 @@ export const mapTravelRecordDetailToFolder = (
     period: formatPeriod(record.startDate, record.endDate),
     photos: getRenderablePhotos(images, record.coverImageUrl),
     serverPhotos,
-    hasUnsupportedStickers: stickers.some(
-      (sticker) => !BACKEND_STICKER_ID_TO_FRONTEND_ID[sticker.stickerId],
-    ),
-    decorations: stickers.flatMap((sticker) => {
-      const stickerId = BACKEND_STICKER_ID_TO_FRONTEND_ID[sticker.stickerId];
-
-      if (!stickerId) {
-        return [];
-      }
-
-      return {
-        id: String(sticker.recordStickerId),
-        source: 'sticker' as const,
-        stickerId,
-        x: sticker.positionX,
-        y: sticker.positionY,
-        rotation: sticker.rotation,
-        scale: sticker.scale,
-        zIndex: sticker.zIndex,
-      };
-    }),
+    decorations: stickers.map((sticker) => ({
+      id: String(sticker.recordStickerId),
+      source: 'sticker' as const,
+      stickerId: BACKEND_STICKER_ID_TO_FRONTEND_ID[sticker.stickerId],
+      backendStickerId: sticker.stickerId,
+      imageUrl: sticker.imageUrl,
+      x: sticker.positionX,
+      y: sticker.positionY,
+      rotation: sticker.rotation,
+      scale: sticker.scale,
+      zIndex: sticker.zIndex,
+    })),
   };
 };
 
 export const mapTravelRecordFolder = (
   summary: TravelRecordSummary,
   detail?: TravelRecordDetailResponse,
+  regionInfo?: TravelRecordRegionInfo,
 ) =>
   detail
-    ? mapTravelRecordDetailToFolder(detail)
-    : mapTravelRecordSummaryToFolder(summary);
+    ? mapTravelRecordDetailToFolder(detail, regionInfo)
+    : mapTravelRecordSummaryToFolder(summary, regionInfo);
 
 interface CreateTravelRecordCreateRequestParams {
   selectedRegion: TravelRecordDraftRegion;
@@ -214,11 +190,15 @@ export const createTravelRecordCreateRequest = ({
     imageOrder: index + 1,
   })),
   stickers: decorations.flatMap((decoration) => {
-    if (decoration.source !== 'sticker' || !decoration.stickerId) {
+    if (decoration.source !== 'sticker') {
       return [];
     }
 
-    const stickerId = FRONTEND_STICKER_ID_TO_BACKEND_ID[decoration.stickerId];
+    const stickerId =
+      decoration.backendStickerId ??
+      (decoration.stickerId
+        ? FRONTEND_STICKER_ID_TO_BACKEND_ID[decoration.stickerId]
+        : undefined);
 
     if (!stickerId) {
       return [];
@@ -238,30 +218,3 @@ export const createTravelRecordCreateRequest = ({
 export const createTravelRecordUpdateRequest = (
   params: CreateTravelRecordCreateRequestParams,
 ): TravelRecordUpdateRequest => createTravelRecordCreateRequest(params);
-
-export const getTravelRecordRegionPhotoRecords = (
-  folders: readonly TravelRecordFolder[],
-): RegionRecordPhoto[] => {
-  const latestFoldersByRegion = new Map<string, TravelRecordFolder>();
-
-  folders.forEach((folder) => {
-    if (!folder.regionCode || !folder.photos[0]) {
-      return;
-    }
-
-    const currentFolder = latestFoldersByRegion.get(folder.regionCode);
-
-    if (
-      !currentFolder ||
-      folder.startDate.localeCompare(currentFolder.startDate) > 0
-    ) {
-      latestFoldersByRegion.set(folder.regionCode, folder);
-    }
-  });
-
-  return Array.from(latestFoldersByRegion.values()).map((folder) => ({
-    regionName: folder.regionName,
-    photoUrl: folder.photos[0],
-    folderId: folder.id,
-  }));
-};

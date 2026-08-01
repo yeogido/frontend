@@ -2,7 +2,7 @@ import {
   apiClient,
   normalizeApiError,
 } from './common';
-import { deleteTravelRecordWithClient } from './travelRecordsClient';
+import { deleteTravelRecordWithClient } from './travelRecordsClient.ts';
 
 import type {
   TravelRecordCreateRequest,

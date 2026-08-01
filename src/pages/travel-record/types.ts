@@ -21,7 +21,6 @@ export interface TravelRecordFolder {
   photos: [string, ...string[]];
   serverPhotos?: TravelRecordServerPhoto[];
   decorations: TravelFolderDecoration[];
-  hasUnsupportedStickers?: boolean;
 }
 
 export interface TravelRecordDraftRegion {

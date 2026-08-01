@@ -18,16 +18,8 @@ import {
 } from '../../../hooks/useTravelRecords';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import { TravelFolderArtwork, TravelRecordPageFrame } from '../components';
-import { TRAVEL_RECORD_FOLDERS } from '../constants/travelRecords';
 import type { TravelRecordFolder } from '../types';
-import {
-  getSavedTravelRecordFolder,
-  getSavedTravelRecordPhotos,
-  revokeTravelRecordFolderPhotoUrls,
-  SAVED_TRAVEL_RECORD_ID_PREFIX,
-  deleteTravelRecord,
-  saveTravelRecordPhotoDraft,
-} from '../utils/travelRecordSave';
+import { saveTravelRecordPhotoDraft } from '../utils/travelRecordSave';
 import {
   saveTravelRecordDraftDateRange,
   saveTravelRecordDraftRegion,
@@ -36,11 +28,6 @@ import { getTravelRecordEditRoute } from '../utils/editRoute';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
-}
-
-interface SavedFolderState {
-  id: string;
-  folder: TravelRecordFolder | null;
 }
 
 const missingRecordLabel = '여행 기록을 찾을 수 없어요';
@@ -76,41 +63,17 @@ function TravelRecordDetailPage() {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { showToast } = useToast();
-  const editedMockFolders = useTravelRecordSessionStore(
-    (state) => state.editedMockFolders,
-  );
-  const deleteMockFolder = useTravelRecordSessionStore(
-    (state) => state.deleteMockFolder,
-  );
   const beginEdit = useTravelRecordSessionStore((state) => state.beginEdit);
   const [transitionTargetIndex, setTransitionTargetIndex] = useState<
     number | null
   >(null);
-  const [savedFolderState, setSavedFolderState] =
-    useState<SavedFolderState | null>(null);
   const locationState =
     location.state as TravelRecordDetailLocationState | null;
-  const isSavedFolder =
-    folderId?.startsWith(SAVED_TRAVEL_RECORD_ID_PREFIX) ?? false;
-  const serverTravelRecordId =
-    folderId && !isSavedFolder && /^\d+$/.test(folderId)
-      ? Number(folderId)
-      : null;
-  const serverTravelRecordQuery = useTravelRecordDetail(serverTravelRecordId);
+  const travelRecordId =
+    folderId && /^\d+$/.test(folderId) ? Number(folderId) : null;
+  const serverTravelRecordQuery = useTravelRecordDetail(travelRecordId);
   const deleteTravelRecordMutation = useDeleteTravelRecord();
-  const staticFolder =
-    locationState?.folder ??
-    TRAVEL_RECORD_FOLDERS.find((record) => record.id === folderId);
-  const savedFolder =
-    savedFolderState && savedFolderState.id === folderId
-      ? savedFolderState.folder
-      : undefined;
-  const folder = isSavedFolder
-    ? savedFolder
-    : editedMockFolders[folderId ?? ''] ??
-      (serverTravelRecordId
-        ? serverTravelRecordQuery.data ?? staticFolder
-        : staticFolder);
+  const folder = serverTravelRecordQuery.data ?? locationState?.folder;
   const motionRange = Math.max(cardWidth, 1);
   const cardDistance = cardWidth + cardStackOffset;
   const previousCardX = useTransform(dragX, (value) => -cardDistance + value);
@@ -128,42 +91,6 @@ function TravelRecordDetailPage() {
       transitionControlsRef.current?.stop();
     };
   }, []);
-
-  useEffect(() => {
-    if (!isSavedFolder || !folderId) {
-      return;
-    }
-
-    let isMounted = true;
-    let loadedFolder: TravelRecordFolder | null = null;
-
-    void getSavedTravelRecordFolder(folderId)
-      .then((folder) => {
-        loadedFolder = folder;
-
-        if (isMounted) {
-          setSavedFolderState({ id: folderId, folder });
-          return;
-        }
-
-        if (folder) {
-          revokeTravelRecordFolderPhotoUrls(folder);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setSavedFolderState({ id: folderId, folder: null });
-        }
-      });
-
-    return () => {
-      isMounted = false;
-
-      if (loadedFolder) {
-        revokeTravelRecordFolderPhotoUrls(loadedFolder);
-      }
-    };
-  }, [folderId, isSavedFolder]);
 
   useEffect(() => {
     const photoStack = photoStackRef.current;
@@ -199,10 +126,7 @@ function TravelRecordDetailPage() {
     };
   }, [isActionMenuOpen]);
 
-  if (
-    (isSavedFolder && savedFolder === undefined) ||
-    (serverTravelRecordId && !staticFolder && serverTravelRecordQuery.isLoading)
-  ) {
+  if (travelRecordId && !folder && serverTravelRecordQuery.isLoading) {
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1]">
         <div
@@ -344,64 +268,27 @@ function TravelRecordDetailPage() {
   };
 
   const handleEdit = async () => {
-    if (!folder) {
+    if (!travelRecordId) {
       return;
     }
 
-    if (serverTravelRecordId && folder.hasUnsupportedStickers) {
-      showToast('커스텀 스티커가 있는 여행 기록은 아직 수정할 수 없어요.');
-      return;
-    }
-
-    const editableFolder = serverTravelRecordId
-      ? serverTravelRecordQuery.data
-      : folder;
+    const editableFolder = serverTravelRecordQuery.data;
 
     if (!editableFolder) {
       showToast('여행 기록을 불러오는 중이에요.');
       return;
     }
 
-    if (serverTravelRecordId && !editableFolder.serverPhotos?.length) {
+    if (!editableFolder.serverPhotos?.length) {
       showToast('사진 정보가 없어 수정할 수 없어요.');
       return;
     }
 
-    let photos;
-
-    try {
-      photos = serverTravelRecordId
-        ? editableFolder.serverPhotos!.map((photo) => ({
-            source: 'server' as const,
-            imageKey: photo.imageKey,
-            imageUrl: photo.imageUrl,
-          }))
-        : isSavedFolder
-          ? (await getSavedTravelRecordPhotos(editableFolder.id)).map((file) => ({
-              source: 'new' as const,
-              file,
-            }))
-          : await Promise.all(
-            editableFolder.photos.map(async (url, index) => {
-              const response = await fetch(url);
-
-              if (!response.ok) {
-                throw new Error('Failed to download a travel record image.');
-              }
-
-              const blob = await response.blob();
-              return {
-                source: 'new' as const,
-                file: new File([blob], `travel-record-${index + 1}.webp`, {
-                  type: blob.type || 'image/webp',
-                }),
-              };
-            }),
-          );
-    } catch {
-      showToast('여행 사진을 불러오지 못해 수정할 수 없어요.');
-      return;
-    }
+    const photos = editableFolder.serverPhotos.map((photo) => ({
+      source: 'server' as const,
+      imageKey: photo.imageKey,
+      imageUrl: photo.imageUrl,
+    }));
 
     const startDate = new Date(`${editableFolder.startDate}T00:00:00`);
     const endDate = new Date(`${editableFolder.endDate ?? editableFolder.startDate}T00:00:00`);
@@ -416,29 +303,18 @@ function TravelRecordDetailPage() {
     await saveTravelRecordPhotoDraft(photos);
     beginEdit({
       id: editableFolder.id,
-      source: isSavedFolder ? 'saved' : serverTravelRecordId ? 'server' : 'mock',
       decorations: editableFolder.decorations,
     });
-    navigate(
-      serverTravelRecordId
-        ? getTravelRecordEditRoute(String(serverTravelRecordId))
-        : '/travel-record/new',
-    );
+    navigate(getTravelRecordEditRoute(String(travelRecordId)));
   };
 
   const handleDelete = async () => {
-    if (!folder) {
+    if (!travelRecordId) {
       return;
     }
 
     try {
-      if (serverTravelRecordId) {
-        await deleteTravelRecordMutation.mutateAsync(serverTravelRecordId);
-      } else if (isSavedFolder) {
-        await deleteTravelRecord(folder.id);
-      } else {
-        deleteMockFolder(folder.id);
-      }
+      await deleteTravelRecordMutation.mutateAsync(travelRecordId);
     } catch {
       showToast('여행 기록을 삭제하지 못했어요.');
       return;

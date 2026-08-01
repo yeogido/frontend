@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { FloatingActionButton } from '../../components/common';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
+import { useTravelRecordRegionDetails } from '../../hooks/useTravelRecordRegions';
 import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
 import {
   getTravelRecordFolders,
   getTravelRecordSummariesFromPages,
   useTravelRecordDetails,
+  useTravelRecordYears,
   useTravelRecords,
 } from '../../hooks/useTravelRecords';
 
@@ -16,66 +19,28 @@ import {
   TravelRecordPageFrame,
   TravelYearDropdown,
 } from './components';
-import { TRAVEL_RECORD_FOLDERS } from './constants/travelRecords';
 import type { TravelRecordFolder, TravelRecordView } from './types';
-import {
-  applyTravelRecordSessionChanges,
-  getValidTravelRecordYear,
-  getTravelRecordYears,
-} from './utils/sessionFolders';
+import { getValidTravelRecordYear } from './utils/sessionFolders';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
 const addTravelRecordLabel = '\uC5EC\uD589 \uAE30\uB85D \uCD94\uAC00';
+const TRAVEL_RECORD_PAGE_SIZE = 20;
 
 function TravelRecordPage() {
   const navigate = useNavigate();
-  const editedMockFolders = useTravelRecordSessionStore(
-    (state) => state.editedMockFolders,
-  );
-  const deletedMockFolderIds = useTravelRecordSessionStore(
-    (state) => state.deletedMockFolderIds,
-  );
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
-  const travelRecordsQuery = useTravelRecords({ size: 50 });
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
-  const [selectedYear, setSelectedYear] = useState(
-    () => TRAVEL_RECORD_FOLDERS[0]?.year ?? new Date().getFullYear(),
-  );
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
 
-  const apiRecordSummaries = useMemo(
-    () => getTravelRecordSummariesFromPages(travelRecordsQuery.data?.pages),
-    [travelRecordsQuery.data?.pages],
-  );
-  const travelRecordDetails = useTravelRecordDetails(apiRecordSummaries);
-  const apiFolders = useMemo(
-    () =>
-      getTravelRecordFolders(
-        apiRecordSummaries,
-        travelRecordDetails.map((query) => query.data),
-      ),
-    [apiRecordSummaries, travelRecordDetails],
-  );
-
-  const displayedFolders = useMemo(
-    () => [
-      ...applyTravelRecordSessionChanges(
-        TRAVEL_RECORD_FOLDERS,
-        editedMockFolders,
-        new Set(deletedMockFolderIds),
-      ),
-      ...apiFolders,
-    ],
-    [apiFolders, deletedMockFolderIds, editedMockFolders],
-  );
-
+  const travelRecordYearsQuery = useTravelRecordYears();
   const years = useMemo(
-    () => getTravelRecordYears(displayedFolders),
-    [displayedFolders],
+    () => travelRecordYearsQuery.data?.years ?? [],
+    [travelRecordYearsQuery.data?.years],
   );
 
   useEffect(() => {
-    // The available years change after local-storage records are loaded.
+    // The available years only settle once the server years finish loading.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedYear((year) =>
       getValidTravelRecordYear(years, year, new Date().getFullYear()),
@@ -88,15 +53,50 @@ function TravelRecordPage() {
     new Date().getFullYear(),
   );
 
+  const travelRecordsQuery = useTravelRecords({
+    size: TRAVEL_RECORD_PAGE_SIZE,
+    year: validSelectedYear,
+  });
+
+  const apiRecordSummaries = useMemo(
+    () => getTravelRecordSummariesFromPages(travelRecordsQuery.data?.pages),
+    [travelRecordsQuery.data?.pages],
+  );
+  const travelRecordDetails = useTravelRecordDetails(apiRecordSummaries);
+  const regionInfoByRegionId = useTravelRecordRegionDetails(
+    apiRecordSummaries.map((record) => record.regionId),
+  );
+  const apiFolders = useMemo(
+    () =>
+      getTravelRecordFolders(
+        apiRecordSummaries,
+        travelRecordDetails.map((query) => query.data),
+        regionInfoByRegionId,
+      ),
+    [apiRecordSummaries, travelRecordDetails, regionInfoByRegionId],
+  );
+
   const visibleFolders = useMemo(
     () =>
-      displayedFolders
-        .filter((folder) => folder.year === validSelectedYear)
-        .sort((currentFolder, nextFolder) =>
-          nextFolder.startDate.localeCompare(currentFolder.startDate),
-        ),
-    [displayedFolders, validSelectedYear],
+      [...apiFolders].sort((currentFolder, nextFolder) =>
+        nextFolder.startDate.localeCompare(currentFolder.startDate),
+      ),
+    [apiFolders],
   );
+
+  const handleLoadMore = useCallback(() => {
+    if (travelRecordsQuery.hasNextPage && !travelRecordsQuery.isFetchingNextPage) {
+      void travelRecordsQuery.fetchNextPage();
+    }
+  }, [travelRecordsQuery]);
+
+  const loadMoreRef = useInfiniteScroll({
+    enabled:
+      Boolean(travelRecordsQuery.hasNextPage) &&
+      !travelRecordsQuery.isPending,
+    onIntersect: handleLoadMore,
+  });
+
   const handleFolderClick = (folder: TravelRecordFolder) => {
     navigate(`/travel-record/${folder.id}`, { state: { folder } });
   };
@@ -140,6 +140,8 @@ function TravelRecordPage() {
       ) : (
         <TravelMapPanel folders={visibleFolders} />
       )}
+
+      <div ref={loadMoreRef} aria-hidden="true" />
 
       <FloatingActionButton
         ariaLabel={addTravelRecordLabel}
