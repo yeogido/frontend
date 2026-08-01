@@ -189,7 +189,8 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
           const pendingImage = state.pendingImages[placeId];
           if (!pendingImage) return state;
           URL.revokeObjectURL(pendingImage.previewUrl);
-          const { [placeId]: _removed, ...pendingImages } = state.pendingImages;
+          const pendingImages = { ...state.pendingImages };
+          delete pendingImages[placeId];
           return { pendingImages };
         }),
       clearPendingImages: () =>
