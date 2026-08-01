@@ -237,7 +237,7 @@ function TravelRecordFolderDecorationPage() {
         { replace: true },
       );
     }
-  }, [navigate, selectedDateRange, selectedPhotos, selectedRegion]);
+  }, [navigate, selectedDateRange, selectedPhotos, selectedRegion, travelRecordId]);
 
   return (
     <TravelRecordPageFrame className="bg-[#f9f9f9]">

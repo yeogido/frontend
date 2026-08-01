@@ -309,7 +309,16 @@ function TravelRecordDetailPage() {
       selectionName: editableFolder.regionName,
     });
     saveTravelRecordDraftDateRange({ startDate, endDate });
-    await saveTravelRecordPhotoDraft(photos);
+
+    try {
+      // IndexedDB가 막혀 있으면 실패한다. 사진 초안 없이 수정 화면으로
+      // 넘어가면 사진이 빈 상태가 되므로 이동하지 않고 안내한다.
+      await saveTravelRecordPhotoDraft(photos);
+    } catch {
+      showToast('여행 사진을 불러오지 못해 수정할 수 없어요.');
+      return;
+    }
+
     beginEdit({
       id: editableFolder.id,
       decorations: editableFolder.decorations,

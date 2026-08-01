@@ -51,7 +51,7 @@ function TravelRecordDateSelectionPage() {
         { replace: true },
       );
     }
-  }, [navigate, selectedRegion]);
+  }, [navigate, selectedRegion, travelRecordId]);
 
   const handleAddPhoto = () => {
     if (!selectedRange || !selectedRegion) {

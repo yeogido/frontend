@@ -38,28 +38,33 @@ function useTravelRecordPhotoSelection(restoreDraft = false) {
     }
 
     let isMounted = true;
-    void getTravelRecordPhotoDraft().then((draftPhotos) => {
-      if (!isMounted || hasUserChangedPhotosRef.current) {
-        return;
-      }
-      setPhotos(
-        draftPhotos.map((photo, index) =>
-          photo.source === 'server'
-            ? {
-                id: `server-${photo.imageKey}`,
-                source: 'server' as const,
-                imageKey: photo.imageKey,
-                url: photo.imageUrl,
-              }
-            : {
-                id: `${photo.file.name}-${photo.file.lastModified}-draft-${index}`,
-                source: 'new' as const,
-                file: photo.file,
-                url: URL.createObjectURL(photo.file),
-              },
-        ),
-      );
-    });
+    void getTravelRecordPhotoDraft()
+      .then((draftPhotos) => {
+        if (!isMounted || hasUserChangedPhotosRef.current) {
+          return;
+        }
+        setPhotos(
+          draftPhotos.map((photo, index) =>
+            photo.source === 'server'
+              ? {
+                  id: `server-${photo.imageKey}`,
+                  source: 'server' as const,
+                  imageKey: photo.imageKey,
+                  url: photo.imageUrl,
+                }
+              : {
+                  id: `${photo.file.name}-${photo.file.lastModified}-draft-${index}`,
+                  source: 'new' as const,
+                  file: photo.file,
+                  url: URL.createObjectURL(photo.file),
+                },
+          ),
+        );
+      })
+      .catch(() => {
+        // IndexedDB를 읽지 못하면 초안을 복원하지 않고 빈 상태로 시작한다.
+        // 사용자가 사진을 다시 고를 수 있으므로 화면은 그대로 둔다.
+      });
 
     return () => {
       isMounted = false;

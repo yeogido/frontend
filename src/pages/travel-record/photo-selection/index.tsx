@@ -115,7 +115,7 @@ function TravelRecordPhotoSelectionPage() {
         { replace: true },
       );
     }
-  }, [navigate, selectedDateRange, selectedRegion]);
+  }, [navigate, selectedDateRange, selectedRegion, travelRecordId]);
 
   return (
     <TravelRecordPageFrame className="bg-[#f9f9f9]">
