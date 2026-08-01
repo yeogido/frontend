@@ -160,6 +160,29 @@ test('normalizes a selected popular metropolitan district to its parent region',
   );
 });
 
+test('excludes 울산 districts from selection even without a parent region id', () => {
+  // 울산은 Region API에 아직 없어 상위 지역으로 변환할 수 없다.
+  // 그래도 하위 구가 선택되지는 않아야 한다.
+  assert.equal(
+    isTravelMapSelectableRegion({ fullName: '울산광역시 남구' }),
+    false,
+  );
+  assert.equal(isTravelMapSelectableRegion({ fullName: '울산광역시' }), true);
+});
+
+test('keeps a region unchanged when its metropolitan parent has no region id', () => {
+  const ulsanDistrict = {
+    id: '900',
+    regionId: 900,
+    name: '남구',
+    province: '울산광역시 남구',
+    selectionName: '남구',
+    imageSrc: '',
+  };
+
+  assert.deepEqual(normalizeTravelMapSelectedRegion(ulsanDistrict), ulsanDistrict);
+});
+
 test('maps a travel record summary cover image URL to the folder photo', () => {
   const summary: TravelRecordSummary = {
     travelRecordId: 10,
@@ -231,6 +254,59 @@ test('resolves a district-level region name against the city map shape', () => {
 
   assert.equal(folder.regionName, '여수시');
   assert.equal(folder.regionCode, '4613');
+});
+
+const createSummaryForRegion = (regionId: number): TravelRecordSummary => ({
+  travelRecordId: 12,
+  title: '여행',
+  regionId,
+  startDate: '2026-07-20',
+  endDate: '2026-07-22',
+  coverImageUrl: 'https://example.com/travel-records/12/image-1.jpg',
+  folderTheme: 'BASIC',
+  createdAt: '2026-07-23T09:00:00',
+});
+
+test('tells apart same-named counties in different provinces', () => {
+  const gangwonGoseong = mapTravelRecordSummaryToFolder(
+    createSummaryForRegion(4282),
+    { name: '고성군', fullName: '강원도 고성군' },
+  );
+  const gyeongnamGoseong = mapTravelRecordSummaryToFolder(
+    createSummaryForRegion(4882),
+    { name: '고성군', fullName: '경상남도 고성군' },
+  );
+
+  assert.equal(gangwonGoseong.regionCode, '4282');
+  assert.equal(gyeongnamGoseong.regionCode, '4882');
+});
+
+test('matches provinces renamed to 특별자치도 against the older map data', () => {
+  // 지도 데이터는 '강원도'로 남아 있지만 Region API는 개편 후 명칭을 줄 수 있다.
+  const folder = mapTravelRecordSummaryToFolder(createSummaryForRegion(4282), {
+    name: '고성군',
+    fullName: '강원특별자치도 고성군',
+  });
+
+  assert.equal(folder.regionCode, '4282');
+});
+
+test('matches 제주 despite the misspelled province name in the map data', () => {
+  const folder = mapTravelRecordSummaryToFolder(createSummaryForRegion(50), {
+    name: '제주',
+    fullName: '제주특별자치도',
+  });
+
+  assert.equal(folder.regionCode, '50');
+});
+
+test('leaves an ambiguous region unmatched instead of picking a wrong shape', () => {
+  const folder = mapTravelRecordSummaryToFolder(createSummaryForRegion(9999), {
+    name: '고성군',
+    fullName: '고성군',
+  });
+
+  assert.equal(folder.regionCode, '');
 });
 
 test('keeps the server folder theme in the folder model', () => {

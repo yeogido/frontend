@@ -1,4 +1,4 @@
-import { findMapRegionByNames } from '../../home/map/utils/regionCodeLookup.ts';
+import { findMapRegion } from '../../home/map/utils/regionCodeLookup.ts';
 import type {
   PopularRegionResponse,
   RegionDetailResponse,
@@ -30,10 +30,10 @@ const resolveTravelRecordMapRegion = (
   fallbackName: string,
   regionInfo?: TravelRecordRegionInfo,
 ) => {
-  const match = findMapRegionByNames([
-    regionInfo?.name,
-    regionInfo?.fullName,
-  ]);
+  const match = findMapRegion({
+    name: regionInfo?.name,
+    fullName: regionInfo?.fullName,
+  });
 
   return {
     regionName: match?.name ?? fallbackName,
