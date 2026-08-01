@@ -51,7 +51,7 @@ async function putFileToPresignedUrl(
     ) {
       throw error;
     }
-    throw new Error('이미지 업로드에 실패했습니다.');
+    throw new Error('이미지 업로드에 실패했습니다.', { cause: error });
   } finally {
     clearTimeout(timeoutId);
   }
@@ -67,4 +67,10 @@ export async function uploadCourseImage(file: File): Promise<string> {
   await putFileToPresignedUrl(uploadUrl, file);
 
   return objectKey;
+}
+
+export async function uploadCourseImages(
+  files: readonly File[]
+): Promise<string[]> {
+  return Promise.all(files.map(uploadCourseImage));
 }

@@ -1,22 +1,40 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { useLocalRecommendationStore } from '../../../../store/localRecommendation.store';
 import type { PlaceItem, SelectedPlace } from '../types';
 
+function toPersistedPlace(place: SelectedPlace) {
+  return {
+    id: place.id,
+    title: place.title,
+    address: place.address,
+    imageKey: '',
+    externalPlaceId: place.id,
+    categoryGroupCode: '',
+    roadAddress: place.address,
+    lotAddress: place.address,
+    latitude: 0,
+    longitude: 0,
+  };
+}
+
 export function useSelectedPlaces() {
+  const setPlaces = useLocalRecommendationStore((state) => state.setPlaces);
+  const setPendingImage = useLocalRecommendationStore(
+    (state) => state.setPendingImage
+  );
+  const removePendingImage = useLocalRecommendationStore(
+    (state) => state.removePendingImage
+  );
+  const clearPendingImages = useLocalRecommendationStore(
+    (state) => state.clearPendingImages
+  );
   const [selectedPlaces, setSelectedPlaces] = useState<SelectedPlace[]>([]);
   const selectedPlacesRef = useRef<SelectedPlace[]>([]);
 
   useEffect(() => {
     selectedPlacesRef.current = selectedPlaces;
   }, [selectedPlaces]);
-
-  useEffect(() => {
-    return () => {
-      selectedPlacesRef.current.forEach((place) => {
-        URL.revokeObjectURL(place.imagePreviewUrl);
-      });
-    };
-  }, []);
 
   const selectedPlaceIds = useMemo(
     () => new Set(selectedPlaces.map((place) => place.id)),
@@ -28,45 +46,33 @@ export function useSelectedPlaces() {
     imageFile: File,
     imagePreviewUrl: string
   ) => {
-    setSelectedPlaces((items) => {
-      const alreadyExists = items.some((item) => item.id === place.id);
+    if (selectedPlacesRef.current.some((item) => item.id === place.id)) {
+      URL.revokeObjectURL(imagePreviewUrl);
+      return;
+    }
 
-      if (alreadyExists) {
-        URL.revokeObjectURL(imagePreviewUrl);
-        return items;
-      }
-
-      return [
-        ...items,
-        {
-          ...place,
-          imageFile,
-          imagePreviewUrl,
-        },
-      ];
-    });
+    const next = [
+      ...selectedPlacesRef.current,
+      { ...place, imageFile, imagePreviewUrl },
+    ];
+    setPendingImage(place.id, { file: imageFile, previewUrl: imagePreviewUrl });
+    setPlaces(next.map(toPersistedPlace));
+    setSelectedPlaces(next);
   };
 
   const removeSelectedPlace = (place: SelectedPlace) => {
-    setSelectedPlaces((items) => {
-      const target = items.find((item) => item.id === place.id);
-
-      if (target) {
-        URL.revokeObjectURL(target.imagePreviewUrl);
-      }
-
-      return items.filter((item) => item.id !== place.id);
-    });
+    const next = selectedPlacesRef.current.filter(
+      (item) => item.id !== place.id
+    );
+    removePendingImage(place.id);
+    setPlaces(next.map(toPersistedPlace));
+    setSelectedPlaces(next);
   };
 
   const removeAllSelectedPlaces = () => {
-    setSelectedPlaces((items) => {
-      items.forEach((place) => {
-        URL.revokeObjectURL(place.imagePreviewUrl);
-      });
-
-      return [];
-    });
+    clearPendingImages();
+    setPlaces([]);
+    setSelectedPlaces([]);
   };
 
   return {
