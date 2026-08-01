@@ -17,7 +17,6 @@ function PlaceSelectionPage() {
     removeSelectedPlace,
     removeAllSelectedPlaces,
   } = useSelectedPlaces();
-
   const {
     pendingPlace,
     pendingImageFile,
@@ -30,12 +29,14 @@ function PlaceSelectionPage() {
   } = usePlacePhotoModal();
 
   const handleConfirmImage = () => {
-    if (!pendingPlace || !pendingImageFile || !pendingImagePreviewUrl) {
-      return;
-    }
+    if (!pendingPlace || !pendingImageFile || !pendingImagePreviewUrl) return;
 
     addSelectedPlace(pendingPlace, pendingImageFile, pendingImagePreviewUrl);
     clearModalState();
+  };
+
+  const handleSubmitPlaces = () => {
+    navigate('/local-recommendation/visit-order-selection');
   };
 
   return (
@@ -45,13 +46,15 @@ function PlaceSelectionPage() {
         selectedPlaceIds={selectedPlaceIds}
         onSearchChange={setQuery}
         onItemAdd={handlePlaceAdd}
-        onBack={() => navigate('/local-recommendation/event-selection', { replace: true })}
+        onBack={() =>
+          navigate('/local-recommendation/event-selection', { replace: true })
+        }
       />
       <SelectedPlaceSection
         selectedPlaces={selectedPlaces}
         onItemRemove={removeSelectedPlace}
         onRemoveAll={removeAllSelectedPlaces}
-        onSubmit={() => navigate('/local-recommendation/visit-order-selection')}
+        onSubmit={handleSubmitPlaces}
       />
       {isImageModalOpen && pendingPlace ? (
         <PlacePhotoModal

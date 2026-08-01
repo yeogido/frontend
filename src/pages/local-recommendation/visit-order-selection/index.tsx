@@ -20,6 +20,8 @@ function VisitOrderSelectionPage() {
     activeEvent,
     activeEventOrder,
     sensors,
+    isUploading,
+    uploadError,
     handleDragStart,
     handleDragCancel,
     handleDragEnd,
@@ -51,11 +53,20 @@ function VisitOrderSelectionPage() {
         />
 
         <SubmitCourseButton
+          isUploading={isUploading}
           onSubmit={() => {
-            handleRegister();
-            navigate('/local-course/detail/1');
+            void handleRegister().then((courseId) => {
+              if (courseId !== null) {
+                navigate(`/local-course/detail/${courseId}`);
+              }
+            });
           }}
         />
+        {uploadError ? (
+          <p role="alert" className="text-main-5 mt-3 text-center text-sm">
+            {uploadError}
+          </p>
+        ) : null}
       </main>
     </ResponsivePageShell>
   );
