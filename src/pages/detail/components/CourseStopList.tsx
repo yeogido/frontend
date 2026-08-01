@@ -9,12 +9,16 @@ const LIST_GAP = 4;
 export interface CourseStopListProps {
   readonly stops: readonly CourseStop[];
   readonly onStopLikeToggle: (stopId: number) => void;
+  readonly pendingPlaceIds?: ReadonlySet<number>;
+  readonly pendingContentIds?: ReadonlySet<number>;
   readonly className?: string;
 }
 
 export function CourseStopList({
   stops,
   onStopLikeToggle,
+  pendingPlaceIds = new Set<number>(),
+  pendingContentIds = new Set<number>(),
   className = '',
 }: CourseStopListProps) {
   const scale = useGlobalScale();
@@ -30,6 +34,13 @@ export function CourseStopList({
           stop={stop}
           isLast={index === stops.length - 1}
           onLikeToggle={() => onStopLikeToggle(stop.id)}
+          isLikeAvailable={
+            stop.placeId !== undefined || stop.contentId !== undefined
+          }
+          isLikePending={
+            (stop.placeId !== undefined && pendingPlaceIds.has(stop.placeId)) ||
+            (stop.contentId !== undefined && pendingContentIds.has(stop.contentId))
+          }
         />
       ))}
     </div>
