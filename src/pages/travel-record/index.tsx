@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { FloatingActionButton } from '../../components/common';
+import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
 
 import {
   TravelFolderGrid,
@@ -15,6 +16,11 @@ import {
   getSavedTravelRecordFolders,
   revokeTravelRecordFolderPhotoUrls,
 } from './utils/travelRecordSave';
+import {
+  applyTravelRecordSessionChanges,
+  getValidTravelRecordYear,
+  getTravelRecordYears,
+} from './utils/sessionFolders';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
@@ -28,18 +34,19 @@ function TravelRecordPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as TravelRecordLocationState | null;
+  const editedMockFolders = useTravelRecordSessionStore(
+    (state) => state.editedMockFolders,
+  );
+  const deletedMockFolderIds = useTravelRecordSessionStore(
+    (state) => state.deletedMockFolderIds,
+  );
   const [folders, setFolders] = useState<TravelRecordFolder[]>(
     TRAVEL_RECORD_FOLDERS
   );
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
-  const years = useMemo(
-    () =>
-      Array.from(new Set(folders.map((folder) => folder.year))).sort(
-        (currentYear, nextYear) => nextYear - currentYear
-      ),
-    [folders]
+  const [selectedYear, setSelectedYear] = useState(
+    () => TRAVEL_RECORD_FOLDERS[0]?.year ?? new Date().getFullYear(),
   );
-  const [selectedYear, setSelectedYear] = useState(years[0]);
 
   useEffect(() => {
     let isMounted = true;
@@ -80,14 +87,44 @@ function TravelRecordPage() {
     };
   }, [locationState?.savedTravelRecordId]);
 
+  const displayedFolders = useMemo(
+    () => [
+      ...applyTravelRecordSessionChanges(
+        TRAVEL_RECORD_FOLDERS,
+        editedMockFolders,
+        new Set(deletedMockFolderIds),
+      ),
+      ...folders.filter((folder) => folder.id.startsWith('saved-')),
+    ],
+    [deletedMockFolderIds, editedMockFolders, folders],
+  );
+  const years = useMemo(
+    () => getTravelRecordYears(displayedFolders),
+    [displayedFolders],
+  );
+
+  useEffect(() => {
+    // The available years change after local-storage records are loaded.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedYear((year) =>
+      getValidTravelRecordYear(years, year, new Date().getFullYear()),
+    );
+  }, [years]);
+
+  const validSelectedYear = getValidTravelRecordYear(
+    years,
+    selectedYear,
+    new Date().getFullYear(),
+  );
+
   const visibleFolders = useMemo(
     () =>
-      folders
-        .filter((folder) => folder.year === selectedYear)
+      displayedFolders
+        .filter((folder) => folder.year === validSelectedYear)
         .sort((currentFolder, nextFolder) =>
-          nextFolder.startDate.localeCompare(currentFolder.startDate)
+          nextFolder.startDate.localeCompare(currentFolder.startDate),
         ),
-    [folders, selectedYear]
+    [displayedFolders, validSelectedYear],
   );
   const handleFolderClick = (folder: TravelRecordFolder) => {
     navigate(`/travel-record/${folder.id}`, { state: { folder } });
@@ -119,7 +156,7 @@ function TravelRecordPage() {
       </div>
 
       <TravelYearDropdown
-        value={selectedYear}
+        value={validSelectedYear}
         years={years}
         onChange={setSelectedYear}
       />
@@ -136,6 +173,7 @@ function TravelRecordPage() {
       <FloatingActionButton
         ariaLabel={addTravelRecordLabel}
         onClick={() => navigate('/travel-record/new')}
+        bottomOffset={40}
       />
     </TravelRecordPageFrame>
   );

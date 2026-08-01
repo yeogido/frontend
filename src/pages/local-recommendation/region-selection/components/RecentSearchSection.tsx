@@ -76,7 +76,7 @@ function RecentSearchSection({
                 className="text-gray-4"
                 style={{ fontSize: CHIP_ICON_SIZE * scale }}
               />
-              {neighborhood.city} {neighborhood.district}
+              {neighborhood.name}
             </span>
           </button>
         ))}

@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 
 import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
 
 import HomePage from '../pages/home';
 import LoginPage from '../pages/auth/login';
@@ -25,7 +26,7 @@ import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
 import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
-import LocalBusinessDetailPage from '../pages/local-business/detail';
+import LocalBusinessDetailPage from '../pages/detail/local-business';
 import LocalRecommendationPage from '../pages/local-recommendation';
 import AdminPage from '../pages/admin';
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
@@ -41,6 +42,7 @@ import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selec
 import VisitOrderSelectionPage from '../pages/local-recommendation/visit-order-selection';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
+import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
 import RegionInfoPage from '../pages/region-info';
 
@@ -101,51 +103,57 @@ function AppRouter() {
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
 
-        <Route
-          path="/local-recommendation"
-          element={<LocalRecommendationPage />}
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/local-recommendation"
+            element={<LocalRecommendationPage />}
+          />
+        </Route>
 
         <Route path="/admin" element={<AdminPage />} />
 
-        <Route path="/travel-record" element={<TravelRecordPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/travel-record" element={<TravelRecordPage />} />
+        </Route>
       </Route>
 
-      <Route
-        path="/local-recommendation/course-info"
-        element={<CourseBasicInfoPage />}
-      />
+      <Route element={<ProtectedRoute />}>
+        <Route
+          path="/local-recommendation/course-info"
+          element={<CourseBasicInfoPage />}
+        />
 
-      <Route
-        path="/local-recommendation/tag-selection"
-        element={<TagSelectionPage />}
-      />
+        <Route
+          path="/local-recommendation/tag-selection"
+          element={<TagSelectionPage />}
+        />
 
-      <Route
-        path="/travel-record/new"
-        element={<TravelRecordRegionSelectionPage />}
-      />
+        <Route
+          path="/travel-record/new"
+          element={<TravelRecordRegionSelectionPage />}
+        />
 
-      <Route
-        path="/travel-record/date-selection"
-        element={<TravelRecordDateSelectionPage />}
-      />
-      <Route
-        path="/travel-record/:folderId"
-        element={<TravelRecordDetailPage />}
-      />
-      <Route
-        path="/travel-record/photo-selection"
-        element={<TravelRecordPhotoSelectionPage />}
-      />
-      <Route
-        path="/travel-record/folder-decoration"
-        element={<TravelRecordFolderDecorationPage />}
-      />
-      <Route
-        path="/local-recommendation/visit-order-selection"
-        element={<VisitOrderSelectionPage />}
-      />
+        <Route
+          path="/travel-record/date-selection"
+          element={<TravelRecordDateSelectionPage />}
+        />
+        <Route
+          path="/travel-record/:folderId"
+          element={<TravelRecordDetailPage />}
+        />
+        <Route
+          path="/travel-record/photo-selection"
+          element={<TravelRecordPhotoSelectionPage />}
+        />
+        <Route
+          path="/travel-record/folder-decoration"
+          element={<TravelRecordFolderDecorationPage />}
+        />
+        <Route
+          path="/local-recommendation/visit-order-selection"
+          element={<VisitOrderSelectionPage />}
+        />
+      </Route>
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
@@ -163,6 +171,10 @@ function AppRouter() {
         element={<YeogidoCourseDetailPage />}
       />
       <Route
+        path="/local-course/detail/:courseId"
+        element={<LocalCourseDetailPage />}
+      />
+      <Route
         path="/local-business/detail/:id"
         element={<LocalBusinessDetailPage />}
       />
@@ -172,15 +184,17 @@ function AppRouter() {
       />
       <Route path="/review" element={<ReviewPage />} />
 
-      <Route
-        path="/local-recommendation/event-selection"
-        element={<EventSelectionPage />}
-      />
+      <Route element={<ProtectedRoute />}>
+        <Route
+          path="/local-recommendation/event-selection"
+          element={<EventSelectionPage />}
+        />
 
-      <Route
-        path="/local-recommendation/place-selection"
-        element={<PlaceSelectionPage />}
-      />
+        <Route
+          path="/local-recommendation/place-selection"
+          element={<PlaceSelectionPage />}
+        />
+      </Route>
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

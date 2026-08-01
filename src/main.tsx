@@ -5,6 +5,9 @@ import { BrowserRouter } from 'react-router-dom';
 
 import './styles/globals.css';
 import App from './App';
+import { validateStoredSession } from './utils/authSession';
+
+validateStoredSession();
 
 const queryClient = new QueryClient();
 

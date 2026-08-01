@@ -18,13 +18,13 @@ import {
 } from '../constants';
 import type { TravelRecordRegion } from '../types';
 
-function useTravelRecordRegionSelection() {
+function useTravelRecordRegionSelection(initialSelectedRegion: TravelRecordRegion | null = null) {
   const [query, setQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>(() =>
     getStoredRecentSearches(recentSearchStorageOptions),
   );
   const [selectedRegion, setSelectedRegion] =
-    useState<TravelRecordRegion | null>(null);
+    useState<TravelRecordRegion | null>(initialSelectedRegion);
   const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
 
   const filteredRegions = useMemo(() => {

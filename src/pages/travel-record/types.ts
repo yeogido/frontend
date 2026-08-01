@@ -9,6 +9,7 @@ export interface TravelRecordFolder {
   title: string;
   year: number;
   startDate: string;
+  endDate?: string;
   period: string;
   photos: [string, ...string[]];
   decorations: TravelFolderDecoration[];

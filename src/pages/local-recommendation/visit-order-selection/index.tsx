@@ -50,7 +50,12 @@ function VisitOrderSelectionPage() {
           onDragEnd={handleDragEnd}
         />
 
-        <SubmitCourseButton onSubmit={handleRegister} />
+        <SubmitCourseButton
+          onSubmit={() => {
+            handleRegister();
+            navigate('/local-course/detail/1');
+          }}
+        />
       </main>
     </ResponsivePageShell>
   );

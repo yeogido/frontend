@@ -82,7 +82,7 @@ function getFilteredCourses(
       filters.transport === ALL_FILTER_LABEL ||
       course.courseType.includes(
         TRANSPORT_COURSE_TYPE_LABELS[filters.transport] ?? filters.transport
-    );
+      );
     const matchesDuration =
       filters.duration === ALL_FILTER_LABEL ||
       course.duration === filters.duration;
@@ -103,7 +103,9 @@ function createMockCourse(
   return {
     ...baseCourse,
     id,
-    title: searchLabel ? `${searchLabel} ${baseCourse.title}` : baseCourse.title,
+    title: searchLabel
+      ? `${searchLabel} ${baseCourse.title}`
+      : baseCourse.title,
     liked:
       filters.sort === DEFAULT_FILTER_LABELS.sort
         ? baseCourse.liked
