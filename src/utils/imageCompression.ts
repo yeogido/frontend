@@ -67,7 +67,7 @@ export async function compressImage(
 
     const compressedName = file.name.replace(/\.[^./]+$/, '.jpg');
     return new File([blob], compressedName, { type: 'image/jpeg' });
-  } catch (error) {
+    } catch (error) {
     console.warn('Image compression failed, falling back to original file:', error);
     return file;
   }

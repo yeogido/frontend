@@ -6,13 +6,15 @@ const BUTTON_TEXT_SIZE = 16;
 const BUTTON_RADIUS = 12;
 
 interface SubmitCourseButtonProps {
-  isUploading: boolean;
   onSubmit: () => void;
+  disabled?: boolean;
+  isSubmitting?: boolean;
 }
 
 function SubmitCourseButton({
-  isUploading,
   onSubmit,
+  disabled = false,
+  isSubmitting = false,
 }: SubmitCourseButtonProps) {
   const scale = useGlobalScale();
 
@@ -20,8 +22,8 @@ function SubmitCourseButton({
     <button
       type="button"
       onClick={onSubmit}
-      disabled={isUploading}
-      className="bg-main-5 w-full shrink-0 font-semibold text-white disabled:opacity-60"
+      disabled={disabled}
+      className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 w-full shrink-0 font-semibold text-white"
       style={{
         marginTop: BUTTON_MARGIN_TOP * scale,
         height: Math.max(BUTTON_HEIGHT * scale, 44),
@@ -29,7 +31,7 @@ function SubmitCourseButton({
         borderRadius: BUTTON_RADIUS * scale,
       }}
     >
-      {isUploading ? '코스 등록 중...' : '코스 등록완료'}
+      {isSubmitting ? '등록 중...' : '코스 등록하기'}
     </button>
   );
 }

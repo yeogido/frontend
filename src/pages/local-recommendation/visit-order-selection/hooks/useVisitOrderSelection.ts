@@ -10,139 +10,127 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useState } from 'react';
 
 import { uploadCourseImages } from '../../../../apis/files';
+import { createLocalRecommendation } from '../../../../apis/localRecommendations';
 import {
-  createLocalRecommendation,
-  type CourseItem,
-  type CreateLocalRecommendationRequest,
-} from '../../../../apis/localRecommendations';
-import { useLocalRecommendationStore } from '../../../../store/localRecommendation.store';
-import { initialVisitEvents, type VisitEvent } from '../constants';
-
-const durationTypeByValue = {
-  'day-trip': 'DAY_TRIP',
-  '1-night-2-days': 'ONE_NIGHT_TWO_DAYS',
-  '2-nights-3-days': 'TWO_NIGHTS_THREE_DAYS',
-  '3-nights-4-days': 'THREE_NIGHTS_FOUR_DAYS',
-  '4-nights-or-more': 'FOUR_NIGHTS_OR_MORE',
-} as const;
-const transportTypeByValue = { walking: 'WALK', car: 'CAR' } as const;
-const companionTypeByValue = {
-  solo: 'SOLO',
-  friends: 'FRIEND',
-  couple: 'COUPLE',
-  family: 'FAMILY',
-  children: 'CHILDREN',
-} as const;
+  LOCAL_RECOMMENDATION_COVER_IMAGE_ID,
+  useLocalRecommendationStore,
+} from '../../../../store/localRecommendation.store';
+import eventThumbnail from '../assets/event-thumbnail.png';
+import { buildCourseRequest } from '../buildCourseRequest';
+import { buildVisitEvents } from '../buildVisitEvents';
+import type { VisitEvent } from '../constants';
 
 export function useVisitOrderSelection() {
-  const [visitEvents, setVisitEvents] =
-    useState<VisitEvent[]>(initialVisitEvents);
+  const draft = useLocalRecommendationStore((state) => state.draft);
+  const setVisitOrder = useLocalRecommendationStore(
+    (state) => state.setVisitOrder
+  );
+  const resetDraft = useLocalRecommendationStore((state) => state.resetDraft);
+  const [visitEvents, setVisitEvents] = useState<VisitEvent[]>(() =>
+    buildVisitEvents(
+      draft.places,
+      draft.festivals,
+      draft.visitOrder,
+      eventThumbnail
+    )
+  );
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
   const handleDragStart = ({ active }: DragStartEvent) =>
     setActiveEventId(String(active.id));
   const handleDragCancel = () => setActiveEventId(null);
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setActiveEventId(null);
     if (!over || active.id === over.id) return;
-    setVisitEvents((currentEvents) => {
-      const activeIndex = currentEvents.findIndex(
-        (event) => event.id === active.id
-      );
-      const overIndex = currentEvents.findIndex(
-        (event) => event.id === over.id
-      );
-      return activeIndex < 0 || overIndex < 0
-        ? currentEvents
-        : arrayMove(currentEvents, activeIndex, overIndex);
-    });
+
+    const activeIndex = visitEvents.findIndex(
+      (event) => event.id === active.id
+    );
+    const overIndex = visitEvents.findIndex((event) => event.id === over.id);
+    if (activeIndex < 0 || overIndex < 0) return;
+
+    const next = arrayMove(visitEvents, activeIndex, overIndex);
+    setVisitEvents(next);
+    setVisitOrder(next.map((event) => event.id));
   };
+
   const activeEvent =
     visitEvents.find((event) => event.id === activeEventId) ?? null;
   const activeEventOrder = activeEvent
     ? visitEvents.findIndex((event) => event.id === activeEvent.id) + 1
     : 0;
 
-  const handleRegister = async (): Promise<number | null> => {
-    setIsUploading(true);
-    setUploadError('');
+  const handleRegister = async (): Promise<{ courseId: number } | null> => {
+    if (isSubmitting) return null;
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
     try {
       const store = useLocalRecommendationStore.getState();
-      const { draft, pendingImages } = store;
-      if (!draft.basicInfo || !draft.neighborhood || !draft.coverImageKey) {
-        throw new Error(
-          '코스 기본 정보가 누락되었습니다. 이전 단계에서 다시 확인해 주세요.'
-        );
+      const { draft: currentDraft, pendingImages } = store;
+      const coverImage = pendingImages[LOCAL_RECOMMENDATION_COVER_IMAGE_ID];
+
+      if (!coverImage) {
+        throw new Error('대표 사진 정보를 찾을 수 없습니다. 사진을 다시 등록해 주세요.');
       }
-      const files = await Promise.all(
-        draft.places.map(async (place) => {
+
+      const files = await Promise.all([
+        coverImage,
+        ...currentDraft.places.map((place) => {
           const pendingImage = pendingImages[place.id];
-          if (!pendingImage)
-            throw new Error(
-              '장소 사진 정보를 찾을 수 없습니다. 사진을 다시 등록해 주세요.'
-            );
-          const compressedFile =
-            pendingImage.compressedFile ??
-            (await pendingImage.compressionPromise);
-          return compressedFile ?? pendingImage.originalFile;
-        })
+          if (!pendingImage) {
+            throw new Error('장소 사진 정보를 찾을 수 없습니다. 사진을 다시 등록해 주세요.');
+          }
+          return pendingImage;
+        }),
+      ].map(async (pendingImage) =>
+        pendingImage.compressedFile ??
+        (await pendingImage.compressionPromise) ??
+        pendingImage.originalFile
+      ));
+      const [coverImageKey, ...placeImageKeys] = await uploadCourseImages(files);
+      const imageKeyByPlaceId = new Map(
+        currentDraft.places.map((place, index) => [
+          place.id,
+          placeImageKeys[index],
+        ])
       );
-      const imageKeys = await uploadCourseImages(files);
-      const places = draft.places.map((place, index) => ({
-        ...place,
-        imageKey: imageKeys[index],
-      }));
-      const orderById = new Map(
-        visitEvents.map(({ id }, index) => [id, index + 1])
+      const eventsWithImageKeys = visitEvents.map((event) =>
+        event.kind === 'PLACE'
+          ? {
+              ...event,
+              imageKey: imageKeyByPlaceId.get(event.id) ?? event.imageKey,
+            }
+          : event
       );
-      const courseItems: CourseItem[] = [
-        ...places.map((place, index) => ({
-          order: orderById.get(place.id) ?? index + 1,
-          type: 'PLACE' as const,
-          externalPlaceId: place.externalPlaceId,
-          categoryGroupCode: place.categoryGroupCode,
-          name: place.title,
-          roadAddress: place.roadAddress,
-          lotAddress: place.lotAddress,
-          latitude: place.latitude,
-          longitude: place.longitude,
-          imageKey: place.imageKey,
-        })),
-      ].sort((left, right) => left.order - right.order);
-      const { basicInfo } = draft;
-      const payload: CreateLocalRecommendationRequest = {
-        title: basicInfo.courseName,
-        regionId: draft.neighborhood.id,
-        description: basicInfo.summary,
-        durationType: durationTypeByValue[basicInfo.duration],
-        transportType: transportTypeByValue[basicInfo.transport],
-        companionType: companionTypeByValue[basicInfo.companion],
-        monthStart: Number(basicInfo.visitStartMonth),
-        monthEnd: Number(basicInfo.visitEndMonth),
-        thumbnailKey: draft.coverImageKey,
-        hashtagIds: draft.hashtagIds,
-        courseItems,
-      };
+      const payload = buildCourseRequest(
+        { ...currentDraft, coverImageKey },
+        eventsWithImageKeys
+      );
+
+      if (!payload) {
+        throw new Error('코스 정보가 모두 입력되어야 등록할 수 있습니다.');
+      }
+
       const result = await createLocalRecommendation(payload);
-      store.setPlaces(places);
-      store.setVisitOrder(visitEvents.map(({ id }) => id));
-      store.resetDraft();
-      return result.courseId;
+      resetDraft();
+      return result;
     } catch (error) {
-      console.error('[handleRegister] Course registration failed:', error);
-      setUploadError(
+      setSubmitError(
         error instanceof Error
           ? error.message
-          : '코스 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          : '코스 등록에 실패했습니다. 다시 시도해 주세요.'
       );
       return null;
     } finally {
-      setIsUploading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -151,11 +139,11 @@ export function useVisitOrderSelection() {
     activeEvent,
     activeEventOrder,
     sensors,
-    isUploading,
-    uploadError,
     handleDragStart,
     handleDragCancel,
     handleDragEnd,
     handleRegister,
+    isSubmitting,
+    submitError,
   };
 }

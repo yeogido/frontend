@@ -4,6 +4,9 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { CourseBasicInfoValues } from '../pages/local-recommendation/course-basic-info/schema';
 import type { FestivalItem } from '../pages/local-recommendation/event-selection/types';
 import type { Neighborhood } from '../pages/local-recommendation/region-selection/types';
+import { compressImage } from '../utils/imageCompression';
+
+export const LOCAL_RECOMMENDATION_COVER_IMAGE_ID = 'cover-image';
 
 export interface PersistedSelectedPlace {
   id: string;
@@ -18,7 +21,7 @@ export interface PersistedSelectedPlace {
   longitude: number;
 }
 
-interface PersistedSelectedFestival {
+export interface PersistedSelectedFestival {
   id: string;
   contentId: number;
   tag: string;
@@ -41,8 +44,17 @@ export interface LocalRecommendationDraft {
   visitOrder: string[];
 }
 
+export interface PendingImage {
+  originalFile: File;
+  compressedFile: File | null;
+  previewUrl: string;
+  isCompressing: boolean;
+  compressionPromise: Promise<File>;
+}
+
 export interface LocalRecommendationState {
   draft: LocalRecommendationDraft;
+  pendingImages: Record<string, PendingImage>;
   setNeighborhood: (neighborhood: Neighborhood | null) => void;
   updateBasicInfo: (basicInfo: CourseBasicInfoValues) => void;
   setTagSelection: (selection: {
@@ -53,6 +65,12 @@ export interface LocalRecommendationState {
   setFestivals: (festivals: readonly FestivalItem[]) => void;
   setPlaces: (places: readonly PersistedSelectedPlaceInput[]) => void;
   setVisitOrder: (visitOrder: readonly string[]) => void;
+  setPendingImage: (
+    placeId: string,
+    data: { file: File; previewUrl: string }
+  ) => void;
+  removePendingImage: (placeId: string) => void;
+  clearPendingImages: () => void;
   resetDraft: () => void;
 }
 
@@ -72,6 +90,7 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
   persist(
     (set) => ({
       draft: createEmptyLocalRecommendationDraft(),
+      pendingImages: {},
       setNeighborhood: (neighborhood) =>
         set((state) => ({
           draft: {
@@ -142,7 +161,67 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
         set((state) => ({
           draft: { ...state.draft, visitOrder: [...visitOrder] },
         })),
-      resetDraft: () => set({ draft: createEmptyLocalRecommendationDraft() }),
+      setPendingImage: (placeId, { file, previewUrl }) => {
+        const previousImage = useLocalRecommendationStore.getState().pendingImages[
+          placeId
+        ];
+        if (previousImage) URL.revokeObjectURL(previousImage.previewUrl);
+        const compressionPromise = compressImage(file).catch(() => file);
+        const pendingImage: PendingImage = {
+          originalFile: file,
+          compressedFile: null,
+          previewUrl,
+          isCompressing: true,
+          compressionPromise,
+        };
+        set((state) => ({
+          pendingImages: { ...state.pendingImages, [placeId]: pendingImage },
+        }));
+        void compressionPromise.then((compressedFile) => {
+          set((state) => {
+            const current = state.pendingImages[placeId];
+            if (!current || current.compressionPromise !== compressionPromise) {
+              return state;
+            }
+            return {
+              pendingImages: {
+                ...state.pendingImages,
+                [placeId]: {
+                  ...current,
+                  compressedFile,
+                  isCompressing: false,
+                },
+              },
+            };
+          });
+        });
+      },
+      removePendingImage: (placeId) =>
+        set((state) => {
+          const pendingImage = state.pendingImages[placeId];
+          if (!pendingImage) return state;
+          URL.revokeObjectURL(pendingImage.previewUrl);
+          const pendingImages = { ...state.pendingImages };
+          delete pendingImages[placeId];
+          return { pendingImages };
+        }),
+      clearPendingImages: () =>
+        set((state) => {
+          Object.values(state.pendingImages).forEach(({ previewUrl }) => {
+            URL.revokeObjectURL(previewUrl);
+          });
+          return { pendingImages: {} };
+        }),
+      resetDraft: () =>
+        set((state) => {
+          Object.values(state.pendingImages).forEach(({ previewUrl }) => {
+            URL.revokeObjectURL(previewUrl);
+          });
+          return {
+            draft: createEmptyLocalRecommendationDraft(),
+            pendingImages: {},
+          };
+        }),
     }),
     {
       name: 'local-recommendation-draft',

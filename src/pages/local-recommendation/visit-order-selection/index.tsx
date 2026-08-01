@@ -20,13 +20,21 @@ function VisitOrderSelectionPage() {
     activeEvent,
     activeEventOrder,
     sensors,
-    isUploading,
-    uploadError,
     handleDragStart,
     handleDragCancel,
     handleDragEnd,
     handleRegister,
+    isSubmitting,
+    submitError,
   } = useVisitOrderSelection();
+
+  const handleSubmit = async () => {
+    const result = await handleRegister();
+
+    if (result) {
+      navigate(`/local-course/detail/${result.courseId}`);
+    }
+  };
 
   return (
     <ResponsivePageShell
@@ -53,18 +61,13 @@ function VisitOrderSelectionPage() {
         />
 
         <SubmitCourseButton
-          isUploading={isUploading}
-          onSubmit={() => {
-            void handleRegister().then((courseId) => {
-              if (courseId !== null) {
-                navigate(`/local-course/detail/${courseId}`);
-              }
-            });
-          }}
+          onSubmit={handleSubmit}
+          disabled={isSubmitting || visitEvents.length === 0}
+          isSubmitting={isSubmitting}
         />
-        {uploadError ? (
-          <p role="alert" className="text-main-5 mt-3 text-center text-sm">
-            {uploadError}
+        {submitError ? (
+          <p role="alert" className="text-main-5 mt-2 text-center text-sm">
+            {submitError}
           </p>
         ) : null}
       </main>

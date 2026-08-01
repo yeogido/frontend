@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { uploadCourseImage } from '../../../apis/files';
 import { fetchHashtags } from '../../../apis/hashtags';
 import type { Hashtag } from '../../../apis/hashtags';
 import { ResponsivePageShell } from '../../../components/layout';
 import { tagDefinitionMap } from '../../../constants/tags';
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
+import {
+  LOCAL_RECOMMENDATION_COVER_IMAGE_ID,
+  useLocalRecommendationStore,
+} from '../../../store/localRecommendation.store';
 
 import {
   KeywordSelectionSection,
@@ -41,19 +43,18 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const setTagSelection = useLocalRecommendationStore(
     (state) => state.setTagSelection
   );
+  const setPendingImage = useLocalRecommendationStore(
+    (state) => state.setPendingImage
+  );
+  const removePendingImage = useLocalRecommendationStore(
+    (state) => state.removePendingImage
+  );
   const [photo, setPhoto] = useState<PhotoSelection | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(new Set());
   const [limitMessage, setLimitMessage] = useState('');
   const [hashtags, setHashtags] = useState<Hashtag[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-
-  useEffect(
-    () => () => {
-      if (photo) URL.revokeObjectURL(photo.previewUrl);
-    },
-    [photo]
-  );
 
   useEffect(() => {
     let isMounted = true;
@@ -73,7 +74,18 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   }, []);
 
   const handlePhotoChange = (file: File | null) => {
-    setPhoto(file ? { file, previewUrl: URL.createObjectURL(file) } : null);
+    if (!file) {
+      removePendingImage(LOCAL_RECOMMENDATION_COVER_IMAGE_ID);
+      setPhoto(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setPendingImage(LOCAL_RECOMMENDATION_COVER_IMAGE_ID, {
+      file,
+      previewUrl,
+    });
+    setPhoto({ file, previewUrl });
   };
 
   const handleTagToggle = (tagId: TagId) => {
@@ -86,38 +98,32 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
 
   const isReady = isTagSelectionReady(photo, selectedTagIds);
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     if (!photo || !isReady || isSubmitting) return;
 
     setIsSubmitting(true);
     setSubmitError('');
 
-    try {
-      const photoKey = await uploadCourseImage(photo.file);
-      const hashtagIds = mapTagIdsToHashtagIds(
-        Array.from(selectedTagIds),
-        hashtags,
-        (tagId) => tagDefinitionMap[tagId]?.label
-      );
+    const hashtagIds = mapTagIdsToHashtagIds(
+      Array.from(selectedTagIds),
+      hashtags,
+      (tagId) => tagDefinitionMap[tagId]?.label
+    );
 
-      setTagSelection({
-        tagIds: Array.from(selectedTagIds),
-        hashtagIds,
-        coverImageKey: photoKey,
-      });
+    setTagSelection({
+      tagIds: Array.from(selectedTagIds),
+      hashtagIds,
+      coverImageKey: null,
+    });
 
-      completeTagSelection({
-        photo,
-        selectedTagIds,
-        photoKey,
-        hashtagIds,
-        onComplete,
-        navigate,
-      });
-    } catch {
-      setSubmitError('사진 업로드에 실패했어요. 다시 시도해 주세요.');
-      setIsSubmitting(false);
-    }
+    completeTagSelection({
+      photo,
+      selectedTagIds,
+      photoKey: '',
+      hashtagIds,
+      onComplete,
+      navigate,
+    });
   };
 
   return (

@@ -9,7 +9,7 @@ export function usePlaceSearch() {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<PlaceItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (debounceTimerRef.current) {
