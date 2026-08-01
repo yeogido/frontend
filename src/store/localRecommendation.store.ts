@@ -4,7 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { CourseBasicInfoValues } from '../pages/local-recommendation/course-basic-info/schema';
 import type { FestivalItem } from '../pages/local-recommendation/event-selection/types';
 import type { Neighborhood } from '../pages/local-recommendation/region-selection/types';
-import { compressImage } from '../utils/imageCompression';
+import { compressImage } from '../utils/imageCompression.ts';
 
 export const LOCAL_RECOMMENDATION_COVER_IMAGE_ID = 'cover-image';
 
