@@ -1,16 +1,12 @@
 import type { ReactNode } from 'react';
-import { IoChevronBack } from 'react-icons/io5';
-
 import { SearchBar } from '../../../components/common';
 import ResponsivePageShell from '../../../components/layout/ResponsivePageShell';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
+import BackButton from './BackButton';
+
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_TOP = 48;
-const BACK_BUTTON_SIZE = 32;
-const BACK_BUTTON_MARGIN_BOTTOM = 16;
-const BACK_BUTTON_MARGIN_LEFT = -8;
-const BACK_ICON_SIZE = 30;
 const TITLE_FONT_SIZE = 30;
 const DESCRIPTION_MARGIN_TOP = 12;
 const DESCRIPTION_FONT_SIZE = 14;
@@ -58,15 +54,6 @@ function SelectionPageLayout<T>({
   renderItem,
 }: SelectionPageLayoutProps<T>) {
   const scale = useGlobalScale();
-  const backButtonSize = BACK_BUTTON_SIZE * scale;
-  const scaledBackButtonSize = BACK_BUTTON_SIZE * scale;
-  const backButtonMarginLeft =
-    BACK_BUTTON_MARGIN_LEFT * scale -
-    (backButtonSize - scaledBackButtonSize) / 2;
-  const backButtonMarginBottom = Math.max(
-    0,
-    BACK_BUTTON_MARGIN_BOTTOM * scale - (backButtonSize - scaledBackButtonSize)
-  );
   const titleSize = TITLE_FONT_SIZE * scale;
   const descriptionSize = DESCRIPTION_FONT_SIZE * scale;
   const resultsTitleSize = RESULTS_TITLE_FONT_SIZE * scale;
@@ -83,23 +70,7 @@ function SelectionPageLayout<T>({
           }px + env(safe-area-inset-bottom, 0px))`,
         }}
       >
-        <button
-          type="button"
-          aria-label="뒤로가기"
-          onClick={onBack}
-          className="text-gray-5 flex items-center justify-center"
-          style={{
-            width: backButtonSize,
-            height: backButtonSize,
-            marginBottom: backButtonMarginBottom,
-            marginLeft: backButtonMarginLeft,
-          }}
-        >
-          <IoChevronBack
-            aria-hidden="true"
-            style={{ fontSize: BACK_ICON_SIZE * scale }}
-          />
-        </button>
+        <BackButton onClick={onBack} />
 
         <h1
           className="leading-[1.28] font-bold tracking-[-0.02em] text-black"

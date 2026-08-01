@@ -4,6 +4,7 @@ import { ResponsivePageShell } from '../../../components/layout/ResponsivePageSh
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 
+import BackButton from '../components/BackButton';
 import { CourseBasicInfoForm } from './components';
 import type { CourseBasicInfoValues } from './schema';
 
@@ -36,6 +37,7 @@ function CourseBasicInfoPage() {
       bottomPadding={CONTAINER_PADDING_BOTTOM}
       className="bg-white"
     >
+      <BackButton onClick={() => navigate('/local-recommendation')} />
       <header>
         <h1
           className="leading-[1.15] font-bold"
