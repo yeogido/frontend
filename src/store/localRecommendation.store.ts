@@ -189,22 +189,21 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
           const pendingImage = state.pendingImages[placeId];
           if (!pendingImage) return state;
           URL.revokeObjectURL(pendingImage.previewUrl);
-          const pendingImages = { ...state.pendingImages };
-          delete pendingImages[placeId];
+          const { [placeId]: _removed, ...pendingImages } = state.pendingImages;
           return { pendingImages };
         }),
       clearPendingImages: () =>
         set((state) => {
-          Object.values(state.pendingImages).forEach(({ previewUrl }) =>
-            URL.revokeObjectURL(previewUrl)
-          );
+          Object.values(state.pendingImages).forEach(({ previewUrl }) => {
+            URL.revokeObjectURL(previewUrl);
+          });
           return { pendingImages: {} };
         }),
       resetDraft: () =>
         set((state) => {
-          Object.values(state.pendingImages).forEach(({ previewUrl }) =>
-            URL.revokeObjectURL(previewUrl)
-          );
+          Object.values(state.pendingImages).forEach(({ previewUrl }) => {
+            URL.revokeObjectURL(previewUrl);
+          });
           return {
             draft: createEmptyLocalRecommendationDraft(),
             pendingImages: {},

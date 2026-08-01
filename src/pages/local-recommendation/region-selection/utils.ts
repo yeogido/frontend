@@ -1,24 +1,20 @@
+import type { Region, RegionSearchResult } from '../../../types/region.type';
 import type { Neighborhood } from './types';
 
-const normalizeSearchText = (text: string) =>
-  text.replace(/\s/g, '').toLowerCase();
+export const fromRegion = (region: Region): Neighborhood => ({
+  id: region.regionId,
+  name: region.name,
+  parentName: '',
+});
+
+export const fromSearchResult = (result: RegionSearchResult): Neighborhood => {
+  const { fullName, name } = result;
+  const parentName = fullName.endsWith(name)
+    ? fullName.slice(0, fullName.length - name.length).trimEnd()
+    : fullName;
+
+  return { id: result.regionId, name, parentName };
+};
 
 export const getNeighborhoodLabel = (neighborhood: Neighborhood) =>
-  `${neighborhood.province} ${neighborhood.city} ${neighborhood.district}`;
-
-export const filterNeighborhoods = (
-  neighborhoods: Neighborhood[],
-  query: string
-) => {
-  const normalizedQuery = normalizeSearchText(query);
-
-  if (!normalizedQuery) {
-    return [];
-  }
-
-  return neighborhoods.filter((neighborhood) =>
-    normalizeSearchText(getNeighborhoodLabel(neighborhood)).includes(
-      normalizedQuery
-    )
-  );
-};
+  [neighborhood.parentName, neighborhood.name].filter(Boolean).join(' ');

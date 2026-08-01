@@ -27,6 +27,8 @@ export interface CourseReview {
 
 export interface CourseStopDto {
   readonly id: number;
+  readonly placeId?: number;
+  readonly contentId?: number;
   readonly order: number;
   readonly name: string;
   readonly address: string;
@@ -40,6 +42,8 @@ export interface CourseStopDto {
 
 export interface CourseStop {
   readonly id: number;
+  readonly placeId?: number;
+  readonly contentId?: number;
   readonly order: number;
   readonly name: string;
   readonly address: string;

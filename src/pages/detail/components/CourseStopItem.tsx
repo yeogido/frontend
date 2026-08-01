@@ -28,12 +28,16 @@ export interface CourseStopItemProps {
   readonly stop: CourseStop;
   readonly isLast: boolean;
   readonly onLikeToggle: () => void;
+  readonly isLikeAvailable?: boolean;
+  readonly isLikePending?: boolean;
 }
 
 export function CourseStopItem({
   stop,
   isLast,
   onLikeToggle,
+  isLikeAvailable = true,
+  isLikePending = false,
 }: CourseStopItemProps) {
   const scale = useGlobalScale();
   const [transportType, ...transportRest] = (stop.transportToNext ?? '').split(
@@ -140,7 +144,8 @@ export function CourseStopItem({
         aria-label={`${stop.name} 좋아요 ${isActive ? '취소' : '추가'}`}
         aria-pressed={isActive}
         onClick={onLikeToggle}
-        className="flex items-center justify-center drop-shadow-xs transition-colors"
+        disabled={!isLikeAvailable || isLikePending}
+        className="flex items-center justify-center drop-shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         style={{
           marginTop: LIKE_BUTTON_MARGIN_TOP * scale,
           height: LIKE_BUTTON_SIZE * scale,
