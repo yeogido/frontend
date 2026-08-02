@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IoChevronBack } from 'react-icons/io5';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
 import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
+import {
+  useCreateTravelRecord,
+  useUpdateTravelRecord,
+} from '../../../hooks/useTravelRecords';
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
 import {
   appendFolderDecoration,
@@ -22,14 +26,12 @@ import {
   getTravelRecordDraftDateRange,
   getTravelRecordDraftRegion,
 } from '../utils/draftStorage';
-import { formatTravelRecordLocalDate } from '../utils/sessionFolders';
 import {
   clearTravelRecordPhotoDraft,
-  createTravelRecordDraftPayload,
   getTravelRecordPhotoDraft,
-  saveTravelRecord,
-  updateTravelRecord,
+  type TravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
+import { getTravelRecordEditRoute } from '../utils/editRoute';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -40,8 +42,10 @@ const description =
   '\uC2A4\uD2F0\uCEE4\uB97C \uCD94\uAC00\uD574 \uB098\uB9CC\uC758 \uD3F4\uB354\uB97C \uB9CC\uB4E4\uC5B4 \uBCF4\uC138\uC694. (\uC120\uD0DD)';
 const saveRecordLabel = '\uAE30\uB85D \uC800\uC7A5\uD558\uAE30';
 
-const createObjectUrls = (files: File[]) =>
-  files.slice(0, 2).map((file) => URL.createObjectURL(file));
+const createPreviewPhotoUrls = (photos: TravelRecordPhotoDraft[]) =>
+  photos.slice(0, 2).map((photo) =>
+    photo.source === 'server' ? photo.imageUrl : URL.createObjectURL(photo.file),
+  );
 
 const formatPeriod = (startDate: Date, endDate: Date) => {
   const formatDate = (date: Date) => {
@@ -56,6 +60,7 @@ const formatPeriod = (startDate: Date, endDate: Date) => {
 
 function TravelRecordFolderDecorationPage() {
   const navigate = useNavigate();
+  const { travelRecordId } = useParams<{ travelRecordId: string }>();
   const location = useLocation();
   const locationState =
     location.state as TravelFolderDecorationLocationState | null;
@@ -68,10 +73,9 @@ function TravelRecordFolderDecorationPage() {
   const selectedDateRange =
     locationState?.selectedDateRange ?? storedSelectedDateRange;
   const previewPhotoUrlsRef = useRef<string[]>([]);
-  const [selectedPhotos, setSelectedPhotos] = useState<File[] | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<TravelRecordPhotoDraft[] | null>(null);
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
   const editSession = useTravelRecordSessionStore((state) => state.editSession);
-  const saveMockFolder = useTravelRecordSessionStore((state) => state.saveMockFolder);
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   const restoredDecorations = editSession?.decorations ?? [];
   const [decorations, setDecorations] = useState<TravelFolderDecoration[]>(
@@ -81,6 +85,8 @@ function TravelRecordFolderDecorationPage() {
   const decorationsRef = useRef<TravelFolderDecoration[]>(restoredDecorations);
   const uploadedStickersRef = useRef<UploadedFolderSticker[]>([]);
   const { showToast } = useToast();
+  const createTravelRecordMutation = useCreateTravelRecord();
+  const updateTravelRecordMutation = useUpdateTravelRecord();
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const folderPhotos = useMemo<[string, ...string[]] | null>(() => {
@@ -123,7 +129,7 @@ function TravelRecordFolderDecorationPage() {
 
     void getTravelRecordPhotoDraft()
       .then((photos) => {
-        previewPhotoUrls = createObjectUrls(photos);
+        previewPhotoUrls = createPreviewPhotoUrls(photos);
 
         if (!isMounted) {
           previewPhotoUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -161,56 +167,77 @@ function TravelRecordFolderDecorationPage() {
     setIsSaving(true);
 
     try {
-      const payload = createTravelRecordDraftPayload({
-        selectedRegion,
-        selectedDateRange,
-        selectedPhotos,
-        decorations,
-      });
-      const result = editSession?.source === 'saved'
-        ? await updateTravelRecord(editSession.id, payload)
-        : editSession?.source === 'mock'
-          ? { id: editSession.id }
-        : await saveTravelRecord(payload);
-      if (editSession?.source === 'mock') {
-        const photos = createObjectUrls(selectedPhotos) as [string, ...string[]];
-        saveMockFolder({
-          id: editSession.id,
-          regionCode: selectedRegion.id,
-          regionName: selectedRegion.selectionName || selectedRegion.name,
-          title: selectedRegion.selectionName || selectedRegion.name,
-          year: selectedDateRange.startDate.getFullYear(),
-          startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),
-          endDate: formatTravelRecordLocalDate(selectedDateRange.endDate),
-          period: formatPeriod(selectedDateRange.startDate, selectedDateRange.endDate),
-          photos,
-          decorations,
-        });
-      }
+      const uploadedPhotos = selectedPhotos.flatMap((photo) =>
+        photo.source === 'new' ? [photo.file] : [],
+      );
+      // 수정 여부는 URL의 travelRecordId를 기준으로 판단한다. 세션에만
+      // 의존하면 편집 URL로 바로 진입했을 때 수정 대신 새 기록이 생성된다.
+      const result = travelRecordId
+        ? {
+            id: String(
+              (
+                await updateTravelRecordMutation.mutateAsync({
+                  travelRecordId: Number(travelRecordId),
+                  selectedRegion,
+                  selectedDateRange,
+                  selectedPhotos,
+                  decorations,
+                })
+              ).travelRecordId,
+            ),
+          }
+        : {
+            id: String(
+              (
+                await createTravelRecordMutation.mutateAsync({
+                  selectedRegion,
+                  selectedDateRange,
+                  selectedPhotos: uploadedPhotos,
+                  decorations,
+                })
+              ).travelRecordId,
+            ),
+          };
       await clearTravelRecordPhotoDraft();
       clearEdit();
       navigate('/travel-record', { state: { savedTravelRecordId: result.id } });
     } catch {
       isSavingRef.current = false;
       setIsSaving(false);
+      showToast('여행 기록을 저장하지 못했어요.');
     }
   };
 
   useEffect(() => {
     if (!selectedRegion) {
-      navigate('/travel-record/new', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId)
+          : '/travel-record/new',
+        { replace: true },
+      );
       return;
     }
 
     if (!selectedDateRange) {
-      navigate('/travel-record/date-selection', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId, 'date')
+          : '/travel-record/date-selection',
+        { replace: true },
+      );
       return;
     }
 
     if (selectedPhotos !== null && selectedPhotos.length === 0) {
-      navigate('/travel-record/photo-selection', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId, 'photos')
+          : '/travel-record/photo-selection',
+        { replace: true },
+      );
     }
-  }, [navigate, selectedDateRange, selectedPhotos, selectedRegion]);
+  }, [navigate, selectedDateRange, selectedPhotos, selectedRegion, travelRecordId]);
 
   return (
     <TravelRecordPageFrame className="bg-[#f9f9f9]">

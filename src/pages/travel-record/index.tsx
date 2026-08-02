@@ -1,8 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { FloatingActionButton } from '../../components/common';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
+import { useTravelRecordRegionDetails } from '../../hooks/useTravelRecordRegions';
 import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
+import {
+  getTravelRecordFolders,
+  getTravelRecordSummariesFromPages,
+  useTravelRecordDetails,
+  useTravelRecordYears,
+  useTravelRecords,
+} from '../../hooks/useTravelRecords';
 
 import {
   TravelFolderGrid,
@@ -10,101 +19,28 @@ import {
   TravelRecordPageFrame,
   TravelYearDropdown,
 } from './components';
-import { TRAVEL_RECORD_FOLDERS } from './constants/travelRecords';
 import type { TravelRecordFolder, TravelRecordView } from './types';
-import {
-  getSavedTravelRecordFolders,
-  revokeTravelRecordFolderPhotoUrls,
-} from './utils/travelRecordSave';
-import {
-  applyTravelRecordSessionChanges,
-  getValidTravelRecordYear,
-  getTravelRecordYears,
-} from './utils/sessionFolders';
+import { getValidTravelRecordYear } from './utils/sessionFolders';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
 const addTravelRecordLabel = '\uC5EC\uD589 \uAE30\uB85D \uCD94\uAC00';
-
-interface TravelRecordLocationState {
-  savedTravelRecordId?: string;
-}
+const TRAVEL_RECORD_PAGE_SIZE = 20;
 
 function TravelRecordPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const locationState = location.state as TravelRecordLocationState | null;
-  const editedMockFolders = useTravelRecordSessionStore(
-    (state) => state.editedMockFolders,
-  );
-  const deletedMockFolderIds = useTravelRecordSessionStore(
-    (state) => state.deletedMockFolderIds,
-  );
-  const [folders, setFolders] = useState<TravelRecordFolder[]>(
-    TRAVEL_RECORD_FOLDERS
-  );
+  const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
-  const [selectedYear, setSelectedYear] = useState(
-    () => TRAVEL_RECORD_FOLDERS[0]?.year ?? new Date().getFullYear(),
-  );
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
 
-  useEffect(() => {
-    let isMounted = true;
-    let savedFolders: TravelRecordFolder[] = [];
-
-    void getSavedTravelRecordFolders()
-      .then((folders) => {
-        savedFolders = folders;
-
-        if (isMounted) {
-          setFolders([...TRAVEL_RECORD_FOLDERS, ...folders]);
-
-          const savedFolder = folders.find(
-            (folder) => folder.id === locationState?.savedTravelRecordId
-          );
-          const latestSavedFolder = [...folders].sort(
-            (currentFolder, nextFolder) =>
-              nextFolder.startDate.localeCompare(currentFolder.startDate)
-          )[0];
-          const defaultSelectedYear = (savedFolder ?? latestSavedFolder)?.year;
-
-          if (defaultSelectedYear) {
-            setSelectedYear(defaultSelectedYear);
-          }
-
-          return;
-        }
-
-        folders.forEach(revokeTravelRecordFolderPhotoUrls);
-      })
-      .catch(() => {
-        // Keep the mock records available when browser storage is unavailable.
-      });
-
-    return () => {
-      isMounted = false;
-      savedFolders.forEach(revokeTravelRecordFolderPhotoUrls);
-    };
-  }, [locationState?.savedTravelRecordId]);
-
-  const displayedFolders = useMemo(
-    () => [
-      ...applyTravelRecordSessionChanges(
-        TRAVEL_RECORD_FOLDERS,
-        editedMockFolders,
-        new Set(deletedMockFolderIds),
-      ),
-      ...folders.filter((folder) => folder.id.startsWith('saved-')),
-    ],
-    [deletedMockFolderIds, editedMockFolders, folders],
-  );
+  const travelRecordYearsQuery = useTravelRecordYears();
   const years = useMemo(
-    () => getTravelRecordYears(displayedFolders),
-    [displayedFolders],
+    () => travelRecordYearsQuery.data?.years ?? [],
+    [travelRecordYearsQuery.data?.years],
   );
 
   useEffect(() => {
-    // The available years change after local-storage records are loaded.
+    // The available years only settle once the server years finish loading.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedYear((year) =>
       getValidTravelRecordYear(years, year, new Date().getFullYear()),
@@ -117,15 +53,54 @@ function TravelRecordPage() {
     new Date().getFullYear(),
   );
 
+  const {
+    data: travelRecordsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending,
+  } = useTravelRecords({
+    size: TRAVEL_RECORD_PAGE_SIZE,
+    year: validSelectedYear,
+  });
+
+  const apiRecordSummaries = useMemo(
+    () => getTravelRecordSummariesFromPages(travelRecordsData?.pages),
+    [travelRecordsData?.pages],
+  );
+  const travelRecordDetails = useTravelRecordDetails(apiRecordSummaries);
+  const regionInfoByRegionId = useTravelRecordRegionDetails(
+    apiRecordSummaries.map((record) => record.regionId),
+  );
+  const apiFolders = useMemo(
+    () =>
+      getTravelRecordFolders(
+        apiRecordSummaries,
+        travelRecordDetails.map((query) => query.data),
+        regionInfoByRegionId,
+      ),
+    [apiRecordSummaries, travelRecordDetails, regionInfoByRegionId],
+  );
+
   const visibleFolders = useMemo(
     () =>
-      displayedFolders
-        .filter((folder) => folder.year === validSelectedYear)
-        .sort((currentFolder, nextFolder) =>
-          nextFolder.startDate.localeCompare(currentFolder.startDate),
-        ),
-    [displayedFolders, validSelectedYear],
+      [...apiFolders].sort((currentFolder, nextFolder) =>
+        nextFolder.startDate.localeCompare(currentFolder.startDate),
+      ),
+    [apiFolders],
   );
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadMoreRef = useInfiniteScroll({
+    enabled: Boolean(hasNextPage) && !isPending,
+    onIntersect: handleLoadMore,
+  });
+
   const handleFolderClick = (folder: TravelRecordFolder) => {
     navigate(`/travel-record/${folder.id}`, { state: { folder } });
   };
@@ -170,9 +145,14 @@ function TravelRecordPage() {
         <TravelMapPanel folders={visibleFolders} />
       )}
 
+      <div ref={loadMoreRef} aria-hidden="true" />
+
       <FloatingActionButton
         ariaLabel={addTravelRecordLabel}
-        onClick={() => navigate('/travel-record/new')}
+        onClick={() => {
+          clearEdit();
+          navigate('/travel-record/new');
+        }}
         bottomOffset={40}
       />
     </TravelRecordPageFrame>

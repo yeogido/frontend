@@ -13,7 +13,6 @@ import {
   removeUploadedFolderSticker,
   validateFolderDecorationFiles,
 } from '../src/pages/travel-record/folder-decoration/folderDecoration.ts';
-import { normalizeStoredDecorations } from '../src/pages/travel-record/utils/travelRecordSave.ts';
 import {
   STICKER_CATEGORIES,
   isKnownStickerId,
@@ -335,10 +334,6 @@ test('scales a decoration by the diagonal resize drag distance', () => {
     ),
     0.5,
   );
-});
-
-test('normalizes records saved before decorations existed', () => {
-  assert.deepEqual(normalizeStoredDecorations(undefined), []);
 });
 
 test('registers the five Figma sticker categories and known sticker ids', () => {

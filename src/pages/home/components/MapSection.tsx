@@ -1,11 +1,33 @@
 import { Map } from '../map/components';
+import {
+  getTravelRecordFoldersFromPages,
+  useTravelRecords,
+} from '../../../hooks/useTravelRecords';
+import { useTravelRecordRegionDetails } from '../../../hooks/useTravelRecordRegions';
+import { getTravelRecordRegionPhotoRecords } from '../../travel-record/utils/regionPhotoRecords';
+import { toRegionPhotoMap } from '../map/types/regionPhoto';
 
 function MapSection() {
+  const travelRecordsQuery = useTravelRecords({ size: 50 });
+  const recordSummaries = travelRecordsQuery.data?.pages.flatMap(
+    (page) => page.items,
+  ) ?? [];
+  const regionInfoByRegionId = useTravelRecordRegionDetails(
+    recordSummaries.map((record) => record.regionId),
+  );
+  const travelRecordFolders = getTravelRecordFoldersFromPages(
+    travelRecordsQuery.data?.pages,
+    regionInfoByRegionId,
+  );
+  const regionPhotos = toRegionPhotoMap(
+    getTravelRecordRegionPhotoRecords(travelRecordFolders),
+  );
+
   return (
     <section className="mx-6 mt-4">
       <div className="relative h-[342px] overflow-hidden rounded-xl bg-[#F9F9F9]">
         <div className="h-full w-full">
-          <Map />
+          <Map regionPhotos={regionPhotos} />
         </div>
 
         <h2 className="absolute left-4 top-4 text-[18px] font-semibold leading-[100%] text-[#1C1C1C]">

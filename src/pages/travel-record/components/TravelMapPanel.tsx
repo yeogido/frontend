@@ -1,7 +1,9 @@
 import Map from '../../home/map/components/Map';
+import { toRegionPhotoMap } from '../../home/map/types/regionPhoto';
 
 import type { MapMarker } from '../../home/map/types/map';
 import type { TravelRecordFolder } from '../types';
+import { getTravelRecordRegionPhotoRecords } from '../utils/regionPhotoRecords';
 
 interface TravelMapPanelProps {
   folders: readonly TravelRecordFolder[];
@@ -37,6 +39,9 @@ function TravelMapPanel({ folders }: TravelMapPanelProps) {
   );
 
   const totalRecordCount = folders.length;
+  const regionPhotos = toRegionPhotoMap(
+    getTravelRecordRegionPhotoRecords(folders),
+  );
 
   return (
     <section
@@ -64,6 +69,7 @@ function TravelMapPanel({ folders }: TravelMapPanelProps) {
           minZoom={0.8}
           initialZoom={0.9}
           markers={markers}
+          regionPhotos={regionPhotos}
         />
       </div>
     </section>
