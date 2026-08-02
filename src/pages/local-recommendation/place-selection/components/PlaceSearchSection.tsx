@@ -1,9 +1,6 @@
 import SelectionPageLayout from '../../components/SelectionPageLayout';
 import SelectionResultCard from '../../components/SelectionResultCard';
-import { referencePlaces } from '../constants/referencePlaces';
 import type { PlaceItem } from '../types';
-
-const placeSearchSuggestions = referencePlaces.map((place) => place.title);
 
 interface PlaceSearchSectionProps {
   searchResults: PlaceItem[];
@@ -32,11 +29,12 @@ function PlaceSearchSection({
       description="코스에 등록할 장소를 검색해 보세요"
       searchPlaceholder="장소명을 검색해 주세요"
       searchLabel="장소명 검색"
-      searchSuggestions={placeSearchSuggestions}
+      searchSuggestions={[]}
       items={searchResults}
       selectedItemIds={selectedPlaceIds}
       getItemId={(place) => place.id}
       onSearchChange={onSearchChange}
+      onQueryChange={onSearchChange}
       onItemAdd={onItemAdd}
       onBack={onBack}
       renderItem={(place, isSelected, onItemAdd) => (
