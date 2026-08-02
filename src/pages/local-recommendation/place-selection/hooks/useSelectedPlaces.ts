@@ -1,22 +1,57 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { useLocalRecommendationStore } from '../../../../store/localRecommendation.store';
 import type { PlaceItem, SelectedPlace } from '../types';
 
+function toPersistedPlace(place: SelectedPlace) {
+  return {
+    id: place.id,
+    title: place.title,
+    address: place.address,
+    imageKey: '',
+    externalPlaceId: place.externalPlaceId,
+    categoryGroupCode: place.categoryGroupCode,
+    roadAddress: place.roadAddress,
+    lotAddress: place.lotAddress,
+    latitude: place.latitude,
+    longitude: place.longitude,
+  };
+}
+
 export function useSelectedPlaces() {
-  const [selectedPlaces, setSelectedPlaces] = useState<SelectedPlace[]>([]);
-  const selectedPlacesRef = useRef<SelectedPlace[]>([]);
+  const draftPlaces = useLocalRecommendationStore((state) => state.draft.places);
+  const pendingImages = useLocalRecommendationStore(
+    (state) => state.pendingImages
+  );
+  const setPlacesInStore = useLocalRecommendationStore(
+    (state) => state.setPlaces
+  );
+  const setPendingImage = useLocalRecommendationStore(
+    (state) => state.setPendingImage
+  );
+  const removePendingImage = useLocalRecommendationStore(
+    (state) => state.removePendingImage
+  );
+  const [selectedPlaces, setSelectedPlaces] = useState<SelectedPlace[]>(() =>
+    draftPlaces.flatMap((place) => {
+      const pendingImage = pendingImages[place.id];
+      if (!pendingImage) return [];
+
+      return [
+        {
+          ...place,
+          imageSrc: null,
+          imageFile: pendingImage.originalFile,
+          imagePreviewUrl: pendingImage.previewUrl,
+        },
+      ];
+    })
+  );
+  const selectedPlacesRef = useRef<SelectedPlace[]>(selectedPlaces);
 
   useEffect(() => {
     selectedPlacesRef.current = selectedPlaces;
   }, [selectedPlaces]);
-
-  useEffect(() => {
-    return () => {
-      selectedPlacesRef.current.forEach((place) => {
-        URL.revokeObjectURL(place.imagePreviewUrl);
-      });
-    };
-  }, []);
 
   const selectedPlaceIds = useMemo(
     () => new Set(selectedPlaces.map((place) => place.id)),
@@ -28,45 +63,38 @@ export function useSelectedPlaces() {
     imageFile: File,
     imagePreviewUrl: string
   ) => {
-    setSelectedPlaces((items) => {
-      const alreadyExists = items.some((item) => item.id === place.id);
+    if (selectedPlacesRef.current.some((item) => item.id === place.id)) {
+      URL.revokeObjectURL(imagePreviewUrl);
+      return;
+    }
 
-      if (alreadyExists) {
-        URL.revokeObjectURL(imagePreviewUrl);
-        return items;
-      }
-
-      return [
-        ...items,
-        {
-          ...place,
-          imageFile,
-          imagePreviewUrl,
-        },
-      ];
-    });
+    const next = [
+      ...selectedPlacesRef.current,
+      { ...place, imageFile, imagePreviewUrl },
+    ];
+    selectedPlacesRef.current = next;
+    setPendingImage(place.id, { file: imageFile, previewUrl: imagePreviewUrl });
+    setPlacesInStore(next.map(toPersistedPlace));
+    setSelectedPlaces(next);
   };
 
   const removeSelectedPlace = (place: SelectedPlace) => {
-    setSelectedPlaces((items) => {
-      const target = items.find((item) => item.id === place.id);
-
-      if (target) {
-        URL.revokeObjectURL(target.imagePreviewUrl);
-      }
-
-      return items.filter((item) => item.id !== place.id);
-    });
+    const next = selectedPlacesRef.current.filter(
+      (item) => item.id !== place.id
+    );
+    selectedPlacesRef.current = next;
+    removePendingImage(place.id);
+    setPlacesInStore(next.map(toPersistedPlace));
+    setSelectedPlaces(next);
   };
 
   const removeAllSelectedPlaces = () => {
-    setSelectedPlaces((items) => {
-      items.forEach((place) => {
-        URL.revokeObjectURL(place.imagePreviewUrl);
-      });
-
-      return [];
+    selectedPlacesRef.current.forEach((place) => {
+      removePendingImage(place.id);
     });
+    selectedPlacesRef.current = [];
+    setPlacesInStore([]);
+    setSelectedPlaces([]);
   };
 
   return {

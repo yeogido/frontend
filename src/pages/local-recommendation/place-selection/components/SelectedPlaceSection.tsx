@@ -4,6 +4,7 @@ import type { SelectedPlace } from '../types';
 
 interface SelectedPlaceSectionProps {
   selectedPlaces: SelectedPlace[];
+  isUploading?: boolean;
   onItemRemove: (place: SelectedPlace) => void;
   onRemoveAll: () => void;
   onSubmit: () => void;
@@ -11,6 +12,7 @@ interface SelectedPlaceSectionProps {
 
 function SelectedPlaceSection({
   selectedPlaces,
+  isUploading = false,
   onItemRemove,
   onRemoveAll,
   onSubmit,
@@ -19,9 +21,9 @@ function SelectedPlaceSection({
     <SelectedItemsSheet
       selectedSectionTitle="추가된 장소"
       emptyMessage="아직 추가된 장소가 없어요"
-      submitButtonLabel="장소 등록하기"
+      submitButtonLabel={isUploading ? '사진 업로드 중...' : '장소 등록하기'}
       selectedItems={selectedPlaces}
-      isSubmitDisabled={selectedPlaces.length === 0}
+      isSubmitDisabled={selectedPlaces.length === 0 || isUploading}
       onItemRemove={onItemRemove}
       onRemoveAll={onRemoveAll}
       onSubmit={onSubmit}

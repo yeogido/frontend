@@ -25,6 +25,7 @@ export interface SearchBarProps {
   hideEmptySuggestions?: boolean;
   className?: string;
   onSearch?: (query: string) => void;
+  onQueryChange?: (query: string) => void;
 }
 
 function SearchBar({
@@ -36,6 +37,7 @@ function SearchBar({
   hideEmptySuggestions = false,
   className = '',
   onSearch,
+  onQueryChange,
 }: SearchBarProps) {
   const { outerRef, innerRef, scale, scaledHeight } = useScaleFrame(
     SEARCH_BAR_DESIGN_WIDTH
@@ -100,6 +102,7 @@ function SearchBar({
 
     updateQuery(trimmedSuggestion);
     setIsOpen(false);
+    onQueryChange?.(trimmedSuggestion);
     onSearch?.(trimmedSuggestion);
   };
 
@@ -170,7 +173,9 @@ function SearchBar({
               value={query}
               onFocus={handleFocus}
               onChange={(event) => {
-                updateQuery(event.target.value);
+                const nextQuery = event.target.value;
+                updateQuery(nextQuery);
+                onQueryChange?.(nextQuery);
 
                 if (hasSuggestions) {
                   setIsOpen(true);
