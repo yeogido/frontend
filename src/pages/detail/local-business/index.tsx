@@ -1,240 +1,169 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import {
-  DetailDescriptionCard,
-  DetailHeroSection,
-  DetailInfoCard,
-  DetailPlaceCard,
-  DetailTitleSection,
-  ShareButton,
-} from '../components';
+import type { NormalizedApiError } from '../../../apis/common';
 import {
   ResponsiveFullBleed,
   ResponsivePageShell,
 } from '../../../components/layout/ResponsivePageShell';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
-import type { DetailTag } from '../../../types/detail';
-import { toSafeExternalUrl, toTelHref } from '../mappers/festivalDetailMapper';
-import { localBusinessMockData } from '../../../apis/localBusiness';
-import type { BusinessItem } from '../../local-business/types';
+import { useBusinessPromotionDetail } from '../../../hooks/useBusinessPromotionDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
-import { getGutter } from '../../../utils/responsiveLayout';
 
-// Figma 390 디자인 기준 리터럴 px ("홍보 페이지 - 상세" 시안, 캔버스 390x1092)
+import {
+  DetailDescriptionCard,
+  DetailHeroSection,
+  DetailInfoCard,
+  DetailStateGuard,
+  DetailTitleSection,
+  FavoriteButton,
+  ShareButton,
+  ShareToast,
+} from '../components';
+import { useShareToast } from '../hooks/useShareToast';
+import { mapBusinessPromotionDetail } from '../mappers/businessPromotionDetailMapper';
+import {
+  toSafeExternalUrl,
+  toTelHref,
+} from '../mappers/festivalDetailMapper';
+
 const PAGE_PADDING_BOTTOM = 32;
 const TITLE_SECTION_PADDING_TOP = 24;
-const TOAST_BOTTOM = 84;
-const TOAST_TEXT_PADDING_X = 16;
-const TOAST_TEXT_PADDING_Y = 8;
-const TOAST_TEXT_FONT_SIZE = 13;
 const DESCRIPTION_MARGIN_TOP = 12;
 const INFO_CARD_MARGIN_TOP = 12;
 const MAP_MARGIN_TOP = 12;
-const PLACE_CARD_MARGIN_TOP = 8;
 const MAP_FALLBACK_HEIGHT = 342;
 const MAP_FALLBACK_RADIUS = 12;
 const MAP_FALLBACK_FONT_SIZE = 14;
+const DESCRIPTION_TITLE = '우리 가게를 소개해요';
+const NOT_FOUND_MESSAGE = '업체 정보를 불러오지 못했습니다.';
 
-// 로컬 비즈니스 상세 mock. BusinessItem에 없는 필드(영업시간/전화/홈페이지/좌표)는
-// 실제 업체 상세 API가 아직 없어 화면 검증용으로 이 파일에서만 보강한다.
-const MOCK_HOURS = '매일 10:00 - 24:00';
-const MOCK_PHONE = '0507-1470-1661';
-const MOCK_HOMEPAGE_LABEL = '@yeogido123';
-const MOCK_HOMEPAGE_URL = 'https://www.instagram.com/yeogido123';
-const MOCK_LOCATION = { latitude: 35.2432, longitude: 129.2247 };
-const MOCK_DESCRIPTION_TITLE = '우리 가게를 소개해요';
-
-const BUSINESS_TAG_ID_MAP: Record<string, string> = {
-  summer: '여름',
-  sea: '바다',
-  cafe: '카페',
-  bakery: '베이커리',
-};
-
-function toDetailTags(business: BusinessItem): readonly DetailTag[] {
-  return business.tags.map((tagId) => ({
-    id: tagId,
-    tagId,
-    label: BUSINESS_TAG_ID_MAP[tagId],
-  }));
+function isNormalizedApiError(error: unknown): error is NormalizedApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    'message' in error
+  );
 }
 
-function LocalBusinessDetailContent({ businessId }: { businessId?: string }) {
+function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
+  const isValidPromotionId = Number.isInteger(promotionId) && promotionId > 0;
+  const { data: detailResponse, error: queryError } =
+    useBusinessPromotionDetail(promotionId);
+  const [likedOverride, setLikedOverride] = useState<boolean | null>(null);
+  const { copied, isToastVisible, handleShare } = useShareToast();
 
-  const business = useMemo<BusinessItem | undefined>(
-    () => localBusinessMockData.find((item) => item.id === businessId),
-    [businessId]
-  );
-  const tags = useMemo(
-    () => (business ? toDetailTags(business) : []),
-    [business]
-  );
+  const business = detailResponse
+    ? mapBusinessPromotionDetail(detailResponse)
+    : null;
 
-  // 이 시안에는 히어로에 별도 좋아요 버튼이 없고, 하단 관련 매장 카드의
-  // 하트 아이콘만 좋아요 액션을 담당한다.
-  const [isPlaceLiked, setIsPlaceLiked] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [isToastVisible, setIsToastVisible] = useState(false);
-
-  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
-      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-    };
-  }, []);
-
-  const handleShare = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
-      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-      setCopied(true);
-      setIsToastVisible(true);
-      fadeTimerRef.current = setTimeout(() => setIsToastVisible(false), 1600);
-      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  };
+  const errorMessage = !isValidPromotionId
+    ? NOT_FOUND_MESSAGE
+    : queryError
+      ? isNormalizedApiError(queryError)
+        ? queryError.message
+        : NOT_FOUND_MESSAGE
+      : null;
 
   const runAuthAction = (action: () => void) => {
     if (!isAuthenticated) {
       openLoginModal();
       return;
     }
+
     action();
   };
 
-  const handlePlaceLikeToggle = () => {
-    runAuthAction(() => setIsPlaceLiked((prev) => !prev));
+  const handleFavoriteToggle = () => {
+    runAuthAction(() =>
+      setLikedOverride((previous) => !(previous ?? business?.liked ?? false))
+    );
   };
 
-  if (!business) {
-    return (
-      <ResponsivePageShell mode="standalone" className="text-gray-4">
-        <div
-          role="status"
-          className="flex flex-1 items-center justify-center text-center"
-        >
-          업체를 찾을 수 없습니다.
-        </div>
-      </ResponsivePageShell>
-    );
-  }
-
   return (
-    <ResponsivePageShell
-      mode="main-layout"
-      bottomPadding={PAGE_PADDING_BOTTOM}
-      className="bg-white"
-    >
-      {/* 1. 히어로 영역 */}
-      <ResponsiveFullBleed>
-        <DetailHeroSection imageUrl={business.image} title={business.title} />
-      </ResponsiveFullBleed>
-
-      {/* 2. 제목 + 공유 버튼, 3. 카테고리 칩 */}
-      <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
-        <DetailTitleSection
-          title={business.title}
-          tags={tags}
-          action={
-            <ShareButton
-              onClick={handleShare}
-              label={`${business.title} 공유하기`}
-            />
-          }
-        />
-      </div>
-
-      {copied && (
-        <div
-          className="pointer-events-none fixed bottom-0 left-1/2 z-[60] flex w-full max-w-[500px] -translate-x-1/2 justify-center"
-          style={{
-            bottom: `max(${TOAST_BOTTOM * scale}px, env(safe-area-inset-bottom, 0px))`,
-            paddingLeft: getGutter(scale),
-            paddingRight: getGutter(scale),
-          }}
+    <DetailStateGuard error={errorMessage} data={business}>
+      {(businessDetail) => (
+        <ResponsivePageShell
+          mode="main-layout"
+          bottomPadding={PAGE_PADDING_BOTTOM}
+          className="bg-white"
         >
-          <span
-            role="status"
-            className={`bg-gray-800 text-center font-medium text-white shadow-lg transition-all duration-300 ${
-              isToastVisible ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{
-              paddingLeft: TOAST_TEXT_PADDING_X * scale,
-              paddingRight: TOAST_TEXT_PADDING_X * scale,
-              paddingTop: TOAST_TEXT_PADDING_Y * scale,
-              paddingBottom: TOAST_TEXT_PADDING_Y * scale,
-              fontSize: TOAST_TEXT_FONT_SIZE * scale,
-              borderRadius: 999 * scale,
-            }}
-          >
-            복사 됨
-          </span>
-        </div>
-      )}
+          <ResponsiveFullBleed>
+            <DetailHeroSection
+              imageUrl={businessDetail.heroImageUrl}
+              title={businessDetail.title}
+              rightAction={
+                <FavoriteButton
+                  isActive={likedOverride ?? businessDetail.liked}
+                  label={businessDetail.title}
+                  onClick={handleFavoriteToggle}
+                />
+              }
+            />
+          </ResponsiveFullBleed>
 
-      {/* 4. 가게 소개 */}
-      <section style={{ marginTop: DESCRIPTION_MARGIN_TOP * scale }}>
-        <DetailDescriptionCard
-          title={MOCK_DESCRIPTION_TITLE}
-          content={business.description}
-        />
-      </section>
-
-      {/* 5. 업체 정보 (주소 / 영업시간 / 전화번호 / 홈페이지) */}
-      <section style={{ marginTop: INFO_CARD_MARGIN_TOP * scale }}>
-        <DetailInfoCard
-          address={business.location}
-          hours={MOCK_HOURS}
-          phone={MOCK_PHONE}
-          website={MOCK_HOMEPAGE_LABEL}
-          phoneHref={toTelHref(MOCK_PHONE)}
-          websiteHref={toSafeExternalUrl(MOCK_HOMEPAGE_URL)}
-        />
-      </section>
-
-      {/* 6. 지도 */}
-      <div style={{ marginTop: MAP_MARGIN_TOP * scale }}>
-        {MOCK_LOCATION ? (
-          <BaseKakaoMap center={MOCK_LOCATION} markers={[MOCK_LOCATION]} />
-        ) : (
-          <div
-            role="status"
-            className="bg-gray-2 text-gray-4 flex w-full items-center justify-center"
-            style={{
-              height: MAP_FALLBACK_HEIGHT * scale,
-              borderRadius: MAP_FALLBACK_RADIUS * scale,
-              fontSize: MAP_FALLBACK_FONT_SIZE * scale,
-            }}
-          >
-            등록된 위치 정보가 없습니다.
+          <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
+            <DetailTitleSection
+              title={businessDetail.title}
+              tags={businessDetail.tags}
+              action={
+                <ShareButton
+                  onClick={handleShare}
+                  label={`${businessDetail.title} 공유하기`}
+                />
+              }
+            />
           </div>
-        )}
-      </div>
 
-      {/* 7. 관련 매장 카드 (좋아요 액션 포함) */}
-      <div style={{ marginTop: PLACE_CARD_MARGIN_TOP * scale }}>
-        <DetailPlaceCard
-          imageUrl={business.image}
-          title={business.title}
-          address={business.location}
-          hours={MOCK_HOURS}
-          liked={isPlaceLiked}
-          onLikeClick={handlePlaceLikeToggle}
-        />
-      </div>
-    </ResponsivePageShell>
+          <ShareToast copied={copied} isToastVisible={isToastVisible} />
+
+          <section style={{ marginTop: DESCRIPTION_MARGIN_TOP * scale }}>
+            <DetailDescriptionCard
+              title={DESCRIPTION_TITLE}
+              content={businessDetail.overview}
+            />
+          </section>
+
+          <section style={{ marginTop: INFO_CARD_MARGIN_TOP * scale }}>
+            <DetailInfoCard
+              address={businessDetail.address}
+              hours={businessDetail.hours}
+              phone={businessDetail.phone}
+              website={businessDetail.snsAccount}
+              phoneHref={toTelHref(businessDetail.phone)}
+              websiteHref={toSafeExternalUrl(businessDetail.snsAccount)}
+            />
+          </section>
+
+          <div style={{ marginTop: MAP_MARGIN_TOP * scale }}>
+            {businessDetail.location ? (
+              <BaseKakaoMap
+                center={businessDetail.location}
+                markers={[businessDetail.location]}
+              />
+            ) : (
+              <div
+                role="status"
+                className="bg-gray-2 text-gray-4 flex w-full items-center justify-center"
+                style={{
+                  height: MAP_FALLBACK_HEIGHT * scale,
+                  borderRadius: MAP_FALLBACK_RADIUS * scale,
+                  fontSize: MAP_FALLBACK_FONT_SIZE * scale,
+                }}
+              >
+                등록된 위치 정보가 없습니다.
+              </div>
+            )}
+          </div>
+        </ResponsivePageShell>
+      )}
+    </DetailStateGuard>
   );
 }
 
@@ -244,8 +173,14 @@ function LocalBusinessDetailContent({ businessId }: { businessId?: string }) {
  */
 function LocalBusinessDetailPage() {
   const { id } = useParams<{ id?: string }>();
+  const promotionId = Number(id);
 
-  return <LocalBusinessDetailContent key={id ?? 'default'} businessId={id} />;
+  return (
+    <LocalBusinessDetailContent
+      key={id ?? 'default'}
+      promotionId={promotionId}
+    />
+  );
 }
 
 export default LocalBusinessDetailPage;
