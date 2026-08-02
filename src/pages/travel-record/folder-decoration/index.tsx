@@ -3,6 +3,7 @@ import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
+import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import {
@@ -77,7 +78,11 @@ function TravelRecordFolderDecorationPage() {
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
   const editSession = useTravelRecordSessionStore((state) => state.editSession);
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
-  const restoredDecorations = editSession?.decorations ?? [];
+  // 다른 기록의 편집 세션이 남아 있을 수 있고, 저장 후 뒤로가기로 되돌아오면
+  // 세션이 이미 비워져 있다. id가 일치할 때만 서버 상태를 복원한 것으로 본다.
+  const restoredEditSession =
+    travelRecordId && editSession?.id === travelRecordId ? editSession : null;
+  const restoredDecorations = restoredEditSession?.decorations ?? [];
   const [decorations, setDecorations] = useState<TravelFolderDecoration[]>(
     () => restoredDecorations,
   );
@@ -182,6 +187,9 @@ function TravelRecordFolderDecorationPage() {
                   selectedDateRange,
                   selectedPhotos,
                   decorations,
+                  isStickerStateRestored: restoredEditSession !== null,
+                  originalTitle: restoredEditSession?.title,
+                  originalRegionId: restoredEditSession?.regionId,
                 })
               ).travelRecordId,
             ),
@@ -201,10 +209,12 @@ function TravelRecordFolderDecorationPage() {
       await clearTravelRecordPhotoDraft();
       clearEdit();
       navigate('/travel-record', { state: { savedTravelRecordId: result.id } });
-    } catch {
+    } catch (error) {
       isSavingRef.current = false;
       setIsSaving(false);
-      showToast('여행 기록을 저장하지 못했어요.');
+      // 사진 장수, 스티커 위치, 지역 등 실패 원인이 서버 문구로 구분되므로
+      // 그대로 보여준다.
+      showToast(getApiErrorMessage(error, '여행 기록을 저장하지 못했어요.'));
     }
   };
 

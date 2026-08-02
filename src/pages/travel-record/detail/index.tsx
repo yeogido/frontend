@@ -11,6 +11,7 @@ import {
 } from 'motion/react';
 import { IoEllipsisVertical } from 'react-icons/io5';
 
+import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import {
   useDeleteTravelRecord,
@@ -322,6 +323,8 @@ function TravelRecordDetailPage() {
     beginEdit({
       id: editableFolder.id,
       decorations: editableFolder.decorations,
+      title: editableFolder.title,
+      regionId: editableFolder.regionId,
     });
     navigate(getTravelRecordEditRoute(String(travelRecordId)));
   };
@@ -338,9 +341,9 @@ function TravelRecordDetailPage() {
 
     try {
       await deleteTravelRecordMutation.mutateAsync(travelRecordId);
-    } catch {
+    } catch (error) {
       setIsDeleted(false);
-      showToast('여행 기록을 삭제하지 못했어요.');
+      showToast(getApiErrorMessage(error, '여행 기록을 삭제하지 못했어요.'));
       return;
     }
 

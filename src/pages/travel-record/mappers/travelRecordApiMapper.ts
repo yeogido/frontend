@@ -7,7 +7,9 @@ import type {
 import type {
   TravelRecordCreateRequest,
   TravelRecordDetailResponse,
+  TravelRecordImageRequest,
   TravelRecordImageResponse,
+  TravelRecordStickerRequest,
   TravelRecordSummary,
   TravelRecordUpdateRequest,
   UploadedTravelRecordImage,
@@ -174,22 +176,21 @@ interface CreateTravelRecordCreateRequestParams {
   decorations: TravelFolderDecoration[];
 }
 
-export const createTravelRecordCreateRequest = ({
-  selectedRegion,
-  selectedDateRange,
-  uploadedImages,
-  decorations,
-}: CreateTravelRecordCreateRequestParams): TravelRecordCreateRequest => ({
-  title: selectedRegion.name,
-  regionId: selectedRegion.regionId ?? Number(selectedRegion.id),
-  startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),
-  endDate: formatTravelRecordLocalDate(selectedDateRange.endDate),
-  folderTheme: defaultFolderTheme,
-  images: uploadedImages.map((image, index) => ({
+const getSelectedRegionId = (selectedRegion: TravelRecordDraftRegion) =>
+  selectedRegion.regionId ?? Number(selectedRegion.id);
+
+const createTravelRecordImageRequests = (
+  uploadedImages: UploadedTravelRecordImage[],
+): TravelRecordImageRequest[] =>
+  uploadedImages.map((image, index) => ({
     imageKey: image.objectKey,
     imageOrder: index + 1,
-  })),
-  stickers: decorations.flatMap((decoration) => {
+  }));
+
+const createTravelRecordStickerRequests = (
+  decorations: TravelFolderDecoration[],
+): TravelRecordStickerRequest[] =>
+  decorations.flatMap((decoration) => {
     if (decoration.source !== 'sticker') {
       return [];
     }
@@ -212,9 +213,65 @@ export const createTravelRecordCreateRequest = ({
       scale: decoration.scale,
       zIndex: decoration.zIndex,
     };
-  }),
+  });
+
+export const createTravelRecordCreateRequest = ({
+  selectedRegion,
+  selectedDateRange,
+  uploadedImages,
+  decorations,
+}: CreateTravelRecordCreateRequestParams): TravelRecordCreateRequest => ({
+  title: selectedRegion.name,
+  regionId: getSelectedRegionId(selectedRegion),
+  startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),
+  endDate: formatTravelRecordLocalDate(selectedDateRange.endDate),
+  folderTheme: defaultFolderTheme,
+  images: createTravelRecordImageRequests(uploadedImages),
+  stickers: createTravelRecordStickerRequests(decorations),
 });
 
-export const createTravelRecordUpdateRequest = (
-  params: CreateTravelRecordCreateRequestParams,
-): TravelRecordUpdateRequest => createTravelRecordCreateRequest(params);
+interface CreateTravelRecordUpdateRequestParams
+  extends CreateTravelRecordCreateRequestParams {
+  /** 서버에 저장돼 있던 스티커를 실제로 복원한 상태인지. */
+  isStickerStateRestored: boolean;
+  /** 서버에 저장돼 있던 제목. */
+  originalTitle?: string;
+  /** 서버에 저장돼 있던 지역 ID. */
+  originalRegionId?: number;
+}
+
+export const createTravelRecordUpdateRequest = ({
+  selectedRegion,
+  selectedDateRange,
+  uploadedImages,
+  decorations,
+  isStickerStateRestored,
+  originalTitle,
+  originalRegionId,
+}: CreateTravelRecordUpdateRequestParams): TravelRecordUpdateRequest => {
+  const regionId = getSelectedRegionId(selectedRegion);
+  const stickers = createTravelRecordStickerRequests(decorations);
+  // 서버는 stickers를 생략하면 기존 스티커를 유지하고, 빈 배열이면 전부
+  // 삭제한다. 편집 세션이 끊겨 복원하지 못했거나 서버가 내려준 스티커를
+  // 하나도 변환하지 못한 상태에서 빈 배열을 보내면, 저장돼 있던 스티커가
+  // 사용자가 지운 적도 없는데 통째로 사라진다.
+  const hasUnconvertedStickers =
+    stickers.length === 0 &&
+    decorations.some((decoration) => decoration.source === 'sticker');
+  const keepsServerStickers = !isStickerStateRestored || hasUnconvertedStickers;
+
+  return {
+    // 제목 입력 화면이 없어 생성 시에는 지역명을 제목으로 쓴다. 수정하면서
+    // 지역을 바꾸지 않았다면 서버에 저장된 제목을 그대로 되돌려 보낸다.
+    title:
+      originalTitle && regionId === originalRegionId
+        ? originalTitle
+        : selectedRegion.name,
+    regionId,
+    startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),
+    endDate: formatTravelRecordLocalDate(selectedDateRange.endDate),
+    folderTheme: defaultFolderTheme,
+    images: createTravelRecordImageRequests(uploadedImages),
+    ...(keepsServerStickers ? {} : { stickers }),
+  };
+};
