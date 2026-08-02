@@ -24,7 +24,17 @@ function VisitOrderSelectionPage() {
     handleDragCancel,
     handleDragEnd,
     handleRegister,
+    isSubmitting,
+    submitError,
   } = useVisitOrderSelection();
+
+  const handleSubmit = async () => {
+    const result = await handleRegister();
+
+    if (result) {
+      navigate(`/local-course/detail/${result.courseId}`);
+    }
+  };
 
   return (
     <ResponsivePageShell
@@ -51,11 +61,15 @@ function VisitOrderSelectionPage() {
         />
 
         <SubmitCourseButton
-          onSubmit={() => {
-            handleRegister();
-            navigate('/local-course/detail/1');
-          }}
+          onSubmit={handleSubmit}
+          disabled={isSubmitting || visitEvents.length === 0}
+          isSubmitting={isSubmitting}
         />
+        {submitError ? (
+          <p role="alert" className="text-main-5 mt-2 text-center text-sm">
+            {submitError}
+          </p>
+        ) : null}
       </main>
     </ResponsivePageShell>
   );

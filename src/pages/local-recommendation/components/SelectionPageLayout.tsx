@@ -34,6 +34,7 @@ interface SelectionPageLayoutProps<T> {
   selectedItemIds: ReadonlySet<string>;
   getItemId: (item: T) => string;
   onSearchChange: (query: string) => void;
+  onQueryChange?: (query: string) => void;
   onItemAdd: (item: T) => void;
   onBack: () => void;
   renderItem: (
@@ -53,6 +54,7 @@ function SelectionPageLayout<T>({
   selectedItemIds,
   getItemId,
   onSearchChange,
+  onQueryChange,
   onItemAdd,
   onBack,
   renderItem,
@@ -126,6 +128,7 @@ function SelectionPageLayout<T>({
             label={searchLabel}
             suggestions={searchSuggestions}
             onSearch={onSearchChange}
+            onQueryChange={onQueryChange}
           />
         </div>
 

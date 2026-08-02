@@ -53,7 +53,7 @@ function PlacePhotoUploader({
 
       <label
         htmlFor={inputId}
-        className="border-main-5 bg-main-1 flex aspect-[294/184] cursor-pointer flex-col items-center justify-center overflow-hidden border-dashed text-center"
+        className="border-main-5 bg-main-1 flex aspect-[294/184] w-full max-w-full cursor-pointer flex-col items-center justify-center overflow-hidden overflow-x-hidden border-dashed text-center scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         style={{
           marginTop: UPLOADER_MARGIN_TOP * scale,
           paddingLeft: UPLOADER_PADDING_X * scale,
