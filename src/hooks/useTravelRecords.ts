@@ -7,6 +7,7 @@ import {
   useQueries,
 } from '@tanstack/react-query';
 
+import { normalizeApiError } from '../apis/common';
 import { createPresignedUrl, uploadFileToPresignedUrl } from '../apis/files.api';
 import { getRegion } from '../apis/regions.api';
 import {
@@ -42,6 +43,14 @@ import type {
 
 type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
 
+const TRAVEL_RECORD_NOT_FOUND_CODE = 'TRAVEL_RECORD4041';
+
+const isTravelRecordNotFoundError = (error: unknown) => {
+  const { code, status } = normalizeApiError(error);
+
+  return code === TRAVEL_RECORD_NOT_FOUND_CODE || status === 404;
+};
+
 interface TravelRecordsPageParam {
   cursor?: number;
 }
@@ -59,6 +68,9 @@ interface UpdateTravelRecordFromDraftParams {
   selectedDateRange: TravelDateRange;
   selectedPhotos: TravelRecordPhotoDraft[];
   decorations: TravelFolderDecoration[];
+  isStickerStateRestored: boolean;
+  originalTitle?: string;
+  originalRegionId?: number;
 }
 
 const uploadTravelRecordImages = async (selectedPhotos: File[]) => {
@@ -203,6 +215,9 @@ export function useUpdateTravelRecord() {
       selectedDateRange,
       selectedPhotos,
       decorations,
+      isStickerStateRestored,
+      originalTitle,
+      originalRegionId,
     }) =>
       updateTravelRecord(
         travelRecordId,
@@ -211,6 +226,9 @@ export function useUpdateTravelRecord() {
           selectedDateRange,
           uploadedImages: await uploadTravelRecordDraftImages(selectedPhotos),
           decorations,
+          isStickerStateRestored,
+          originalTitle,
+          originalRegionId,
         }),
       ),
     onSuccess: (_, { travelRecordId }) => {
@@ -227,7 +245,18 @@ export function useDeleteTravelRecord() {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, number>({
-    mutationFn: deleteTravelRecordById,
+    mutationFn: async (travelRecordId) => {
+      try {
+        await deleteTravelRecordById(travelRecordId);
+      } catch (error) {
+        // 이미 없는 기록이면 사용자가 원한 상태에 도달한 것이다. 실패로
+        // 처리하면 상세 화면에 남아 재시도해도 계속 404가 나서 빠져나갈
+        // 방법이 없어진다. 캐시 정리는 onSuccess에서 이어서 수행한다.
+        if (!isTravelRecordNotFoundError(error)) {
+          throw error;
+        }
+      }
+    },
     onSuccess: (_, travelRecordId) => {
       // Strip the deleted record out of every cached list immediately,
       // instead of relying on invalidateQueries' async refetch. Otherwise
