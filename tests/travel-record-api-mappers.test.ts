@@ -207,7 +207,6 @@ test('maps a travel record summary cover image URL to the folder photo', () => {
       regionName: '부산광역시',
       title: 'Busan',
       folderTheme: 'BASIC',
-      year: 2026,
       startDate: '2026-07-20',
       endDate: '2026-07-22',
       period: '07.20 - 07.22',
@@ -355,9 +354,7 @@ test('maps detail stickers into the folder displayed in the record list', () => 
   assert.deepEqual(mapTravelRecordFolder(summary, detail).decorations, [
     {
       id: '7',
-      source: 'sticker',
-      stickerId: 'animal-dog',
-      backendStickerId: 21,
+      stickerId: 21,
       imageUrl: 'https://example.com/stickers/dog.png',
       x: 0.5,
       y: 0.25,
@@ -445,7 +442,7 @@ test('handles a detail response that omits stickers', () => {
   assert.deepEqual(mapTravelRecordDetailToFolder(detail).decorations, []);
 });
 
-test('keeps an unmapped sticker id renderable through its server image URL', () => {
+test('keeps a sticker missing from the catalog renderable through its server image URL', () => {
   const detail: TravelRecordDetailResponse = {
     travelRecordId: 10,
     title: 'Busan',
@@ -470,12 +467,12 @@ test('keeps an unmapped sticker id renderable through its server image URL', () 
     createdAt: '2026-07-23T09:00:00',
   };
 
+  // 논리 삭제된 커스텀 스티커는 카탈로그에 없지만 기존 기록에는 계속
+  // 내려온다. 상세 응답의 imageUrl로 그리므로 그대로 표시된다.
   assert.deepEqual(mapTravelRecordDetailToFolder(detail).decorations, [
     {
       id: '9',
-      source: 'sticker',
-      stickerId: undefined,
-      backendStickerId: 999,
+      stickerId: 999,
       imageUrl: 'https://example.com/stickers/custom.png',
       x: 0.5,
       y: 0.25,
@@ -486,22 +483,29 @@ test('keeps an unmapped sticker id renderable through its server image URL', () 
   ]);
 });
 
+const busanDraftRegion = {
+  id: '27',
+  regionId: 27,
+  name: 'Busan',
+  province: 'Busan Metropolitan City',
+  selectionName: 'Busan',
+};
+
+const createUpdateRequestParams = () => ({
+  selectedRegion: busanDraftRegion,
+  selectedDateRange: {
+    startDate: new Date(2026, 6, 20),
+    endDate: new Date(2026, 6, 22),
+  },
+  uploadedImages: [{ objectKey: 'travel-records/10/image-1.jpg' }],
+});
+
 test('creates a travel record update request from the edited draft data', () => {
   assert.deepEqual(
     createTravelRecordUpdateRequest({
-      selectedRegion: {
-        id: '27',
-        regionId: 27,
-        name: 'Busan',
-        province: 'Busan Metropolitan City',
-        selectionName: 'Busan',
-      },
-      selectedDateRange: {
-        startDate: new Date(2026, 6, 20),
-        endDate: new Date(2026, 6, 22),
-      },
-      uploadedImages: [{ objectKey: 'travel-records/10/image-1.jpg' }],
+      ...createUpdateRequestParams(),
       decorations: [],
+      isStickerStateRestored: true,
     }),
     {
       title: 'Busan',
@@ -517,27 +521,93 @@ test('creates a travel record update request from the edited draft data', () => 
   );
 });
 
+test('omits stickers when the server sticker state was never restored', () => {
+  // 편집 세션이 끊긴 상태다. 빈 배열을 보내면 서버가 기존 스티커를 모두
+  // 지우므로 필드 자체를 생략해 유지시킨다.
+  const request = createTravelRecordUpdateRequest({
+    ...createUpdateRequestParams(),
+    decorations: [],
+    isStickerStateRestored: false,
+  });
+
+  assert.equal('stickers' in request, false);
+});
+
+test('sends an empty sticker list when the user removed every sticker', () => {
+  const request = createTravelRecordUpdateRequest({
+    ...createUpdateRequestParams(),
+    decorations: [],
+    isStickerStateRestored: true,
+  });
+
+  assert.deepEqual(request.stickers, []);
+});
+
+test('round-trips server sticker ids without any local mapping', () => {
+  const request = createTravelRecordUpdateRequest({
+    ...createUpdateRequestParams(),
+    decorations: [
+      {
+        id: 'placed-custom-sticker',
+        stickerId: 999,
+        imageUrl: 'https://example.com/stickers/custom.png',
+        x: 0.1,
+        y: 0.2,
+        rotation: 0,
+        scale: 1,
+        zIndex: 1,
+      },
+    ],
+    isStickerStateRestored: true,
+  });
+
+  assert.deepEqual(request.stickers, [
+    {
+      stickerId: 999,
+      positionX: 0.1,
+      positionY: 0.2,
+      rotation: 0,
+      scale: 1,
+      zIndex: 1,
+    },
+  ]);
+});
+
+test('keeps the stored title when the region was not changed while editing', () => {
+  const request = createTravelRecordUpdateRequest({
+    ...createUpdateRequestParams(),
+    decorations: [],
+    isStickerStateRestored: true,
+    originalTitle: '부산 감성 바다 여행',
+    originalRegionId: 27,
+  });
+
+  assert.equal(request.title, '부산 감성 바다 여행');
+});
+
+test('falls back to the region name once the region is changed while editing', () => {
+  const request = createTravelRecordUpdateRequest({
+    ...createUpdateRequestParams(),
+    decorations: [],
+    isStickerStateRestored: true,
+    originalTitle: '제주 겨울 여행',
+    originalRegionId: 50,
+  });
+
+  assert.equal(request.title, 'Busan');
+});
+
 test('creates travel record create request from draft data and uploaded image keys', () => {
   const decorations: TravelFolderDecoration[] = [
     {
-      id: 'known-sticker',
-      source: 'sticker',
-      stickerId: 'animal-dog',
+      id: 'placed-sticker',
+      stickerId: 10,
+      imageUrl: 'https://example.com/stickers/dog.png',
       x: 0.5,
       y: 0.25,
       rotation: 15,
       scale: 1.2,
       zIndex: 3,
-    },
-    {
-      id: 'uploaded-sticker',
-      source: 'upload',
-      uploadedStickerId: 'local-upload',
-      x: 0.1,
-      y: 0.2,
-      rotation: 0,
-      scale: 1,
-      zIndex: 4,
     },
   ];
   const uploadedImages: UploadedTravelRecordImage[] = [
@@ -573,7 +643,7 @@ test('creates travel record create request from draft data and uploaded image ke
       ],
       stickers: [
         {
-          stickerId: 21,
+          stickerId: 10,
           positionX: 0.5,
           positionY: 0.25,
           rotation: 15,
@@ -592,7 +662,6 @@ test('uses the latest folder with a renderable first photo for map photos', () =
       regionCode: '26',
       regionName: 'Busan',
       title: 'Busan',
-      year: 2025,
       startDate: '2025-07-01',
       period: '07.01 - 07.02',
       photos: ['older-photo.jpg'],
@@ -603,7 +672,6 @@ test('uses the latest folder with a renderable first photo for map photos', () =
       regionCode: '26',
       regionName: 'Busan',
       title: 'Busan',
-      year: 2026,
       startDate: '2026-07-01',
       period: '07.01 - 07.02',
       photos: ['latest-photo.jpg'],
@@ -614,7 +682,6 @@ test('uses the latest folder with a renderable first photo for map photos', () =
       regionCode: '11',
       regionName: 'Seoul',
       title: 'Seoul',
-      year: 2026,
       startDate: '2026-07-01',
       period: '07.01 - 07.02',
       photos: [''],

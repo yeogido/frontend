@@ -7,6 +7,7 @@ import {
   useQueries,
 } from '@tanstack/react-query';
 
+import { normalizeApiError } from '../apis/common';
 import { createPresignedUrl, uploadFileToPresignedUrl } from '../apis/files.api';
 import { getRegion } from '../apis/regions.api';
 import {
@@ -28,6 +29,7 @@ import {
 import type { TravelDateRange } from '../pages/travel-record/date-selection/types';
 import type { TravelFolderDecoration } from '../pages/travel-record/folder-decoration/folderDecoration';
 import type { TravelRecordDraftRegion } from '../pages/travel-record/types';
+import { collectTravelRecords } from '../pages/travel-record/utils/collectTravelRecords';
 import type { TravelRecordPhotoDraft } from '../pages/travel-record/utils/travelRecordSave';
 import type { RegionDetailResponse } from '../types/region.type';
 import type {
@@ -41,6 +43,14 @@ import type {
 } from '../types/travelRecord.type';
 
 type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
+
+const TRAVEL_RECORD_NOT_FOUND_CODE = 'TRAVEL_RECORD4041';
+
+const isTravelRecordNotFoundError = (error: unknown) => {
+  const { code, status } = normalizeApiError(error);
+
+  return code === TRAVEL_RECORD_NOT_FOUND_CODE || status === 404;
+};
 
 interface TravelRecordsPageParam {
   cursor?: number;
@@ -59,6 +69,9 @@ interface UpdateTravelRecordFromDraftParams {
   selectedDateRange: TravelDateRange;
   selectedPhotos: TravelRecordPhotoDraft[];
   decorations: TravelFolderDecoration[];
+  isStickerStateRestored: boolean;
+  originalTitle?: string;
+  originalRegionId?: number;
 }
 
 const uploadTravelRecordImages = async (selectedPhotos: File[]) => {
@@ -127,6 +140,54 @@ export function useTravelRecordYears() {
   });
 }
 
+const MAP_RECORDS_PAGE_SIZE = 50;
+
+const getAllTravelRecordsInYear = (year: number) =>
+  collectTravelRecords((cursor) =>
+    getTravelRecords({ year, size: MAP_RECORDS_PAGE_SIZE, cursor }),
+  );
+
+/**
+ * 지도에 찍을 여행 기록 전체.
+ *
+ * 목록 API는 year를 생략하면 현재 연도만 돌려주기 때문에, 연도 목록을 받아
+ * 연도별로 조회한 뒤 합친다. 지도 전용 API가 생기면 이 훅만 바꾸면 된다.
+ */
+export function useTravelRecordsForMap() {
+  const travelRecordYearsQuery = useTravelRecordYears();
+  const years = travelRecordYearsQuery.data?.years ?? [];
+
+  const yearQueries = useQueries({
+    queries: years.map((year) => ({
+      queryKey: ['travelRecordsByYear', year],
+      queryFn: () => getAllTravelRecordsInYear(year),
+    })),
+  });
+
+  const failedYearQueries = yearQueries.filter((query) => query.isError);
+  const isError =
+    travelRecordYearsQuery.isError || failedYearQueries.length > 0;
+
+  return {
+    // 한 연도라도 실패하면 나머지 연도만 넘기지 않는다. 일부만 빠진 지도는
+    // 그 지역에 다녀온 적이 없는 것처럼 보여서 실패보다 더 오해를 준다.
+    records: isError
+      ? []
+      : yearQueries.flatMap((query) => query.data ?? []),
+    isPending:
+      travelRecordYearsQuery.isPending ||
+      yearQueries.some((query) => query.isPending),
+    isError,
+    retry: () => {
+      if (travelRecordYearsQuery.isError) {
+        void travelRecordYearsQuery.refetch();
+      }
+
+      failedYearQueries.forEach((query) => void query.refetch());
+    },
+  };
+}
+
 export function useTravelRecordDetail(travelRecordId: number | null) {
   const queryClient = useQueryClient();
 
@@ -184,6 +245,7 @@ export function useCreateTravelRecord() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
     },
   });
@@ -203,6 +265,9 @@ export function useUpdateTravelRecord() {
       selectedDateRange,
       selectedPhotos,
       decorations,
+      isStickerStateRestored,
+      originalTitle,
+      originalRegionId,
     }) =>
       updateTravelRecord(
         travelRecordId,
@@ -211,10 +276,14 @@ export function useUpdateTravelRecord() {
           selectedDateRange,
           uploadedImages: await uploadTravelRecordDraftImages(selectedPhotos),
           decorations,
+          isStickerStateRestored,
+          originalTitle,
+          originalRegionId,
         }),
       ),
     onSuccess: (_, { travelRecordId }) => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.invalidateQueries({
         queryKey: ['travelRecord', travelRecordId],
@@ -227,7 +296,18 @@ export function useDeleteTravelRecord() {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, number>({
-    mutationFn: deleteTravelRecordById,
+    mutationFn: async (travelRecordId) => {
+      try {
+        await deleteTravelRecordById(travelRecordId);
+      } catch (error) {
+        // 이미 없는 기록이면 사용자가 원한 상태에 도달한 것이다. 실패로
+        // 처리하면 상세 화면에 남아 재시도해도 계속 404가 나서 빠져나갈
+        // 방법이 없어진다. 캐시 정리는 onSuccess에서 이어서 수행한다.
+        if (!isTravelRecordNotFoundError(error)) {
+          throw error;
+        }
+      }
+    },
     onSuccess: (_, travelRecordId) => {
       // Strip the deleted record out of every cached list immediately,
       // instead of relying on invalidateQueries' async refetch. Otherwise
@@ -252,6 +332,7 @@ export function useDeleteTravelRecord() {
         };
       });
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.removeQueries({
         queryKey: ['travelRecord', travelRecordId],
@@ -276,6 +357,17 @@ export const getTravelRecordFoldersFromPages = (
 export const getTravelRecordSummariesFromPages = (
   pages: TravelRecordListResponse[] | undefined,
 ) => pages?.flatMap((page) => page.items) ?? [];
+
+export const getTravelRecordFoldersFromSummaries = (
+  records: TravelRecordSummary[],
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
+) =>
+  records.map((record) =>
+    mapTravelRecordSummaryToFolder(
+      record,
+      regionInfoByRegionId.get(record.regionId),
+    ),
+  );
 
 export const getTravelRecordFolders = (
   records: TravelRecordSummary[],

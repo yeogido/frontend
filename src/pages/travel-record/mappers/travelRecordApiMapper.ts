@@ -7,7 +7,9 @@ import type {
 import type {
   TravelRecordCreateRequest,
   TravelRecordDetailResponse,
+  TravelRecordImageRequest,
   TravelRecordImageResponse,
+  TravelRecordStickerRequest,
   TravelRecordSummary,
   TravelRecordUpdateRequest,
   UploadedTravelRecordImage,
@@ -18,10 +20,6 @@ import type {
   TravelRecordDraftRegion,
   TravelRecordFolder,
 } from '../types';
-import {
-  BACKEND_STICKER_ID_TO_FRONTEND_ID,
-  FRONTEND_STICKER_ID_TO_BACKEND_ID,
-} from '../constants/travelRecordStickerIds.ts';
 import { formatTravelRecordLocalDate } from '../utils/sessionFolders.ts';
 
 type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
@@ -106,7 +104,6 @@ export const mapTravelRecordSummaryToFolder = (
   ...resolveTravelRecordMapRegion(record.title, regionInfo),
   title: record.title,
   folderTheme: record.folderTheme,
-  year: Number(record.startDate.slice(0, 4)),
   startDate: record.startDate,
   endDate: record.endDate,
   period: formatPeriod(record.startDate, record.endDate),
@@ -137,17 +134,14 @@ export const mapTravelRecordDetailToFolder = (
     ...resolveTravelRecordMapRegion(record.title, regionInfo),
     title: record.title,
     folderTheme: record.folderTheme,
-    year: Number(record.startDate.slice(0, 4)),
-    startDate: record.startDate,
+      startDate: record.startDate,
     endDate: record.endDate,
     period: formatPeriod(record.startDate, record.endDate),
     photos: getRenderablePhotos(images, record.coverImageUrl),
     serverPhotos,
     decorations: stickers.map((sticker) => ({
       id: String(sticker.recordStickerId),
-      source: 'sticker' as const,
-      stickerId: BACKEND_STICKER_ID_TO_FRONTEND_ID[sticker.stickerId],
-      backendStickerId: sticker.stickerId,
+      stickerId: sticker.stickerId,
       imageUrl: sticker.imageUrl,
       x: sticker.positionX,
       y: sticker.positionY,
@@ -174,6 +168,29 @@ interface CreateTravelRecordCreateRequestParams {
   decorations: TravelFolderDecoration[];
 }
 
+const getSelectedRegionId = (selectedRegion: TravelRecordDraftRegion) =>
+  selectedRegion.regionId ?? Number(selectedRegion.id);
+
+const createTravelRecordImageRequests = (
+  uploadedImages: UploadedTravelRecordImage[],
+): TravelRecordImageRequest[] =>
+  uploadedImages.map((image, index) => ({
+    imageKey: image.objectKey,
+    imageOrder: index + 1,
+  }));
+
+const createTravelRecordStickerRequests = (
+  decorations: TravelFolderDecoration[],
+): TravelRecordStickerRequest[] =>
+  decorations.map((decoration) => ({
+    stickerId: decoration.stickerId,
+    positionX: decoration.x,
+    positionY: decoration.y,
+    rotation: decoration.rotation,
+    scale: decoration.scale,
+    zIndex: decoration.zIndex,
+  }));
+
 export const createTravelRecordCreateRequest = ({
   selectedRegion,
   selectedDateRange,
@@ -181,40 +198,53 @@ export const createTravelRecordCreateRequest = ({
   decorations,
 }: CreateTravelRecordCreateRequestParams): TravelRecordCreateRequest => ({
   title: selectedRegion.name,
-  regionId: selectedRegion.regionId ?? Number(selectedRegion.id),
+  regionId: getSelectedRegionId(selectedRegion),
   startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),
   endDate: formatTravelRecordLocalDate(selectedDateRange.endDate),
   folderTheme: defaultFolderTheme,
-  images: uploadedImages.map((image, index) => ({
-    imageKey: image.objectKey,
-    imageOrder: index + 1,
-  })),
-  stickers: decorations.flatMap((decoration) => {
-    if (decoration.source !== 'sticker') {
-      return [];
-    }
-
-    const stickerId =
-      decoration.backendStickerId ??
-      (decoration.stickerId
-        ? FRONTEND_STICKER_ID_TO_BACKEND_ID[decoration.stickerId]
-        : undefined);
-
-    if (!stickerId) {
-      return [];
-    }
-
-    return {
-      stickerId,
-      positionX: decoration.x,
-      positionY: decoration.y,
-      rotation: decoration.rotation,
-      scale: decoration.scale,
-      zIndex: decoration.zIndex,
-    };
-  }),
+  images: createTravelRecordImageRequests(uploadedImages),
+  stickers: createTravelRecordStickerRequests(decorations),
 });
 
-export const createTravelRecordUpdateRequest = (
-  params: CreateTravelRecordCreateRequestParams,
-): TravelRecordUpdateRequest => createTravelRecordCreateRequest(params);
+interface CreateTravelRecordUpdateRequestParams
+  extends CreateTravelRecordCreateRequestParams {
+  /** 서버에 저장돼 있던 스티커를 실제로 복원한 상태인지. */
+  isStickerStateRestored: boolean;
+  /** 서버에 저장돼 있던 제목. */
+  originalTitle?: string;
+  /** 서버에 저장돼 있던 지역 ID. */
+  originalRegionId?: number;
+}
+
+export const createTravelRecordUpdateRequest = ({
+  selectedRegion,
+  selectedDateRange,
+  uploadedImages,
+  decorations,
+  isStickerStateRestored,
+  originalTitle,
+  originalRegionId,
+}: CreateTravelRecordUpdateRequestParams): TravelRecordUpdateRequest => {
+  const regionId = getSelectedRegionId(selectedRegion);
+  // 서버는 stickers를 생략하면 기존 스티커를 유지하고, 빈 배열이면 전부
+  // 삭제한다. 편집 세션이 끊겨 서버 상태를 복원하지 못했는데 빈 배열을
+  // 보내면, 저장돼 있던 스티커가 사용자가 지운 적도 없는데 사라진다.
+  const keepsServerStickers = !isStickerStateRestored;
+
+  return {
+    // 제목 입력 화면이 없어 생성 시에는 지역명을 제목으로 쓴다. 수정하면서
+    // 지역을 바꾸지 않았다면 서버에 저장된 제목을 그대로 되돌려 보낸다.
+    title:
+      originalTitle && regionId === originalRegionId
+        ? originalTitle
+        : selectedRegion.name,
+    regionId,
+    startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),
+    endDate: formatTravelRecordLocalDate(selectedDateRange.endDate),
+    folderTheme: defaultFolderTheme,
+    images: createTravelRecordImageRequests(uploadedImages),
+    ...(keepsServerStickers
+      ? {}
+      : { stickers: createTravelRecordStickerRequests(decorations) }),
+  };
+};

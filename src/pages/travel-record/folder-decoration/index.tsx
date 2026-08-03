@@ -3,6 +3,7 @@ import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
+import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import {
@@ -12,11 +13,8 @@ import {
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
 import {
   appendFolderDecoration,
-  createUploadedFolderSticker,
-  removeUploadedFolderSticker,
-  validateFolderDecorationFiles,
+  type FolderDecorationSeed,
   type TravelFolderDecoration,
-  type UploadedFolderSticker,
 } from './folderDecoration';
 import {
   FolderDecorationCanvas,
@@ -77,13 +75,15 @@ function TravelRecordFolderDecorationPage() {
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
   const editSession = useTravelRecordSessionStore((state) => state.editSession);
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
-  const restoredDecorations = editSession?.decorations ?? [];
+  // 다른 기록의 편집 세션이 남아 있을 수 있고, 저장 후 뒤로가기로 되돌아오면
+  // 세션이 이미 비워져 있다. id가 일치할 때만 서버 상태를 복원한 것으로 본다.
+  const restoredEditSession =
+    travelRecordId && editSession?.id === travelRecordId ? editSession : null;
+  const restoredDecorations = restoredEditSession?.decorations ?? [];
   const [decorations, setDecorations] = useState<TravelFolderDecoration[]>(
     () => restoredDecorations,
   );
-  const [uploadedStickers, setUploadedStickers] = useState<UploadedFolderSticker[]>([]);
   const decorationsRef = useRef<TravelFolderDecoration[]>(restoredDecorations);
-  const uploadedStickersRef = useRef<UploadedFolderSticker[]>([]);
   const { showToast } = useToast();
   const createTravelRecordMutation = useCreateTravelRecord();
   const updateTravelRecordMutation = useUpdateTravelRecord();
@@ -109,18 +109,17 @@ function TravelRecordFolderDecorationPage() {
     setDecorations(nextDecorations);
   };
 
-  const appendDecoration = (seed: Parameters<typeof appendFolderDecoration>[1]) => {
+  const appendDecoration = (seed: FolderDecorationSeed) => {
     const result = appendFolderDecoration(decorationsRef.current, seed);
 
     if (!result.added) {
       showToast(
         '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
       );
-      return false;
+      return;
     }
 
     replaceDecorations(result.decorations);
-    return true;
   };
 
   useEffect(() => {
@@ -182,6 +181,9 @@ function TravelRecordFolderDecorationPage() {
                   selectedDateRange,
                   selectedPhotos,
                   decorations,
+                  isStickerStateRestored: restoredEditSession !== null,
+                  originalTitle: restoredEditSession?.title,
+                  originalRegionId: restoredEditSession?.regionId,
                 })
               ).travelRecordId,
             ),
@@ -201,10 +203,12 @@ function TravelRecordFolderDecorationPage() {
       await clearTravelRecordPhotoDraft();
       clearEdit();
       navigate('/travel-record', { state: { savedTravelRecordId: result.id } });
-    } catch {
+    } catch (error) {
       isSavingRef.current = false;
       setIsSaving(false);
-      showToast('여행 기록을 저장하지 못했어요.');
+      // 사진 장수, 스티커 위치, 지역 등 실패 원인이 서버 문구로 구분되므로
+      // 그대로 보여준다.
+      showToast(getApiErrorMessage(error, '여행 기록을 저장하지 못했어요.'));
     }
   };
 
@@ -282,73 +286,12 @@ function TravelRecordFolderDecorationPage() {
       <section className="absolute top-[503px] left-0 h-[341px] w-full bg-[#f9f9f9] shadow-[0_-1px_5px_rgba(0,0,0,0.07)]">
         <FolderDecorationPalette
           decorations={decorations}
-          uploadedStickers={uploadedStickers}
           onLimitReached={() =>
             showToast(
               '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
             )
           }
-          onAddSticker={(stickerId) => {
-            appendDecoration({ source: 'sticker', stickerId });
-          }}
-          onAddUpload={(imageFile) => {
-            if (uploadedStickersRef.current.length >= 10) {
-              showToast(
-                '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
-              );
-              return;
-            }
-
-            const result = validateFolderDecorationFiles(
-              [imageFile],
-              10 - decorationsRef.current.length,
-            );
-            if (!result.files.length) {
-              showToast(result.message);
-              return;
-            }
-
-            const uploadedSticker = createUploadedFolderSticker(imageFile);
-            if (!appendDecoration({
-              source: 'upload',
-              imageFile,
-              uploadedStickerId: uploadedSticker.id,
-            })) {
-              return;
-            }
-
-            const nextUploadedStickers = [
-              ...uploadedStickersRef.current,
-              uploadedSticker,
-            ];
-            uploadedStickersRef.current = nextUploadedStickers;
-            setUploadedStickers(nextUploadedStickers);
-          }}
-          onAddUploadedSticker={(uploadedStickerId) => {
-            const uploadedSticker = uploadedStickersRef.current.find(
-              (sticker) => sticker.id === uploadedStickerId,
-            );
-
-            if (!uploadedSticker) {
-              return;
-            }
-
-            appendDecoration({
-              source: 'upload',
-              imageFile: uploadedSticker.imageFile,
-              uploadedStickerId,
-            });
-          }}
-          onDeleteUploadedSticker={(uploadedStickerId) => {
-            const result = removeUploadedFolderSticker(
-              uploadedStickersRef.current,
-              decorationsRef.current,
-              uploadedStickerId,
-            );
-            uploadedStickersRef.current = result.uploadedStickers;
-            setUploadedStickers(result.uploadedStickers);
-            replaceDecorations(result.decorations);
-          }}
+          onAddSticker={appendDecoration}
         />
 
         <button
