@@ -25,7 +25,8 @@ interface FolderDecorationCanvasProps {
   onChange: (decorations: TravelFolderDecoration[]) => void;
 }
 
-type EditorMode = 'drag' | 'rotate' | 'resize';
+/** 핸들 하나로 각도와 크기를 함께 조절한다. */
+type EditorMode = 'drag' | 'transform';
 
 interface PointerEditState {
   initialPointer: { x: number; y: number };
@@ -116,26 +117,22 @@ export function FolderDecorationCanvas({
     };
     const currentPointer = { x: event.clientX, y: event.clientY };
 
-    if (editorMode === 'rotate') {
-      updateDecoration(selectedDecoration.id, {
-        rotation: getDecorationRotationFromPointerDelta(
-          pointerEditState.initialRotation,
-          center,
-          pointerEditState.initialPointer,
-          currentPointer,
-        ),
-      });
-      return;
-    }
-
-    const scale = getDecorationScaleFromPointerDistance(
-      pointerEditState.initialScale,
-      center,
-      pointerEditState.initialPointer,
-      currentPointer,
-    );
-
-    updateDecoration(selectedDecoration.id, { scale });
+    // 중심을 기준으로 핸들을 돌리면 각도가, 멀어지거나 가까워지면 크기가
+    // 바뀐다. 한 번에 갱신해야 뒤 호출이 앞 결과를 덮어쓰지 않는다.
+    updateDecoration(selectedDecoration.id, {
+      rotation: getDecorationRotationFromPointerDelta(
+        pointerEditState.initialRotation,
+        center,
+        pointerEditState.initialPointer,
+        currentPointer,
+      ),
+      scale: getDecorationScaleFromPointerDistance(
+        pointerEditState.initialScale,
+        center,
+        pointerEditState.initialPointer,
+        currentPointer,
+      ),
+    });
   };
 
   const endEditing = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -199,21 +196,11 @@ export function FolderDecorationCanvas({
                 </button>
                 <button
                   type="button"
-                  aria-label="\uC2A4\uD2F0\uCEE4 \uD68C\uC804"
-                  className="absolute -bottom-3 left-1/2 flex size-6 -translate-x-1/2 items-center justify-center rounded-full bg-[#ff6f41] text-xs text-white"
-                  onPointerDown={(event) =>
-                    beginPointerEditing(event, decoration, 'rotate')
-                  }
-                >
-                  R
-                </button>
-                <button
-                  type="button"
-                  aria-label="\uC2A4\uD2F0\uCEE4 \uD06C\uAE30 \uC870\uC808"
-                  title="\uD06C\uAE30 \uC870\uC808"
+                  aria-label="\uC2A4\uD2F0\uCEE4 \uD06C\uAE30\uC640 \uAC01\uB3C4 \uC870\uC808"
+                  title="\uD06C\uAE30\uC640 \uAC01\uB3C4 \uC870\uC808"
                   className="absolute -right-3 -bottom-3 flex size-6 items-center justify-center rounded-full bg-[#ff6f41] text-white"
                   onPointerDown={(event) =>
-                    beginPointerEditing(event, decoration, 'resize')
+                    beginPointerEditing(event, decoration, 'transform')
                   }
                 >
                   <IoResizeOutline
