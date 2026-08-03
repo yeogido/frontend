@@ -25,15 +25,15 @@ export function UploadedStickerImage({
     return imageResource.dispose;
   }, [imageFile]);
 
+  // 배경이 없는 PNG를 그대로 보여준다. 흰 배경이나 테두리를 두르면 등록 후
+  // 실제로 폴더에 붙는 모습과 미리보기가 달라진다.
   return (
-    <span
-      className={`block overflow-hidden rounded-xl bg-white p-[3px] shadow-[0_2px_5px_rgba(0,0,0,0.2)] ${className}`}
-    >
+    <span className={`block overflow-hidden ${className}`}>
       {imageUrl ? (
         <img
           src={imageUrl}
           alt=""
-          className={`block size-full rounded-[9px] object-contain ${imageClassName}`}
+          className={`block size-full object-contain ${imageClassName}`}
         />
       ) : null}
     </span>

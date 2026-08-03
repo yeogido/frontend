@@ -1,29 +1,80 @@
-export const STICKER_CATEGORIES = [
-  'food',
-  'nature',
-  'animal',
-  'person',
-  'object',
-] as const;
+import type {
+  StickerCategory,
+  StickerCategoryGroup,
+  StickerListResponse,
+  StickerResponse,
+} from '../../../types/sticker.type';
 
-export type StickerCategory = (typeof STICKER_CATEGORIES)[number];
+// apiClient를 import하지 않는다. 이 파일은 순수 함수만 담아 Node 테스트
+// 러너에서 그대로 불러올 수 있어야 한다.
 
-export const STICKER_IDS = [
-  'food-coffee', 'food-cake', 'food-fishbread', 'food-pork', 'food-stew',
-  'food-chicken', 'food-kimbap', 'food-bibimbap', 'food-beer', 'food-soju',
-  'nature-wave', 'nature-palm', 'nature-starfish', 'nature-sun', 'nature-shell',
-  'nature-cloud', 'nature-fire', 'nature-mountain', 'nature-tree', 'nature-clover',
-  'animal-dog', 'animal-cat', 'animal-chick', 'animal-bee', 'animal-snail',
-  'animal-seal', 'animal-turtle', 'animal-whale', 'animal-fish', 'animal-jellyfish',
-  'person-smile', 'person-heart', 'person-hot', 'person-eye', 'person-mouth',
-  'person-finger', 'person-girls', 'person-boys', 'person-couple', 'person-family',
-  'object-shoe', 'object-parasol', 'object-swimsuit', 'object-snorkel', 'object-ball',
-  'object-camera', 'object-umbrella', 'object-bag', 'object-car', 'object-guitar',
-] as const;
+export const STICKER_CATEGORY_LABELS: Record<StickerCategory, string> = {
+  NATURE: '자연',
+  FOOD: '음식',
+  ANIMAL: '동물',
+  PERSON: '인물',
+  OBJECT: '사물',
+  CUSTOM: '만들기',
+};
 
-export type StickerId = (typeof STICKER_IDS)[number];
+const CUSTOM_CATEGORY: StickerCategory = 'CUSTOM';
 
-const knownStickerIds = new Set<string>(STICKER_IDS);
+export const getStickerCategoryGroups = (
+  catalog: StickerListResponse | undefined,
+): StickerCategoryGroup[] => catalog?.categories ?? [];
 
-export const isKnownStickerId = (stickerId: string) =>
-  knownStickerIds.has(stickerId);
+export const getCustomStickers = (
+  catalog: StickerListResponse | undefined,
+): StickerResponse[] =>
+  getStickerCategoryGroups(catalog).find(
+    (group) => group.category === CUSTOM_CATEGORY,
+  )?.stickers ?? [];
+
+/**
+ * 등록 응답으로 받은 커스텀 스티커를 카탈로그에 이어 붙인다.
+ *
+ * 등록 API가 스티커 전체를 돌려주므로 목록을 다시 받아올 때까지 기다리지 않고
+ * 팔레트에 바로 반영한다. 서버는 커스텀 스티커를 등록 순서로 내려주므로
+ * 맨 뒤에 붙인다.
+ */
+export const appendCustomSticker = (
+  catalog: StickerListResponse,
+  sticker: StickerResponse,
+): StickerListResponse => {
+  const hasCustomCategory = catalog.categories.some(
+    (group) => group.category === CUSTOM_CATEGORY,
+  );
+
+  if (!hasCustomCategory) {
+    return {
+      categories: [
+        ...catalog.categories,
+        { category: CUSTOM_CATEGORY, stickers: [sticker] },
+      ],
+    };
+  }
+
+  return {
+    categories: catalog.categories.map((group) =>
+      group.category === CUSTOM_CATEGORY
+        ? { ...group, stickers: [...group.stickers, sticker] }
+        : group,
+    ),
+  };
+};
+
+export const removeCustomSticker = (
+  catalog: StickerListResponse,
+  stickerId: number,
+): StickerListResponse => ({
+  categories: catalog.categories.map((group) =>
+    group.category === CUSTOM_CATEGORY
+      ? {
+          ...group,
+          stickers: group.stickers.filter(
+            (sticker) => sticker.stickerId !== stickerId,
+          ),
+        }
+      : group,
+  ),
+});

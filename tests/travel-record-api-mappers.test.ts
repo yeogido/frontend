@@ -354,9 +354,7 @@ test('maps detail stickers into the folder displayed in the record list', () => 
   assert.deepEqual(mapTravelRecordFolder(summary, detail).decorations, [
     {
       id: '7',
-      source: 'sticker',
-      stickerId: 'animal-dog',
-      backendStickerId: 21,
+      stickerId: 21,
       imageUrl: 'https://example.com/stickers/dog.png',
       x: 0.5,
       y: 0.25,
@@ -444,7 +442,7 @@ test('handles a detail response that omits stickers', () => {
   assert.deepEqual(mapTravelRecordDetailToFolder(detail).decorations, []);
 });
 
-test('keeps an unmapped sticker id renderable through its server image URL', () => {
+test('keeps a sticker missing from the catalog renderable through its server image URL', () => {
   const detail: TravelRecordDetailResponse = {
     travelRecordId: 10,
     title: 'Busan',
@@ -469,12 +467,12 @@ test('keeps an unmapped sticker id renderable through its server image URL', () 
     createdAt: '2026-07-23T09:00:00',
   };
 
+  // 논리 삭제된 커스텀 스티커는 카탈로그에 없지만 기존 기록에는 계속
+  // 내려온다. 상세 응답의 imageUrl로 그리므로 그대로 표시된다.
   assert.deepEqual(mapTravelRecordDetailToFolder(detail).decorations, [
     {
       id: '9',
-      source: 'sticker',
-      stickerId: undefined,
-      backendStickerId: 999,
+      stickerId: 999,
       imageUrl: 'https://example.com/stickers/custom.png',
       x: 0.5,
       y: 0.25,
@@ -535,36 +533,24 @@ test('omits stickers when the server sticker state was never restored', () => {
   assert.equal('stickers' in request, false);
 });
 
-test('omits stickers when no restored sticker could be converted', () => {
-  // 서버 stickerId를 프론트 스티커로 변환하지 못한 경우. 사용자가 지운 게
-  // 아니므로 삭제 요청으로 오인되면 안 된다.
-  const request = createTravelRecordUpdateRequest({
-    ...createUpdateRequestParams(),
-    decorations: [
-      {
-        id: 'unconvertible-sticker',
-        source: 'sticker',
-        x: 0.5,
-        y: 0.25,
-        rotation: 0,
-        scale: 1,
-        zIndex: 1,
-      },
-    ],
-    isStickerStateRestored: true,
-  });
-
-  assert.equal('stickers' in request, false);
-});
-
 test('sends an empty sticker list when the user removed every sticker', () => {
   const request = createTravelRecordUpdateRequest({
     ...createUpdateRequestParams(),
+    decorations: [],
+    isStickerStateRestored: true,
+  });
+
+  assert.deepEqual(request.stickers, []);
+});
+
+test('round-trips server sticker ids without any local mapping', () => {
+  const request = createTravelRecordUpdateRequest({
+    ...createUpdateRequestParams(),
     decorations: [
       {
-        id: 'uploaded-sticker',
-        source: 'upload',
-        uploadedStickerId: 'local-upload',
+        id: 'placed-custom-sticker',
+        stickerId: 999,
+        imageUrl: 'https://example.com/stickers/custom.png',
         x: 0.1,
         y: 0.2,
         rotation: 0,
@@ -575,7 +561,16 @@ test('sends an empty sticker list when the user removed every sticker', () => {
     isStickerStateRestored: true,
   });
 
-  assert.deepEqual(request.stickers, []);
+  assert.deepEqual(request.stickers, [
+    {
+      stickerId: 999,
+      positionX: 0.1,
+      positionY: 0.2,
+      rotation: 0,
+      scale: 1,
+      zIndex: 1,
+    },
+  ]);
 });
 
 test('keeps the stored title when the region was not changed while editing', () => {
@@ -605,24 +600,14 @@ test('falls back to the region name once the region is changed while editing', (
 test('creates travel record create request from draft data and uploaded image keys', () => {
   const decorations: TravelFolderDecoration[] = [
     {
-      id: 'known-sticker',
-      source: 'sticker',
-      stickerId: 'animal-dog',
+      id: 'placed-sticker',
+      stickerId: 10,
+      imageUrl: 'https://example.com/stickers/dog.png',
       x: 0.5,
       y: 0.25,
       rotation: 15,
       scale: 1.2,
       zIndex: 3,
-    },
-    {
-      id: 'uploaded-sticker',
-      source: 'upload',
-      uploadedStickerId: 'local-upload',
-      x: 0.1,
-      y: 0.2,
-      rotation: 0,
-      scale: 1,
-      zIndex: 4,
     },
   ];
   const uploadedImages: UploadedTravelRecordImage[] = [
@@ -658,7 +643,7 @@ test('creates travel record create request from draft data and uploaded image ke
       ],
       stickers: [
         {
-          stickerId: 21,
+          stickerId: 10,
           positionX: 0.5,
           positionY: 0.25,
           rotation: 15,

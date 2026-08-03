@@ -13,11 +13,8 @@ import {
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
 import {
   appendFolderDecoration,
-  createUploadedFolderSticker,
-  removeUploadedFolderSticker,
-  validateFolderDecorationFiles,
+  type FolderDecorationSeed,
   type TravelFolderDecoration,
-  type UploadedFolderSticker,
 } from './folderDecoration';
 import {
   FolderDecorationCanvas,
@@ -86,9 +83,7 @@ function TravelRecordFolderDecorationPage() {
   const [decorations, setDecorations] = useState<TravelFolderDecoration[]>(
     () => restoredDecorations,
   );
-  const [uploadedStickers, setUploadedStickers] = useState<UploadedFolderSticker[]>([]);
   const decorationsRef = useRef<TravelFolderDecoration[]>(restoredDecorations);
-  const uploadedStickersRef = useRef<UploadedFolderSticker[]>([]);
   const { showToast } = useToast();
   const createTravelRecordMutation = useCreateTravelRecord();
   const updateTravelRecordMutation = useUpdateTravelRecord();
@@ -114,18 +109,17 @@ function TravelRecordFolderDecorationPage() {
     setDecorations(nextDecorations);
   };
 
-  const appendDecoration = (seed: Parameters<typeof appendFolderDecoration>[1]) => {
+  const appendDecoration = (seed: FolderDecorationSeed) => {
     const result = appendFolderDecoration(decorationsRef.current, seed);
 
     if (!result.added) {
       showToast(
         '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
       );
-      return false;
+      return;
     }
 
     replaceDecorations(result.decorations);
-    return true;
   };
 
   useEffect(() => {
@@ -292,73 +286,12 @@ function TravelRecordFolderDecorationPage() {
       <section className="absolute top-[503px] left-0 h-[341px] w-full bg-[#f9f9f9] shadow-[0_-1px_5px_rgba(0,0,0,0.07)]">
         <FolderDecorationPalette
           decorations={decorations}
-          uploadedStickers={uploadedStickers}
           onLimitReached={() =>
             showToast(
               '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
             )
           }
-          onAddSticker={(stickerId) => {
-            appendDecoration({ source: 'sticker', stickerId });
-          }}
-          onAddUpload={(imageFile) => {
-            if (uploadedStickersRef.current.length >= 10) {
-              showToast(
-                '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
-              );
-              return;
-            }
-
-            const result = validateFolderDecorationFiles(
-              [imageFile],
-              10 - decorationsRef.current.length,
-            );
-            if (!result.files.length) {
-              showToast(result.message);
-              return;
-            }
-
-            const uploadedSticker = createUploadedFolderSticker(imageFile);
-            if (!appendDecoration({
-              source: 'upload',
-              imageFile,
-              uploadedStickerId: uploadedSticker.id,
-            })) {
-              return;
-            }
-
-            const nextUploadedStickers = [
-              ...uploadedStickersRef.current,
-              uploadedSticker,
-            ];
-            uploadedStickersRef.current = nextUploadedStickers;
-            setUploadedStickers(nextUploadedStickers);
-          }}
-          onAddUploadedSticker={(uploadedStickerId) => {
-            const uploadedSticker = uploadedStickersRef.current.find(
-              (sticker) => sticker.id === uploadedStickerId,
-            );
-
-            if (!uploadedSticker) {
-              return;
-            }
-
-            appendDecoration({
-              source: 'upload',
-              imageFile: uploadedSticker.imageFile,
-              uploadedStickerId,
-            });
-          }}
-          onDeleteUploadedSticker={(uploadedStickerId) => {
-            const result = removeUploadedFolderSticker(
-              uploadedStickersRef.current,
-              decorationsRef.current,
-              uploadedStickerId,
-            );
-            uploadedStickersRef.current = result.uploadedStickers;
-            setUploadedStickers(result.uploadedStickers);
-            replaceDecorations(result.decorations);
-          }}
+          onAddSticker={appendDecoration}
         />
 
         <button
