@@ -1,6 +1,8 @@
 import axios from 'axios';
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 import { useAuthStore } from '../../store/auth.store';
+import type { LoginResult } from '../../types/auth.type';
 
 import { normalizeApiError } from './apiError';
 import type { ApiResponse } from './apiTypes';
@@ -15,8 +17,14 @@ const apiClient = axios.create({
 });
 
 // 인증 없이 호출되는 엔드포인트. 로그인 요청 등에 이전 세션의 토큰이
-// 그대로 붙어 나가는 것을 막기 위해 예외 처리한다.
-const AUTH_EXEMPT_PATHS = ['/auth/login'];
+// 그대로 붙어 나가는 것을 막기 위해 예외 처리한다. /auth/reissue도
+// 포함해야 만료된 accessToken이 재발급 요청 자체에 붙거나, 재발급
+// 요청의 401이 또 재발급을 트리거하는 무한 루프를 막을 수 있다.
+const AUTH_EXEMPT_PATHS = ['/auth/login', '/auth/reissue'];
+
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 function isAuthExemptPath(url?: string): boolean {
   if (!url) return false;
@@ -40,6 +48,30 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+let reissuePromise: Promise<string> | null = null;
+
+// 여러 요청이 동시에 401을 받아도 /auth/reissue는 한 번만 호출되도록,
+// 진행 중인 재발급 Promise를 공유한다 (kakaoMap.ts의 sdkPromise와 동일한 패턴).
+function reissueAccessToken(): Promise<string> {
+  if (reissuePromise) {
+    return reissuePromise;
+  }
+
+  const { refreshToken } = useAuthStore.getState();
+
+  reissuePromise = apiClient
+    .post<LoginResult>('/auth/reissue', { refreshToken })
+    .then(({ data }) => {
+      useAuthStore.getState().setTokens(data.accessToken, data.refreshToken);
+      return data.accessToken;
+    })
+    .finally(() => {
+      reissuePromise = null;
+    });
+
+  return reissuePromise;
+}
+
 // 서버 응답은 항상 { isSuccess, code, message, result } 형태로 감싸져 있다.
 //
 // - 성공(2xx) 응답만 여기서 result를 벗겨서 각 API 함수가 실제 데이터 타입을
@@ -57,7 +89,33 @@ apiClient.interceptors.response.use(
 
     return response;
   },
-  (error) => Promise.reject(normalizeApiError(error))
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
+
+    const shouldReissue =
+      error.response?.status === 401 &&
+      originalRequest &&
+      !isAuthExemptPath(originalRequest.url) &&
+      !originalRequest._retry;
+
+    if (!shouldReissue) {
+      return Promise.reject(normalizeApiError(error));
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      await reissueAccessToken();
+      return apiClient(originalRequest);
+    } catch {
+      // refreshToken도 만료/무효(AUTH4013 등) — 로컬 세션을 정리하고
+      // 로그인 페이지로 보낸다. 인터셉터는 컴포넌트 트리 밖이라
+      // useNavigate를 쓸 수 없어 풀 리로드로 이동한다.
+      useAuthStore.getState().clearAuth();
+      window.location.href = '/login';
+      return Promise.reject(normalizeApiError(error));
+    }
+  }
 );
 
 export default apiClient;
