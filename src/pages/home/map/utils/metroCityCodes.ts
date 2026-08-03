@@ -1,4 +1,4 @@
-import koreaProvinceJson from '../assets/korea-province.json';
+import koreaProvinceJson from '../assets/korea-province.json' with { type: 'json' };
 
 // 이름이 특별시/광역시로 끝나는 지역 = 구 단위 세부 구분선을 감추고
 // 싶은 대상. 하드코딩 목록 대신 province geojson에서 자동으로 판별한다.
