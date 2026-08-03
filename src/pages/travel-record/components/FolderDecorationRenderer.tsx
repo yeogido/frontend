@@ -1,6 +1,10 @@
 import { type ReactNode } from 'react';
 
-import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
+import {
+  CUSTOM_STICKER_OUTLINE_CLASS,
+  isCustomStickerImage,
+  type TravelFolderDecoration,
+} from '../folder-decoration/folderDecoration';
 
 import { getDecorationLayerStyle } from './decorationRender';
 
@@ -27,7 +31,11 @@ function DecorationImage({
           src={decoration.imageUrl}
           alt=""
           loading="lazy"
-          className="pointer-events-none block size-full object-contain"
+          className={`pointer-events-none block size-full object-contain ${
+            isCustomStickerImage(decoration.imageUrl)
+              ? CUSTOM_STICKER_OUTLINE_CLASS
+              : ''
+          }`}
         />
       ) : null}
     </span>

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { getApiErrorMessage } from '../../../../apis/common';
 import { UploadedStickerImage } from '../../../../components/sticker';
@@ -13,9 +20,11 @@ import closeRoundedIcon from '../../../../assets/icons/close-rounded.svg';
 import photoUploadIcon from '../../photo-selection/assets/photo-upload-icon.svg';
 import {
   CUSTOM_STICKER_CONTENT_TYPE,
+  CUSTOM_STICKER_OUTLINE_CLASS,
   getCustomStickerSlotState,
   getPastedStickerImage,
   MAX_FOLDER_DECORATION_COUNT,
+  readStickerImageFromClipboard,
   validateCustomStickerFile,
   type FolderDecorationSeed,
   type TravelFolderDecoration,
@@ -32,12 +41,18 @@ const pngOnlyMessage = '배경이 없는 PNG 이미지만 추가할 수 있어�
 interface FolderDecorationPaletteProps {
   decorations: TravelFolderDecoration[];
   onAddSticker: (seed: FolderDecorationSeed) => void;
+  onStickerDragStart: (
+    seed: FolderDecorationSeed,
+    point: { x: number; y: number },
+    pointerId: number,
+  ) => void;
   onLimitReached: () => void;
 }
 
 export function FolderDecorationPalette({
   decorations,
   onAddSticker,
+  onStickerDragStart,
   onLimitReached,
 }: FolderDecorationPaletteProps) {
   const { showToast } = useToast();
@@ -104,6 +119,36 @@ export function FolderDecorationPalette({
     return () => document.removeEventListener('paste', handlePaste);
   }, [isUploadModalOpen, selectStickerFile, showToast]);
 
+  const handlePasteFromClipboard = async () => {
+    const { clipboard } = navigator;
+
+    // HTTPS(또는 localhost)가 아니거나 지원하지 않는 브라우저에서는 아예 없다.
+    if (!clipboard?.read) {
+      showToast('이 브라우저에서는 붙여넣기를 쓸 수 없어요. 사진에서 선택해 주세요.');
+      return;
+    }
+
+    try {
+      const clipboardImage = await readStickerImageFromClipboard(clipboard);
+
+      if (!clipboardImage) {
+        showToast('복사한 사진이 없어요. 사진 앱에서 피사체를 복사한 뒤 다시 눌러 주세요.');
+        return;
+      }
+
+      selectStickerFile(clipboardImage);
+    } catch (error) {
+      const isPermissionDenied =
+        error instanceof DOMException && error.name === 'NotAllowedError';
+
+      showToast(
+        isPermissionDenied
+          ? '붙여넣기를 허용해야 사진을 가져올 수 있어요.'
+          : '붙여넣기에 실패했어요. 사진에서 선택해 주세요.',
+      );
+    }
+  };
+
   const closeUploadModal = () => {
     setIsUploadModalOpen(false);
     setPendingFile(null);
@@ -117,6 +162,35 @@ export function FolderDecorationPalette({
 
     onAddSticker({ stickerId, imageUrl });
   };
+
+  /**
+   * 탭하면 폴더 가운데, 끌어다 놓으면 놓은 자리에 붙는다.
+   *
+   * 포인터로 누른 경우는 드래그 흐름에서 함께 처리하므로 click은 키보드로
+   * 누른 경우(detail 0)만 받는다. 그러지 않으면 한 번 누를 때 두 번 붙는다.
+   */
+  const getStickerHandlers = (stickerId: number, imageUrl: string) => ({
+    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) {
+        return;
+      }
+
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      onStickerDragStart(
+        { stickerId, imageUrl },
+        { x: event.clientX, y: event.clientY },
+        event.pointerId,
+      );
+    },
+    onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
+      if (event.detail !== 0) {
+        return;
+      }
+
+      addSticker(stickerId, imageUrl);
+    },
+  });
 
   const handleCreateCustomSticker = async () => {
     if (!pendingFile || isSavingCustomSticker) {
@@ -186,14 +260,14 @@ export function FolderDecorationPalette({
               <button
                 type="button"
                 aria-label={`${sticker.name} 스티커 추가`}
-                onClick={() => addSticker(sticker.stickerId, sticker.imageUrl)}
-                className="size-full overflow-hidden rounded-xl bg-[#e4e4e4]"
+                {...getStickerHandlers(sticker.stickerId, sticker.imageUrl)}
+                className="size-full touch-none cursor-grab select-none overflow-hidden rounded-xl bg-[#e4e4e4] active:cursor-grabbing"
               >
                 <img
                   src={sticker.imageUrl}
                   alt=""
                   loading="lazy"
-                  className="size-full object-contain p-1"
+                  className={`size-full object-contain p-1 ${CUSTOM_STICKER_OUTLINE_CLASS}`}
                 />
               </button>
               <button
@@ -235,8 +309,8 @@ export function FolderDecorationPalette({
         type="button"
         aria-disabled={isFolderFull}
         aria-label={`${sticker.name} 스티커 추가`}
-        onClick={() => addSticker(sticker.stickerId, sticker.imageUrl)}
-        className="flex size-14 items-center justify-center overflow-hidden rounded-xl bg-[#e4e4e4]"
+        {...getStickerHandlers(sticker.stickerId, sticker.imageUrl)}
+        className="flex size-14 touch-none cursor-grab items-center justify-center overflow-hidden rounded-xl bg-[#e4e4e4] select-none active:cursor-grabbing"
       >
         <img
           src={sticker.imageUrl}
@@ -310,31 +384,44 @@ export function FolderDecorationPalette({
               만들어 보세요
             </h2>
             <p className="mt-1 text-[14px] text-[#1c1c1c]">
-              사진에서 복사한 피사체를 붙여넣어 보세요!
+              사진 앱에서 피사체를 복사한 뒤 붙여넣어 주세요!
             </p>
             {pendingFile ? (
               <div className="mt-5 flex h-[213px] w-full items-center justify-center">
+                {/* 폴더에 붙었을 때와 같은 흰 테두리로 보여준다. */}
                 <UploadedStickerImage
                   imageFile={pendingFile}
                   className="size-[150px]"
+                  imageClassName={CUSTOM_STICKER_OUTLINE_CLASS}
                 />
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="mt-5 flex h-[213px] w-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-[#ff6f41] bg-[#fff7f5]"
-              >
+              <div className="mt-5 flex h-[213px] w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#ff6f41] bg-[#fff7f5] px-6">
                 <span className="flex size-[51px] items-center justify-center rounded-full bg-[#fbd0c2]">
                   <img src={photoUploadIcon} alt="" className="size-8" />
                 </span>
-                <span className="text-center text-[14px] font-semibold text-[#1c1c1c]">
-                  사진을 붙여넣거나 추가해 주세요.
-                </span>
-                <span className="text-[12px] text-[#1c1c1c]">
-                  여기를 탭해서 업로드할 수 있어요.
-                </span>
-              </button>
+                <p className="text-center text-[14px] font-semibold text-[#1c1c1c]">
+                  사진 속 피사체를 길게 눌러 복사한 뒤<br />
+                  붙여넣기를 눌러 주세요.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handlePasteFromClipboard()}
+                    className="h-9 rounded-full bg-[#ff6f41] px-4 text-[14px] font-semibold text-[#f9f9f9]"
+                  >
+                    붙여넣기
+                  </button>
+                  {/* 붙여넣기가 막힌 환경을 위해 파일 선택도 남겨 둔다. */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-9 rounded-full border border-[#e4e4e4] bg-[#f9f9f9] px-4 text-[14px] font-medium text-[#505050]"
+                  >
+                    사진에서 선택
+                  </button>
+                </div>
+              </div>
             )}
             <button
               type="button"

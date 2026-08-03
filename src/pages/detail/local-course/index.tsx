@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import type { CourseDetailResult } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
@@ -42,6 +42,7 @@ function removePendingId(
 
 function LocalCourseDetailPage() {
   const { courseId: courseIdParam } = useParams<{ courseId?: string }>();
+  const navigate = useNavigate();
   const { openLoginModal } = useLoginModal();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const { showToast } = useToast();
@@ -175,6 +176,7 @@ function LocalCourseDetailPage() {
           onContentLikeToggle={handleContentLikeToggle}
           pendingPlaceIds={pendingPlaceIds}
           pendingContentIds={pendingContentIds}
+          onBack={() => navigate('/local-course')}
         />
       )}
     </DetailStateGuard>

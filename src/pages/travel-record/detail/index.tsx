@@ -377,7 +377,7 @@ function TravelRecordDetailPage() {
           <h1 className="text-center text-[20px] leading-none font-semibold text-[#1c1c1c]">
             {folder.title}
           </h1>
-          <time className="rounded-full bg-[#e4e4e4] px-2 py-1 text-[16px] leading-none text-[#7f7f7f]">
+          <time className="shrink-0 whitespace-nowrap rounded-full bg-[#e4e4e4] px-2 py-1 text-[16px] leading-none text-[#7f7f7f]">
             {folder.period}
           </time>
         </div>

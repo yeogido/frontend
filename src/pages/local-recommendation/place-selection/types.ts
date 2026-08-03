@@ -12,6 +12,6 @@ export interface PlaceItem {
 }
 
 export interface SelectedPlace extends PlaceItem {
-  imageFile: File;
-  imagePreviewUrl: string;
+  imageFile: File | null;
+  imagePreviewUrl: string | null;
 }

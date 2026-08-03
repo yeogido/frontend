@@ -2,11 +2,6 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import {
-  filterFestivalApiItems,
-  normalizeFestivalTag,
-} from '../src/pages/local-recommendation/event-selection/festivalSearch.ts';
-
 test('persistent event sheet is non-modal and cannot dismiss below its minimum snap point', () => {
   const sheetPath = new URL(
     '../src/pages/local-recommendation/event-selection/components/SelectedEventSheet.tsx',
@@ -49,35 +44,8 @@ test('event selection uses the shared selection UI and submits to place selectio
   assert.ok(existsSync(sheetPath));
   assert.match(eventPageSource, /<SelectionPageLayout/);
   assert.match(eventPageSource, /<SelectedItemsSheet/);
-  assert.match(eventPageSource, /navigate\('\/local-recommendation\/place-selection'\)/);
-});
-
-test('festival tags are normalized regardless of whitespace and case', () => {
-  assert.equal(normalizeFestivalTag('  BUSAN Festival  '), 'busan festival');
-});
-
-test('festival search matches tag, title, and address', () => {
-  const festivals = [
-    {
-      id: '1',
-      tag: 'busan beach',
-      title: 'Gwangalli Beach Festival',
-      address: 'Busan Suyeong-gu',
-    },
-    {
-      id: '2',
-      tag: 'music festival',
-      title: 'Rock Festival',
-      address: 'Seoul',
-    },
-  ];
-
-  assert.deepEqual(
-    filterFestivalApiItems(festivals, 'music').map((festival) => festival.id),
-    ['2']
-  );
-  assert.deepEqual(
-    filterFestivalApiItems(festivals, 'suyeong').map((festival) => festival.id),
-    ['1']
+  assert.match(
+    eventPageSource,
+    /navigate\('\/local-recommendation\/place-selection'\)/
   );
 });

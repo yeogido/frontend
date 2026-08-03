@@ -8,14 +8,15 @@ export function buildVisitEvents(
   places: readonly PersistedSelectedPlace[],
   festivals: readonly PersistedSelectedFestival[],
   visitOrder: readonly string[],
-  fallbackImageSrc: string
+  fallbackImageSrc: string,
+  placeImageSrcById: ReadonlyMap<string, string> = new Map()
 ): VisitEvent[] {
   const placeEvents: VisitEvent[] = places.map((place) => ({
     id: place.id,
     kind: 'PLACE',
     name: place.title,
     address: place.address,
-    imageSrc: fallbackImageSrc,
+    imageSrc: placeImageSrcById.get(place.id) ?? fallbackImageSrc,
     externalPlaceId: place.externalPlaceId,
     categoryGroupCode: place.categoryGroupCode,
     roadAddress: place.roadAddress,
