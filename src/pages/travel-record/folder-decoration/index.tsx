@@ -17,7 +17,7 @@ import {
   appendFolderDecoration,
   getDecorationDragPoint,
   getDraggingStickerPreviewStyle,
-  isPointInFolderDecorationLayout,
+  isFolderDecorationDropTarget,
   shouldAppendFolderDecorationAfterDrag,
   type FolderDecorationSeed,
   type TravelFolderDecoration,
@@ -189,17 +189,21 @@ function TravelRecordFolderDecorationPage() {
       clearDraggingSticker();
 
       const canvasRect = folderCanvasRef.current?.getBoundingClientRect();
-      const dropPoint = canvasRect
+      const isDropTarget = Boolean(
+        canvasRect &&
+          isFolderDecorationDropTarget(
+            canvasRect,
+            event.clientX,
+            event.clientY,
+          ),
+      );
+      const dropPoint = isDropTarget && canvasRect
         ? getDecorationDragPoint(canvasRect, event.clientX, event.clientY)
         : null;
 
       const movedDistance = Math.hypot(
         event.clientX - currentDraggingSticker.origin.x,
         event.clientY - currentDraggingSticker.origin.y,
-      );
-
-      const isDropTarget = Boolean(
-        dropPoint && isPointInFolderDecorationLayout(dropPoint),
       );
 
       if (

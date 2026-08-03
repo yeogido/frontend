@@ -250,6 +250,16 @@ export const getDecorationDragPoint = (
     FOLDER_DECORATION_CANVAS_BOUNDS,
   );
 
+export const isFolderDecorationDropTarget = (
+  rect: CanvasRect,
+  clientX: number,
+  clientY: number,
+) =>
+  isPointInFolderDecorationLayout({
+    x: (clientX - rect.left) / rect.width,
+    y: (clientY - rect.top) / rect.height,
+  });
+
 export const getDecorationRotation = (
   center: { x: number; y: number },
   point: { x: number; y: number },

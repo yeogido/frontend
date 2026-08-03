@@ -205,6 +205,20 @@ test('accepts drag positions only inside the folder or either photo frame', () =
   assert.equal(isPointInFolderDecorationLayout({ x: 1, y: 0 }), false);
 });
 
+test('rejects a dropped sticker outside the folder without clamping it to the edge', () => {
+  const isFolderDecorationDropTarget = (
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration')
+  ).isFolderDecorationDropTarget;
+
+  assert.equal(typeof isFolderDecorationDropTarget, 'function');
+  if (!isFolderDecorationDropTarget) return;
+
+  const canvasRect = { left: 0, top: 0, width: 159, height: 183 };
+
+  assert.equal(isFolderDecorationDropTarget(canvasRect, 79.5, 137), true);
+  assert.equal(isFolderDecorationDropTarget(canvasRect, 79.5, 220), false);
+});
+
 test('creates new decorations in the canvas center above existing layers', () => {
   const decoration = createFolderDecoration(
     { stickerId: 11, imageUrl: 'https://example.com/stickers/sun.png' },
