@@ -21,6 +21,9 @@ const CARD_GAP = 16;
 const REGION_FESTIVAL_PREVIEW_COUNT = 2;
 const ERROR_MARGIN_TOP = 16;
 const ERROR_TEXT_SIZE = 13;
+const RETRY_BUTTON_FONT_SIZE = 14;
+const RETRY_BUTTON_PADDING_X = 16;
+const RETRY_BUTTON_PADDING_Y = 8;
 
 interface RegionFestivalSectionProps {
   regionName: string;
@@ -134,7 +137,14 @@ function RegionFestivalSection({
             <button
               type="button"
               onClick={() => void refetch()}
-              className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+              className="rounded-full border border-[#e4e4e4] font-medium text-[#505050]"
+              style={{
+                fontSize: RETRY_BUTTON_FONT_SIZE * scale,
+                paddingLeft: RETRY_BUTTON_PADDING_X * scale,
+                paddingRight: RETRY_BUTTON_PADDING_X * scale,
+                paddingTop: RETRY_BUTTON_PADDING_Y * scale,
+                paddingBottom: RETRY_BUTTON_PADDING_Y * scale,
+              }}
             >
               다시 시도
             </button>
