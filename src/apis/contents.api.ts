@@ -12,11 +12,12 @@ import type {
 
 export async function getCultureContents(
   params: GetCultureContentsParams = {},
+  signal?: AbortSignal,
 ): Promise<GetCultureContentsResponse> {
   try {
     const { data } = await apiClient.get<GetCultureContentsResponse>(
       '/contents',
-      { params },
+      { params, signal },
     );
 
     return data;

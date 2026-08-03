@@ -1,5 +1,5 @@
 import {
-  FaChildReaching,
+  FaDog,
   FaHeart,
   FaPeopleGroup,
   FaPeopleRoof,
@@ -33,7 +33,7 @@ const icons = {
   friends: FaPeopleGroup,
   couple: FaHeart,
   family: FaPeopleRoof,
-  children: FaChildReaching,
+  pet: FaDog,
 };
 
 function CompanionSelector({ value, onChange }: CompanionSelectorProps) {

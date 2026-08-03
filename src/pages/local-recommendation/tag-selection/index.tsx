@@ -12,6 +12,7 @@ import {
   useLocalRecommendationStore,
 } from '../../../store/localRecommendation.store';
 
+import BackButton from '../components/BackButton';
 import {
   KeywordSelectionSection,
   RepresentativePhotoSection,
@@ -43,6 +44,15 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const setTagSelection = useLocalRecommendationStore(
     (state) => state.setTagSelection
   );
+  const savedTagIds = useLocalRecommendationStore(
+    (state) => state.draft.tagIds
+  );
+  const savedHashtagIds = useLocalRecommendationStore(
+    (state) => state.draft.hashtagIds
+  );
+  const savedCoverImage = useLocalRecommendationStore(
+    (state) => state.pendingImages[LOCAL_RECOMMENDATION_COVER_IMAGE_ID]
+  );
   const setPendingImage = useLocalRecommendationStore(
     (state) => state.setPendingImage
   );
@@ -52,8 +62,20 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const imageRecoveryRequired = useLocalRecommendationStore(
     (state) => state.imageRecoveryRequired
   );
-  const [photo, setPhoto] = useState<PhotoSelection | null>(null);
-  const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(new Set());
+  const hasPendingImages = useLocalRecommendationStore(
+    (state) => Object.keys(state.pendingImages).length > 0
+  );
+  const [photo, setPhoto] = useState<PhotoSelection | null>(() =>
+    savedCoverImage
+      ? {
+          file: savedCoverImage.originalFile,
+          previewUrl: savedCoverImage.previewUrl,
+        }
+      : null
+  );
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(
+    () => new Set(savedTagIds as TagId[])
+  );
   const [limitMessage, setLimitMessage] = useState('');
   const [hashtags, setHashtags] = useState<Hashtag[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,12 +119,19 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const handleTagToggle = (tagId: TagId) => {
     const result = toggleTag(selectedTagIds, tagId);
     setSelectedTagIds(result.selectedTagIds);
+    setTagSelection({
+      tagIds: Array.from(result.selectedTagIds),
+      hashtagIds: savedHashtagIds,
+      coverImageKey: null,
+    });
     setLimitMessage(
       result.limitReached ? '키워드는 최대 5개까지 선택할 수 있어요.' : ''
     );
   };
 
   const isReady = isTagSelectionReady(photo, selectedTagIds);
+  const shouldShowImageRecoveryMessage =
+    imageRecoveryRequired && !hasPendingImages;
 
   const handleComplete = async () => {
     if (!photo || !isReady || isSubmitting) return;
@@ -146,6 +175,9 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
       topPadding={PAGE_PADDING_TOP}
       bottomPadding={32}
     >
+      <BackButton
+        onClick={() => navigate('/local-recommendation/course-info')}
+      />
       <main className="flex-1">
         <h1
           className="leading-[1.3] font-bold"
@@ -165,7 +197,7 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
           코스를 더 매력적으로 소개할 수 있어요!
         </p>
 
-        {imageRecoveryRequired ? (
+        {shouldShowImageRecoveryMessage ? (
           <p className="text-main-5 mt-2 text-sm" role="alert">
             새로고침으로 사진이 사라졌습니다. 대표 사진과 장소 사진을 다시 등록해 주세요.
           </p>

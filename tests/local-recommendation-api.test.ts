@@ -5,6 +5,106 @@ import {
   createLocalRecommendationWithClient,
   type CreateLocalRecommendationRequest,
 } from '../src/apis/localRecommendations.ts';
+import {
+  buildCourseRequest,
+  getCourseRequestValidationError,
+} from '../src/pages/local-recommendation/visit-order-selection/buildCourseRequest.ts';
+import { buildVisitEvents } from '../src/pages/local-recommendation/visit-order-selection/buildVisitEvents.ts';
+
+test('uses the selected place image preview in visit-order cards', () => {
+  const events = buildVisitEvents(
+    [
+      {
+        id: 'place-1',
+        title: 'Cafe',
+        address: '1 Road',
+        imageKey: null,
+        externalPlaceId: 'place-1',
+        categoryGroupCode: 'CE7',
+        roadAddress: '1 Road',
+        lotAddress: '',
+        latitude: 37.5,
+        longitude: 127,
+      },
+    ],
+    [],
+    [],
+    'fallback.png',
+    new Map([['place-1', 'blob:place-preview']])
+  );
+
+  assert.equal(events[0]?.imageSrc, 'blob:place-preview');
+});
+
+const createDraft = () => ({
+  neighborhood: { id: 1, name: 'Seoul', parentName: '' },
+  basicInfo: {
+    courseName: 'Seoul day trip',
+    summary: 'A walk through Seoul.',
+    duration: 'day-trip',
+    visitStartMonth: '4',
+    visitEndMonth: '5',
+    transport: 'walking',
+    companion: 'solo',
+  },
+  tagIds: [],
+  hashtagIds: [],
+  coverImageKey: 'thumbnails/seoul.jpg',
+  festivals: [],
+  places: [],
+  visitOrder: [],
+});
+
+test('maps basic information to Swagger course enums', () => {
+  const payload = buildCourseRequest(createDraft(), [
+    {
+      id: 'place-1',
+      kind: 'PLACE',
+      name: 'Cafe',
+      address: '1 Road',
+      imageSrc: '',
+      externalPlaceId: 'place-1',
+      categoryGroupCode: 'CE7',
+      roadAddress: '1 Road',
+      lotAddress: '',
+      latitude: 37.5,
+      longitude: 127,
+      imageKey: '',
+    },
+  ]);
+
+  assert.equal(payload?.durationType, 'DAY_TRIP');
+});
+
+test('requires at least one place and an address for every place', () => {
+  const draft = createDraft();
+
+  assert.match(
+    getCourseRequestValidationError(draft, [
+      { id: 'content-1', kind: 'CONTENT', name: 'Festival', address: '', imageSrc: '', contentId: 1 },
+    ]) ?? '',
+    /장소/
+  );
+  assert.match(
+    getCourseRequestValidationError(draft, [
+      {
+        id: 'place-1',
+        kind: 'PLACE',
+        name: 'Cafe',
+        address: '',
+        imageSrc: '',
+        externalPlaceId: 'place-1',
+        categoryGroupCode: 'CE7',
+        roadAddress: '',
+        lotAddress: '',
+        latitude: 37.5,
+        longitude: 127,
+        imageKey: '',
+      },
+    ]) ?? '',
+    /주소/
+  );
+});
 
 test('posts the supplied course payload unchanged to /courses', async () => {
   const payload: CreateLocalRecommendationRequest = {

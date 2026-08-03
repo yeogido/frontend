@@ -26,6 +26,9 @@ import type { VisitEvent } from '../constants';
 
 export function useVisitOrderSelection() {
   const draft = useLocalRecommendationStore((state) => state.draft);
+  const pendingImages = useLocalRecommendationStore(
+    (state) => state.pendingImages
+  );
   const imageRecoveryRequired = useLocalRecommendationStore(
     (state) => state.imageRecoveryRequired
   );
@@ -39,7 +42,13 @@ export function useVisitOrderSelection() {
       draft.places,
       draft.festivals,
       draft.visitOrder,
-      eventThumbnail
+      eventThumbnail,
+      new Map(
+        Object.entries(pendingImages).map(([placeId, image]) => [
+          placeId,
+          image.previewUrl,
+        ])
+      )
     )
   );
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
@@ -94,24 +103,21 @@ export function useVisitOrderSelection() {
         throw new Error('대표 사진 정보를 찾을 수 없습니다. 사진을 다시 등록해 주세요.');
       }
 
-      const files = await Promise.all([
-        coverImage,
-        ...currentDraft.places.map((place) => {
-          const pendingImage = pendingImages[place.id];
-          if (!pendingImage) {
-            throw new Error('장소 사진 정보를 찾을 수 없습니다. 사진을 다시 등록해 주세요.');
-          }
-          return pendingImage;
-        }),
-      ].map(async (pendingImage) =>
+      const placeImageUploads = currentDraft.places.flatMap((place) => {
+        const pendingImage = pendingImages[place.id];
+        return pendingImage ? [{ placeId: place.id, pendingImage }] : [];
+      });
+      const files = await Promise.all([coverImage, ...placeImageUploads.map(
+        ({ pendingImage }) => pendingImage
+      )].map(async (pendingImage) =>
         pendingImage.compressedFile ??
         (await pendingImage.compressionPromise) ??
         pendingImage.originalFile
       ));
       const [coverImageKey, ...placeImageKeys] = await uploadCourseImages(files);
       const imageKeyByPlaceId = new Map(
-        currentDraft.places.map((place, index) => [
-          place.id,
+        placeImageUploads.map(({ placeId }, index) => [
+          placeId,
           placeImageKeys[index],
         ])
       );
