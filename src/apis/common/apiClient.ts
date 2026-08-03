@@ -106,7 +106,6 @@ apiClient.interceptors.response.use(
 
     try {
       await reissueAccessToken();
-      return apiClient(originalRequest);
     } catch {
       // refreshToken도 만료/무효(AUTH4013 등) — 로컬 세션을 정리하고
       // 로그인 페이지로 보낸다. 인터셉터는 컴포넌트 트리 밖이라
@@ -115,6 +114,11 @@ apiClient.interceptors.response.use(
       window.location.href = '/login';
       return Promise.reject(normalizeApiError(error));
     }
+
+    // 재발급 자체는 성공했으므로, 재시도가 실패하더라도(재발급과 무관한
+    // 별개 오류) 로그아웃 처리하지 않는다. 재시도도 이 인터셉터를 다시
+    // 타므로, 실패 시 그 호출에서 이미 정규화되어 reject된다.
+    return apiClient(originalRequest);
   }
 );
 
