@@ -1,8 +1,7 @@
 import { type ReactNode } from 'react';
 
 import {
-  CUSTOM_STICKER_FRAME_CLASS,
-  CUSTOM_STICKER_FRAME_IMAGE_CLASS,
+  CUSTOM_STICKER_OUTLINE_CLASS,
   isCustomStickerImage,
   type TravelFolderDecoration,
 } from '../folder-decoration/folderDecoration';
@@ -22,28 +21,22 @@ function DecorationImage({
 }: {
   decoration: TravelFolderDecoration;
 }) {
-  const hasCustomStickerFrame = isCustomStickerImage(decoration.imageUrl);
-
   return (
     <span
       className="pointer-events-none absolute block size-[58px]"
       style={getDecorationLayerStyle(decoration)}
     >
       {decoration.imageUrl ? (
-        <span
-          className={`block size-full overflow-hidden ${
-            hasCustomStickerFrame ? CUSTOM_STICKER_FRAME_CLASS : ''
+        <img
+          src={decoration.imageUrl}
+          alt=""
+          loading="lazy"
+          className={`pointer-events-none block size-full object-contain ${
+            isCustomStickerImage(decoration.imageUrl)
+              ? CUSTOM_STICKER_OUTLINE_CLASS
+              : ''
           }`}
-        >
-          <img
-            src={decoration.imageUrl}
-            alt=""
-            loading="lazy"
-            className={`pointer-events-none block size-full object-contain ${
-              hasCustomStickerFrame ? CUSTOM_STICKER_FRAME_IMAGE_CLASS : ''
-            }`}
-          />
-        </span>
+        />
       ) : null}
     </span>
   );

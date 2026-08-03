@@ -13,8 +13,7 @@ import closeRoundedIcon from '../../../../assets/icons/close-rounded.svg';
 import photoUploadIcon from '../../photo-selection/assets/photo-upload-icon.svg';
 import {
   CUSTOM_STICKER_CONTENT_TYPE,
-  CUSTOM_STICKER_FRAME_CLASS,
-  CUSTOM_STICKER_FRAME_IMAGE_CLASS,
+  CUSTOM_STICKER_OUTLINE_CLASS,
   getCustomStickerSlotState,
   getPastedStickerImage,
   MAX_FOLDER_DECORATION_COUNT,
@@ -189,13 +188,13 @@ export function FolderDecorationPalette({
                 type="button"
                 aria-label={`${sticker.name} 스티커 추가`}
                 onClick={() => addSticker(sticker.stickerId, sticker.imageUrl)}
-                className={`size-full overflow-hidden ${CUSTOM_STICKER_FRAME_CLASS}`}
+                className="size-full overflow-hidden rounded-xl bg-[#e4e4e4]"
               >
                 <img
                   src={sticker.imageUrl}
                   alt=""
                   loading="lazy"
-                  className={`size-full object-contain ${CUSTOM_STICKER_FRAME_IMAGE_CLASS}`}
+                  className={`size-full object-contain p-1 ${CUSTOM_STICKER_OUTLINE_CLASS}`}
                 />
               </button>
               <button
@@ -316,11 +315,11 @@ export function FolderDecorationPalette({
             </p>
             {pendingFile ? (
               <div className="mt-5 flex h-[213px] w-full items-center justify-center">
-                {/* 폴더에 붙었을 때와 같은 흰 프레임으로 보여준다. */}
+                {/* 폴더에 붙었을 때와 같은 흰 테두리로 보여준다. */}
                 <UploadedStickerImage
                   imageFile={pendingFile}
-                  className={`size-[150px] ${CUSTOM_STICKER_FRAME_CLASS}`}
-                  imageClassName={CUSTOM_STICKER_FRAME_IMAGE_CLASS}
+                  className="size-[150px]"
+                  imageClassName={CUSTOM_STICKER_OUTLINE_CLASS}
                 />
               </div>
             ) : (

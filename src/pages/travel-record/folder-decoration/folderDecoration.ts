@@ -143,11 +143,13 @@ const DEFAULT_STICKER_PATH_SEGMENT = '/stickers/default/';
 export const isCustomStickerImage = (imageUrl: string) =>
   Boolean(imageUrl) && !imageUrl.includes(DEFAULT_STICKER_PATH_SEGMENT);
 
-/** 사용자가 올린 피사체를 스티커처럼 보이게 하는 흰 프레임. */
-export const CUSTOM_STICKER_FRAME_CLASS =
-  'rounded-xl bg-white p-[3px] shadow-[0_2px_5px_rgba(0,0,0,0.2)]';
-
-export const CUSTOM_STICKER_FRAME_IMAGE_CLASS = 'rounded-[9px]';
+/**
+ * 사용자가 올린 피사체를 기본 스티커처럼 보이게 하는 흰 테두리.
+ *
+ * 실루엣을 따라 그려지므로 사진 비율과 무관하게 흰 여백이 생기지 않는다.
+ * 정의는 globals.css에 있다.
+ */
+export const CUSTOM_STICKER_OUTLINE_CLASS = 'sticker-outline';
 
 const createDecorationId = () =>
   typeof crypto.randomUUID === 'function'
