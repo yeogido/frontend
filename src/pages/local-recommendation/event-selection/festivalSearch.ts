@@ -1,10 +1,18 @@
-import { getCultureContents } from '../../../apis/contents.api';
-
-import { toFestivalItem } from './festivalTransform';
+import { toFestivalItem } from './festivalTransform.ts';
 import type { FestivalItem } from './types';
+import type {
+  GetCultureContentsParams,
+  GetCultureContentsResponse,
+} from '../../../types/content.type';
+
+export type GetCultureContents = (
+  params: GetCultureContentsParams,
+  signal?: AbortSignal
+) => Promise<GetCultureContentsResponse>;
 
 export const searchFestivals = async (
   keyword: string,
+  getCultureContents: GetCultureContents,
   signal?: AbortSignal
 ): Promise<FestivalItem[]> => {
   const trimmedKeyword = keyword.trim();

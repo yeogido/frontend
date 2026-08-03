@@ -6,6 +6,7 @@ import SelectionPageLayout from '../components/SelectionPageLayout';
 import SelectionResultCard from '../components/SelectionResultCard';
 import SelectedItemsSheet from '../components/SelectedItemsSheet';
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
+import { getCultureContents } from '../../../apis/contents.api';
 import { festivalSearchSuggestions } from './constants/festivalSearchSuggestions';
 import { searchFestivals } from './festivalSearch';
 import type { FestivalItem } from './types';
@@ -43,7 +44,8 @@ function EventSelectionPage() {
     isError,
   } = useQuery({
     queryKey: ['event-selection', 'festival-search', debouncedQuery],
-    queryFn: ({ signal }) => searchFestivals(debouncedQuery, signal),
+    queryFn: ({ signal }) =>
+      searchFestivals(debouncedQuery, getCultureContents, signal),
     enabled: debouncedQuery.length > 0,
     staleTime: 30_000,
   });
