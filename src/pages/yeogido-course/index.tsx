@@ -4,6 +4,7 @@ import {
   ContentCard,
   ContentCardSkeleton,
   CourseCard,
+  LoadingSpinner,
   SearchTriggerButton,
   SectionHeader,
 } from '../../components/common';
@@ -110,7 +111,12 @@ function YeogidoCoursePage() {
   const recentCoursePreviews = useRecentCourses()
     .slice(0, RECENT_COURSE_PREVIEW_COUNT)
     .map(toCourseCardProps);
-  const { data: recommendedCourses } = useRecommendedCourses();
+  const {
+    data: recommendedCourses,
+    isPending: isRecommendedCoursesPending,
+    isError: isRecommendedCoursesError,
+    refetch: refetchRecommendedCourses,
+  } = useRecommendedCourses();
   const heroCourse = recommendedCourses?.[0];
   const heroTitle = heroCourse?.title ?? DEFAULT_HERO_TITLE;
   const heroDescription = heroCourse?.description ?? DEFAULT_HERO_DESCRIPTION;
@@ -179,6 +185,41 @@ function YeogidoCoursePage() {
         />
       </div>
 
+      {isRecommendedCoursesPending ? (
+        <div
+          className="flex items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#8EA98C_0%,#507047_100%)]"
+          style={{
+            height: HERO_HEIGHT * scale,
+            marginTop: HERO_MARGIN_TOP * scale,
+            borderRadius: HERO_RADIUS * scale,
+          }}
+        >
+          <LoadingSpinner label="추천 코스를 불러오는 중" />
+        </div>
+      ) : isRecommendedCoursesError ? (
+        <div
+          className="bg-gray-1 flex flex-col items-center justify-center gap-3 overflow-hidden"
+          style={{
+            height: HERO_HEIGHT * scale,
+            marginTop: HERO_MARGIN_TOP * scale,
+            borderRadius: HERO_RADIUS * scale,
+          }}
+        >
+          <p
+            className="text-gray-4 text-center font-medium"
+            style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+          >
+            추천 코스를 불러오지 못했어요.
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetchRecommendedCourses()}
+            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+          >
+            다시 시도
+          </button>
+        </div>
+      ) : (
       <button
         type="button"
         onClick={() =>
@@ -278,6 +319,7 @@ function YeogidoCoursePage() {
           </div>
         </div>
       </button>
+      )}
 
       <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
         <SectionHeader
