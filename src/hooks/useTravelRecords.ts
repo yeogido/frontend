@@ -164,11 +164,27 @@ export function useTravelRecordsForMap() {
     })),
   });
 
+  const failedYearQueries = yearQueries.filter((query) => query.isError);
+  const isError =
+    travelRecordYearsQuery.isError || failedYearQueries.length > 0;
+
   return {
-    records: yearQueries.flatMap((query) => query.data ?? []),
+    // 한 연도라도 실패하면 나머지 연도만 넘기지 않는다. 일부만 빠진 지도는
+    // 그 지역에 다녀온 적이 없는 것처럼 보여서 실패보다 더 오해를 준다.
+    records: isError
+      ? []
+      : yearQueries.flatMap((query) => query.data ?? []),
     isPending:
       travelRecordYearsQuery.isPending ||
       yearQueries.some((query) => query.isPending),
+    isError,
+    retry: () => {
+      if (travelRecordYearsQuery.isError) {
+        void travelRecordYearsQuery.refetch();
+      }
+
+      failedYearQueries.forEach((query) => void query.refetch());
+    },
   };
 }
 

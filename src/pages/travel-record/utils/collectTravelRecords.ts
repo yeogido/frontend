@@ -18,16 +18,25 @@ export const collectTravelRecords = async (
   fetchPage: FetchTravelRecordPage,
 ): Promise<TravelRecordSummary[]> => {
   const records: TravelRecordSummary[] = [];
+  const requestedCursors = new Set<number>();
   let cursor: number | undefined;
 
-  do {
+  for (;;) {
     const page = await fetchPage(cursor);
 
     records.push(...page.items);
-    // hasNext가 true여도 커서가 비어 오면 다음 페이지를 요청할 근거가 없다.
-    // 그대로 반복하면 같은 페이지를 무한히 받게 되므로 여기서 멈춘다.
-    cursor = page.hasNext ? (page.cursorId ?? undefined) : undefined;
-  } while (cursor !== undefined);
 
-  return records;
+    // hasNext가 true여도 커서가 비어 오면 다음 페이지를 요청할 근거가 없다.
+    const nextCursor = page.hasNext ? (page.cursorId ?? undefined) : undefined;
+
+    // 이미 요청했던 커서가 다시 오면 서버가 같은 페이지를 계속 돌려주는
+    // 상태다. 그대로 따라가면 응답이 끝나지 않아 쿼리가 영원히 완료되지
+    // 않으므로 여기서 수집을 끝낸다.
+    if (nextCursor === undefined || requestedCursors.has(nextCursor)) {
+      return records;
+    }
+
+    requestedCursors.add(nextCursor);
+    cursor = nextCursor;
+  }
 };
