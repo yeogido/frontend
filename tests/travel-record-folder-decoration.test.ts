@@ -11,6 +11,7 @@ import {
   getDecorationRotation,
   getNormalizedCanvasPoint,
   getPastedStickerImage,
+  isCustomStickerImage,
   validateCustomStickerFile,
 } from '../src/pages/travel-record/folder-decoration/folderDecoration.ts';
 import { getDecorationLayerStyle } from '../src/pages/travel-record/components/decorationRender.ts';
@@ -43,6 +44,27 @@ test('rejects a custom sticker file over the size limit', () => {
   );
   assert.equal(MAX_FOLDER_DECORATION_COUNT, 10);
   assert.equal(MAX_CUSTOM_STICKER_COUNT, 10);
+});
+
+test('tells custom stickers apart from default ones by image path', () => {
+  // 여행 기록 상세 응답에는 stickerType이 없어 경로로 구분한다.
+  const base = 'https://example.com';
+
+  assert.equal(
+    isCustomStickerImage(`${base}/stickers/default/nature/sun.png`),
+    false,
+  );
+  assert.equal(
+    isCustomStickerImage(`${base}/stickers/default/food/cake.png`),
+    false,
+  );
+  assert.equal(
+    isCustomStickerImage(
+      `${base}/stickers/230c1263-630a-407b-9603-7cc8e231f911.png`,
+    ),
+    true,
+  );
+  assert.equal(isCustomStickerImage(''), false);
 });
 
 test('picks the first pasted PNG image out of the clipboard', () => {

@@ -127,6 +127,28 @@ export const CUSTOM_STICKER_CONTENT_TYPE = 'image/png';
 
 export const CUSTOM_STICKER_FILE_NAME = 'custom-sticker.png';
 
+const DEFAULT_STICKER_PATH_SEGMENT = '/stickers/default/';
+
+/**
+ * 커스텀 스티커인지 이미지 경로로 판별한다.
+ *
+ * 기본 스티커는 흰 테두리가 그림에 들어 있지만 사용자가 올린 피사체는 그렇지
+ * 않아서, 같이 붙이면 결이 달라 보인다. 그래서 커스텀 스티커에만 흰 프레임을
+ * 씌운다.
+ *
+ * 여행 기록 상세 응답의 스티커에는 stickerType이 없고, 논리 삭제된 커스텀
+ * 스티커는 카탈로그에서도 빠지기 때문에 조회로는 구분할 수 없다. 서버가 기본
+ * 스티커만 stickers/default/ 아래에 두는 것을 이용한다.
+ */
+export const isCustomStickerImage = (imageUrl: string) =>
+  Boolean(imageUrl) && !imageUrl.includes(DEFAULT_STICKER_PATH_SEGMENT);
+
+/** 사용자가 올린 피사체를 스티커처럼 보이게 하는 흰 프레임. */
+export const CUSTOM_STICKER_FRAME_CLASS =
+  'rounded-xl bg-white p-[3px] shadow-[0_2px_5px_rgba(0,0,0,0.2)]';
+
+export const CUSTOM_STICKER_FRAME_IMAGE_CLASS = 'rounded-[9px]';
+
 const createDecorationId = () =>
   typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
