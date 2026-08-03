@@ -16,9 +16,9 @@ import {
   DetailDescriptionCard,
   DetailHeroSection,
   DetailInfoCard,
+  DetailPlaceCard,
   DetailStateGuard,
   DetailTitleSection,
-  FavoriteButton,
   ShareButton,
   ShareToast,
 } from '../components';
@@ -34,6 +34,7 @@ const TITLE_SECTION_PADDING_TOP = 24;
 const DESCRIPTION_MARGIN_TOP = 12;
 const INFO_CARD_MARGIN_TOP = 12;
 const MAP_MARGIN_TOP = 12;
+const PLACE_CARD_MARGIN_TOP = 8;
 const MAP_FALLBACK_HEIGHT = 342;
 const MAP_FALLBACK_RADIUS = 12;
 const MAP_FALLBACK_FONT_SIZE = 14;
@@ -98,13 +99,6 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
             <DetailHeroSection
               imageUrl={businessDetail.heroImageUrl}
               title={businessDetail.title}
-              rightAction={
-                <FavoriteButton
-                  isActive={likedOverride ?? businessDetail.liked}
-                  label={businessDetail.title}
-                  onClick={handleFavoriteToggle}
-                />
-              }
             />
           </ResponsiveFullBleed>
 
@@ -160,6 +154,17 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                 등록된 위치 정보가 없습니다.
               </div>
             )}
+          </div>
+
+          <div style={{ marginTop: PLACE_CARD_MARGIN_TOP * scale }}>
+            <DetailPlaceCard
+              imageUrl={businessDetail.heroImageUrl}
+              title={businessDetail.title}
+              address={businessDetail.address}
+              hours={businessDetail.hours}
+              liked={likedOverride ?? businessDetail.liked}
+              onLikeClick={handleFavoriteToggle}
+            />
           </div>
         </ResponsivePageShell>
       )}
