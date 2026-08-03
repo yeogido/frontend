@@ -15,6 +15,7 @@ export interface BusinessPromotionListParams {
   size?: number;
   category?: BusinessPromotionCategoryParam;
   sort?: BusinessPromotionSortParam;
+  regionId?: number;
 }
 
 export interface BusinessPromotionItem {

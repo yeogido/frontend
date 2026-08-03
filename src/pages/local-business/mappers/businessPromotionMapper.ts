@@ -1,8 +1,11 @@
+import { regionCities } from '../../../constants/regions';
+import type { RegionCityId } from '../../../constants/regions';
 import type {
   BusinessPromotionCategoryParam,
   BusinessPromotionItem,
   BusinessPromotionSortParam,
 } from '../../../types/businessPromotion.type';
+import type { Region } from '../../../types/region.type';
 import type { BusinessCategory, BusinessItem, BusinessSort } from '../types';
 
 const CATEGORY_PARAM_BY_LABEL: Record<
@@ -58,6 +61,26 @@ export function mapApiCategoryToLabel(
 
 export function formatBusinessPromotionDate(createdAt: string): string {
   return createdAt.slice(0, 10).replace(/-/g, '.');
+}
+
+// regionCities(캐러셀이 쓰는 정적 문자열 슬러그)와 getRegions()(백엔드 실제
+// 지역 목록, 숫자 regionId)를 지역명으로 매칭한다. 두 데이터 소스의 표기가
+// 어긋나 매칭에 실패하면(존재하지 않는 이름 등) undefined를 반환해 전체
+// 조회로 안전하게 폴백한다 — 잘못된 regionId로 필터링해 빈 목록을
+// 보여주는 것보다 낫다.
+export function resolveRegionId(
+  selectedRegionId: RegionCityId,
+  regions: readonly Region[] | undefined
+): number | undefined {
+  const cityName = regionCities.find(
+    (city) => city.id === selectedRegionId
+  )?.name;
+
+  if (!cityName || !regions) {
+    return undefined;
+  }
+
+  return regions.find((region) => region.name === cityName)?.regionId;
 }
 
 export function mapBusinessPromotionItemToBusinessItem(

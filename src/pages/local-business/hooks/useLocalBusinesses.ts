@@ -1,11 +1,14 @@
 import { useCallback } from 'react';
 
+import type { RegionCityId } from '../../../constants/regions';
 import { useBusinessPromotions } from '../../../hooks/useBusinessPromotions';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import { useRegions } from '../../../hooks/useRegions';
 import {
   mapBusinessCategoryToApiParam,
   mapBusinessPromotionItemToBusinessItem,
   mapBusinessSortToApiParam,
+  resolveRegionId,
 } from '../mappers/businessPromotionMapper';
 import type { BusinessCategory, BusinessSort } from '../types';
 
@@ -14,12 +17,17 @@ const PAGE_SIZE = 10;
 interface UseLocalBusinessesParams {
   selectedCategory: BusinessCategory;
   sortBy: BusinessSort;
+  selectedRegionId: RegionCityId;
 }
 
 function useLocalBusinesses({
   selectedCategory,
   sortBy,
+  selectedRegionId,
 }: UseLocalBusinessesParams) {
+  const { data: regionsData } = useRegions();
+  const regionId = resolveRegionId(selectedRegionId, regionsData?.regions);
+
   const {
     data,
     error,
@@ -35,6 +43,7 @@ function useLocalBusinesses({
         : mapBusinessCategoryToApiParam(selectedCategory),
     sort: mapBusinessSortToApiParam(sortBy),
     size: PAGE_SIZE,
+    regionId,
   });
 
   const businesses = (data?.pages.flatMap((page) => page.items) ?? []).map(
