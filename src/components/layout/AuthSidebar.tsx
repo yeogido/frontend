@@ -6,6 +6,7 @@ import { guestSidebarMenu } from '../../constants/sidebarMenu';
 
 import { Divider } from '../ui';
 
+import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useLogout } from '../../hooks/useLogout';
 import { APP_MAX_WIDTH } from '../../constants/layout';
@@ -19,8 +20,6 @@ const PROFILE_LEFT = 24;
 const AVATAR_SIZE = 40;
 const PROFILE_GAP = 12;
 const NAME_TEXT_SIZE = 16;
-const EMAIL_TEXT_SIZE = 12;
-const PROFILE_TEXT_GAP = 2;
 const MENU_ITEM_HEIGHT = 51;
 const MENU_PADDING_X = 24;
 const TEXT_BASE = 16;
@@ -30,15 +29,6 @@ const MY_LABEL_PADDING_BOTTOM = 4;
 const LOGOUT_PADDING_Y = 16;
 const LOGOUT_ICON_SIZE = 20;
 const LOGOUT_GAP = 12;
-
-/**
- * 로그인 여부에 따라 표시될 사용자 프로필 정보는 아직 API 연동 전이라
- * 화면 확인용 샘플 데이터를 그대로 노출한다. 실제 사용자 정보 연동 시 교체 예정.
- */
-const SAMPLE_PROFILE = {
-  nickname: '김여기도',
-  email: 'test@yeogido.com',
-};
 
 /**
  * 로그인 전용 메뉴. path가 없는 항목은 아직 연결된 화면이 없어
@@ -59,6 +49,10 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const handleLogout = useLogout();
+  const { userId } = useAuth();
+  // 닉네임/이메일을 내려주는 사용자 프로필 API가 아직 없어, 지어낸 값 대신
+  // 실제로 존재하는 userId 기반의 안전한 표시값만 사용한다.
+  const displayName = userId ? `회원 #${userId}` : '회원';
 
   return (
     // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
@@ -130,18 +124,9 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
               <div className="flex min-w-0 flex-col">
                 <span
                   className="truncate font-semibold leading-none text-[#1C1C1C]"
-                  style={{
-                    fontSize: NAME_TEXT_SIZE * scale,
-                    marginBottom: PROFILE_TEXT_GAP * scale,
-                  }}
+                  style={{ fontSize: NAME_TEXT_SIZE * scale }}
                 >
-                  {SAMPLE_PROFILE.nickname}
-                </span>
-                <span
-                  className="truncate font-normal leading-none text-[#7F7F7F]"
-                  style={{ fontSize: EMAIL_TEXT_SIZE * scale }}
-                >
-                  {SAMPLE_PROFILE.email}
+                  {displayName}
                 </span>
               </div>
             </div>
