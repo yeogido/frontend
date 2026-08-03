@@ -77,7 +77,12 @@ function TravelRecordDetailPage() {
     isDeleted ? null : travelRecordId,
   );
   const deleteTravelRecordMutation = useDeleteTravelRecord();
-  const folder = serverTravelRecordQuery.data ?? locationState?.folder;
+  // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
+  // 실패했는데도 그걸 그대로 그리면 남의 기록(403)이나 이미 지워진 기록(404)이
+  // 정상 화면처럼 보이므로, 실패했을 때는 캐시 데이터를 쓰지 않는다.
+  const folder = serverTravelRecordQuery.isError
+    ? undefined
+    : (serverTravelRecordQuery.data ?? locationState?.folder);
   const motionRange = Math.max(cardWidth, 1);
   const cardDistance = cardWidth + cardStackOffset;
   const previousCardX = useTransform(dragX, (value) => -cardDistance + value);
@@ -150,9 +155,17 @@ function TravelRecordDetailPage() {
   if (!folder) {
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
-        <div className="flex h-full flex-col items-center justify-center text-center">
+        <div
+          role={serverTravelRecordQuery.isError ? 'alert' : undefined}
+          className="flex h-full flex-col items-center justify-center text-center"
+        >
           <p className="text-base font-medium text-[#7f7f7f]">
-            {missingRecordLabel}
+            {serverTravelRecordQuery.isError
+              ? getApiErrorMessage(
+                  serverTravelRecordQuery.error,
+                  missingRecordLabel,
+                )
+              : missingRecordLabel}
           </p>
           <button
             type="button"
