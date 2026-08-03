@@ -55,3 +55,8 @@ export interface GetCoursesParams {
   cursorId?: number;
   size?: number;
 }
+
+export interface GetPopularCoursesParams {
+  courseType: CourseType;
+  regionId?: number;
+}
