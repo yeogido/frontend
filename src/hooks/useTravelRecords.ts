@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query';
 
 import { normalizeApiError } from '../apis/common';
+import { useAuth } from './useAuth';
 import { createPresignedUrl, uploadFileToPresignedUrl } from '../apis/files.api';
 import { getRegion } from '../apis/regions.api';
 import {
@@ -133,10 +134,11 @@ export function useTravelRecords(params: TravelRecordListParams = {}) {
   });
 }
 
-export function useTravelRecordYears() {
+export function useTravelRecordYears({ enabled = true } = {}) {
   return useQuery({
     queryKey: ['travelRecordYears'],
     queryFn: getTravelRecordYears,
+    enabled,
   });
 }
 
@@ -152,9 +154,15 @@ const getAllTravelRecordsInYear = (year: number) =>
  *
  * 목록 API는 year를 생략하면 현재 연도만 돌려주기 때문에, 연도 목록을 받아
  * 연도별로 조회한 뒤 합친다. 지도 전용 API가 생기면 이 훅만 바꾸면 된다.
+ *
+ * 홈은 로그인 없이 열리는 화면인데 여행 기록 API는 인증이 필요하다. 로그인
+ * 전에는 조회를 시작하지 않는다.
  */
 export function useTravelRecordsForMap() {
-  const travelRecordYearsQuery = useTravelRecordYears();
+  const { isAuthenticated } = useAuth();
+  const travelRecordYearsQuery = useTravelRecordYears({
+    enabled: isAuthenticated,
+  });
   const years = travelRecordYearsQuery.data?.years ?? [];
 
   const yearQueries = useQueries({
@@ -165,8 +173,15 @@ export function useTravelRecordsForMap() {
   });
 
   const failedYearQueries = yearQueries.filter((query) => query.isError);
+  // 비활성 쿼리는 계속 pending으로 남는다. 로그인 전 상태가 로딩이나 실패로
+  // 보이지 않도록 인증 여부를 함께 본다.
   const isError =
-    travelRecordYearsQuery.isError || failedYearQueries.length > 0;
+    isAuthenticated &&
+    (travelRecordYearsQuery.isError || failedYearQueries.length > 0);
+  const isPending =
+    isAuthenticated &&
+    (travelRecordYearsQuery.isPending ||
+      yearQueries.some((query) => query.isPending));
 
   return {
     // 한 연도라도 실패하면 나머지 연도만 넘기지 않는다. 일부만 빠진 지도는
@@ -174,9 +189,7 @@ export function useTravelRecordsForMap() {
     records: isError
       ? []
       : yearQueries.flatMap((query) => query.data ?? []),
-    isPending:
-      travelRecordYearsQuery.isPending ||
-      yearQueries.some((query) => query.isPending),
+    isPending,
     isError,
     retry: () => {
       if (travelRecordYearsQuery.isError) {
