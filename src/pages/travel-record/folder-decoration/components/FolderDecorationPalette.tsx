@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { getApiErrorMessage } from '../../../../apis/common';
 import { UploadedStickerImage } from '../../../../components/sticker';
@@ -34,12 +41,17 @@ const pngOnlyMessage = '배경이 없는 PNG 이미지만 추가할 수 있어�
 interface FolderDecorationPaletteProps {
   decorations: TravelFolderDecoration[];
   onAddSticker: (seed: FolderDecorationSeed) => void;
+  onStickerDragStart: (
+    seed: FolderDecorationSeed,
+    point: { x: number; y: number },
+  ) => void;
   onLimitReached: () => void;
 }
 
 export function FolderDecorationPalette({
   decorations,
   onAddSticker,
+  onStickerDragStart,
   onLimitReached,
 }: FolderDecorationPaletteProps) {
   const { showToast } = useToast();
@@ -150,6 +162,34 @@ export function FolderDecorationPalette({
     onAddSticker({ stickerId, imageUrl });
   };
 
+  /**
+   * 탭하면 폴더 가운데, 끌어다 놓으면 놓은 자리에 붙는다.
+   *
+   * 포인터로 누른 경우는 드래그 흐름에서 함께 처리하므로 click은 키보드로
+   * 누른 경우(detail 0)만 받는다. 그러지 않으면 한 번 누를 때 두 번 붙는다.
+   */
+  const getStickerHandlers = (stickerId: number, imageUrl: string) => ({
+    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) {
+        return;
+      }
+
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      onStickerDragStart(
+        { stickerId, imageUrl },
+        { x: event.clientX, y: event.clientY },
+      );
+    },
+    onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
+      if (event.detail !== 0) {
+        return;
+      }
+
+      addSticker(stickerId, imageUrl);
+    },
+  });
+
   const handleCreateCustomSticker = async () => {
     if (!pendingFile || isSavingCustomSticker) {
       return;
@@ -218,8 +258,8 @@ export function FolderDecorationPalette({
               <button
                 type="button"
                 aria-label={`${sticker.name} 스티커 추가`}
-                onClick={() => addSticker(sticker.stickerId, sticker.imageUrl)}
-                className="size-full overflow-hidden rounded-xl bg-[#e4e4e4]"
+                {...getStickerHandlers(sticker.stickerId, sticker.imageUrl)}
+                className="size-full touch-none cursor-grab select-none overflow-hidden rounded-xl bg-[#e4e4e4] active:cursor-grabbing"
               >
                 <img
                   src={sticker.imageUrl}
@@ -267,8 +307,8 @@ export function FolderDecorationPalette({
         type="button"
         aria-disabled={isFolderFull}
         aria-label={`${sticker.name} 스티커 추가`}
-        onClick={() => addSticker(sticker.stickerId, sticker.imageUrl)}
-        className="flex size-14 items-center justify-center overflow-hidden rounded-xl bg-[#e4e4e4]"
+        {...getStickerHandlers(sticker.stickerId, sticker.imageUrl)}
+        className="flex size-14 touch-none cursor-grab items-center justify-center overflow-hidden rounded-xl bg-[#e4e4e4] select-none active:cursor-grabbing"
       >
         <img
           src={sticker.imageUrl}

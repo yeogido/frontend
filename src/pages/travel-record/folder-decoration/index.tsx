@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -6,6 +7,7 @@ import { TravelRecordPageFrame } from '../components';
 import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
   useCreateTravelRecord,
   useUpdateTravelRecord,
@@ -13,6 +15,10 @@ import {
 import type { TravelFolderDecorationLocationState } from '../photo-selection/types';
 import {
   appendFolderDecoration,
+  getDecorationDragPoint,
+  getDraggingStickerPreviewStyle,
+  isPointInFolderDecorationLayout,
+  shouldAppendFolderDecorationAfterDrag,
   type FolderDecorationSeed,
   type TravelFolderDecoration,
 } from './folderDecoration';
@@ -39,6 +45,12 @@ const titleSecondLine =
 const description =
   '\uC2A4\uD2F0\uCEE4\uB97C \uCD94\uAC00\uD574 \uB098\uB9CC\uC758 \uD3F4\uB354\uB97C \uB9CC\uB4E4\uC5B4 \uBCF4\uC138\uC694. (\uC120\uD0DD)';
 const saveRecordLabel = '\uAE30\uB85D \uC800\uC7A5\uD558\uAE30';
+
+interface DraggingStickerState {
+  seed: FolderDecorationSeed;
+  origin: { x: number; y: number };
+  current: { x: number; y: number };
+}
 
 const createPreviewPhotoUrls = (photos: TravelRecordPhotoDraft[]) =>
   photos.slice(0, 2).map((photo) =>
@@ -84,7 +96,12 @@ function TravelRecordFolderDecorationPage() {
     () => restoredDecorations,
   );
   const decorationsRef = useRef<TravelFolderDecoration[]>(restoredDecorations);
+  const folderCanvasRef = useRef<HTMLDivElement>(null);
+  const draggingStickerRef = useRef<DraggingStickerState | null>(null);
+  const [draggingSticker, setDraggingSticker] =
+    useState<DraggingStickerState | null>(null);
   const { showToast } = useToast();
+  const scale = useGlobalScale();
   const createTravelRecordMutation = useCreateTravelRecord();
   const updateTravelRecordMutation = useUpdateTravelRecord();
   const isSavingRef = useRef(false);
@@ -109,8 +126,11 @@ function TravelRecordFolderDecorationPage() {
     setDecorations(nextDecorations);
   };
 
-  const appendDecoration = (seed: FolderDecorationSeed) => {
-    const result = appendFolderDecoration(decorationsRef.current, seed);
+  const appendDecoration = (
+    seed: FolderDecorationSeed,
+    point?: { x: number; y: number },
+  ) => {
+    const result = appendFolderDecoration(decorationsRef.current, seed, point);
 
     if (!result.added) {
       showToast(
@@ -121,6 +141,97 @@ function TravelRecordFolderDecorationPage() {
 
     replaceDecorations(result.decorations);
   };
+  const appendDecorationRef = useRef(appendDecoration);
+
+  useEffect(() => {
+    appendDecorationRef.current = appendDecoration;
+  });
+
+  const handleStickerDragStart = (
+    seed: FolderDecorationSeed,
+    point: { x: number; y: number },
+  ) => {
+    const nextDraggingSticker = { seed, origin: point, current: point };
+
+    draggingStickerRef.current = nextDraggingSticker;
+    setDraggingSticker(nextDraggingSticker);
+  };
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const currentDraggingSticker = draggingStickerRef.current;
+
+      if (!currentDraggingSticker) {
+        return;
+      }
+
+      const nextDraggingSticker = {
+        ...currentDraggingSticker,
+        current: { x: event.clientX, y: event.clientY },
+      };
+
+      draggingStickerRef.current = nextDraggingSticker;
+      setDraggingSticker(nextDraggingSticker);
+    };
+
+    const clearDraggingSticker = () => {
+      draggingStickerRef.current = null;
+      setDraggingSticker(null);
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      const currentDraggingSticker = draggingStickerRef.current;
+
+      if (!currentDraggingSticker) {
+        return;
+      }
+
+      clearDraggingSticker();
+
+      const canvasRect = folderCanvasRef.current?.getBoundingClientRect();
+      const dropPoint = canvasRect
+        ? getDecorationDragPoint(canvasRect, event.clientX, event.clientY)
+        : null;
+
+      const movedDistance = Math.hypot(
+        event.clientX - currentDraggingSticker.origin.x,
+        event.clientY - currentDraggingSticker.origin.y,
+      );
+
+      const isDropTarget = Boolean(
+        dropPoint && isPointInFolderDecorationLayout(dropPoint),
+      );
+
+      if (
+        !shouldAppendFolderDecorationAfterDrag({
+          isCancelled: false,
+          movedDistance,
+          isDropTarget,
+        })
+      ) {
+        return;
+      }
+
+      appendDecorationRef.current(
+        currentDraggingSticker.seed,
+        isDropTarget ? dropPoint ?? undefined : undefined,
+      );
+    };
+
+    const handlePointerCancel = () => {
+      clearDraggingSticker();
+    };
+
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerCancel);
+
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerCancel);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -269,6 +380,7 @@ function TravelRecordFolderDecorationPage() {
           className="absolute top-[237px] left-1/2 flex w-[159px] -translate-x-1/2 flex-col items-center"
         >
           <FolderDecorationCanvas
+            canvasRef={folderCanvasRef}
             photos={folderPhotos}
             title={regionName}
             decorations={decorations}
@@ -292,7 +404,24 @@ function TravelRecordFolderDecorationPage() {
             )
           }
           onAddSticker={appendDecoration}
+          onStickerDragStart={handleStickerDragStart}
         />
+
+        {draggingSticker
+          ? createPortal(
+              <img
+                src={draggingSticker.seed.imageUrl}
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none fixed z-70 size-[58px] object-contain"
+                style={getDraggingStickerPreviewStyle(
+                  draggingSticker.current,
+                  scale,
+                )}
+              />,
+              document.body,
+            )
+          : null}
 
         <button
           type="button"

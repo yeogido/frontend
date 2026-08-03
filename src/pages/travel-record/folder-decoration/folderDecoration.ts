@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 export interface TravelFolderDecoration {
   id: string;
   /** 서버 스티커 ID. 기본 스티커와 커스텀 스티커를 구분 없이 같은 값으로 다룬다. */
@@ -311,15 +313,20 @@ export const bringDecorationToFront = <T extends FolderDecorationLayer>(
   );
 };
 
+/** 목록에서 탭했을 때 스티커가 놓이는 자리. */
+export const FOLDER_DECORATION_DEFAULT_POINT = { x: 0.5, y: 0.5 };
+
 export const createFolderDecoration = (
   seed: FolderDecorationSeed,
   decorations: FolderDecorationLayer[],
+  // 목록에서 끌어다 놓으면 손을 뗀 자리에 놓인다.
+  point: { x: number; y: number } = FOLDER_DECORATION_DEFAULT_POINT,
 ): TravelFolderDecoration => ({
   id: createDecorationId(),
   stickerId: seed.stickerId,
   imageUrl: seed.imageUrl,
-  x: 0.5,
-  y: 0.5,
+  x: point.x,
+  y: point.y,
   rotation: 0,
   scale: 1,
   zIndex: Math.max(0, ...decorations.map((decoration) => decoration.zIndex)) + 1,
@@ -328,16 +335,40 @@ export const createFolderDecoration = (
 export const appendFolderDecoration = (
   decorations: TravelFolderDecoration[],
   seed: FolderDecorationSeed,
+  point?: { x: number; y: number },
 ) => {
   if (decorations.length >= MAX_FOLDER_DECORATION_COUNT) {
     return { decorations, added: false };
   }
 
   return {
-    decorations: [...decorations, createFolderDecoration(seed, decorations)],
+    decorations: [
+      ...decorations,
+      createFolderDecoration(seed, decorations, point),
+    ],
     added: true,
   };
 };
+
+export const shouldAppendFolderDecorationAfterDrag = ({
+  isCancelled,
+  movedDistance,
+  isDropTarget,
+}: {
+  isCancelled: boolean;
+  movedDistance: number;
+  isDropTarget: boolean;
+}) =>
+  !isCancelled && (isDropTarget || movedDistance <= 8);
+
+export const getDraggingStickerPreviewStyle = (
+  point: { x: number; y: number },
+  scale: number,
+): CSSProperties => ({
+  left: point.x,
+  top: point.y,
+  transform: `translate(-50%, -50%) scale(${scale})`,
+});
 
 /**
  * '만들기' 탭의 슬롯 상태.

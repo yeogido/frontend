@@ -220,6 +220,69 @@ test('creates new decorations in the canvas center above existing layers', () =>
   assert.equal(decoration.zIndex, 5);
 });
 
+test('drops a sticker where the pointer was released', () => {
+  // 목록에서 끌어다 놓으면 손을 뗀 자리에 붙는다.
+  const dropPoint = { x: 0.2, y: 0.8 };
+  const decoration = createFolderDecoration(
+    { stickerId: 11, imageUrl: 'https://example.com/sun.png' },
+    [],
+    dropPoint,
+  );
+
+  assert.equal(decoration.x, 0.2);
+  assert.equal(decoration.y, 0.8);
+});
+
+test('appends a dropped sticker at the given point', () => {
+  const result = appendFolderDecoration(
+    [],
+    { stickerId: 11, imageUrl: 'https://example.com/sun.png' },
+    { x: 0.1, y: 0.9 },
+  );
+
+  assert.equal(result.added, true);
+  assert.deepEqual(
+    { x: result.decorations[0].x, y: result.decorations[0].y },
+    { x: 0.1, y: 0.9 },
+  );
+});
+
+test('does not append a sticker when its pointer interaction is cancelled', () => {
+  const shouldAppendFolderDecorationAfterDrag = (
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration')
+  ).shouldAppendFolderDecorationAfterDrag;
+
+  assert.equal(typeof shouldAppendFolderDecorationAfterDrag, 'function');
+  if (!shouldAppendFolderDecorationAfterDrag) return;
+
+  assert.equal(
+    shouldAppendFolderDecorationAfterDrag({
+      isCancelled: true,
+      movedDistance: 0,
+      isDropTarget: true,
+    }),
+    false,
+  );
+});
+
+test('positions the dragged sticker preview from viewport pointer coordinates', () => {
+  const getDraggingStickerPreviewStyle = (
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration')
+  ).getDraggingStickerPreviewStyle;
+
+  assert.equal(typeof getDraggingStickerPreviewStyle, 'function');
+  if (!getDraggingStickerPreviewStyle) return;
+
+  assert.deepEqual(
+    getDraggingStickerPreviewStyle({ x: 218, y: 391 }, 0.8),
+    {
+      left: 218,
+      top: 391,
+      transform: 'translate(-50%, -50%) scale(0.8)',
+    },
+  );
+});
+
 test('keeps the decoration count at ten when an additional sticker is requested', () => {
   const decorations = Array.from({ length: MAX_FOLDER_DECORATION_COUNT }, (_, index) =>
     createFolderDecoration(

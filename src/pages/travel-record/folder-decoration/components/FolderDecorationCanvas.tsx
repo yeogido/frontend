@@ -1,5 +1,6 @@
 import {
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
   useEffect,
   useRef,
   useState,
@@ -23,6 +24,8 @@ interface FolderDecorationCanvasProps {
   title: string;
   decorations: TravelFolderDecoration[];
   onChange: (decorations: TravelFolderDecoration[]) => void;
+  /** 목록에서 끌어온 스티커의 드롭 위치를 페이지가 계산할 수 있도록 넘겨받는다. */
+  canvasRef: RefObject<HTMLDivElement | null>;
 }
 
 /** 핸들 하나로 각도와 크기를 함께 조절한다. */
@@ -39,8 +42,8 @@ export function FolderDecorationCanvas({
   title,
   decorations,
   onChange,
+  canvasRef,
 }: FolderDecorationCanvasProps) {
-  const canvasRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode | null>(null);
   const pointerEditStateRef = useRef<PointerEditState | null>(null);
