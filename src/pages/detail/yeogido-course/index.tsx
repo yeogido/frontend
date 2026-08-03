@@ -8,8 +8,12 @@ import { useToast } from '../../../components/toast';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
 import { NotFoundPage } from '../../not-found';
+import { saveRecentCourse } from '../../../utils/recentCourses';
 import { CourseDetailLayout, DetailStateGuard } from '../components';
-import { mapCourseApiDetailToDto } from '../mappers/courseApiDetailMapper';
+import {
+  mapCourseApiDetailToCourseSummary,
+  mapCourseApiDetailToDto,
+} from '../mappers/courseApiDetailMapper';
 import { mapCourseDetailDtoToViewModel } from '../mappers/courseDetailMapper';
 import {
   useYeogidoCourseDetail,
@@ -81,6 +85,12 @@ function YeogidoCourseDetailPage() {
     } catch {
       return null;
     }
+  }, [data]);
+
+  useEffect(() => {
+    if (!data || data.courseType !== 'OFFICIAL') return;
+
+    saveRecentCourse(mapCourseApiDetailToCourseSummary(data));
   }, [data]);
 
   if (courseId === null || isLoadingError || (data && !course)) {

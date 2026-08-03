@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -6,80 +5,32 @@ import {
   CourseCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
-import type { TagType } from '../../../components/common/TagChip';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useAuthStore } from '../../../store/auth.store';
+import { useCourses } from '../../../hooks/useCourses';
+import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { toCourseCardProps } from '../../../utils/courseCard';
 
 const SECTION_MARGIN_TOP = 32;
 const SECTION_PADDING_X = 24;
 const LIST_MARGIN_TOP = 16;
 const CARD_GAP = 16;
-
-interface Course {
-  id: number;
-  image: string;
-  title: string;
-  duration: string;
-  courseType: string;
-  companion: string;
-  tags: TagType[];
-  liked: boolean;
-}
+const COURSE_PREVIEW_COUNT = 2;
 
 function CourseSection() {
-  const isLoading = false;
-  // const isLoading = true; // 스켈레톤 확인용
-
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
-  const { openLoginModal } = useLoginModal();
+  const { getLiked, toggleLike } = useCourseLikeToggle();
 
-  const [courses, setCourses] = useState<Course[]>([
-    {
-      id: 1,
-      image: '',
-      title: '강릉 혼자 여행 코스',
-      duration: '2박 3일',
-      courseType: '뚜벅이',
-      companion: '혼자',
-      tags: ['summer', 'nature', 'sea'],
-      liked: false,
-    },
-    {
-      id: 2,
-      image: '',
-      title: '서울에서 출발하는 3박 4일 여름 바다 여행 추천 코스',
-      duration: '3박 4일',
-      courseType: '드라이브',
-      companion: '친구',
-      tags: ['summer', 'sea', 'cafe'],
-      liked: true,
-    },
-  ]);
+  const { data, isPending } = useCourses({
+    courseType: 'OFFICIAL',
+    sort: 'RECOMMEND',
+    size: COURSE_PREVIEW_COUNT,
+  });
 
-  const handleLikeClick = (courseId: number) => {
-    if (!isLoggedIn) {
-      openLoginModal();
-      return;
-    }
-
-    setCourses((prev) =>
-      prev.map((course) =>
-        course.id === courseId
-          ? {
-              ...course,
-              liked: !course.liked,
-            }
-          : course,
-      ),
-    );
-
-    // TODO: 좋아요 API 연동
-    console.log('좋아요', courseId);
-  };
+  const courses = (data?.pages[0]?.items ?? [])
+    .slice(0, COURSE_PREVIEW_COUNT)
+    .map(toCourseCardProps);
 
   return (
     <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
@@ -92,7 +43,7 @@ function CourseSection() {
           <SectionHeader
             title="여기도 추천 코스"
             actionText="전체보기"
-            onActionClick={() => navigate('/yeogido-course/search')}
+            onActionClick={() => navigate('/yeogido-course/')}
           />
         </div>
 
@@ -105,7 +56,7 @@ function CourseSection() {
             paddingRight: SECTION_PADDING_X * scale,
           }}
         >
-          {isLoading ? (
+          {isPending ? (
             <>
               <CourseCardSkeleton />
               <CourseCardSkeleton />
@@ -116,11 +67,13 @@ function CourseSection() {
                 <CourseCard
                   key={course.id}
                   {...course}
-                  liked={isLoggedIn && course.liked}
+                  liked={getLiked(course.id, course.liked)}
                   onClick={() =>
                     navigate(`/yeogido-course/detail/${course.id}`)
                   }
-                  onLikeClick={() => handleLikeClick(course.id)}
+                  onLikeClick={() =>
+                    toggleLike(course.id, getLiked(course.id, course.liked))
+                  }
                 />
               ))}
             </>

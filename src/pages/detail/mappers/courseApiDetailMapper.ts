@@ -3,6 +3,12 @@ import type { CourseDetailResult } from '../../../apis/courses';
 import type { BadgeId } from '../../../constants/badges';
 import type { DetailTag } from '../../../types/detail';
 import type { TagId } from '../../../types/tag.type';
+import type {
+  Course,
+  CourseCompanionType,
+  CourseDurationType,
+  CourseTransportType,
+} from '../../../types/course.type';
 import type { CourseDetailDto, CourseStopDto } from '../types/courseDetail';
 
 const durationLabels: Record<string, string> = {
@@ -111,5 +117,31 @@ export function mapCourseApiDetailToDto(
     overview: course.description,
     stops: toCourseStops(course),
     reviews: [],
+  };
+}
+
+// 코스 상세 응답에는 region이 내려오지 않아, 첫 번째 코스 아이템 주소에서
+// 시/도 다음 토큰(구/군 등)을 지역명으로 대략 추출한다.
+function deriveRegionFromCourseItems(
+  courseItems: CourseDetailResult['courseItems']
+): string {
+  const address = courseItems[0]?.roadAddress || courseItems[0]?.lotAddress;
+
+  return address?.split(' ')[1] ?? '';
+}
+
+export function mapCourseApiDetailToCourseSummary(
+  course: CourseDetailResult
+): Course {
+  return {
+    courseId: course.courseId,
+    thumbnailUrl: course.thumbnailUrl,
+    title: course.title,
+    region: deriveRegionFromCourseItems(course.courseItems),
+    durationType: course.durationType as CourseDurationType,
+    transportType: course.transportType as CourseTransportType,
+    companionType: course.companionType as CourseCompanionType,
+    tags: course.tags,
+    isLiked: course.isLiked,
   };
 }
