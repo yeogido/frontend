@@ -1,15 +1,15 @@
-export type TravelFolderDecorationSource = 'sticker' | 'upload';
-
 export interface TravelFolderDecoration {
   id: string;
-  source: TravelFolderDecorationSource;
-  stickerId?: string;
-  /** 서버 stickerId(number). 프론트 stickerId로 알 수 없는 스티커도 그대로 왕복 저장하기 위해 보관한다. */
-  backendStickerId?: number;
-  /** 서버가 내려준 렌더링용 이미지 URL. 프론트 stickerId 매핑이 없을 때 대체 렌더링에 쓴다. */
-  imageUrl?: string;
-  imageFile?: File;
-  uploadedStickerId?: string;
+  /** 서버 스티커 ID. 기본 스티커와 커스텀 스티커를 구분 없이 같은 값으로 다룬다. */
+  stickerId: number;
+  /**
+   * 서버가 내려준 렌더링용 이미지 URL.
+   *
+   * 카탈로그를 뒤져 찾지 않고 이 값으로 바로 그린다. 논리 삭제된 커스텀
+   * 스티커는 카탈로그에 없지만 여행 기록 상세에는 계속 내려오기 때문에,
+   * 카탈로그 조회 방식으로는 기존 기록을 그릴 수 없다.
+   */
+  imageUrl: string;
   x: number;
   y: number;
   rotation: number;
@@ -18,15 +18,8 @@ export interface TravelFolderDecoration {
 }
 
 export interface FolderDecorationSeed {
-  source: TravelFolderDecorationSource;
-  stickerId?: string;
-  imageFile?: File;
-  uploadedStickerId?: string;
-}
-
-export interface UploadedFolderSticker {
-  id: string;
-  imageFile: File;
+  stickerId: number;
+  imageUrl: string;
 }
 
 export interface FolderDecorationLayer {
@@ -118,94 +111,62 @@ export const isPointInFolderDecorationLayout = (point: {
   );
 };
 
-interface FolderDecorationFileValidationResult {
-  files: File[];
-  message: string;
-}
-
+/** \uD3F4\uB354 \uD558\uB098\uC5D0 \uBC30\uCE58\uD560 \uC218 \uC788\uB294 \uC2A4\uD2F0\uCEE4 \uC218. \uC11C\uBC84 \uC81C\uD55C\uC740 \uC5C6\uACE0 \uD504\uB860\uD2B8 \uC815\uCC45\uC774\uB2E4. */
 export const MAX_FOLDER_DECORATION_COUNT = 10;
-export const MAX_FOLDER_DECORATION_FILE_SIZE = 10 * 1024 * 1024;
 
-const acceptedFileTypes = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
+/** \uC0AC\uC6A9\uC790\uAC00 \uBCF4\uC720\uD560 \uC218 \uC788\uB294 \uCEE4\uC2A4\uD140 \uC2A4\uD2F0\uCEE4 \uC218. \uCD08\uACFC\uD558\uBA74 \uC11C\uBC84\uAC00 STICKER4091\uC744 \uC900\uB2E4. */
+export const MAX_CUSTOM_STICKER_COUNT = 10;
+
+export const MAX_CUSTOM_STICKER_FILE_SIZE = 10 * 1024 * 1024;
+
+/**
+ * \uCEE4\uC2A4\uD140 \uC2A4\uD2F0\uCEE4\uB294 \uBC30\uACBD\uC774 \uC5C6\uC5B4\uC57C \uD558\uBBC0\uB85C PNG\uB9CC \uBC1B\uB294\uB2E4. JPEG\uB294 \uD22C\uBA85\uB3C4\uB97C \uB2F4\uC9C0
+ * \uBABB\uD574 \uBCC0\uD658\uD574\uB3C4 \uD770 \uC0AC\uAC01\uD615\uC774 \uB41C\uB2E4.
+ */
+export const CUSTOM_STICKER_CONTENT_TYPE = 'image/png';
+
+export const CUSTOM_STICKER_FILE_NAME = 'custom-sticker.png';
 
 const createDecorationId = () =>
   typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
     : `decoration-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-const createUploadedStickerId = () =>
-  typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `uploaded-sticker-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-export const createUploadedFolderSticker = (
-  imageFile: File,
-): UploadedFolderSticker => ({
-  id: createUploadedStickerId(),
-  imageFile,
-});
-
-export const removeUploadedFolderSticker = (
-  uploadedStickers: UploadedFolderSticker[],
-  decorations: TravelFolderDecoration[],
-  uploadedStickerId: string,
-) => ({
-  uploadedStickers: uploadedStickers.filter(
-    (sticker) => sticker.id !== uploadedStickerId,
-  ),
-  decorations: decorations.filter(
-    (decoration) => decoration.uploadedStickerId !== uploadedStickerId,
-  ),
-});
-
 const clamp = (value: number, minimum: number, maximum: number) =>
   Math.min(Math.max(value, minimum), maximum);
 
-export const validateFolderDecorationFiles = (
-  selectedFiles: File[],
-  remainingCount: number,
-): FolderDecorationFileValidationResult => {
-  if (remainingCount <= 0) {
-    return {
-      files: [],
-      message: '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
-    };
+/** \uAC80\uC99D\uC744 \uD1B5\uACFC\uD558\uBA74 \uBE48 \uBB38\uC790\uC5F4, \uC2E4\uD328\uD558\uBA74 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uBCF4\uC5EC\uC904 \uC0AC\uC720\uB97C \uB3CC\uB824\uC900\uB2E4. */
+export const validateCustomStickerFile = (file: File): string => {
+  if (file.type !== CUSTOM_STICKER_CONTENT_TYPE) {
+    return '\uBC30\uACBD\uC774 \uC5C6\uB294 PNG \uC774\uBBF8\uC9C0\uB9CC \uCD94\uAC00\uD560 \uC218 \uC788\uC5B4\uC694.';
   }
 
-  const supportedFiles = selectedFiles.filter((file) =>
-    acceptedFileTypes.has(file.type),
-  );
-  const sizeValidFiles = supportedFiles.filter(
-    (file) => file.size <= MAX_FOLDER_DECORATION_FILE_SIZE,
-  );
-  const files = sizeValidFiles.slice(0, remainingCount);
-
-  if (supportedFiles.length !== selectedFiles.length) {
-    return {
-      files,
-      message: 'JPEG, PNG, WebP \uC774\uBBF8\uC9C0\uB9CC \uCD94\uAC00\uD560 \uC218 \uC788\uC5B4\uC694.',
-    };
+  if (file.size > MAX_CUSTOM_STICKER_FILE_SIZE) {
+    return '\uD30C\uC77C \uD558\uB098\uB2F9 10MB \uC774\uD558\uC758 \uC774\uBBF8\uC9C0\uB9CC \uCD94\uAC00\uD560 \uC218 \uC788\uC5B4\uC694.';
   }
 
-  if (sizeValidFiles.length !== supportedFiles.length) {
-    return {
-      files,
-      message: '\uD30C\uC77C \uD558\uB098\uB2F9 10MB \uC774\uD558\uC758 \uC774\uBBF8\uC9C0\uB9CC \uCD94\uAC00\uD560 \uC218 \uC788\uC5B4\uC694.',
-    };
+  return '';
+};
+
+/** \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uB2F4\uAE34 \uD56D\uBAA9 \uC911 \uCCAB \uBC88\uC9F8 PNG \uC774\uBBF8\uC9C0\uB97C \uAEBC\uB0B8\uB2E4. */
+export const getPastedStickerImage = (
+  items: ReadonlyArray<{
+    kind: string;
+    type: string;
+    getAsFile: () => File | null;
+  }>,
+): File | null => {
+  for (const item of items) {
+    if (item.kind === 'file' && item.type === CUSTOM_STICKER_CONTENT_TYPE) {
+      const file = item.getAsFile();
+
+      if (file) {
+        return file;
+      }
+    }
   }
 
-  if (sizeValidFiles.length > remainingCount) {
-    return {
-      files,
-      message: '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
-    };
-  }
-
-  return { files, message: '' };
+  return null;
 };
 
 export const getNormalizedCanvasPoint = (
@@ -298,10 +259,8 @@ export const createFolderDecoration = (
   decorations: FolderDecorationLayer[],
 ): TravelFolderDecoration => ({
   id: createDecorationId(),
-  source: seed.source,
   stickerId: seed.stickerId,
-  imageFile: seed.imageFile,
-  uploadedStickerId: seed.uploadedStickerId,
+  imageUrl: seed.imageUrl,
   x: 0.5,
   y: 0.5,
   rotation: 0,
@@ -323,13 +282,19 @@ export const appendFolderDecoration = (
   };
 };
 
-export const getUploadStickerSlotState = (uploadedStickerCount: number) => {
-  const canAdd = uploadedStickerCount < MAX_FOLDER_DECORATION_COUNT;
+/**
+ * '만들기' 탭의 슬롯 상태.
+ *
+ * 보유 개수만 보고 판단한다. 폴더에 몇 개를 배치했는지는 서버의 커스텀
+ * 스티커 보유 한도와 무관하다.
+ */
+export const getCustomStickerSlotState = (customStickerCount: number) => {
+  const canAdd = customStickerCount < MAX_CUSTOM_STICKER_COUNT;
 
   return {
     canAdd,
     emptySlotCount: canAdd
-      ? MAX_FOLDER_DECORATION_COUNT - uploadedStickerCount - 1
+      ? MAX_CUSTOM_STICKER_COUNT - customStickerCount - 1
       : 0,
   };
 };
