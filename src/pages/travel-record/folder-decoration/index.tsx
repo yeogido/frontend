@@ -18,6 +18,7 @@ import {
   getDecorationDragPoint,
   getDraggingStickerPreviewStyle,
   isFolderDecorationDropTarget,
+  isActiveStickerDragPointer,
   shouldAppendFolderDecorationAfterDrag,
   type FolderDecorationSeed,
   type TravelFolderDecoration,
@@ -48,6 +49,7 @@ const saveRecordLabel = '\uAE30\uB85D \uC800\uC7A5\uD558\uAE30';
 
 interface DraggingStickerState {
   seed: FolderDecorationSeed;
+  pointerId: number;
   origin: { x: number; y: number };
   current: { x: number; y: number };
 }
@@ -150,8 +152,18 @@ function TravelRecordFolderDecorationPage() {
   const handleStickerDragStart = (
     seed: FolderDecorationSeed,
     point: { x: number; y: number },
+    pointerId: number,
   ) => {
-    const nextDraggingSticker = { seed, origin: point, current: point };
+    if (draggingStickerRef.current) {
+      return;
+    }
+
+    const nextDraggingSticker = {
+      seed,
+      pointerId,
+      origin: point,
+      current: point,
+    };
 
     draggingStickerRef.current = nextDraggingSticker;
     setDraggingSticker(nextDraggingSticker);
@@ -161,7 +173,13 @@ function TravelRecordFolderDecorationPage() {
     const handlePointerMove = (event: PointerEvent) => {
       const currentDraggingSticker = draggingStickerRef.current;
 
-      if (!currentDraggingSticker) {
+      if (
+        !currentDraggingSticker ||
+        !isActiveStickerDragPointer(
+          currentDraggingSticker.pointerId,
+          event.pointerId,
+        )
+      ) {
         return;
       }
 
@@ -182,7 +200,13 @@ function TravelRecordFolderDecorationPage() {
     const handlePointerUp = (event: PointerEvent) => {
       const currentDraggingSticker = draggingStickerRef.current;
 
-      if (!currentDraggingSticker) {
+      if (
+        !currentDraggingSticker ||
+        !isActiveStickerDragPointer(
+          currentDraggingSticker.pointerId,
+          event.pointerId,
+        )
+      ) {
         return;
       }
 
@@ -222,7 +246,19 @@ function TravelRecordFolderDecorationPage() {
       );
     };
 
-    const handlePointerCancel = () => {
+    const handlePointerCancel = (event: PointerEvent) => {
+      const currentDraggingSticker = draggingStickerRef.current;
+
+      if (
+        !currentDraggingSticker ||
+        !isActiveStickerDragPointer(
+          currentDraggingSticker.pointerId,
+          event.pointerId,
+        )
+      ) {
+        return;
+      }
+
       clearDraggingSticker();
     };
 

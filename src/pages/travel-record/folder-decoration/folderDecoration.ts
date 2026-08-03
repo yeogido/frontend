@@ -371,6 +371,11 @@ export const shouldAppendFolderDecorationAfterDrag = ({
 }) =>
   !isCancelled && (isDropTarget || movedDistance <= 8);
 
+export const isActiveStickerDragPointer = (
+  activePointerId: number,
+  eventPointerId: number,
+) => activePointerId === eventPointerId;
+
 export const getDraggingStickerPreviewStyle = (
   point: { x: number; y: number },
   scale: number,

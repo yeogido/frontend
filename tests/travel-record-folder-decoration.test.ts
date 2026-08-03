@@ -297,6 +297,18 @@ test('positions the dragged sticker preview from viewport pointer coordinates', 
   );
 });
 
+test('ignores pointer events from a different sticker drag', () => {
+  const isActiveStickerDragPointer = (
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration')
+  ).isActiveStickerDragPointer;
+
+  assert.equal(typeof isActiveStickerDragPointer, 'function');
+  if (!isActiveStickerDragPointer) return;
+
+  assert.equal(isActiveStickerDragPointer(12, 12), true);
+  assert.equal(isActiveStickerDragPointer(12, 13), false);
+});
+
 test('keeps the decoration count at ten when an additional sticker is requested', () => {
   const decorations = Array.from({ length: MAX_FOLDER_DECORATION_COUNT }, (_, index) =>
     createFolderDecoration(

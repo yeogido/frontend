@@ -31,6 +31,11 @@ import type { TravelDateRange } from '../pages/travel-record/date-selection/type
 import type { TravelFolderDecoration } from '../pages/travel-record/folder-decoration/folderDecoration';
 import type { TravelRecordDraftRegion } from '../pages/travel-record/types';
 import { collectTravelRecords } from '../pages/travel-record/utils/collectTravelRecords';
+import {
+  getTravelRecordMapRecords,
+  getTravelRecordMapYearQueries,
+  getTravelRecordMapYears,
+} from '../pages/travel-record/utils/mapAuth';
 import type { TravelRecordPhotoDraft } from '../pages/travel-record/utils/travelRecordSave';
 import type { RegionDetailResponse } from '../types/region.type';
 import type {
@@ -163,13 +168,17 @@ export function useTravelRecordsForMap() {
   const travelRecordYearsQuery = useTravelRecordYears({
     enabled: isAuthenticated,
   });
-  const years = travelRecordYearsQuery.data?.years ?? [];
+  const cachedYears = travelRecordYearsQuery.data?.years;
+  const years = getTravelRecordMapYears(isAuthenticated, cachedYears);
 
   const yearQueries = useQueries({
-    queries: years.map((year) => ({
+    queries: getTravelRecordMapYearQueries(isAuthenticated, years).map(
+      ({ year, enabled }) => ({
       queryKey: ['travelRecordsByYear', year],
       queryFn: () => getAllTravelRecordsInYear(year),
-    })),
+      enabled,
+      }),
+    ),
   });
 
   const failedYearQueries = yearQueries.filter((query) => query.isError);
@@ -186,12 +195,17 @@ export function useTravelRecordsForMap() {
   return {
     // 한 연도라도 실패하면 나머지 연도만 넘기지 않는다. 일부만 빠진 지도는
     // 그 지역에 다녀온 적이 없는 것처럼 보여서 실패보다 더 오해를 준다.
-    records: isError
-      ? []
-      : yearQueries.flatMap((query) => query.data ?? []),
+    records: getTravelRecordMapRecords(
+      isAuthenticated && !isError,
+      yearQueries.map((query) => query.data ?? []),
+    ),
     isPending,
     isError,
     retry: () => {
+      if (!isAuthenticated) {
+        return;
+      }
+
       if (travelRecordYearsQuery.isError) {
         void travelRecordYearsQuery.refetch();
       }

@@ -44,6 +44,7 @@ interface FolderDecorationPaletteProps {
   onStickerDragStart: (
     seed: FolderDecorationSeed,
     point: { x: number; y: number },
+    pointerId: number,
   ) => void;
   onLimitReached: () => void;
 }
@@ -179,6 +180,7 @@ export function FolderDecorationPalette({
       onStickerDragStart(
         { stickerId, imageUrl },
         { x: event.clientX, y: event.clientY },
+        event.pointerId,
       );
     },
     onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
