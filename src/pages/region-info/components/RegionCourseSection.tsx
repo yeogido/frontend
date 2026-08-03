@@ -25,11 +25,13 @@ const RETRY_BUTTON_PADDING_Y = 8;
 interface RegionCourseSectionProps {
   regionName: string;
   regionId?: number;
+  isRegionLoading?: boolean;
 }
 
 function RegionCourseSection({
   regionName,
   regionId,
+  isRegionLoading = false,
 }: RegionCourseSectionProps) {
   const scale = useGlobalScale();
   const navigate = useNavigate();
@@ -37,6 +39,8 @@ function RegionCourseSection({
 
   // regionId를 찾지 못한 지역(예: /regions 목록에 없는 지역)은
   // 인기 코스 API 대신 일반 코스 목록을 지역명 키워드로 검색해 대체한다.
+  // 지역 목록이 아직 로딩 중일 때는 둘 다 대기시켜, regionId 미확정 상태에서
+  // 키워드 검색이 먼저 떴다가 인기 코스로 바뀌는 깜빡임을 막는다.
   const hasRegionId = regionId !== undefined;
 
   const popularQuery = usePopularCourses(
@@ -51,7 +55,7 @@ function RegionCourseSection({
       sort: 'RECOMMEND',
       size: REGION_COURSE_PREVIEW_COUNT,
     },
-    { enabled: !hasRegionId }
+    { enabled: !hasRegionId && !isRegionLoading }
   );
 
   const isPending = hasRegionId

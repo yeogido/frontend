@@ -15,7 +15,7 @@ function RegionInfoPage() {
       ? regionInfoMap[region]
       : regionInfoMap.busan;
 
-  const { data: regionsData } = useRegions();
+  const { data: regionsData, isPending: isRegionsPending } = useRegions();
   const regionId = regionsData?.regions.find(
     (candidate) => candidate.name === regionInfo.name
   )?.regionId;
@@ -27,11 +27,13 @@ function RegionInfoPage() {
       <RegionCourseSection
         regionName={regionInfo.name}
         regionId={regionId}
+        isRegionLoading={isRegionsPending}
       />
 
       <RegionFestivalSection
         regionName={regionInfo.name}
         regionId={regionId}
+        isRegionLoading={isRegionsPending}
       />
 
       <RegionReviewSection

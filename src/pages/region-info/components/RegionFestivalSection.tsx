@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -9,8 +8,7 @@ import {
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCultureContents } from '../../../hooks/useCultureContents';
-import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useAuthStore } from '../../../store/auth.store';
+import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 
@@ -28,42 +26,34 @@ const RETRY_BUTTON_PADDING_Y = 8;
 interface RegionFestivalSectionProps {
   regionName: string;
   regionId?: number;
+  isRegionLoading?: boolean;
 }
 
 function RegionFestivalSection({
   regionName,
   regionId,
+  isRegionLoading = false,
 }: RegionFestivalSectionProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
-  const { openLoginModal } = useLoginModal();
-  const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
+  const { getLiked, toggleLike } = useContentLikeToggle();
 
   // regionId를 찾지 못한 지역(예: /regions 목록에 없는 지역)은
   // regionId 필터 대신 지역명을 키워드로 검색해 대체한다.
-  const { data, isPending, isError, refetch } = useCultureContents({
-    regionId,
-    keyword: regionId === undefined ? regionName : undefined,
-    category: 'FESTIVAL',
-    sort: 'RECOMMEND',
-    size: REGION_FESTIVAL_PREVIEW_COUNT,
-  });
+  // 지역 목록이 아직 로딩 중일 때는 대기시켜, regionId 미확정 상태에서
+  // 키워드 검색이 먼저 떴다가 지역 필터로 바뀌는 깜빡임을 막는다.
+  const { data, isPending, isError, refetch } = useCultureContents(
+    {
+      regionId,
+      keyword: regionId === undefined ? regionName : undefined,
+      category: 'FESTIVAL',
+      sort: 'RECOMMEND',
+      size: REGION_FESTIVAL_PREVIEW_COUNT,
+    },
+    { enabled: !isRegionLoading }
+  );
 
   const festivals = data?.pages[0]?.items ?? [];
-
-  const handleLikeClick = (contentId: number) => {
-    if (!isLoggedIn) {
-      openLoginModal();
-      return;
-    }
-
-    setLikedContentIds((previous) =>
-      previous.includes(contentId)
-        ? previous.filter((id) => id !== contentId)
-        : [...previous, contentId]
-    );
-  };
 
   return (
     <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
@@ -107,13 +97,16 @@ function RegionFestivalSection({
                   firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                   secondInfo={festival.regionName}
                   tags={toContentTagIds(festival.hashtags)}
-                  liked={
-                    isLoggedIn && likedContentIds.includes(festival.contentId)
-                  }
+                  liked={getLiked(festival.contentId, false)}
                   onClick={() =>
                     navigate(buildFestivalDetailPath(festival.contentId))
                   }
-                  onLikeClick={() => handleLikeClick(festival.contentId)}
+                  onLikeClick={() =>
+                    toggleLike(
+                      festival.contentId,
+                      getLiked(festival.contentId, false)
+                    )
+                  }
                 />
               ))
             )}
