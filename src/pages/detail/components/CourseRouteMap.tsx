@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchKakaoWalkingRoute } from '../../../apis/kakaoWalkingRoute';
 import { SectionHeader } from '../../../components/common';
 import { BaseKakaoMap } from '../../../components/kakaomap/BaseKakaoMap';
 import {
@@ -23,6 +24,7 @@ export interface CourseRouteMapProps {
 
 export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
   const scale = useGlobalScale();
+  const [walkingRoute, setWalkingRoute] = useState<readonly GeoPoint[]>([]);
 
   // 1. 유효한 stop.location만 추출
   const validLocations: readonly GeoPoint[] = useMemo(() => {
@@ -32,6 +34,26 @@ export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
   }, [stops]);
 
   const center = validLocations[0] ?? null;
+
+  useEffect(() => {
+    if (validLocations.length < 2) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    void fetchKakaoWalkingRoute(validLocations, controller.signal)
+      .then(setWalkingRoute)
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setWalkingRoute([]);
+        }
+      });
+
+    return () => controller.abort();
+  }, [validLocations]);
+
+  const routePath = validLocations.length < 2 ? [] : walkingRoute;
 
   // 2. 좌표가 없으면 안내 문구 표시
   if (!center) {
@@ -67,7 +89,11 @@ export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
       >
         <SectionHeader title="코스 지도" />
       </div>
-      <BaseKakaoMap center={center} markers={validLocations} />
+      <BaseKakaoMap
+        center={center}
+        markers={validLocations}
+        routePath={routePath}
+      />
     </section>
   );
 }
