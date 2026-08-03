@@ -5,6 +5,16 @@ import {
   getFolderPhotoSlotIndexes,
   getVisibleFolderPhotos,
 } from '../src/pages/travel-record/components/folderPhotos.ts';
+import { getFolderPreviewPhotoUrls } from '../src/pages/travel-record/photo-selection/folderPreviewPhotos.ts';
+
+import type { SelectedPhoto } from '../src/pages/travel-record/photo-selection/types.ts';
+
+const createSelectedPhoto = (id: string): SelectedPhoto => ({
+  id,
+  source: 'new',
+  file: { name: id } as File,
+  url: `blob:${id}`,
+});
 
 test('puts a single travel photo in the right folder slot', () => {
   assert.deepEqual(getVisibleFolderPhotos(['first-photo']), ['first-photo']);
@@ -26,4 +36,24 @@ test('ignores empty travel photo fallback urls', () => {
   assert.deepEqual(getVisibleFolderPhotos(['', 'second-photo']), [
     'second-photo',
   ]);
+});
+
+test('follows the selected photo order in the folder preview', () => {
+  const first = createSelectedPhoto('first');
+  const second = createSelectedPhoto('second');
+  const third = createSelectedPhoto('third');
+
+  assert.deepEqual(getFolderPreviewPhotoUrls([first, second, third]), [
+    'blob:first',
+    'blob:second',
+  ]);
+  // 목록에서 순서를 바꾸면 미리보기에 보이는 사진도 함께 바뀐다.
+  assert.deepEqual(getFolderPreviewPhotoUrls([third, first, second]), [
+    'blob:third',
+    'blob:first',
+  ]);
+});
+
+test('shows nothing in the folder preview until a photo is selected', () => {
+  assert.deepEqual(getFolderPreviewPhotoUrls([]), []);
 });
