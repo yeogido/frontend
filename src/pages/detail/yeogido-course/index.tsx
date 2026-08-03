@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 
@@ -53,7 +53,7 @@ function YeogidoCourseDetailPage() {
     parsedCourseId > 0
       ? parsedCourseId
       : null;
-  const { data, isError } = useYeogidoCourseDetail(courseId);
+  const { data, isLoadingError } = useYeogidoCourseDetail(courseId);
   const likeMutation = useYeogidoCourseLikeMutation();
   const placeLikeMutation = usePlaceLikeMutation();
   const contentLikeMutation = useContentLikeMutation();
@@ -63,6 +63,13 @@ function YeogidoCourseDetailPage() {
   const [pendingContentIds, setPendingContentIds] = useState<
     ReadonlySet<number>
   >(() => new Set());
+
+  useEffect(() => {
+    // courseId가 바뀌면 이전 코스의 좋아요 대기 상태가 남지 않도록 초기화한다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPendingPlaceIds(new Set());
+    setPendingContentIds(new Set());
+  }, [courseId]);
 
   const course = useMemo(() => {
     if (!data || data.courseType !== 'OFFICIAL') {
@@ -76,7 +83,7 @@ function YeogidoCourseDetailPage() {
     }
   }, [data]);
 
-  if (courseId === null || isError || (data && !course)) {
+  if (courseId === null || isLoadingError || (data && !course)) {
     return <NotFoundPage />;
   }
 
