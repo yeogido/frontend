@@ -7,11 +7,14 @@ import {
   SearchBar,
 } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useCultureContents } from '../../../hooks/useCultureContents';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
+import { toContentTagIds } from '../../../utils/contentTags';
+import type { ContentCategory, ContentSort } from '../../../types/content.type';
 
 import { FestivalFilterBar } from '../components';
 import {
@@ -21,7 +24,6 @@ import {
 } from '../constants/search';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
 import useFestivalFilters from '../hooks/useFestivalFilters';
-import useFestivals from '../hooks/useFestivals';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -32,6 +34,21 @@ const EMPTY_MARGIN_TOP = 40;
 const ERROR_MARGIN_TOP = 24;
 const MESSAGE_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
+
+const categoryByFilterValue: Record<string, ContentCategory | undefined> = {
+  ALL: undefined,
+  EXPERIENCE: 'EXPERIENCE',
+  EXHIBITION: 'EXHIBITION',
+  PERFORMANCE: 'PERFORMANCE',
+  FESTIVAL: 'FESTIVAL',
+};
+
+const sortByFilterValue: Record<string, ContentSort> = {
+  RECOMMENDED: 'RECOMMEND',
+  SAVED: 'LIKE',
+  DISTANCE: 'DISTANCE',
+  ENDING_SOON: 'DEADLINE',
+};
 
 function FestivalSearchPage() {
   const scale = useGlobalScale();
@@ -45,9 +62,9 @@ function FestivalSearchPage() {
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
   const subRegion = searchParams.get('subRegion') ?? '';
-  const displaySearchQuery =
-    keyword ||
-    (region && subRegion ? `${region} ${subRegion}` : subRegion || region);
+  const regionLabel =
+    region && subRegion ? `${region} ${subRegion}` : subRegion || region;
+  const displaySearchQuery = keyword || regionLabel;
   const {
     selectedFilters,
     handleSortSelect,
@@ -61,14 +78,14 @@ function FestivalSearchPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useFestivals({
-    filters: selectedFilters,
-    keyword,
-    region,
-    subRegion,
+  } = useCultureContents({
+    keyword: displaySearchQuery.trim() || undefined,
+    category: categoryByFilterValue[selectedFilters.category],
+    sort: sortByFilterValue[selectedFilters.sort],
+    size: 20,
   });
 
-  const festivals = data?.pages.flatMap((page) => page.content) ?? [];
+  const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
 
   const handleIntersect = useCallback(() => {
@@ -160,21 +177,24 @@ function FestivalSearchPage() {
             ))
           : festivals.map((festival) => (
               <ContentCard
-                key={festival.id}
-                image={festival.image}
+                key={festival.contentId}
+                image={festival.thumbnailImageUrl}
                 title={festival.title}
-                firstInfo={festival.period}
-                secondInfo={festival.location}
-                liked={likedOverrides[String(festival.id)] ?? festival.liked}
-                tags={festival.tags}
+                firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                secondInfo={festival.regionName}
+                liked={
+                  isAuthenticated &&
+                  (likedOverrides[String(festival.contentId)] ?? false)
+                }
+                tags={toContentTagIds(festival.hashtags)}
                 className="w-full"
                 onClick={() =>
-                  navigate(buildFestivalDetailPath(festival.id))
+                  navigate(buildFestivalDetailPath(festival.contentId))
                 }
                 onLikeClick={() =>
                   handleLikeClick(
-                    festival.id,
-                    likedOverrides[String(festival.id)] ?? festival.liked
+                    festival.contentId,
+                    likedOverrides[String(festival.contentId)] ?? false
                   )
                 }
               />

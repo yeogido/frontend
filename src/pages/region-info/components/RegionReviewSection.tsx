@@ -34,7 +34,7 @@ function RegionReviewSection({
         }}
       >
         <SectionHeader
-          title={`${regionName}에서 뭐든 어때요?`}
+          title={`${regionName}에서 이 곳은 어때요?`}
           actionText="전체보기"
           onActionClick={() => navigate('/local-business')}
         />

@@ -25,7 +25,10 @@ interface CoursesPageParam {
   cursorId?: number;
 }
 
-export function useCourses(params: GetCoursesParams) {
+export function useCourses(
+  params: GetCoursesParams,
+  options?: { enabled?: boolean }
+) {
   return useInfiniteQuery<
     GetCoursesResponse,
     NormalizedApiError,
@@ -48,13 +51,18 @@ export function useCourses(params: GetCoursesParams) {
             cursorId: lastPage.cursorId,
           }
         : undefined,
+    enabled: options?.enabled,
   });
 }
 
-export function usePopularCourses(params: GetPopularCoursesParams) {
+export function usePopularCourses(
+  params: GetPopularCoursesParams,
+  options?: { enabled?: boolean }
+) {
   return useQuery<Course[], NormalizedApiError>({
     queryKey: ['popularCourses', params],
     queryFn: () => getPopularCourses(params),
+    enabled: options?.enabled,
   });
 }
 
