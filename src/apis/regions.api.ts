@@ -3,7 +3,9 @@ import { apiClient } from './common';
 import type {
   GetRegionsResponse,
   GetSubRegionsResponse,
-  RegionSearchResult,
+  PopularRegionResponse,
+  RegionDetailResponse,
+  RegionSearchResponse,
   SubRegion,
 } from '../types/region.type';
 
@@ -15,16 +17,25 @@ export async function getRegions(): Promise<GetRegionsResponse> {
   return data;
 }
 
+export async function getRegion(
+  regionId: number,
+): Promise<RegionDetailResponse> {
+  const { data } = await apiClient.get<RegionDetailResponse>(
+    `/regions/${regionId}`,
+  );
+
+  return data;
+}
+
 export async function getSubRegions(regionId: number): Promise<SubRegion[]> {
   try {
     const { data } = await apiClient.get<GetSubRegionsResponse>(
-      `/regions/${regionId}/sub-regions`
+      `/regions/${regionId}/sub-regions`,
     );
 
     return data.subRegions;
   } catch (error) {
-    // The backend 404s (REGION4041) when a region has no sub-regions — that
-    // just means this region is a leaf, not a real failure.
+    // A leaf region has no sub-regions; the backend represents that as 404.
     if (
       error &&
       typeof error === 'object' &&
@@ -39,11 +50,19 @@ export async function getSubRegions(regionId: number): Promise<SubRegion[]> {
 }
 
 export async function searchRegions(
-  keyword: string
-): Promise<RegionSearchResult[]> {
-  const { data } = await apiClient.get<RegionSearchResult[]>(
+  keyword: string,
+): Promise<RegionSearchResponse[]> {
+  const { data } = await apiClient.get<RegionSearchResponse[]>(
     '/regions/search',
-    { params: { keyword } }
+    { params: { keyword } },
+  );
+
+  return data;
+}
+
+export async function getPopularRegions(): Promise<PopularRegionResponse[]> {
+  const { data } = await apiClient.get<PopularRegionResponse[]>(
+    '/regions/popular',
   );
 
   return data;

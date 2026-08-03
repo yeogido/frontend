@@ -128,9 +128,17 @@ function AppRouter() {
           path="/travel-record/new"
           element={<TravelRecordRegionSelectionPage />}
         />
+        <Route
+          path="/travel-record/:travelRecordId/edit"
+          element={<TravelRecordRegionSelectionPage />}
+        />
 
         <Route
           path="/travel-record/date-selection"
+          element={<TravelRecordDateSelectionPage />}
+        />
+        <Route
+          path="/travel-record/:travelRecordId/edit/date"
           element={<TravelRecordDateSelectionPage />}
         />
         <Route
@@ -142,7 +150,15 @@ function AppRouter() {
           element={<TravelRecordPhotoSelectionPage />}
         />
         <Route
+          path="/travel-record/:travelRecordId/edit/photos"
+          element={<TravelRecordPhotoSelectionPage />}
+        />
+        <Route
           path="/travel-record/folder-decoration"
+          element={<TravelRecordFolderDecorationPage />}
+        />
+        <Route
+          path="/travel-record/:travelRecordId/edit/decorate"
           element={<TravelRecordFolderDecorationPage />}
         />
         <Route

@@ -18,3 +18,9 @@ test('keeps at most two travel photos in folder slot order', () => {
   );
   assert.deepEqual(getFolderPhotoSlotIndexes(2), [0, 1]);
 });
+
+test('ignores empty travel photo fallback urls', () => {
+  assert.deepEqual(getVisibleFolderPhotos(['', 'second-photo']), [
+    'second-photo',
+  ]);
+});

@@ -1,69 +1,17 @@
-import type { TravelDateRange } from '../date-selection/types';
-import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
-import type { TravelRecordDraftRegion, TravelRecordFolder } from '../types';
-
 const databaseName = 'yeogido-travel-records';
 const databaseVersion = 3;
-const recordStoreName = 'travel-records';
 const photoDraftStoreName = 'travel-record-photo-drafts';
 
-export const SAVED_TRAVEL_RECORD_ID_PREFIX = 'saved-';
 export const TRAVEL_RECORD_PHOTO_DRAFT_ID = 'current-travel-record';
 
-export interface CreateTravelRecordPayload {
-  regionCode: string;
-  regionName: string;
-  startDate: Date;
-  endDate: Date;
-  photos: File[];
-  decorations: TravelFolderDecoration[];
-}
-
-export interface SavedTravelRecordResult {
-  id: string;
-}
-
-interface CreateTravelRecordDraftPayloadParams {
-  selectedRegion: TravelRecordDraftRegion;
-  selectedDateRange: TravelDateRange;
-  selectedPhotos: File[];
-  decorations: TravelFolderDecoration[];
-}
-
-interface StoredTravelRecord {
-  id: string;
-  regionCode: string;
-  regionName: string;
-  startDate: string;
-  endDate: string;
-  photos: File[];
-  decorations?: TravelFolderDecoration[];
-}
+export type TravelRecordPhotoDraft =
+  | { source: 'new'; file: File }
+  | { source: 'server'; imageKey: string; imageUrl: string };
 
 interface StoredPhotoDraft {
   id: string;
-  photos: File[];
+  photos: Array<TravelRecordPhotoDraft | File>;
 }
-
-const formatDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-};
-
-const formatPeriod = (startDate: string, endDate: string) =>
-  `${startDate.slice(5).replace('-', '.')} - ${endDate
-    .slice(5)
-    .replace('-', '.')}`;
-
-const createRecordId = () =>
-  `${SAVED_TRAVEL_RECORD_ID_PREFIX}${
-    typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
-  }`;
 
 const openTravelRecordDatabase = () =>
   new Promise<IDBDatabase>((resolve, reject) => {
@@ -71,10 +19,6 @@ const openTravelRecordDatabase = () =>
 
     request.onupgradeneeded = () => {
       const database = request.result;
-
-      if (!database.objectStoreNames.contains(recordStoreName)) {
-        database.createObjectStore(recordStoreName, { keyPath: 'id' });
-      }
 
       if (!database.objectStoreNames.contains(photoDraftStoreName)) {
         database.createObjectStore(photoDraftStoreName, { keyPath: 'id' });
@@ -116,52 +60,7 @@ const runTransaction = <Result>(
     transaction.onabort = () => reject(transaction.error);
   });
 
-const createFolder = (record: StoredTravelRecord): TravelRecordFolder | null => {
-  const photoUrls = record.photos.map((photo) => URL.createObjectURL(photo));
-
-  if (photoUrls.length === 0) {
-    return null;
-  }
-
-  return {
-    id: record.id,
-    regionCode: record.regionCode,
-    regionName: record.regionName,
-    title: record.regionName,
-    year: Number(record.startDate.slice(0, 4)),
-    startDate: record.startDate,
-    endDate: record.endDate,
-    period: formatPeriod(record.startDate, record.endDate),
-    photos: photoUrls as [string, ...string[]],
-    decorations: normalizeStoredDecorations(record.decorations),
-  };
-};
-
-export const normalizeStoredDecorations = (
-  decorations: TravelFolderDecoration[] | undefined,
-) => decorations ?? [];
-
-export const revokeTravelRecordFolderPhotoUrls = (folder: TravelRecordFolder) => {
-  Array.from(new Set(folder.photos)).forEach((photoUrl) =>
-    URL.revokeObjectURL(photoUrl),
-  );
-};
-
-export const createTravelRecordDraftPayload = ({
-  selectedRegion,
-  selectedDateRange,
-  selectedPhotos,
-  decorations,
-}: CreateTravelRecordDraftPayloadParams): CreateTravelRecordPayload => ({
-  regionCode: selectedRegion.id,
-  regionName: selectedRegion.selectionName || selectedRegion.name,
-  startDate: selectedDateRange.startDate,
-  endDate: selectedDateRange.endDate,
-  photos: selectedPhotos,
-  decorations,
-});
-
-export const saveTravelRecordPhotoDraft = (photos: File[]) =>
+export const saveTravelRecordPhotoDraft = (photos: TravelRecordPhotoDraft[]) =>
   withTravelRecordDatabase((database) =>
     runTransaction(database, photoDraftStoreName, 'readwrite', (store) =>
       store.put({ id: TRAVEL_RECORD_PHOTO_DRAFT_ID, photos } satisfies StoredPhotoDraft),
@@ -178,7 +77,13 @@ export const getTravelRecordPhotoDraft = async () => {
     ),
   );
 
-  return draft?.photos ?? [];
+  return (draft?.photos ?? []).flatMap((photo) => {
+    if (photo instanceof File) {
+      return [{ source: 'new' as const, file: photo }];
+    }
+
+    return photo.source === 'server' || photo.source === 'new' ? [photo] : [];
+  });
 };
 
 export const clearTravelRecordPhotoDraft = () =>
@@ -187,93 +92,3 @@ export const clearTravelRecordPhotoDraft = () =>
       store.delete(TRAVEL_RECORD_PHOTO_DRAFT_ID),
     ),
   );
-
-export const saveTravelRecord = async (
-  payload: CreateTravelRecordPayload,
-): Promise<SavedTravelRecordResult> => {
-  const record: StoredTravelRecord = {
-    id: createRecordId(),
-    regionCode: payload.regionCode,
-    regionName: payload.regionName,
-    startDate: formatDate(payload.startDate),
-    endDate: formatDate(payload.endDate),
-    photos: payload.photos,
-    decorations: payload.decorations,
-  };
-
-  await withTravelRecordDatabase((database) =>
-    runTransaction(database, recordStoreName, 'readwrite', (store) =>
-      store.put(record),
-    ),
-  );
-
-  return { id: record.id };
-};
-
-export const updateTravelRecord = async (
-  id: string,
-  payload: CreateTravelRecordPayload,
-): Promise<SavedTravelRecordResult> => {
-  const record: StoredTravelRecord = {
-    id,
-    regionCode: payload.regionCode,
-    regionName: payload.regionName,
-    startDate: formatDate(payload.startDate),
-    endDate: formatDate(payload.endDate),
-    photos: payload.photos,
-    decorations: payload.decorations,
-  };
-
-  await withTravelRecordDatabase((database) =>
-    runTransaction(database, recordStoreName, 'readwrite', (store) =>
-      store.put(record),
-    ),
-  );
-
-  return { id };
-};
-
-export const deleteTravelRecord = (id: string) =>
-  withTravelRecordDatabase((database) =>
-    runTransaction(database, recordStoreName, 'readwrite', (store) =>
-      store.delete(id),
-    ),
-  );
-
-export const getSavedTravelRecordPhotos = async (id: string) => {
-  const record = await withTravelRecordDatabase((database) =>
-    runTransaction<StoredTravelRecord | undefined>(
-      database,
-      recordStoreName,
-      'readonly',
-      (store) => store.get(id),
-    ),
-  );
-
-  return record?.photos ?? [];
-};
-
-export const getSavedTravelRecordFolders = async () => {
-  const records = await withTravelRecordDatabase((database) =>
-    runTransaction<StoredTravelRecord[]>(database, recordStoreName, 'readonly', (store) =>
-      store.getAll(),
-    ),
-  );
-
-  return records
-    .map(createFolder)
-    .filter((folder): folder is TravelRecordFolder => folder !== null);
-};
-
-export const getSavedTravelRecordFolder = async (id: string) => {
-  const record = await withTravelRecordDatabase((database) =>
-    runTransaction<StoredTravelRecord | undefined>(
-      database,
-      recordStoreName,
-      'readonly',
-      (store) => store.get(id),
-    ),
-  );
-
-  return record ? createFolder(record) : null;
-};

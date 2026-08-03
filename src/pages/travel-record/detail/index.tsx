@@ -11,31 +11,24 @@ import {
 } from 'motion/react';
 import { IoEllipsisVertical } from 'react-icons/io5';
 
+import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
+import {
+  useDeleteTravelRecord,
+  useTravelRecordDetail,
+} from '../../../hooks/useTravelRecords';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import { TravelFolderArtwork, TravelRecordPageFrame } from '../components';
-import { TRAVEL_RECORD_FOLDERS } from '../constants/travelRecords';
 import type { TravelRecordFolder } from '../types';
-import {
-  getSavedTravelRecordFolder,
-  getSavedTravelRecordPhotos,
-  revokeTravelRecordFolderPhotoUrls,
-  SAVED_TRAVEL_RECORD_ID_PREFIX,
-  deleteTravelRecord,
-  saveTravelRecordPhotoDraft,
-} from '../utils/travelRecordSave';
+import { saveTravelRecordPhotoDraft } from '../utils/travelRecordSave';
 import {
   saveTravelRecordDraftDateRange,
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
+import { getTravelRecordEditRoute } from '../utils/editRoute';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
-}
-
-interface SavedFolderState {
-  id: string;
-  folder: TravelRecordFolder | null;
 }
 
 const missingRecordLabel = '여행 기록을 찾을 수 없어요';
@@ -70,33 +63,26 @@ function TravelRecordDetailPage() {
   const [isPhotoTransitioning, setIsPhotoTransitioning] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
   const { showToast } = useToast();
-  const editedMockFolders = useTravelRecordSessionStore(
-    (state) => state.editedMockFolders,
-  );
-  const deleteMockFolder = useTravelRecordSessionStore(
-    (state) => state.deleteMockFolder,
-  );
   const beginEdit = useTravelRecordSessionStore((state) => state.beginEdit);
   const [transitionTargetIndex, setTransitionTargetIndex] = useState<
     number | null
   >(null);
-  const [savedFolderState, setSavedFolderState] =
-    useState<SavedFolderState | null>(null);
   const locationState =
     location.state as TravelRecordDetailLocationState | null;
-  const isSavedFolder =
-    folderId?.startsWith(SAVED_TRAVEL_RECORD_ID_PREFIX) ?? false;
-  const staticFolder =
-    locationState?.folder ??
-    TRAVEL_RECORD_FOLDERS.find((record) => record.id === folderId);
-  const savedFolder =
-    savedFolderState && savedFolderState.id === folderId
-      ? savedFolderState.folder
-      : undefined;
-  const folder = isSavedFolder
-    ? savedFolder
-    : editedMockFolders[folderId ?? ''] ?? staticFolder;
+  const travelRecordId =
+    folderId && /^\d+$/.test(folderId) ? Number(folderId) : null;
+  const serverTravelRecordQuery = useTravelRecordDetail(
+    isDeleted ? null : travelRecordId,
+  );
+  const deleteTravelRecordMutation = useDeleteTravelRecord();
+  // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
+  // 실패했는데도 그걸 그대로 그리면 남의 기록(403)이나 이미 지워진 기록(404)이
+  // 정상 화면처럼 보이므로, 실패했을 때는 캐시 데이터를 쓰지 않는다.
+  const folder = serverTravelRecordQuery.isError
+    ? undefined
+    : (serverTravelRecordQuery.data ?? locationState?.folder);
   const motionRange = Math.max(cardWidth, 1);
   const cardDistance = cardWidth + cardStackOffset;
   const previousCardX = useTransform(dragX, (value) => -cardDistance + value);
@@ -114,42 +100,6 @@ function TravelRecordDetailPage() {
       transitionControlsRef.current?.stop();
     };
   }, []);
-
-  useEffect(() => {
-    if (!isSavedFolder || !folderId) {
-      return;
-    }
-
-    let isMounted = true;
-    let loadedFolder: TravelRecordFolder | null = null;
-
-    void getSavedTravelRecordFolder(folderId)
-      .then((folder) => {
-        loadedFolder = folder;
-
-        if (isMounted) {
-          setSavedFolderState({ id: folderId, folder });
-          return;
-        }
-
-        if (folder) {
-          revokeTravelRecordFolderPhotoUrls(folder);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setSavedFolderState({ id: folderId, folder: null });
-        }
-      });
-
-    return () => {
-      isMounted = false;
-
-      if (loadedFolder) {
-        revokeTravelRecordFolderPhotoUrls(loadedFolder);
-      }
-    };
-  }, [folderId, isSavedFolder]);
 
   useEffect(() => {
     const photoStack = photoStackRef.current;
@@ -185,7 +135,13 @@ function TravelRecordDetailPage() {
     };
   }, [isActionMenuOpen]);
 
-  if (isSavedFolder && savedFolder === undefined) {
+  // 삭제가 성공하면 상세 캐시가 제거되어 folder가 비는데, 목록으로
+  // 이동하기 전 한 프레임 동안 "찾을 수 없어요"가 스치는 것을 막는다.
+  if (
+    travelRecordId &&
+    !folder &&
+    (serverTravelRecordQuery.isLoading || isDeleted)
+  ) {
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1]">
         <div
@@ -199,9 +155,17 @@ function TravelRecordDetailPage() {
   if (!folder) {
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
-        <div className="flex h-full flex-col items-center justify-center text-center">
+        <div
+          role={serverTravelRecordQuery.isError ? 'alert' : undefined}
+          className="flex h-full flex-col items-center justify-center text-center"
+        >
           <p className="text-base font-medium text-[#7f7f7f]">
-            {missingRecordLabel}
+            {serverTravelRecordQuery.isError
+              ? getApiErrorMessage(
+                  serverTravelRecordQuery.error,
+                  missingRecordLabel,
+                )
+              : missingRecordLabel}
           </p>
           <button
             type="button"
@@ -215,7 +179,11 @@ function TravelRecordDetailPage() {
     );
   }
 
-  const lastPhotoIndex = folder.photos.length - 1;
+  const folderPhotos: [string, ...string[]] =
+    Array.isArray(folder.photos) && folder.photos.length > 0
+      ? folder.photos
+      : [''];
+  const lastPhotoIndex = folderPhotos.length - 1;
   const visiblePhotoIndexes =
     isPhotoTransitioning && transitionTargetIndex !== null
       ? [activePhotoIndex, transitionTargetIndex]
@@ -323,49 +291,73 @@ function TravelRecordDetailPage() {
   };
 
   const handleEdit = async () => {
-    if (!folder) {
+    if (!travelRecordId) {
       return;
     }
 
-    const photos = isSavedFolder
-      ? await getSavedTravelRecordPhotos(folder.id)
-      : await Promise.all(
-          folder.photos.map(async (url, index) => {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            return new File([blob], `travel-record-${index + 1}.webp`, {
-              type: blob.type || 'image/webp',
-            });
-          }),
-        );
+    const editableFolder = serverTravelRecordQuery.data;
 
-    const startDate = new Date(`${folder.startDate}T00:00:00`);
-    const endDate = new Date(`${folder.endDate ?? folder.startDate}T00:00:00`);
+    if (!editableFolder) {
+      showToast('여행 기록을 불러오는 중이에요.');
+      return;
+    }
+
+    if (!editableFolder.serverPhotos?.length) {
+      showToast('사진 정보가 없어 수정할 수 없어요.');
+      return;
+    }
+
+    const photos = editableFolder.serverPhotos.map((photo) => ({
+      source: 'server' as const,
+      imageKey: photo.imageKey,
+      imageUrl: photo.imageUrl,
+    }));
+
+    const startDate = new Date(`${editableFolder.startDate}T00:00:00`);
+    const endDate = new Date(`${editableFolder.endDate ?? editableFolder.startDate}T00:00:00`);
     saveTravelRecordDraftRegion({
-      id: folder.regionCode,
-      name: folder.regionName,
-      province: folder.regionName,
-      selectionName: folder.regionName,
+      id: String(editableFolder.regionId ?? editableFolder.regionCode),
+      regionId: editableFolder.regionId,
+      name: editableFolder.regionName,
+      province: editableFolder.regionName,
+      selectionName: editableFolder.regionName,
     });
     saveTravelRecordDraftDateRange({ startDate, endDate });
-    await saveTravelRecordPhotoDraft(photos);
+
+    try {
+      // IndexedDB가 막혀 있으면 실패한다. 사진 초안 없이 수정 화면으로
+      // 넘어가면 사진이 빈 상태가 되므로 이동하지 않고 안내한다.
+      await saveTravelRecordPhotoDraft(photos);
+    } catch {
+      showToast('여행 사진을 불러오지 못해 수정할 수 없어요.');
+      return;
+    }
+
     beginEdit({
-      id: folder.id,
-      source: isSavedFolder ? 'saved' : 'mock',
-      decorations: folder.decorations,
+      id: editableFolder.id,
+      decorations: editableFolder.decorations,
+      title: editableFolder.title,
+      regionId: editableFolder.regionId,
     });
-    navigate('/travel-record/new');
+    navigate(getTravelRecordEditRoute(String(travelRecordId)));
   };
 
   const handleDelete = async () => {
-    if (!folder) {
+    if (!travelRecordId) {
       return;
     }
 
-    if (isSavedFolder) {
-      await deleteTravelRecord(folder.id);
-    } else {
-      deleteMockFolder(folder.id);
+    // Disable this page's detail query before the mutation removes its
+    // cache entry, so react-query doesn't treat it as an active observer
+    // and immediately re-fetch the record we're about to delete.
+    setIsDeleted(true);
+
+    try {
+      await deleteTravelRecordMutation.mutateAsync(travelRecordId);
+    } catch (error) {
+      setIsDeleted(false);
+      showToast(getApiErrorMessage(error, '여행 기록을 삭제하지 못했어요.'));
+      return;
     }
 
     navigate('/travel-record');
@@ -376,7 +368,7 @@ function TravelRecordDetailPage() {
       <header className="relative h-[146px]">
         <div className="absolute top-0 left-6 h-[152px] w-[132px] origin-top-left scale-[0.83]">
           <TravelFolderArtwork
-            photos={folder.photos}
+            photos={folderPhotos}
             title={folder.title}
             decorations={folder.decorations}
           />
@@ -445,7 +437,14 @@ function TravelRecordDetailPage() {
             <p className="mt-3 text-sm text-[#7f7f7f]">삭제한 기록은 되돌릴 수 없어요.</p>
             <div className="mt-6 flex gap-2">
               <button type="button" onClick={() => setIsDeleteDialogOpen(false)} className="h-11 flex-1 rounded-xl bg-[#e4e4e4] text-sm font-semibold text-[#505050]">취소</button>
-              <button type="button" onClick={() => void handleDelete()} className="h-11 flex-1 rounded-xl bg-[#ff6f41] text-sm font-semibold text-white">삭제</button>
+              <button
+                type="button"
+                onClick={() => void handleDelete()}
+                disabled={deleteTravelRecordMutation.isPending}
+                className="h-11 flex-1 rounded-xl bg-[#ff6f41] text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                삭제
+              </button>
             </div>
           </section>
         </div>
@@ -459,7 +458,7 @@ function TravelRecordDetailPage() {
       >
         <AnimatePresence initial={false}>
           {visiblePhotoIndexes.map((index) => {
-            const photo = folder.photos[index];
+            const photo = folderPhotos[index];
             const isActive = index === activePhotoIndex;
 
             return (
@@ -480,11 +479,13 @@ function TravelRecordDetailPage() {
                 style={getPhotoCardStyle(index)}
                 className="absolute inset-0 overflow-hidden rounded-[24px] bg-[#e4e4e4]"
               >
-                <img
-                  src={photo}
-                  alt={`${folder.title} 여행 사진 ${index + 1}`}
-                  className="block size-full object-cover"
-                />
+                {photo && (
+                  <img
+                    src={photo}
+                    alt={`${folder.title} 여행 사진 ${index + 1}`}
+                    className="block size-full object-cover"
+                  />
+                )}
               </motion.article>
             );
           })}
@@ -492,7 +493,7 @@ function TravelRecordDetailPage() {
       </div>
 
       <div className="mt-8 flex justify-center gap-[15px] overflow-hidden">
-        {folder.photos.map((photo, index) => (
+        {folderPhotos.map((photo, index) => (
           <button
             key={`${photo}-${index}`}
             type="button"
@@ -502,7 +503,9 @@ function TravelRecordDetailPage() {
             aria-pressed={selectedThumbnailIndex === index}
             className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-[#e4e4e4] disabled:cursor-default"
           >
-            <img src={photo} alt="" className="block size-full object-cover" />
+            {photo && (
+              <img src={photo} alt="" className="block size-full object-cover" />
+            )}
             {selectedThumbnailIndex !== index && (
               <span
                 className="pointer-events-none absolute inset-0 bg-black/45"

@@ -23,13 +23,15 @@ function PopularRegionGrid({
             type="button"
             onClick={() => onSelect(region)}
             aria-pressed={selectedRegionId === region.id}
-            className="relative h-[127px] overflow-hidden rounded-xl text-left"
+            className="relative h-[127px] overflow-hidden rounded-xl bg-gray-3 text-left"
           >
-            <img
-              src={region.imageSrc}
-              alt=""
-              className="absolute inset-0 size-full object-cover"
-            />
+            {region.imageSrc ? (
+              <img
+                src={region.imageSrc}
+                alt=""
+                className="absolute inset-0 size-full object-cover"
+              />
+            ) : null}
             <span className="absolute inset-0 bg-black/30" />
             <span className="absolute top-[81px] left-3 max-w-[80px] truncate text-[14px] leading-none font-semibold text-[#f9f9f9]">
               {region.name}

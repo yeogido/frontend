@@ -9,6 +9,19 @@ const createDate = (year: number, monthIndex: number, day: number) =>
 export const getStartOfDay = (date: Date) =>
   createDate(date.getFullYear(), date.getMonth(), date.getDate());
 
+export const getInitialTravelDateRange = (
+  initialRange: TravelDateRange | null,
+  today: Date = new Date(),
+): TravelDateRange => {
+  if (initialRange) {
+    return initialRange;
+  }
+
+  const startDate = getStartOfDay(today);
+
+  return { startDate, endDate: startDate };
+};
+
 export const addDays = (date: Date, days: number) =>
   createDate(date.getFullYear(), date.getMonth(), date.getDate() + days);
 

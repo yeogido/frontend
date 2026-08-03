@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { IoChevronBack } from 'react-icons/io5';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
@@ -20,7 +20,9 @@ import {
 import {
   saveTravelRecordPhotoDraft,
   TRAVEL_RECORD_PHOTO_DRAFT_ID,
+  type TravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
+import { getTravelRecordEditRoute } from '../utils/editRoute';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -32,6 +34,7 @@ const decorateFolderLabel = '\uD3F4\uB354 \uAFB8\uBBF8\uAE30';
 
 function TravelRecordPhotoSelectionPage() {
   const navigate = useNavigate();
+  const { travelRecordId } = useParams<{ travelRecordId: string }>();
   const location = useLocation();
   const locationState =
     location.state as TravelPhotoSelectionLocationState | null;
@@ -70,26 +73,49 @@ function TravelRecordPhotoSelectionPage() {
       return;
     }
 
-    await saveTravelRecordPhotoDraft(photos.map((photo) => photo.file));
-    navigate('/travel-record/folder-decoration', {
+    await saveTravelRecordPhotoDraft(
+      photos.flatMap<TravelRecordPhotoDraft>((photo) => {
+        if (photo.source === 'server' && photo.imageKey) {
+          return [{ source: 'server' as const, imageKey: photo.imageKey, imageUrl: photo.url }];
+        }
+
+        return photo.file ? [{ source: 'new' as const, file: photo.file }] : [];
+      }),
+    );
+    navigate(
+      travelRecordId
+        ? getTravelRecordEditRoute(travelRecordId, 'decorate')
+        : '/travel-record/folder-decoration',
+      {
       state: {
         selectedRegion,
         selectedDateRange,
         photoDraftId: TRAVEL_RECORD_PHOTO_DRAFT_ID,
       },
-    });
+      },
+    );
   };
 
   useEffect(() => {
     if (!selectedRegion) {
-      navigate('/travel-record/new', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId)
+          : '/travel-record/new',
+        { replace: true },
+      );
       return;
     }
 
     if (!selectedDateRange) {
-      navigate('/travel-record/date-selection', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId, 'date')
+          : '/travel-record/date-selection',
+        { replace: true },
+      );
     }
-  }, [navigate, selectedDateRange, selectedRegion]);
+  }, [navigate, selectedDateRange, selectedRegion, travelRecordId]);
 
   return (
     <TravelRecordPageFrame className="bg-[#f9f9f9]">
