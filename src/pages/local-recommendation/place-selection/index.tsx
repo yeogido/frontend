@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 import PlacePhotoModal from './components/PlacePhotoModal';
 import PlaceSearchSection from './components/PlaceSearchSection';
 import SelectedPlaceSection from './components/SelectedPlaceSection';
@@ -9,6 +11,9 @@ import { useSelectedPlaces } from './hooks/useSelectedPlaces';
 
 function PlaceSelectionPage() {
   const navigate = useNavigate();
+  const imageRecoveryRequired = useLocalRecommendationStore(
+    (state) => state.imageRecoveryRequired
+  );
   const { setQuery, searchResults } = usePlaceSearch();
   const {
     selectedPlaces,
@@ -17,7 +22,6 @@ function PlaceSelectionPage() {
     removeSelectedPlace,
     removeAllSelectedPlaces,
   } = useSelectedPlaces();
-
   const {
     pendingPlace,
     pendingImageFile,
@@ -29,13 +33,20 @@ function PlaceSelectionPage() {
     clearModalState,
   } = usePlacePhotoModal();
 
+  useEffect(() => {
+    if (!imageRecoveryRequired) return;
+    navigate('/local-recommendation/tag-selection', { replace: true });
+  }, [imageRecoveryRequired, navigate]);
+
   const handleConfirmImage = () => {
-    if (!pendingPlace || !pendingImageFile || !pendingImagePreviewUrl) {
-      return;
-    }
+    if (!pendingPlace) return;
 
     addSelectedPlace(pendingPlace, pendingImageFile, pendingImagePreviewUrl);
     clearModalState();
+  };
+
+  const handleSubmitPlaces = () => {
+    navigate('/local-recommendation/visit-order-selection');
   };
 
   return (
@@ -45,13 +56,15 @@ function PlaceSelectionPage() {
         selectedPlaceIds={selectedPlaceIds}
         onSearchChange={setQuery}
         onItemAdd={handlePlaceAdd}
-        onBack={() => navigate('/local-recommendation/event-selection', { replace: true })}
+        onBack={() =>
+          navigate('/local-recommendation/event-selection', { replace: true })
+        }
       />
       <SelectedPlaceSection
         selectedPlaces={selectedPlaces}
         onItemRemove={removeSelectedPlace}
         onRemoveAll={removeAllSelectedPlaces}
-        onSubmit={() => navigate('/local-recommendation/visit-order-selection')}
+        onSubmit={handleSubmitPlaces}
       />
       {isImageModalOpen && pendingPlace ? (
         <PlacePhotoModal

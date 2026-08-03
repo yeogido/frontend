@@ -1,41 +1,21 @@
-import type { ChangeEvent, RefObject } from 'react';
-
 import uploadIcon from '../assets/photo-upload-icon.svg';
 
 interface PhotoUploadBoxProps {
-  fileInputRef: RefObject<HTMLInputElement | null>;
-  hasSelectedPhotos: boolean;
-  onPhotoChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onUploadClick: () => void;
 }
 
-const uploadAreaLabel = '\uC0AC\uC9C4 \uC5C5\uB85C\uB4DC';
+const uploadAreaLabel = '사진 업로드';
 const addPhotoLabel =
-  '\uC0AC\uC9C4\uC744 \uCD94\uAC00\uD574 \uC8FC\uC138\uC694';
-const addMorePhotoLabel =
-  '\uC0AC\uC9C4\uC744 \uB354 \uCD94\uAC00\uD560 \uC218 \uC788\uC5B4\uC694';
+  '사진을 추가해 주세요';
 const uploadHelperText =
-  '\uC5EC\uAE30\uB97C \uD0ED\uD574 \uC5C5\uB85C\uB4DC\uD560 \uC218 \uC788\uC5B4\uC694';
+  '여기를 탭해 업로드할 수 있어요';
 
-function PhotoUploadBox({
-  fileInputRef,
-  hasSelectedPhotos,
-  onPhotoChange,
-  onUploadClick,
-}: PhotoUploadBoxProps) {
+function PhotoUploadBox({ onUploadClick }: PhotoUploadBoxProps) {
   return (
     <section
       aria-label={uploadAreaLabel}
       className="absolute top-[237px] left-6 h-[213px] w-[342px] overflow-hidden rounded-xl border border-dashed border-[#ff6f41] bg-[#fff7f5]"
     >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        multiple
-        onChange={onPhotoChange}
-        className="sr-only"
-      />
       <button
         type="button"
         onClick={onUploadClick}
@@ -47,7 +27,7 @@ function PhotoUploadBox({
           </span>
           <span className="flex flex-col items-center gap-3 text-[#1c1c1c]">
             <span className="text-center text-[14px] leading-none font-semibold">
-              {hasSelectedPhotos ? addMorePhotoLabel : addPhotoLabel}
+              {addPhotoLabel}
             </span>
             <span className="text-[12px] leading-none">
               {uploadHelperText}

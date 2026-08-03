@@ -1,5 +1,5 @@
 export { default as apiClient } from './apiClient';
-export { normalizeApiError } from './apiError';
+export { getApiErrorMessage, normalizeApiError } from './apiError';
 export type {
   ApiErrorResponse,
   ApiResponse,

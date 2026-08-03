@@ -22,6 +22,7 @@ import { useShareToast } from '../hooks/useShareToast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
+import BackButton from '../../local-recommendation/components/BackButton';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 25;
@@ -47,6 +48,7 @@ export interface CourseDetailLayoutProps {
   ) => Promise<boolean>;
   readonly pendingPlaceIds?: ReadonlySet<number>;
   readonly pendingContentIds?: ReadonlySet<number>;
+  readonly onBack?: () => void;
 }
 
 export function CourseDetailLayout({
@@ -58,6 +60,7 @@ export function CourseDetailLayout({
   onContentLikeToggle,
   pendingPlaceIds = new Set<number>(),
   pendingContentIds = new Set<number>(),
+  onBack,
 }: CourseDetailLayoutProps) {
   return (
     <CourseDetailLayoutContent
@@ -70,6 +73,7 @@ export function CourseDetailLayout({
       onContentLikeToggle={onContentLikeToggle}
       pendingPlaceIds={pendingPlaceIds}
       pendingContentIds={pendingContentIds}
+      onBack={onBack}
     />
   );
 }
@@ -83,6 +87,7 @@ function CourseDetailLayoutContent({
   onContentLikeToggle,
   pendingPlaceIds = new Set<number>(),
   pendingContentIds = new Set<number>(),
+  onBack,
 }: CourseDetailLayoutProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
@@ -181,18 +186,25 @@ function CourseDetailLayoutContent({
     >
       {/* 1. 히어로 세션 (우측 상단 좋아요 버튼 슬롯) */}
       <ResponsiveFullBleed>
-        <DetailHeroSection
-          imageUrl={course.heroImageUrl}
-          title={course.title}
-          rightAction={
-            <FavoriteButton
-              isActive={isLiked}
-              label={course.title}
-              onClick={handleFavoriteToggle}
-              disabled={isFavoritePending}
-            />
-          }
-        />
+        <div className="relative">
+          <DetailHeroSection
+            imageUrl={course.heroImageUrl}
+            title={course.title}
+            rightAction={
+              <FavoriteButton
+                isActive={isLiked}
+                label={course.title}
+                onClick={handleFavoriteToggle}
+                disabled={isFavoritePending}
+              />
+            }
+          />
+          {onBack ? (
+            <div className="absolute top-3 left-6 z-10">
+              <BackButton onClick={onBack} />
+            </div>
+          ) : null}
+        </div>
       </ResponsiveFullBleed>
 
       {/* 2. 타이틀 세션 (우측 공유 버튼 슬롯) */}

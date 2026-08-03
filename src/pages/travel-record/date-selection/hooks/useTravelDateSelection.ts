@@ -4,8 +4,7 @@ import type { TravelDatePreset, TravelDateRange } from '../types';
 import {
   addDays,
   getStartOfDay,
-  INITIAL_MONTH_INDEX,
-  INITIAL_YEAR,
+  getInitialTravelDateRange,
   isFutureDate,
   isFutureMonth,
   isSameDate,
@@ -48,21 +47,25 @@ const getPresetRange = (
 };
 
 function useTravelDateSelection(initialRange: TravelDateRange | null = null) {
-  const [visibleYear, setVisibleYear] = useState(initialRange?.startDate.getFullYear() ?? INITIAL_YEAR);
-  const [visibleMonthIndex, setVisibleMonthIndex] =
-    useState(initialRange?.startDate.getMonth() ?? INITIAL_MONTH_INDEX);
-  const [selectedPreset, setSelectedPreset] =
-    useState<TravelDatePreset>('custom');
-  const [selectedRange, setSelectedRange] = useState<TravelDateRange | null>(
-    initialRange,
+  const [selectedRange, setSelectedRange] = useState<TravelDateRange>(() =>
+    getInitialTravelDateRange(initialRange, createToday()),
   );
+  const [visibleYear, setVisibleYear] = useState(
+    selectedRange.startDate.getFullYear(),
+  );
+  const [visibleMonthIndex, setVisibleMonthIndex] =
+    useState(selectedRange.startDate.getMonth());
+  const [selectedPreset, setSelectedPreset] =
+    useState<TravelDatePreset>(
+      initialRange ? 'custom' : 'today',
+    );
 
   const previousMonth = getAdjacentMonth(visibleYear, visibleMonthIndex, -1);
   const nextMonth = getAdjacentMonth(visibleYear, visibleMonthIndex, 1);
   const canGoToPreviousMonth = true;
   const canGoToNextMonth =
     !isFutureMonth(nextMonth.getFullYear(), nextMonth.getMonth());
-  const canAddPhoto = selectedRange !== null;
+  const canAddPhoto = true;
 
   const visibleMonthLabel = useMemo(
     () => `${visibleYear}\uB144 ${visibleMonthIndex + 1}\uC6D4`,

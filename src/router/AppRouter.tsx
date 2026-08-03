@@ -103,13 +103,6 @@ function AppRouter() {
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route
-            path="/local-recommendation"
-            element={<LocalRecommendationPage />}
-          />
-        </Route>
-
         <Route path="/admin" element={<AdminPage />} />
 
         <Route element={<ProtectedRoute />}>
@@ -119,10 +112,13 @@ function AppRouter() {
 
       <Route element={<ProtectedRoute />}>
         <Route
+          path="/local-recommendation"
+          element={<LocalRecommendationPage />}
+        />
+        <Route
           path="/local-recommendation/course-info"
           element={<CourseBasicInfoPage />}
         />
-
         <Route
           path="/local-recommendation/tag-selection"
           element={<TagSelectionPage />}
@@ -132,9 +128,17 @@ function AppRouter() {
           path="/travel-record/new"
           element={<TravelRecordRegionSelectionPage />}
         />
+        <Route
+          path="/travel-record/:travelRecordId/edit"
+          element={<TravelRecordRegionSelectionPage />}
+        />
 
         <Route
           path="/travel-record/date-selection"
+          element={<TravelRecordDateSelectionPage />}
+        />
+        <Route
+          path="/travel-record/:travelRecordId/edit/date"
           element={<TravelRecordDateSelectionPage />}
         />
         <Route
@@ -146,7 +150,15 @@ function AppRouter() {
           element={<TravelRecordPhotoSelectionPage />}
         />
         <Route
+          path="/travel-record/:travelRecordId/edit/photos"
+          element={<TravelRecordPhotoSelectionPage />}
+        />
+        <Route
           path="/travel-record/folder-decoration"
+          element={<TravelRecordFolderDecorationPage />}
+        />
+        <Route
+          path="/travel-record/:travelRecordId/edit/decorate"
           element={<TravelRecordFolderDecorationPage />}
         />
         <Route

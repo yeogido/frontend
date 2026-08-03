@@ -57,7 +57,7 @@ function PlacePhotoModal({
           borderRadius: DIALOG_RADIUS * scale,
         }}
       >
-        <div className="min-h-0 overflow-y-auto overscroll-contain">
+        <div className="min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <PlacePhotoModalHeader onClose={onClose} />
           <PlacePhotoUploader
             placeTitle={placeTitle}
@@ -65,7 +65,7 @@ function PlacePhotoModal({
             onFileChange={onFileChange}
           />
         </div>
-        <PlacePhotoModalFooter previewUrl={previewUrl} onConfirm={onConfirm} />
+        <PlacePhotoModalFooter onConfirm={onConfirm} />
       </section>
     </div>
   );

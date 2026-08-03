@@ -22,8 +22,10 @@ export interface SearchBarProps {
   label?: string;
   suggestions?: readonly string[];
   noResultsText?: string;
+  hideEmptySuggestions?: boolean;
   className?: string;
   onSearch?: (query: string) => void;
+  onQueryChange?: (query: string) => void;
 }
 
 function SearchBar({
@@ -32,8 +34,10 @@ function SearchBar({
   label = '검색어 입력',
   suggestions = [],
   noResultsText = '검색 결과가 없습니다',
+  hideEmptySuggestions = false,
   className = '',
   onSearch,
+  onQueryChange,
 }: SearchBarProps) {
   const { outerRef, innerRef, scale, scaledHeight } = useScaleFrame(
     SEARCH_BAR_DESIGN_WIDTH
@@ -98,6 +102,7 @@ function SearchBar({
 
     updateQuery(trimmedSuggestion);
     setIsOpen(false);
+    onQueryChange?.(trimmedSuggestion);
     onSearch?.(trimmedSuggestion);
   };
 
@@ -168,7 +173,9 @@ function SearchBar({
               value={query}
               onFocus={handleFocus}
               onChange={(event) => {
-                updateQuery(event.target.value);
+                const nextQuery = event.target.value;
+                updateQuery(nextQuery);
+                onQueryChange?.(nextQuery);
 
                 if (hasSuggestions) {
                   setIsOpen(true);
@@ -183,7 +190,9 @@ function SearchBar({
               className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-normal font-medium outline-none"
             />
           </div>
-          {hasSuggestions && isOpen ? (
+          {hasSuggestions &&
+          isOpen &&
+          (filteredSuggestions.length > 0 || !hideEmptySuggestions) ? (
             <div
               id={listboxId}
               role="listbox"
