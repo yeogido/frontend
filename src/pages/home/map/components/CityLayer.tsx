@@ -75,6 +75,11 @@ function CityLayer({ zoomLevel, regionPhotos }: CityLayerProps) {
 
         if (!d) return null;
 
+        // 사진이 있는 시/군은 축소 상태에서도 PhotoLayer가 사진을 그린다.
+        // 보이는데 눌리지 않으면 어색하므로 클릭만 함께 열어 준다. 사진이
+        // 없는 도형까지 열면 도 단위 클릭이 사실상 막힌다.
+        const isInteractive = isVisible || Boolean(regionPhotos?.[name]);
+
         return (
           <path
             key={index}
@@ -83,9 +88,9 @@ function CityLayer({ zoomLevel, regionPhotos }: CityLayerProps) {
             stroke="#FF6F41"
             strokeWidth={0.5}
             strokeOpacity={isVisible ? 1 : 0}
-            pointerEvents={isVisible ? 'all' : 'none'}
-            style={{ cursor: isVisible ? 'pointer' : 'default' }}
-            onClick={isVisible ? () => handleClick(name) : undefined}
+            pointerEvents={isInteractive ? 'all' : 'none'}
+            style={{ cursor: isInteractive ? 'pointer' : 'default' }}
+            onClick={isInteractive ? () => handleClick(name) : undefined}
           />
         );
       })}

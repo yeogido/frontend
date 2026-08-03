@@ -4,7 +4,6 @@ import { geoMercator, geoPath } from 'd3-geo';
 
 import koreaProvinceJson from '../assets/korea-province.json';
 import koreaCityJson from '../assets/korea-city.json';
-import { CITY_LAYER_ZOOM } from '../constants/map';
 import { isMetroCityCode } from '../utils/metroCityCodes';
 
 import type { KoreaCityGeoJson } from '../types/map';
@@ -18,7 +17,6 @@ const koreaProvince = koreaProvinceJson as GeoJSON.FeatureCollection;
 const koreaCity = koreaCityJson as KoreaCityGeoJson;
 
 interface PhotoLayerProps {
-  zoomLevel: number;
   /** 여행 기록 페이지에서 받아온, 지역명 → 대표 사진 매핑 */
   regionPhotos: RegionPhotoMap;
 }
@@ -28,10 +26,13 @@ interface PhotoLayerProps {
  * 채워 넣는 레이어. ProvinceLayer / CityLayer 위에 그려져서, 사진이
  * 있는 지역만 도형 모양 그대로 사진이 채워져 보이게 한다.
  * 클릭/줌 판정 로직은 갖지 않고 순수하게 시각 표현만 담당한다.
+ *
+ * 사진은 줌과 무관하게 항상 그린다. CityLayer는 축소 상태에서도 시/군
+ * 도형을 그려 두고 선만 감추므로, 사진을 얹을 자리는 어느 줌에서든
+ * 있다. 도 단위 사진을 먼저 깔고 시/군 사진을 그 위에 올려서, 좁은
+ * 도형이 넓은 도형에 가려지지 않게 한다.
  */
-function PhotoLayer({ zoomLevel, regionPhotos }: PhotoLayerProps) {
-  const isCity = zoomLevel >= CITY_LAYER_ZOOM;
-
+function PhotoLayer({ regionPhotos }: PhotoLayerProps) {
   const provinceProjection = useMemo(
     () =>
       geoMercator().fitExtent(
@@ -84,16 +85,15 @@ function PhotoLayer({ zoomLevel, regionPhotos }: PhotoLayerProps) {
 
           const bounds = provincePath.bounds(feature);
 
-          return { key: `province-${index}`, d, bounds, photoUrl };
+          return { key: `province-${index}`, name, d, bounds, photoUrl };
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item)),
     [provincePath, regionPhotos],
   );
 
-  const cityItems = useMemo(() => {
-    if (!isCity) return [];
-
-    return koreaCity.features
+  const cityItems = useMemo(
+    () =>
+      koreaCity.features
       .map((feature, index) => {
         const properties = feature.properties as {
           code?: string;
@@ -112,12 +112,22 @@ function PhotoLayer({ zoomLevel, regionPhotos }: PhotoLayerProps) {
 
         const bounds = cityPath.bounds(feature);
 
-        return { key: `city-${index}`, d, bounds, photoUrl };
+        return { key: `city-${index}`, name, d, bounds, photoUrl };
       })
-      .filter((item): item is NonNullable<typeof item> => Boolean(item));
-  }, [isCity, cityPath, regionPhotos]);
+      .filter((item): item is NonNullable<typeof item> => Boolean(item)),
+    [cityPath, regionPhotos],
+  );
 
-  const items = isCity ? cityItems : provinceItems;
+  const items = useMemo(() => {
+    // 세종특별자치시처럼 도와 시 목록에 같은 이름이 모두 있는 지역은
+    // 두 번 그려지지 않도록 더 좁은 city 도형만 남긴다.
+    const cityNames = new Set(cityItems.map(({ name }) => name));
+
+    return [
+      ...provinceItems.filter(({ name }) => !cityNames.has(name)),
+      ...cityItems,
+    ];
+  }, [cityItems, provinceItems]);
 
   return (
     <>

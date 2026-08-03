@@ -30,8 +30,9 @@ const MapViewport = forwardRef<SVGGElement, MapViewportProps>(
   ) {
     return (
       <g ref={ref} id="map-content">
-        {/* 클릭 영역(Province/City) 위, 라벨 아래에 사진을 얹는다 */}
-        <PhotoLayer zoomLevel={zoomLevel} regionPhotos={regionPhotos} />
+        {/* 클릭 영역(Province/City) 아래, 배경 위에 사진을 깐다.
+            사진은 줌과 무관하게 항상 그려진다. */}
+        <PhotoLayer regionPhotos={regionPhotos} />
 
         <ProvinceLayer regionPhotos={regionPhotos} />
 
