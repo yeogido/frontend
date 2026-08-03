@@ -62,6 +62,9 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const imageRecoveryRequired = useLocalRecommendationStore(
     (state) => state.imageRecoveryRequired
   );
+  const hasPendingImages = useLocalRecommendationStore(
+    (state) => Object.keys(state.pendingImages).length > 0
+  );
   const [photo, setPhoto] = useState<PhotoSelection | null>(() =>
     savedCoverImage
       ? {
@@ -127,6 +130,8 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   };
 
   const isReady = isTagSelectionReady(photo, selectedTagIds);
+  const shouldShowImageRecoveryMessage =
+    imageRecoveryRequired && !hasPendingImages;
 
   const handleComplete = async () => {
     if (!photo || !isReady || isSubmitting) return;
@@ -192,7 +197,7 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
           코스를 더 매력적으로 소개할 수 있어요!
         </p>
 
-        {imageRecoveryRequired ? (
+        {shouldShowImageRecoveryMessage ? (
           <p className="text-main-5 mt-2 text-sm" role="alert">
             새로고침으로 사진이 사라졌습니다. 대표 사진과 장소 사진을 다시 등록해 주세요.
           </p>
