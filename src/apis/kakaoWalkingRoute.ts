@@ -31,7 +31,9 @@ function splitIntoRouteRequests(points: readonly GeoPoint[]) {
 
 function toWalkingRoutePoints(response: KakaoWalkingRouteResponse): GeoPoint[] {
   if (response.status !== 'OK' || !response.route?.legs) {
-    return [];
+    throw new Error(
+      `Kakao walking route request failed with status: ${response.status}`
+    );
   }
 
   return response.route.legs.flatMap((leg) =>

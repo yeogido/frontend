@@ -22,9 +22,17 @@ export interface CourseRouteMapProps {
   readonly className?: string;
 }
 
+interface WalkingRouteResult {
+  readonly locations: readonly GeoPoint[];
+  readonly route: readonly GeoPoint[];
+}
+
+const EMPTY_ROUTE_RESULT: WalkingRouteResult = { locations: [], route: [] };
+
 export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
   const scale = useGlobalScale();
-  const [walkingRoute, setWalkingRoute] = useState<readonly GeoPoint[]>([]);
+  const [routeResult, setRouteResult] =
+    useState<WalkingRouteResult>(EMPTY_ROUTE_RESULT);
 
   // 1. 유효한 stop.location만 추출
   const validLocations: readonly GeoPoint[] = useMemo(() => {
@@ -43,17 +51,24 @@ export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
     const controller = new AbortController();
 
     void fetchKakaoWalkingRoute(validLocations, controller.signal)
-      .then(setWalkingRoute)
+      .then((route) => {
+        if (!controller.signal.aborted) {
+          setRouteResult({ locations: validLocations, route });
+        }
+      })
       .catch(() => {
         if (!controller.signal.aborted) {
-          setWalkingRoute([]);
+          setRouteResult({ locations: validLocations, route: [] });
         }
       });
 
     return () => controller.abort();
   }, [validLocations]);
 
-  const routePath = validLocations.length < 2 ? [] : walkingRoute;
+  // 정류장이 바뀌어 새 요청이 시작되면, 이전 좌표에 대한 결과는 즉시 무효화되어
+  // 새 마커에 옛 경로가 겹쳐 보이지 않도록 함(파생값이라 별도 setState 불필요).
+  const routePath =
+    routeResult.locations === validLocations ? routeResult.route : [];
 
   // 2. 좌표가 없으면 안내 문구 표시
   if (!center) {
