@@ -3,9 +3,15 @@ export interface PlaceItem {
   title: string;
   address: string;
   imageSrc: string | null;
+  externalPlaceId: string;
+  categoryGroupCode: string;
+  roadAddress: string;
+  lotAddress: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface SelectedPlace extends PlaceItem {
-  imageFile: File;
-  imagePreviewUrl: string;
+  imageFile: File | null;
+  imagePreviewUrl: string | null;
 }

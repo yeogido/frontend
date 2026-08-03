@@ -9,7 +9,7 @@ export type CourseItem =
       lotAddress: string;
       latitude: number;
       longitude: number;
-      imageKey: string;
+      imageKey: string | null;
     }
   | { order: number; type: 'CONTENT'; contentId: number };
 
@@ -19,12 +19,11 @@ export interface CreateLocalRecommendationRequest {
   description: string;
   durationType:
     | 'DAY_TRIP'
-    | 'ONE_NIGHT_TWO_DAYS'
-    | 'TWO_NIGHTS_THREE_DAYS'
-    | 'THREE_NIGHTS_FOUR_DAYS'
-    | 'FOUR_NIGHTS_OR_MORE';
-  transportType: 'WALK' | 'CAR';
-  companionType: 'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'CHILDREN';
+    | 'ONE_NIGHT'
+    | 'TWO_NIGHT'
+    | 'THREE_PLUS';
+  transportType: 'WALK' | 'PUBLIC' | 'CAR';
+  companionType: 'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
   monthStart: number;
   monthEnd: number;
   thumbnailKey: string;

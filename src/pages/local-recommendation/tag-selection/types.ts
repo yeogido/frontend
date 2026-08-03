@@ -10,4 +10,8 @@ export interface PhotoSelection {
 export interface TagSelectionResult {
   photo: File;
   tagIds: TagId[];
+  /** presigned-url 업로드로 얻은 대표 사진의 실제 오브젝트 키 */
+  photoKey: string;
+  /** tagIds를 서버 해시태그 목록에 매핑해 얻은 실제 숫자 id 목록 */
+  hashtagIds: number[];
 }

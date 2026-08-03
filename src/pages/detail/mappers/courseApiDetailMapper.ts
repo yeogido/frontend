@@ -3,6 +3,12 @@ import type { CourseDetailResult } from '../../../apis/courses';
 import type { BadgeId } from '../../../constants/badges';
 import type { DetailTag } from '../../../types/detail';
 import type { TagId } from '../../../types/tag.type';
+import type {
+  Course,
+  CourseCompanionType,
+  CourseDurationType,
+  CourseTransportType,
+} from '../../../types/course.type';
 import type { CourseDetailDto, CourseStopDto } from '../types/courseDetail';
 
 const durationLabels: Record<string, string> = {
@@ -31,6 +37,7 @@ const companionLabels: Record<string, { label: string; icon: BadgeId }> = {
   COUPLE: { label: '연인과', icon: 'group' },
   FAMILY: { label: '가족과', icon: 'group' },
   CHILDREN: { label: '아이와', icon: 'child' },
+  PET: { label: '반려동물과', icon: 'group' },
 };
 
 function toTagId(tag: string): TagId | undefined {
@@ -110,5 +117,86 @@ export function mapCourseApiDetailToDto(
     overview: course.description,
     stops: toCourseStops(course),
     reviews: [],
+  };
+}
+
+// 코스 상세 응답에는 region이 내려오지 않아, 첫 번째 코스 아이템 주소에서
+// 시/도 다음 토큰(구/군 등)을 지역명으로 대략 추출한다.
+function deriveRegionFromCourseItems(
+  courseItems: CourseDetailResult['courseItems']
+): string {
+  const address = courseItems[0]?.roadAddress || courseItems[0]?.lotAddress;
+
+  return address?.split(' ')[1] ?? '';
+}
+
+// durationLabels/transportLabels/companionLabels가 인식하는 레거시 별칭까지
+// toCourseCardProps가 쓰는 canonical enum 값으로 정규화해서, 저장/표시 단계에서
+// 라벨이 비는 일이 없도록 한다.
+function toCanonicalDurationType(durationType: string): CourseDurationType {
+  switch (durationType) {
+    case 'ONE_NIGHT':
+    case 'ONE_NIGHT_TWO_DAYS':
+      return 'ONE_NIGHT';
+    case 'TWO_NIGHT':
+    case 'TWO_NIGHTS_THREE_DAYS':
+      return 'TWO_NIGHT';
+    case 'THREE_NIGHT':
+    case 'THREE_NIGHTS_FOUR_DAYS':
+    case 'THREE_PLUS':
+    case 'FOUR_NIGHTS_OR_MORE':
+      return 'THREE_PLUS';
+    case 'DAY_TRIP':
+    default:
+      return 'DAY_TRIP';
+  }
+}
+
+function toCanonicalTransportType(transportType: string): CourseTransportType {
+  switch (transportType) {
+    case 'WALK':
+      return 'WALK';
+    case 'PUBLIC':
+    case 'PUBLIC_TRANSPORT':
+      return 'PUBLIC';
+    case 'CAR':
+    default:
+      return 'CAR';
+  }
+}
+
+function toCanonicalCompanionType(
+  companionType: string
+): CourseCompanionType {
+  switch (companionType) {
+    case 'FRIEND':
+      return 'FRIEND';
+    case 'COUPLE':
+      return 'COUPLE';
+    case 'FAMILY':
+      return 'FAMILY';
+    case 'CHILDREN':
+    case 'PET':
+      return 'PET';
+    case 'SOLO':
+    case 'ALONE':
+    default:
+      return 'SOLO';
+  }
+}
+
+export function mapCourseApiDetailToCourseSummary(
+  course: CourseDetailResult
+): Course {
+  return {
+    courseId: course.courseId,
+    thumbnailUrl: course.thumbnailUrl,
+    title: course.title,
+    region: deriveRegionFromCourseItems(course.courseItems),
+    durationType: toCanonicalDurationType(course.durationType),
+    transportType: toCanonicalTransportType(course.transportType),
+    companionType: toCanonicalCompanionType(course.companionType),
+    tags: course.tags,
+    isLiked: course.isLiked,
   };
 }

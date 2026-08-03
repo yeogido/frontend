@@ -1,13 +1,23 @@
 import {
   type InfiniteData,
   useInfiniteQuery,
+  useMutation,
+  useQuery,
 } from '@tanstack/react-query';
 
-import { getCourses } from '../apis/courses.api';
+import {
+  getCourses,
+  getPopularCourses,
+  getRecommendedCourses,
+} from '../apis/courses.api';
+import { addCourseLike, removeCourseLike } from '../apis/courses';
 import type { NormalizedApiError } from '../apis/common';
 import type {
+  Course,
   GetCoursesParams,
   GetCoursesResponse,
+  GetPopularCoursesParams,
+  RecommendedCourse,
 } from '../types/course.type';
 
 interface CoursesPageParam {
@@ -38,5 +48,31 @@ export function useCourses(params: GetCoursesParams) {
             cursorId: lastPage.cursorId,
           }
         : undefined,
+  });
+}
+
+export function usePopularCourses(params: GetPopularCoursesParams) {
+  return useQuery<Course[], NormalizedApiError>({
+    queryKey: ['popularCourses', params],
+    queryFn: () => getPopularCourses(params),
+  });
+}
+
+export function useRecommendedCourses() {
+  return useQuery<RecommendedCourse[], NormalizedApiError>({
+    queryKey: ['recommendedCourses'],
+    queryFn: getRecommendedCourses,
+  });
+}
+
+export function useCourseLikeMutation() {
+  return useMutation({
+    mutationFn: ({
+      courseId,
+      isLiked,
+    }: {
+      courseId: number;
+      isLiked: boolean;
+    }) => (isLiked ? removeCourseLike(courseId) : addCourseLike(courseId)),
   });
 }

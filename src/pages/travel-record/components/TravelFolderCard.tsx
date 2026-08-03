@@ -37,8 +37,10 @@ const folderPhotoSlots: FolderPhotoSlot[] = [
       'absolute top-[calc(50%-0.19px)] left-[-12.19px] size-[104px] -translate-y-1/2',
   },
   {
+    // 대표 사진이 놓이는 자리. 렌더 순서와 무관하게 왼쪽 사진 위로 겹치도록
+    // z-index를 한 단계 높인다.
     wrapperClassName:
-      'absolute top-[19px] left-[55px] z-10 flex size-[106.675px] items-center justify-center',
+      'absolute top-[19px] left-[55px] z-11 flex size-[106.675px] items-center justify-center',
     frameClassName:
       'flex size-[88px] rotate-[14deg] items-center justify-center overflow-hidden rounded-xl bg-[#f9f9f9] shadow-[2px_2px_2px_rgba(0,0,0,0.15)]',
     cropClassName:

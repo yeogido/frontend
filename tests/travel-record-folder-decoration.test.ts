@@ -3,58 +3,118 @@ import test from 'node:test';
 import * as folderDecoration from '../src/pages/travel-record/folder-decoration/folderDecoration.ts';
 
 import {
+  MAX_CUSTOM_STICKER_COUNT,
   MAX_FOLDER_DECORATION_COUNT,
   appendFolderDecoration,
   createFolderDecoration,
-  createUploadedFolderSticker,
-  getUploadStickerSlotState,
+  getCustomStickerSlotState,
   getDecorationRotation,
   getNormalizedCanvasPoint,
-  removeUploadedFolderSticker,
-  validateFolderDecorationFiles,
+  getPastedStickerImage,
+  isCustomStickerImage,
+  readStickerImageFromClipboard,
+  validateCustomStickerFile,
 } from '../src/pages/travel-record/folder-decoration/folderDecoration.ts';
-import { normalizeStoredDecorations } from '../src/pages/travel-record/utils/travelRecordSave.ts';
-import {
-  STICKER_CATEGORIES,
-  isKnownStickerId,
-} from '../src/pages/travel-record/folder-decoration/stickerCatalog.ts';
 import { getDecorationLayerStyle } from '../src/pages/travel-record/components/decorationRender.ts';
 
 const createFile = (type: string, size: number) => ({ type, size }) as File;
 
-test('allows supported image files only until the remaining decoration limit', () => {
-  const result = validateFolderDecorationFiles(
-    [
-      createFile('image/jpeg', 1),
-      createFile('image/png', 1),
-      createFile('image/webp', 1),
-    ],
-    2,
-  );
+const createClipboardItem = (
+  kind: string,
+  type: string,
+  file: File | null,
+) => ({ kind, type, getAsFile: () => file });
 
-  assert.equal(result.files.length, 2);
-  assert.match(result.message, /10/);
+test('accepts only transparent-capable PNG files as custom stickers', () => {
+  assert.equal(validateCustomStickerFile(createFile('image/png', 1)), '');
+  // JPEG는 투명도를 담지 못해 변환해도 흰 사각형이 된다.
+  assert.match(
+    validateCustomStickerFile(createFile('image/jpeg', 1)),
+    /PNG/,
+  );
+  assert.match(
+    validateCustomStickerFile(createFile('image/webp', 1)),
+    /PNG/,
+  );
 });
 
-test('rejects unsupported, oversized, and over-limit decoration uploads', () => {
-  assert.equal(
-    validateFolderDecorationFiles([createFile('image/gif', 1)], 1).files
-      .length,
-    0,
-  );
-  assert.equal(
-    validateFolderDecorationFiles(
-      [createFile('image/png', 10 * 1024 * 1024 + 1)],
-      1,
-    ).files.length,
-    0,
-  );
-  assert.equal(
-    validateFolderDecorationFiles([createFile('image/png', 1)], 0).files
-      .length,
-    0,
+test('rejects a custom sticker file over the size limit', () => {
+  assert.match(
+    validateCustomStickerFile(createFile('image/png', 10 * 1024 * 1024 + 1)),
+    /10MB/,
   );
   assert.equal(MAX_FOLDER_DECORATION_COUNT, 10);
+  assert.equal(MAX_CUSTOM_STICKER_COUNT, 10);
+});
+
+test('tells custom stickers apart from default ones by image path', () => {
+  // 여행 기록 상세 응답에는 stickerType이 없어 경로로 구분한다.
+  const base = 'https://example.com';
+
+  assert.equal(
+    isCustomStickerImage(`${base}/stickers/default/nature/sun.png`),
+    false,
+  );
+  assert.equal(
+    isCustomStickerImage(`${base}/stickers/default/food/cake.png`),
+    false,
+  );
+  assert.equal(
+    isCustomStickerImage(
+      `${base}/stickers/230c1263-630a-407b-9603-7cc8e231f911.png`,
+    ),
+    true,
+  );
+  assert.equal(isCustomStickerImage(''), false);
+});
+
+test('reads a copied PNG through the clipboard API', async () => {
+  // 모바일에는 Ctrl+V가 없어 paste 이벤트 대신 이 경로로 받는다.
+  const clipboard = {
+    read: async () => [
+      { types: ['text/plain'], getType: async () => new Blob(['x']) },
+      {
+        types: ['image/png'],
+        getType: async (type: string) => new Blob(['sticker'], { type }),
+      },
+    ],
+  };
+
+  const image = await readStickerImageFromClipboard(clipboard);
+
+  assert.equal(image?.type, 'image/png');
+  assert.equal(image?.name, 'custom-sticker.png');
+});
+
+test('returns nothing when the clipboard holds no PNG', async () => {
+  const clipboard = {
+    read: async () => [
+      { types: ['text/plain'], getType: async () => new Blob(['x']) },
+      { types: ['image/jpeg'], getType: async () => new Blob(['x']) },
+    ],
+  };
+
+  assert.equal(await readStickerImageFromClipboard(clipboard), null);
+});
+
+test('picks the first pasted PNG image out of the clipboard', () => {
+  const pngFile = createFile('image/png', 1);
+
+  assert.equal(
+    getPastedStickerImage([
+      createClipboardItem('string', 'text/plain', null),
+      createClipboardItem('file', 'image/jpeg', createFile('image/jpeg', 1)),
+      createClipboardItem('file', 'image/png', pngFile),
+    ]),
+    pngFile,
+  );
+  assert.equal(
+    getPastedStickerImage([
+      createClipboardItem('file', 'image/png', null),
+      createClipboardItem('string', 'text/html', null),
+    ]),
+    null,
+  );
 });
 
 test('clamps pointer coordinates to the folder canvas', () => {
@@ -145,12 +205,28 @@ test('accepts drag positions only inside the folder or either photo frame', () =
   assert.equal(isPointInFolderDecorationLayout({ x: 1, y: 0 }), false);
 });
 
+test('rejects a dropped sticker outside the folder without clamping it to the edge', () => {
+  const isFolderDecorationDropTarget = (
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration')
+  ).isFolderDecorationDropTarget;
+
+  assert.equal(typeof isFolderDecorationDropTarget, 'function');
+  if (!isFolderDecorationDropTarget) return;
+
+  const canvasRect = { left: 0, top: 0, width: 159, height: 183 };
+
+  assert.equal(isFolderDecorationDropTarget(canvasRect, 79.5, 137), true);
+  assert.equal(isFolderDecorationDropTarget(canvasRect, 79.5, 220), false);
+});
+
 test('creates new decorations in the canvas center above existing layers', () => {
   const decoration = createFolderDecoration(
-    { source: 'sticker', stickerId: 'food-noodle' },
+    { stickerId: 11, imageUrl: 'https://example.com/stickers/sun.png' },
     [{ id: 'existing', zIndex: 4 }],
   );
 
+  assert.equal(decoration.stickerId, 11);
+  assert.equal(decoration.imageUrl, 'https://example.com/stickers/sun.png');
   assert.equal(decoration.x, 0.5);
   assert.equal(decoration.y, 0.5);
   assert.equal(decoration.rotation, 0);
@@ -158,61 +234,108 @@ test('creates new decorations in the canvas center above existing layers', () =>
   assert.equal(decoration.zIndex, 5);
 });
 
+test('drops a sticker where the pointer was released', () => {
+  // 목록에서 끌어다 놓으면 손을 뗀 자리에 붙는다.
+  const dropPoint = { x: 0.2, y: 0.8 };
+  const decoration = createFolderDecoration(
+    { stickerId: 11, imageUrl: 'https://example.com/sun.png' },
+    [],
+    dropPoint,
+  );
+
+  assert.equal(decoration.x, 0.2);
+  assert.equal(decoration.y, 0.8);
+});
+
+test('appends a dropped sticker at the given point', () => {
+  const result = appendFolderDecoration(
+    [],
+    { stickerId: 11, imageUrl: 'https://example.com/sun.png' },
+    { x: 0.1, y: 0.9 },
+  );
+
+  assert.equal(result.added, true);
+  assert.deepEqual(
+    { x: result.decorations[0].x, y: result.decorations[0].y },
+    { x: 0.1, y: 0.9 },
+  );
+});
+
+test('does not append a sticker when its pointer interaction is cancelled', () => {
+  const shouldAppendFolderDecorationAfterDrag = (
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration')
+  ).shouldAppendFolderDecorationAfterDrag;
+
+  assert.equal(typeof shouldAppendFolderDecorationAfterDrag, 'function');
+  if (!shouldAppendFolderDecorationAfterDrag) return;
+
+  assert.equal(
+    shouldAppendFolderDecorationAfterDrag({
+      isCancelled: true,
+      movedDistance: 0,
+      isDropTarget: true,
+    }),
+    false,
+  );
+});
+
+test('positions the dragged sticker preview from viewport pointer coordinates', () => {
+  const getDraggingStickerPreviewStyle = (
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration')
+  ).getDraggingStickerPreviewStyle;
+
+  assert.equal(typeof getDraggingStickerPreviewStyle, 'function');
+  if (!getDraggingStickerPreviewStyle) return;
+
+  assert.deepEqual(
+    getDraggingStickerPreviewStyle({ x: 218, y: 391 }, 0.8),
+    {
+      left: 218,
+      top: 391,
+      transform: 'translate(-50%, -50%) scale(0.8)',
+    },
+  );
+});
+
+test('ignores pointer events from a different sticker drag', () => {
+  const isActiveStickerDragPointer = (
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration')
+  ).isActiveStickerDragPointer;
+
+  assert.equal(typeof isActiveStickerDragPointer, 'function');
+  if (!isActiveStickerDragPointer) return;
+
+  assert.equal(isActiveStickerDragPointer(12, 12), true);
+  assert.equal(isActiveStickerDragPointer(12, 13), false);
+});
+
 test('keeps the decoration count at ten when an additional sticker is requested', () => {
   const decorations = Array.from({ length: MAX_FOLDER_DECORATION_COUNT }, (_, index) =>
     createFolderDecoration(
-      { source: 'sticker', stickerId: `food-sticker-${index}` },
+      { stickerId: index + 1, imageUrl: `https://example.com/${index}.png` },
       [],
     ),
   );
 
-  const result = appendFolderDecoration(
-    decorations,
-    { source: 'sticker', stickerId: 'food-extra' },
-  );
+  const result = appendFolderDecoration(decorations, {
+    stickerId: 50,
+    imageUrl: 'https://example.com/extra.png',
+  });
 
   assert.equal(result.added, false);
   assert.equal(result.decorations, decorations);
 });
 
-test('appends an uploaded sticker only while a decoration slot remains', () => {
-  const result = appendFolderDecoration(
-    [],
-    { source: 'upload', imageFile: createFile('image/png', 1) },
-  );
-
-  assert.equal(result.added, true);
-  assert.equal(result.decorations.length, 1);
-});
-
-test('hides the upload add slot when ten uploaded stickers exist', () => {
-  assert.deepEqual(getUploadStickerSlotState(MAX_FOLDER_DECORATION_COUNT), {
+test('hides the custom sticker add slot once the hold limit is reached', () => {
+  assert.deepEqual(getCustomStickerSlotState(MAX_CUSTOM_STICKER_COUNT), {
     canAdd: false,
     emptySlotCount: 0,
   });
-});
-
-test('removes an uploaded sticker source and its placed decorations together', () => {
-  const uploadedSticker = createUploadedFolderSticker(
-    createFile('image/png', 1),
-  );
-  const placedDecoration = createFolderDecoration(
-    {
-      source: 'upload',
-      imageFile: uploadedSticker.imageFile,
-      uploadedStickerId: uploadedSticker.id,
-    },
-    [],
-  );
-
-  assert.deepEqual(
-    removeUploadedFolderSticker(
-      [uploadedSticker],
-      [placedDecoration],
-      uploadedSticker.id,
-    ),
-    { uploadedStickers: [], decorations: [] },
-  );
+  // 폴더에 몇 개를 배치했는지는 보유 한도와 무관하다.
+  assert.deepEqual(getCustomStickerSlotState(2), {
+    canAdd: true,
+    emptySlotCount: MAX_CUSTOM_STICKER_COUNT - 3,
+  });
 });
 
 test('moves a selected decoration above every other decoration', () => {
@@ -335,22 +458,6 @@ test('scales a decoration by the diagonal resize drag distance', () => {
     ),
     0.5,
   );
-});
-
-test('normalizes records saved before decorations existed', () => {
-  assert.deepEqual(normalizeStoredDecorations(undefined), []);
-});
-
-test('registers the five Figma sticker categories and known sticker ids', () => {
-  assert.deepEqual(STICKER_CATEGORIES, [
-    'food',
-    'nature',
-    'animal',
-    'person',
-    'object',
-  ]);
-  assert.equal(isKnownStickerId('food-coffee'), true);
-  assert.equal(isKnownStickerId('missing-sticker'), false);
 });
 
 test('converts saved decoration geometry to a renderer style', () => {

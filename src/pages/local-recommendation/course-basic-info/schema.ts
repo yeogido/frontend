@@ -7,8 +7,7 @@ export const courseBasicInfoSchema = z.object({
     'day-trip',
     '1-night-2-days',
     '2-nights-3-days',
-    '3-nights-4-days',
-    '4-nights-or-more',
+    '3-nights-or-more',
   ]),
   visitStartMonth: z.enum([
     '1',
@@ -38,8 +37,8 @@ export const courseBasicInfoSchema = z.object({
     '11',
     '12',
   ]),
-  transport: z.enum(['walking', 'car']),
-  companion: z.enum(['solo', 'friends', 'couple', 'family', 'children']),
+  transport: z.enum(['walking', 'public', 'car']),
+  companion: z.enum(['solo', 'friends', 'couple', 'family', 'pet']),
 });
 
 export type CourseBasicInfoValues = z.infer<typeof courseBasicInfoSchema>;

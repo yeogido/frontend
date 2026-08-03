@@ -3,8 +3,10 @@ import type { TravelRecordDraftRegion } from '../types';
 
 export interface SelectedPhoto {
   id: string;
-  file: File;
   url: string;
+  source: 'new' | 'server';
+  file?: File;
+  imageKey?: string;
 }
 
 export interface TravelFolderDecorationLocationState {

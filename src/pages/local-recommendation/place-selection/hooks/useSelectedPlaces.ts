@@ -1,22 +1,60 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 
+import {
+  type PendingImage,
+  type PersistedSelectedPlace,
+  useLocalRecommendationStore,
+} from '../../../../store/localRecommendation.store';
 import type { PlaceItem, SelectedPlace } from '../types';
 
+function toPersistedPlace(place: SelectedPlace) {
+  return {
+    id: place.id,
+    title: place.title,
+    address: place.address,
+    imageKey: '',
+    externalPlaceId: place.externalPlaceId,
+    categoryGroupCode: place.categoryGroupCode,
+    roadAddress: place.roadAddress,
+    lotAddress: place.lotAddress,
+    latitude: place.latitude,
+    longitude: place.longitude,
+  };
+}
+
+function toSelectedPlace(
+  place: PersistedSelectedPlace,
+  pendingImage: PendingImage | undefined
+): SelectedPlace {
+  return {
+    ...place,
+    imageSrc: null,
+    imageFile: pendingImage?.originalFile ?? null,
+    imagePreviewUrl: pendingImage?.previewUrl ?? null,
+  };
+}
+
 export function useSelectedPlaces() {
-  const [selectedPlaces, setSelectedPlaces] = useState<SelectedPlace[]>([]);
-  const selectedPlacesRef = useRef<SelectedPlace[]>([]);
-
-  useEffect(() => {
-    selectedPlacesRef.current = selectedPlaces;
-  }, [selectedPlaces]);
-
-  useEffect(() => {
-    return () => {
-      selectedPlacesRef.current.forEach((place) => {
-        URL.revokeObjectURL(place.imagePreviewUrl);
-      });
-    };
-  }, []);
+  const draftPlaces = useLocalRecommendationStore((state) => state.draft.places);
+  const pendingImages = useLocalRecommendationStore(
+    (state) => state.pendingImages
+  );
+  const setPlacesInStore = useLocalRecommendationStore(
+    (state) => state.setPlaces
+  );
+  const setPendingImage = useLocalRecommendationStore(
+    (state) => state.setPendingImage
+  );
+  const removePendingImage = useLocalRecommendationStore(
+    (state) => state.removePendingImage
+  );
+  const selectedPlaces = useMemo(
+    () =>
+      draftPlaces.map((place) =>
+        toSelectedPlace(place, pendingImages[place.id])
+      ),
+    [draftPlaces, pendingImages]
+  );
 
   const selectedPlaceIds = useMemo(
     () => new Set(selectedPlaces.map((place) => place.id)),
@@ -25,48 +63,37 @@ export function useSelectedPlaces() {
 
   const addSelectedPlace = (
     place: PlaceItem,
-    imageFile: File,
-    imagePreviewUrl: string
+    imageFile: File | null,
+    imagePreviewUrl: string | null
   ) => {
-    setSelectedPlaces((items) => {
-      const alreadyExists = items.some((item) => item.id === place.id);
+    if (selectedPlaces.some((item) => item.id === place.id)) {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+      return;
+    }
 
-      if (alreadyExists) {
-        URL.revokeObjectURL(imagePreviewUrl);
-        return items;
-      }
-
-      return [
-        ...items,
-        {
-          ...place,
-          imageFile,
-          imagePreviewUrl,
-        },
-      ];
-    });
+    const next = [
+      ...selectedPlaces,
+      { ...place, imageFile, imagePreviewUrl },
+    ];
+    if (imageFile && imagePreviewUrl) {
+      setPendingImage(place.id, { file: imageFile, previewUrl: imagePreviewUrl });
+    }
+    setPlacesInStore(next.map(toPersistedPlace));
   };
 
   const removeSelectedPlace = (place: SelectedPlace) => {
-    setSelectedPlaces((items) => {
-      const target = items.find((item) => item.id === place.id);
-
-      if (target) {
-        URL.revokeObjectURL(target.imagePreviewUrl);
-      }
-
-      return items.filter((item) => item.id !== place.id);
-    });
+    const next = selectedPlaces.filter(
+      (item) => item.id !== place.id
+    );
+    removePendingImage(place.id);
+    setPlacesInStore(next.map(toPersistedPlace));
   };
 
   const removeAllSelectedPlaces = () => {
-    setSelectedPlaces((items) => {
-      items.forEach((place) => {
-        URL.revokeObjectURL(place.imagePreviewUrl);
-      });
-
-      return [];
+    selectedPlaces.forEach((place) => {
+      removePendingImage(place.id);
     });
+    setPlacesInStore([]);
   };
 
   return {
