@@ -11,10 +11,9 @@ const DURATION_TYPE_MAP: Record<
   CreateLocalRecommendationRequest['durationType']
 > = {
   'day-trip': 'DAY_TRIP',
-  '1-night-2-days': 'ONE_NIGHT_TWO_DAYS',
-  '2-nights-3-days': 'TWO_NIGHTS_THREE_DAYS',
-  '3-nights-4-days': 'THREE_NIGHTS_FOUR_DAYS',
-  '4-nights-or-more': 'FOUR_NIGHTS_OR_MORE',
+  '1-night-2-days': 'ONE_NIGHT',
+  '2-nights-3-days': 'TWO_NIGHT',
+  '3-nights-or-more': 'THREE_PLUS',
 };
 
 const TRANSPORT_TYPE_MAP: Record<
@@ -22,6 +21,7 @@ const TRANSPORT_TYPE_MAP: Record<
   CreateLocalRecommendationRequest['transportType']
 > = {
   walking: 'WALK',
+  public: 'PUBLIC',
   car: 'CAR',
 };
 
@@ -33,7 +33,7 @@ const COMPANION_TYPE_MAP: Record<
   friends: 'FRIEND',
   couple: 'COUPLE',
   family: 'FAMILY',
-  children: 'CHILDREN',
+  pet: 'PET',
 };
 
 export function buildCourseItemsFromVisitEvents(
@@ -69,6 +69,19 @@ export function getCourseRequestValidationError(
   if (!draft.basicInfo) return '기본 정보 입력 단계에서 코스 정보를 입력해 주세요.';
   if (!draft.coverImageKey) return '대표 사진을 등록해 주세요.';
   if (visitEvents.length === 0) return '방문할 장소 또는 행사를 하나 이상 추가해 주세요.';
+  if (!visitEvents.some((event) => event.kind === 'PLACE')) {
+    return '코스에는 장소를 하나 이상 추가해 주세요.';
+  }
+  if (
+    visitEvents.some(
+      (event) =>
+        event.kind === 'PLACE' &&
+        !event.roadAddress.trim() &&
+        !event.lotAddress.trim()
+    )
+  ) {
+    return '장소의 도로명 주소 또는 지번 주소를 입력해 주세요.';
+  }
 
   const { duration, transport, companion } = draft.basicInfo;
   if (!DURATION_TYPE_MAP[duration] || !TRANSPORT_TYPE_MAP[transport] || !COMPANION_TYPE_MAP[companion]) {

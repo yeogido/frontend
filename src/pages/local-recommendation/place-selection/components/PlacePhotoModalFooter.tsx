@@ -6,22 +6,17 @@ const BUTTON_RADIUS = 12;
 const BUTTON_FONT_SIZE = 18;
 
 interface PlacePhotoModalFooterProps {
-  previewUrl: string | null;
   onConfirm: () => void;
 }
 
-function PlacePhotoModalFooter({
-  previewUrl,
-  onConfirm,
-}: PlacePhotoModalFooterProps) {
+function PlacePhotoModalFooter({ onConfirm }: PlacePhotoModalFooterProps) {
   const scale = useGlobalScale();
 
   return (
     <button
       type="button"
-      disabled={!previewUrl}
       onClick={onConfirm}
-      className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full shrink-0 font-semibold disabled:cursor-not-allowed"
+      className="bg-main-5 text-pure-white w-full shrink-0 font-semibold"
       style={{
         marginTop: FOOTER_MARGIN_TOP * scale,
         height: BUTTON_HEIGHT * scale,

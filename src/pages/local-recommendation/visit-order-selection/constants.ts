@@ -15,7 +15,7 @@ export type VisitEvent =
       lotAddress: string;
       latitude: number;
       longitude: number;
-      imageKey: string;
+      imageKey: string | null;
     }
   | {
       id: string;

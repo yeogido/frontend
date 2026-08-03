@@ -44,6 +44,15 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const setTagSelection = useLocalRecommendationStore(
     (state) => state.setTagSelection
   );
+  const savedTagIds = useLocalRecommendationStore(
+    (state) => state.draft.tagIds
+  );
+  const savedHashtagIds = useLocalRecommendationStore(
+    (state) => state.draft.hashtagIds
+  );
+  const savedCoverImage = useLocalRecommendationStore(
+    (state) => state.pendingImages[LOCAL_RECOMMENDATION_COVER_IMAGE_ID]
+  );
   const setPendingImage = useLocalRecommendationStore(
     (state) => state.setPendingImage
   );
@@ -53,8 +62,17 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const imageRecoveryRequired = useLocalRecommendationStore(
     (state) => state.imageRecoveryRequired
   );
-  const [photo, setPhoto] = useState<PhotoSelection | null>(null);
-  const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(new Set());
+  const [photo, setPhoto] = useState<PhotoSelection | null>(() =>
+    savedCoverImage
+      ? {
+          file: savedCoverImage.originalFile,
+          previewUrl: savedCoverImage.previewUrl,
+        }
+      : null
+  );
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(
+    () => new Set(savedTagIds as TagId[])
+  );
   const [limitMessage, setLimitMessage] = useState('');
   const [hashtags, setHashtags] = useState<Hashtag[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,6 +116,11 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const handleTagToggle = (tagId: TagId) => {
     const result = toggleTag(selectedTagIds, tagId);
     setSelectedTagIds(result.selectedTagIds);
+    setTagSelection({
+      tagIds: Array.from(result.selectedTagIds),
+      hashtagIds: savedHashtagIds,
+      coverImageKey: null,
+    });
     setLimitMessage(
       result.limitReached ? '키워드는 최대 5개까지 선택할 수 있어요.' : ''
     );

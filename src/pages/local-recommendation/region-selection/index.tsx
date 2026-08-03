@@ -90,7 +90,7 @@ function LocalRecommendationPage() {
       mode="main-layout"
       topPadding={MAIN_PADDING_TOP}
       bottomPadding={PAGE_PADDING_BOTTOM}
-      className="bg-background"
+      className="bg-white"
     >
       <BackButton onClick={() => navigate('/local-course')} />
       <main className="flex-1">

@@ -65,7 +65,7 @@ function PlacePhotoModal({
             onFileChange={onFileChange}
           />
         </div>
-        <PlacePhotoModalFooter previewUrl={previewUrl} onConfirm={onConfirm} />
+        <PlacePhotoModalFooter onConfirm={onConfirm} />
       </section>
     </div>
   );
