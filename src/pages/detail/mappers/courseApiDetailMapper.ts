@@ -130,6 +130,61 @@ function deriveRegionFromCourseItems(
   return address?.split(' ')[1] ?? '';
 }
 
+// durationLabels/transportLabels/companionLabels가 인식하는 레거시 별칭까지
+// toCourseCardProps가 쓰는 canonical enum 값으로 정규화해서, 저장/표시 단계에서
+// 라벨이 비는 일이 없도록 한다.
+function toCanonicalDurationType(durationType: string): CourseDurationType {
+  switch (durationType) {
+    case 'ONE_NIGHT':
+    case 'ONE_NIGHT_TWO_DAYS':
+      return 'ONE_NIGHT';
+    case 'TWO_NIGHT':
+    case 'TWO_NIGHTS_THREE_DAYS':
+      return 'TWO_NIGHT';
+    case 'THREE_NIGHT':
+    case 'THREE_NIGHTS_FOUR_DAYS':
+    case 'THREE_PLUS':
+    case 'FOUR_NIGHTS_OR_MORE':
+      return 'THREE_PLUS';
+    case 'DAY_TRIP':
+    default:
+      return 'DAY_TRIP';
+  }
+}
+
+function toCanonicalTransportType(transportType: string): CourseTransportType {
+  switch (transportType) {
+    case 'WALK':
+      return 'WALK';
+    case 'PUBLIC':
+    case 'PUBLIC_TRANSPORT':
+      return 'PUBLIC';
+    case 'CAR':
+    default:
+      return 'CAR';
+  }
+}
+
+function toCanonicalCompanionType(
+  companionType: string
+): CourseCompanionType {
+  switch (companionType) {
+    case 'FRIEND':
+      return 'FRIEND';
+    case 'COUPLE':
+      return 'COUPLE';
+    case 'FAMILY':
+      return 'FAMILY';
+    case 'CHILDREN':
+    case 'PET':
+      return 'PET';
+    case 'SOLO':
+    case 'ALONE':
+    default:
+      return 'SOLO';
+  }
+}
+
 export function mapCourseApiDetailToCourseSummary(
   course: CourseDetailResult
 ): Course {
@@ -138,9 +193,9 @@ export function mapCourseApiDetailToCourseSummary(
     thumbnailUrl: course.thumbnailUrl,
     title: course.title,
     region: deriveRegionFromCourseItems(course.courseItems),
-    durationType: course.durationType as CourseDurationType,
-    transportType: course.transportType as CourseTransportType,
-    companionType: course.companionType as CourseCompanionType,
+    durationType: toCanonicalDurationType(course.durationType),
+    transportType: toCanonicalTransportType(course.transportType),
+    companionType: toCanonicalCompanionType(course.companionType),
     tags: course.tags,
     isLiked: course.isLiked,
   };

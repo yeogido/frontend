@@ -48,6 +48,30 @@ export function saveRecentCourse(course: Course): void {
   }
 }
 
+export function updateRecentCourseLikeState(
+  courseId: number,
+  isLiked: boolean,
+): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const courses = getStoredRecentCourses();
+
+    if (!courses.some((course) => course.courseId === courseId)) return;
+
+    const updatedCourses = courses.map((course) =>
+      course.courseId === courseId ? { ...course, isLiked } : course,
+    );
+
+    window.localStorage.setItem(
+      RECENT_COURSES_STORAGE_KEY,
+      JSON.stringify(updatedCourses),
+    );
+  } catch {
+    return;
+  }
+}
+
 function isRecentCourse(value: unknown): value is Course {
   if (typeof value !== 'object' || value === null) return false;
 

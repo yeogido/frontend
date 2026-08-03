@@ -64,17 +64,23 @@ const HERO_ICON_SIZE = 14;
 const SECTION_MARGIN_TOP = 32;
 const LIST_MARGIN_TOP = 12;
 const LIST_GAP = 16;
+const ERROR_MARGIN_TOP = 16;
+const ERROR_TEXT_SIZE = 13;
 
 function YeogidoCoursePage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const { data: popularCourses, isPending: isPopularCoursesPending } =
-    useCourses({
-      courseType: 'OFFICIAL',
-      sort: 'RECOMMEND',
-      size: POPULAR_COURSE_PREVIEW_COUNT,
-    });
+  const {
+    data: popularCourses,
+    isPending: isPopularCoursesPending,
+    isError: isPopularCoursesError,
+    refetch: refetchPopularCourses,
+  } = useCourses({
+    courseType: 'OFFICIAL',
+    sort: 'RECOMMEND',
+    size: POPULAR_COURSE_PREVIEW_COUNT,
+  });
   const popularCoursePreviews = (
     popularCourses?.pages[0]?.items ?? []
   ).slice(0, POPULAR_COURSE_PREVIEW_COUNT);
@@ -264,6 +270,30 @@ function YeogidoCoursePage() {
                 />
               ))}
         </div>
+
+        {!isPopularCoursesPending && isPopularCoursesError ? (
+          <div
+            className="flex flex-col items-center"
+            style={{
+              marginTop: ERROR_MARGIN_TOP * scale,
+              gap: ERROR_MARGIN_TOP * scale,
+            }}
+          >
+            <p
+              className="text-main-5 text-center font-medium"
+              style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+            >
+              코스 목록을 불러오지 못했어요.
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetchPopularCourses()}
+              className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : null}
       </section>
 
       {recentCoursePreviews.length > 0 ? (

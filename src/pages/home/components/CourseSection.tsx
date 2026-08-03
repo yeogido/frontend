@@ -16,13 +16,15 @@ const SECTION_PADDING_X = 24;
 const LIST_MARGIN_TOP = 16;
 const CARD_GAP = 16;
 const COURSE_PREVIEW_COUNT = 2;
+const ERROR_MARGIN_TOP = 16;
+const ERROR_TEXT_SIZE = 13;
 
 function CourseSection() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
 
-  const { data, isPending } = useCourses({
+  const { data, isPending, isError } = useCourses({
     courseType: 'OFFICIAL',
     sort: 'RECOMMEND',
     size: COURSE_PREVIEW_COUNT,
@@ -79,6 +81,18 @@ function CourseSection() {
             </>
           )}
         </div>
+
+        {!isPending && isError ? (
+          <p
+            className="text-main-5 text-center font-medium"
+            style={{
+              marginTop: ERROR_MARGIN_TOP * scale,
+              fontSize: ERROR_TEXT_SIZE * scale,
+            }}
+          >
+            코스 목록을 불러오지 못했어요.
+          </p>
+        ) : null}
     </section>
   );
 }
