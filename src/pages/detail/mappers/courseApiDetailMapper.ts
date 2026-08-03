@@ -31,6 +31,7 @@ const companionLabels: Record<string, { label: string; icon: BadgeId }> = {
   COUPLE: { label: '연인과', icon: 'group' },
   FAMILY: { label: '가족과', icon: 'group' },
   CHILDREN: { label: '아이와', icon: 'child' },
+  PET: { label: '반려동물과', icon: 'group' },
 };
 
 function toTagId(tag: string): TagId | undefined {
