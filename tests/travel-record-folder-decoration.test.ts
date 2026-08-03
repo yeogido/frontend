@@ -12,6 +12,7 @@ import {
   getNormalizedCanvasPoint,
   getPastedStickerImage,
   isCustomStickerImage,
+  readStickerImageFromClipboard,
   validateCustomStickerFile,
 } from '../src/pages/travel-record/folder-decoration/folderDecoration.ts';
 import { getDecorationLayerStyle } from '../src/pages/travel-record/components/decorationRender.ts';
@@ -65,6 +66,35 @@ test('tells custom stickers apart from default ones by image path', () => {
     true,
   );
   assert.equal(isCustomStickerImage(''), false);
+});
+
+test('reads a copied PNG through the clipboard API', async () => {
+  // 모바일에는 Ctrl+V가 없어 paste 이벤트 대신 이 경로로 받는다.
+  const clipboard = {
+    read: async () => [
+      { types: ['text/plain'], getType: async () => new Blob(['x']) },
+      {
+        types: ['image/png'],
+        getType: async (type: string) => new Blob(['sticker'], { type }),
+      },
+    ],
+  };
+
+  const image = await readStickerImageFromClipboard(clipboard);
+
+  assert.equal(image?.type, 'image/png');
+  assert.equal(image?.name, 'custom-sticker.png');
+});
+
+test('returns nothing when the clipboard holds no PNG', async () => {
+  const clipboard = {
+    read: async () => [
+      { types: ['text/plain'], getType: async () => new Blob(['x']) },
+      { types: ['image/jpeg'], getType: async () => new Blob(['x']) },
+    ],
+  };
+
+  assert.equal(await readStickerImageFromClipboard(clipboard), null);
 });
 
 test('picks the first pasted PNG image out of the clipboard', () => {

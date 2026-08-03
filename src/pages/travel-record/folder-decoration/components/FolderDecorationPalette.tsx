@@ -17,6 +17,7 @@ import {
   getCustomStickerSlotState,
   getPastedStickerImage,
   MAX_FOLDER_DECORATION_COUNT,
+  readStickerImageFromClipboard,
   validateCustomStickerFile,
   type FolderDecorationSeed,
   type TravelFolderDecoration,
@@ -104,6 +105,36 @@ export function FolderDecorationPalette({
 
     return () => document.removeEventListener('paste', handlePaste);
   }, [isUploadModalOpen, selectStickerFile, showToast]);
+
+  const handlePasteFromClipboard = async () => {
+    const { clipboard } = navigator;
+
+    // HTTPS(또는 localhost)가 아니거나 지원하지 않는 브라우저에서는 아예 없다.
+    if (!clipboard?.read) {
+      showToast('이 브라우저에서는 붙여넣기를 쓸 수 없어요. 사진에서 선택해 주세요.');
+      return;
+    }
+
+    try {
+      const clipboardImage = await readStickerImageFromClipboard(clipboard);
+
+      if (!clipboardImage) {
+        showToast('복사한 사진이 없어요. 사진 앱에서 피사체를 복사한 뒤 다시 눌러 주세요.');
+        return;
+      }
+
+      selectStickerFile(clipboardImage);
+    } catch (error) {
+      const isPermissionDenied =
+        error instanceof DOMException && error.name === 'NotAllowedError';
+
+      showToast(
+        isPermissionDenied
+          ? '붙여넣기를 허용해야 사진을 가져올 수 있어요.'
+          : '붙여넣기에 실패했어요. 사진에서 선택해 주세요.',
+      );
+    }
+  };
 
   const closeUploadModal = () => {
     setIsUploadModalOpen(false);
@@ -311,7 +342,7 @@ export function FolderDecorationPalette({
               만들어 보세요
             </h2>
             <p className="mt-1 text-[14px] text-[#1c1c1c]">
-              사진에서 복사한 피사체를 붙여넣어 보세요!
+              사진 앱에서 피사체를 복사한 뒤 붙여넣어 주세요!
             </p>
             {pendingFile ? (
               <div className="mt-5 flex h-[213px] w-full items-center justify-center">
@@ -323,21 +354,32 @@ export function FolderDecorationPalette({
                 />
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="mt-5 flex h-[213px] w-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-[#ff6f41] bg-[#fff7f5]"
-              >
+              <div className="mt-5 flex h-[213px] w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#ff6f41] bg-[#fff7f5] px-6">
                 <span className="flex size-[51px] items-center justify-center rounded-full bg-[#fbd0c2]">
                   <img src={photoUploadIcon} alt="" className="size-8" />
                 </span>
-                <span className="text-center text-[14px] font-semibold text-[#1c1c1c]">
-                  사진을 붙여넣거나 추가해 주세요.
-                </span>
-                <span className="text-[12px] text-[#1c1c1c]">
-                  여기를 탭해서 업로드할 수 있어요.
-                </span>
-              </button>
+                <p className="text-center text-[14px] font-semibold text-[#1c1c1c]">
+                  사진 속 피사체를 길게 눌러 복사한 뒤<br />
+                  붙여넣기를 눌러 주세요.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handlePasteFromClipboard()}
+                    className="h-9 rounded-full bg-[#ff6f41] px-4 text-[14px] font-semibold text-[#f9f9f9]"
+                  >
+                    붙여넣기
+                  </button>
+                  {/* 붙여넣기가 막힌 환경을 위해 파일 선택도 남겨 둔다. */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-9 rounded-full border border-[#e4e4e4] bg-[#f9f9f9] px-4 text-[14px] font-medium text-[#505050]"
+                  >
+                    사진에서 선택
+                  </button>
+                </div>
+              </div>
             )}
             <button
               type="button"

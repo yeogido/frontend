@@ -172,7 +172,40 @@ export const validateCustomStickerFile = (file: File): string => {
   return '';
 };
 
-/** \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uB2F4\uAE34 \uD56D\uBAA9 \uC911 \uCCAB \uBC88\uC9F8 PNG \uC774\uBBF8\uC9C0\uB97C \uAEBC\uB0B8\uB2E4. */
+interface ReadableClipboardItem {
+  types: readonly string[];
+  getType: (type: string) => Promise<Blob>;
+}
+
+/**
+ * \uD074\uB9BD\uBCF4\uB4DC API\uB85C \uBCF5\uC0AC\uD574 \uB454 PNG\uB97C \uC77D\uC5B4 \uC628\uB2E4.
+ *
+ * \uBAA8\uBC14\uC77C\uC5D0\uB294 Ctrl+V\uAC00 \uC5C6\uC5B4 paste \uC774\uBCA4\uD2B8\uAC00 \uBC1C\uC0DD\uD558\uC9C0 \uC54A\uB294\uB2E4. \uC544\uC774\uD3F0 \uC0AC\uC9C4 \uC571\uC758
+ * '\uD53C\uC0AC\uCCB4 \uBCF5\uC0AC'\uB098 \uC548\uB4DC\uB85C\uC774\uB4DC \uD53C\uC0AC\uCCB4 \uCD94\uCD9C \uACB0\uACFC\uB294 \uD074\uB9BD\uBCF4\uB4DC\uC5D0\uB9CC \uC62C\uB77C\uAC00\uACE0 \uAC24\uB7EC\uB9AC\uC5D0
+ * \uC800\uC7A5\uB418\uC9C0 \uC54A\uC73C\uBBC0\uB85C, \uD30C\uC77C \uC120\uD0DD\uC73C\uB85C\uB294 \uAC00\uC838\uC62C \uC218 \uC5C6\uB2E4.
+ */
+export const readStickerImageFromClipboard = async (clipboard: {
+  read: () => Promise<ReadonlyArray<ReadableClipboardItem>>;
+}): Promise<File | null> => {
+  const clipboardItems = await clipboard.read();
+
+  for (const item of clipboardItems) {
+    if (!item.types.includes(CUSTOM_STICKER_CONTENT_TYPE)) {
+      continue;
+    }
+
+    const image = await item.getType(CUSTOM_STICKER_CONTENT_TYPE);
+
+    // \uD074\uB9BD\uBCF4\uB4DC \uD56D\uBAA9\uC5D0\uB294 \uD30C\uC77C\uBA85\uC774 \uC5C6\uC5B4 \uC9C1\uC811 \uB9CC\uB4E4\uC5B4 \uC900\uB2E4.
+    return new File([image], CUSTOM_STICKER_FILE_NAME, {
+      type: CUSTOM_STICKER_CONTENT_TYPE,
+    });
+  }
+
+  return null;
+};
+
+/** \uB370\uC2A4\uD06C\uD1B1 \uBD99\uC5EC\uB123\uAE30(Ctrl+V) \uD56D\uBAA9 \uC911 \uCCAB \uBC88\uC9F8 PNG \uC774\uBBF8\uC9C0\uB97C \uAEBC\uB0B8\uB2E4. */
 export const getPastedStickerImage = (
   items: ReadonlyArray<{
     kind: string;
