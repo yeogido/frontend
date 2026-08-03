@@ -14,7 +14,6 @@ export interface TravelRecordFolder {
   regionName: string;
   title: string;
   folderTheme?: string;
-  year: number;
   startDate: string;
   endDate?: string;
   period: string;

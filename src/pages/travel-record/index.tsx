@@ -131,11 +131,14 @@ function TravelRecordPage() {
         </button>
       </div>
 
-      <TravelYearDropdown
-        value={validSelectedYear}
-        years={years}
-        onChange={setSelectedYear}
-      />
+      {/* 기록이 하나도 없으면 고를 연도가 없어 빈 목록만 열린다. */}
+      {years.length > 0 ? (
+        <TravelYearDropdown
+          value={validSelectedYear}
+          years={years}
+          onChange={setSelectedYear}
+        />
+      ) : null}
 
       {isTravelRecordsError ? (
         <section
