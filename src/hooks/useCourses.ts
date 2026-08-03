@@ -5,7 +5,11 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 
-import { getCourses, getPopularCourses } from '../apis/courses.api';
+import {
+  getCourses,
+  getPopularCourses,
+  getRecommendedCourses,
+} from '../apis/courses.api';
 import { addCourseLike, removeCourseLike } from '../apis/courses';
 import type { NormalizedApiError } from '../apis/common';
 import type {
@@ -13,6 +17,7 @@ import type {
   GetCoursesParams,
   GetCoursesResponse,
   GetPopularCoursesParams,
+  RecommendedCourse,
 } from '../types/course.type';
 
 interface CoursesPageParam {
@@ -50,6 +55,13 @@ export function usePopularCourses(params: GetPopularCoursesParams) {
   return useQuery<Course[], NormalizedApiError>({
     queryKey: ['popularCourses', params],
     queryFn: () => getPopularCourses(params),
+  });
+}
+
+export function useRecommendedCourses() {
+  return useQuery<RecommendedCourse[], NormalizedApiError>({
+    queryKey: ['recommendedCourses'],
+    queryFn: getRecommendedCourses,
   });
 }
 
