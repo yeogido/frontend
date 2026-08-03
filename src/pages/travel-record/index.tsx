@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { getApiErrorMessage } from '../../apis/common';
 import { FloatingActionButton } from '../../components/common';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import { useTravelRecordRegionDetails } from '../../hooks/useTravelRecordRegions';
@@ -55,10 +56,13 @@ function TravelRecordPage() {
 
   const {
     data: travelRecordsData,
+    error: travelRecordsError,
     fetchNextPage,
     hasNextPage,
+    isError: isTravelRecordsError,
     isFetchingNextPage,
     isPending,
+    refetch: refetchTravelRecords,
   } = useTravelRecords({
     size: TRAVEL_RECORD_PAGE_SIZE,
     year: validSelectedYear,
@@ -82,13 +86,10 @@ function TravelRecordPage() {
     [apiRecordSummaries, travelRecordDetails, regionInfoByRegionId],
   );
 
-  const visibleFolders = useMemo(
-    () =>
-      [...apiFolders].sort((currentFolder, nextFolder) =>
-        nextFolder.startDate.localeCompare(currentFolder.startDate),
-      ),
-    [apiFolders],
-  );
+  // 서버가 travelRecordId 내림차순으로 잘라 주므로 그 순서를 그대로 쓴다.
+  // 받은 페이지만 다시 정렬하면 다음 페이지를 불러올 때 뒤에 붙은 기록이
+  // 위로 끼어들어 목록이 튄다.
+  const visibleFolders = apiFolders;
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -136,7 +137,26 @@ function TravelRecordPage() {
         onChange={setSelectedYear}
       />
 
-      {activeView === 'folder' ? (
+      {isTravelRecordsError ? (
+        <section
+          role="alert"
+          className="mt-[142px] flex flex-col items-center gap-4 text-center"
+        >
+          <p className="text-gray-4 text-[16px] leading-[22px] font-medium">
+            {getApiErrorMessage(
+              travelRecordsError,
+              '여행 기록을 불러오지 못했어요',
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetchTravelRecords()}
+            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+          >
+            다시 시도
+          </button>
+        </section>
+      ) : activeView === 'folder' ? (
         <TravelFolderGrid
           folders={visibleFolders}
           onFolderClick={handleFolderClick}

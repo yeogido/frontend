@@ -1,22 +1,19 @@
 import { Map } from '../map/components';
 import {
-  getTravelRecordFoldersFromPages,
-  useTravelRecords,
+  getTravelRecordFoldersFromSummaries,
+  useTravelRecordsForMap,
 } from '../../../hooks/useTravelRecords';
 import { useTravelRecordRegionDetails } from '../../../hooks/useTravelRecordRegions';
 import { getTravelRecordRegionPhotoRecords } from '../../travel-record/utils/regionPhotoRecords';
 import { toRegionPhotoMap } from '../map/types/regionPhoto';
 
 function MapSection() {
-  const travelRecordsQuery = useTravelRecords({ size: 50 });
-  const recordSummaries = travelRecordsQuery.data?.pages.flatMap(
-    (page) => page.items,
-  ) ?? [];
+  const { records } = useTravelRecordsForMap();
   const regionInfoByRegionId = useTravelRecordRegionDetails(
-    recordSummaries.map((record) => record.regionId),
+    records.map((record) => record.regionId),
   );
-  const travelRecordFolders = getTravelRecordFoldersFromPages(
-    travelRecordsQuery.data?.pages,
+  const travelRecordFolders = getTravelRecordFoldersFromSummaries(
+    records,
     regionInfoByRegionId,
   );
   const regionPhotos = toRegionPhotoMap(

@@ -29,6 +29,7 @@ import {
 import type { TravelDateRange } from '../pages/travel-record/date-selection/types';
 import type { TravelFolderDecoration } from '../pages/travel-record/folder-decoration/folderDecoration';
 import type { TravelRecordDraftRegion } from '../pages/travel-record/types';
+import { collectTravelRecords } from '../pages/travel-record/utils/collectTravelRecords';
 import type { TravelRecordPhotoDraft } from '../pages/travel-record/utils/travelRecordSave';
 import type { RegionDetailResponse } from '../types/region.type';
 import type {
@@ -139,6 +140,38 @@ export function useTravelRecordYears() {
   });
 }
 
+const MAP_RECORDS_PAGE_SIZE = 50;
+
+const getAllTravelRecordsInYear = (year: number) =>
+  collectTravelRecords((cursor) =>
+    getTravelRecords({ year, size: MAP_RECORDS_PAGE_SIZE, cursor }),
+  );
+
+/**
+ * 지도에 찍을 여행 기록 전체.
+ *
+ * 목록 API는 year를 생략하면 현재 연도만 돌려주기 때문에, 연도 목록을 받아
+ * 연도별로 조회한 뒤 합친다. 지도 전용 API가 생기면 이 훅만 바꾸면 된다.
+ */
+export function useTravelRecordsForMap() {
+  const travelRecordYearsQuery = useTravelRecordYears();
+  const years = travelRecordYearsQuery.data?.years ?? [];
+
+  const yearQueries = useQueries({
+    queries: years.map((year) => ({
+      queryKey: ['travelRecordsByYear', year],
+      queryFn: () => getAllTravelRecordsInYear(year),
+    })),
+  });
+
+  return {
+    records: yearQueries.flatMap((query) => query.data ?? []),
+    isPending:
+      travelRecordYearsQuery.isPending ||
+      yearQueries.some((query) => query.isPending),
+  };
+}
+
 export function useTravelRecordDetail(travelRecordId: number | null) {
   const queryClient = useQueryClient();
 
@@ -196,6 +229,7 @@ export function useCreateTravelRecord() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
     },
   });
@@ -233,6 +267,7 @@ export function useUpdateTravelRecord() {
       ),
     onSuccess: (_, { travelRecordId }) => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.invalidateQueries({
         queryKey: ['travelRecord', travelRecordId],
@@ -281,6 +316,7 @@ export function useDeleteTravelRecord() {
         };
       });
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.removeQueries({
         queryKey: ['travelRecord', travelRecordId],
@@ -305,6 +341,17 @@ export const getTravelRecordFoldersFromPages = (
 export const getTravelRecordSummariesFromPages = (
   pages: TravelRecordListResponse[] | undefined,
 ) => pages?.flatMap((page) => page.items) ?? [];
+
+export const getTravelRecordFoldersFromSummaries = (
+  records: TravelRecordSummary[],
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
+) =>
+  records.map((record) =>
+    mapTravelRecordSummaryToFolder(
+      record,
+      regionInfoByRegionId.get(record.regionId),
+    ),
+  );
 
 export const getTravelRecordFolders = (
   records: TravelRecordSummary[],
