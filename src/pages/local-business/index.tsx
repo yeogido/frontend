@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { RegionImageCarousel } from '../../components/common';
+import { PromotionCardSkeleton, RegionImageCarousel } from '../../components/common';
 import { DEFAULT_REGION_CITY_ID } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
@@ -25,6 +25,10 @@ const LIST_MARGIN_TOP = 16;
 const GRID_GAP_X = 16;
 const GRID_GAP_Y = 18;
 const LIST_GAP = 16;
+const EMPTY_MARGIN_TOP = 40;
+const MESSAGE_TEXT_SIZE = 13;
+const LOAD_MORE_HEIGHT = 40;
+const PENDING_SKELETON_COUNT = 4;
 
 function LocalBusinessPage() {
   const navigate = useNavigate();
@@ -37,10 +41,17 @@ function LocalBusinessPage() {
     DEFAULT_REGION_CITY_ID
   );
 
-  const businesses = useLocalBusinesses({
+  const {
+    businesses,
+    isError,
+    isFetchingNextPage,
+    isPending,
+    loadMoreRef,
+  } = useLocalBusinesses({
     selectedCategory,
     sortBy,
   });
+  const hasEmptyResult = !isPending && !isError && businesses.length === 0;
 
   const handleCardClick = (businessId: string) => {
     navigate(buildLocalBusinessDetailPath(businessId));
@@ -106,8 +117,21 @@ function LocalBusinessPage() {
       />
 
       <div style={{ marginTop: LIST_MARGIN_TOP * scale }}>
-        {businesses.length === 0 ? (
-          <p>조건에 맞는 소상공인이 없습니다.</p>
+        {isPending ? (
+          viewMode === 'card' ? (
+            <div className="flex flex-col" style={{ gap: LIST_GAP * scale }}>
+              {Array.from({ length: PENDING_SKELETON_COUNT }, (_, index) => (
+                <PromotionCardSkeleton key={index} />
+              ))}
+            </div>
+          ) : (
+            <p
+              className="text-center font-medium text-gray-4"
+              style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
+            >
+              불러오는 중...
+            </p>
+          )
         ) : viewMode === 'grid' ? (
           <BusinessGrid
             businesses={businesses}
@@ -122,7 +146,46 @@ function LocalBusinessPage() {
             gap={LIST_GAP * scale}
           />
         )}
+
+        {isFetchingNextPage && viewMode === 'card' ? (
+          <div
+            className="flex flex-col"
+            style={{ gap: LIST_GAP * scale, marginTop: LIST_GAP * scale }}
+          >
+            <PromotionCardSkeleton />
+          </div>
+        ) : null}
       </div>
+
+      {hasEmptyResult ? (
+        <p
+          className="text-center font-medium text-gray-4"
+          style={{
+            marginTop: EMPTY_MARGIN_TOP * scale,
+            fontSize: MESSAGE_TEXT_SIZE * scale,
+          }}
+        >
+          조건에 맞는 소상공인이 없습니다.
+        </p>
+      ) : null}
+
+      {isError ? (
+        <p
+          className="text-main-5 text-center font-medium"
+          style={{
+            marginTop: EMPTY_MARGIN_TOP * scale,
+            fontSize: MESSAGE_TEXT_SIZE * scale,
+          }}
+        >
+          소상공인 목록을 불러오지 못했어요.
+        </p>
+      ) : null}
+
+      <div
+        ref={loadMoreRef}
+        style={{ height: LOAD_MORE_HEIGHT * scale }}
+        aria-hidden="true"
+      />
     </section>
   );
 }
