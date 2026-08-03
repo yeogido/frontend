@@ -10,6 +10,7 @@ import {
   PhotoSelectionTip,
   PhotoUploadBox,
   SelectedPhotoStrip,
+  TravelFolderPreview,
 } from './components';
 import { useDraggablePhotoOrder, useTravelRecordPhotoSelection } from './hooks';
 import type { TravelPhotoSelectionLocationState } from '../date-selection/types';
@@ -46,6 +47,8 @@ function TravelRecordPhotoSelectionPage() {
   const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const selectedDateRange =
     locationState?.selectedDateRange ?? storedSelectedDateRange;
+  const regionName =
+    selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
   const isEditing = useTravelRecordSessionStore((state) => state.editSession !== null);
   const {
     fileInputRef,
@@ -137,12 +140,22 @@ function TravelRecordPhotoSelectionPage() {
         <p className="text-[14px] leading-none text-[#505050]">{description}</p>
       </section>
 
-      <PhotoUploadBox
-        fileInputRef={fileInputRef}
-        hasSelectedPhotos={hasSelectedPhotos}
-        onPhotoChange={handlePhotoChange}
-        onUploadClick={openFilePicker}
+      {/* 업로드 박스가 사라져도 사진 추가 버튼이 동작해야 하므로 입력은
+          페이지에 둔다. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        onChange={handlePhotoChange}
+        className="sr-only"
       />
+
+      {hasSelectedPhotos ? (
+        <TravelFolderPreview photos={photos} regionName={regionName} />
+      ) : (
+        <PhotoUploadBox onUploadClick={openFilePicker} />
+      )}
 
       <SelectedPhotoStrip
         draggingPhoto={draggingPhoto}

@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 export interface TravelFolderDecoration {
   id: string;
   /** 서버 스티커 ID. 기본 스티커와 커스텀 스티커를 구분 없이 같은 값으로 다룬다. */
@@ -127,6 +129,30 @@ export const CUSTOM_STICKER_CONTENT_TYPE = 'image/png';
 
 export const CUSTOM_STICKER_FILE_NAME = 'custom-sticker.png';
 
+const DEFAULT_STICKER_PATH_SEGMENT = '/stickers/default/';
+
+/**
+ * 커스텀 스티커인지 이미지 경로로 판별한다.
+ *
+ * 기본 스티커는 흰 테두리가 그림에 들어 있지만 사용자가 올린 피사체는 그렇지
+ * 않아서, 같이 붙이면 결이 달라 보인다. 그래서 커스텀 스티커에만 흰 프레임을
+ * 씌운다.
+ *
+ * 여행 기록 상세 응답의 스티커에는 stickerType이 없고, 논리 삭제된 커스텀
+ * 스티커는 카탈로그에서도 빠지기 때문에 조회로는 구분할 수 없다. 서버가 기본
+ * 스티커만 stickers/default/ 아래에 두는 것을 이용한다.
+ */
+export const isCustomStickerImage = (imageUrl: string) =>
+  Boolean(imageUrl) && !imageUrl.includes(DEFAULT_STICKER_PATH_SEGMENT);
+
+/**
+ * 사용자가 올린 피사체를 기본 스티커처럼 보이게 하는 흰 테두리.
+ *
+ * 실루엣을 따라 그려지므로 사진 비율과 무관하게 흰 여백이 생기지 않는다.
+ * 정의는 globals.css에 있다.
+ */
+export const CUSTOM_STICKER_OUTLINE_CLASS = 'sticker-outline';
+
 const createDecorationId = () =>
   typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
@@ -148,7 +174,40 @@ export const validateCustomStickerFile = (file: File): string => {
   return '';
 };
 
-/** \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uB2F4\uAE34 \uD56D\uBAA9 \uC911 \uCCAB \uBC88\uC9F8 PNG \uC774\uBBF8\uC9C0\uB97C \uAEBC\uB0B8\uB2E4. */
+interface ReadableClipboardItem {
+  types: readonly string[];
+  getType: (type: string) => Promise<Blob>;
+}
+
+/**
+ * \uD074\uB9BD\uBCF4\uB4DC API\uB85C \uBCF5\uC0AC\uD574 \uB454 PNG\uB97C \uC77D\uC5B4 \uC628\uB2E4.
+ *
+ * \uBAA8\uBC14\uC77C\uC5D0\uB294 Ctrl+V\uAC00 \uC5C6\uC5B4 paste \uC774\uBCA4\uD2B8\uAC00 \uBC1C\uC0DD\uD558\uC9C0 \uC54A\uB294\uB2E4. \uC544\uC774\uD3F0 \uC0AC\uC9C4 \uC571\uC758
+ * '\uD53C\uC0AC\uCCB4 \uBCF5\uC0AC'\uB098 \uC548\uB4DC\uB85C\uC774\uB4DC \uD53C\uC0AC\uCCB4 \uCD94\uCD9C \uACB0\uACFC\uB294 \uD074\uB9BD\uBCF4\uB4DC\uC5D0\uB9CC \uC62C\uB77C\uAC00\uACE0 \uAC24\uB7EC\uB9AC\uC5D0
+ * \uC800\uC7A5\uB418\uC9C0 \uC54A\uC73C\uBBC0\uB85C, \uD30C\uC77C \uC120\uD0DD\uC73C\uB85C\uB294 \uAC00\uC838\uC62C \uC218 \uC5C6\uB2E4.
+ */
+export const readStickerImageFromClipboard = async (clipboard: {
+  read: () => Promise<ReadonlyArray<ReadableClipboardItem>>;
+}): Promise<File | null> => {
+  const clipboardItems = await clipboard.read();
+
+  for (const item of clipboardItems) {
+    if (!item.types.includes(CUSTOM_STICKER_CONTENT_TYPE)) {
+      continue;
+    }
+
+    const image = await item.getType(CUSTOM_STICKER_CONTENT_TYPE);
+
+    // \uD074\uB9BD\uBCF4\uB4DC \uD56D\uBAA9\uC5D0\uB294 \uD30C\uC77C\uBA85\uC774 \uC5C6\uC5B4 \uC9C1\uC811 \uB9CC\uB4E4\uC5B4 \uC900\uB2E4.
+    return new File([image], CUSTOM_STICKER_FILE_NAME, {
+      type: CUSTOM_STICKER_CONTENT_TYPE,
+    });
+  }
+
+  return null;
+};
+
+/** \uB370\uC2A4\uD06C\uD1B1 \uBD99\uC5EC\uB123\uAE30(Ctrl+V) \uD56D\uBAA9 \uC911 \uCCAB \uBC88\uC9F8 PNG \uC774\uBBF8\uC9C0\uB97C \uAEBC\uB0B8\uB2E4. */
 export const getPastedStickerImage = (
   items: ReadonlyArray<{
     kind: string;
@@ -190,6 +249,16 @@ export const getDecorationDragPoint = (
     clientY,
     FOLDER_DECORATION_CANVAS_BOUNDS,
   );
+
+export const isFolderDecorationDropTarget = (
+  rect: CanvasRect,
+  clientX: number,
+  clientY: number,
+) =>
+  isPointInFolderDecorationLayout({
+    x: (clientX - rect.left) / rect.width,
+    y: (clientY - rect.top) / rect.height,
+  });
 
 export const getDecorationRotation = (
   center: { x: number; y: number },
@@ -254,15 +323,20 @@ export const bringDecorationToFront = <T extends FolderDecorationLayer>(
   );
 };
 
+/** 목록에서 탭했을 때 스티커가 놓이는 자리. */
+export const FOLDER_DECORATION_DEFAULT_POINT = { x: 0.5, y: 0.5 };
+
 export const createFolderDecoration = (
   seed: FolderDecorationSeed,
   decorations: FolderDecorationLayer[],
+  // 목록에서 끌어다 놓으면 손을 뗀 자리에 놓인다.
+  point: { x: number; y: number } = FOLDER_DECORATION_DEFAULT_POINT,
 ): TravelFolderDecoration => ({
   id: createDecorationId(),
   stickerId: seed.stickerId,
   imageUrl: seed.imageUrl,
-  x: 0.5,
-  y: 0.5,
+  x: point.x,
+  y: point.y,
   rotation: 0,
   scale: 1,
   zIndex: Math.max(0, ...decorations.map((decoration) => decoration.zIndex)) + 1,
@@ -271,16 +345,45 @@ export const createFolderDecoration = (
 export const appendFolderDecoration = (
   decorations: TravelFolderDecoration[],
   seed: FolderDecorationSeed,
+  point?: { x: number; y: number },
 ) => {
   if (decorations.length >= MAX_FOLDER_DECORATION_COUNT) {
     return { decorations, added: false };
   }
 
   return {
-    decorations: [...decorations, createFolderDecoration(seed, decorations)],
+    decorations: [
+      ...decorations,
+      createFolderDecoration(seed, decorations, point),
+    ],
     added: true,
   };
 };
+
+export const shouldAppendFolderDecorationAfterDrag = ({
+  isCancelled,
+  movedDistance,
+  isDropTarget,
+}: {
+  isCancelled: boolean;
+  movedDistance: number;
+  isDropTarget: boolean;
+}) =>
+  !isCancelled && (isDropTarget || movedDistance <= 8);
+
+export const isActiveStickerDragPointer = (
+  activePointerId: number,
+  eventPointerId: number,
+) => activePointerId === eventPointerId;
+
+export const getDraggingStickerPreviewStyle = (
+  point: { x: number; y: number },
+  scale: number,
+): CSSProperties => ({
+  left: point.x,
+  top: point.y,
+  transform: `translate(-50%, -50%) scale(${scale})`,
+});
 
 /**
  * '만들기' 탭의 슬롯 상태.
