@@ -4,6 +4,7 @@ import {
   ContentCard,
   ContentCardSkeleton,
   CourseCard,
+  LoadingSpinner,
   SearchTriggerButton,
   SectionHeader,
 } from '../../components/common';
@@ -11,7 +12,7 @@ import {
 import calendar from '../../assets/icons/calendar.svg';
 import location from '../../assets/icons/location.svg';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { useCourses } from '../../hooks/useCourses';
+import { useCourses, useRecommendedCourses } from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
@@ -30,6 +31,29 @@ const durationLabelByType: Record<CourseDurationType, string> = {
   TWO_NIGHT: '2박 3일',
   THREE_PLUS: '3박 이상',
 };
+
+// /courses/recommended 문서와 실제 응답의 enum 표기가 엇갈릴 수 있어(ONE_DAY/MORE 등),
+// 알려진 값은 정상 라벨로 보여주고 모르는 값은 원문을 그대로 보여준다.
+const HERO_DURATION_LABEL_BY_TYPE: Record<string, string> = {
+  DAY_TRIP: '당일치기',
+  ONE_DAY: '당일치기',
+  ONE_NIGHT: '1박 2일',
+  TWO_NIGHT: '2박 3일',
+  THREE_PLUS: '3박 이상',
+  MORE: '3박 이상',
+};
+
+const HERO_TRANSPORT_LABEL_BY_TYPE: Record<string, string> = {
+  WALK: '뚜벅이 코스',
+  PUBLIC: '대중교통 코스',
+  CAR: '드라이브 코스',
+};
+
+const DEFAULT_HERO_TITLE = '8월의 순천 힐링 여행';
+const DEFAULT_HERO_DESCRIPTION =
+  '자연과 사람, 로컬 문화를 천천히 경험하며 순천만의 매력을 느껴보세요.';
+const DEFAULT_HERO_DURATION_LABEL = '2박 3일';
+const DEFAULT_HERO_TRANSPORT_LABEL = '뚜벅이 코스';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -87,6 +111,23 @@ function YeogidoCoursePage() {
   const recentCoursePreviews = useRecentCourses()
     .slice(0, RECENT_COURSE_PREVIEW_COUNT)
     .map(toCourseCardProps);
+  const {
+    data: recommendedCourses,
+    isPending: isRecommendedCoursesPending,
+    isError: isRecommendedCoursesError,
+    refetch: refetchRecommendedCourses,
+  } = useRecommendedCourses();
+  const heroCourse = recommendedCourses?.[0];
+  const heroTitle = heroCourse?.title ?? DEFAULT_HERO_TITLE;
+  const heroDescription = heroCourse?.description ?? DEFAULT_HERO_DESCRIPTION;
+  const heroDurationLabel = heroCourse
+    ? (HERO_DURATION_LABEL_BY_TYPE[heroCourse.durationType] ??
+      heroCourse.durationType)
+    : DEFAULT_HERO_DURATION_LABEL;
+  const heroTransportLabel = heroCourse
+    ? (HERO_TRANSPORT_LABEL_BY_TYPE[heroCourse.transportType] ??
+      heroCourse.transportType)
+    : DEFAULT_HERO_TRANSPORT_LABEL;
 
   const goToCourseRegionSearch = () => {
     navigate(`${COURSE_REGION_SEARCH_PATH}${COURSE_REGION_SEARCH_FROM_COURSE}`);
@@ -122,7 +163,7 @@ function YeogidoCoursePage() {
             lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
-          여기도 왔어요
+          여기도 가볼까?
         </h1>
         <p
           className="text-gray-4 font-normal"
@@ -144,9 +185,48 @@ function YeogidoCoursePage() {
         />
       </div>
 
+      {isRecommendedCoursesPending ? (
+        <div
+          className="flex items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#8EA98C_0%,#507047_100%)]"
+          style={{
+            height: HERO_HEIGHT * scale,
+            marginTop: HERO_MARGIN_TOP * scale,
+            borderRadius: HERO_RADIUS * scale,
+          }}
+        >
+          <LoadingSpinner label="추천 코스를 불러오는 중" />
+        </div>
+      ) : isRecommendedCoursesError ? (
+        <div
+          className="bg-gray-1 flex flex-col items-center justify-center gap-3 overflow-hidden"
+          style={{
+            height: HERO_HEIGHT * scale,
+            marginTop: HERO_MARGIN_TOP * scale,
+            borderRadius: HERO_RADIUS * scale,
+          }}
+        >
+          <p
+            className="text-gray-4 text-center font-medium"
+            style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+          >
+            추천 코스를 불러오지 못했어요.
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetchRecommendedCourses()}
+            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+          >
+            다시 시도
+          </button>
+        </div>
+      ) : (
       <button
         type="button"
-        onClick={goToCourseRegionSearch}
+        onClick={() =>
+          heroCourse
+            ? goToCourseDetail(heroCourse.courseId)
+            : goToCourseRegionSearch()
+        }
         className="block w-full overflow-hidden text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
         style={{
           marginTop: HERO_MARGIN_TOP * scale,
@@ -157,6 +237,14 @@ function YeogidoCoursePage() {
           className="relative overflow-hidden bg-[linear-gradient(180deg,#8EA98C_0%,#507047_100%)]"
           style={{ height: HERO_HEIGHT * scale }}
         >
+          {heroCourse?.thumbnailUrl ? (
+            <img
+              src={heroCourse.thumbnailUrl}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : null}
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.45),rgba(0,0,0,0.05))]" />
           <div
             className="text-pure-white absolute"
@@ -173,7 +261,7 @@ function YeogidoCoursePage() {
                 lineHeight: `${HERO_TITLE_LINE_HEIGHT * scale}px`,
               }}
             >
-              8월의 순천 힐링 여행
+              {heroTitle}
             </p>
             <p
               className="text-pure-white/85 font-normal"
@@ -183,8 +271,7 @@ function YeogidoCoursePage() {
                 lineHeight: `${HERO_DESCRIPTION_LINE_HEIGHT * scale}px`,
               }}
             >
-              자연과 사람, 로컬 문화를 천천히 경험하며 순천만의 매력을
-              느껴보세요.
+              {heroDescription}
             </p>
           </div>
           <div
@@ -211,7 +298,7 @@ function YeogidoCoursePage() {
                   height: HERO_ICON_SIZE * scale,
                 }}
               />
-              2박 3일
+              {heroDurationLabel}
             </span>
             <span
               className="flex items-center"
@@ -227,11 +314,12 @@ function YeogidoCoursePage() {
                   height: HERO_ICON_SIZE * scale,
                 }}
               />
-              뚜벅이 코스
+              {heroTransportLabel}
             </span>
           </div>
         </div>
       </button>
+      )}
 
       <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
         <SectionHeader
