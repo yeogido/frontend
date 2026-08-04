@@ -24,8 +24,23 @@ import type { RegionPhotoMap } from '../types/regionPhoto';
 const MAP_PADDING = 20;
 
 const LABEL_COLOR = '#FF6F41';
-/** 사진이 채워진 지역은 스크림 위에 얹히므로 흰 글씨를 쓴다. */
-const PHOTO_LABEL_COLOR = '#FFFFFF';
+/** 사진이 채워진 지역은 스크림 위에 얹히므로 흰 글씨를 쓴다. theme의 --color-white */
+const PHOTO_LABEL_COLOR = '#F9F9F9';
+/** 디자인(Figma) 기준 */
+const LABEL_FONT_WEIGHT = 500;
+
+/**
+ * 도 단위가 보이는 축소 상태에서는 사진 유무와 관계없이 기본색으로
+ * 통일한다. 시/군까지 보이는 확대 상태에서만 사진 위 글씨를 흰색으로
+ * 바꾼다.
+ */
+function getLabelColor(isProvinceZoom: boolean, hasPhoto: boolean) {
+  if (isProvinceZoom) {
+    return LABEL_COLOR;
+  }
+
+  return hasPhoto ? PHOTO_LABEL_COLOR : LABEL_COLOR;
+}
 
 interface LabelLayerProps {
   zoomLevel: number;
@@ -256,8 +271,8 @@ function LabelLayer({
             x={x}
             y={y}
             fontSize={size}
-            fontWeight={600}
-            fill={hasPhoto ? PHOTO_LABEL_COLOR : LABEL_COLOR}
+            fontWeight={LABEL_FONT_WEIGHT}
+            fill={getLabelColor(!isCity, hasPhoto)}
             textAnchor="middle"
             dominantBaseline="middle"
             pointerEvents="none"
