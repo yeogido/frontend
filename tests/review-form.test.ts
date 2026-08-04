@@ -36,3 +36,10 @@ test('requires both a photo and comment to enable review submission', () => {
     false
   );
 });
+
+test('rejects more than the maximum number of review photos', () => {
+  assert.equal(
+    isReviewFormValid({ rating: 5, review: 'valid review', photoCount: 6 }),
+    false
+  );
+});

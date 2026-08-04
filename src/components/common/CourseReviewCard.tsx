@@ -54,7 +54,7 @@ function CourseReviewCard({
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!onClick) return;
+    if (!onClick || event.currentTarget !== event.target) return;
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();

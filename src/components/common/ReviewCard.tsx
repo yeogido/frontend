@@ -61,7 +61,7 @@ function ReviewCard({
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!onClick) return;
+    if (!onClick || event.currentTarget !== event.target) return;
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -152,7 +152,7 @@ function ReviewCard({
                 {content}
               </p>
 
-              {isMine ? (
+              {isMine && onMoreClick ? (
                 <button
                   type="button"
                   aria-label="리뷰 메뉴"

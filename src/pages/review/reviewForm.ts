@@ -33,6 +33,7 @@ export function isReviewFormValid({
     rating <= 5 &&
     review.trim().length > 0 &&
     review.length <= 300 &&
-    photoCount > 0
+    photoCount > 0 &&
+    photoCount <= MAX_REVIEW_PHOTOS
   );
 }

@@ -68,7 +68,10 @@ function RecentReviewCoursesPage() {
         }}
       >
         {recentReviewCourses.map(({ id, liked, ...courseReview }) => {
-          const isLiked = likedCourseIds.includes(id) ? !liked : liked;
+          const initialLiked = liked ?? false;
+          const isLiked = likedCourseIds.includes(id)
+            ? !initialLiked
+            : initialLiked;
 
           return (
             <CourseReviewCard

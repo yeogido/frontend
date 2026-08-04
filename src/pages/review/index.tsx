@@ -5,6 +5,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import backIcon from '../../assets/icons/vector.svg';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import {
+  useSubmittedCourseReviewsStore,
+  type SubmittedCourseReviewType,
+} from '../../store/submitted-course-reviews.store';
 
 import {
   PhotoUploader,
@@ -64,13 +68,17 @@ function ReviewPage() {
   const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [isLoadingCourse, setIsLoadingCourse] = useState(Boolean(targetId));
 
-  const [rating, setRating] = useState<number | null>(5);
+  const [rating, setRating] = useState<number | null>(null);
   const [review, setReview] = useState('');
   const [selectedPhotos, setSelectedPhotos] = useState<
     Array<{ file: File; previewUrl: string }>
   >([]);
   const photoPickerRef = useRef<HTMLInputElement>(null);
   const selectedPhotosRef = useRef(selectedPhotos);
+  const submittedPhotoUrlsRef = useRef(new Set<string>());
+  const addSubmittedReview = useSubmittedCourseReviewsStore(
+    (state) => state.addReview
+  );
   const isMaxPhotosReached = selectedPhotos.length >= MAX_REVIEW_PHOTOS;
   const canSubmit = isReviewFormValid({
     rating,
@@ -113,10 +121,14 @@ function ReviewPage() {
   }, [selectedPhotos]);
 
   useEffect(() => {
+    const submittedPhotoUrls = submittedPhotoUrlsRef.current;
+
     return () => {
-      selectedPhotosRef.current.forEach(({ previewUrl }) =>
-        URL.revokeObjectURL(previewUrl)
-      );
+      selectedPhotosRef.current.forEach(({ previewUrl }) => {
+        if (!submittedPhotoUrls.has(previewUrl)) {
+          URL.revokeObjectURL(previewUrl);
+        }
+      });
     };
   }, []);
 
@@ -168,6 +180,27 @@ function ReviewPage() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canSubmit) return;
+
+    if (
+      targetId &&
+      (targetType === 'yeogido-course' || targetType === 'local-course') &&
+      rating !== null
+    ) {
+      selectedPhotos.forEach(({ previewUrl }) =>
+        submittedPhotoUrlsRef.current.add(previewUrl)
+      );
+      addSubmittedReview({
+        courseType: targetType as SubmittedCourseReviewType,
+        courseId: targetId,
+        images: selectedPhotos.map(({ previewUrl }) => previewUrl),
+        content: review.trim(),
+        rating,
+      });
+      navigate(`/${targetType}/detail/${targetId}`, { replace: true });
+      return;
+    }
+
+    navigate(-1);
 
     // TODO: 백엔드 리뷰 작성 API 연동 (POST /api/reviews)
     // payload: { targetType, targetId, rating, review, photos: selectedPhotos }

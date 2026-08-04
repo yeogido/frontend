@@ -22,6 +22,10 @@ import { useShareToast } from '../hooks/useShareToast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
+import {
+  getSubmittedCourseReviewKey,
+  useSubmittedCourseReviewsStore,
+} from '../../../store/submitted-course-reviews.store';
 import BackButton from '../../local-recommendation/components/BackButton';
 import {
   getCourseReviewsPath,
@@ -36,6 +40,7 @@ const MAP_MARGIN_TOP = 24;
 const STOP_LIST_MARGIN_TOP = 0;
 const REVIEW_MARGIN_TOP = 24;
 const REVIEW_BUTTON_MARGIN_TOP = 12;
+const EMPTY_REVIEWS: readonly CourseDetail['reviews'][number][] = [];
 
 export interface CourseDetailLayoutProps {
   readonly course: CourseDetail;
@@ -98,6 +103,13 @@ function CourseDetailLayoutContent({
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
+  const submittedReviews = useSubmittedCourseReviewsStore(
+    (state) =>
+      state.reviewsByCourse[
+        getSubmittedCourseReviewKey(reviewType, course.id)
+      ] ?? EMPTY_REVIEWS
+  );
+  const reviews = [...submittedReviews, ...course.reviews];
 
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
@@ -183,7 +195,7 @@ function CourseDetailLayoutContent({
 
   const handleNavigateCourseReviews = () => {
     navigate(getCourseReviewsPath(reviewType, course.id), {
-      state: { courseTitle: course.title, reviews: course.reviews },
+      state: { courseTitle: course.title, reviews },
     });
   };
 
@@ -276,7 +288,7 @@ function CourseDetailLayoutContent({
       {/* 7. 최근 여행자들의 후기 */}
       <div style={{ marginTop: REVIEW_MARGIN_TOP * scale }}>
         <DetailReviewSection
-          reviews={course.reviews}
+          reviews={reviews}
           onActionClick={handleNavigateCourseReviews}
         />
       </div>
