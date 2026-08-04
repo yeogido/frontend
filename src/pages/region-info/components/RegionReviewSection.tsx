@@ -36,10 +36,23 @@ function RegionReviewSection({
   const navigate = useNavigate();
   const scale = useGlobalScale();
 
-  const { data, isPending, isError, refetch } = useBusinessPromotions(
+  const hasRegionId = regionId !== undefined;
+
+  const {
+    data,
+    isPending: isPromotionPending,
+    isError: isPromotionError,
+    refetch,
+  } = useBusinessPromotions(
     { regionId, sort: 'RECOMMEND', size: 1 },
-    { enabled: !isRegionLoading }
+    { enabled: !isRegionLoading && hasRegionId }
   );
+
+  // regionId를 끝내 찾지 못하면(예: /regions에 없는 지역) 쿼리를
+  // undefined regionId로 실행해 전국 데이터를 잘못 보여주는 대신
+  // 바로 에러 상태로 취급한다.
+  const isPending = isRegionLoading || (hasRegionId && isPromotionPending);
+  const isError = !isRegionLoading && (!hasRegionId || isPromotionError);
 
   const promotion = data?.pages[0]?.items[0];
 
