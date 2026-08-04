@@ -43,11 +43,14 @@ function formatBusinessHours(
     return NO_HOURS_LABEL;
   }
 
-  const isSameEveryDay = businessHours.every(
-    (hour) =>
-      hour.openTime === businessHours[0].openTime &&
-      hour.closeTime === businessHours[0].closeTime
-  );
+  const coveredDays = new Set(businessHours.map((hour) => hour.dayOfWeek));
+  const isSameEveryDay =
+    DAY_OF_WEEK_ORDER.every((day) => coveredDays.has(day)) &&
+    businessHours.every(
+      (hour) =>
+        hour.openTime === businessHours[0].openTime &&
+        hour.closeTime === businessHours[0].closeTime
+    );
 
   if (isSameEveryDay) {
     return `매일 ${businessHours[0].openTime} - ${businessHours[0].closeTime}`;
@@ -94,7 +97,8 @@ export function mapBusinessPromotionDetail(
     phone: detail.phoneNumber,
     snsAccount: detail.snsAccount,
     location:
-      detail.place.latitude && detail.place.longitude
+      Number.isFinite(detail.place.latitude) &&
+      Number.isFinite(detail.place.longitude)
         ? { latitude: detail.place.latitude, longitude: detail.place.longitude }
         : undefined,
   };
