@@ -8,7 +8,7 @@ import { useRecentCourses } from '../../../hooks/useRecentCourses';
 import { toRecentCourseCardProps } from './constants/recentCourses';
 
 const PAGE_PADDING_X = 24;
-const PAGE_PADDING_TOP = 56;
+const PAGE_PADDING_TOP = 12;
 const PAGE_PADDING_BOTTOM = 40;
 const TITLE_SIZE = 18;
 const DESCRIPTION_MARGIN_TOP = 6;
@@ -27,7 +27,9 @@ function YeogidoCourseRecentPage() {
     navigate(`/yeogido-course/detail/${courseId}`);
   };
 
-  const recentCourses = useRecentCourses().map(toRecentCourseCardProps);
+  const recentCourses = useRecentCourses()
+    .filter((course) => course.courseType === 'OFFICIAL')
+    .map(toRecentCourseCardProps);
 
   return (
     <section
