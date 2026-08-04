@@ -9,7 +9,7 @@ const TITLE_FONT_SIZE = 16;
 const TITLE_LINE_HEIGHT = 24;
 const HELPER_FONT_SIZE = 11;
 const HELPER_LINE_HEIGHT = 16;
-const GRID_MARGIN_TOP = 5;
+const GRID_MARGIN_TOP = 12;
 const GRID_GAP = 16;
 
 interface SelectedPhotoSectionProps {
@@ -39,7 +39,7 @@ function SelectedPhotoSection({
       <div className="flex items-center justify-between">
         <h2
           id="selected-photo-title"
-          className="font-medium"
+          className="font-semibold"
           style={{
             fontSize: TITLE_FONT_SIZE * scale,
             lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,

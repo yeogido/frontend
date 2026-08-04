@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { IoChevronBack } from 'react-icons/io5';
 
+import backIcon from '../../assets/icons/vector.svg';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 
@@ -194,9 +194,15 @@ function ReviewPage() {
           marginTop: backButtonOverlap,
         }}
       >
-        <IoChevronBack
+        <img
+          src={backIcon}
+          alt=""
           aria-hidden="true"
-          style={{ fontSize: BACK_ICON_SIZE * scale }}
+          style={{
+            width: BACK_ICON_SIZE * scale,
+            height: BACK_ICON_SIZE * scale,
+            transform: 'rotate(180deg)',
+          }}
         />
       </button>
       <form onSubmit={handleSubmit}>

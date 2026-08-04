@@ -1,12 +1,11 @@
-import { IoClose } from 'react-icons/io5';
-
+import closeIcon from '../../../assets/icons/close.svg';
+import addIcon from '../../travel-record/photo-selection/assets/photo-add-icon.svg';
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // Figma 390 디자인 기준 리터럴 px
 const SLOT_RADIUS = 12;
-const PLACEHOLDER_BAR_LENGTH = 18;
-const PLACEHOLDER_BAR_THICKNESS = 1.5;
+const ADD_ICON_SIZE = 24;
 const REMOVE_VISUAL_SIZE = 20;
 const REMOVE_ICON_SIZE = 12;
 
@@ -36,22 +35,13 @@ function PhotoSlot({ label, previewUrl, onClick, onRemove }: PhotoSlotProps) {
         {previewUrl ? (
           <img src={previewUrl} alt="" className="size-full object-cover" />
         ) : (
-          <>
-            <span
-              className="bg-gray-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-              style={{
-                height: PLACEHOLDER_BAR_THICKNESS * scale,
-                width: PLACEHOLDER_BAR_LENGTH * scale,
-              }}
-            />
-            <span
-              className="bg-gray-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-              style={{
-                height: PLACEHOLDER_BAR_LENGTH * scale,
-                width: PLACEHOLDER_BAR_THICKNESS * scale,
-              }}
-            />
-          </>
+          <img
+            src={addIcon}
+            alt=""
+            aria-hidden="true"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ width: ADD_ICON_SIZE * scale, height: ADD_ICON_SIZE * scale }}
+          />
         )}
       </button>
 
@@ -71,9 +61,11 @@ function PhotoSlot({ label, previewUrl, onClick, onRemove }: PhotoSlotProps) {
             height: removeButtonSize,
           }}
         >
-          <IoClose
+          <img
+            src={closeIcon}
+            alt=""
             aria-hidden="true"
-            style={{ fontSize: REMOVE_ICON_SIZE * scale }}
+            style={{ width: REMOVE_ICON_SIZE * scale, height: REMOVE_ICON_SIZE * scale }}
           />
         </button>
       )}

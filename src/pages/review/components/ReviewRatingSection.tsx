@@ -6,9 +6,9 @@ import RatingStars from './RatingStars';
 const SECTION_MARGIN_TOP = 31;
 const TITLE_FONT_SIZE = 16;
 const TITLE_LINE_HEIGHT = 24;
-const HELPER_MARGIN_TOP = 3;
-const HELPER_FONT_SIZE = 11;
-const HELPER_LINE_HEIGHT = 16;
+const HELPER_MARGIN_TOP = 6;
+const HELPER_FONT_SIZE = 12;
+const HELPER_LINE_HEIGHT = 14;
 
 interface ReviewRatingSectionProps {
   value: number;
