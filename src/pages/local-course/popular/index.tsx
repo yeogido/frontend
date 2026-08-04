@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   ContentCard,
@@ -7,12 +8,20 @@ import {
 } from '../../../components/common';
 import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import { useCourses } from '../../../hooks/useCourses';
+import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { toContentTagIds } from '../../../utils/contentTags';
 
 import { localCourseFilterGroups } from '../constants/filters';
 import { LOCAL_COURSE_SKELETON_ITEMS } from '../constants/ui';
+import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import useLocalCourseFilters from '../hooks/useLocalCourseFilters';
-import useLocalCourses from '../hooks/useLocalCourses';
+import type {
+  CourseCompanionType,
+  CourseDurationType,
+  CourseSort,
+  CourseTransportType,
+} from '../../../types/course.type';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -29,8 +38,50 @@ const ERROR_MARGIN_TOP = 24;
 const ERROR_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
 
+const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
+  도보: 'WALK',
+  대중교통: 'PUBLIC',
+  자차: 'CAR',
+};
+
+const durationTypeByLabel: Record<string, CourseDurationType | undefined> = {
+  당일치기: 'DAY_TRIP',
+  '1박 2일': 'ONE_NIGHT',
+  '2박 3일': 'TWO_NIGHT',
+  '3박 이상': 'THREE_PLUS',
+};
+
+const companionTypeByLabel: Record<string, CourseCompanionType | undefined> = {
+  혼자: 'SOLO',
+  친구와: 'FRIEND',
+  연인과: 'COUPLE',
+  가족과: 'FAMILY',
+  반려동물과: 'PET',
+};
+
+// LOCAL 코스 목록은 RECOMMEND 정렬을 지원하지 않아(COURSE4008),
+// '추천순' 필터는 최신순으로 대체한다.
+const sortByLabel: Record<string, CourseSort> = {
+  추천순: 'LATEST',
+  저장순: 'SAVED',
+  후기순: 'REVIEW',
+};
+
+const durationLabelByType: Record<CourseDurationType, string> = {
+  DAY_TRIP: '당일치기',
+  ONE_NIGHT: '1박 2일',
+  TWO_NIGHT: '2박 3일',
+  THREE_PLUS: '3박 이상',
+};
+
 function LocalCoursePopularPage() {
+  const navigate = useNavigate();
   const scale = useGlobalScale();
+  const { getLiked, toggleLike } = useCourseLikeToggle();
+
+  const handleCourseClick = (courseId: number | string) => {
+    navigate(`/local-course/detail/${courseId}`);
+  };
   const {
     filterContainerRef,
     openFilterKey,
@@ -38,6 +89,7 @@ function LocalCoursePopularPage() {
     handleFilterToggle,
     handleFilterSelect,
   } = useLocalCourseFilters();
+
   const {
     data,
     fetchNextPage,
@@ -45,9 +97,16 @@ function LocalCoursePopularPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useLocalCourses({ filters: selectedFilters });
+  } = useCourses({
+    courseType: 'LOCAL',
+    transportType: transportTypeByLabel[selectedFilters.transport],
+    durationType: durationTypeByLabel[selectedFilters.duration],
+    companionType: companionTypeByLabel[selectedFilters.companion],
+    sort: sortByLabel[selectedFilters.sort],
+    size: 20,
+  });
 
-  const courses = data?.pages.flatMap((page) => page.content) ?? [];
+  const courses = data?.pages.flatMap((page) => page.items) ?? [];
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -56,7 +115,7 @@ function LocalCoursePopularPage() {
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const loadMoreRef = useInfiniteScroll({
-    enabled: hasNextPage && !isPending,
+    enabled: Boolean(hasNextPage) && !isPending,
     onIntersect: handleIntersect,
   });
 
@@ -119,14 +178,21 @@ function LocalCoursePopularPage() {
             ))
           : courses.map((course) => (
               <ContentCard
-                key={course.id}
-                image={course.image}
+                key={course.courseId}
+                image={course.thumbnailUrl}
                 title={course.title}
-                firstInfo={course.duration}
-                secondInfo={course.courseType}
-                liked={course.liked}
-                tags={course.tags}
+                firstInfo={durationLabelByType[course.durationType]}
+                secondInfo={course.region}
+                tags={toContentTagIds(course.tags)}
+                liked={getLiked(course.courseId, course.isLiked)}
                 className="w-full"
+                onClick={() => handleCourseClick(course.courseId)}
+                onLikeClick={() =>
+                  toggleLike(
+                    course.courseId,
+                    getLiked(course.courseId, course.isLiked)
+                  )
+                }
               />
             ))}
 

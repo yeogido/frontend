@@ -109,6 +109,7 @@ function YeogidoCoursePage() {
     popularCourses?.pages[0]?.items ?? []
   ).slice(0, POPULAR_COURSE_PREVIEW_COUNT);
   const recentCoursePreviews = useRecentCourses()
+    .filter((course) => course.courseType === 'OFFICIAL')
     .slice(0, RECENT_COURSE_PREVIEW_COUNT)
     .map(toCourseCardProps);
   const {

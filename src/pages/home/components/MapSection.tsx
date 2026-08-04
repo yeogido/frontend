@@ -24,7 +24,16 @@ function MapSection() {
     <section className="mx-6 mt-4">
       <div className="relative h-[342px] overflow-hidden rounded-xl bg-[#F9F9F9]">
         <div className="h-full w-full">
-          <Map regionPhotos={regionPhotos} />
+          {/* 여행 기록 지도(TravelMapPanel) 축척을 기준으로 홈 카드 높이에
+              맞춰 조금 키운 값. 기본값(2.5)은 확대가 심해 전국이 크게 잘린다.
+              labelBaseScale은 그대로 둬서 지역명 크기는 유지한다. */}
+          <Map
+            baseScale={1.62}
+            labelBaseScale={2.5}
+            minZoom={0.8}
+            initialZoom={0.9781}
+            regionPhotos={regionPhotos}
+          />
         </div>
 
         <h2 className="absolute left-4 top-4 text-[18px] font-semibold leading-[100%] text-[#1C1C1C]">
