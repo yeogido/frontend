@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -14,11 +14,10 @@ import {
 import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
 import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourseSearch';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useCourses } from '../../../hooks/useCourses';
+import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
-import { useAuthStore } from '../../../store/auth.store';
 
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
@@ -79,11 +78,7 @@ const durationLabelByType: Record<CourseDurationType, string> = {
 function YeogidoCourseSearchPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { openLoginModal } = useLoginModal();
-  const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
-    {}
-  );
+  const { getLiked, toggleLike } = useCourseLikeToggle();
 
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/yeogido-course/detail/${courseId}`);
@@ -157,18 +152,6 @@ function YeogidoCourseSearchPage() {
     setSearchParams(nextSearchParams);
   };
 
-  const handleLikeClick = (courseId: number | string, isLiked: boolean) => {
-    if (!isAuthenticated) {
-      openLoginModal();
-      return;
-    }
-
-    setLikedOverrides((previous) => ({
-      ...previous,
-      [String(courseId)]: !isLiked,
-    }));
-  };
-
   return (
     <section
       className="mx-auto flex min-h-screen w-full flex-col"
@@ -221,15 +204,13 @@ function YeogidoCourseSearchPage() {
                   firstInfo={durationLabelByType[course.durationType]}
                   secondInfo={course.region}
                   tags={toContentTagIds(course.tags)}
-                  liked={
-                    likedOverrides[String(course.courseId)] ?? course.isLiked
-                  }
+                  liked={getLiked(course.courseId, course.isLiked)}
                   className="w-full"
                   onClick={() => handleCourseClick(course.courseId)}
                   onLikeClick={() =>
-                    handleLikeClick(
+                    toggleLike(
                       course.courseId,
-                      likedOverrides[String(course.courseId)] ?? course.isLiked
+                      getLiked(course.courseId, course.isLiked)
                     )
                   }
                 />

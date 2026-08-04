@@ -12,7 +12,7 @@ export interface PersistedSelectedPlace {
   id: string;
   title: string;
   address: string;
-  imageKey: string;
+  imageKey: string | null;
   externalPlaceId: string;
   categoryGroupCode: string;
   roadAddress: string;

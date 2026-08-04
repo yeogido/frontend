@@ -6,9 +6,7 @@ import { guestSidebarMenu } from '../../constants/sidebarMenu';
 
 import { Divider } from '../ui';
 
-import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { useLogout } from '../../hooks/useLogout';
 import { APP_MAX_WIDTH } from '../../constants/layout';
 
 const DRAWER_MAX_WIDTH = 280;
@@ -33,15 +31,12 @@ interface SidebarProps {
  * 조건부 렌더링으로 교체 예정.
  */
 const TEMP_MENU = [
-  { path: '/travel-record', label: '여행기록 (임시)' },
   { path: '/admin', label: '관리자 페이지 (임시)' },
 ];
 
 function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const { isAuthenticated } = useAuth();
-  const handleLogout = useLogout();
 
   return (
     // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
@@ -105,58 +100,35 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
             </button>
           </div>
 
-          {/* Login / Logout */}
-          {isAuthenticated ? (
-            <button
-              type="button"
-              onClick={() => {
-                void handleLogout();
-                onClose();
-              }}
-              style={{
-                paddingLeft: LOGIN_PADDING_X * scale,
-                paddingRight: LOGIN_PADDING_X * scale,
-                paddingTop: LOGIN_PADDING_Y * scale,
-                paddingBottom: LOGIN_PADDING_Y * scale,
-              }}
+          {/* Login */}
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/login');
+              onClose();
+            }}
+            className="flex items-center"
+            style={{
+              gap: LOGIN_GAP * scale,
+              paddingLeft: LOGIN_PADDING_X * scale,
+              paddingRight: LOGIN_PADDING_X * scale,
+              paddingTop: LOGIN_PADDING_Y * scale,
+              paddingBottom: LOGIN_PADDING_Y * scale,
+            }}
+          >
+            <span
+              className="font-semibold leading-none"
+              style={{ fontSize: TEXT_BASE * scale }}
             >
-              <span
-                className="font-semibold leading-none"
-                style={{ fontSize: TEXT_BASE * scale }}
-              >
-                로그아웃
-              </span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                navigate('/login');
-                onClose();
-              }}
-              className="flex items-center"
-              style={{
-                gap: LOGIN_GAP * scale,
-                paddingLeft: LOGIN_PADDING_X * scale,
-                paddingRight: LOGIN_PADDING_X * scale,
-                paddingTop: LOGIN_PADDING_Y * scale,
-                paddingBottom: LOGIN_PADDING_Y * scale,
-              }}
-            >
-              <span
-                className="font-semibold leading-none"
-                style={{ fontSize: TEXT_BASE * scale }}
-              >
-                로그인
-              </span>
+              로그인
+            </span>
 
-              <img
-                src={chevronRight}
-                alt=""
-                aria-hidden="true"
-              />
-            </button>
-          )}
+            <img
+              src={chevronRight}
+              alt=""
+              aria-hidden="true"
+            />
+          </button>
 
           <Divider />
 
