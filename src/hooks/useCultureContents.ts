@@ -14,6 +14,7 @@ interface CultureContentsPageParam {
 
 export function useCultureContents(
   params: GetCultureContentsParams = {},
+  options?: { enabled?: boolean },
 ) {
   return useInfiniteQuery<
     GetCultureContentsResponse,
@@ -37,5 +38,6 @@ export function useCultureContents(
             cursorId: lastPage.cursorId,
           }
         : undefined,
+    enabled: options?.enabled,
   });
 }
