@@ -7,12 +7,9 @@ import { CITY_LAYER_ZOOM, CITY_STROKE_WIDTH } from '../constants/map';
 import { buildRecordPath, buildSearchPath } from '../constants/cityMeta';
 import { isMetroCityCode } from '../utils/metroCityCodes';
 
-import koreaCityJson from '../assets/korea-city.json';
+import { koreaCity } from '../assets/koreaCity';
 
-import type { KoreaCityGeoJson } from '../types/map';
 import type { RegionPhotoMap } from '../types/regionPhoto';
-
-const koreaCity = koreaCityJson as KoreaCityGeoJson;
 
 const MAP_WIDTH = 400;
 const MAP_HEIGHT = 600;

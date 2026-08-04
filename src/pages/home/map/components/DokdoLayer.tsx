@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { geoMercator } from 'd3-geo';
 
-import koreaProvinceJson from '../assets/korea-province.json';
+import { koreaProvince } from '../assets/koreaProvince';
 import {
   CITY_LABEL_FONT_SIZE,
   CITY_LAYER_ZOOM,
@@ -11,8 +11,6 @@ import {
 } from '../constants/map';
 
 const MAP_PADDING = 20;
-
-const koreaProvince = koreaProvinceJson as GeoJSON.FeatureCollection;
 
 /** 독도(경상북도 울릉군 독도리)의 실제 좌표 */
 const DOKDO_COORDINATES: [number, number] = [131.8724, 37.2428];

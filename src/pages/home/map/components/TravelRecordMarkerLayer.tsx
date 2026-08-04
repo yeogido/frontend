@@ -7,14 +7,12 @@ import {
   MAP_VIEWBOX_WIDTH,
 } from '../constants/map';
 
-import koreaCityJson from '../assets/korea-city.json';
-import koreaProvinceJson from '../assets/korea-province.json';
+import { koreaCity } from '../assets/koreaCity';
+import { koreaProvince } from '../assets/koreaProvince';
 
-import type { KoreaCityGeoJson, MapMarker } from '../types/map';
+import type { MapMarker } from '../types/map';
 
 const MAP_PADDING = 20;
-const koreaCity = koreaCityJson as KoreaCityGeoJson;
-const koreaProvince = koreaProvinceJson as GeoJSON.FeatureCollection;
 const mapExtent: [[number, number], [number, number]] = [
   [MAP_PADDING, MAP_PADDING],
   [MAP_VIEWBOX_WIDTH - MAP_PADDING, MAP_VIEWBOX_HEIGHT - MAP_PADDING],

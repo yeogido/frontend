@@ -1,4 +1,4 @@
-import koreaProvinceJson from '../assets/korea-province.json' with { type: 'json' };
+import { koreaProvince } from '../assets/koreaProvince.ts';
 
 // 이름이 특별시/광역시로 끝나는 지역 = 구 단위 세부 구분선을 감추고
 // 싶은 대상. 하드코딩 목록 대신 province geojson에서 자동으로 판별한다.
@@ -6,7 +6,7 @@ import koreaProvinceJson from '../assets/korea-province.json' with { type: 'json
 // 이 패턴에 걸리지 않도록 "특별시" 또는 "광역시"로만 한정한다.)
 const METRO_NAME_PATTERN = /(특별시|광역시)$/;
 
-const provinceGeoJson = koreaProvinceJson as GeoJSON.FeatureCollection;
+const provinceGeoJson = koreaProvince as GeoJSON.FeatureCollection;
 
 export const METRO_PROVINCE_CODES: ReadonlySet<string> = new Set(
   provinceGeoJson.features

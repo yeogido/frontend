@@ -16,8 +16,8 @@ import {
   isMetroCityCode,
 } from '../utils/metroCityCodes';
 
-import koreaCityJson from '../assets/korea-city.json';
-import koreaProvinceJson from '../assets/korea-province.json';
+import { koreaCity } from '../assets/koreaCity';
+import { koreaProvince } from '../assets/koreaProvince';
 
 import type { RegionPhotoMap } from '../types/regionPhoto';
 
@@ -104,8 +104,8 @@ function LabelLayer({
   const geoJson = useMemo(
     () =>
       isCity
-        ? (koreaCityJson as GeoJSON.FeatureCollection)
-        : (koreaProvinceJson as GeoJSON.FeatureCollection),
+        ? (koreaCity as GeoJSON.FeatureCollection)
+        : (koreaProvince as GeoJSON.FeatureCollection),
     [isCity],
   );
 
@@ -140,8 +140,7 @@ function LabelLayer({
 
   // 광역시/특별시 전용 라벨: 구 단위 대신 도 단위(하나로 합쳐진) 이름 하나만 표시
   const metroLabelPositions = useMemo(() => {
-    const provinceGeoJson =
-      koreaProvinceJson as GeoJSON.FeatureCollection;
+    const provinceGeoJson = koreaProvince as GeoJSON.FeatureCollection;
 
     const provinceProjection = geoMercator().fitExtent(
       [
@@ -225,8 +224,8 @@ function LabelLayer({
 
       const area = pathGenerator.area(feature);
 
-      // LABEL_OFFSETS는 GeoJSON 이름을 키로 쓰므로, 표시용 이름으로
-      // 바꾸는 건 마지막에 한 번만 한다.
+      // LABEL_OFFSETS와 regionPhotos는 GeoJSON 이름을 키로 쓰므로,
+      // 표시용 이름으로 바꾸는 건 마지막에 한 번만 한다.
       candidates.push({
         index,
         x,

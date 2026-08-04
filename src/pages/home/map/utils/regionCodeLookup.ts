@@ -1,5 +1,5 @@
-import koreaCityJson from '../assets/korea-city.json' with { type: 'json' };
-import koreaProvinceJson from '../assets/korea-province.json' with { type: 'json' };
+import { koreaCity } from '../assets/koreaCity.ts';
+import { koreaProvince } from '../assets/koreaProvince.ts';
 
 import { isMetroCityCode } from './metroCityCodes.ts';
 
@@ -35,7 +35,7 @@ const toProvinceStem = (name: string) =>
 const provinceCodeByName = new Map<string, string>();
 const provinceNameByCode = new Map<string, string>();
 
-(koreaProvinceJson as GeoJSON.FeatureCollection).features.forEach((feature) => {
+(koreaProvince as GeoJSON.FeatureCollection).features.forEach((feature) => {
   const properties = feature.properties as MapRegionFeatureProperties | null;
 
   if (properties?.name && properties.code) {
@@ -51,7 +51,7 @@ const provinceNameByCode = new Map<string, string>();
 const cityCodesByName = new Map<string, string[]>();
 const cityNameByCode = new Map<string, string>();
 
-(koreaCityJson as GeoJSON.FeatureCollection).features.forEach((feature) => {
+(koreaCity as GeoJSON.FeatureCollection).features.forEach((feature) => {
   const properties = feature.properties as MapRegionFeatureProperties | null;
 
   if (!properties?.name || !properties.code) {

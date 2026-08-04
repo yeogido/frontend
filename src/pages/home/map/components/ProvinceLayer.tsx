@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { geoMercator, geoPath } from 'd3-geo';
 
-import koreaProvinceJson from '../assets/korea-province.json';
+import { koreaProvince } from '../assets/koreaProvince';
 import { buildRecordPath, buildSearchPath } from '../constants/cityMeta';
 import { PROVINCE_STROKE_WIDTH } from '../constants/map';
 
@@ -12,9 +12,6 @@ import type { RegionPhotoMap } from '../types/regionPhoto';
 const MAP_WIDTH = 400;
 const MAP_HEIGHT = 600;
 const MAP_PADDING = 20;
-
-const koreaProvince =
-  koreaProvinceJson as GeoJSON.FeatureCollection;
 
 interface ProvinceLayerProps {
   /** 줌과 무관하게 선 굵기를 유지하기 위해 나눌 배율 */

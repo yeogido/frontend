@@ -2,19 +2,16 @@ import { useMemo } from 'react';
 
 import { geoMercator, geoPath } from 'd3-geo';
 
-import koreaProvinceJson from '../assets/korea-province.json';
-import koreaCityJson from '../assets/korea-city.json';
+import { koreaProvince } from '../assets/koreaProvince';
+import { koreaCity } from '../assets/koreaCity';
 import { isMetroCityCode } from '../utils/metroCityCodes';
 
-import type { KoreaCityGeoJson } from '../types/map';
 import type { RegionPhotoMap } from '../types/regionPhoto';
 
 const MAP_WIDTH = 400;
 const MAP_HEIGHT = 600;
 const MAP_PADDING = 20;
 
-const koreaProvince = koreaProvinceJson as GeoJSON.FeatureCollection;
-const koreaCity = koreaCityJson as KoreaCityGeoJson;
 
 /**
  * 사진 위에 덮는 스크림. 사진마다 밝기가 제각각이라 그대로 두면 흰
