@@ -28,7 +28,9 @@ export function toReviewCardProps(
   review: RecentReview | ReviewDetail,
   myReviewIds: ReadonlySet<number> = new Set()
 ) {
-  const courseTitle = 'course' in review ? review.course.title : undefined;
+  // GET /reviews/recent 응답에는 course가 없고 GET /reviews에는 있다. 어느
+  // 쪽으로 조회했든 같은 카드에 쓸 수 있도록 있을 때만 채운다.
+  const course = 'course' in review ? review.course : undefined;
 
   return {
     id: review.reviewId,
@@ -39,7 +41,9 @@ export function toReviewCardProps(
     content: review.content,
     rating: review.rating,
     isMine: myReviewIds.has(review.reviewId),
-    ...(courseTitle ? { courseTitle } : {}),
+    ...(course
+      ? { courseTitle: course.title, courseId: course.courseId }
+      : {}),
   };
 }
 

@@ -9,6 +9,7 @@ import {
 } from '../../../components/common';
 import { useNavigate } from 'react-router-dom';
 
+import { useNavigateToCourseDetail } from '../../../hooks/useCourses';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
   useMyReviewIds,
@@ -46,6 +47,13 @@ function ReviewSection() {
   } = useReviewDelete();
   const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
   const openedReview = reviews.find((review) => review.id === openedReviewId);
+  // 조회를 GET /reviews/recent로 되돌리면 course가 사라지므로, 없을 수도
+  // 있다고 보고 있을 때만 코스로 가는 길을 연다.
+  const openedReviewCourseId =
+    openedReview && 'courseId' in openedReview
+      ? openedReview.courseId
+      : undefined;
+  const { goToCourseDetail } = useNavigateToCourseDetail();
   const navigate = useNavigate();
   const scale = useGlobalScale();
 
@@ -197,12 +205,13 @@ function ReviewSection() {
       )}
 
       {/*
-        홈 후기 응답(GET /reviews/recent)에는 코스 정보가 없어 어느 코스의
-        후기인지 알 수 없다. 그래서 카드 클릭 이동도, '코스 바로가기'도 붙일 수
-        없다. 백엔드가 course를 내려주면 둘 다 살릴 수 있다.
+        카드 자체에는 클릭 이동을 붙이지 않는다. 홈 후기는 좌우 스와이프로
+        넘기는 캐러셀이라 탭 판정이 스와이프와 부딪친다. 코스로 가는 길은
+        모달의 '코스 바로가기'로만 연다.
       */}
       <ReviewDetailModal
         isOpen={Boolean(openedReview)}
+        courseTitle={openedReview?.courseTitle}
         images={openedReview?.images}
         content={openedReview?.content ?? ''}
         profileImage={openedReview?.profileImage ?? ''}
@@ -210,6 +219,11 @@ function ReviewSection() {
         meta={openedReview?.meta ?? ''}
         rating={openedReview?.rating}
         onClose={() => setOpenedReviewId(null)}
+        onGoToCourse={
+          openedReviewCourseId === undefined
+            ? undefined
+            : () => void goToCourseDetail(openedReviewCourseId)
+        }
       />
 
       <ConfirmDialog

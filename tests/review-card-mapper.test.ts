@@ -38,6 +38,42 @@ test('maps a recent review into review card props', () => {
   });
 });
 
+test('carries course title and id through when the response includes a course', () => {
+  const card = toReviewCardProps({
+    reviewId: 101,
+    content: '내용',
+    rating: 5,
+    createdAt: '2026-07-05T15:30:00',
+    images: [],
+    author,
+    course: {
+      courseId: 15,
+      title: '강릉 혼자 여행 코스',
+      thumbnailUrl: '',
+      durationType: 'TWO_NIGHT',
+      transportType: 'CAR',
+      isLiked: false,
+    },
+  });
+
+  assert.equal(card.courseTitle, '강릉 혼자 여행 코스');
+  assert.equal(card.courseId, 15);
+});
+
+test('omits course fields when the response has no course', () => {
+  const card = toReviewCardProps({
+    reviewId: 101,
+    content: '내용',
+    rating: 5,
+    createdAt: '2026-07-05T15:30:00',
+    images: [],
+    author,
+  });
+
+  assert.ok(!('courseTitle' in card));
+  assert.ok(!('courseId' in card));
+});
+
 test('marks a recent review as mine when its id is in my review ids', () => {
   const review = {
     reviewId: 101,

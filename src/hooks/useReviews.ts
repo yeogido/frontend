@@ -213,6 +213,21 @@ export function useDeleteReview() {
           })),
         };
       });
+      // 홈은 무한 쿼리가 아니라 일반 쿼리로 담겨 있어 위 updater에 걸리지
+      // 않는다. 키를 ['reviews'] 아래로 합치면 위 updater가 pages 없는
+      // 데이터에 걸려 터지므로, 키는 분리한 채로 여기서 따로 걷어낸다.
+      queryClient.setQueriesData<GetReviewsResponse>(
+        { queryKey: ['recentReviews'] },
+        (data) =>
+          data
+            ? {
+                ...data,
+                items: data.items.filter(
+                  (item) => item.reviewId !== reviewId,
+                ),
+              }
+            : data,
+      );
       void queryClient.invalidateQueries({ queryKey: ['courseReviews'] });
       void queryClient.invalidateQueries({ queryKey: ['reviews'] });
       void queryClient.invalidateQueries({ queryKey: ['recentReviews'] });
