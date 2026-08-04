@@ -1,42 +1,58 @@
 import close from '../../assets/icons/close.svg';
-import chevronRight from '../../assets/icons/chevron-right.svg';
+import logout from '../../assets/icons/out.svg';
 import { useNavigate } from 'react-router-dom';
 
 import { guestSidebarMenu } from '../../constants/sidebarMenu';
 
 import { Divider } from '../ui';
 
+import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useLogout } from '../../hooks/useLogout';
 import { APP_MAX_WIDTH } from '../../constants/layout';
 
 const DRAWER_MAX_WIDTH = 280;
-const DRAWER_HEADER_HEIGHT = 67;
+const DRAWER_HEADER_HEIGHT = 111;
 const CLOSE_TOP = 20;
 const CLOSE_RIGHT = 24;
-const LOGIN_GAP = 6;
-const LOGIN_PADDING_X = 24;
-const LOGIN_PADDING_Y = 16;
-const TEXT_BASE = 16;
+const PROFILE_TOP = 59;
+const PROFILE_LEFT = 24;
+const AVATAR_SIZE = 40;
+const PROFILE_GAP = 12;
+const NAME_TEXT_SIZE = 16;
 const MENU_ITEM_HEIGHT = 51;
 const MENU_PADDING_X = 24;
+const TEXT_BASE = 16;
+const MY_LABEL_SIZE = 13;
+const MY_LABEL_PADDING_TOP = 16;
+const MY_LABEL_PADDING_BOTTOM = 4;
+const LOGOUT_PADDING_Y = 16;
+const LOGOUT_ICON_SIZE = 20;
+const LOGOUT_GAP = 12;
 
-interface SidebarProps {
+/**
+ * 로그인 전용 메뉴. path가 없는 항목은 아직 연결된 화면이 없어
+ * 클릭 시 사이드바만 닫는다. 화면이 만들어지면 path를 채워 넣는다.
+ */
+const MY_MENU: { label: string; path?: string }[] = [
+  { label: '여행기록', path: '/travel-record' },
+  { label: '좋아요' },
+  { label: '내가 등록한 게시물' },
+];
+
+interface AuthSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-/**
- * 로그인/권한 기능 구현 전까지, 테스트 및 화면 확인용으로 임시 노출하는 메뉴.
- * 실제 접근 권한과 메뉴 노출 조건이 구현되면 이 블록은 제거하거나
- * 조건부 렌더링으로 교체 예정.
- */
-const TEMP_MENU = [
-  { path: '/admin', label: '관리자 페이지 (임시)' },
-];
-
-function Sidebar({ isOpen, onClose }: SidebarProps) {
+function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const handleLogout = useLogout();
+  const { userId } = useAuth();
+  // 닉네임/이메일을 내려주는 사용자 프로필 API가 아직 없어, 지어낸 값 대신
+  // 실제로 존재하는 userId 기반의 안전한 표시값만 사용한다.
+  const displayName = userId ? `회원 #${userId}` : '회원';
 
   return (
     // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
@@ -84,11 +100,37 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
           `}
           style={{ maxWidth: DRAWER_MAX_WIDTH * scale }}
         >
-          {/* Header */}
+          {/* Header: 프로필 요약 + 닫기 버튼 */}
           <div
             className="relative"
             style={{ height: DRAWER_HEADER_HEIGHT * scale }}
           >
+            <div
+              className="absolute flex min-w-0 items-center"
+              style={{
+                top: PROFILE_TOP * scale,
+                left: PROFILE_LEFT * scale,
+                gap: PROFILE_GAP * scale,
+              }}
+            >
+              <div
+                className="shrink-0 rounded-full bg-[#E4E4E4]"
+                style={{
+                  width: AVATAR_SIZE * scale,
+                  height: AVATAR_SIZE * scale,
+                }}
+              />
+
+              <div className="flex min-w-0 flex-col">
+                <span
+                  className="truncate font-semibold leading-none text-[#1C1C1C]"
+                  style={{ fontSize: NAME_TEXT_SIZE * scale }}
+                >
+                  {displayName}
+                </span>
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={onClose}
@@ -99,36 +141,6 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
               <img src={close} alt="닫기" />
             </button>
           </div>
-
-          {/* Login */}
-          <button
-            type="button"
-            onClick={() => {
-              navigate('/login');
-              onClose();
-            }}
-            className="flex items-center"
-            style={{
-              gap: LOGIN_GAP * scale,
-              paddingLeft: LOGIN_PADDING_X * scale,
-              paddingRight: LOGIN_PADDING_X * scale,
-              paddingTop: LOGIN_PADDING_Y * scale,
-              paddingBottom: LOGIN_PADDING_Y * scale,
-            }}
-          >
-            <span
-              className="font-semibold leading-none"
-              style={{ fontSize: TEXT_BASE * scale }}
-            >
-              로그인
-            </span>
-
-            <img
-              src={chevronRight}
-              alt=""
-              aria-hidden="true"
-            />
-          </button>
 
           <Divider />
 
@@ -161,14 +173,31 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           <Divider />
 
-          {/* 임시 메뉴: 로그인/권한 기능 구현 전까지 테스트용으로 노출 */}
+          {/* MY: 마이페이지 메뉴 */}
+          <div
+            style={{
+              paddingLeft: MENU_PADDING_X * scale,
+              paddingTop: MY_LABEL_PADDING_TOP * scale,
+              paddingBottom: MY_LABEL_PADDING_BOTTOM * scale,
+            }}
+          >
+            <span
+              className="font-semibold leading-none text-[#FF6F41]"
+              style={{ fontSize: MY_LABEL_SIZE * scale }}
+            >
+              MY
+            </span>
+          </div>
+
           <nav className="flex flex-col">
-            {TEMP_MENU.map((menu) => (
+            {MY_MENU.map((menu) => (
               <button
-                key={menu.path}
+                key={menu.label}
                 type="button"
                 onClick={() => {
-                  navigate(menu.path);
+                  if (menu.path) {
+                    navigate(menu.path);
+                  }
                   onClose();
                 }}
                 className="flex items-center justify-between text-left"
@@ -179,7 +208,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
                 }}
               >
                 <span
-                  className="font-medium leading-none text-[#FF6F41]"
+                  className="font-medium leading-none"
                   style={{ fontSize: TEXT_BASE * scale }}
                 >
                   {menu.label}
@@ -187,10 +216,46 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
               </button>
             ))}
           </nav>
+
+          {/* 로그아웃: 메뉴가 짧아도 항상 사이드바 하단에 붙도록 mt-auto로 민다 */}
+          <div className="mt-auto">
+
+            <button
+              type="button"
+              onClick={() => {
+                void handleLogout();
+                onClose();
+              }}
+              className="flex items-center text-left"
+              style={{
+                gap: LOGOUT_GAP * scale,
+                paddingLeft: MENU_PADDING_X * scale,
+                paddingRight: MENU_PADDING_X * scale,
+                paddingTop: LOGOUT_PADDING_Y * scale,
+                paddingBottom: LOGOUT_PADDING_Y * scale,
+              }}
+            >
+              <img
+                src={logout}
+                alt=""
+                aria-hidden="true"
+                style={{
+                  width: LOGOUT_ICON_SIZE * scale,
+                  height: LOGOUT_ICON_SIZE * scale,
+                }}
+              />
+              <span
+                className="font-medium leading-none text-[#1C1C1C]"
+                style={{ fontSize: TEXT_BASE * scale }}
+              >
+                로그아웃
+              </span>
+            </button>
+          </div>
         </aside>
       </div>
     </div>
   );
 }
 
-export default Sidebar;
+export default AuthSidebar;

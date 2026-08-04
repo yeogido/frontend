@@ -4,6 +4,7 @@ import { useGlobalScale } from '../../hooks/useGlobalScale';
 import type { GeoPoint } from './types';
 
 const EMPTY_MARKERS: readonly GeoPoint[] = [];
+const EMPTY_ROUTE_PATH: readonly GeoPoint[] = [];
 
 // Figma 390 디자인 기준 리터럴 px
 // 카카오맵 SDK가 컨테이너 DOM에 직접 Map 인스턴스를 붙이므로
@@ -19,6 +20,7 @@ export type MapSdkStatus = 'loading' | 'ready' | 'sdk-error';
 export interface BaseKakaoMapProps {
   readonly center: GeoPoint;
   readonly markers?: readonly GeoPoint[];
+  readonly routePath?: readonly GeoPoint[];
   readonly className?: string;
 }
 
@@ -31,12 +33,14 @@ type ResizableKakaoMap = kakao.maps.Map & {
 export function BaseKakaoMap({
   center,
   markers = EMPTY_MARKERS,
+  routePath = EMPTY_ROUTE_PATH,
   className = '',
 }: BaseKakaoMapProps) {
   const scale = useGlobalScale();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<kakao.maps.Map | null>(null);
   const markersRef = useRef<kakao.maps.Marker[]>([]);
+  const routeRef = useRef<kakao.maps.Polyline | null>(null);
 
   const apiKey = import.meta.env.VITE_KAKAO_MAP_API_KEY;
   const [status, setStatus] = useState<MapSdkStatus>(
@@ -97,6 +101,35 @@ export function BaseKakaoMap({
     markersRef.current = newMarkers;
   }, [markers, status]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    routeRef.current?.setMap(null);
+    routeRef.current = null;
+
+    if (routePath.length < 2) return;
+
+    routeRef.current = new window.kakao.maps.Polyline({
+      map,
+      path: routePath.map(
+        (point) => new window.kakao.maps.LatLng(point.latitude, point.longitude)
+      ),
+      strokeWeight: 5,
+      strokeColor: '#3182F6',
+      strokeOpacity: 0.85,
+      strokeStyle: 'dash',
+    });
+
+    const bounds = new window.kakao.maps.LatLngBounds();
+    routePath.forEach((point) => {
+      bounds.extend(
+        new window.kakao.maps.LatLng(point.latitude, point.longitude)
+      );
+    });
+    map.setBounds(bounds);
+  }, [routePath, status]);
+
   // 3. Keep the rendered map aligned with its responsive container.
   useEffect(() => {
     const container = containerRef.current;
@@ -156,6 +189,8 @@ export function BaseKakaoMap({
     return () => {
       markersRef.current.forEach((m) => m.setMap(null));
       markersRef.current = [];
+      routeRef.current?.setMap(null);
+      routeRef.current = null;
       if (container) {
         container.innerHTML = '';
       }
