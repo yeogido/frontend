@@ -44,7 +44,7 @@ function RecentSearchSection({
         최근 검색
       </h3>
       <div
-        className="flex overflow-x-auto"
+        className="scrollbar-hide flex overflow-x-auto"
         style={{
           marginTop: LIST_MARGIN_TOP * scale,
           gap: LIST_GAP * scale,

@@ -46,9 +46,12 @@ async function putFileToPresignedUrl(
     }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error('이미지 업로드 시간이 초과되었습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.', {
-        cause: error,
-      });
+      throw new Error(
+        '이미지 업로드 시간이 초과되었습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.',
+        {
+          cause: error,
+        }
+      );
     }
     if (
       error instanceof Error &&
@@ -62,10 +65,24 @@ async function putFileToPresignedUrl(
   }
 }
 
+const createUniqueFileName = (fileName: string) => {
+  const suffix =
+    typeof globalThis.crypto?.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  return `${suffix}-${fileName}`;
+};
+
 export async function uploadCourseImage(file: File): Promise<string> {
+  // 모바일 브라우저의 카메라 촬영 입력은 매 촬영마다 동일한 파일명
+  // (예: image.jpg)을 주는 경우가 많다. presigned URL 요청의 fileName이
+  // 곧 저장 키로 이어질 수 있어, 같은 등록 요청 안의 여러 업로드가 같은
+  // 파일명을 갖더라도 서로 다른 objectKey를 받도록 항상 유일한 파일명을
+  // 붙여 보낸다.
   const { uploadUrl, objectKey } = await getPresignedUrl({
     directory: 'COURSE',
-    fileName: file.name,
+    fileName: createUniqueFileName(file.name),
     contentType: file.type,
   });
 
