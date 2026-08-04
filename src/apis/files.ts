@@ -67,8 +67,8 @@ async function putFileToPresignedUrl(
 
 const createUniqueFileName = (fileName: string) => {
   const suffix =
-    typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
+    typeof globalThis.crypto?.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   return `${suffix}-${fileName}`;
