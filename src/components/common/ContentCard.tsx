@@ -1,13 +1,10 @@
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import calendar from '../../assets/icons/calendar.svg';
 import heart from '../../assets/icons/heart.svg';
 import location from '../../assets/icons/location.svg';
 import oheart from '../../assets/icons/oheart.svg';
+import people from '../../assets/icons/people.svg';
 
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 
@@ -33,6 +30,8 @@ interface ContentCardProps {
   title: string;
   firstInfo: string;
   secondInfo: string;
+  /** 두 번째 정보 줄에 함께 붙는 보조 정보(예: 동행 유형). 없으면 렌더링하지 않는다. */
+  thirdInfo?: string;
   liked?: boolean;
   className?: string;
   tags?: TagType[];
@@ -59,17 +58,14 @@ function useResponsiveTagCount(tags: TagType[] | undefined) {
 
     const recalculate = () => {
       const elements = Array.from(hidden.children) as HTMLElement[];
-      const widths = elements.map(
-        (el) => el.getBoundingClientRect().width,
-      );
+      const widths = elements.map((el) => el.getBoundingClientRect().width);
 
       if (widths.length === 0 || widths.some((w) => w === 0)) {
         return;
       }
 
       const style = getComputedStyle(container);
-      const gap =
-        Number.parseFloat(style.columnGap || style.gap || '0') || 0;
+      const gap = Number.parseFloat(style.columnGap || style.gap || '0') || 0;
 
       const containerWidth = container.getBoundingClientRect().width;
       const EPSILON = 0.5;
@@ -110,6 +106,7 @@ function ContentCard({
   title,
   firstInfo,
   secondInfo,
+  thirdInfo,
   liked = false,
   className = '',
   tags,
@@ -122,12 +119,13 @@ function ContentCard({
     useResponsiveTagCount(tags);
 
   const isClickable = Boolean(onClick);
+  const hasCustomWidth = /(?:^|\s)(?:w-|min-w|max-w)/.test(className);
 
   return (
     <div
       className={`shrink-0 overflow-hidden ${className}`}
       style={{
-        width: CARD_DESIGN_WIDTH * scale,
+        width: hasCustomWidth ? undefined : CARD_DESIGN_WIDTH * scale,
         height: CARD_HEIGHT * scale,
       }}
     >
@@ -135,15 +133,7 @@ function ContentCard({
         onClick={onClick}
         role={isClickable ? 'button' : undefined}
         tabIndex={isClickable ? 0 : undefined}
-        className={`
-          flex
-          flex-col
-          overflow-hidden
-          rounded-xl
-          bg-[#F9F9F9]
-          shadow-[0_1px_5px_rgba(0,0,0,0.07)]
-          ${isClickable ? 'cursor-pointer' : ''}
-        `}
+        className={`flex flex-col overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)] ${isClickable ? 'cursor-pointer' : ''} `}
         style={{
           width: CARD_DESIGN_WIDTH,
           height: CARD_HEIGHT,
@@ -191,7 +181,7 @@ function ContentCard({
         >
           {/* Title */}
           <h3
-            className="truncate font-medium leading-none text-[#1C1C1C]"
+            className="truncate leading-none font-medium text-[#1C1C1C]"
             style={{ fontSize: TITLE_SIZE }}
           >
             {title}
@@ -209,7 +199,7 @@ function ContentCard({
               />
 
               <span
-                className="min-w-0 truncate font-medium leading-none text-[#7F7F7F]"
+                className="min-w-0 truncate leading-none font-medium text-[#7F7F7F]"
                 style={{ fontSize: INFO_SIZE }}
               >
                 {firstInfo}
@@ -226,11 +216,30 @@ function ContentCard({
               />
 
               <span
-                className="min-w-0 truncate font-medium leading-none text-[#7F7F7F]"
+                className="min-w-0 truncate leading-none font-medium text-[#7F7F7F]"
                 style={{ fontSize: INFO_SIZE }}
               >
                 {secondInfo}
               </span>
+
+              {thirdInfo ? (
+                <>
+                  <img
+                    src={people}
+                    alt=""
+                    aria-hidden="true"
+                    className="shrink-0"
+                    style={{ height: ICON_SIZE, width: ICON_SIZE }}
+                  />
+
+                  <span
+                    className="shrink-0 truncate leading-none font-medium text-[#7F7F7F]"
+                    style={{ fontSize: INFO_SIZE }}
+                  >
+                    {thirdInfo}
+                  </span>
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -239,7 +248,7 @@ function ContentCard({
             <>
               <div
                 ref={hiddenContainerRef}
-                className="absolute invisible flex"
+                className="invisible absolute flex"
                 style={{ gap: TAG_GAP }}
                 aria-hidden="true"
               >

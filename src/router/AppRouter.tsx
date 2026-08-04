@@ -45,6 +45,7 @@ import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
 import RegionInfoPage from '../pages/region-info';
+import LikesPage from '../pages/likes';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
 import CourseReviewsPage from '../pages/course-reviews';
 
@@ -124,6 +125,7 @@ function AppRouter() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/travel-record" element={<TravelRecordPage />} />
+          <Route path="/likes" element={<LikesPage />} />
         </Route>
       </Route>
 

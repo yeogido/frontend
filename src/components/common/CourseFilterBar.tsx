@@ -22,7 +22,12 @@ interface CourseFilterBarProps<TKey extends string> {
   selectedFilters: Record<TKey, string>;
   openFilterKey: TKey | null;
   filterContainerRef: RefObject<HTMLDivElement | null>;
-  isExtendedTransport: boolean;
+  /** 코스 필터 전용. 다른 화면에서 gridClassName을 직접 넘길 때는 사용하지 않는다. */
+  isExtendedTransport?: boolean;
+  /** 코스 필터 그리드가 아닌 다른 칩 배치가 필요할 때 그리드 클래스를 대체한다. */
+  gridClassName?: string;
+  /** gridClassName을 대체했을 때 각 칩이 놓일 컬럼 클래스를 함께 넘긴다. */
+  getColumnClassName?: (filterKey: TKey) => string;
   marginTop: number;
   onToggle: (filterKey: TKey) => void;
   onSelect: (filterKey: TKey, option: string) => void;
@@ -111,13 +116,16 @@ function CourseFilterBar<TKey extends string>({
   selectedFilters,
   openFilterKey,
   filterContainerRef,
-  isExtendedTransport,
+  isExtendedTransport = false,
+  gridClassName,
+  getColumnClassName = getCourseFilterColumnClassName,
   marginTop,
   onToggle,
   onSelect,
 }: CourseFilterBarProps<TKey>) {
   const scale = useGlobalScale();
-  const filterGridClassName = getCourseFilterGridClassName(isExtendedTransport);
+  const filterGridClassName =
+    gridClassName ?? getCourseFilterGridClassName(isExtendedTransport);
 
   return (
     <div
@@ -137,10 +145,7 @@ function CourseFilterBar<TKey extends string>({
         }}
       >
         {filterGroups.map((filter) => (
-          <div
-            key={filter.key}
-            className={getCourseFilterColumnClassName(filter.key)}
-          >
+          <div key={filter.key} className={getColumnClassName(filter.key)}>
             <CourseFilterChip
               label={selectedFilters[filter.key]}
               options={filter.options}
