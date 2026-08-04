@@ -167,10 +167,12 @@ function CourseReviewCard({
                 {Array.from({ length: 5 }).map((_, index) => (
                   <img
                     key={index}
-                    src={index < displayedRating ? star : darkStar}
-                    alt=""
-                    aria-hidden="true"
-                    className="h-[14px] w-[14px]"
+                  src={index < displayedRating ? star : darkStar}
+                  alt=""
+                  aria-hidden="true"
+                  className={`h-[14px] w-[14px] ${
+                    index < displayedRating ? '' : 'scale-[1.42]'
+                  }`}
                   />
                 ))}
               </div>

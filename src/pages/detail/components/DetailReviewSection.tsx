@@ -22,11 +22,13 @@ const EMPTY_STATE_FONT_SIZE = 14;
 export interface DetailReviewSectionProps {
   readonly reviews: readonly CourseReview[];
   readonly className?: string;
+  readonly onActionClick?: () => void;
 }
 
 export function DetailReviewSection({
   reviews,
   className = '',
+  onActionClick,
 }: DetailReviewSectionProps) {
   const scale = useGlobalScale();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -83,7 +85,11 @@ export function DetailReviewSection({
         gap: SECTION_GAP * scale,
       }}
     >
-      <SectionHeader title="최근 여행자들의 후기" actionText="전체보기" />
+      <SectionHeader
+        title="최근 여행자들의 후기"
+        actionText="전체보기"
+        onActionClick={onActionClick}
+      />
 
       {reviews.length === 0 ? (
         <div
@@ -115,6 +121,7 @@ export function DetailReviewSection({
                 meta={review.meta}
                 content={review.content}
                 rating={review.rating}
+                isMine={review.isMine}
                 className="[&>div>article]:!bg-background"
               />
             </div>

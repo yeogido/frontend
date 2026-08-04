@@ -23,6 +23,10 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
 import BackButton from '../../local-recommendation/components/BackButton';
+import {
+  getCourseReviewsPath,
+  type CourseReviewType,
+} from '../../course-reviews/courseReviewRoute';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 25;
@@ -35,7 +39,7 @@ const REVIEW_BUTTON_MARGIN_TOP = 12;
 
 export interface CourseDetailLayoutProps {
   readonly course: CourseDetail;
-  readonly reviewType: string;
+  readonly reviewType: CourseReviewType;
   readonly onFavoriteToggle?: (isLiked: boolean) => Promise<boolean>;
   readonly isFavoritePending?: boolean;
   readonly onPlaceLikeToggle?: (
@@ -177,6 +181,12 @@ function CourseDetailLayoutContent({
     navigate(`/review?type=${reviewType}&id=${course.id}`);
   };
 
+  const handleNavigateCourseReviews = () => {
+    navigate(getCourseReviewsPath(reviewType, course.id), {
+      state: { courseTitle: course.title, reviews: course.reviews },
+    });
+  };
+
   return (
     <ResponsivePageShell
       key={course.id}
@@ -265,7 +275,10 @@ function CourseDetailLayoutContent({
 
       {/* 7. 최근 여행자들의 후기 */}
       <div style={{ marginTop: REVIEW_MARGIN_TOP * scale }}>
-        <DetailReviewSection reviews={course.reviews} />
+        <DetailReviewSection
+          reviews={course.reviews}
+          onActionClick={handleNavigateCourseReviews}
+        />
       </div>
 
       {/* 8. 하단 고정 리뷰 작성 버튼 */}
