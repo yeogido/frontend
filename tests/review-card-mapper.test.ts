@@ -52,6 +52,27 @@ test('marks a recent review as mine when its id is in my review ids', () => {
   assert.equal(toReviewCardProps(review, new Set([102])).isMine, false);
 });
 
+test('includes the course title when the review list response provides course data', () => {
+  const card = toReviewCardProps({
+    reviewId: 102,
+    content: 'Review content',
+    rating: 5,
+    createdAt: '2026-07-05T15:30:00',
+    images: [],
+    author,
+    course: {
+      courseId: 15,
+      title: 'Gangneung solo course',
+      thumbnailUrl: 'https://example.com/course.png',
+      durationType: 'TWO_NIGHT',
+      transportType: 'PUBLIC',
+      isLiked: false,
+    },
+  });
+
+  assert.equal(card.courseTitle, 'Gangneung solo course');
+});
+
 test('maps a review with course info into course review card props', () => {
   const card = toReviewCourseCardProps({
     reviewId: 101,
@@ -75,6 +96,7 @@ test('maps a review with course info into course review card props', () => {
     courseId: 15,
     isMine: false,
     image: 'https://example.com/course.png',
+    images: [],
     title: '강릉 혼자 여행 코스',
     duration: '2박 3일',
     courseType: '대중교통',

@@ -25,9 +25,11 @@ function toImageUrls(images: ReviewImage[] | undefined): string[] {
  * (useMyReviewIds 참고). 백엔드가 isMine을 내려주면 인자를 걷어내면 된다.
  */
 export function toReviewCardProps(
-  review: RecentReview,
+  review: RecentReview | ReviewDetail,
   myReviewIds: ReadonlySet<number> = new Set()
 ) {
+  const courseTitle = 'course' in review ? review.course.title : undefined;
+
   return {
     id: review.reviewId,
     images: toImageUrls(review.images),
@@ -37,6 +39,7 @@ export function toReviewCardProps(
     content: review.content,
     rating: review.rating,
     isMine: myReviewIds.has(review.reviewId),
+    ...(courseTitle ? { courseTitle } : {}),
   };
 }
 
@@ -54,7 +57,10 @@ export function toReviewCourseCardProps(
     id: review.reviewId,
     courseId: review.course.courseId,
     isMine: myReviewIds.has(review.reviewId),
+    // 카드에 그리는 건 코스 썸네일(image)이고, 후기 사진(images)은 길게 눌러
+    // 여는 상세 모달에서 쓴다.
     image: review.course.thumbnailUrl,
+    images: toImageUrls(review.images),
     title: review.course.title,
     duration: toDurationLabel(review.course.durationType),
     courseType: toTransportLabel(review.course.transportType),

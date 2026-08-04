@@ -1,11 +1,13 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import {
   ConfirmDialog,
   CourseReviewCard,
   LoadingSpinner,
+  ReviewDetailModal,
 } from '../../components/common';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
+import { useNavigateToCourseDetail } from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import {
@@ -49,9 +51,13 @@ function RecentReviewCoursesPage() {
     confirmDelete,
   } = useReviewDelete();
 
+  const { goToCourseDetail } = useNavigateToCourseDetail();
+  const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
+
   const reviews = getReviewsFromPages(data?.pages).map((review) =>
     toReviewCourseCardProps(review, myReviewIds)
   );
+  const openedReview = reviews.find((review) => review.id === openedReviewId);
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -124,15 +130,26 @@ function RecentReviewCoursesPage() {
             gap: LIST_GAP * scale,
           }}
         >
-          {reviews.map(({ id, courseId, liked, ...courseReview }) => (
+          {reviews.map((review) => (
             <CourseReviewCard
-              key={id}
-              {...courseReview}
-              liked={getLiked(courseId, liked)}
+              key={review.id}
+              image={review.image}
+              title={review.title}
+              duration={review.duration}
+              courseType={review.courseType}
+              profileImage={review.profileImage}
+              nickname={review.nickname}
+              meta={review.meta}
+              content={review.content}
+              rating={review.rating}
+              isMine={review.isMine}
+              liked={getLiked(review.courseId, review.liked)}
               onLikeClick={() =>
-                toggleLike(courseId, getLiked(courseId, liked))
+                toggleLike(review.courseId, getLiked(review.courseId, review.liked))
               }
-              onDeleteClick={() => requestDelete(id)}
+              onDeleteClick={() => requestDelete(review.id)}
+              onClick={() => void goToCourseDetail(review.courseId)}
+              onLongPress={() => setOpenedReviewId(review.id)}
             />
           ))}
 
@@ -143,6 +160,23 @@ function RecentReviewCoursesPage() {
           )}
         </div>
       )}
+
+      <ReviewDetailModal
+        isOpen={Boolean(openedReview)}
+        courseTitle={openedReview?.title}
+        images={openedReview?.images}
+        content={openedReview?.content ?? ''}
+        profileImage={openedReview?.profileImage ?? ''}
+        nickname={openedReview?.nickname ?? ''}
+        meta={openedReview?.meta ?? ''}
+        rating={openedReview?.rating}
+        onClose={() => setOpenedReviewId(null)}
+        onGoToCourse={() => {
+          if (openedReview) {
+            void goToCourseDetail(openedReview.courseId);
+          }
+        }}
+      />
 
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}

@@ -18,6 +18,7 @@ export { default as RegionImageCarousel } from './RegionImageCarousel';
 export { default as ReviewActionMenu } from './ReviewActionMenu';
 export { default as ReviewCard } from './ReviewCard';
 export { default as ReviewCardSkeleton } from './ReviewCardSkeleton';
+export { default as ReviewDetailModal } from './ReviewDetailModal';
 export { default as SearchBar } from './SearchBar';
 export { default as SearchTriggerButton } from './SearchTriggerButton';
 export { default as SectionHeader } from './SectionHeader';

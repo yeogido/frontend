@@ -14,7 +14,6 @@ import {
   createCourseReview,
   deleteReview,
   getCourseReviews,
-  getRecentReviews,
   getReviews,
   updateReview,
 } from '../apis/reviews.api';
@@ -79,7 +78,7 @@ const uploadReviewImages = async (photos: File[]) => {
 export function useRecentReviews() {
   return useQuery({
     queryKey: ['recentReviews'],
-    queryFn: getRecentReviews,
+    queryFn: () => getReviews({ sort: 'LATEST', size: 3 }),
   });
 }
 

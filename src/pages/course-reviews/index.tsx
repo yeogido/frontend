@@ -6,6 +6,7 @@ import {
   ConfirmDialog,
   LoadingSpinner,
   ReviewCard,
+  ReviewDetailModal,
 } from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
@@ -45,6 +46,7 @@ function CourseReviewsPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const [sort, setSort] = useState<CourseReviewSort>('latest');
+  const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
   const { courseTitle = '' } =
     (location.state as CourseReviewListLocationState | null) ?? {};
   const courseType: CourseReviewType = location.pathname.startsWith(
@@ -76,6 +78,12 @@ function CourseReviewsPage() {
       ? [...reviews].sort((first, second) => second.rating - first.rating)
       : reviews;
   }, [data, myReviewIds, sort]);
+
+  const openedReview = sortedReviews.find(
+    (review) => review.id === openedReviewId
+  );
+  // 이 화면은 이미 코스가 정해져 있어 타입 조회 없이 경로를 만들 수 있다.
+  const courseDetailPath = `/${courseType}/detail/${courseId}`;
 
   const reviewButton = (
     <div
@@ -166,12 +174,27 @@ function CourseReviewsPage() {
                 rating={review.rating}
                 isMine={review.isMine}
                 onDeleteClick={() => requestDelete(review.id)}
+                onClick={() => navigate(courseDetailPath)}
+                onLongPress={() => setOpenedReviewId(review.id)}
                 className="[&>div>article]:!bg-[#F1F1F1]"
               />
             ))
           )}
         </div>
       </section>
+
+      <ReviewDetailModal
+        isOpen={Boolean(openedReview)}
+        courseTitle={courseTitle || undefined}
+        images={openedReview?.images}
+        content={openedReview?.content ?? ''}
+        profileImage={openedReview?.profileImage ?? ''}
+        nickname={openedReview?.nickname ?? ''}
+        meta={openedReview?.meta ?? ''}
+        rating={openedReview?.rating}
+        onClose={() => setOpenedReviewId(null)}
+        onGoToCourse={() => navigate(courseDetailPath)}
+      />
 
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}

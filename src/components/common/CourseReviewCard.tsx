@@ -7,6 +7,7 @@ import location from '../../assets/icons/location.svg';
 import oheart from '../../assets/icons/oheart.svg';
 import people from '../../assets/icons/people.svg';
 import star from '../../assets/icons/star.svg';
+import { useLongPress } from '../../hooks/useLongPress';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 import type { TagId } from '../../types/tag.type';
 
@@ -33,6 +34,7 @@ export interface CourseReviewCardProps {
   liked?: boolean;
   isMine?: boolean;
   onClick?: () => void;
+  onLongPress?: () => void;
   onLikeClick?: () => void;
   onEditClick?: () => void;
   onDeleteClick?: () => void;
@@ -53,14 +55,21 @@ function CourseReviewCard({
   liked = false,
   isMine = false,
   onClick,
+  onLongPress,
   onLikeClick,
   onEditClick,
   onDeleteClick,
 }: CourseReviewCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
-  const isClickable = Boolean(onClick);
+  const isClickable = Boolean(onClick || onLongPress);
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
+  // 길게 누르면 후기 상세, 짧게 누르면 코스 상세. 포인터로만 구분되므로
+  // 키보드는 기존대로 onClick만 실행한다.
+  const longPressHandlers = useLongPress({
+    onLongPress: () => onLongPress?.(),
+    onClick,
+  });
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!onClick || event.currentTarget !== event.target) return;
@@ -85,11 +94,11 @@ function CourseReviewCard({
     >
       <article
         ref={innerRef}
-        onClick={onClick}
+        {...(isClickable ? longPressHandlers : {})}
         onKeyDown={handleKeyDown}
         role={isClickable ? 'button' : undefined}
         tabIndex={isClickable ? 0 : undefined}
-        className={`relative overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)] ${
+        className={`relative overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)] select-none ${
           isClickable ? 'cursor-pointer' : ''
         }`}
         style={{

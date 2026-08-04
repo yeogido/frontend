@@ -4,6 +4,7 @@ import {
   ConfirmDialog,
   ReviewCard,
   ReviewCardSkeleton,
+  ReviewDetailModal,
   SectionHeader,
 } from '../../../components/common';
 import { useNavigate } from 'react-router-dom';
@@ -20,16 +21,18 @@ import { toReviewCardProps } from '../../../utils/reviewCard';
 const SECTION_MARGIN_TOP = 32;
 const SECTION_GAP = 12;
 const SECTION_PADDING_X = 24;
+const REVIEW_CARD_GAP = 12;
 
 const DOT_GAP = 4;
 const DOT_SIZE = 4;
 const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
+const ERROR_TEXT_SIZE = 13;
 
 function ReviewSection() {
   const { data, isPending, isError } = useRecentReviews();
   const myReviewIds = useMyReviewIds();
-  const reviews = (data?.reviews ?? []).map((review) =>
+  const reviews = (data?.items ?? []).map((review) =>
     toReviewCardProps(review, myReviewIds)
   );
   const isLoading = isPending;
@@ -41,6 +44,8 @@ function ReviewSection() {
     cancelDelete,
     confirmDelete,
   } = useReviewDelete();
+  const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
+  const openedReview = reviews.find((review) => review.id === openedReviewId);
   const navigate = useNavigate();
   const scale = useGlobalScale();
 
@@ -66,7 +71,9 @@ function ReviewSection() {
           return;
         }
 
-        const index = Math.round(container.scrollLeft / itemWidth);
+        const index = Math.round(
+          container.scrollLeft / (itemWidth + REVIEW_CARD_GAP * scale)
+        );
         setActiveIndex(index);
       });
     };
@@ -77,7 +84,7 @@ function ReviewSection() {
       container.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [scale]);
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current;
@@ -87,14 +94,15 @@ function ReviewSection() {
     }
 
     container.scrollTo({
-      left: container.clientWidth * index,
+      left: (container.clientWidth + REVIEW_CARD_GAP * scale) * index,
       behavior: 'smooth',
     });
   };
 
-  // 후기가 없거나 조회에 실패하면 섹션을 통째로 감춘다. 제목만 남고 캐러셀이
-  // 비어 있으면 아직 로딩 중인 것처럼 보인다.
-  if (!isLoading && (isError || reviews.length === 0)) {
+  // 후기가 아직 없는 건 정상 상태라 섹션을 통째로 감춘다. 제목만 남고 캐러셀이
+  // 비어 있으면 아직 로딩 중인 것처럼 보이기 때문이다. 반면 조회 실패는
+  // 감추면 원인을 알 수 없으므로 안내를 남긴다.
+  if (!isLoading && !isError && reviews.length === 0) {
     return null;
   }
 
@@ -114,10 +122,20 @@ function ReviewSection() {
         onActionClick={() => navigate('/recent-review-courses')}
       />
 
+      {isError && !isLoading && (
+        <p
+          className="text-gray-4 text-center font-medium"
+          style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+        >
+          후기를 불러오지 못했습니다.
+        </p>
+      )}
+
       {/* Carousel: 카드 1개가 화면을 꽉 채우며 스와이프로 다음 카드로 스냅 이동 */}
       <div
         ref={scrollRef}
         className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
+        style={{ gap: REVIEW_CARD_GAP * scale }}
       >
         {isLoading
           ? Array.from({ length: 3 }).map((_, index) => (
@@ -135,6 +153,7 @@ function ReviewSection() {
               >
                 <ReviewCard
                   images={review.images}
+                  courseTitle={review.courseTitle}
                   profileImage={review.profileImage}
                   nickname={review.nickname}
                   meta={review.meta}
@@ -142,6 +161,7 @@ function ReviewSection() {
                   rating={review.rating}
                   isMine={review.isMine}
                   onDeleteClick={() => requestDelete(review.id)}
+                  onLongPress={() => setOpenedReviewId(review.id)}
                 />
               </div>
             ))}
@@ -175,6 +195,22 @@ function ReviewSection() {
           ))}
         </div>
       )}
+
+      {/*
+        홈 후기 응답(GET /reviews/recent)에는 코스 정보가 없어 어느 코스의
+        후기인지 알 수 없다. 그래서 카드 클릭 이동도, '코스 바로가기'도 붙일 수
+        없다. 백엔드가 course를 내려주면 둘 다 살릴 수 있다.
+      */}
+      <ReviewDetailModal
+        isOpen={Boolean(openedReview)}
+        images={openedReview?.images}
+        content={openedReview?.content ?? ''}
+        profileImage={openedReview?.profileImage ?? ''}
+        nickname={openedReview?.nickname ?? ''}
+        meta={openedReview?.meta ?? ''}
+        rating={openedReview?.rating}
+        onClose={() => setOpenedReviewId(null)}
+      />
 
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}

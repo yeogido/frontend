@@ -25,6 +25,7 @@ export interface DetailReviewSectionProps {
   readonly className?: string;
   readonly onActionClick?: () => void;
   readonly onReviewDelete?: (reviewId: number) => void;
+  readonly onReviewLongPress?: (reviewId: number) => void;
 }
 
 export function DetailReviewSection({
@@ -32,6 +33,7 @@ export function DetailReviewSection({
   className = '',
   onActionClick,
   onReviewDelete,
+  onReviewLongPress,
 }: DetailReviewSectionProps) {
   const scale = useGlobalScale();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -129,6 +131,11 @@ export function DetailReviewSection({
                 isMine={review.isMine}
                 onDeleteClick={
                   onReviewDelete ? () => onReviewDelete(review.id) : undefined
+                }
+                onLongPress={
+                  onReviewLongPress
+                    ? () => onReviewLongPress(review.id)
+                    : undefined
                 }
                 className="[&>div>article]:!bg-background"
               />

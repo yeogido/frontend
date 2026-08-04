@@ -19,7 +19,7 @@ import {
 
 import type { CourseDetail, CourseStop } from '../types/courseDetail';
 import { useShareToast } from '../hooks/useShareToast';
-import { ConfirmDialog } from '../../../components/common';
+import { ConfirmDialog, ReviewDetailModal } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import {
@@ -118,6 +118,8 @@ function CourseDetailLayoutContent({
     cancelDelete,
     confirmDelete,
   } = useReviewDelete();
+  const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
+  const openedReview = reviews.find((review) => review.id === openedReviewId);
 
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
@@ -301,6 +303,7 @@ function CourseDetailLayoutContent({
           reviews={reviews}
           onActionClick={handleNavigateCourseReviews}
           onReviewDelete={requestDelete}
+          onReviewLongPress={setOpenedReviewId}
         />
       </div>
 
@@ -312,6 +315,19 @@ function CourseDetailLayoutContent({
       >
         <ReviewButton onClick={handleNavigateReview} />
       </div>
+
+      {/* 이미 이 코스의 상세라 '코스 바로가기'는 넣지 않는다. */}
+      <ReviewDetailModal
+        isOpen={Boolean(openedReview)}
+        courseTitle={course.title}
+        images={openedReview?.images}
+        content={openedReview?.content ?? ''}
+        profileImage={openedReview?.profileImage ?? ''}
+        nickname={openedReview?.nickname ?? ''}
+        meta={openedReview?.meta ?? ''}
+        rating={openedReview?.rating}
+        onClose={() => setOpenedReviewId(null)}
+      />
 
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
