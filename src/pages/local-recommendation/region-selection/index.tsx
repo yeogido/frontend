@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
-import { getRegions, searchRegions } from '../../../apis/regions.api';
+import { getPopularRegions, searchRegions } from '../../../apis/regions.api';
 import { LoadingSpinner } from '../../../components/common';
 import { ResponsivePageShell } from '../../../components/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
@@ -45,8 +45,8 @@ function LocalRecommendationPage() {
     useState<Neighborhood | null>(draftNeighborhood);
 
   const regionsQuery = useQuery({
-    queryKey: ['regions'],
-    queryFn: getRegions,
+    queryKey: ['regions', 'popular'],
+    queryFn: getPopularRegions,
     staleTime: 5 * 60_000,
   });
 
@@ -142,7 +142,7 @@ function LocalRecommendationPage() {
           </section>
         ) : (
           <PopularRegionGrid
-            regions={regionsQuery.data?.regions ?? []}
+            regions={regionsQuery.data ?? []}
             onSelect={(region) => handleSelectNeighborhood(fromRegion(region))}
           />
         )}

@@ -6,6 +6,8 @@ const SECTION_MARGIN_TOP = 32;
 const HEADING_SIZE = 16;
 const GRID_MARGIN_TOP = 12;
 const GRID_GAP = 12;
+const CARD_WIDTH = 104;
+const CARD_HEIGHT = 127;
 const CARD_RADIUS = 12;
 const CARD_TEXT_INSET = 12;
 const CARD_NAME_SIZE = 14;
@@ -31,19 +33,23 @@ function PopularRegionGrid({ regions, onSelect }: PopularRegionGridProps) {
         인기 지역
       </h3>
       <div
-        className="grid grid-cols-2"
+        className="grid grid-cols-3"
         style={{
           marginTop: GRID_MARGIN_TOP * scale,
           gap: GRID_GAP * scale,
         }}
       >
-        {regions.map((region) => (
+        {regions.slice(0, 6).map((region) => (
           <button
             key={region.regionId}
             type="button"
             onClick={() => onSelect(region)}
             className="group relative aspect-[4/3] min-w-0 overflow-hidden text-left"
-            style={{ borderRadius: CARD_RADIUS * scale }}
+            style={{
+              borderRadius: CARD_RADIUS * scale,
+              width: CARD_WIDTH * scale,
+              height: CARD_HEIGHT * scale,
+            }}
           >
             <img
               src={region.imageUrl}
