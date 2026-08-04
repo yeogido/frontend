@@ -5,7 +5,11 @@ import { geoMercator, geoPath } from 'd3-geo';
 
 import { koreaProvince } from '../assets/koreaProvince';
 import { buildRecordPath, buildSearchPath } from '../constants/cityMeta';
-import { PROVINCE_STROKE_WIDTH } from '../constants/map';
+import {
+  CITY_LAYER_ZOOM,
+  PROVINCE_STROKE_WIDTH,
+  PROVINCE_STROKE_WIDTH_ZOOMED,
+} from '../constants/map';
 
 import type { RegionPhotoMap } from '../types/regionPhoto';
 
@@ -14,12 +18,18 @@ const MAP_HEIGHT = 600;
 const MAP_PADDING = 20;
 
 interface ProvinceLayerProps {
+  /** 0.5 단위로 스냅된 현재 줌. 선 굵기를 가른다. */
+  zoomLevel: number;
   /** 줌과 무관하게 선 굵기를 유지하기 위해 나눌 배율 */
   renderScale: number;
   regionPhotos: RegionPhotoMap;
 }
 
-function ProvinceLayer({ renderScale, regionPhotos }: ProvinceLayerProps) {
+function ProvinceLayer({
+  zoomLevel,
+  renderScale,
+  regionPhotos,
+}: ProvinceLayerProps) {
   const navigate = useNavigate();
 
   const projection = useMemo(
@@ -68,7 +78,12 @@ function ProvinceLayer({ renderScale, regionPhotos }: ProvinceLayerProps) {
     navigate(buildSearchPath(name));
   };
 
-  const strokeWidth = Math.max(PROVINCE_STROKE_WIDTH / renderScale, 0.12);
+  // 시/군 경계선이 함께 보일 때만 굵게 그려 도·광역시 경계를 구분한다.
+  const baseStrokeWidth =
+    zoomLevel >= CITY_LAYER_ZOOM
+      ? PROVINCE_STROKE_WIDTH_ZOOMED
+      : PROVINCE_STROKE_WIDTH;
+  const strokeWidth = Math.max(baseStrokeWidth / renderScale, 0.12);
 
   return (
     <>

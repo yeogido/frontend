@@ -21,3 +21,7 @@ export const PROVINCE_LABEL_MAX_FONT_SIZE = 8.5;
 // user 단위라 줌 배율만큼 그대로 굵어져서, 확대할수록 선이 지도를 덮는다.
 export const PROVINCE_STROKE_WIDTH = 1.2;
 export const CITY_STROKE_WIDTH = 0.6;
+// 시/군 경계선이 함께 보이는 확대 상태에서는 도·광역시 경계를 더 굵게
+// 그린다. 축소 상태의 1.2는 시/군 선(0.6)의 두 배지만 둘 다 1px 안팎
+// 이라 화면에서 구분되지 않는다.
+export const PROVINCE_STROKE_WIDTH_ZOOMED = 2.2;

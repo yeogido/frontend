@@ -36,6 +36,7 @@ const MapViewport = forwardRef<SVGGElement, MapViewportProps>(
         <PhotoLayer regionPhotos={regionPhotos} />
 
         <ProvinceLayer
+          zoomLevel={zoomLevel}
           renderScale={renderScale}
           regionPhotos={regionPhotos}
         />
