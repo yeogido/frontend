@@ -1,5 +1,7 @@
-import koreaCityJson from '../assets/korea-city.json' with { type: 'json' };
-import koreaProvinceJson from '../assets/korea-province.json' with { type: 'json' };
+import { koreaCity } from '../assets/koreaCity.ts';
+import { koreaProvince } from '../assets/koreaProvince.ts';
+
+import { isMetroCityCode } from './metroCityCodes.ts';
 
 interface MapRegionFeatureProperties {
   code?: string;
@@ -33,7 +35,7 @@ const toProvinceStem = (name: string) =>
 const provinceCodeByName = new Map<string, string>();
 const provinceNameByCode = new Map<string, string>();
 
-(koreaProvinceJson as GeoJSON.FeatureCollection).features.forEach((feature) => {
+(koreaProvince as GeoJSON.FeatureCollection).features.forEach((feature) => {
   const properties = feature.properties as MapRegionFeatureProperties | null;
 
   if (properties?.name && properties.code) {
@@ -47,13 +49,16 @@ const provinceNameByCode = new Map<string, string>();
  * 중구는 여러 광역시에) 이름 하나에 코드를 배열로 모아 둔다.
  */
 const cityCodesByName = new Map<string, string[]>();
+const cityNameByCode = new Map<string, string>();
 
-(koreaCityJson as GeoJSON.FeatureCollection).features.forEach((feature) => {
+(koreaCity as GeoJSON.FeatureCollection).features.forEach((feature) => {
   const properties = feature.properties as MapRegionFeatureProperties | null;
 
   if (!properties?.name || !properties.code) {
     return;
   }
+
+  cityNameByCode.set(properties.code, properties.name);
 
   const codes = cityCodesByName.get(properties.name);
 
@@ -64,6 +69,30 @@ const cityCodesByName = new Map<string, string[]>();
 
   cityCodesByName.set(properties.name, [properties.code]);
 });
+
+const CITY_SUFFIX_SWAP: Record<string, string> = { 시: '군', 군: '시' };
+
+/**
+ * 군에서 시로 승격된 지역(여주군 → 여주시, 당진군 → 당진시)은 지도
+ * 데이터가 승격 전 이름을 그대로 쓰고 있어 이름으로는 찾지 못한다.
+ * 이 데이터에는 어간이 같은데 접미사만 다른 지역이 없으므로, 시↔군을
+ * 바꿔 한 번 더 찾아도 엉뚱한 지역에 걸리지 않는다.
+ */
+const findCityCodes = (cityName: string) => {
+  const codes = cityCodesByName.get(cityName);
+
+  if (codes) {
+    return codes;
+  }
+
+  const swappedSuffix = CITY_SUFFIX_SWAP[cityName.slice(-1)];
+
+  if (!swappedSuffix) {
+    return undefined;
+  }
+
+  return cityCodesByName.get(`${cityName.slice(0, -1)}${swappedSuffix}`);
+};
 
 const findProvinceCode = (provinceName: string) => {
   const canonicalName = toCanonicalProvinceName(provinceName);
@@ -98,6 +127,46 @@ const resolveCityCodeByProvince = (
   return matchedCodes.length === 1 ? matchedCodes[0] : null;
 };
 
+const PROVINCE_CODE_LENGTH = 2;
+
+/**
+ * 지도에 사진을 채울 때 쓸 도형을 고른다.
+ *
+ * 도형 이름은 항상 코드로부터 역산한다. Region API의 지역명(`강원특별자치도`)과
+ * 지도 데이터의 지역명(`강원도`)이 다른 경우가 있어, 이름을 그대로 넘기면
+ * 도형을 못 찾아 사진이 사라진다. 코드는 별칭 보정을 거쳐 이미 정확하므로
+ * 코드를 신뢰한다.
+ *
+ * 광역시/특별시 산하 구는 지도에서 도형 자체가 항상 숨겨져 있어, 그대로
+ * 두면 어느 줌에서도 사진을 그릴 자리가 없다. 이런 지역은 부모 광역시
+ * 도형으로 올려서 광역시 전체가 사진으로 채워지게 한다.
+ *
+ * 여기서 정한 이름은 지도 내부 조회 키로만 쓰인다. 기록 상세나 폴더
+ * 미리보기에 쓰는 표시용 이름(`folder.regionName`)은 건드리지 않는다.
+ */
+export function toMapShapeRegion({
+  name,
+  code,
+}: {
+  name: string;
+  code: string;
+}): { name: string; code: string } {
+  if (code.length <= PROVINCE_CODE_LENGTH) {
+    return { name: provinceNameByCode.get(code) ?? name, code };
+  }
+
+  if (isMetroCityCode(code)) {
+    const provinceCode = code.slice(0, PROVINCE_CODE_LENGTH);
+    const provinceName = provinceNameByCode.get(provinceCode);
+
+    return provinceName
+      ? { name: provinceName, code: provinceCode }
+      : { name, code };
+  }
+
+  return { name: cityNameByCode.get(code) ?? name, code };
+}
+
 export interface MapRegionMatch {
   /** korea-city.json / korea-province.json properties.name과 동일한 값 */
   name: string;
@@ -125,7 +194,7 @@ export function findMapRegion({
   for (const candidate of [name, fullName]) {
     if (!candidate) continue;
 
-    const cityCodes = cityCodesByName.get(candidate);
+    const cityCodes = findCityCodes(candidate);
 
     if (cityCodes?.length === 1) {
       return { name: candidate, code: cityCodes[0] };

@@ -135,14 +135,20 @@ function useCourseRegionSearch() {
     setRecentSearches(nextSearches);
   };
 
-  const submitSearch = (query: string) => {
-    const keyword = query.trim();
+  const findMatchingCity = (keyword: string) =>
+    cities.find(
+      (city) => keyword === city.name || keyword.startsWith(`${city.name} `)
+    );
 
-    if (!keyword) {
+  const navigateToSearchResult = (keyword: string) => {
+    const matchedCity = findMatchingCity(keyword);
+
+    if (matchedCity) {
+      navigate(`/region-info/${matchedCity.id}`);
+
       return;
     }
 
-    addRecentSearch(keyword);
     navigate(
       createSearchResultLocation({
         targetPathname: searchTargetPathname,
@@ -151,14 +157,20 @@ function useCourseRegionSearch() {
     );
   };
 
+  const submitSearch = (query: string) => {
+    const keyword = query.trim();
+
+    if (!keyword) {
+      return;
+    }
+
+    addRecentSearch(keyword);
+    navigateToSearchResult(keyword);
+  };
+
   const selectRecentSearch = (keyword: string) => {
     addRecentSearch(keyword);
-    navigate(
-      createSearchResultLocation({
-        targetPathname: searchTargetPathname,
-        keyword,
-      })
-    );
+    navigateToSearchResult(keyword);
   };
 
   const removeRecentSearch = (targetIndex: number) => {
@@ -204,17 +216,19 @@ function useCourseRegionSearch() {
     }
 
     if (selectedParentDistrict) {
-      const selectedSubDistrict =
-        district === '전체'
-          ? selectedParentDistrict.name
-          : `${selectedParentDistrict.name} ${district}`;
-
       setSelectedDistrict(district);
+
+      if (district === '전체') {
+        navigate(`/region-info/${selectedCity.id}`);
+
+        return;
+      }
+
       navigate(
         createSearchResultLocation({
           targetPathname: searchTargetPathname,
           city: selectedCity.name,
-          district: selectedSubDistrict,
+          district: `${selectedParentDistrict.name} ${district}`,
         })
       );
 
@@ -233,6 +247,13 @@ function useCourseRegionSearch() {
     }
 
     setSelectedDistrict(district);
+
+    if (district === '전체') {
+      navigate(`/region-info/${selectedCity.id}`);
+
+      return;
+    }
+
     navigate(
       createSearchResultLocation({
         targetPathname: searchTargetPathname,

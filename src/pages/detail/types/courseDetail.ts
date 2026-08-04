@@ -23,6 +23,7 @@ export interface CourseReview {
   readonly meta: string;
   readonly content: string;
   readonly rating: number;
+  readonly isMine?: boolean;
 }
 
 export interface CourseStopDto {

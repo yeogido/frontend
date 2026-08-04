@@ -255,6 +255,40 @@ test('resolves a district-level region name against the city map shape', () => {
   assert.equal(folder.regionCode, '4613');
 });
 
+test('matches cities promoted from 군 to 시 against the outdated map name', () => {
+  const summary: TravelRecordSummary = {
+    travelRecordId: 13,
+    title: 'Yeoju trip',
+    regionId: 92,
+    startDate: '2026-07-20',
+    endDate: '2026-07-22',
+    coverImageUrl: 'https://example.com/travel-records/13/image-1.jpg',
+    folderTheme: 'BASIC',
+    createdAt: '2026-07-23T09:00:00',
+  };
+
+  // korea-city.json은 2013년 승격 전 이름인 '여주군'을 쓰고 있다.
+  // 표시용 이름은 Region API가 준 '여주시'를 유지해야 한다.
+  const folder = mapTravelRecordSummaryToFolder(summary, {
+    name: '여주시',
+    fullName: '경기도 여주시',
+  });
+
+  assert.equal(folder.regionName, '여주시');
+  assert.equal(folder.regionCode, '4173');
+
+  // 지도 조회 키는 코드에서 역산하므로 지도 데이터 표기를 따른다.
+  assert.deepEqual(
+    getTravelRecordRegionPhotoRecords([
+      {
+        ...folder,
+        photos: ['yeoju.jpg'],
+      },
+    ]),
+    [{ regionName: '여주군', photoUrl: 'yeoju.jpg', folderId: folder.id }],
+  );
+});
+
 const createSummaryForRegion = (regionId: number): TravelRecordSummary => ({
   travelRecordId: 12,
   title: '여행',
@@ -689,11 +723,105 @@ test('uses the latest folder with a renderable first photo for map photos', () =
     },
   ] as const;
 
+  // 지도 조회 키는 표시용 이름이 아니라 지역 코드에서 역산한 지도 도형
+  // 이름이다. Region API 지역명과 지도 데이터 지역명이 어긋나는 지역이
+  // 있어(강원특별자치도 ↔ 강원도) 이름을 그대로 쓰면 도형을 못 찾는다.
   assert.deepEqual(getTravelRecordRegionPhotoRecords(folders), [
     {
-      regionName: 'Busan',
+      regionName: '부산광역시',
       photoUrl: 'latest-photo.jpg',
       folderId: 'latest',
+    },
+  ]);
+});
+
+test('resolves map shape names that differ from the Region API name', () => {
+  const folders = [
+    {
+      id: 'gangwon',
+      regionCode: '42',
+      regionName: '강원특별자치도',
+      title: '강원',
+      startDate: '2026-02-01',
+      period: '02.01 - 02.02',
+      photos: ['gangwon.jpg'],
+      decorations: [],
+    },
+    {
+      id: 'jeju',
+      regionCode: '50',
+      regionName: '제주특별자치도',
+      title: '제주',
+      startDate: '2026-02-01',
+      period: '02.01 - 02.02',
+      photos: ['jeju.jpg'],
+      decorations: [],
+    },
+  ] as const;
+
+  // korea-province.json은 개편 전 명칭(강원도)과 오타(제주특별별자치도)를
+  // 쓰고 있다. 지도 조회 키는 그 표기를 따라야 사진이 그려진다.
+  assert.deepEqual(getTravelRecordRegionPhotoRecords(folders), [
+    {
+      regionName: '강원도',
+      photoUrl: 'gangwon.jpg',
+      folderId: 'gangwon',
+    },
+    {
+      regionName: '제주특별별자치도',
+      photoUrl: 'jeju.jpg',
+      folderId: 'jeju',
+    },
+  ]);
+});
+
+test('draws metro district photos on the parent metro city shape', () => {
+  const folders = [
+    {
+      id: 'jongno',
+      regionCode: '1111',
+      regionName: '종로구',
+      title: '종로',
+      startDate: '2025-03-01',
+      period: '03.01 - 03.02',
+      photos: ['jongno.jpg'],
+      decorations: [],
+    },
+    {
+      id: 'gangnam',
+      regionCode: '1168',
+      regionName: '강남구',
+      title: '강남',
+      startDate: '2026-03-01',
+      period: '03.01 - 03.02',
+      photos: ['gangnam.jpg'],
+      decorations: [],
+    },
+    {
+      id: 'yeosu',
+      regionCode: '4613',
+      regionName: '여수시',
+      title: '여수',
+      startDate: '2026-05-01',
+      period: '05.01 - 05.02',
+      photos: ['yeosu.jpg'],
+      decorations: [],
+    },
+  ] as const;
+
+  // 광역시 산하 구 도형은 지도에서 숨겨져 있어 그대로 두면 그릴 자리가
+  // 없다. 서울 두 구는 서울특별시 하나로 합쳐지고 최신 기록이 남는다.
+  // 도 소속 시/군은 자기 도형을 그대로 쓴다.
+  assert.deepEqual(getTravelRecordRegionPhotoRecords(folders), [
+    {
+      regionName: '서울특별시',
+      photoUrl: 'gangnam.jpg',
+      folderId: 'gangnam',
+    },
+    {
+      regionName: '여수시',
+      photoUrl: 'yeosu.jpg',
+      folderId: 'yeosu',
     },
   ]);
 });

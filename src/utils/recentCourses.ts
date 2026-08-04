@@ -1,19 +1,25 @@
-import type { Course } from '../types/course.type';
+import type { Course, CourseType } from '../types/course.type';
 
 export const RECENT_COURSES_STORAGE_KEY = 'recent-courses';
 export const MAX_RECENT_COURSES = 10;
 
+// 여기도(OFFICIAL)/우리동네(LOCAL) 코스를 같은 저장소에 함께 기록하되,
+// 화면별로 자신의 courseType만 걸러 보여줄 수 있도록 태그를 붙여 저장한다.
+export interface RecentCourse extends Course {
+  courseType: CourseType;
+}
+
 export function upsertRecentCourse(
-  courses: readonly Course[],
-  course: Course,
-): Course[] {
+  courses: readonly RecentCourse[],
+  course: RecentCourse,
+): RecentCourse[] {
   return [
     course,
     ...courses.filter((item) => item.courseId !== course.courseId),
   ].slice(0, MAX_RECENT_COURSES);
 }
 
-export function getStoredRecentCourses(): Course[] {
+export function getStoredRecentCourses(): RecentCourse[] {
   if (typeof window === 'undefined') return [];
 
   try {
@@ -33,7 +39,7 @@ export function getStoredRecentCourses(): Course[] {
   }
 }
 
-export function saveRecentCourse(course: Course): void {
+export function saveRecentCourse(course: RecentCourse): void {
   if (typeof window === 'undefined') return;
 
   try {
@@ -72,7 +78,7 @@ export function updateRecentCourseLikeState(
   }
 }
 
-function isRecentCourse(value: unknown): value is Course {
+function isRecentCourse(value: unknown): value is RecentCourse {
   if (typeof value !== 'object' || value === null) return false;
 
   const course = value as Record<string, unknown>;
@@ -87,6 +93,7 @@ function isRecentCourse(value: unknown): value is Course {
     typeof course.companionType === 'string' &&
     Array.isArray(course.tags) &&
     course.tags.every((tag) => typeof tag === 'string') &&
-    typeof course.isLiked === 'boolean'
+    typeof course.isLiked === 'boolean' &&
+    (course.courseType === 'OFFICIAL' || course.courseType === 'LOCAL')
   );
 }

@@ -45,6 +45,9 @@ import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
 import RegionInfoPage from '../pages/region-info';
+import LikesPage from '../pages/likes';
+import RecentReviewCoursesPage from '../pages/recent-review-courses';
+import CourseReviewsPage from '../pages/course-reviews';
 
 function AppRouter() {
   return (
@@ -103,10 +106,26 @@ function AppRouter() {
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
 
+        <Route
+          path="/recent-review-courses"
+          element={<RecentReviewCoursesPage />}
+        />
+
+        <Route
+          path="/yeogido-course/detail/:courseId/reviews"
+          element={<CourseReviewsPage />}
+        />
+
+        <Route
+          path="/local-course/detail/:courseId/reviews"
+          element={<CourseReviewsPage />}
+        />
+
         <Route path="/admin" element={<AdminPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/travel-record" element={<TravelRecordPage />} />
+          <Route path="/likes" element={<LikesPage />} />
         </Route>
       </Route>
 

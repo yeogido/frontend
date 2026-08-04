@@ -1,5 +1,7 @@
 import type { KeyboardEvent } from 'react';
 
+import more from '../../assets/icons/more.svg';
+import darkStar from '../../assets/icons/dark star.svg';
 import star from '../../assets/icons/star.svg';
 
 import { useGlobalScale } from '../../hooks/useGlobalScale';
@@ -34,7 +36,9 @@ export interface ReviewCardProps {
   meta: string;
   content: string;
   rating?: number;
+  isMine?: boolean;
   onClick?: () => void;
+  onMoreClick?: () => void;
   className?: string;
 }
 
@@ -45,16 +49,19 @@ function ReviewCard({
   meta,
   content,
   rating = 5,
+  isMine = false,
   onClick,
+  onMoreClick,
   className = '',
 }: ReviewCardProps) {
   const scale = useGlobalScale();
   const { innerRef, scaledHeight } = useMeasuredScaledHeight(scale);
 
   const isClickable = Boolean(onClick);
+  const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!onClick) return;
+    if (!onClick || event.currentTarget !== event.target) return;
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -134,15 +141,37 @@ function ReviewCard({
               paddingTop: images.length > 0 ? SECTION_GAP : CARD_PADDING,
             }}
           >
-            <p
-              className="line-clamp-2 font-normal text-[#1C1C1C]"
-              style={{
-                fontSize: TEXT_FONT_SIZE,
-                lineHeight: `${TEXT_LINE_HEIGHT}px`,
-              }}
-            >
-              {content}
-            </p>
+            <div className="flex min-w-0 items-start">
+              <p
+                className="line-clamp-2 min-w-0 flex-1 font-normal text-[#1C1C1C]"
+                style={{
+                  fontSize: TEXT_FONT_SIZE,
+                  lineHeight: `${TEXT_LINE_HEIGHT}px`,
+                }}
+              >
+                {content}
+              </p>
+
+              {isMine && onMoreClick ? (
+                <button
+                  type="button"
+                  aria-label="리뷰 메뉴"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onMoreClick?.();
+                  }}
+                  className="-mt-[3px] -mr-[3px] ml-2 flex shrink-0 items-center justify-center"
+                  style={{ width: 20, height: 20 }}
+                >
+                  <img
+                    src={more}
+                    alt=""
+                    aria-hidden="true"
+                    style={{ width: 20, height: 20 }}
+                  />
+                </button>
+              ) : null}
+            </div>
 
             <div className="flex items-center" style={{ gap: PROFILE_GAP }}>
               {profileImage ? (
@@ -190,12 +219,13 @@ function ReviewCard({
                   className="flex items-center"
                   style={{ gap: STAR_GAP }}
                 >
-                  {Array.from({ length: rating }).map((_, index) => (
+                  {Array.from({ length: 5 }).map((_, index) => (
                     <img
                       key={index}
-                      src={star}
+                      src={index < displayedRating ? star : darkStar}
                       alt=""
                       aria-hidden="true"
+                      className={index < displayedRating ? '' : 'scale-[1.42]'}
                       style={{ width: STAR_SIZE, height: STAR_SIZE }}
                     />
                   ))}

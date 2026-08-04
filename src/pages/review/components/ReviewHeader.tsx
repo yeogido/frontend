@@ -2,10 +2,10 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // Figma 390 디자인 기준 리터럴 px
 const HEADER_MARGIN_TOP = 17;
-const TITLE_SIZE = 30;
+const TITLE_SIZE = 32;
 const DESCRIPTION_MARGIN_TOP = 12;
-const DESCRIPTION_SIZE = 13;
-const DESCRIPTION_LINE_HEIGHT = 19;
+const DESCRIPTION_SIZE = 14;
+const DESCRIPTION_LINE_HEIGHT = 17;
 
 function ReviewHeader() {
   const scale = useGlobalScale();
@@ -13,7 +13,7 @@ function ReviewHeader() {
   return (
     <header style={{ marginTop: HEADER_MARGIN_TOP * scale }}>
       <h1
-        className="font-bold leading-[1.25] tracking-[-0.03em]"
+        className="font-semibold leading-none"
         style={{ fontSize: TITLE_SIZE * scale }}
       >
         이번 여행은

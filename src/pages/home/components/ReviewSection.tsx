@@ -120,7 +120,7 @@ function ReviewSection() {
       <SectionHeader
         title="최근 여행자들의 후기"
         actionText="전체보기"
-        onActionClick={() => navigate('/review')}
+        onActionClick={() => navigate('/recent-review-courses')}
       />
 
       {/* Carousel: 카드 1개가 화면을 꽉 채우며 스와이프로 다음 카드로 스냅 이동 */}

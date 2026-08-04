@@ -1,11 +1,9 @@
-import {
-  IoCalendarOutline,
-  IoImageOutline,
-  IoLocationSharp,
-  IoPerson,
-} from 'react-icons/io5';
-
+import calendar from '../../../assets/icons/calendar.svg';
+import location from '../../../assets/icons/location.svg';
+import people from '../../../assets/icons/people.svg';
+import upload from '../../../assets/icons/upload.svg';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import type { ReviewCourseCardData } from '../reviewCourse';
 
 // Figma 390 디자인 기준 리터럴 px
 const CARD_MARGIN_TOP = 29;
@@ -18,31 +16,20 @@ const THUMBNAIL_RADIUS = 8;
 const NO_IMAGE_ICON_SIZE = 20;
 const NO_IMAGE_TEXT_SIZE = 10;
 const CONTENT_MARGIN_LEFT = 12;
-const TITLE_FONT_SIZE = 15;
+const TITLE_FONT_SIZE = 16;
 const TITLE_LINE_HEIGHT = 20;
-const META_MARGIN_TOP = 12;
-const META_FONT_SIZE = 11;
-const META_LINE_HEIGHT = 16;
-const META_ICON_SIZE = 13;
+const META_MARGIN_TOP = 16;
+const META_FONT_SIZE = 12;
+const META_LINE_HEIGHT = 14;
+const META_ICON_SIZE = 14;
 
 export interface ReviewCourseCardProps {
-  title?: string;
-  image?: string;
-  thumbnailUrl?: string;
-  duration?: string;
-  courseType?: string;
-  companion?: string;
+  readonly course: ReviewCourseCardData;
 }
 
-function ReviewCourseCard({
-  title = '강릉 혼자 여행 코스',
-  image,
-  thumbnailUrl,
-  duration = '2박 3일',
-  courseType = '뚜벅이 코스',
-  companion = '혼자',
-}: ReviewCourseCardProps) {
-  const thumbnail = image || thumbnailUrl;
+function ReviewCourseCard({ course }: ReviewCourseCardProps) {
+  const { title, thumbnailUrl: thumbnail, duration, transport, companion } =
+    course;
   const scale = useGlobalScale();
 
   return (
@@ -76,9 +63,11 @@ function ReviewCourseCard({
             borderRadius: THUMBNAIL_RADIUS * scale,
           }}
         >
-          <IoImageOutline
+          <img
+            src={upload}
+            alt=""
             aria-hidden="true"
-            style={{ fontSize: NO_IMAGE_ICON_SIZE * scale }}
+            style={{ width: NO_IMAGE_ICON_SIZE * scale, height: NO_IMAGE_ICON_SIZE * scale }}
           />
           <span
             className="font-medium"
@@ -116,23 +105,27 @@ function ReviewCourseCard({
               className="flex items-center whitespace-nowrap"
               style={{ gap: 3 * scale }}
             >
-              <IoCalendarOutline
+              <img
+                src={calendar}
+                alt=""
                 aria-hidden="true"
-                style={{ fontSize: META_ICON_SIZE * scale }}
+                style={{ width: META_ICON_SIZE * scale, height: META_ICON_SIZE * scale }}
               />
               {duration}
             </span>
           )}
-          {courseType && (
+          {transport && (
             <span
               className="flex items-center whitespace-nowrap"
               style={{ gap: 2 * scale }}
             >
-              <IoLocationSharp
+              <img
+                src={location}
+                alt=""
                 aria-hidden="true"
-                style={{ fontSize: META_ICON_SIZE * scale }}
+                style={{ width: META_ICON_SIZE * scale, height: META_ICON_SIZE * scale }}
               />
-              {courseType}
+              {transport}
             </span>
           )}
           {companion && (
@@ -140,7 +133,12 @@ function ReviewCourseCard({
               className="flex items-center whitespace-nowrap"
               style={{ gap: 3 * scale }}
             >
-              <IoPerson aria-hidden="true" style={{ fontSize: 12 * scale }} />
+              <img
+                src={people}
+                alt=""
+                aria-hidden="true"
+                style={{ width: META_ICON_SIZE * scale, height: META_ICON_SIZE * scale }}
+              />
               {companion}
             </span>
           )}
