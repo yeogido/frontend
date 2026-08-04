@@ -1,12 +1,11 @@
-import { IoClose } from 'react-icons/io5';
-
+import closeIcon from '../../../assets/icons/close-rounded.svg';
+import addIcon from '../../travel-record/photo-selection/assets/photo-add-icon.svg';
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // Figma 390 디자인 기준 리터럴 px
 const SLOT_RADIUS = 12;
-const PLACEHOLDER_BAR_LENGTH = 18;
-const PLACEHOLDER_BAR_THICKNESS = 1.5;
+const ADD_ICON_SIZE = 24;
 const REMOVE_VISUAL_SIZE = 20;
 const REMOVE_ICON_SIZE = 12;
 
@@ -34,24 +33,21 @@ function PhotoSlot({ label, previewUrl, onClick, onRemove }: PhotoSlotProps) {
         style={{ borderRadius: SLOT_RADIUS * scale }}
       >
         {previewUrl ? (
-          <img src={previewUrl} alt="" className="size-full object-cover" />
+          <img
+            key={previewUrl}
+            src={previewUrl}
+            alt=""
+            className="size-full object-cover"
+          />
         ) : (
-          <>
-            <span
-              className="bg-gray-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-              style={{
-                height: PLACEHOLDER_BAR_THICKNESS * scale,
-                width: PLACEHOLDER_BAR_LENGTH * scale,
-              }}
-            />
-            <span
-              className="bg-gray-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-              style={{
-                height: PLACEHOLDER_BAR_LENGTH * scale,
-                width: PLACEHOLDER_BAR_THICKNESS * scale,
-              }}
-            />
-          </>
+          <img
+            key="add-photo"
+            src={addIcon}
+            alt=""
+            aria-hidden="true"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ width: ADD_ICON_SIZE * scale, height: ADD_ICON_SIZE * scale }}
+          />
         )}
       </button>
 
@@ -63,7 +59,7 @@ function PhotoSlot({ label, previewUrl, onClick, onRemove }: PhotoSlotProps) {
             e.stopPropagation();
             onRemove();
           }}
-          className="absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+          className="absolute flex items-center justify-center"
           style={{
             top: -6 * scale + removeOverlap,
             right: -6 * scale + removeOverlap,
@@ -71,10 +67,21 @@ function PhotoSlot({ label, previewUrl, onClick, onRemove }: PhotoSlotProps) {
             height: removeButtonSize,
           }}
         >
-          <IoClose
-            aria-hidden="true"
-            style={{ fontSize: REMOVE_ICON_SIZE * scale }}
-          />
+          <span
+            className="flex items-center justify-center rounded-full bg-[#7F7F7F]/80 shadow-[0_2px_8px_rgba(0,0,0,0.16)]"
+            style={{ width: removeVisualSize, height: removeVisualSize }}
+          >
+            <img
+              src={closeIcon}
+              alt=""
+              aria-hidden="true"
+              className="brightness-0 invert"
+              style={{
+                width: REMOVE_ICON_SIZE * scale,
+                height: REMOVE_ICON_SIZE * scale,
+              }}
+            />
+          </span>
         </button>
       )}
     </div>

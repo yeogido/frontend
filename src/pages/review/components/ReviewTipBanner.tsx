@@ -1,5 +1,4 @@
-import { IoBulb } from 'react-icons/io5';
-
+import tipIcon from '../../travel-record/photo-selection/assets/photo-tip-icon.svg';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -8,7 +7,7 @@ const BANNER_HEIGHT = 62;
 const BANNER_RADIUS = 12;
 const BANNER_PADDING_X = 14;
 const ICON_CIRCLE_SIZE = 28;
-const ICON_SIZE = 17;
+const ICON_SIZE = 18;
 const TEXT_MARGIN_LEFT = 16;
 const TEXT_FONT_SIZE = 11;
 const TEXT_LINE_HEIGHT = 14;
@@ -34,7 +33,12 @@ function ReviewTipBanner() {
           height: ICON_CIRCLE_SIZE * scale,
         }}
       >
-        <IoBulb aria-hidden="true" style={{ fontSize: ICON_SIZE * scale }} />
+        <img
+          src={tipIcon}
+          alt=""
+          aria-hidden="true"
+          style={{ width: ICON_SIZE * scale, height: ICON_SIZE * scale }}
+        />
       </span>
       <p
         style={{

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import {
   ContentCard,
+  ContentCardSkeleton,
   CourseCard,
   FloatingActionButton,
   SearchTriggerButton,
@@ -10,9 +11,14 @@ import {
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useLoginModal } from '../../hooks/useLoginModal';
 import { useAuthStore } from '../../store/auth.store';
+import { useCourses } from '../../hooks/useCourses';
+import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
+import { useRecentCourses } from '../../hooks/useRecentCourses';
+import { toContentTagIds } from '../../utils/contentTags';
+import { toCourseCardProps } from '../../utils/courseCard';
+import type { CourseDurationType } from '../../types/course.type';
 
 import { CreateCourseBanner } from './components';
-import useLocalCoursePreviews from './hooks/useLocalCoursePreviews';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -27,13 +33,42 @@ const BANNER_MARGIN_TOP = 12;
 const SECTION_MARGIN_TOP = 32;
 const LIST_MARGIN_TOP = 12;
 const LIST_GAP = 16;
+const ERROR_MARGIN_TOP = 16;
+const ERROR_TEXT_SIZE = 13;
+const POPULAR_COURSE_PREVIEW_COUNT = 2;
+const RECENT_COURSE_PREVIEW_COUNT = 2;
+
+const durationLabelByType: Record<CourseDurationType, string> = {
+  DAY_TRIP: '당일치기',
+  ONE_NIGHT: '1박 2일',
+  TWO_NIGHT: '2박 3일',
+  THREE_PLUS: '3박 이상',
+};
 
 function LocalCoursePage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
-  const { popularCourses, recentCourses } = useLocalCoursePreviews();
+  const { getLiked, toggleLike } = useCourseLikeToggle();
+
+  const {
+    data: popularCourses,
+    isPending: isPopularCoursesPending,
+    isError: isPopularCoursesError,
+    refetch: refetchPopularCourses,
+  } = useCourses({
+    courseType: 'LOCAL',
+    sort: 'LATEST',
+    size: POPULAR_COURSE_PREVIEW_COUNT,
+  });
+  const popularCoursePreviews = (
+    popularCourses?.pages[0]?.items ?? []
+  ).slice(0, POPULAR_COURSE_PREVIEW_COUNT);
+  const recentCoursePreviews = useRecentCourses()
+    .filter((course) => course.courseType === 'LOCAL')
+    .slice(0, RECENT_COURSE_PREVIEW_COUNT)
+    .map(toCourseCardProps);
 
   const goToRegionSearch = () => {
     navigate('/course-region-search?from=local-course');
@@ -122,45 +157,85 @@ function LocalCoursePage() {
             gap: LIST_GAP * scale,
           }}
         >
-          {popularCourses.map((course) => (
-            <ContentCard
-              key={course.id}
-              image={course.image}
-              title={course.title}
-              firstInfo={course.duration}
-              secondInfo={course.courseType}
-              liked={course.liked}
-              tags={course.tags}
-              onClick={() => goToCourseDetail(course.id)}
-            />
-          ))}
+          {isPopularCoursesPending
+            ? Array.from({ length: POPULAR_COURSE_PREVIEW_COUNT }, (_, index) => (
+                <ContentCardSkeleton key={index} />
+              ))
+            : popularCoursePreviews.map((course) => (
+                <ContentCard
+                  key={course.courseId}
+                  image={course.thumbnailUrl}
+                  title={course.title}
+                  firstInfo={durationLabelByType[course.durationType]}
+                  secondInfo={course.region}
+                  tags={toContentTagIds(course.tags)}
+                  liked={getLiked(course.courseId, course.isLiked)}
+                  onClick={() => goToCourseDetail(course.courseId)}
+                  onLikeClick={() =>
+                    toggleLike(
+                      course.courseId,
+                      getLiked(course.courseId, course.isLiked)
+                    )
+                  }
+                />
+              ))}
         </div>
+
+        {!isPopularCoursesPending && isPopularCoursesError ? (
+          <div
+            className="flex flex-col items-center"
+            style={{
+              marginTop: ERROR_MARGIN_TOP * scale,
+              gap: ERROR_MARGIN_TOP * scale,
+            }}
+          >
+            <p
+              className="text-main-5 text-center font-medium"
+              style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+            >
+              코스 목록을 불러오지 못했어요.
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetchPopularCourses()}
+              className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : null}
       </section>
 
-      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
-        <SectionHeader
-          title="최근 본 코스"
-          actionText="전체 보기"
-          onActionClick={goToRecentCourses}
-        />
+      {recentCoursePreviews.length > 0 ? (
+        <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
+          <SectionHeader
+            title="최근 본 코스"
+            actionText="전체 보기"
+            onActionClick={goToRecentCourses}
+          />
 
-        <div
-          className="grid grid-cols-1"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            gap: LIST_GAP * scale,
-          }}
-        >
-          {recentCourses.map((course) => (
-            <div key={course.id} className="w-full">
-              <CourseCard
-                {...course}
-                onClick={() => goToCourseDetail(course.id)}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
+          <div
+            className="grid grid-cols-1"
+            style={{
+              marginTop: LIST_MARGIN_TOP * scale,
+              gap: LIST_GAP * scale,
+            }}
+          >
+            {recentCoursePreviews.map((course) => (
+              <div key={course.id} className="w-full">
+                <CourseCard
+                  {...course}
+                  liked={getLiked(course.id, course.liked)}
+                  onClick={() => goToCourseDetail(course.id)}
+                  onLikeClick={() =>
+                    toggleLike(course.id, getLiked(course.id, course.liked))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <FloatingActionButton
         ariaLabel="코스 만들기"

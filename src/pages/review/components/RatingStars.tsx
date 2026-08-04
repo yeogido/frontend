@@ -1,15 +1,15 @@
-import { IoStar } from 'react-icons/io5';
-
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import darkStar from '../../../assets/icons/dark star.svg';
+import star from '../../../assets/icons/star.svg';
 
 // Figma 390 디자인 기준 리터럴 px
-const ROW_MARGIN_TOP = 15;
-const ROW_GAP = 6;
-const STAR_VISUAL_SIZE = 39;
+const ROW_MARGIN_TOP = 12;
+const ROW_GAP = 0;
+const STAR_VISUAL_SIZE = 46;
 
 interface RatingStarsProps {
-  value: number;
+  value: number | null;
   onChange: (value: number) => void;
 }
 
@@ -33,7 +33,7 @@ function RatingStars({ value, onChange }: RatingStarsProps) {
           key={rating}
           type="button"
           aria-label={`${rating}점`}
-          aria-pressed={value === rating}
+            aria-pressed={value === rating}
           onClick={() => onChange(rating)}
           className="flex items-center justify-center"
           style={{
@@ -43,10 +43,14 @@ function RatingStars({ value, onChange }: RatingStarsProps) {
             marginRight: starOverlap,
           }}
         >
-          <IoStar
+          <img
+            src={value !== null && rating <= value ? star : darkStar}
+            alt=""
             aria-hidden="true"
-            className={rating <= value ? 'text-rating-star' : 'text-gray-2'}
-            style={{ fontSize: starVisualSize }}
+            className={
+              value !== null && rating <= value ? '' : 'scale-[1.42]'
+            }
+            style={{ width: starVisualSize, height: starVisualSize }}
           />
         </button>
       ))}
