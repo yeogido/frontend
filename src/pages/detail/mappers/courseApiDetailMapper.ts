@@ -75,7 +75,7 @@ function toCourseStops(
     name: item.name,
     address: item.roadAddress || item.lotAddress || '',
     hours: '',
-    image: course.thumbnailUrl,
+    image: item.imageUrl || course.thumbnailUrl,
     liked: item.isLiked,
     latitude: item.latitude,
     longitude: item.longitude,
