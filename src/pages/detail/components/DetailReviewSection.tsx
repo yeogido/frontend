@@ -7,6 +7,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { getCourseReviewIndex } from '../utils/courseReviewCarousel';
 
 const SECTION_GAP = 14;
+const REVIEW_CARD_GAP = 16;
 
 const DOT_GAP = 4;
 const DOT_SIZE = 4;
@@ -51,7 +52,8 @@ export function DetailReviewSection({
           getCourseReviewIndex(
             container.scrollLeft,
             container.clientWidth,
-            reviews.length
+            reviews.length,
+            REVIEW_CARD_GAP * scale
           )
         );
       });
@@ -63,7 +65,7 @@ export function DetailReviewSection({
       container.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(rafId);
     };
-  }, [reviews.length]);
+  }, [reviews.length, scale]);
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current;
@@ -73,7 +75,7 @@ export function DetailReviewSection({
     }
 
     container.scrollTo({
-      left: container.clientWidth * index,
+      left: (container.clientWidth + REVIEW_CARD_GAP * scale) * index,
       behavior: 'smooth',
     });
   };
@@ -108,6 +110,7 @@ export function DetailReviewSection({
         <div
           ref={scrollRef}
           className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto"
+          style={{ gap: REVIEW_CARD_GAP * scale }}
         >
           {reviews.map((review) => (
             <div
