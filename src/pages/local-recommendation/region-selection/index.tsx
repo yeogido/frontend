@@ -10,7 +10,6 @@ import { useLocalRecommendationStore } from '../../../store/localRecommendation.
 
 import BackButton from '../components/BackButton';
 import {
-  NeighborhoodResultList,
   NeighborhoodSearchSection,
   PopularRegionGrid,
   RecentSearchSection,
@@ -40,7 +39,6 @@ function LocalRecommendationPage() {
   const { recentRegions, addRecentRegion } = useRecentRegions();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [submittedQuery, setSubmittedQuery] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] =
     useState<Neighborhood | null>(draftNeighborhood);
 
@@ -50,24 +48,40 @@ function LocalRecommendationPage() {
     staleTime: 5 * 60_000,
   });
 
+  const trimmedSearchQuery = searchQuery.trim();
+
+  // 검색창에 입력하는 즉시(타이핑마다) 백엔드에 물어 연관 검색어를 채운다.
+  // 백엔드가 이름 LIKE(부분 문자열) 매칭이라 SearchBar의 로컬 재필터를
+  // 그대로 통과하므로, 이 목록을 suggestions로 넘기기만 하면 된다.
   const searchResultsQuery = useQuery({
-    queryKey: ['regions', 'search', submittedQuery],
+    queryKey: ['regions', 'search', trimmedSearchQuery],
     queryFn: async () =>
-      (await searchRegions(submittedQuery)).map(fromSearchResult),
-    enabled: submittedQuery.length > 0,
+      (await searchRegions(trimmedSearchQuery)).map(fromSearchResult),
+    enabled: trimmedSearchQuery.length > 0,
     staleTime: 30_000,
   });
 
-  const handleSearch = (query: string) => {
+  const searchSuggestions = searchResultsQuery.data?.map((n) => n.name) ?? [];
+
+  const handleQueryChange = (query: string) => {
     setSearchQuery(query);
-    setSubmittedQuery(query.trim());
-    setSelectedNeighborhood(null);
-    setNeighborhood(null);
+  };
+
+  // 추천 목록에서 클릭했거나(정확한 이름이 그대로 들어옴) 검색어를 그대로
+  // 입력해 제출한 경우, 현재 검색 결과 중 이름이 일치하는 지역을 선택한다.
+  const handleSearch = (query: string) => {
+    const trimmedQuery = query.trim();
+    const matched = searchResultsQuery.data?.find(
+      (neighborhood) => neighborhood.name === trimmedQuery
+    );
+
+    if (matched) {
+      handleSelectNeighborhood(matched);
+    }
   };
 
   const handleSelectNeighborhood = (candidate: Neighborhood) => {
     setSearchQuery('');
-    setSubmittedQuery('');
 
     if (selectedNeighborhood?.id === candidate.id) {
       setSelectedNeighborhood(null);
@@ -94,34 +108,17 @@ function LocalRecommendationPage() {
     >
       <BackButton onClick={() => navigate('/local-course')} />
       <main className="flex-1">
-        <NeighborhoodSearchSection onSearch={handleSearch} />
+        <NeighborhoodSearchSection
+          suggestions={searchSuggestions}
+          onSearch={handleSearch}
+          onQueryChange={handleQueryChange}
+        />
 
         {selectedNeighborhood && !searchQuery.trim() ? (
           <SelectedNeighborhoodCard
             neighborhood={selectedNeighborhood}
             onClear={handleClearSelection}
           />
-        ) : searchQuery.trim() ? (
-          searchResultsQuery.isLoading ? (
-            <LoadingSpinner label="검색 결과를 불러오는 중" />
-          ) : searchResultsQuery.isError ? (
-            <section aria-live="polite" className="text-center">
-              <p>검색 결과를 불러오지 못했습니다.</p>
-              <button
-                type="button"
-                onClick={() => searchResultsQuery.refetch()}
-              >
-                다시 시도
-              </button>
-            </section>
-          ) : (
-            <NeighborhoodResultList
-              heading="검색 결과"
-              results={searchResultsQuery.data ?? []}
-              selectedNeighborhood={selectedNeighborhood}
-              onSelect={handleSelectNeighborhood}
-            />
-          )
         ) : null}
 
         {!searchQuery.trim() && !selectedNeighborhood ? (
