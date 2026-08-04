@@ -54,6 +54,14 @@ function LikesPage() {
     handleFilterSelect,
   } = useLikedItemFilters();
 
+  const activeLikedItems = useMemo(
+    () =>
+      MOCK_LIKED_ITEMS.filter(
+        (item) => !unlikedIds.has(`${item.category}-${item.id}`)
+      ),
+    [unlikedIds]
+  );
+
   const filterGroups = useMemo(
     () =>
       [
@@ -62,7 +70,7 @@ function LikesPage() {
           key: 'detail',
           options: getDetailFilterOptions(
             selectedFilters.category,
-            MOCK_LIKED_ITEMS
+            activeLikedItems
           ),
         },
         { key: 'sort', options: LIKED_SORT_OPTIONS },
@@ -70,21 +78,21 @@ function LikesPage() {
         key: LikedItemFilterKey;
         options: readonly string[];
       }[],
-    [selectedFilters.category]
+    [selectedFilters.category, activeLikedItems]
   );
 
   const likedItems = useMemo(
     () =>
       sortLikedItems(
         filterLikedItems({
-          items: MOCK_LIKED_ITEMS,
+          items: activeLikedItems,
           categoryLabel: selectedFilters.category,
           detailLabel: selectedFilters.detail,
           keyword,
         }),
         selectedFilters.sort
       ),
-    [keyword, selectedFilters]
+    [activeLikedItems, keyword, selectedFilters]
   );
 
   const toggleLike = (itemKey: string) => {

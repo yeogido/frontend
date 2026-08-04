@@ -119,12 +119,13 @@ function ContentCard({
     useResponsiveTagCount(tags);
 
   const isClickable = Boolean(onClick);
+  const hasCustomWidth = /(?:^|\s)(?:w-|min-w|max-w)/.test(className);
 
   return (
     <div
       className={`shrink-0 overflow-hidden ${className}`}
       style={{
-        width: CARD_DESIGN_WIDTH * scale,
+        width: hasCustomWidth ? undefined : CARD_DESIGN_WIDTH * scale,
         height: CARD_HEIGHT * scale,
       }}
     >
