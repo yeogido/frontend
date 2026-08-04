@@ -25,7 +25,7 @@ function useLocalBusinesses({
   sortBy,
   selectedRegionId,
 }: UseLocalBusinessesParams) {
-  const { data: regionsData } = useRegions();
+  const { data: regionsData, isPending: isRegionsPending } = useRegions();
   const regionId = resolveRegionId(selectedRegionId, regionsData?.regions);
 
   const {
@@ -36,15 +36,18 @@ function useLocalBusinesses({
     isError,
     isFetchingNextPage,
     isPending,
-  } = useBusinessPromotions({
-    category:
-      selectedCategory === '전체'
-        ? undefined
-        : mapBusinessCategoryToApiParam(selectedCategory),
-    sort: mapBusinessSortToApiParam(sortBy),
-    size: PAGE_SIZE,
-    regionId,
-  });
+  } = useBusinessPromotions(
+    {
+      category:
+        selectedCategory === '전체'
+          ? undefined
+          : mapBusinessCategoryToApiParam(selectedCategory),
+      sort: mapBusinessSortToApiParam(sortBy),
+      size: PAGE_SIZE,
+      regionId,
+    },
+    { enabled: !isRegionsPending }
+  );
 
   const businesses = (data?.pages.flatMap((page) => page.items) ?? []).map(
     mapBusinessPromotionItemToBusinessItem
