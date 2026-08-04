@@ -124,9 +124,11 @@ function Map({
 
   return (
     <div className="relative h-full w-full">
+      {/* SVG text는 font-family를 상속받는다. 루트에서 한 번 지정해
+          지역명·독도·마커 숫자가 같은 서체를 쓰게 한다. */}
       <svg
         ref={svgRef}
-        className="h-full w-full"
+        className="h-full w-full font-sans"
         viewBox={`0 0 ${MAP_VIEWBOX_WIDTH} ${MAP_VIEWBOX_HEIGHT}`}
         preserveAspectRatio="xMidYMid meet"
       >
