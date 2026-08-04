@@ -8,6 +8,7 @@ import {
   MAP_VIEWBOX_HEIGHT,
   MAP_VIEWBOX_WIDTH,
   PROVINCE_LABEL_FONT_SIZE,
+  PROVINCE_LABEL_MAX_FONT_SIZE,
 } from '../constants/map';
 import { LABEL_OFFSETS } from '../constants/labelOffsets';
 import { toRegionLabel } from '../constants/regionLabels';
@@ -279,11 +280,16 @@ function LabelLayer({
 
   // 확대해도 화면상 글씨 크기가 일정하게 유지되도록 renderScale로 나눈다.
   const fontSize = useMemo(() => {
-    const base = isCity
-      ? CITY_LABEL_FONT_SIZE
-      : PROVINCE_LABEL_FONT_SIZE;
+    if (isCity) {
+      return Math.max(CITY_LABEL_FONT_SIZE / renderScale, 1.5);
+    }
 
-    return Math.max(base / renderScale, 1.5);
+    // 도 라벨은 상한을 둔다. 축소할수록 글씨가 지도 좌표계에서 커지는데,
+    // 그대로 두면 최소 줌에서 이웃 라벨과 겹쳐 서울·광주가 사라진다.
+    return Math.min(
+      Math.max(PROVINCE_LABEL_FONT_SIZE / renderScale, 1.5),
+      PROVINCE_LABEL_MAX_FONT_SIZE,
+    );
   }, [isCity, renderScale]);
 
   // 광역시/특별시 전용 라벨: 구 단위 대신 도 단위(하나로 합쳐진) 이름 하나만 표시
@@ -412,12 +418,13 @@ function LabelLayer({
       // regionPhotos는 GeoJSON 이름을 키로 쓰므로, 표시용 이름으로
       // 바꾸는 건 마지막에 한 번만 한다.
       const label = toRegionLabel(name);
-      const fittedFontSize = fitLabelFontSize(
-        label,
-        fontSize,
-        bounds,
-        radius,
-      );
+      // 도형 맞춤은 시/군이 보이는 확대 상태에만 적용한다. 축소 상태의
+      // 도 도형은 서로 겹치지 않아 글씨가 조금 넘쳐도 읽는 데 문제가
+      // 없는 반면, 여기에 같은 기준을 걸면 도형이 작은 부산·인천·세종의
+      // 라벨이 통째로 사라진다.
+      const fittedFontSize = isCity
+        ? fitLabelFontSize(label, fontSize, bounds, radius)
+        : fontSize;
 
       if (fittedFontSize === null) return;
 
