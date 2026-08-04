@@ -17,6 +17,10 @@ export function useNaverLogin() {
     setIsLoading(true);
 
     try {
+      if (!NAVER_CLIENT_ID.trim()) {
+        throw new Error('[VITE_NAVER_CLIENT_ID]가 설정되지 않았습니다.');
+      }
+
       await loadNaverAuthSdk();
 
       // authorize()는 네이버 로그인 페이지로 현재 페이지를 이동시킨다

@@ -90,10 +90,9 @@ function SocialProfileForm({
       navigate('/');
     } catch (error) {
       const code = isNormalizedApiError(error) ? error.code : undefined;
+      const mappedMessage = code ? SIGNUP_ERROR_MESSAGES[code] : undefined;
 
-      setSubmitError(
-        (code && SIGNUP_ERROR_MESSAGES[code]) ?? DEFAULT_ERROR_MESSAGE
-      );
+      setSubmitError(mappedMessage ?? DEFAULT_ERROR_MESSAGE);
     } finally {
       setIsSubmitting(false);
     }

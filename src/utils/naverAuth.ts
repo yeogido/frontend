@@ -18,9 +18,19 @@ export function loadNaverAuthSdk(): Promise<void> {
   }
 
   sdkPromise = new Promise((resolve, reject) => {
+    // 실패한 스크립트 태그를 문서에 남겨두면, 이미 load/error 이벤트가
+    // 끝난 태그라 다음 시도에서 재사용해도 이벤트가 다시 발생하지 않아
+    // Promise가 영원히 대기하게 된다. 다음 시도가 새 <script>를 새로
+    // 만들 수 있도록 실패 시 태그 자체를 제거한다.
+    const resetFailedScript = () => {
+      sdkPromise = null;
+
+      document.getElementById(NAVER_AUTH_SCRIPT_ID)?.remove();
+    };
+
     const handleLoad = () => {
       if (!window.naver?.LoginWithNaverId) {
-        sdkPromise = null;
+        resetFailedScript();
         reject(new Error('네이버 SDK를 초기화하지 못했습니다.'));
         return;
       }
@@ -29,7 +39,7 @@ export function loadNaverAuthSdk(): Promise<void> {
     };
 
     const handleError = () => {
-      sdkPromise = null;
+      resetFailedScript();
       reject(new Error('네이버 SDK를 불러오지 못했습니다.'));
     };
 
