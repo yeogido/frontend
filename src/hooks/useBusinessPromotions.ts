@@ -14,8 +14,13 @@ interface BusinessPromotionsPageParam {
   cursorId?: number;
 }
 
+interface UseBusinessPromotionsOptions {
+  enabled?: boolean;
+}
+
 export function useBusinessPromotions(
-  params: BusinessPromotionListParams = {}
+  params: BusinessPromotionListParams = {},
+  options: UseBusinessPromotionsOptions = {}
 ) {
   return useInfiniteQuery<
     BusinessPromotionListResponse,
@@ -32,6 +37,7 @@ export function useBusinessPromotions(
         cursorId: pageParam.cursorId,
       }),
     initialPageParam: {},
+    enabled: options.enabled,
     getNextPageParam: (lastPage) => {
       if (!lastPage.hasNext) return undefined;
 

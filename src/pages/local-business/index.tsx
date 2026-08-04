@@ -50,6 +50,7 @@ function LocalBusinessPage() {
   } = useLocalBusinesses({
     selectedCategory,
     sortBy,
+    selectedRegionId,
   });
   const hasEmptyResult = !isPending && !isError && businesses.length === 0;
 
@@ -57,8 +58,6 @@ function LocalBusinessPage() {
     navigate(buildLocalBusinessDetailPath(businessId));
   };
 
-  // TODO: BusinessItem.location이 자유 텍스트라 현재 필터링 불가.
-  // location을 RegionCityId 기반으로 정규화하는 작업 필요 - 별도 이슈
   const handleSelectRegion = (region: { id: string }) => {
     setSelectedRegionId(region.id as RegionCityId);
   };
