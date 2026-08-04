@@ -5,6 +5,7 @@ import { geoMercator, geoPath } from 'd3-geo';
 
 import koreaProvinceJson from '../assets/korea-province.json';
 import { buildRecordPath, buildSearchPath } from '../constants/cityMeta';
+import { PROVINCE_STROKE_WIDTH } from '../constants/map';
 
 import type { RegionPhotoMap } from '../types/regionPhoto';
 
@@ -16,10 +17,12 @@ const koreaProvince =
   koreaProvinceJson as GeoJSON.FeatureCollection;
 
 interface ProvinceLayerProps {
+  /** 줌과 무관하게 선 굵기를 유지하기 위해 나눌 배율 */
+  renderScale: number;
   regionPhotos: RegionPhotoMap;
 }
 
-function ProvinceLayer({ regionPhotos }: ProvinceLayerProps) {
+function ProvinceLayer({ renderScale, regionPhotos }: ProvinceLayerProps) {
   const navigate = useNavigate();
 
   const projection = useMemo(
@@ -68,6 +71,8 @@ function ProvinceLayer({ regionPhotos }: ProvinceLayerProps) {
     navigate(buildSearchPath(name));
   };
 
+  const strokeWidth = Math.max(PROVINCE_STROKE_WIDTH / renderScale, 0.12);
+
   return (
     <>
       {paths.map(({ index, name, d }) => {
@@ -79,7 +84,7 @@ function ProvinceLayer({ regionPhotos }: ProvinceLayerProps) {
             d={d}
             fill="transparent"
             stroke="#FF6F41"
-            strokeWidth={1}
+            strokeWidth={strokeWidth}
             style={{ cursor: 'pointer' }}
             onClick={() => handleClick(name)}
           />

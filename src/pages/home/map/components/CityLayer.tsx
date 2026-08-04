@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { geoMercator, geoPath } from 'd3-geo';
 
-import { CITY_LAYER_ZOOM } from '../constants/map';
+import { CITY_LAYER_ZOOM, CITY_STROKE_WIDTH } from '../constants/map';
 import { buildRecordPath, buildSearchPath } from '../constants/cityMeta';
 import { isMetroCityCode } from '../utils/metroCityCodes';
 
@@ -20,10 +20,12 @@ const MAP_PADDING = 20;
 
 interface CityLayerProps {
   zoomLevel: number;
+  /** 줌과 무관하게 선 굵기를 유지하기 위해 나눌 배율 */
+  renderScale: number;
   regionPhotos: RegionPhotoMap;
 }
 
-function CityLayer({ zoomLevel, regionPhotos }: CityLayerProps) {
+function CityLayer({ zoomLevel, renderScale, regionPhotos }: CityLayerProps) {
   const navigate = useNavigate();
 
   const projection = useMemo(
@@ -44,6 +46,7 @@ function CityLayer({ zoomLevel, regionPhotos }: CityLayerProps) {
   );
 
   const isVisible = zoomLevel >= CITY_LAYER_ZOOM;
+  const strokeWidth = Math.max(CITY_STROKE_WIDTH / renderScale, 0.06);
 
   const handleClick = (name: string) => {
     if (!name) return;
@@ -86,7 +89,7 @@ function CityLayer({ zoomLevel, regionPhotos }: CityLayerProps) {
             d={d}
             fill="transparent"
             stroke="#FF6F41"
-            strokeWidth={0.5}
+            strokeWidth={strokeWidth}
             strokeOpacity={isVisible ? 1 : 0}
             pointerEvents={isInteractive ? 'all' : 'none'}
             style={{ cursor: isInteractive ? 'pointer' : 'default' }}

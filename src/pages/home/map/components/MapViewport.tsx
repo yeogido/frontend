@@ -35,9 +35,16 @@ const MapViewport = forwardRef<SVGGElement, MapViewportProps>(
             사진은 줌과 무관하게 항상 그려진다. */}
         <PhotoLayer regionPhotos={regionPhotos} />
 
-        <ProvinceLayer regionPhotos={regionPhotos} />
+        <ProvinceLayer
+          renderScale={renderScale}
+          regionPhotos={regionPhotos}
+        />
 
-        <CityLayer zoomLevel={zoomLevel} regionPhotos={regionPhotos} />
+        <CityLayer
+          zoomLevel={zoomLevel}
+          renderScale={renderScale}
+          regionPhotos={regionPhotos}
+        />
 
         {/* 독도는 geojson에 없어 실제 좌표로 따로 그린다.
             라벨과 같은 배율·줌 기준을 써서 글씨를 맞춘다. */}
