@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { ReviewCard } from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { getGutter } from '../../utils/responsiveLayout';
 import { ReviewButton } from '../detail/components';
 import type { CourseReview } from '../detail/types/courseDetail';
 
@@ -13,7 +15,7 @@ import type { CourseReviewType } from './courseReviewRoute';
 import type { CourseReviewSort } from './courseReviewSort';
 
 const PAGE_PADDING_TOP = 12;
-const PAGE_PADDING_BOTTOM = 40;
+const PAGE_PADDING_BOTTOM = 117;
 const TITLE_SIZE = 18;
 const TITLE_LINE_HEIGHT = 22;
 const DESCRIPTION_MARGIN_TOP = 6;
@@ -22,7 +24,7 @@ const DESCRIPTION_LINE_HEIGHT = 17;
 const FILTER_MARGIN_TOP = 11;
 const LIST_MARGIN_TOP = 12;
 const LIST_GAP = 16;
-const REVIEW_BUTTON_MARGIN_TOP = 24;
+const REVIEW_BUTTON_BOTTOM = 32;
 
 interface CourseReviewListLocationState {
   courseTitle?: string;
@@ -51,6 +53,22 @@ function CourseReviewsPage() {
           )
         : displayReviews,
     [displayReviews, sort]
+  );
+  const reviewButton = (
+    <div
+      className="pointer-events-none fixed bottom-0 left-1/2 z-30 flex w-full max-w-[500px] -translate-x-1/2"
+      style={{
+        bottom: `max(${REVIEW_BUTTON_BOTTOM * scale}px, env(safe-area-inset-bottom, 0px))`,
+        paddingInline: getGutter(scale),
+      }}
+    >
+      <ReviewButton
+        className="pointer-events-auto"
+        onClick={() =>
+          courseId && navigate(`/review?type=${courseType}&id=${courseId}`)
+        }
+      />
+    </div>
   );
 
   return (
@@ -108,14 +126,10 @@ function CourseReviewsPage() {
             />
           ))}
         </div>
-        <div style={{ marginTop: REVIEW_BUTTON_MARGIN_TOP * scale }}>
-          <ReviewButton
-            onClick={() =>
-              courseId && navigate(`/review?type=${courseType}&id=${courseId}`)
-            }
-          />
-        </div>
       </section>
+      {typeof document === 'undefined'
+        ? reviewButton
+        : createPortal(reviewButton, document.body)}
     </ResponsivePageShell>
   );
 }
