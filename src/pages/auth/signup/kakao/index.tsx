@@ -1,41 +1,123 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import type { FormEvent, ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
+import type { NormalizedApiError } from '../../../../apis/common';
+import { completeSocialSignup } from '../../../../apis/auth.api';
 import { KakaoIcon } from '../../../../components/auth';
 import { Logo } from '../../../../components/common';
 import { BIRTH_YEARS } from '../../../../constants/birthYears';
-import { SIGNUP_REGIONS } from '../../../../constants/signupRegions';
+import { useRegions } from '../../../../hooks/useRegions';
+import { useAuthStore } from '../../../../store/auth.store';
+import type { SocialGender } from '../../../../types/auth.type';
 
-const genders = ['여성', '남성', '선택 안 함'];
+const genders: { label: string; value: SocialGender }[] = [
+  { label: '여성', value: 'FEMALE' },
+  { label: '남성', value: 'MALE' },
+];
+
+const DEFAULT_ERROR_MESSAGE = '회원가입에 실패했습니다. 다시 시도해 주세요.';
+
+// social-signup/complete API에 실제로 매핑된 에러 코드만 반영.
+const SIGNUP_ERROR_MESSAGES: Record<string, string> = {
+  COMMON4001: '잘못된 요청입니다.',
+  AUTH4003: '인증이 만료되었습니다. 처음부터 다시 시도해 주세요.',
+  REGION4041: '선택한 지역을 찾을 수 없습니다.',
+  USER4091: '이미 가입된 이메일입니다.',
+  AUTH4091: '이미 가입된 소셜 계정입니다.',
+};
+
+interface KakaoSignupLocationState {
+  temporaryToken?: string;
+  name?: string;
+}
+
+function isNormalizedApiError(error: unknown): error is NormalizedApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    'message' in error
+  );
+}
 
 function KakaoSignupPage() {
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [region, setRegion] = useState('');
+  const location = useLocation();
+  const locationState = location.state as KakaoSignupLocationState | null;
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const { data: regionsData } = useRegions();
+
+  const temporaryToken = locationState?.temporaryToken;
+
+  const [name, setName] = useState(locationState?.name ?? '');
+  const [regionId, setRegionId] = useState('');
   const [gender, setGender] = useState('');
   const [birthYear, setBirthYear] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const isFormComplete =
     name.trim().length > 0 &&
-    region.trim().length > 0 &&
+    regionId.trim().length > 0 &&
     gender.trim().length > 0 &&
     birthYear.trim().length > 0;
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!isFormComplete || !temporaryToken) {
+      return;
+    }
+
+    setSubmitError('');
+    setIsSubmitting(true);
+
+    try {
+      const result = await completeSocialSignup({
+        temporaryToken,
+        name: name.trim(),
+        gender: gender as SocialGender,
+        birthYear,
+        regionId: Number(regionId),
+      });
+
+      setAuth(result);
+      navigate('/');
+    } catch (error) {
+      const code = isNormalizedApiError(error) ? error.code : undefined;
+
+      setSubmitError(
+        (code && SIGNUP_ERROR_MESSAGES[code]) ?? DEFAULT_ERROR_MESSAGE
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!temporaryToken) {
+    return (
+      <main className="min-h-dvh bg-white">
+        <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col items-center justify-center px-6 text-center">
+          <p className="text-sm font-medium text-gray-4">
+            잘못된 접근입니다. 로그인 화면에서 다시 시도해 주세요.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="mt-4 text-sm font-bold text-main-5"
+          >
+            로그인으로 이동
+          </button>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-dvh bg-white">
       <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
-        <form
-          className="flex-1"
-          onSubmit={(event) => {
-            event.preventDefault();
-
-            if (!isFormComplete) {
-              return;
-            }
-
-            navigate('/login');
-          }}
-        >
+        <form className="flex-1" onSubmit={handleSubmit}>
           <div className="mb-8 flex justify-start">
             <Logo />
           </div>
@@ -86,14 +168,14 @@ function KakaoSignupPage() {
               <SelectField>
                 <select
                   id="kakao-region"
-                  value={region}
-                  onChange={(event) => setRegion(event.target.value)}
+                  value={regionId}
+                  onChange={(event) => setRegionId(event.target.value)}
                   className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
                 >
                   <option value="">거주 중인 지역을 선택해 주세요</option>
-                  {SIGNUP_REGIONS.map((region) => (
-                    <option key={region} value={region}>
-                      {region}
+                  {(regionsData?.regions ?? []).map((region) => (
+                    <option key={region.regionId} value={region.regionId}>
+                      {region.name}
                     </option>
                   ))}
                 </select>
@@ -109,9 +191,12 @@ function KakaoSignupPage() {
                   className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
                 >
                   <option value="">성별을 선택해 주세요</option>
-                  {genders.map((gender) => (
-                    <option key={gender} value={gender}>
-                      {gender}
+                  {genders.map((genderOption) => (
+                    <option
+                      key={genderOption.value}
+                      value={genderOption.value}
+                    >
+                      {genderOption.label}
                     </option>
                   ))}
                 </select>
@@ -137,12 +222,18 @@ function KakaoSignupPage() {
             </Field>
           </div>
 
+          {submitError && (
+            <p className="mt-4 text-center text-xs font-medium text-main-5">
+              {submitError}
+            </p>
+          )}
+
           <button
             type="submit"
-            disabled={!isFormComplete}
+            disabled={!isFormComplete || isSubmitting}
             className="mt-8 h-12 w-full rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-gray-2 disabled:text-gray-3 enabled:bg-main-5 enabled:text-white"
           >
-            여기도 시작하기
+            {isSubmitting ? '가입 처리 중...' : '여기도 시작하기'}
           </button>
         </form>
       </section>
@@ -157,7 +248,7 @@ function Field({
 }: {
   label: string;
   htmlFor: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div>
@@ -172,7 +263,7 @@ function Field({
   );
 }
 
-function SelectField({ children }: { children: React.ReactNode }) {
+function SelectField({ children }: { children: ReactNode }) {
   return (
     <div className="relative">
       {children}

@@ -10,6 +10,7 @@ import ForgotPasswordPage from '../pages/auth/forgot-password';
 import ForgotPasswordResetPage from '../pages/auth/forgot-password/reset';
 import SignupPage from '../pages/auth/signup';
 import KakaoSignupPage from '../pages/auth/signup/kakao';
+import KakaoCallbackPage from '../pages/auth/kakao-callback';
 import NaverSignupPage from '../pages/auth/signup/naver';
 import LocalCoursePage from '../pages/local-course';
 import LocalCoursePopularPage from '../pages/local-course/popular';
@@ -177,6 +178,7 @@ function AppRouter() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />
+        <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
       </Route>
       <Route
         path="/yeogido-course/detail/:courseId"

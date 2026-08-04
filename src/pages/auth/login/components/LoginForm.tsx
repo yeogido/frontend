@@ -16,9 +16,16 @@ import {
 interface LoginFormProps {
   onSubmit: (values: LoginFormValues) => Promise<void>;
   submitError?: string;
+  onKakaoLogin?: () => void;
+  isKakaoLoading?: boolean;
 }
 
-function LoginForm({ onSubmit, submitError }: LoginFormProps) {
+function LoginForm({
+  onSubmit,
+  submitError,
+  onKakaoLogin,
+  isKakaoLoading,
+}: LoginFormProps) {
   const {
     register,
     handleSubmit,
@@ -138,7 +145,9 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
               <button
                 type="button"
                 aria-label="카카오로 로그인"
-                className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#FEE500] text-black shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
+                onClick={onKakaoLogin}
+                disabled={isKakaoLoading}
+                className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#FEE500] text-black shadow-[0_1px_4px_rgba(0,0,0,0.05)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <KakaoIcon
                   width={24}
