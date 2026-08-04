@@ -10,10 +10,9 @@ import RegionReviewSection from './components/RegionReviewSection';
 function RegionInfoPage() {
   const { region } = useParams();
 
-  const regionInfo =
-    region && regionInfoMap[region]
-      ? regionInfoMap[region]
-      : regionInfoMap.busan;
+  const isKnownRegion = Boolean(region && regionInfoMap[region]);
+  const regionSlug = isKnownRegion ? (region as string) : 'busan';
+  const regionInfo = regionInfoMap[regionSlug];
 
   const { data: regionsData, isPending: isRegionsPending } = useRegions();
   const regionId = regionsData?.regions.find(
@@ -38,6 +37,9 @@ function RegionInfoPage() {
 
       <RegionReviewSection
         regionName={regionInfo.name}
+        regionSlug={regionSlug}
+        regionId={regionId}
+        isRegionLoading={isRegionsPending}
       />
     </main>
   );
