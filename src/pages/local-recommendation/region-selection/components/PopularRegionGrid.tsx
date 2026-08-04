@@ -1,5 +1,5 @@
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import type { Region } from '../../../../types/region.type';
+import type { PopularRegionResponse } from '../../../../types/region.type';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 32;
@@ -13,8 +13,8 @@ const CARD_TEXT_INSET = 12;
 const CARD_NAME_SIZE = 14;
 
 interface PopularRegionGridProps {
-  regions: readonly Region[];
-  onSelect: (region: Region) => void;
+  regions: readonly PopularRegionResponse[];
+  onSelect: (region: PopularRegionResponse) => void;
 }
 
 function PopularRegionGrid({ regions, onSelect }: PopularRegionGridProps) {
