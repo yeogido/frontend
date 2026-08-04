@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getPopularRegions, searchRegions } from '../../../apis/regions.api';
 import { LoadingSpinner } from '../../../components/common';
@@ -37,6 +37,7 @@ function LocalRecommendationPage() {
     (state) => state.setNeighborhood
   );
   const { recentRegions, addRecentRegion } = useRecentRegions();
+  const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] =
@@ -50,13 +51,15 @@ function LocalRecommendationPage() {
 
   const trimmedSearchQuery = searchQuery.trim();
 
+  const searchNeighborhoods = async (query: string) =>
+    (await searchRegions(query)).map(fromSearchResult);
+
   // 검색창에 입력하는 즉시(타이핑마다) 백엔드에 물어 연관 검색어를 채운다.
   // 백엔드가 이름 LIKE(부분 문자열) 매칭이라 SearchBar의 로컬 재필터를
   // 그대로 통과하므로, 이 목록을 suggestions로 넘기기만 하면 된다.
   const searchResultsQuery = useQuery({
     queryKey: ['regions', 'search', trimmedSearchQuery],
-    queryFn: async () =>
-      (await searchRegions(trimmedSearchQuery)).map(fromSearchResult),
+    queryFn: () => searchNeighborhoods(trimmedSearchQuery),
     enabled: trimmedSearchQuery.length > 0,
     staleTime: 30_000,
   });
@@ -69,9 +72,25 @@ function LocalRecommendationPage() {
 
   // 추천 목록에서 클릭했거나(정확한 이름이 그대로 들어옴) 검색어를 그대로
   // 입력해 제출한 경우, 현재 검색 결과 중 이름이 일치하는 지역을 선택한다.
-  const handleSearch = (query: string) => {
+  // 아직 응답이 없는 상태(빠른 타이핑 후 즉시 Enter)라면 결과를 기다렸다가
+  // 판단해서, 유효한 일치 결과를 조용히 놓치지 않도록 한다.
+  const handleSearch = async (query: string) => {
     const trimmedQuery = query.trim();
-    const matched = searchResultsQuery.data?.find(
+
+    if (!trimmedQuery) {
+      return;
+    }
+
+    const results =
+      trimmedQuery === trimmedSearchQuery && searchResultsQuery.data
+        ? searchResultsQuery.data
+        : await queryClient.fetchQuery({
+            queryKey: ['regions', 'search', trimmedQuery],
+            queryFn: () => searchNeighborhoods(trimmedQuery),
+            staleTime: 30_000,
+          });
+
+    const matched = results.find(
       (neighborhood) => neighborhood.name === trimmedQuery
     );
 
