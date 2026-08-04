@@ -16,9 +16,20 @@ import {
 interface LoginFormProps {
   onSubmit: (values: LoginFormValues) => Promise<void>;
   submitError?: string;
+  onKakaoLogin?: () => void;
+  isKakaoLoading?: boolean;
+  onNaverLogin?: () => void;
+  isNaverLoading?: boolean;
 }
 
-function LoginForm({ onSubmit, submitError }: LoginFormProps) {
+// 이 브랜치는 네이버 소셜 로그인만 다룬다. onKakaoLogin/isKakaoLoading은
+// 카카오 작업 재개 시 쓸 수 있도록 타입만 유지하고, 여기서는 받지 않는다.
+function LoginForm({
+  onSubmit,
+  submitError,
+  onNaverLogin,
+  isNaverLoading,
+}: LoginFormProps) {
   const {
     register,
     handleSubmit,
@@ -151,7 +162,9 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
               <button
                 type="button"
                 aria-label="네이버로 로그인"
-                className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
+                onClick={onNaverLogin}
+                disabled={isNaverLoading}
+                className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <NaverIcon
                   width={20}
