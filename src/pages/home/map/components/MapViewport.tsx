@@ -56,6 +56,7 @@ const MapViewport = forwardRef<SVGGElement, MapViewportProps>(
         <LabelLayer
           zoomLevel={zoomLevel}
           renderScale={labelRenderScale ?? renderScale}
+          regionPhotos={regionPhotos}
         />
 
         {markers.length > 0 ? (

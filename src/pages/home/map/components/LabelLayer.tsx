@@ -19,11 +19,18 @@ import {
 import koreaCityJson from '../assets/korea-city.json';
 import koreaProvinceJson from '../assets/korea-province.json';
 
+import type { RegionPhotoMap } from '../types/regionPhoto';
+
 const MAP_PADDING = 20;
+
+const LABEL_COLOR = '#FF6F41';
+/** 사진이 채워진 지역은 스크림 위에 얹히므로 흰 글씨를 쓴다. */
+const PHOTO_LABEL_COLOR = '#FFFFFF';
 
 interface LabelLayerProps {
   zoomLevel: number;
   renderScale: number;
+  regionPhotos: RegionPhotoMap;
 }
 
 interface LabelCandidate {
@@ -33,6 +40,7 @@ interface LabelCandidate {
   name: string;
   area: number;
   fontSize: number;
+  hasPhoto: boolean;
 }
 
 function estimateLabelWidth(text: string, fontSize: number) {
@@ -83,7 +91,11 @@ function pickNonOverlappingLabels(
   return accepted;
 }
 
-function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
+function LabelLayer({
+  zoomLevel,
+  renderScale,
+  regionPhotos,
+}: LabelLayerProps) {
   const isCity = useMemo(
     () => zoomLevel >= CITY_LAYER_ZOOM,
     [zoomLevel],
@@ -183,6 +195,7 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
           name: toRegionLabel(metro.name),
           area: Number.MAX_SAFE_INTEGER,
           fontSize: fontSize * 1.4,
+          hasPhoto: Boolean(regionPhotos[metro.name]),
         });
       });
     }
@@ -221,6 +234,7 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
         name: toRegionLabel(name),
         area,
         fontSize,
+        hasPhoto: Boolean(regionPhotos[name]),
       });
     });
 
@@ -231,19 +245,20 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
     isCity,
     fontSize,
     metroLabelPositions,
+    regionPhotos,
   ]);
 
   return (
     <>
       {visibleLabels.map(
-        ({ index, x, y, name, fontSize: size }) => (
+        ({ index, x, y, name, fontSize: size, hasPhoto }) => (
           <text
             key={index}
             x={x}
             y={y}
             fontSize={size}
             fontWeight={600}
-            fill="#FF6F41"
+            fill={hasPhoto ? PHOTO_LABEL_COLOR : LABEL_COLOR}
             textAnchor="middle"
             dominantBaseline="middle"
             pointerEvents="none"

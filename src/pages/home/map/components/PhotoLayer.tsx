@@ -16,6 +16,13 @@ const MAP_PADDING = 20;
 const koreaProvince = koreaProvinceJson as GeoJSON.FeatureCollection;
 const koreaCity = koreaCityJson as KoreaCityGeoJson;
 
+/**
+ * 사진 위에 덮는 스크림. 사진마다 밝기가 제각각이라 그대로 두면 흰
+ * 지역명이 묻힌다. 값은 디자인(Figma) 기준.
+ */
+const PHOTO_SCRIM_COLOR = '#000000';
+const PHOTO_SCRIM_OPACITY = 0.32;
+
 interface PhotoLayerProps {
   /** 여행 기록 페이지에서 받아온, 지역명 → 대표 사진 매핑 */
   regionPhotos: RegionPhotoMap;
@@ -151,6 +158,13 @@ function PhotoLayer({ regionPhotos }: PhotoLayerProps) {
               height={height}
               preserveAspectRatio="xMidYMid slice"
               clipPath={`url(#${clipId})`}
+            />
+
+            {/* 도형과 같은 path라 클리핑 없이도 사진 영역에만 얹힌다 */}
+            <path
+              d={d}
+              fill={PHOTO_SCRIM_COLOR}
+              fillOpacity={PHOTO_SCRIM_OPACITY}
             />
           </g>
         );
