@@ -7,6 +7,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { getCourseReviewIndex } from '../utils/courseReviewCarousel';
 
 const SECTION_GAP = 14;
+const REVIEW_CARD_GAP = 16;
 
 const DOT_GAP = 4;
 const DOT_SIZE = 4;
@@ -22,11 +23,13 @@ const EMPTY_STATE_FONT_SIZE = 14;
 export interface DetailReviewSectionProps {
   readonly reviews: readonly CourseReview[];
   readonly className?: string;
+  readonly onActionClick?: () => void;
 }
 
 export function DetailReviewSection({
   reviews,
   className = '',
+  onActionClick,
 }: DetailReviewSectionProps) {
   const scale = useGlobalScale();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -49,7 +52,8 @@ export function DetailReviewSection({
           getCourseReviewIndex(
             container.scrollLeft,
             container.clientWidth,
-            reviews.length
+            reviews.length,
+            REVIEW_CARD_GAP * scale
           )
         );
       });
@@ -61,7 +65,7 @@ export function DetailReviewSection({
       container.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(rafId);
     };
-  }, [reviews.length]);
+  }, [reviews.length, scale]);
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current;
@@ -71,7 +75,7 @@ export function DetailReviewSection({
     }
 
     container.scrollTo({
-      left: container.clientWidth * index,
+      left: (container.clientWidth + REVIEW_CARD_GAP * scale) * index,
       behavior: 'smooth',
     });
   };
@@ -83,7 +87,11 @@ export function DetailReviewSection({
         gap: SECTION_GAP * scale,
       }}
     >
-      <SectionHeader title="최근 여행자들의 후기" actionText="전체보기" />
+      <SectionHeader
+        title="최근 여행자들의 후기"
+        actionText="전체보기"
+        onActionClick={onActionClick}
+      />
 
       {reviews.length === 0 ? (
         <div
@@ -102,6 +110,7 @@ export function DetailReviewSection({
         <div
           ref={scrollRef}
           className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto"
+          style={{ gap: REVIEW_CARD_GAP * scale }}
         >
           {reviews.map((review) => (
             <div
@@ -115,6 +124,7 @@ export function DetailReviewSection({
                 meta={review.meta}
                 content={review.content}
                 rating={review.rating}
+                isMine={review.isMine}
                 className="[&>div>article]:!bg-background"
               />
             </div>

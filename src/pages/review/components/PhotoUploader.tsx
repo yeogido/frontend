@@ -1,22 +1,22 @@
 import type { ChangeEvent, RefObject } from 'react';
-import { IoImage } from 'react-icons/io5';
 
+import upload from '../../travel-record/photo-selection/assets/photo-upload-icon.svg';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 31;
 const TITLE_FONT_SIZE = 16;
 const TITLE_LINE_HEIGHT = 24;
-const UPLOADER_MARGIN_TOP = 6;
+const UPLOADER_MARGIN_TOP = 12;
 const UPLOADER_HEIGHT = 213;
 const UPLOADER_RADIUS = 12;
 const UPLOADER_BORDER_WIDTH = 1;
 const ICON_CIRCLE_SIZE = 51;
-const ICON_SIZE = 27;
-const STRONG_MARGIN_TOP = 17;
+const ICON_SIZE = 32;
+const STRONG_MARGIN_TOP = 18;
 const STRONG_FONT_SIZE = 14;
 const STRONG_LINE_HEIGHT = 20;
-const DESCRIPTION_MARGIN_TOP = 7;
+const DESCRIPTION_MARGIN_TOP = 12;
 const DESCRIPTION_FONT_SIZE = 12;
 const DESCRIPTION_LINE_HEIGHT = 18;
 
@@ -75,10 +75,12 @@ function PhotoUploader({ inputRef, onChange, disabled }: PhotoUploaderProps) {
             height: ICON_CIRCLE_SIZE * scale,
           }}
         >
-          <IoImage
+          <img
+            src={upload}
+            alt=""
             aria-hidden="true"
-            className={disabled ? 'text-gray-4' : 'text-main-5'}
-            style={{ fontSize: ICON_SIZE * scale }}
+            className={disabled ? 'opacity-40' : ''}
+            style={{ width: ICON_SIZE * scale, height: ICON_SIZE * scale }}
           />
         </span>
         <strong
