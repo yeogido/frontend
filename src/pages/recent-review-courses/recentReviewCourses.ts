@@ -33,7 +33,7 @@ export const recentReviewCourses: RecentReviewCourse[] = [
     nickname: '지우',
     meta: '20대 남',
     content: '골목마다 들를 곳이 많아서 하루가 정말 알찼어요. 다음에도 또 가고 싶어요!',
-    rating: 5,
+    rating: 4,
     liked: false,
   },
   {

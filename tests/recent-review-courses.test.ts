@@ -21,3 +21,7 @@ test('recent review courses provides course and review details for each card', (
     liked: false,
   });
 });
+
+test('recent review courses can display a four-star review', () => {
+  assert.ok(recentReviewCourses.some((course) => course.rating === 4));
+});
