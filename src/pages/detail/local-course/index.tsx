@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -8,8 +8,12 @@ import { useToast } from '../../../components/toast';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
 import { NotFoundPage } from '../../not-found';
+import { saveRecentCourse } from '../../../utils/recentCourses';
 import { CourseDetailLayout, DetailStateGuard } from '../components';
-import { mapCourseApiDetailToDto } from '../mappers/courseApiDetailMapper';
+import {
+  mapCourseApiDetailToCourseSummary,
+  mapCourseApiDetailToDto,
+} from '../mappers/courseApiDetailMapper';
 import { mapCourseDetailDtoToViewModel } from '../mappers/courseDetailMapper';
 import {
   useLocalCourseDetail,
@@ -75,6 +79,15 @@ function LocalCourseDetailPage() {
     } catch {
       return null;
     }
+  }, [data]);
+
+  useEffect(() => {
+    if (!data || data.courseType !== 'LOCAL') return;
+
+    saveRecentCourse({
+      ...mapCourseApiDetailToCourseSummary(data),
+      courseType: 'LOCAL',
+    });
   }, [data]);
 
   if (courseId === null || isError || (data && !course)) {
