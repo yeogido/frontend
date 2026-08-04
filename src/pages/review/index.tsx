@@ -64,7 +64,7 @@ function ReviewPage() {
   const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [isLoadingCourse, setIsLoadingCourse] = useState(Boolean(targetId));
 
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState<number | null>(5);
   const [review, setReview] = useState('');
   const [selectedPhotos, setSelectedPhotos] = useState<
     Array<{ file: File; previewUrl: string }>
@@ -72,7 +72,11 @@ function ReviewPage() {
   const photoPickerRef = useRef<HTMLInputElement>(null);
   const selectedPhotosRef = useRef(selectedPhotos);
   const isMaxPhotosReached = selectedPhotos.length >= MAX_REVIEW_PHOTOS;
-  const canSubmit = isReviewFormValid({ rating, review });
+  const canSubmit = isReviewFormValid({
+    rating,
+    review,
+    photoCount: selectedPhotos.length,
+  });
 
   // targetType 및 targetId에 맞춰 코스/장소 데이터 API 조회
   useEffect(() => {
@@ -208,11 +212,14 @@ function ReviewPage() {
       <form onSubmit={handleSubmit}>
         <ReviewHeader />
         <ReviewCourseCard
-          title={courseData?.title}
-          image={courseData?.image}
-          duration={courseData?.duration}
-          courseType={courseData?.courseType}
-          companion={courseData?.companion}
+          course={{
+            id: targetId ?? 'fallback',
+            title: courseData?.title ?? '강릉 혼자 여행 코스',
+            thumbnailUrl: courseData?.image,
+            duration: courseData?.duration ?? '2박 3일',
+            transport: courseData?.courseType ?? '뚜벅이 코스',
+            companion: courseData?.companion ?? '혼자',
+          }}
         />
 
         <PhotoUploader

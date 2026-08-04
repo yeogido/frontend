@@ -9,7 +9,7 @@ const ROW_GAP = 0;
 const STAR_VISUAL_SIZE = 46;
 
 interface RatingStarsProps {
-  value: number;
+  value: number | null;
   onChange: (value: number) => void;
 }
 
@@ -33,7 +33,7 @@ function RatingStars({ value, onChange }: RatingStarsProps) {
           key={rating}
           type="button"
           aria-label={`${rating}점`}
-          aria-pressed={value === rating}
+            aria-pressed={value === rating}
           onClick={() => onChange(rating)}
           className="flex items-center justify-center"
           style={{
@@ -44,10 +44,12 @@ function RatingStars({ value, onChange }: RatingStarsProps) {
           }}
         >
           <img
-            src={rating <= value ? star : darkStar}
+            src={value !== null && rating <= value ? star : darkStar}
             alt=""
             aria-hidden="true"
-            className={rating <= value ? '' : 'scale-[1.42]'}
+            className={
+              value !== null && rating <= value ? '' : 'scale-[1.42]'
+            }
             style={{ width: starVisualSize, height: starVisualSize }}
           />
         </button>

@@ -3,6 +3,7 @@ import location from '../../../assets/icons/location.svg';
 import people from '../../../assets/icons/people.svg';
 import upload from '../../../assets/icons/upload.svg';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import type { ReviewCourseCardData } from '../reviewCourse';
 
 // Figma 390 디자인 기준 리터럴 px
 const CARD_MARGIN_TOP = 29;
@@ -23,23 +24,12 @@ const META_LINE_HEIGHT = 14;
 const META_ICON_SIZE = 14;
 
 export interface ReviewCourseCardProps {
-  title?: string;
-  image?: string;
-  thumbnailUrl?: string;
-  duration?: string;
-  courseType?: string;
-  companion?: string;
+  readonly course: ReviewCourseCardData;
 }
 
-function ReviewCourseCard({
-  title = '강릉 혼자 여행 코스',
-  image,
-  thumbnailUrl,
-  duration = '2박 3일',
-  courseType = '뚜벅이 코스',
-  companion = '혼자',
-}: ReviewCourseCardProps) {
-  const thumbnail = image || thumbnailUrl;
+function ReviewCourseCard({ course }: ReviewCourseCardProps) {
+  const { title, thumbnailUrl: thumbnail, duration, transport, companion } =
+    course;
   const scale = useGlobalScale();
 
   return (
@@ -124,7 +114,7 @@ function ReviewCourseCard({
               {duration}
             </span>
           )}
-          {courseType && (
+          {transport && (
             <span
               className="flex items-center whitespace-nowrap"
               style={{ gap: 2 * scale }}
@@ -135,7 +125,7 @@ function ReviewCourseCard({
                 aria-hidden="true"
                 style={{ width: META_ICON_SIZE * scale, height: META_ICON_SIZE * scale }}
               />
-              {courseType}
+              {transport}
             </span>
           )}
           {companion && (

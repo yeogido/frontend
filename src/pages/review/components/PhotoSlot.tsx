@@ -1,4 +1,4 @@
-import closeIcon from '../../../assets/icons/close.svg';
+import closeIcon from '../../../assets/icons/close-rounded.svg';
 import addIcon from '../../travel-record/photo-selection/assets/photo-add-icon.svg';
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
@@ -33,9 +33,15 @@ function PhotoSlot({ label, previewUrl, onClick, onRemove }: PhotoSlotProps) {
         style={{ borderRadius: SLOT_RADIUS * scale }}
       >
         {previewUrl ? (
-          <img src={previewUrl} alt="" className="size-full object-cover" />
+          <img
+            key={previewUrl}
+            src={previewUrl}
+            alt=""
+            className="size-full object-cover"
+          />
         ) : (
           <img
+            key="add-photo"
             src={addIcon}
             alt=""
             aria-hidden="true"
@@ -53,7 +59,7 @@ function PhotoSlot({ label, previewUrl, onClick, onRemove }: PhotoSlotProps) {
             e.stopPropagation();
             onRemove();
           }}
-          className="absolute flex items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+          className="absolute flex items-center justify-center"
           style={{
             top: -6 * scale + removeOverlap,
             right: -6 * scale + removeOverlap,
@@ -61,12 +67,21 @@ function PhotoSlot({ label, previewUrl, onClick, onRemove }: PhotoSlotProps) {
             height: removeButtonSize,
           }}
         >
-          <img
-            src={closeIcon}
-            alt=""
-            aria-hidden="true"
-            style={{ width: REMOVE_ICON_SIZE * scale, height: REMOVE_ICON_SIZE * scale }}
-          />
+          <span
+            className="flex items-center justify-center rounded-full bg-[#7F7F7F]/80 shadow-[0_2px_8px_rgba(0,0,0,0.16)]"
+            style={{ width: removeVisualSize, height: removeVisualSize }}
+          >
+            <img
+              src={closeIcon}
+              alt=""
+              aria-hidden="true"
+              className="brightness-0 invert"
+              style={{
+                width: REMOVE_ICON_SIZE * scale,
+                height: REMOVE_ICON_SIZE * scale,
+              }}
+            />
+          </span>
         </button>
       )}
     </div>

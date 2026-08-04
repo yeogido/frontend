@@ -11,7 +11,7 @@ const HELPER_FONT_SIZE = 12;
 const HELPER_LINE_HEIGHT = 14;
 
 interface ReviewRatingSectionProps {
-  value: number;
+  value: number | null;
   onChange: (rating: number) => void;
 }
 
