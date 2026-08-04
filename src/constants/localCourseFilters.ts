@@ -6,13 +6,13 @@ export const localCourseFilterGroups = [
   },
   {
     key: 'duration',
-    defaultLabel: '2박 3일',
+    defaultLabel: '전체',
     options: ['전체', '당일치기', '1박 2일', '2박 3일', '3박 이상'],
   },
   {
     key: 'companion',
-    defaultLabel: '혼자',
-    options: ['혼자', '친구와', '연인과', '가족과', '아이와'],
+    defaultLabel: '전체',
+    options: ['전체', '혼자', '친구와', '연인과', '가족과', '아이와'],
   },
   {
     key: 'sort',

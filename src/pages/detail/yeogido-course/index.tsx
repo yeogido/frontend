@@ -90,7 +90,10 @@ function YeogidoCourseDetailPage() {
   useEffect(() => {
     if (!data || data.courseType !== 'OFFICIAL') return;
 
-    saveRecentCourse(mapCourseApiDetailToCourseSummary(data));
+    saveRecentCourse({
+      ...mapCourseApiDetailToCourseSummary(data),
+      courseType: 'OFFICIAL',
+    });
   }, [data]);
 
   if (courseId === null || isLoadingError || (data && !course)) {
