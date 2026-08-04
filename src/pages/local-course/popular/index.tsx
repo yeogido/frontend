@@ -56,7 +56,7 @@ const companionTypeByLabel: Record<string, CourseCompanionType | undefined> = {
   친구와: 'FRIEND',
   연인과: 'COUPLE',
   가족과: 'FAMILY',
-  아이와: 'PET',
+  반려동물과: 'PET',
 };
 
 // LOCAL 코스 목록은 RECOMMEND 정렬을 지원하지 않아(COURSE4008),

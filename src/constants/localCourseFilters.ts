@@ -12,7 +12,7 @@ export const localCourseFilterGroups = [
   {
     key: 'companion',
     defaultLabel: '전체',
-    options: ['전체', '혼자', '친구와', '연인과', '가족과', '아이와'],
+    options: ['전체', '혼자', '친구와', '연인과', '가족과', '반려동물과'],
   },
   {
     key: 'sort',
