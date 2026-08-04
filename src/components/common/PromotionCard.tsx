@@ -64,7 +64,7 @@ function PromotionCard({
         ref={innerRef}
         onClick={onClick}
         onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
+          if (!event.repeat && (event.key === 'Enter' || event.key === ' ')) {
             event.preventDefault();
             onClick?.();
           }
