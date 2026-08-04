@@ -10,7 +10,12 @@ import {
   getPopularCourses,
   getRecommendedCourses,
 } from '../apis/courses.api';
-import { addCourseLike, removeCourseLike } from '../apis/courses';
+import {
+  addCourseLike,
+  getCourseDetail,
+  removeCourseLike,
+} from '../apis/courses';
+import type { CourseDetailResult } from '../apis/courses';
 import type { NormalizedApiError } from '../apis/common';
 import type {
   Course,
@@ -19,6 +24,9 @@ import type {
   GetPopularCoursesParams,
   RecommendedCourse,
 } from '../types/course.type';
+
+const DETAIL_STALE_TIME = 1000 * 60;
+const DETAIL_GC_TIME = 1000 * 60 * 5;
 
 interface CoursesPageParam {
   cursorValue?: string;
@@ -70,6 +78,23 @@ export function useRecommendedCourses() {
   return useQuery<RecommendedCourse[], NormalizedApiError>({
     queryKey: ['recommendedCourses'],
     queryFn: getRecommendedCourses,
+  });
+}
+
+/**
+ * 코스 상세. 여기도/동네 코스 모두 GET /courses/{courseId} 하나를 쓴다.
+ *
+ * 상세 페이지들은 각자 화면 전용 캐시 키로 같은 조회를 따로 갖고 있어서,
+ * 상세 화면 밖(리뷰 작성 등)에서 코스를 읽어야 할 때 쓰라고 공용으로 둔다.
+ */
+export function useCourseDetail(courseId: number | null) {
+  return useQuery<CourseDetailResult, NormalizedApiError>({
+    queryKey: ['courseDetail', courseId],
+    queryFn: () => getCourseDetail(courseId as number),
+    enabled: courseId !== null,
+    staleTime: DETAIL_STALE_TIME,
+    gcTime: DETAIL_GC_TIME,
+    refetchOnWindowFocus: false,
   });
 }
 
