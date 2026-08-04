@@ -1,11 +1,12 @@
 import type { KeyboardEvent } from 'react';
 
-import more from '../../assets/icons/more.svg';
 import darkStar from '../../assets/icons/dark star.svg';
 import star from '../../assets/icons/star.svg';
 
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useMeasuredScaledHeight } from '../../hooks/useMeasuredScaledHeight';
+
+import ReviewActionMenu from './ReviewActionMenu';
 
 // Figma 390 디자인 기준 리터럴 px (카드 자체 폭 290 기준)
 const CARD_DESIGN_WIDTH = 342;
@@ -38,7 +39,8 @@ export interface ReviewCardProps {
   rating?: number;
   isMine?: boolean;
   onClick?: () => void;
-  onMoreClick?: () => void;
+  onEditClick?: () => void;
+  onDeleteClick?: () => void;
   className?: string;
 }
 
@@ -51,7 +53,8 @@ function ReviewCard({
   rating = 5,
   isMine = false,
   onClick,
-  onMoreClick,
+  onEditClick,
+  onDeleteClick,
   className = '',
 }: ReviewCardProps) {
   const scale = useGlobalScale();
@@ -152,24 +155,11 @@ function ReviewCard({
                 {content}
               </p>
 
-              {isMine && onMoreClick ? (
-                <button
-                  type="button"
-                  aria-label="리뷰 메뉴"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onMoreClick?.();
-                  }}
-                  className="-mt-[3px] -mr-[3px] ml-2 flex shrink-0 items-center justify-center"
-                  style={{ width: 20, height: 20 }}
-                >
-                  <img
-                    src={more}
-                    alt=""
-                    aria-hidden="true"
-                    style={{ width: 20, height: 20 }}
-                  />
-                </button>
+              {isMine ? (
+                <ReviewActionMenu
+                  onEditClick={onEditClick}
+                  onDeleteClick={onDeleteClick}
+                />
               ) : null}
             </div>
 

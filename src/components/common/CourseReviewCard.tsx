@@ -10,6 +10,7 @@ import star from '../../assets/icons/star.svg';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 import type { TagId } from '../../types/tag.type';
 
+import ReviewActionMenu from './ReviewActionMenu';
 import TagChip from './TagChip';
 
 const CARD_DESIGN_WIDTH = 342;
@@ -20,16 +21,21 @@ export interface CourseReviewCardProps {
   title: string;
   duration: string;
   courseType: string;
-  companion: string;
-  tags: TagId[];
+  // 리뷰 목록 API의 코스 정보에는 동행·해시태그가 없어, 값이 없으면 해당
+  // 항목만 빼고 그린다. 백엔드에 추가 요청해 둔 상태다.
+  companion?: string;
+  tags?: TagId[];
   profileImage: string;
   nickname: string;
   meta: string;
   content: string;
   rating?: number;
   liked?: boolean;
+  isMine?: boolean;
   onClick?: () => void;
   onLikeClick?: () => void;
+  onEditClick?: () => void;
+  onDeleteClick?: () => void;
 }
 
 function CourseReviewCard({
@@ -38,15 +44,18 @@ function CourseReviewCard({
   duration,
   courseType,
   companion,
-  tags,
+  tags = [],
   profileImage,
   nickname,
   meta,
   content,
   rating = 5,
   liked = false,
+  isMine = false,
   onClick,
   onLikeClick,
+  onEditClick,
+  onDeleteClick,
 }: CourseReviewCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
@@ -66,7 +75,7 @@ function CourseReviewCard({
     { icon: calendar, label: duration },
     { icon: location, label: courseType },
     { icon: people, label: companion },
-  ];
+  ].filter((item) => Boolean(item.label));
 
   return (
     <div
@@ -131,18 +140,31 @@ function CourseReviewCard({
           </div>
         </div>
 
-        <button
-          type="button"
-          aria-label={liked ? '좋아요 취소' : '좋아요'}
-          aria-pressed={liked}
-          onClick={(event) => {
-            event.stopPropagation();
-            onLikeClick?.();
-          }}
-          className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center"
-        >
-          <img src={liked ? oheart : heart} alt="" aria-hidden="true" />
-        </button>
+        {/*
+          내가 쓴 후기에는 좋아요 대신 더보기를 같은 자리에 둔다. 두 아이콘을
+          같이 쌓으면 하트가 후기에 대한 것으로 오해된다.
+          카드가 overflow-hidden이라 메뉴 패널은 포털로 뜬다.
+        */}
+        {isMine ? (
+          <ReviewActionMenu
+            onEditClick={onEditClick}
+            onDeleteClick={onDeleteClick}
+            triggerClassName="absolute top-3 left-[310px]"
+          />
+        ) : (
+          <button
+            type="button"
+            aria-label={liked ? '좋아요 취소' : '좋아요'}
+            aria-pressed={liked}
+            onClick={(event) => {
+              event.stopPropagation();
+              onLikeClick?.();
+            }}
+            className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center"
+          >
+            <img src={liked ? oheart : heart} alt="" aria-hidden="true" />
+          </button>
+        )}
 
         <div className="mx-4 border-t border-[#E4E4E4]" />
 

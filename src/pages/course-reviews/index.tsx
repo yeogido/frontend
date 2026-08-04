@@ -2,15 +2,23 @@ import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { ReviewCard } from '../../components/common';
+import {
+  ConfirmDialog,
+  LoadingSpinner,
+  ReviewCard,
+} from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import {
+  useCourseReviews,
+  useMyReviewIds,
+  useReviewDelete,
+} from '../../hooks/useReviews';
 import { getGutter } from '../../utils/responsiveLayout';
 import { ReviewButton } from '../detail/components';
-import type { CourseReview } from '../detail/types/courseDetail';
+import { mapCourseReviewPreviews } from '../detail/mappers/courseReviewMapper';
 
 import CourseReviewSortDropdown from './CourseReviewSortDropdown';
-import { getCourseReviewList } from './courseReviewData';
 import type { CourseReviewType } from './courseReviewRoute';
 import type { CourseReviewSort } from './courseReviewSort';
 
@@ -25,10 +33,10 @@ const FILTER_MARGIN_TOP = 11;
 const LIST_MARGIN_TOP = 12;
 const LIST_GAP = 16;
 const REVIEW_BUTTON_BOTTOM = 32;
+const MESSAGE_TEXT_SIZE = 13;
 
 interface CourseReviewListLocationState {
   courseTitle?: string;
-  reviews?: readonly CourseReview[];
 }
 
 function CourseReviewsPage() {
@@ -37,23 +45,38 @@ function CourseReviewsPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const [sort, setSort] = useState<CourseReviewSort>('latest');
-  const { courseTitle = '', reviews = [] } =
+  const { courseTitle = '' } =
     (location.state as CourseReviewListLocationState | null) ?? {};
   const courseType: CourseReviewType = location.pathname.startsWith(
     '/local-course/'
   )
     ? 'local-course'
     : 'yeogido-course';
-  const displayReviews = getCourseReviewList(reviews);
-  const sortedReviews = useMemo(
-    () =>
-      sort === 'rating'
-        ? [...displayReviews].sort(
-            (first, second) => second.rating - first.rating
-          )
-        : displayReviews,
-    [displayReviews, sort]
+
+  const parsedCourseId = Number(courseId);
+  const { data, isPending, isError } = useCourseReviews(
+    Number.isInteger(parsedCourseId) ? parsedCourseId : undefined
   );
+  const myReviewIds = useMyReviewIds();
+  const {
+    isDeleteDialogOpen,
+    isDeletePending,
+    requestDelete,
+    cancelDelete,
+    confirmDelete,
+  } = useReviewDelete();
+
+  // 코스별 리뷰 API에는 정렬 파라미터가 없어 받아온 목록을 여기서 정렬한다.
+  // 페이징도 없어 전체가 한 번에 오므로 잘린 목록을 정렬할 위험은 없다.
+  // 백엔드가 sort/cursor를 추가하면 이 useMemo를 걷어내고 훅에 넘기면 된다.
+  const sortedReviews = useMemo(() => {
+    const reviews = mapCourseReviewPreviews(data, myReviewIds);
+
+    return sort === 'rating'
+      ? [...reviews].sort((first, second) => second.rating - first.rating)
+      : reviews;
+  }, [data, myReviewIds, sort]);
+
   const reviewButton = (
     <div
       className="pointer-events-none fixed bottom-0 left-1/2 z-30 flex w-full max-w-[500px] -translate-x-1/2"
@@ -112,21 +135,53 @@ function CourseReviewsPage() {
           className="flex flex-col"
           style={{ marginTop: LIST_MARGIN_TOP * scale, gap: LIST_GAP * scale }}
         >
-          {sortedReviews.map((review) => (
-            <ReviewCard
-              key={review.id}
-              images={review.images}
-              profileImage={review.profileImage}
-              nickname={review.nickname}
-              meta={review.meta}
-              content={review.content}
-              rating={review.rating}
-              isMine={review.isMine}
-              className="[&>div>article]:!bg-[#F1F1F1]"
+          {isPending ? (
+            <LoadingSpinner
+              className="w-full"
+              label="코스 후기를 불러오는 중"
             />
-          ))}
+          ) : isError ? (
+            <p
+              className="text-gray-4 text-center font-medium"
+              style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
+            >
+              후기를 불러오지 못했습니다.
+            </p>
+          ) : sortedReviews.length === 0 ? (
+            <p
+              className="text-gray-4 text-center font-medium"
+              style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
+            >
+              아직 등록된 후기가 없습니다.
+            </p>
+          ) : (
+            sortedReviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                images={review.images}
+                profileImage={review.profileImage}
+                nickname={review.nickname}
+                meta={review.meta}
+                content={review.content}
+                rating={review.rating}
+                isMine={review.isMine}
+                onDeleteClick={() => requestDelete(review.id)}
+                className="[&>div>article]:!bg-[#F1F1F1]"
+              />
+            ))
+          )}
         </div>
       </section>
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="후기를 삭제할까요?"
+        description="삭제한 후기는 되돌릴 수 없어요."
+        isPending={isDeletePending}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
+
       {typeof document === 'undefined'
         ? reviewButton
         : createPortal(reviewButton, document.body)}

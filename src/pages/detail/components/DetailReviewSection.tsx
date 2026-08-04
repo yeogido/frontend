@@ -24,12 +24,14 @@ export interface DetailReviewSectionProps {
   readonly reviews: readonly CourseReview[];
   readonly className?: string;
   readonly onActionClick?: () => void;
+  readonly onReviewDelete?: (reviewId: number) => void;
 }
 
 export function DetailReviewSection({
   reviews,
   className = '',
   onActionClick,
+  onReviewDelete,
 }: DetailReviewSectionProps) {
   const scale = useGlobalScale();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -125,6 +127,9 @@ export function DetailReviewSection({
                 content={review.content}
                 rating={review.rating}
                 isMine={review.isMine}
+                onDeleteClick={
+                  onReviewDelete ? () => onReviewDelete(review.id) : undefined
+                }
                 className="[&>div>article]:!bg-background"
               />
             </div>

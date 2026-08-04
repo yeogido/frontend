@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import {
+  ConfirmDialog,
   ReviewCard,
   ReviewCardSkeleton,
   SectionHeader,
@@ -8,6 +9,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import {
+  useMyReviewIds,
+  useRecentReviews,
+  useReviewDelete,
+} from '../../../hooks/useReviews';
+import { toReviewCardProps } from '../../../utils/reviewCard';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 32;
@@ -19,43 +26,21 @@ const DOT_SIZE = 4;
 const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
 
-const reviews = [
-  {
-    id: 1,
-    images: ['', ''],
-    profileImage: '',
-    nickname: '민지',
-    meta: '20대 여',
-    content:
-      '혼자 떠난 강릉 여행이었는데 바다도 예쁘고 코스도 알차서 정말 만족스러웠어요.',
-    rating: 5,
-  },
-  {
-    id: 2,
-    images: [''],
-    profileImage: '',
-    nickname: '준호',
-    meta: '30대 남',
-    content:
-      '맛집과 카페 동선이 잘 짜여 있어서 하루 동안 편하게 여행했습니다.',
-    rating: 5,
-  },
-  {
-    id: 3,
-    images: ['', '', ''],
-    profileImage: '',
-    nickname: '수진',
-    meta: '20대 여',
-    content:
-      '사진 찍기 좋은 장소가 많고 코스가 자연스럽게 이어져서 즐거운 여행이었어요.',
-    rating: 5,
-  },
-];
-
 function ReviewSection() {
-  const isLoading = false;
-  // const isLoading = true; 스켈레톤 확인용
+  const { data, isPending, isError } = useRecentReviews();
+  const myReviewIds = useMyReviewIds();
+  const reviews = (data?.reviews ?? []).map((review) =>
+    toReviewCardProps(review, myReviewIds)
+  );
+  const isLoading = isPending;
 
+  const {
+    isDeleteDialogOpen,
+    isDeletePending,
+    requestDelete,
+    cancelDelete,
+    confirmDelete,
+  } = useReviewDelete();
   const navigate = useNavigate();
   const scale = useGlobalScale();
 
@@ -107,6 +92,12 @@ function ReviewSection() {
     });
   };
 
+  // 후기가 없거나 조회에 실패하면 섹션을 통째로 감춘다. 제목만 남고 캐러셀이
+  // 비어 있으면 아직 로딩 중인 것처럼 보인다.
+  if (!isLoading && (isError || reviews.length === 0)) {
+    return null;
+  }
+
   return (
     <section
       className="flex flex-col"
@@ -149,6 +140,8 @@ function ReviewSection() {
                   meta={review.meta}
                   content={review.content}
                   rating={review.rating}
+                  isMine={review.isMine}
+                  onDeleteClick={() => requestDelete(review.id)}
                 />
               </div>
             ))}
@@ -182,6 +175,15 @@ function ReviewSection() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="후기를 삭제할까요?"
+        description="삭제한 후기는 되돌릴 수 없어요."
+        isPending={isDeletePending}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </section>
   );
 }
