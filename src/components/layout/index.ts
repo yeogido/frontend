@@ -1,4 +1,5 @@
 export { default as AuthLayout } from './AuthLayout';
+export { default as AuthSidebar } from './AuthSidebar';
 export { default as Header } from './Header';
 export { default as MainLayout } from './MainLayout';
 export {
