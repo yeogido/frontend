@@ -10,6 +10,7 @@ import {
   PROVINCE_LABEL_FONT_SIZE,
 } from '../constants/map';
 import { LABEL_OFFSETS } from '../constants/labelOffsets';
+import { toRegionLabel } from '../constants/regionLabels';
 import {
   METRO_PROVINCE_CODES,
   isMetroCityCode,
@@ -179,7 +180,7 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
           index: -(i + 1),
           x: metro.x,
           y: metro.y,
-          name: metro.name,
+          name: toRegionLabel(metro.name),
           area: Number.MAX_SAFE_INTEGER,
           fontSize: fontSize * 1.4,
         });
@@ -211,11 +212,13 @@ function LabelLayer({ zoomLevel, renderScale }: LabelLayerProps) {
 
       const area = pathGenerator.area(feature);
 
+      // LABEL_OFFSETS는 GeoJSON 이름을 키로 쓰므로, 표시용 이름으로
+      // 바꾸는 건 마지막에 한 번만 한다.
       candidates.push({
         index,
         x,
         y,
-        name,
+        name: toRegionLabel(name),
         area,
         fontSize,
       });
