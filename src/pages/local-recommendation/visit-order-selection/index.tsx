@@ -1,11 +1,17 @@
 import { useNavigate } from 'react-router-dom';
 
+import { ResponsivePageShell } from '../../../components/layout/ResponsivePageShell';
+
 import {
   SortableVisitEventList,
   SubmitCourseButton,
   VisitOrderHeader,
 } from './components';
 import { useVisitOrderSelection } from './hooks';
+
+// Figma 390 디자인 기준 리터럴 px
+const PAGE_PADDING_TOP = 60;
+const PAGE_PADDING_BOTTOM = 30;
 
 function VisitOrderSelectionPage() {
   const navigate = useNavigate();
@@ -18,24 +24,54 @@ function VisitOrderSelectionPage() {
     handleDragCancel,
     handleDragEnd,
     handleRegister,
+    isSubmitting,
+    submitError,
   } = useVisitOrderSelection();
 
+  const handleSubmit = async () => {
+    const result = await handleRegister();
+
+    if (result) {
+      navigate(`/local-course/detail/${result.courseId}`);
+    }
+  };
+
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[500px] flex-col overflow-x-hidden bg-white px-6 pt-[60px] pb-[30px]">
-      <VisitOrderHeader onBack={() => navigate(-1)} />
+    <ResponsivePageShell
+      mode="standalone"
+      topPadding={PAGE_PADDING_TOP}
+      bottomPadding={PAGE_PADDING_BOTTOM}
+      className="bg-white"
+    >
+      <main className="flex min-w-0 flex-1 flex-col">
+        <VisitOrderHeader
+          onBack={() =>
+            navigate('/local-recommendation/place-selection', { replace: true })
+          }
+        />
 
-      <SortableVisitEventList
-        visitEvents={visitEvents}
-        activeEvent={activeEvent}
-        activeEventOrder={activeEventOrder}
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragCancel={handleDragCancel}
-        onDragEnd={handleDragEnd}
-      />
+        <SortableVisitEventList
+          visitEvents={visitEvents}
+          activeEvent={activeEvent}
+          activeEventOrder={activeEventOrder}
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragCancel={handleDragCancel}
+          onDragEnd={handleDragEnd}
+        />
 
-      <SubmitCourseButton onSubmit={handleRegister} />
-    </main>
+        <SubmitCourseButton
+          onSubmit={handleSubmit}
+          disabled={isSubmitting || visitEvents.length === 0}
+          isSubmitting={isSubmitting}
+        />
+        {submitError ? (
+          <p role="alert" className="text-main-5 mt-2 text-center text-sm">
+            {submitError}
+          </p>
+        ) : null}
+      </main>
+    </ResponsivePageShell>
   );
 }
 

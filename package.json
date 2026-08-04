@@ -23,6 +23,7 @@
     "d3-selection": "^3.0.0",
     "d3-zoom": "^3.0.0",
     "immer": "^11.1.9",
+    "jwt-decode": "^4.0.0",
     "motion": "12.42.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

@@ -1,5 +1,23 @@
 import heart from '../../assets/icons/heart.svg';
 
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+
+const CARD_WIDTH = 163;
+const CARD_HEIGHT = 222;
+const IMAGE_HEIGHT = 115;
+const CONTENT_PADDING = 8;
+const HEART_SIZE = 16;
+const HEART_OFFSET = 8;
+const TITLE_HEIGHT = 14;
+const TITLE_WIDTH = 88;
+const INFO_ICON_SIZE = 14;
+const INFO_TEXT_HEIGHT = 12;
+const INFO_GAP = 4;
+const INFO_MARGIN_TOP = 8;
+const TAG_HEIGHT = 20;
+const TAG_GAP = 4;
+const TAG_MARGIN_TOP = 8;
+
 interface ContentCardSkeletonProps {
   className?: string;
   imageClassName?: string;
@@ -7,65 +25,98 @@ interface ContentCardSkeletonProps {
 
 function ContentCardSkeleton({
   className = '',
-  imageClassName = 'aspect-[163/115]',
+  imageClassName = '',
 }: ContentCardSkeletonProps) {
+  const scale = useGlobalScale();
+  const hasCustomWidth = /(?:^|\s)(?:w-|min-w|max-w)/.test(className);
+  const hasCustomImageHeight = /(?:^|\s)(?:h-|min-h|max-h|aspect-)/.test(
+    imageClassName
+  );
+
   return (
-    <article
-      className={`
-        flex
-        w-[41.79vw]
-        shrink-0
-        aspect-[163/222]
-        flex-col
-        overflow-hidden
-        rounded-xl
-        bg-[#F9F9F9]
-        shadow-[0_1px_5px_rgba(0,0,0,0.07)]
-        animate-pulse
-        ${className}
-      `}
+    <div
+      className={`shrink-0 overflow-hidden ${className}`}
+      style={{
+        width: hasCustomWidth ? undefined : CARD_WIDTH * scale,
+        height: CARD_HEIGHT * scale,
+      }}
     >
-      {/* Image */}
-      <div className="relative overflow-hidden rounded-[8px]">
-        <div className={`${imageClassName} w-full bg-[#EAEAEA]`} />
-
-        <div className="absolute right-[2.05vw] top-[2.05vw]">
-          <img
-            src={heart}
-            alt=""
-            aria-hidden="true"
-            className="h-[4.10vw] w-[4.10vw]"
+      <article
+        className="flex h-full w-full animate-pulse flex-col overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+        style={{
+          width: CARD_WIDTH,
+          height: CARD_HEIGHT,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
+      >
+        <div className="relative overflow-hidden rounded-[8px]">
+          <div
+            className={`w-full bg-[#EAEAEA] ${imageClassName}`}
+            style={{ height: hasCustomImageHeight ? undefined : IMAGE_HEIGHT }}
           />
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex min-h-0 flex-1 flex-col p-[2.05vw]">
-        {/* Title */}
-        <div className="h-[3.59vw] w-[22.56vw] rounded bg-[#EAEAEA]" />
-
-        {/* Info */}
-        <div className="mt-[2.05vw] flex flex-col gap-[1.03vw]">
-          <div className="flex items-center gap-[1.03vw]">
-            <div className="h-[3.59vw] w-[3.59vw] rounded-full bg-[#EAEAEA]" />
-            <div className="h-[3.08vw] w-[18.46vw] rounded bg-[#EAEAEA]" />
-          </div>
-
-          <div className="flex items-center gap-[1.03vw]">
-            <div className="h-[3.59vw] w-[3.59vw] rounded-full bg-[#EAEAEA]" />
-            <div className="h-[3.08vw] w-[24.62vw] rounded bg-[#EAEAEA]" />
+          <div
+            className="absolute"
+            style={{ top: HEART_OFFSET, right: HEART_OFFSET }}
+          >
+            <img
+              src={heart}
+              alt=""
+              aria-hidden="true"
+              style={{ width: HEART_SIZE, height: HEART_SIZE }}
+            />
           </div>
         </div>
 
-        {/* Tags */}
-        <div className="mt-auto border-t border-[#E4E4E4] pt-[2.05vw]">
-          <div className="flex gap-[1.03vw]">
-            <div className="h-[5.13vw] w-[12.31vw] rounded-full bg-[#EAEAEA]" />
-            <div className="h-[5.13vw] w-[14.36vw] rounded-full bg-[#EAEAEA]" />
+        <div
+          className="flex min-h-0 flex-1 flex-col"
+          style={{ padding: CONTENT_PADDING }}
+        >
+          <div
+            className="rounded bg-[#EAEAEA]"
+            style={{ width: TITLE_WIDTH, height: TITLE_HEIGHT }}
+          />
+
+          <div
+            className="flex flex-col"
+            style={{ marginTop: INFO_MARGIN_TOP, gap: INFO_GAP }}
+          >
+            {[56, 72].map((textWidth) => (
+              <div
+                key={textWidth}
+                className="flex items-center"
+                style={{ gap: INFO_GAP }}
+              >
+                <div
+                  className="rounded-full bg-[#EAEAEA]"
+                  style={{ width: INFO_ICON_SIZE, height: INFO_ICON_SIZE }}
+                />
+                <div
+                  className="rounded bg-[#EAEAEA]"
+                  style={{ width: textWidth, height: INFO_TEXT_HEIGHT }}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="mt-auto border-t border-[#E4E4E4]"
+            style={{ paddingTop: TAG_MARGIN_TOP }}
+          >
+            <div className="flex" style={{ gap: TAG_GAP }}>
+              <div
+                className="rounded-full bg-[#EAEAEA]"
+                style={{ width: 48, height: TAG_HEIGHT }}
+              />
+              <div
+                className="rounded-full bg-[#EAEAEA]"
+                style={{ width: 56, height: TAG_HEIGHT }}
+              />
+            </div>
           </div>
         </div>
-      </div>
-    </article>
+      </article>
+    </div>
   );
 }
 

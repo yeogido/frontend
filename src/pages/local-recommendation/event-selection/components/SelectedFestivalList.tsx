@@ -13,7 +13,7 @@ function SelectedFestivalList({
   if (festivals.length === 0) {
     return (
       <p className="text-gray-5 py-8 text-center text-base font-medium">
-        아직 추가된 장소가 없어요
+        아직 추가된 행사가 없어요
       </p>
     );
   }

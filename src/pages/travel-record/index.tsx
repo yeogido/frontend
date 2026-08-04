@@ -1,32 +1,113 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import addIcon from '../../assets/icons/material-symbols_add-2-rounded.svg';
+import { getApiErrorMessage } from '../../apis/common';
+import { FloatingActionButton } from '../../components/common';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
+import { useTravelRecordRegionDetails } from '../../hooks/useTravelRecordRegions';
+import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
+import {
+  getTravelRecordFolders,
+  getTravelRecordSummariesFromPages,
+  useTravelRecordDetails,
+  useTravelRecordYears,
+  useTravelRecords,
+} from '../../hooks/useTravelRecords';
 
 import {
   TravelFolderGrid,
   TravelMapPanel,
+  TravelRecordPageFrame,
   TravelYearDropdown,
 } from './components';
-import {
-  TRAVEL_RECORD_FOLDERS,
-  TRAVEL_RECORD_YEARS,
-} from './constants/travelRecords';
-import type { TravelRecordView } from './types';
+import type { TravelRecordFolder, TravelRecordView } from './types';
+import { getValidTravelRecordYear } from './utils/sessionFolders';
+
+const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
+const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
+const addTravelRecordLabel = '\uC5EC\uD589 \uAE30\uB85D \uCD94\uAC00';
+const TRAVEL_RECORD_PAGE_SIZE = 20;
 
 function TravelRecordPage() {
   const navigate = useNavigate();
+  const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
-  const [selectedYear, setSelectedYear] = useState(TRAVEL_RECORD_YEARS[0]);
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
 
-  const visibleFolders = useMemo(
-    () =>
-      TRAVEL_RECORD_FOLDERS.filter((folder) => folder.year === selectedYear),
-    [selectedYear],
+  const travelRecordYearsQuery = useTravelRecordYears();
+  const years = useMemo(
+    () => travelRecordYearsQuery.data?.years ?? [],
+    [travelRecordYearsQuery.data?.years],
   );
 
+  useEffect(() => {
+    // The available years only settle once the server years finish loading.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedYear((year) =>
+      getValidTravelRecordYear(years, year, new Date().getFullYear()),
+    );
+  }, [years]);
+
+  const validSelectedYear = getValidTravelRecordYear(
+    years,
+    selectedYear,
+    new Date().getFullYear(),
+  );
+
+  const {
+    data: travelRecordsData,
+    error: travelRecordsError,
+    fetchNextPage,
+    hasNextPage,
+    isError: isTravelRecordsError,
+    isFetchingNextPage,
+    isPending,
+    refetch: refetchTravelRecords,
+  } = useTravelRecords({
+    size: TRAVEL_RECORD_PAGE_SIZE,
+    year: validSelectedYear,
+  });
+
+  const apiRecordSummaries = useMemo(
+    () => getTravelRecordSummariesFromPages(travelRecordsData?.pages),
+    [travelRecordsData?.pages],
+  );
+  const travelRecordDetails = useTravelRecordDetails(apiRecordSummaries);
+  const regionInfoByRegionId = useTravelRecordRegionDetails(
+    apiRecordSummaries.map((record) => record.regionId),
+  );
+  const apiFolders = useMemo(
+    () =>
+      getTravelRecordFolders(
+        apiRecordSummaries,
+        travelRecordDetails.map((query) => query.data),
+        regionInfoByRegionId,
+      ),
+    [apiRecordSummaries, travelRecordDetails, regionInfoByRegionId],
+  );
+
+  // 서버가 travelRecordId 내림차순으로 잘라 주므로 그 순서를 그대로 쓴다.
+  // 받은 페이지만 다시 정렬하면 다음 페이지를 불러올 때 뒤에 붙은 기록이
+  // 위로 끼어들어 목록이 튄다.
+  const visibleFolders = apiFolders;
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadMoreRef = useInfiniteScroll({
+    enabled: Boolean(hasNextPage) && !isPending,
+    onIntersect: handleLoadMore,
+  });
+
+  const handleFolderClick = (folder: TravelRecordFolder) => {
+    navigate(`/travel-record/${folder.id}`, { state: { folder } });
+  };
+
   return (
-    <section className="relative mx-auto min-h-screen w-full max-w-[390px] px-6 pt-3 pb-28">
+    <TravelRecordPageFrame scrollable className="bg-[#f1f1f1] px-6 pt-3 pb-28">
       <div className="flex items-center gap-[30px]">
         <button
           type="button"
@@ -36,7 +117,7 @@ function TravelRecordPage() {
             activeView === 'folder' ? 'text-black' : 'text-gray-3'
           }`}
         >
-          여행 폴더
+          {folderViewLabel}
         </button>
         <button
           type="button"
@@ -46,31 +127,58 @@ function TravelRecordPage() {
             activeView === 'map' ? 'text-black' : 'text-gray-3'
           }`}
         >
-          여행 지도
+          {mapViewLabel}
         </button>
       </div>
 
-      <TravelYearDropdown
-        value={selectedYear}
-        years={TRAVEL_RECORD_YEARS}
-        onChange={setSelectedYear}
-      />
+      {/* 기록이 하나도 없으면 고를 연도가 없어 빈 목록만 열린다. */}
+      {years.length > 0 ? (
+        <TravelYearDropdown
+          value={validSelectedYear}
+          years={years}
+          onChange={setSelectedYear}
+        />
+      ) : null}
 
-      {activeView === 'folder' ? (
-        <TravelFolderGrid folders={visibleFolders} />
+      {isTravelRecordsError ? (
+        <section
+          role="alert"
+          className="mt-[142px] flex flex-col items-center gap-4 text-center"
+        >
+          <p className="text-gray-4 text-[16px] leading-[22px] font-medium">
+            {getApiErrorMessage(
+              travelRecordsError,
+              '여행 기록을 불러오지 못했어요',
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetchTravelRecords()}
+            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+          >
+            다시 시도
+          </button>
+        </section>
+      ) : activeView === 'folder' ? (
+        <TravelFolderGrid
+          folders={visibleFolders}
+          onFolderClick={handleFolderClick}
+        />
       ) : (
         <TravelMapPanel folders={visibleFolders} />
       )}
 
-      <button
-        type="button"
-        aria-label="여행 기록 추가"
-        onClick={() => navigate('/travel-record/new')}
-        className="absolute right-6 bottom-10 z-40 flex size-14 items-center justify-center rounded-full bg-black"
-      >
-        <img src={addIcon} alt="" className="size-8" />
-      </button>
-    </section>
+      <div ref={loadMoreRef} aria-hidden="true" />
+
+      <FloatingActionButton
+        ariaLabel={addTravelRecordLabel}
+        onClick={() => {
+          clearEdit();
+          navigate('/travel-record/new');
+        }}
+        bottomOffset={40}
+      />
+    </TravelRecordPageFrame>
   );
 }
 

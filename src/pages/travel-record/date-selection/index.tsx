@@ -1,5 +1,7 @@
 import { useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+
+import { TravelRecordPageFrame } from '../components';
 
 import backIcon from './assets/back-icon.svg';
 import {
@@ -9,17 +11,25 @@ import {
 } from './components';
 import { useTravelDateSelection } from './hooks';
 import type { TravelDateSelectionLocationState } from './types';
-import { getTravelRecordDraftRegion } from '../utils/draftStorage';
+import {
+  getTravelRecordDraftRegion,
+  getTravelRecordDraftDateRange,
+  saveTravelRecordDraftDateRange,
+} from '../utils/draftStorage';
+import { getTravelRecordEditRoute } from '../utils/editRoute';
 
 function TravelRecordDateSelectionPage() {
   const navigate = useNavigate();
+  const { travelRecordId } = useParams<{ travelRecordId: string }>();
   const location = useLocation();
-  const locationState = location.state as TravelDateSelectionLocationState | null;
+  const locationState =
+    location.state as TravelDateSelectionLocationState | null;
   const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
   const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const {
     canGoToNextMonth,
     canGoToPreviousMonth,
+    canAddPhoto,
     selectedPreset,
     selectedRange,
     visibleYear,
@@ -30,16 +40,41 @@ function TravelRecordDateSelectionPage() {
     selectDate,
     selectMonth,
     selectPreset,
-  } = useTravelDateSelection();
+  } = useTravelDateSelection(getTravelRecordDraftDateRange());
 
   useEffect(() => {
     if (!selectedRegion) {
-      navigate('/travel-record/new', { replace: true });
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId)
+          : '/travel-record/new',
+        { replace: true },
+      );
     }
-  }, [navigate, selectedRegion]);
+  }, [navigate, selectedRegion, travelRecordId]);
+
+  const handleAddPhoto = () => {
+    if (!selectedRange || !selectedRegion) {
+      return;
+    }
+
+    saveTravelRecordDraftDateRange(selectedRange);
+
+    navigate(
+      travelRecordId
+        ? getTravelRecordEditRoute(travelRecordId, 'photos')
+        : '/travel-record/photo-selection',
+      {
+      state: {
+        selectedRegion,
+        selectedDateRange: selectedRange,
+      },
+      },
+    );
+  };
 
   return (
-    <main className="relative mx-auto h-[844px] w-full max-w-[390px] bg-[#f9f9f9]">
+    <TravelRecordPageFrame className="bg-[#f9f9f9]">
       <button
         type="button"
         onClick={() => navigate(-1)}
@@ -71,13 +106,13 @@ function TravelRecordDateSelectionPage() {
 
       <button
         type="button"
-        disabled
-        aria-label="사진 추가하기, 다음 작업에서 지원 예정"
+        disabled={!canAddPhoto}
+        onClick={handleAddPhoto}
         className="absolute top-[759px] left-6 flex h-[53px] w-[342px] items-center justify-center rounded-xl bg-[#e4e4e4] text-[18px] leading-none font-semibold text-[#7f7f7f] enabled:bg-[#ff6f41] enabled:text-[#f9f9f9]"
       >
         사진 추가하기
       </button>
-    </main>
+    </TravelRecordPageFrame>
   );
 }
 

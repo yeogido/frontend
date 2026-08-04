@@ -1,6 +1,24 @@
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
 import { IoCheckmark, IoChevronDown } from 'react-icons/io5';
 
+import { useGlobalScale } from '../../../../hooks/useGlobalScale';
+
+// Figma 390 디자인 기준 리터럴 px
+const TRIGGER_HEIGHT = 48;
+const TRIGGER_GAP = 12;
+const TRIGGER_PADDING_X = 16;
+const FONT_SIZE = 14;
+const CHEVRON_SIZE = 20;
+const LISTBOX_MARGIN_TOP = 8;
+const LISTBOX_MAX_HEIGHT = 240;
+const LISTBOX_PADDING = 6;
+const LISTBOX_VIEWPORT_GUTTER = 8;
+const OPTION_HEIGHT = 44;
+const OPTION_PADDING_X = 12;
+const CHECK_ICON_SIZE = 18;
+const LARGE_BORDER_RADIUS = 12;
+const SMALL_BORDER_RADIUS = 8;
+
 interface SelectOption<T extends string> {
   value: T;
   label: string;
@@ -14,6 +32,8 @@ interface CustomSelectProps<T extends string> {
   onChange: (value: T) => void;
 }
 
+type ListboxPlacement = 'above' | 'below';
+
 function CustomSelect<T extends string>({
   id,
   options,
@@ -21,6 +41,9 @@ function CustomSelect<T extends string>({
   value,
   onChange,
 }: CustomSelectProps<T>) {
+  const scale = useGlobalScale();
+  const triggerHeight = Math.max(44, TRIGGER_HEIGHT * scale);
+  const optionHeight = Math.max(44, OPTION_HEIGHT * scale);
   const listboxId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -29,6 +52,11 @@ function CustomSelect<T extends string>({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(
     selectedIndex >= 0 ? selectedIndex : 0
+  );
+  const [listboxPlacement, setListboxPlacement] =
+    useState<ListboxPlacement>('below');
+  const [listboxMaxHeight, setListboxMaxHeight] = useState(
+    LISTBOX_MAX_HEIGHT * scale
   );
 
   useEffect(() => {
@@ -43,6 +71,60 @@ function CustomSelect<T extends string>({
     document.addEventListener('pointerdown', handlePointerDown);
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updateListboxLayout = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+
+      const viewport = window.visualViewport;
+      const viewportTop = viewport?.offsetTop ?? 0;
+      const viewportBottom = viewportTop + (viewport?.height ?? window.innerHeight);
+      const listboxGap = LISTBOX_MARGIN_TOP * scale;
+      const triggerBounds = trigger.getBoundingClientRect();
+      const spaceAbove = Math.max(
+        0,
+        triggerBounds.top -
+          viewportTop -
+          LISTBOX_VIEWPORT_GUTTER * scale -
+          listboxGap
+      );
+      const spaceBelow = Math.max(
+        0,
+        viewportBottom -
+          triggerBounds.bottom -
+          LISTBOX_VIEWPORT_GUTTER * scale -
+          listboxGap
+      );
+      const placement = spaceBelow >= spaceAbove ? 'below' : 'above';
+
+      setListboxPlacement(placement);
+      setListboxMaxHeight(
+        Math.max(
+          OPTION_HEIGHT * scale,
+          Math.min(
+            LISTBOX_MAX_HEIGHT * scale,
+            placement === 'below' ? spaceBelow : spaceAbove
+          )
+        )
+      );
+    };
+
+    updateListboxLayout();
+    window.addEventListener('resize', updateListboxLayout);
+    window.addEventListener('scroll', updateListboxLayout, true);
+    window.visualViewport?.addEventListener('resize', updateListboxLayout);
+    window.visualViewport?.addEventListener('scroll', updateListboxLayout);
+
+    return () => {
+      window.removeEventListener('resize', updateListboxLayout);
+      window.removeEventListener('scroll', updateListboxLayout, true);
+      window.visualViewport?.removeEventListener('resize', updateListboxLayout);
+      window.visualViewport?.removeEventListener('scroll', updateListboxLayout);
+    };
+  }, [isOpen, scale]);
 
   const openListbox = (index = selectedIndex >= 0 ? selectedIndex : 0) => {
     setActiveIndex(index);
@@ -130,18 +212,31 @@ function CustomSelect<T extends string>({
             : openListbox(selectedIndex >= 0 ? selectedIndex : 0)
         }
         onKeyDown={handleTriggerKeyDown}
-        className={`focus:border-main-5 flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 text-left text-sm transition-colors outline-none ${
+        className={`focus:border-main-5 flex w-full items-center justify-between border bg-white text-left transition-colors outline-none ${
           isOpen ? 'border-main-5' : 'border-gray-2'
         }`}
+        style={{
+          height: triggerHeight,
+          gap: TRIGGER_GAP * scale,
+          paddingLeft: TRIGGER_PADDING_X * scale,
+          paddingRight: TRIGGER_PADDING_X * scale,
+          fontSize: FONT_SIZE * scale,
+          borderRadius: LARGE_BORDER_RADIUS * scale,
+        }}
       >
-        <span className={selectedOption ? 'text-black' : 'text-gray-4'}>
+        <span
+          className={`min-w-0 truncate ${
+            selectedOption ? 'text-black' : 'text-gray-4'
+          }`}
+        >
           {selectedOption?.label ?? placeholder}
         </span>
         <IoChevronDown
           aria-hidden="true"
-          className={`text-gray-4 shrink-0 text-xl transition-transform ${
+          className={`text-gray-4 shrink-0 transition-transform ${
             isOpen ? 'rotate-180' : ''
           }`}
+          style={{ fontSize: CHEVRON_SIZE * scale }}
         />
       </button>
 
@@ -150,7 +245,22 @@ function CustomSelect<T extends string>({
           id={listboxId}
           role="listbox"
           aria-labelledby={id}
-          className="border-gray-2 absolute top-full right-0 left-0 z-30 mt-2 max-h-60 overflow-y-auto rounded-xl border bg-white p-1.5 shadow-lg"
+          className="border-gray-2 absolute right-0 left-0 z-30 overflow-y-auto border bg-white shadow-lg"
+          style={{
+            top: listboxPlacement === 'below' ? '100%' : undefined,
+            bottom: listboxPlacement === 'above' ? '100%' : undefined,
+            marginTop:
+              listboxPlacement === 'below'
+                ? LISTBOX_MARGIN_TOP * scale
+                : undefined,
+            marginBottom:
+              listboxPlacement === 'above'
+                ? LISTBOX_MARGIN_TOP * scale
+                : undefined,
+            maxHeight: listboxMaxHeight,
+            padding: LISTBOX_PADDING * scale,
+            borderRadius: LARGE_BORDER_RADIUS * scale,
+          }}
         >
           {options.map((option, index) => {
             const isSelected = option.value === value;
@@ -169,19 +279,27 @@ function CustomSelect<T extends string>({
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => selectOption(index)}
                 onKeyDown={(event) => handleOptionKeyDown(event, index)}
-                className={`flex h-11 w-full items-center justify-between rounded-lg px-3 text-left text-sm transition-colors outline-none ${
+                className={`flex w-full items-center justify-between text-left transition-colors outline-none ${
                   isSelected
                     ? 'bg-main-2 text-main-5 font-semibold'
                     : isActive
                       ? 'bg-main-1 text-black'
                       : 'text-gray-5 hover:bg-main-1 focus:bg-main-1'
                 }`}
+                style={{
+                  height: optionHeight,
+                  paddingLeft: OPTION_PADDING_X * scale,
+                  paddingRight: OPTION_PADDING_X * scale,
+                  fontSize: FONT_SIZE * scale,
+                  borderRadius: SMALL_BORDER_RADIUS * scale,
+                }}
               >
-                <span>{option.label}</span>
+                <span className="min-w-0 truncate">{option.label}</span>
                 {isSelected ? (
                   <IoCheckmark
                     aria-hidden="true"
-                    className="shrink-0 text-lg"
+                    className="shrink-0"
+                    style={{ fontSize: CHECK_ICON_SIZE * scale }}
                   />
                 ) : null}
               </button>

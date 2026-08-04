@@ -1,13 +1,27 @@
 import {
-  FaChildReaching,
+  FaDog,
   FaHeart,
   FaPeopleGroup,
   FaPeopleRoof,
   FaUser,
 } from 'react-icons/fa6';
 
+import { useGlobalScale } from '../../../../hooks/useGlobalScale';
+
 import { companionOptions } from '../constants/options';
 import type { CourseBasicInfoValues } from '../schema';
+
+// Figma 390 디자인 기준 리터럴 px
+const LEGEND_MARGIN_BOTTOM = 12;
+const LEGEND_FONT_SIZE = 16;
+const GRID_GAP = 8;
+const CARD_MIN_HEIGHT = 56;
+const CARD_PADDING_X = 4;
+const CARD_PADDING_Y = 8;
+const ICON_SIZE = 18;
+const LABEL_MARGIN_TOP = 4;
+const LABEL_FONT_SIZE = 10;
+const CARD_BORDER_RADIUS = 12;
 
 interface CompanionSelectorProps {
   value: CourseBasicInfoValues['companion'];
@@ -19,16 +33,24 @@ const icons = {
   friends: FaPeopleGroup,
   couple: FaHeart,
   family: FaPeopleRoof,
-  children: FaChildReaching,
+  pet: FaDog,
 };
 
 function CompanionSelector({ value, onChange }: CompanionSelectorProps) {
+  const scale = useGlobalScale();
+
   return (
     <fieldset>
-      <legend className="mb-3 text-base font-semibold">
+      <legend
+        className="font-semibold"
+        style={{
+          marginBottom: LEGEND_MARGIN_BOTTOM * scale,
+          fontSize: LEGEND_FONT_SIZE * scale,
+        }}
+      >
         누구와 함께 즐기기 좋은 코스인가요?
       </legend>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-5" style={{ gap: GRID_GAP * scale }}>
         {companionOptions.map((option) => {
           const Icon = icons[option.value];
           const selected = value === option.value;
@@ -39,14 +61,31 @@ function CompanionSelector({ value, onChange }: CompanionSelectorProps) {
               type="button"
               aria-pressed={selected}
               onClick={() => onChange(option.value)}
-              className={`flex min-h-14 min-w-0 flex-col items-center justify-center rounded-xl border px-1 py-2 ${
+              className={`flex min-w-0 flex-col items-center justify-center border ${
                 selected
                   ? 'border-main-5 bg-main-2 text-main-5'
                   : 'border-gray-2 text-gray-4 bg-white'
               }`}
+              style={{
+                minHeight: CARD_MIN_HEIGHT * scale,
+                paddingLeft: CARD_PADDING_X * scale,
+                paddingRight: CARD_PADDING_X * scale,
+                paddingTop: CARD_PADDING_Y * scale,
+                paddingBottom: CARD_PADDING_Y * scale,
+                borderRadius: CARD_BORDER_RADIUS * scale,
+              }}
             >
-              <Icon aria-hidden="true" className="text-lg" />
-              <span className="mt-1 w-full truncate text-[10px]">
+              <Icon
+                aria-hidden="true"
+                style={{ fontSize: ICON_SIZE * scale }}
+              />
+              <span
+                className="w-full truncate"
+                style={{
+                  marginTop: LABEL_MARGIN_TOP * scale,
+                  fontSize: LABEL_FONT_SIZE * scale,
+                }}
+              >
                 {option.label}
               </span>
             </button>

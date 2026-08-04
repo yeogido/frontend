@@ -1,13 +1,15 @@
+import { useMemo } from 'react';
+
+import { useNavigate } from 'react-router-dom';
 import { geoMercator, geoPath } from 'd3-geo';
 
-import { CITY_LAYER_ZOOM } from '../constants/map';
+import { CITY_LAYER_ZOOM, CITY_STROKE_WIDTH } from '../constants/map';
+import { buildRecordPath, buildSearchPath } from '../constants/cityMeta';
 import { isMetroCityCode } from '../utils/metroCityCodes';
 
-import koreaCityJson from '../assets/korea-city.json';
+import { koreaCity } from '../assets/koreaCity';
 
-import type { KoreaCityGeoJson } from '../types/map';
-
-const koreaCity = koreaCityJson as KoreaCityGeoJson;
+import type { RegionPhotoMap } from '../types/regionPhoto';
 
 const MAP_WIDTH = 400;
 const MAP_HEIGHT = 600;
@@ -15,48 +17,80 @@ const MAP_PADDING = 20;
 
 interface CityLayerProps {
   zoomLevel: number;
+  /** 줌과 무관하게 선 굵기를 유지하기 위해 나눌 배율 */
+  renderScale: number;
+  regionPhotos: RegionPhotoMap;
 }
 
-function CityLayer({ zoomLevel }: CityLayerProps) {
-  const projection = geoMercator().fitExtent(
-    [
-      [MAP_PADDING, MAP_PADDING],
-      [MAP_WIDTH - MAP_PADDING, MAP_HEIGHT - MAP_PADDING],
-    ],
-    koreaCity,
+function CityLayer({ zoomLevel, renderScale, regionPhotos }: CityLayerProps) {
+  const navigate = useNavigate();
+
+  const projection = useMemo(
+    () =>
+      geoMercator().fitExtent(
+        [
+          [MAP_PADDING, MAP_PADDING],
+          [MAP_WIDTH - MAP_PADDING, MAP_HEIGHT - MAP_PADDING],
+        ],
+        koreaCity,
+      ),
+    [],
   );
 
-  const pathGenerator = geoPath(projection);
+  const pathGenerator = useMemo(
+    () => geoPath(projection),
+    [projection],
+  );
 
   const isVisible = zoomLevel >= CITY_LAYER_ZOOM;
+  const strokeWidth = Math.max(CITY_STROKE_WIDTH / renderScale, 0.06);
+
+  const handleClick = (name: string) => {
+    if (!name) return;
+
+    const record = regionPhotos?.[name];
+
+    if (record) {
+      navigate(buildRecordPath(record.folderId));
+      return;
+    }
+
+    navigate(buildSearchPath(name));
+  };
 
   return (
     <>
       {koreaCity.features.map((feature, index) => {
         const properties = feature.properties as {
           code?: string;
+          name?: string;
         } | null;
 
-        // 광역시/특별시 소속 구(74개)는 세부 경계선을 그리지 않는다.
-        // 그 결과 밑에 항상 그려져 있는 ProvinceLayer의 도 단위
-        // 통짜 경계선만 남아, 구 구분 없이 하나로 뭉쳐 보인다.
         if (isMetroCityCode(properties?.code)) {
           return null;
         }
 
+        const name = properties?.name ?? '';
         const d = pathGenerator(feature);
 
         if (!d) return null;
+
+        // 사진이 있는 시/군은 축소 상태에서도 PhotoLayer가 사진을 그린다.
+        // 보이는데 눌리지 않으면 어색하므로 클릭만 함께 열어 준다. 사진이
+        // 없는 도형까지 열면 도 단위 클릭이 사실상 막힌다.
+        const isInteractive = isVisible || Boolean(regionPhotos?.[name]);
 
         return (
           <path
             key={index}
             d={d}
-            fill="none"
+            fill="transparent"
             stroke="#FF6F41"
-            strokeWidth={0.5}
+            strokeWidth={strokeWidth}
             strokeOpacity={isVisible ? 1 : 0}
-            pointerEvents="none"
+            pointerEvents={isInteractive ? 'all' : 'none'}
+            style={{ cursor: isInteractive ? 'pointer' : 'default' }}
+            onClick={isInteractive ? () => handleClick(name) : undefined}
           />
         );
       })}

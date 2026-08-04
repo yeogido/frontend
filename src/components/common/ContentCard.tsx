@@ -29,7 +29,7 @@ const TAG_HEIGHT = 20;
 const TAG_GAP = 4;
 
 interface ContentCardProps {
-  image: string;
+  image: string | null;
   title: string;
   firstInfo: string;
   secondInfo: string;

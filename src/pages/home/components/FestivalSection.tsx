@@ -1,11 +1,17 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import {
   ContentCard,
   ContentCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
-import { useNavigate } from 'react-router-dom';
-
+import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useAuthStore } from '../../../store/auth.store';
+import { buildFestivalDetailPath } from '../../../utils/routes';
+import { toContentTagIds } from '../../../utils/contentTags';
 
 const SECTION_MARGIN_TOP = 32;
 const SECTION_PADDING_X = 24;
@@ -13,11 +19,35 @@ const LIST_MARGIN_TOP = 16;
 const CARD_GAP = 16;
 
 function FestivalSection() {
-  const isLoading = false;
-  // const isLoading = true; // 스켈레톤 확인용
-
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
+  const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
+  const {
+    data: cultureContents,
+    isPending: isLoading,
+  } = useCultureContents({
+    category: 'FESTIVAL',
+    sort: 'RECOMMEND',
+    size: 2,
+  });
+  const festivals = cultureContents?.pages[0]?.items ?? [];
+
+  const handleLikeClick = (contentId: number) => {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+
+    setLikedContentIds((previousIds) =>
+      previousIds.includes(contentId)
+        ? previousIds.filter((id) => id !== contentId)
+        : [...previousIds, contentId],
+    );
+
+    // TODO: 좋아요 API 연동
+  };
 
   return (
     <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
@@ -30,7 +60,7 @@ function FestivalSection() {
         <SectionHeader
           title="진행 중인 행사"
           actionText="전체보기"
-          onActionClick={() => navigate('/festival/search')}
+          onActionClick={() => navigate('/festival/')}
         />
       </div>
 
@@ -52,24 +82,24 @@ function FestivalSection() {
                 <ContentCardSkeleton />
               </>
             ) : (
-              <>
+              festivals.map((festival) => (
                 <ContentCard
-                  image=""
-                  title="양평수박축제"
-                  firstInfo="2026.07 ~ 2026.07"
-                  secondInfo="경기도 양평군"
-                  tags={['summer', 'nature', 'experience']}
+                  key={festival.contentId}
+                  image={festival.thumbnailImageUrl}
+                  title={festival.title}
+                  firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                  secondInfo={festival.regionName}
+                  tags={toContentTagIds(festival.hashtags)}
+                  liked={
+                    isLoggedIn &&
+                    likedContentIds.includes(festival.contentId)
+                  }
+                  onClick={() =>
+                    navigate(buildFestivalDetailPath(festival.contentId))
+                  }
+                  onLikeClick={() => handleLikeClick(festival.contentId)}
                 />
-
-                <ContentCard
-                  image=""
-                  title="양평수박축제"
-                  firstInfo="2026.07 ~ 2026.07"
-                  secondInfo="경기도 양평군"
-                  liked
-                  tags={['summer', 'bakery', 'experience']}
-                />
-              </>
+              ))
             )}
           </div>
         </div>

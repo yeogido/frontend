@@ -1,4 +1,3 @@
-import type { TagType } from '../../components/common/TagChip';
 import { businessCategories, businessSortOptions } from './constants';
 
 export type BusinessCategory = (typeof businessCategories)[number];
@@ -14,8 +13,4 @@ export interface BusinessItem {
   author: string;
   date: string;
   image: string;
-  tags: TagType[];
-  recommendationScore: number;
-  savedCount: number;
-  reviewCount: number;
 }

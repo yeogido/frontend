@@ -1,72 +1,93 @@
-import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { CourseCard, CourseCardSkeleton } from '../../../components/common';
+import { CourseCard } from '../../../components/common';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { useRecentCourses } from '../../../hooks/useRecentCourses';
 
-import { initialYeogidoCourseSelectedFilters } from '../constants/filters';
-import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
-import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
-import useYeogidoCourses from '../hooks/useYeogidoCourses';
 import { toRecentCourseCardProps } from './constants/recentCourses';
 
+const PAGE_PADDING_X = 24;
+const PAGE_PADDING_TOP = 56;
+const PAGE_PADDING_BOTTOM = 40;
+const TITLE_SIZE = 18;
+const DESCRIPTION_MARGIN_TOP = 6;
+const DESCRIPTION_SIZE = 14;
+const LIST_MARGIN_TOP = 30;
+const LIST_GAP = 16;
+const EMPTY_MARGIN_TOP = 40;
+const MESSAGE_TEXT_SIZE = 13;
+
 function YeogidoCourseRecentPage() {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isError,
-    isFetchingNextPage,
-    isPending,
-  } = useYeogidoCourses({ filters: initialYeogidoCourseSelectedFilters });
+  const navigate = useNavigate();
+  const scale = useGlobalScale();
+  const { getLiked, toggleLike } = useCourseLikeToggle();
 
-  const recentCourses =
-    data?.pages.flatMap((page) => page.content).map(toRecentCourseCardProps) ??
-    [];
+  const handleCourseClick = (courseId: number | string) => {
+    navigate(`/yeogido-course/detail/${courseId}`);
+  };
 
-  const handleIntersect = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const loadMoreRef = useInfiniteScroll({
-    enabled: Boolean(hasNextPage) && !isPending,
-    onIntersect: handleIntersect,
-  });
+  const recentCourses = useRecentCourses().map(toRecentCourseCardProps);
 
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-14 pb-10">
+    <section
+      className="mx-auto flex min-h-screen w-full flex-col"
+      style={{
+        paddingLeft: PAGE_PADDING_X * scale,
+        paddingRight: PAGE_PADDING_X * scale,
+        paddingTop: PAGE_PADDING_TOP * scale,
+        paddingBottom: PAGE_PADDING_BOTTOM * scale,
+      }}
+    >
       <div>
-        <h1 className="text-[18px] leading-none font-semibold text-black">
+        <h1
+          className="font-semibold leading-none text-black"
+          style={{ fontSize: TITLE_SIZE * scale }}
+        >
           최근 본 코스
         </h1>
-        <p className="text-gray-5 mt-1.5 text-[14px] leading-none font-normal">
+        <p
+          className="text-gray-5 font-normal leading-none"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: DESCRIPTION_SIZE * scale,
+          }}
+        >
           최근 확인한 코스를 다시 둘러보세요
         </p>
       </div>
 
-      <div className="mt-[30px] flex flex-col gap-4">
-        {isPending
-          ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
-              <CourseCardSkeleton key={item} />
-            ))
-          : recentCourses.map((course) => (
-              <CourseCard key={course.id} {...course} />
-            ))}
-
-        {isFetchingNextPage
-          ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
-              <CourseCardSkeleton key={`next-page-${item}`} />
-            ))
-          : null}
-      </div>
-
-      {isError ? (
-        <p className="text-main-5 mt-6 text-center text-[13px] font-medium">
-          최근 본 코스를 불러오지 못했어요.
+      {recentCourses.length > 0 ? (
+        <div
+          className="flex flex-col"
+          style={{
+            marginTop: LIST_MARGIN_TOP * scale,
+            gap: LIST_GAP * scale,
+          }}
+        >
+          {recentCourses.map((course) => (
+            <CourseCard
+              key={course.id}
+              {...course}
+              liked={getLiked(course.id, course.liked)}
+              onClick={() => handleCourseClick(course.id)}
+              onLikeClick={() =>
+                toggleLike(course.id, getLiked(course.id, course.liked))
+              }
+            />
+          ))}
+        </div>
+      ) : (
+        <p
+          className="text-center font-medium text-gray-4"
+          style={{
+            marginTop: EMPTY_MARGIN_TOP * scale,
+            fontSize: MESSAGE_TEXT_SIZE * scale,
+          }}
+        >
+          최근 본 코스가 없습니다.
         </p>
-      ) : null}
-
-      <div ref={loadMoreRef} className="h-10" aria-hidden="true" />
+      )}
     </section>
   );
 }

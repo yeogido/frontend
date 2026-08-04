@@ -25,6 +25,15 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+/**
+ * 로그인/권한 기능 구현 전까지, 테스트 및 화면 확인용으로 임시 노출하는 메뉴.
+ * 실제 접근 권한과 메뉴 노출 조건이 구현되면 이 블록은 제거하거나
+ * 조건부 렌더링으로 교체 예정.
+ */
+const TEMP_MENU = [
+  { path: '/admin', label: '관리자 페이지 (임시)' },
+];
+
 function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
@@ -142,6 +151,35 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
               >
                 <span
                   className="font-medium leading-none"
+                  style={{ fontSize: TEXT_BASE * scale }}
+                >
+                  {menu.label}
+                </span>
+              </button>
+            ))}
+          </nav>
+
+          <Divider />
+
+          {/* 임시 메뉴: 로그인/권한 기능 구현 전까지 테스트용으로 노출 */}
+          <nav className="flex flex-col">
+            {TEMP_MENU.map((menu) => (
+              <button
+                key={menu.path}
+                type="button"
+                onClick={() => {
+                  navigate(menu.path);
+                  onClose();
+                }}
+                className="flex items-center justify-between text-left"
+                style={{
+                  height: MENU_ITEM_HEIGHT * scale,
+                  paddingLeft: MENU_PADDING_X * scale,
+                  paddingRight: MENU_PADDING_X * scale,
+                }}
+              >
+                <span
+                  className="font-medium leading-none text-[#FF6F41]"
                   style={{ fontSize: TEXT_BASE * scale }}
                 >
                   {menu.label}

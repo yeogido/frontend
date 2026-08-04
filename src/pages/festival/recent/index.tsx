@@ -1,96 +1,121 @@
-import { useCallback } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import {
-  ContentCard,
-  ContentCardSkeleton,
-} from '../../../components/common';
-import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import { ContentCard } from '../../../components/common';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useRecentCultureContents } from '../../../hooks/useRecentCultureContents';
+import { useAuthStore } from '../../../store/auth.store';
+import { toContentTagIds } from '../../../utils/contentTags';
+import { buildFestivalDetailPath } from '../../../utils/routes';
 
-import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
-import useRecentFestivals from '../hooks/useRecentFestivals';
+const PAGE_PADDING_X = 24;
+const PAGE_PADDING_TOP = 12;
+const PAGE_PADDING_BOTTOM = 40;
+const TITLE_SIZE = 18;
+const TITLE_LINE_HEIGHT = 21;
+const DESCRIPTION_MARGIN_TOP = 6;
+const DESCRIPTION_SIZE = 14;
+const DESCRIPTION_LINE_HEIGHT = 17;
+const LIST_MARGIN_TOP = 24;
+const LIST_GAP = 16;
+const EMPTY_MARGIN_TOP = 40;
+const MESSAGE_TEXT_SIZE = 13;
 
 function FestivalRecentPage() {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isError,
-    isFetchingNextPage,
-    isPending,
-  } = useRecentFestivals();
+  const navigate = useNavigate();
+  const scale = useGlobalScale();
+  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
+  const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
+  const recentFestivals = useRecentCultureContents();
 
-  const recentFestivals = data?.pages.flatMap((page) => page.content) ?? [];
-  const hasEmptyResult =
-    !isPending && !isError && recentFestivals.length === 0;
-
-  const handleIntersect = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+  const handleLikeClick = (contentId: number) => {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  const loadMoreRef = useInfiniteScroll({
-    enabled: Boolean(hasNextPage) && !isPending,
-    onIntersect: handleIntersect,
-  });
+    setLikedContentIds((previousIds) =>
+      previousIds.includes(contentId)
+        ? previousIds.filter((id) => id !== contentId)
+        : [...previousIds, contentId],
+    );
+  };
 
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-3 pb-10">
+    <section
+      className="mx-auto flex min-h-screen w-full flex-col"
+      style={{
+        paddingLeft: PAGE_PADDING_X * scale,
+        paddingRight: PAGE_PADDING_X * scale,
+        paddingTop: PAGE_PADDING_TOP * scale,
+        paddingBottom: PAGE_PADDING_BOTTOM * scale,
+      }}
+    >
       <div>
-        <h1 className="text-[18px] leading-[21px] font-semibold text-black">
+        <h1
+          className="font-semibold text-black"
+          style={{
+            fontSize: TITLE_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+          }}
+        >
           최근 본 행사
         </h1>
-        <p className="mt-[6px] text-[14px] leading-[17px] font-normal text-gray-5">
-          최근 확인한 행사를 다시 둘러보세요
+        <p
+          className="font-normal text-gray-5"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: DESCRIPTION_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+          }}
+        >
+          최근 확인한 행사를 다시 살펴보세요.
         </p>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4">
-        {isPending
-          ? FESTIVAL_SKELETON_ITEMS.map((item) => (
-              <ContentCardSkeleton
-                key={item}
-                className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
-              />
-            ))
-          : recentFestivals.map((festival) => (
-              <ContentCard
-                key={festival.id}
-                image={festival.image}
-                title={festival.title}
-                firstInfo={festival.period}
-                secondInfo={festival.location}
-                liked={festival.liked}
-                tags={festival.tags}
-                className="w-full"
-              />
-            ))}
-
-        {isFetchingNextPage
-          ? FESTIVAL_SKELETON_ITEMS.slice(0, 4).map((item) => (
-              <ContentCardSkeleton
-                key={`next-page-${item}`}
-                className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
-              />
-            ))
-          : null}
-      </div>
-
-      {hasEmptyResult ? (
-        <p className="mt-10 text-center text-[13px] font-medium text-gray-4">
+      {recentFestivals.length > 0 ? (
+        <div
+          className="grid grid-cols-2"
+          style={{
+            marginTop: LIST_MARGIN_TOP * scale,
+            columnGap: LIST_GAP * scale,
+            rowGap: LIST_GAP * scale,
+          }}
+        >
+          {recentFestivals.map((festival) => (
+            <ContentCard
+              key={festival.contentId}
+              image={festival.thumbnailImageUrl}
+              title={festival.title}
+              firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+              secondInfo={festival.regionName}
+              tags={toContentTagIds(festival.hashtags)}
+              liked={
+                isLoggedIn &&
+                festival.liked !==
+                  likedContentIds.includes(festival.contentId)
+              }
+              className="w-full"
+              onClick={() =>
+                navigate(buildFestivalDetailPath(festival.contentId))
+              }
+              onLikeClick={() => handleLikeClick(festival.contentId)}
+            />
+          ))}
+        </div>
+      ) : (
+        <p
+          className="text-center font-medium text-gray-4"
+          style={{
+            marginTop: EMPTY_MARGIN_TOP * scale,
+            fontSize: MESSAGE_TEXT_SIZE * scale,
+          }}
+        >
           최근 본 행사가 없습니다.
         </p>
-      ) : null}
-
-      {isError ? (
-        <p className="mt-6 text-center text-[13px] font-medium text-main-5">
-          최근 본 행사를 불러오지 못했어요.
-        </p>
-      ) : null}
-
-      <div ref={loadMoreRef} className="h-10" aria-hidden="true" />
+      )}
     </section>
   );
 }

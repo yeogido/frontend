@@ -5,6 +5,26 @@ import {
   IoPerson,
 } from 'react-icons/io5';
 
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+
+// Figma 390 디자인 기준 리터럴 px
+const CARD_MARGIN_TOP = 29;
+const CARD_MIN_HEIGHT = 100;
+const CARD_PADDING = 12;
+const CARD_RADIUS = 12;
+const THUMBNAIL_WIDTH = 103;
+const THUMBNAIL_HEIGHT = 76;
+const THUMBNAIL_RADIUS = 8;
+const NO_IMAGE_ICON_SIZE = 20;
+const NO_IMAGE_TEXT_SIZE = 10;
+const CONTENT_MARGIN_LEFT = 12;
+const TITLE_FONT_SIZE = 15;
+const TITLE_LINE_HEIGHT = 20;
+const META_MARGIN_TOP = 12;
+const META_FONT_SIZE = 11;
+const META_LINE_HEIGHT = 16;
+const META_ICON_SIZE = 13;
+
 export interface ReviewCourseCardProps {
   title?: string;
   image?: string;
@@ -23,44 +43,104 @@ function ReviewCourseCard({
   companion = '혼자',
 }: ReviewCourseCardProps) {
   const thumbnail = image || thumbnailUrl;
+  const scale = useGlobalScale();
 
   return (
     <section
       aria-label="리뷰할 코스"
-      className="bg-background mt-[29px] flex min-h-[100px] items-center rounded-xl px-3 py-3"
+      className="bg-background flex items-center"
+      style={{
+        marginTop: CARD_MARGIN_TOP * scale,
+        minHeight: CARD_MIN_HEIGHT * scale,
+        borderRadius: CARD_RADIUS * scale,
+        padding: CARD_PADDING * scale,
+      }}
     >
       {thumbnail ? (
         <img
           src={thumbnail}
           alt={title}
-          className="h-[76px] w-[103px] shrink-0 rounded-lg object-cover"
+          className="shrink-0 object-cover"
+          style={{
+            width: THUMBNAIL_WIDTH * scale,
+            height: THUMBNAIL_HEIGHT * scale,
+            borderRadius: THUMBNAIL_RADIUS * scale,
+          }}
         />
       ) : (
-        <div className="bg-gray-2 text-gray-4 flex h-[76px] w-[103px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg">
-          <IoImageOutline aria-hidden="true" className="text-[20px]" />
-          <span className="text-[10px] font-medium">이미지 없음</span>
+        <div
+          className="bg-gray-2 text-gray-4 flex shrink-0 flex-col items-center justify-center gap-1"
+          style={{
+            width: THUMBNAIL_WIDTH * scale,
+            height: THUMBNAIL_HEIGHT * scale,
+            borderRadius: THUMBNAIL_RADIUS * scale,
+          }}
+        >
+          <IoImageOutline
+            aria-hidden="true"
+            style={{ fontSize: NO_IMAGE_ICON_SIZE * scale }}
+          />
+          <span
+            className="font-medium"
+            style={{ fontSize: NO_IMAGE_TEXT_SIZE * scale }}
+          >
+            이미지 없음
+          </span>
         </div>
       )}
-      <div className="ml-3 min-w-0 flex-1">
-        <h2 className="truncate text-[15px] leading-5 font-semibold tracking-[-0.02em]">
+      <div
+        className="min-w-0 flex-1"
+        style={{ marginLeft: CONTENT_MARGIN_LEFT * scale }}
+      >
+        <h2
+          className="truncate font-semibold tracking-[-0.02em]"
+          style={{
+            fontSize: TITLE_FONT_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+          }}
+        >
           {title}
         </h2>
-        <div className="text-gray-4 mt-3 flex flex-wrap items-center gap-x-[9px] gap-y-1 text-[11px] leading-4">
+        <div
+          className="text-gray-4 flex flex-wrap items-center"
+          style={{
+            marginTop: META_MARGIN_TOP * scale,
+            columnGap: 9 * scale,
+            rowGap: 4 * scale,
+            fontSize: META_FONT_SIZE * scale,
+            lineHeight: `${META_LINE_HEIGHT * scale}px`,
+          }}
+        >
           {duration && (
-            <span className="flex items-center gap-[3px] whitespace-nowrap">
-              <IoCalendarOutline aria-hidden="true" className="text-[13px]" />
+            <span
+              className="flex items-center whitespace-nowrap"
+              style={{ gap: 3 * scale }}
+            >
+              <IoCalendarOutline
+                aria-hidden="true"
+                style={{ fontSize: META_ICON_SIZE * scale }}
+              />
               {duration}
             </span>
           )}
           {courseType && (
-            <span className="flex items-center gap-[2px] whitespace-nowrap">
-              <IoLocationSharp aria-hidden="true" className="text-[13px]" />
+            <span
+              className="flex items-center whitespace-nowrap"
+              style={{ gap: 2 * scale }}
+            >
+              <IoLocationSharp
+                aria-hidden="true"
+                style={{ fontSize: META_ICON_SIZE * scale }}
+              />
               {courseType}
             </span>
           )}
           {companion && (
-            <span className="flex items-center gap-[3px] whitespace-nowrap">
-              <IoPerson aria-hidden="true" className="text-[12px]" />
+            <span
+              className="flex items-center whitespace-nowrap"
+              style={{ gap: 3 * scale }}
+            >
+              <IoPerson aria-hidden="true" style={{ fontSize: 12 * scale }} />
               {companion}
             </span>
           )}

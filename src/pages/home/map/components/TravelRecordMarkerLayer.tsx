@@ -7,12 +7,16 @@ import {
   MAP_VIEWBOX_WIDTH,
 } from '../constants/map';
 
-import koreaCityJson from '../assets/korea-city.json';
+import { koreaCity } from '../assets/koreaCity';
+import { koreaProvince } from '../assets/koreaProvince';
 
-import type { KoreaCityGeoJson, MapMarker } from '../types/map';
+import type { MapMarker } from '../types/map';
 
 const MAP_PADDING = 20;
-const koreaCity = koreaCityJson as KoreaCityGeoJson;
+const mapExtent: [[number, number], [number, number]] = [
+  [MAP_PADDING, MAP_PADDING],
+  [MAP_VIEWBOX_WIDTH - MAP_PADDING, MAP_VIEWBOX_HEIGHT - MAP_PADDING],
+];
 
 interface TravelRecordMarkerLayerProps {
   markers: readonly MapMarker[];
@@ -23,37 +27,47 @@ function TravelRecordMarkerLayer({
   markers,
   renderScale,
 }: TravelRecordMarkerLayerProps) {
-  const projection = useMemo(
-    () =>
-      geoMercator().fitExtent(
-        [
-          [MAP_PADDING, MAP_PADDING],
-          [
-            MAP_VIEWBOX_WIDTH - MAP_PADDING,
-            MAP_VIEWBOX_HEIGHT - MAP_PADDING,
-          ],
-        ],
-        koreaCity,
-      ),
+  const cityProjection = useMemo(
+    () => geoMercator().fitExtent(mapExtent, koreaCity),
+    [],
+  );
+  const provinceProjection = useMemo(
+    () => geoMercator().fitExtent(mapExtent, koreaProvince),
     [],
   );
 
-  const pathGenerator = useMemo(
-    () => geoPath(projection),
-    [projection],
+  const cityPathGenerator = useMemo(
+    () => geoPath(cityProjection),
+    [cityProjection],
+  );
+  const provincePathGenerator = useMemo(
+    () => geoPath(provinceProjection),
+    [provinceProjection],
   );
 
   const visibleMarkers = useMemo(
     () =>
       markers
         .map((marker) => {
-          const feature = koreaCity.features.find(
+          // 시/군/구 도형(4자리 코드) 우선 매칭, 없으면 광역시/도 도형
+          // (2자리 코드, 예: 광역시 전체)으로 매칭한다.
+          const cityFeature = koreaCity.features.find(
             ({ properties }) => properties.code === marker.regionCode,
           );
 
-          if (!feature) return null;
+          const [x, y] = cityFeature
+            ? cityPathGenerator.centroid(cityFeature)
+            : (() => {
+                const provinceFeature = koreaProvince.features.find(
+                  (feature) =>
+                    (feature.properties as { code?: string } | null)
+                      ?.code === marker.regionCode,
+                );
 
-          const [x, y] = pathGenerator.centroid(feature);
+                return provinceFeature
+                  ? provincePathGenerator.centroid(provinceFeature)
+                  : [Number.NaN, Number.NaN];
+              })();
 
           if (Number.isNaN(x) || Number.isNaN(y)) return null;
 
@@ -64,7 +78,7 @@ function TravelRecordMarkerLayer({
           };
         })
         .filter((marker) => marker !== null),
-    [markers, pathGenerator],
+    [markers, cityPathGenerator, provincePathGenerator],
   );
 
   const radius = Math.max(11 / renderScale, 3.6);

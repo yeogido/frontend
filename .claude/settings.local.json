@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep -l \"scaleValue\")",
+      "Bash(xargs grep -h \"scaleValue\")",
+      "Bash(pnpm build *)",
+      "Bash(pnpm lint *)"
+    ]
+  }
+}

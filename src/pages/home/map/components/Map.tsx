@@ -21,6 +21,7 @@ import MapControls from './MapControls';
 import MapViewport from './MapViewport';
 
 import type { MapMarker } from '../types/map';
+import type { RegionPhotoMap } from '../types/regionPhoto';
 
 interface MapProps {
   baseScale?: number;
@@ -28,6 +29,8 @@ interface MapProps {
   minZoom?: number;
   initialZoom?: number;
   markers?: readonly MapMarker[];
+  /** 여행 기록 페이지에서 받아온 지역별 대표 사진. 없으면 빈 객체 */
+  regionPhotos?: RegionPhotoMap;
 }
 
 function Map({
@@ -36,6 +39,7 @@ function Map({
   minZoom = MIN_ZOOM,
   initialZoom = minZoom,
   markers = [],
+  regionPhotos = {},
 }: MapProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const mapViewportRef = useRef<SVGGElement | null>(null);
@@ -120,9 +124,11 @@ function Map({
 
   return (
     <div className="relative h-full w-full">
+      {/* SVG text는 font-family를 상속받는다. 루트에서 한 번 지정해
+          지역명·독도·마커 숫자가 같은 서체를 쓰게 한다. */}
       <svg
         ref={svgRef}
-        className="h-full w-full"
+        className="h-full w-full font-sans"
         viewBox={`0 0 ${MAP_VIEWBOX_WIDTH} ${MAP_VIEWBOX_HEIGHT}`}
         preserveAspectRatio="xMidYMid meet"
       >
@@ -132,6 +138,7 @@ function Map({
           renderScale={rawScale}
           labelRenderScale={zoomLevel * labelBaseScale}
           markers={markers}
+          regionPhotos={regionPhotos}
         />
       </svg>
 

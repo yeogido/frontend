@@ -1,5 +1,21 @@
 import calendar from '../../../assets/icons/calendar.svg';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import type { FeaturedFestival } from '../types';
+
+const BANNER_HEIGHT = 129;
+const BANNER_RADIUS = 12;
+const TITLE_TOP = 24;
+const TITLE_LEFT = 16;
+const TITLE_WIDTH = 163;
+const TITLE_SIZE = 16;
+const DESCRIPTION_MARGIN_TOP = 10;
+const DESCRIPTION_SIZE = 10;
+const DESCRIPTION_LINE_HEIGHT = 12;
+const META_BOTTOM = 14;
+const META_LEFT = 16;
+const META_GAP = 2;
+const META_SIZE = 10;
+const ICON_SIZE = 14;
 
 interface FeaturedFestivalBannerProps {
   festival: FeaturedFestival;
@@ -10,11 +26,17 @@ function FeaturedFestivalBanner({
   festival,
   onClick,
 }: FeaturedFestivalBannerProps) {
+  const scale = useGlobalScale();
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className="relative block h-[129px] w-full overflow-hidden rounded-xl text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+      className="relative block w-full overflow-hidden text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+      style={{
+        height: BANNER_HEIGHT * scale,
+        borderRadius: BANNER_RADIUS * scale,
+      }}
     >
       <img
         src={festival.image}
@@ -24,21 +46,44 @@ function FeaturedFestivalBanner({
       />
       <div className="absolute inset-0 bg-black/30" />
 
-      <div className="absolute top-6 left-4 w-[163px] text-white">
-        <p className="text-[16px] leading-none font-semibold">
+      <div
+        className="absolute text-white"
+        style={{
+          top: TITLE_TOP * scale,
+          left: TITLE_LEFT * scale,
+          width: TITLE_WIDTH * scale,
+        }}
+      >
+        <p className="font-semibold" style={{ fontSize: TITLE_SIZE * scale }}>
           {festival.title}
         </p>
-        <p className="mt-2.5 line-clamp-2 text-[10px] leading-3 font-medium">
+        <p
+          className="line-clamp-2 font-medium"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: DESCRIPTION_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+          }}
+        >
           {festival.description}
         </p>
       </div>
 
-      <div className="absolute bottom-3.5 left-4 flex items-center gap-0.5 text-[10px] leading-none font-medium text-white">
+      <div
+        className="absolute flex items-center font-medium text-white"
+        style={{
+          bottom: META_BOTTOM * scale,
+          left: META_LEFT * scale,
+          gap: META_GAP * scale,
+          fontSize: META_SIZE * scale,
+        }}
+      >
         <img
           src={calendar}
           alt=""
           aria-hidden="true"
-          className="h-3.5 w-3.5 brightness-0 invert"
+          className="brightness-0 invert"
+          style={{ width: ICON_SIZE * scale, height: ICON_SIZE * scale }}
         />
         <span>{festival.period}</span>
       </div>

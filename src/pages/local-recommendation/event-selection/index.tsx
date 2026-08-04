@@ -1,28 +1,74 @@
-import { useMemo, useState } from 'react';
-import { IoChevronBack } from 'react-icons/io5';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
-import { SearchBar } from '../../../components/common';
-import { FestivalSearchResults, SelectedEventSheet } from './components';
-import { referenceFestivalRecords } from './constants/referenceFestivals';
+import SelectionPageLayout from '../components/SelectionPageLayout';
+import SelectionResultCard from '../components/SelectionResultCard';
+import SelectedItemsSheet from '../components/SelectedItemsSheet';
+import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
+import { getCultureContents } from '../../../apis/contents.api';
+import { festivalSearchSuggestions } from './constants/festivalSearchSuggestions';
+import { searchFestivals } from './festivalSearch';
 import type { FestivalItem } from './types';
-import { filterFestivals } from './utils';
 
-const festivalSearchSuggestions = referenceFestivalRecords
-  .map(({ tag }) => tag)
-  .slice(0, 3);
+const SEARCH_DEBOUNCE_MS = 300;
 
 function EventSelectionPage() {
   const navigate = useNavigate();
+  const draftFestivals = useLocalRecommendationStore(
+    (state) => state.draft.festivals
+  );
+  const setFestivalsInStore = useLocalRecommendationStore(
+    (state) => state.setFestivals
+  );
   const [query, setQuery] = useState('');
   const [selectedFestivals, setSelectedFestivals] = useState<FestivalItem[]>(
-    []
+    () => draftFestivals.map((festival) => ({ ...festival, imageSrc: null }))
   );
 
-  const searchResults = useMemo(
-    () => filterFestivals(referenceFestivalRecords, query),
-    [query]
-  );
+  const trimmedQuery = query.trim();
+  const [debouncedQuery, setDebouncedQuery] = useState(trimmedQuery);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(
+      () => setDebouncedQuery(trimmedQuery),
+      SEARCH_DEBOUNCE_MS
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [trimmedQuery]);
+
+  const {
+    data: searchResults = [],
+    isFetching,
+    isError,
+  } = useQuery({
+    queryKey: ['event-selection', 'festival-search', debouncedQuery],
+    queryFn: ({ signal }) =>
+      searchFestivals(debouncedQuery, getCultureContents, signal),
+    enabled: debouncedQuery.length > 0,
+    staleTime: 30_000,
+  });
+
+  const statusMessage = useMemo(() => {
+    if (!trimmedQuery) {
+      return null;
+    }
+
+    if (isFetching) {
+      return '행사를 검색하고 있어요...';
+    }
+
+    if (isError) {
+      return '행사를 불러오지 못했어요. 다시 시도해 주세요.';
+    }
+
+    if (searchResults.length === 0) {
+      return '검색 결과가 없어요.';
+    }
+
+    return null;
+  }, [trimmedQuery, isFetching, isError, searchResults.length]);
 
   const selectedFestivalIds = useMemo(
     () => new Set(selectedFestivals.map((festival) => festival.id)),
@@ -30,76 +76,90 @@ function EventSelectionPage() {
   );
 
   const handleAddFestival = (festival: FestivalItem) => {
-    setSelectedFestivals((currentFestivals) =>
-      currentFestivals.some((item) => item.id === festival.id)
-        ? currentFestivals
-        : [...currentFestivals, festival]
-    );
+    if (selectedFestivals.some((item) => item.id === festival.id)) return;
+    const next = [...selectedFestivals, festival];
+    setSelectedFestivals(next);
+    setFestivalsInStore(next);
   };
 
   const handleRemoveFestival = (festival: FestivalItem) => {
-    setSelectedFestivals((currentFestivals) =>
-      currentFestivals.filter((item) => item.id !== festival.id)
-    );
+    const next = selectedFestivals.filter((item) => item.id !== festival.id);
+    setSelectedFestivals(next);
+    setFestivalsInStore(next);
   };
 
   const handleRemoveAllFestivals = () => {
     setSelectedFestivals([]);
+    setFestivalsInStore([]);
   };
 
   return (
-    <div className="bg-background min-h-dvh w-full">
-      <main className="mx-auto min-h-dvh w-full max-w-[430px] bg-white px-6 pt-12 pb-[32dvh]">
-        <button
-          type="button"
-          aria-label="뒤로가기"
-          onClick={() =>
-            navigate('/local-recommendation/tag-selection', { replace: true })
-          }
-          className="text-gray-5 mb-4 -ml-2 flex h-8 w-8 items-center justify-center"
-        >
-          <IoChevronBack aria-hidden="true" className="text-3xl" />
-        </button>
-        <h1 className="text-[30px] leading-[1.28] font-bold tracking-[-0.02em] text-black">
-          코스에
-          <br />
-          행사를 등록해 주세요
-        </h1>
-
-        <p className="text-gray-5 mt-3 text-sm leading-5">
-          코스에 등록할 행사 및 페스티벌을 검색해 보세요
-        </p>
-
-        <SearchBar
-          className="mt-8 max-w-none [&:has(input:placeholder-shown)_[role=listbox]]:hidden"
-          placeholder="행사명을 검색해 주세요"
-          label="행사명 검색"
-          suggestions={festivalSearchSuggestions}
-          onSearch={setQuery}
-        />
-
-        <section className="mt-[22px]" aria-labelledby="festival-results-title">
-          <h2
-            id="festival-results-title"
-            className="text-base leading-5 font-semibold text-black"
-          >
-            검색 결과
-          </h2>
-
-          <FestivalSearchResults
-            festivals={searchResults}
-            selectedFestivalIds={selectedFestivalIds}
-            onAdd={handleAddFestival}
+    <>
+      <SelectionPageLayout
+        title={
+          <>
+            코스에
+            <br />
+            행사를 등록해 주세요
+          </>
+        }
+        description="코스에 등록할 행사 및 페스티벌을 검색해 보세요"
+        searchPlaceholder="행사명을 검색해 주세요"
+        searchLabel="행사명 검색"
+        searchSuggestions={festivalSearchSuggestions}
+        hideEmptySearchSuggestions
+        items={searchResults}
+        selectedItemIds={selectedFestivalIds}
+        getItemId={(festival) => festival.id}
+        onSearchChange={setQuery}
+        onItemAdd={handleAddFestival}
+        onBack={() =>
+          navigate('/local-recommendation/tag-selection', { replace: true })
+        }
+        statusMessage={
+          statusMessage ? (
+            <p className="text-gray-5 text-center text-sm font-medium">
+              {statusMessage}
+            </p>
+          ) : undefined
+        }
+        renderItem={(festival, isSelected, onItemAdd) => (
+          <SelectionResultCard
+            key={festival.id}
+            item={festival}
+            title={festival.title}
+            description={festival.address}
+            imageSrc={festival.imageSrc}
+            imageAlt={`${festival.title} 행사 이미지`}
+            action="add"
+            disabled={isSelected}
+            onItemAdd={onItemAdd}
           />
-        </section>
-      </main>
-
-      <SelectedEventSheet
-        selectedEvents={selectedFestivals}
-        onRemoveAll={handleRemoveAllFestivals}
-        onRemove={handleRemoveFestival}
+        )}
       />
-    </div>
+      <SelectedItemsSheet
+        selectedSectionTitle="추가된 행사"
+        emptyMessage="아직 추가된 행사가 없어요"
+        submitButtonLabel="행사 등록하기"
+        selectedItems={selectedFestivals}
+        isSubmitDisabled={selectedFestivals.length === 0}
+        onItemRemove={handleRemoveFestival}
+        onRemoveAll={handleRemoveAllFestivals}
+        onSubmit={() => navigate('/local-recommendation/place-selection')}
+        renderItem={(festival, onItemRemove) => (
+          <SelectionResultCard
+            key={festival.id}
+            item={festival}
+            title={festival.title}
+            description={festival.address}
+            imageSrc={festival.imageSrc}
+            imageAlt={`${festival.title} 행사 이미지`}
+            action="remove"
+            onItemRemove={onItemRemove}
+          />
+        )}
+      />
+    </>
   );
 }
 

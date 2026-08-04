@@ -1,5 +1,10 @@
+import { useEffect } from 'react';
 import { IoChevronBack } from 'react-icons/io5';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+
+import { TravelRecordPageFrame } from '../components';
+import { usePopularTravelRecordRegions } from '../../../hooks/useTravelRecordRegions';
+import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 
 import {
   PopularRegionGrid,
@@ -9,10 +14,23 @@ import {
   SelectedRegionSearchBar,
 } from './components';
 import { useTravelRecordRegionSelection } from './hooks';
-import { saveTravelRecordDraftRegion } from '../utils/draftStorage';
+import {
+  clearTravelRecordDraftDateRange,
+  saveTravelRecordDraftRegion,
+} from '../utils/draftStorage';
+import { getTravelRecordDraftRegion } from '../utils/draftStorage';
+import { mapPopularRegionToTravelRecordRegion } from '../mappers/travelRecordApiMapper';
+import { getTravelRecordEditRoute } from '../utils/editRoute';
 
 function TravelRecordRegionSelectionPage() {
   const navigate = useNavigate();
+  const { travelRecordId } = useParams<{ travelRecordId: string }>();
+  const storedDraftRegion = getTravelRecordDraftRegion();
+  const popularRegionsQuery = usePopularTravelRecordRegions();
+  const popularRegions =
+    popularRegionsQuery.data?.map(mapPopularRegionToTravelRecordRegion) ?? [];
+  const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
+  const isEditing = Boolean(travelRecordId);
   const {
     filteredRegions,
     isSuggestionOpen,
@@ -28,10 +46,19 @@ function TravelRecordRegionSelectionPage() {
     selectRegionName,
     submitSearch,
     updateQuery,
-  } = useTravelRecordRegionSelection();
+  } = useTravelRecordRegionSelection(
+    popularRegions,
+    storedDraftRegion ? { ...storedDraftRegion, imageSrc: '' } : null,
+  );
+
+  useEffect(() => {
+    if (!travelRecordId) {
+      clearEdit();
+    }
+  }, [clearEdit, travelRecordId]);
 
   return (
-    <main className="relative mx-auto h-[844px] w-full max-w-[390px] bg-[#f9f9f9] px-6 pt-[60px]">
+    <TravelRecordPageFrame className="bg-[#f9f9f9] px-6 pt-[60px]">
       <button
         type="button"
         onClick={() => navigate('/travel-record')}
@@ -42,7 +69,7 @@ function TravelRecordRegionSelectionPage() {
       </button>
 
       <section className="mt-4 flex shrink-0 flex-col gap-3">
-        <h1 className="text-black text-[32px] leading-none font-semibold">
+        <h1 className="text-[32px] leading-none font-semibold text-black">
           어디를
           <br />
           다녀오셨나요?
@@ -101,24 +128,33 @@ function TravelRecordRegionSelectionPage() {
 
           const draftRegion = {
             id: selectedRegion.id,
+            regionId: selectedRegion.regionId,
             name: selectedRegion.name,
             province: selectedRegion.province,
             selectionName: selectedRegion.selectionName,
           };
 
+          if (!isEditing) {
+            clearTravelRecordDraftDateRange();
+          }
           saveTravelRecordDraftRegion(draftRegion);
 
-          navigate('/travel-record/date-selection', {
+          navigate(
+            travelRecordId
+              ? getTravelRecordEditRoute(travelRecordId, 'date')
+              : '/travel-record/date-selection',
+            {
             state: {
               selectedRegion: draftRegion,
             },
-          });
+            },
+          );
         }}
-        className="bg-gray-2 text-gray-4 absolute top-[759px] right-6 left-6 flex h-[53px] items-center justify-center rounded-xl text-[18px] leading-none font-semibold enabled:bg-main-5 enabled:text-white"
+        className="bg-gray-2 text-gray-4 enabled:bg-main-5 absolute top-[759px] right-6 left-6 flex h-[53px] items-center justify-center rounded-xl text-[18px] leading-none font-semibold enabled:text-white"
       >
         날짜 선택하기
       </button>
-    </main>
+    </TravelRecordPageFrame>
   );
 }
 

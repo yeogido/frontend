@@ -3,18 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import {
   ContentCard,
   CourseCard,
+  FloatingActionButton,
   SearchTriggerButton,
   SectionHeader,
 } from '../../components/common';
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useLoginModal } from '../../hooks/useLoginModal';
+import { useAuthStore } from '../../store/auth.store';
 
-import {
-  CreateCourseBanner,
-  FloatingCreateButton,
-} from './components';
+import { CreateCourseBanner } from './components';
 import useLocalCoursePreviews from './hooks/useLocalCoursePreviews';
+
+const PAGE_PADDING_X = 24;
+const PAGE_PADDING_TOP = 12;
+const PAGE_PADDING_BOTTOM = 40;
+const TITLE_SIZE = 18;
+const TITLE_LINE_HEIGHT = 22;
+const DESCRIPTION_MARGIN_TOP = 5;
+const DESCRIPTION_SIZE = 12;
+const DESCRIPTION_LINE_HEIGHT = 17;
+const SEARCH_MARGIN_TOP = 12;
+const BANNER_MARGIN_TOP = 12;
+const SECTION_MARGIN_TOP = 32;
+const LIST_MARGIN_TOP = 12;
+const LIST_GAP = 16;
 
 function LocalCoursePage() {
   const navigate = useNavigate();
+  const scale = useGlobalScale();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
   const { popularCourses, recentCourses } = useLocalCoursePreviews();
 
   const goToRegionSearch = () => {
@@ -25,6 +43,15 @@ function LocalCoursePage() {
     navigate('/local-recommendation');
   };
 
+  const handleCreateCourse = () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    goToCreateCourse();
+  };
+
   const goToPopularCourses = () => {
     navigate('/local-course/popular');
   };
@@ -33,36 +60,68 @@ function LocalCoursePage() {
     navigate('/local-course/recent');
   };
 
+  const goToCourseDetail = (courseId: number) => {
+    navigate(`/local-course/detail/${courseId}`);
+  };
+
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-3 pb-10">
+    <section
+      className="mx-auto flex min-h-screen w-full flex-col"
+      style={{
+        paddingLeft: PAGE_PADDING_X * scale,
+        paddingRight: PAGE_PADDING_X * scale,
+        paddingTop: PAGE_PADDING_TOP * scale,
+        paddingBottom: PAGE_PADDING_BOTTOM * scale,
+      }}
+    >
       <div>
-        <h1 className="text-[18px] leading-[22px] font-semibold text-black">
+        <h1
+          className="font-semibold text-black"
+          style={{
+            fontSize: TITLE_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+          }}
+        >
           우리동네 추천 코스
         </h1>
-        <p className="text-gray-4 mt-[5px] text-[12px] leading-[17px] font-normal">
+        <p
+          className="text-gray-4 font-normal"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: DESCRIPTION_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+          }}
+        >
           여행자들이 직접 만든 지역 경험 코스
         </p>
       </div>
 
-      <SearchTriggerButton
-        className="mt-3"
-        label="지역명 또는 도시명 검색 화면으로 이동"
-        placeholder="지역명 또는 도시명을 검색해 주세요"
-        onClick={goToRegionSearch}
-      />
+      <div style={{ marginTop: SEARCH_MARGIN_TOP * scale }}>
+        <SearchTriggerButton
+          label="지역명 또는 도시명 검색 화면으로 이동"
+          placeholder="지역명 또는 도시명을 검색해 주세요"
+          onClick={goToRegionSearch}
+        />
+      </div>
 
-      <div className="mt-3">
+      <div style={{ marginTop: BANNER_MARGIN_TOP * scale }}>
         <CreateCourseBanner onClick={goToCreateCourse} />
       </div>
 
-      <section className="mt-8">
+      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
         <SectionHeader
           title="인기 추천 코스"
           actionText="자세히 보기"
           onActionClick={goToPopularCourses}
         />
 
-        <div className="mt-3 flex [scrollbar-width:none] gap-4 overflow-x-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div
+          className="flex [scrollbar-width:none] overflow-x-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          style={{
+            marginTop: LIST_MARGIN_TOP * scale,
+            gap: LIST_GAP * scale,
+          }}
+        >
           {popularCourses.map((course) => (
             <ContentCard
               key={course.id}
@@ -72,28 +131,41 @@ function LocalCoursePage() {
               secondInfo={course.courseType}
               liked={course.liked}
               tags={course.tags}
+              onClick={() => goToCourseDetail(course.id)}
             />
           ))}
         </div>
       </section>
 
-      <section className="mt-8">
+      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
         <SectionHeader
           title="최근 본 코스"
           actionText="전체 보기"
           onActionClick={goToRecentCourses}
         />
 
-        <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(342px,1fr))] gap-4">
+        <div
+          className="grid grid-cols-1"
+          style={{
+            marginTop: LIST_MARGIN_TOP * scale,
+            gap: LIST_GAP * scale,
+          }}
+        >
           {recentCourses.map((course) => (
-            <div key={course.id} className="w-[342px] max-w-full">
-              <CourseCard {...course} />
+            <div key={course.id} className="w-full">
+              <CourseCard
+                {...course}
+                onClick={() => goToCourseDetail(course.id)}
+              />
             </div>
           ))}
         </div>
       </section>
 
-      <FloatingCreateButton onClick={goToCreateCourse} />
+      <FloatingActionButton
+        ariaLabel="코스 만들기"
+        onClick={handleCreateCourse}
+      />
     </section>
   );
 }

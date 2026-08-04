@@ -1,17 +1,53 @@
-import { useCallback } from 'react';
+import {
+  useCallback,
+  useState,
+} from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   ContentCard,
   ContentCardSkeleton,
 } from '../../../components/common';
+import { useCultureContents } from '../../../hooks/useCultureContents';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useAuthStore } from '../../../store/auth.store';
+import { toContentTagIds } from '../../../utils/contentTags';
+import { buildFestivalDetailPath } from '../../../utils/routes';
 
 import { FestivalFilterBar } from '../components';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
 import useFestivalFilters from '../hooks/useFestivalFilters';
-import useFestivals from '../hooks/useFestivals';
+
+const PAGE_PADDING_X = 24;
+const PAGE_PADDING_TOP = 12;
+const PAGE_PADDING_BOTTOM = 40;
+const TITLE_SIZE = 18;
+const TITLE_LINE_HEIGHT = 21;
+const DESCRIPTION_MARGIN_TOP = 6;
+const DESCRIPTION_SIZE = 14;
+const DESCRIPTION_LINE_HEIGHT = 17;
+const LIST_MARGIN_TOP = 24;
+const LIST_GAP = 16;
+const EMPTY_MARGIN_TOP = 40;
+const ERROR_MARGIN_TOP = 24;
+const MESSAGE_TEXT_SIZE = 13;
+const LOAD_MORE_HEIGHT = 40;
+
+const contentSortByFestivalSort = {
+  RECOMMENDED: 'RECOMMEND',
+  SAVED: 'LIKE',
+  DISTANCE: 'DISTANCE',
+  ENDING_SOON: 'DEADLINE',
+} as const;
 
 function FestivalOngoingPage() {
+  const navigate = useNavigate();
+  const scale = useGlobalScale();
+  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
+  const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
   const {
     selectedFilters,
     handleSortSelect,
@@ -24,12 +60,16 @@ function FestivalOngoingPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useFestivals({
-    filters: selectedFilters,
-    status: 'ONGOING',
+  } = useCultureContents({
+    category:
+      selectedFilters.category === 'ALL'
+        ? undefined
+        : selectedFilters.category,
+    sort: contentSortByFestivalSort[selectedFilters.sort],
+    size: 20,
   });
 
-  const festivals = data?.pages.flatMap((page) => page.content) ?? [];
+  const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
 
   const handleIntersect = useCallback(() => {
@@ -43,13 +83,49 @@ function FestivalOngoingPage() {
     onIntersect: handleIntersect,
   });
 
+  const handleLikeClick = (contentId: number) => {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+
+    setLikedContentIds((previousIds) =>
+      previousIds.includes(contentId)
+        ? previousIds.filter((id) => id !== contentId)
+        : [...previousIds, contentId],
+    );
+
+    // TODO: 좋아요 API 연동
+  };
+
   return (
-    <section className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col px-6 pt-3 pb-10">
+    <section
+      className="mx-auto flex min-h-screen w-full flex-col"
+      style={{
+        paddingLeft: PAGE_PADDING_X * scale,
+        paddingRight: PAGE_PADDING_X * scale,
+        paddingTop: PAGE_PADDING_TOP * scale,
+        paddingBottom: PAGE_PADDING_BOTTOM * scale,
+      }}
+    >
       <div>
-        <h1 className="text-[18px] leading-[21px] font-semibold text-black">
+        <h1
+          className="font-semibold text-black"
+          style={{
+            fontSize: TITLE_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+          }}
+        >
           진행 중인 행사
         </h1>
-        <p className="mt-[6px] text-[14px] leading-[17px] font-normal text-gray-5">
+        <p
+          className="font-normal text-gray-5"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: DESCRIPTION_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+          }}
+        >
           지금 참여할 수 있는 행사를 만나보세요
         </p>
       </div>
@@ -61,7 +137,14 @@ function FestivalOngoingPage() {
         onCategorySelect={handleCategorySelect}
       />
 
-      <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4">
+      <div
+        className="grid grid-cols-2"
+        style={{
+          marginTop: LIST_MARGIN_TOP * scale,
+          columnGap: LIST_GAP * scale,
+          rowGap: LIST_GAP * scale,
+        }}
+      >
         {isPending
           ? FESTIVAL_SKELETON_ITEMS.map((item) => (
               <ContentCardSkeleton
@@ -72,14 +155,21 @@ function FestivalOngoingPage() {
             ))
           : festivals.map((festival) => (
               <ContentCard
-                key={festival.id}
-                image={festival.image}
+                key={festival.contentId}
+                image={festival.thumbnailImageUrl}
                 title={festival.title}
-                firstInfo={festival.period}
-                secondInfo={festival.location}
-                liked={festival.liked}
-                tags={festival.tags}
+                firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                secondInfo={festival.regionName}
+                tags={toContentTagIds(festival.hashtags)}
+                liked={
+                  isLoggedIn &&
+                  likedContentIds.includes(festival.contentId)
+                }
                 className="w-full"
+                onClick={() =>
+                  navigate(buildFestivalDetailPath(festival.contentId))
+                }
+                onLikeClick={() => handleLikeClick(festival.contentId)}
               />
             ))}
 
@@ -95,18 +185,34 @@ function FestivalOngoingPage() {
       </div>
 
       {hasEmptyResult ? (
-        <p className="mt-10 text-center text-[13px] font-medium text-gray-4">
+        <p
+          className="text-center font-medium text-gray-4"
+          style={{
+            marginTop: EMPTY_MARGIN_TOP * scale,
+            fontSize: MESSAGE_TEXT_SIZE * scale,
+          }}
+        >
           진행 중인 행사가 없습니다.
         </p>
       ) : null}
 
       {isError ? (
-        <p className="mt-6 text-center text-[13px] font-medium text-main-5">
+        <p
+          className="text-main-5 text-center font-medium"
+          style={{
+            marginTop: ERROR_MARGIN_TOP * scale,
+            fontSize: MESSAGE_TEXT_SIZE * scale,
+          }}
+        >
           행사 목록을 불러오지 못했어요.
         </p>
       ) : null}
 
-      <div ref={loadMoreRef} className="h-10" aria-hidden="true" />
+      <div
+        ref={loadMoreRef}
+        style={{ height: LOAD_MORE_HEIGHT * scale }}
+        aria-hidden="true"
+      />
     </section>
   );
 }

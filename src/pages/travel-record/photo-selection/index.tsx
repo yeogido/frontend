@@ -1,0 +1,186 @@
+import { useEffect, useMemo } from 'react';
+import { IoChevronBack } from 'react-icons/io5';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+
+import { TravelRecordPageFrame } from '../components';
+import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
+
+import {
+  DraggingPhotoPreview,
+  PhotoSelectionTip,
+  PhotoUploadBox,
+  SelectedPhotoStrip,
+  TravelFolderPreview,
+} from './components';
+import { useDraggablePhotoOrder, useTravelRecordPhotoSelection } from './hooks';
+import type { TravelPhotoSelectionLocationState } from '../date-selection/types';
+import {
+  getTravelRecordDraftDateRange,
+  getTravelRecordDraftRegion,
+} from '../utils/draftStorage';
+import {
+  saveTravelRecordPhotoDraft,
+  TRAVEL_RECORD_PHOTO_DRAFT_ID,
+  type TravelRecordPhotoDraft,
+} from '../utils/travelRecordSave';
+import { getTravelRecordEditRoute } from '../utils/editRoute';
+
+const previousPageLabel =
+  '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
+const titleFirstLine = '\uC5EC\uD589 \uC0AC\uC9C4\uC744';
+const titleSecondLine = '\uCD94\uAC00\uD574 \uBCF4\uC138\uC694';
+const description =
+  '\uC5EC\uD589\uC758 \uC21C\uAC04\uC744 \uC0AC\uC9C4\uC73C\uB85C \uB0A8\uACA8\uBCF4\uC138\uC694';
+const decorateFolderLabel = '\uD3F4\uB354 \uAFB8\uBBF8\uAE30';
+
+function TravelRecordPhotoSelectionPage() {
+  const navigate = useNavigate();
+  const { travelRecordId } = useParams<{ travelRecordId: string }>();
+  const location = useLocation();
+  const locationState =
+    location.state as TravelPhotoSelectionLocationState | null;
+  const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
+  const storedSelectedDateRange = useMemo(
+    () => getTravelRecordDraftDateRange(),
+    []
+  );
+  const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
+  const selectedDateRange =
+    locationState?.selectedDateRange ?? storedSelectedDateRange;
+  const regionName =
+    selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
+  const isEditing = useTravelRecordSessionStore((state) => state.editSession !== null);
+  const {
+    fileInputRef,
+    hasSelectedPhotos,
+    photos,
+    photosRef,
+    handlePhotoChange,
+    openFilePicker,
+    removePhoto,
+    reorderPhotos,
+  } = useTravelRecordPhotoSelection(isEditing);
+  const {
+    draggingPhoto,
+    handlePhotoPointerDown,
+    handlePhotoPointerMove,
+    handlePhotoPointerUp,
+    registerPhotoItem,
+  } = useDraggablePhotoOrder({
+    photosRef,
+    onReorderPhotos: reorderPhotos,
+  });
+
+  const handleDecorateFolder = async () => {
+    if (!hasSelectedPhotos || !selectedRegion || !selectedDateRange) {
+      return;
+    }
+
+    await saveTravelRecordPhotoDraft(
+      photos.flatMap<TravelRecordPhotoDraft>((photo) => {
+        if (photo.source === 'server' && photo.imageKey) {
+          return [{ source: 'server' as const, imageKey: photo.imageKey, imageUrl: photo.url }];
+        }
+
+        return photo.file ? [{ source: 'new' as const, file: photo.file }] : [];
+      }),
+    );
+    navigate(
+      travelRecordId
+        ? getTravelRecordEditRoute(travelRecordId, 'decorate')
+        : '/travel-record/folder-decoration',
+      {
+      state: {
+        selectedRegion,
+        selectedDateRange,
+        photoDraftId: TRAVEL_RECORD_PHOTO_DRAFT_ID,
+      },
+      },
+    );
+  };
+
+  useEffect(() => {
+    if (!selectedRegion) {
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId)
+          : '/travel-record/new',
+        { replace: true },
+      );
+      return;
+    }
+
+    if (!selectedDateRange) {
+      navigate(
+        travelRecordId
+          ? getTravelRecordEditRoute(travelRecordId, 'date')
+          : '/travel-record/date-selection',
+        { replace: true },
+      );
+    }
+  }, [navigate, selectedDateRange, selectedRegion, travelRecordId]);
+
+  return (
+    <TravelRecordPageFrame className="bg-[#f9f9f9]">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        aria-label={previousPageLabel}
+        className="absolute top-[60px] left-6 flex size-6 items-center justify-start text-[#505050]"
+      >
+        <IoChevronBack aria-hidden="true" className="text-[24px]" />
+      </button>
+
+      <section className="absolute top-[100px] left-6 flex flex-col gap-3">
+        <h1 className="text-[32px] leading-none font-semibold text-[#1c1c1c]">
+          {titleFirstLine}
+          <br />
+          {titleSecondLine}
+        </h1>
+        <p className="text-[14px] leading-none text-[#505050]">{description}</p>
+      </section>
+
+      {/* 업로드 박스가 사라져도 사진 추가 버튼이 동작해야 하므로 입력은
+          페이지에 둔다. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        onChange={handlePhotoChange}
+        className="sr-only"
+      />
+
+      {hasSelectedPhotos ? (
+        <TravelFolderPreview photos={photos} regionName={regionName} />
+      ) : (
+        <PhotoUploadBox onUploadClick={openFilePicker} />
+      )}
+
+      <SelectedPhotoStrip
+        draggingPhoto={draggingPhoto}
+        photos={photos}
+        onPhotoPointerDown={handlePhotoPointerDown}
+        onPhotoPointerMove={handlePhotoPointerMove}
+        onPhotoPointerUp={handlePhotoPointerUp}
+        onRegisterPhotoItem={registerPhotoItem}
+        onRemovePhoto={removePhoto}
+        onAddPhoto={openFilePicker}
+      />
+
+      <PhotoSelectionTip />
+      <DraggingPhotoPreview draggingPhoto={draggingPhoto} />
+
+      <button
+        type="button"
+        disabled={!hasSelectedPhotos}
+        onClick={handleDecorateFolder}
+        className="absolute top-[759px] left-6 flex h-[53px] w-[342px] items-center justify-center rounded-xl bg-[#e4e4e4] text-[18px] leading-none font-semibold text-[#7f7f7f] enabled:bg-[#ff6f41] enabled:text-[#f9f9f9]"
+      >
+        {decorateFolderLabel}
+      </button>
+    </TravelRecordPageFrame>
+  );
+}
+
+export default TravelRecordPhotoSelectionPage;
