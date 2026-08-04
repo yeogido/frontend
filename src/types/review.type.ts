@@ -16,7 +16,8 @@ export interface ReviewImage {
 export interface ReviewAuthor {
   nickname: string;
   ageGroup: string;
-  profileImageUrl: string;
+  /** 프로필을 설정하지 않은 계정은 null로 온다(확인됨). */
+  profileImageUrl: string | null;
   /** 아직 리뷰 응답에는 없다. 추가되면 카드 메타가 "20대 여"로 완성된다. */
   gender?: string;
 }
