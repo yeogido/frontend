@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -10,7 +10,9 @@ import {
 } from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import {
+  getCourseReviewsFromPages,
   useCourseReviews,
   useMyReviewIds,
   useReviewDelete,
@@ -56,25 +58,37 @@ function CourseReviewsPage() {
     : 'yeogido-course';
 
   const parsedCourseId = Number(courseId);
-  const { data, isPending, isError } = useCourseReviews(
-    Number.isInteger(parsedCourseId) ? parsedCourseId : undefined
+  const {
+    data,
+    isPending,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useCourseReviews(
+    Number.isInteger(parsedCourseId) ? parsedCourseId : undefined,
+    sort === 'rating' ? 'RATING' : 'LATEST'
   );
   const myReviewIds = useMyReviewIds();
   const { requestDelete, dialogProps } = useReviewDelete();
 
-  // 코스별 리뷰 API에는 정렬 파라미터가 없어 받아온 목록을 여기서 정렬한다.
-  // 페이징도 없어 전체가 한 번에 오므로 잘린 목록을 정렬할 위험은 없다.
-  // 백엔드가 sort/cursor를 추가하면 이 useMemo를 걷어내고 훅에 넘기면 된다.
-  const sortedReviews = useMemo(() => {
-    const reviews = mapCourseReviewPreviews(data, myReviewIds);
-
-    return sort === 'rating'
-      ? [...reviews].sort((first, second) => second.rating - first.rating)
-      : reviews;
-  }, [data, myReviewIds, sort]);
-
+  const reviews = mapCourseReviewPreviews(
+    getCourseReviewsFromPages(data?.pages),
+    myReviewIds
+  );
   const { openedReview, openReview, closeReview } =
-    useReviewDetailModal(sortedReviews);
+    useReviewDetailModal(reviews);
+
+  const handleIntersect = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadMoreRef = useInfiniteScroll({
+    enabled: Boolean(hasNextPage) && !isFetchingNextPage,
+    onIntersect: handleIntersect,
+  });
   // 이 화면은 이미 코스가 정해져 있어 타입 조회 없이 경로를 만들 수 있다.
   const courseDetailPath = `/${courseType}/detail/${courseId}`;
 
@@ -152,25 +166,36 @@ function CourseReviewsPage() {
             />
           ) : isError ? (
             renderMessage('후기를 불러오지 못했습니다.')
-          ) : sortedReviews.length === 0 ? (
+          ) : reviews.length === 0 ? (
             renderMessage('아직 등록된 후기가 없습니다.')
           ) : (
-            sortedReviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                images={review.images}
-                profileImage={review.profileImage}
-                nickname={review.nickname}
-                meta={review.meta}
-                content={review.content}
-                rating={review.rating}
-                isMine={review.isMine}
-                onDeleteClick={() => requestDelete(review.id)}
-                onClick={() => navigate(courseDetailPath)}
-                onLongPress={() => openReview(review.id)}
-                className="[&>div>article]:!bg-[#F1F1F1]"
-              />
-            ))
+            <>
+              {reviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  images={review.images}
+                  profileImage={review.profileImage}
+                  nickname={review.nickname}
+                  meta={review.meta}
+                  content={review.content}
+                  rating={review.rating}
+                  isMine={review.isMine}
+                  onDeleteClick={() => requestDelete(review.id)}
+                  onClick={() => navigate(courseDetailPath)}
+                  onLongPress={() => openReview(review.id)}
+                  className="[&>div>article]:!bg-[#F1F1F1]"
+                />
+              ))}
+
+              <div ref={loadMoreRef} aria-hidden="true" />
+
+              {isFetchingNextPage && (
+                <LoadingSpinner
+                  className="w-full"
+                  label="후기를 더 불러오는 중"
+                />
+              )}
+            </>
           )}
         </div>
       </section>

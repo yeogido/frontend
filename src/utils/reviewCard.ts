@@ -6,12 +6,28 @@ import {
 
 import type { ReviewDetail, ReviewImage } from '../types/review.type';
 
-// 응답이 순서대로 온다는 보장이 없어 imageOrder로 정렬한 뒤 URL만 추린다.
+// 응답이 순서대로 온다는 보장이 없어 imageOrder로 정렬해 둔다.
+function sortImages(images: ReviewImage[] | undefined): ReviewImage[] {
+  return [...(images ?? [])].sort((a, b) => a.imageOrder - b.imageOrder);
+}
+
 function toImageUrls(images: ReviewImage[] | undefined): string[] {
-  return [...(images ?? [])]
-    .sort((a, b) => a.imageOrder - b.imageOrder)
+  return sortImages(images)
     .map((image) => image.imageUrl)
     .filter(Boolean);
+}
+
+/**
+ * 수정 화면이 쓰는 사진 목록.
+ *
+ * 유지할 사진을 PATCH에 다시 실어 보내려면 imageKey가 필요하고, 화면에는
+ * imageUrl을 그려야 해서 둘을 함께 넘긴다. 코스별 후기 목록
+ * (CourseReviewPreview)에는 imageKey가 없어 그 화면들은 수정할 수 없다.
+ */
+function toEditableImages(images: ReviewImage[] | undefined) {
+  return sortImages(images)
+    .filter((image) => image.imageKey && image.imageUrl)
+    .map(({ imageKey, imageUrl }) => ({ imageKey, imageUrl }));
 }
 
 /**
@@ -27,6 +43,7 @@ export function toReviewCardProps(
   return {
     id: review.reviewId,
     images: toImageUrls(review.images),
+    editableImages: toEditableImages(review.images),
     profileImage: review.author?.profileImageUrl ?? '',
     nickname: review.author?.nickname ?? '',
     meta: toReviewerMetaLabel(review.author?.ageGroup, review.author?.gender),
@@ -56,6 +73,7 @@ export function toReviewCourseCardProps(
     // 여는 상세 모달에서 쓴다.
     image: review.course.thumbnailUrl,
     images: toImageUrls(review.images),
+    editableImages: toEditableImages(review.images),
     title: review.course.title,
     duration: toDurationLabel(review.course.durationType),
     courseType: toTransportLabel(review.course.transportType),

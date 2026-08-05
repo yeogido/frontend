@@ -12,8 +12,9 @@ const MENU_GAP = 8;
 
 export interface ReviewActionMenuProps {
   /**
-   * 아직 넘기는 화면이 없어 메뉴에는 '삭제'만 뜬다. 수정 화면을 못 만드는
-   * 이유는 types/review.type.ts의 수정 요청 타입 주석 참고.
+   * 수정 화면이 아직 없어 넘기는 곳이 없다. 메뉴에는 항목이 보이지만 눌러도
+   * 아무 일도 일어나지 않는다. 화면을 못 만드는 이유는 types/review.type.ts의
+   * 수정 요청 타입 주석 참고.
    */
   onEditClick?: () => void;
   onDeleteClick?: () => void;
@@ -107,14 +108,12 @@ function ReviewActionMenu({
     action?.();
   };
 
+  // 수정은 화면이 아직 없어 항상 자리만 잡아 둔다. 삭제는 동작이 붙어 있을
+  // 때만 내보낸다.
   const menuItems = [
     { key: 'edit', label: '수정', action: onEditClick },
     { key: 'delete', label: '삭제', action: onDeleteClick },
-  ].filter((item) => Boolean(item.action));
-
-  if (menuItems.length === 0) {
-    return null;
-  }
+  ].filter((item) => item.key === 'edit' || Boolean(item.action));
 
   return (
     <>

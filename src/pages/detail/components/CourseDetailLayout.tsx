@@ -26,7 +26,7 @@ import {
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import {
-  useCourseReviews,
+  useCourseReviewPreviews,
   useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
@@ -110,11 +110,11 @@ function CourseDetailLayoutContent({
   const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
   const numericCourseId = Number(course.id);
-  const { data: courseReviews } = useCourseReviews(
+  const { data: courseReviews } = useCourseReviewPreviews(
     Number.isInteger(numericCourseId) ? numericCourseId : undefined
   );
   const myReviewIds = useMyReviewIds();
-  const reviews = mapCourseReviewPreviews(courseReviews, myReviewIds);
+  const reviews = mapCourseReviewPreviews(courseReviews?.items, myReviewIds);
   const { requestDelete, dialogProps } = useReviewDelete();
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);

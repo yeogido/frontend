@@ -5,6 +5,7 @@ import {
   ReviewCardSkeleton,
   ReviewDeleteDialog,
   ReviewDetailModal,
+  ReviewEditModal,
   SectionHeader,
 } from '../../../components/common';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +17,7 @@ import {
   useRecentReviews,
   useReviewDelete,
   useReviewDetailModal,
+  useReviewEdit,
 } from '../../../hooks/useReviews';
 import { toReviewCardProps } from '../../../utils/reviewCard';
 
@@ -38,6 +40,7 @@ function ReviewSection() {
     toReviewCardProps(review, myReviewIds)
   );
   const { requestDelete, dialogProps } = useReviewDelete();
+  const { requestEdit, editorProps } = useReviewEdit();
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
   const { goToCourseDetail } = useNavigateToCourseDetail();
@@ -156,6 +159,7 @@ function ReviewSection() {
                   rating={review.rating}
                   isMine={review.isMine}
                   onDeleteClick={() => requestDelete(review.id)}
+                  onEditClick={() => requestEdit(review)}
                   onLongPress={() => openReview(review.id)}
                 />
               </div>
@@ -204,6 +208,8 @@ function ReviewSection() {
           openedReview && (() => void goToCourseDetail(openedReview.courseId))
         }
       />
+
+      <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
 
       <ReviewDeleteDialog {...dialogProps} />
     </section>

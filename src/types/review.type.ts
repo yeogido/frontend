@@ -3,14 +3,10 @@
 // 표시 시점에 src/utils/courseEnumLabels.ts에서 매핑한다.
 
 export interface ReviewImage {
+  /** 수정 시 유지할 이미지를 지목하는 데 쓴다. */
+  imageKey: string;
   imageUrl: string;
   imageOrder: number;
-  /**
-   * 리뷰 수정 시 "유지할 이미지"를 지목하려면 imageKey가 필요한데, 현재
-   * 조회 응답은 URL만 내려준다(백엔드 추가 요청 중). 내려오기 시작하면
-   * 그대로 채워지도록 선택 필드로 둔다.
-   */
-  imageKey?: string;
 }
 
 export interface ReviewAuthor {
@@ -64,7 +60,12 @@ export interface GetReviewsResponse {
   hasNext: boolean;
 }
 
-/** GET /courses/{courseId}/reviews 아이템. 이미지가 URL 배열이다. */
+/**
+ * GET /courses/{courseId}/reviews 아이템.
+ *
+ * 전체 후기 목록(ReviewDetail)과 달리 이미지가 URL 배열이라 imageKey가 없다.
+ * 그래서 이 화면들에서는 사진을 유지한 채 수정할 수 없다.
+ */
 export interface CourseReviewPreview {
   reviewId: number;
   author: ReviewAuthor;
@@ -72,6 +73,21 @@ export interface CourseReviewPreview {
   content: string;
   imageUrls: string[];
   createdAt: string;
+}
+
+export interface GetCourseReviewsParams {
+  /** 직전 응답의 cursorValue를 그대로 돌려보낸다. LATEST는 createdAt, RATING은 rating. */
+  cursorValue?: string;
+  cursorId?: number;
+  size?: number;
+  sort?: ReviewSort;
+}
+
+export interface GetCourseReviewsResponse {
+  items: CourseReviewPreview[];
+  cursorValue: string | number | null;
+  cursorId: number | null;
+  hasNext: boolean;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react';
+import type { KeyboardEvent } from 'react';
 
 import calendar from '../../assets/icons/calendar.svg';
 import darkStar from '../../assets/icons/dark star.svg';
@@ -12,7 +12,6 @@ import { useScaleFrame } from '../../hooks/useScaleFrame';
 import type { TagId } from '../../types/tag.type';
 
 import ReviewActionMenu from './ReviewActionMenu';
-import ReviewEditModal from './ReviewEditModal';
 import TagChip from './TagChip';
 
 const CARD_DESIGN_WIDTH = 342;
@@ -20,7 +19,6 @@ const CARD_HEIGHT = 166;
 
 export interface CourseReviewCardProps {
   image: string;
-  images?: string[];
   title: string;
   duration: string;
   courseType: string;
@@ -44,7 +42,6 @@ export interface CourseReviewCardProps {
 
 function CourseReviewCard({
   image,
-  images = [],
   title,
   duration,
   courseType,
@@ -63,7 +60,6 @@ function CourseReviewCard({
   onEditClick,
   onDeleteClick,
 }: CourseReviewCardProps) {
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
   const isClickable = Boolean(onClick || onLongPress);
@@ -160,10 +156,7 @@ function CourseReviewCard({
         */}
         {isMine ? (
           <ReviewActionMenu
-            onEditClick={() => {
-              setIsEditOpen(true);
-              onEditClick?.();
-            }}
+            onEditClick={onEditClick}
             onDeleteClick={onDeleteClick}
             triggerClassName="absolute top-3 left-[310px]"
           />
@@ -222,12 +215,6 @@ function CourseReviewCard({
           </p>
         </div>
       </article>
-      {isEditOpen ? (
-        <ReviewEditModal
-          review={{ images, content, rating }}
-          onClose={() => setIsEditOpen(false)}
-        />
-      ) : null}
     </div>
   );
 }

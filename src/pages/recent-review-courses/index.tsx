@@ -5,6 +5,7 @@ import {
   LoadingSpinner,
   ReviewDeleteDialog,
   ReviewDetailModal,
+  ReviewEditModal,
 } from '../../components/common';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useNavigateToCourseDetail } from '../../hooks/useCourses';
@@ -15,6 +16,7 @@ import {
   useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
+  useReviewEdit,
   useReviews,
 } from '../../hooks/useReviews';
 import { toReviewCourseCardProps } from '../../utils/reviewCard';
@@ -45,6 +47,7 @@ function RecentReviewCoursesPage() {
   } = useReviews('LATEST');
   const myReviewIds = useMyReviewIds();
   const { requestDelete, dialogProps } = useReviewDelete();
+  const { requestEdit, editorProps } = useReviewEdit();
   const { goToCourseDetail } = useNavigateToCourseDetail();
 
   const reviews = getReviewsFromPages(data?.pages).map((review) =>
@@ -128,7 +131,6 @@ function RecentReviewCoursesPage() {
             <CourseReviewCard
               key={review.id}
               image={review.image}
-              images={review.images}
               title={review.title}
               duration={review.duration}
               courseType={review.courseType}
@@ -143,6 +145,7 @@ function RecentReviewCoursesPage() {
                 toggleLike(review.courseId, getLiked(review.courseId, review.liked))
               }
               onDeleteClick={() => requestDelete(review.id)}
+              onEditClick={() => requestEdit(review)}
               onClick={() => void goToCourseDetail(review.courseId)}
               onLongPress={() => openReview(review.id)}
             />
@@ -164,6 +167,8 @@ function RecentReviewCoursesPage() {
           openedReview && (() => void goToCourseDetail(openedReview.courseId))
         }
       />
+
+      <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
 
       <ReviewDeleteDialog {...dialogProps} />
     </section>

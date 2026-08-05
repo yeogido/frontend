@@ -1,9 +1,10 @@
 import { apiClient, normalizeApiError } from './common';
 
 import type {
-  CourseReviewPreview,
   CreateCourseReviewRequest,
   CreateCourseReviewResponse,
+  GetCourseReviewsParams,
+  GetCourseReviewsResponse,
   GetReviewsParams,
   GetReviewsResponse,
   UpdateReviewRequest,
@@ -27,16 +28,18 @@ export async function getReviews(
 /**
  * 코스별 리뷰 목록.
  *
- * 정렬/커서 파라미터가 없어 전체 배열이 한 번에 내려온다. 후기 전체보기
- * 화면의 최신순/별점순은 당분간 받아온 뒤 클라이언트에서 정렬한다.
- * (백엔드에 정렬·페이징 추가 요청 중)
+ * 전체 후기 목록(GET /reviews)이 cursor 하나만 받는 것과 달리, 여기는
+ * cursorValue와 cursorId를 함께 받는다. RATING 정렬에서 별점이 같은 리뷰가
+ * 이어지도록 reviewId를 보조 기준으로 쓰기 때문이다.
  */
 export async function getCourseReviews(
   courseId: number,
-): Promise<CourseReviewPreview[]> {
+  params: GetCourseReviewsParams = {},
+): Promise<GetCourseReviewsResponse> {
   try {
-    const { data } = await apiClient.get<CourseReviewPreview[]>(
+    const { data } = await apiClient.get<GetCourseReviewsResponse>(
       `/courses/${courseId}/reviews`,
+      { params },
     );
 
     return data;

@@ -28,8 +28,8 @@ const review: ReviewDetail = {
   rating: 4,
   createdAt: '2026-07-05T15:30:00',
   images: [
-    { imageUrl: 'https://example.com/b.jpg', imageOrder: 2 },
-    { imageUrl: 'https://example.com/a.jpg', imageOrder: 1 },
+    { imageKey: 'reviews/b.jpg', imageUrl: 'https://example.com/b.jpg', imageOrder: 2 },
+    { imageKey: 'reviews/a.jpg', imageUrl: 'https://example.com/a.jpg', imageOrder: 1 },
   ],
   author,
   course,
@@ -40,6 +40,10 @@ test('maps a review into review card props', () => {
     id: 101,
     // imageOrder 순으로 정렬된다.
     images: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
+    editableImages: [
+      { imageKey: 'reviews/a.jpg', imageUrl: 'https://example.com/a.jpg' },
+      { imageKey: 'reviews/b.jpg', imageUrl: 'https://example.com/b.jpg' },
+    ],
     profileImage: 'https://example.com/profile.png',
     nickname: '민지',
     meta: '20대',
@@ -59,6 +63,10 @@ test('maps a review into course review card props', () => {
     // 카드에 그리는 건 코스 썸네일, images는 상세 모달용 후기 사진이다.
     image: 'https://example.com/course.png',
     images: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
+    editableImages: [
+      { imageKey: 'reviews/a.jpg', imageUrl: 'https://example.com/a.jpg' },
+      { imageKey: 'reviews/b.jpg', imageUrl: 'https://example.com/b.jpg' },
+    ],
     title: '강릉 혼자 여행 코스',
     duration: '2박 3일',
     // Swagger enum에는 없지만 실제로 내려오는 값이다.

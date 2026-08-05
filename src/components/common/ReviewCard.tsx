@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react';
+import type { KeyboardEvent } from 'react';
 
 import darkStar from '../../assets/icons/dark star.svg';
 import star from '../../assets/icons/star.svg';
@@ -7,7 +7,6 @@ import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useLongPress } from '../../hooks/useLongPress';
 
 import ReviewActionMenu from './ReviewActionMenu';
-import ReviewEditModal from './ReviewEditModal';
 
 // Figma 390 디자인 기준 리터럴 px (카드 자체 폭 290 기준)
 const CARD_DESIGN_WIDTH = 342;
@@ -64,7 +63,6 @@ function ReviewCard({
   className = '',
 }: ReviewCardProps) {
   const scale = useGlobalScale();
-  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const isClickable = Boolean(onClick || onLongPress);
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
@@ -172,10 +170,7 @@ function ReviewCard({
 
               {isMine ? (
                 <ReviewActionMenu
-                  onEditClick={() => {
-                    setIsEditOpen(true);
-                    onEditClick?.();
-                  }}
+                  onEditClick={onEditClick}
                   onDeleteClick={onDeleteClick}
                 />
               ) : null}
@@ -256,12 +251,6 @@ function ReviewCard({
           </div>
         </article>
       </div>
-      {isEditOpen ? (
-        <ReviewEditModal
-          review={{ images, content, rating }}
-          onClose={() => setIsEditOpen(false)}
-        />
-      ) : null}
     </div>
   );
 }

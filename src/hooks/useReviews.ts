@@ -23,7 +23,9 @@ import { useAuth } from './useAuth';
 import type {
   CourseReviewImageRequest,
   CreateCourseReviewResponse,
+  GetCourseReviewsResponse,
   GetReviewsResponse,
+  ReviewImageRequest,
   ReviewSort,
   UpdateReviewRequest,
   UpdateReviewResponse,
@@ -60,16 +62,21 @@ const REVIEWS_PAGE_SIZE = 10;
  * 여행 기록(useTravelRecords)과 동일한 절차이며, 순서 필드명만 리뷰 작성
  * API 스펙에 맞춰 order를 쓴다.
  */
+const uploadPhoto = async (photo: File) => {
+  const presignedUrl = await createPresignedUrl({
+    fileName: photo.name,
+    contentType: photo.type || 'application/octet-stream',
+  });
+  await uploadFileToPresignedUrl(presignedUrl.uploadUrl, photo);
+
+  return presignedUrl.objectKey;
+};
+
 const uploadReviewImages = async (photos: File[]) => {
   const images: CourseReviewImageRequest[] = [];
 
   for (const [index, photo] of photos.entries()) {
-    const presignedUrl = await createPresignedUrl({
-      fileName: photo.name,
-      contentType: photo.type || 'application/octet-stream',
-    });
-    await uploadFileToPresignedUrl(presignedUrl.uploadUrl, photo);
-    images.push({ imageKey: presignedUrl.objectKey, order: index + 1 });
+    images.push({ imageKey: await uploadPhoto(photo), order: index + 1 });
   }
 
   return images;
@@ -133,13 +140,69 @@ export function useMyReviewIds() {
   return data ?? EMPTY_REVIEW_IDS;
 }
 
-export function useCourseReviews(courseId: number | undefined) {
+/** 코스 상세에 끼워 넣는 미리보기. 첫 페이지만 본다. */
+const COURSE_REVIEW_PREVIEW_SIZE = 4;
+
+const COURSE_REVIEWS_PAGE_SIZE = 10;
+
+const isValidCourseId = (courseId: number | undefined) =>
+  typeof courseId === 'number' && courseId > 0;
+
+export function useCourseReviewPreviews(courseId: number | undefined) {
   return useQuery({
-    queryKey: ['courseReviews', courseId],
-    queryFn: () => getCourseReviews(courseId as number),
-    enabled: typeof courseId === 'number' && courseId > 0,
+    queryKey: ['courseReviews', courseId, 'preview'],
+    queryFn: () =>
+      getCourseReviews(courseId as number, {
+        size: COURSE_REVIEW_PREVIEW_SIZE,
+        sort: 'LATEST',
+      }),
+    enabled: isValidCourseId(courseId),
   });
 }
+
+interface CourseReviewsPageParam {
+  cursorValue?: string;
+  cursorId?: number;
+}
+
+export function useCourseReviews(
+  courseId: number | undefined,
+  sort: ReviewSort = 'LATEST',
+) {
+  return useInfiniteQuery<
+    GetCourseReviewsResponse,
+    Error,
+    InfiniteData<GetCourseReviewsResponse, CourseReviewsPageParam>,
+    [string, number | undefined, ReviewSort],
+    CourseReviewsPageParam
+  >({
+    queryKey: ['courseReviews', courseId, sort],
+    queryFn: ({ pageParam }) =>
+      getCourseReviews(courseId as number, {
+        ...pageParam,
+        size: COURSE_REVIEWS_PAGE_SIZE,
+        sort,
+      }),
+    initialPageParam: {},
+    // cursorValue와 cursorId는 반드시 함께 보내야 한다. 하나만 가면 서버가
+    // 400(COMMON4001)으로 처리하므로, 둘 다 온 경우에만 다음 페이지를 잇는다.
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext &&
+      lastPage.cursorId !== null &&
+      lastPage.cursorValue !== null
+        ? {
+            // LATEST는 일시, RATING은 별점이 실려 오므로 문자열로 맞춰 보낸다.
+            cursorValue: String(lastPage.cursorValue),
+            cursorId: lastPage.cursorId,
+          }
+        : undefined,
+    enabled: isValidCourseId(courseId),
+  });
+}
+
+export const getCourseReviewsFromPages = (
+  pages: GetCourseReviewsResponse[] | undefined,
+) => pages?.flatMap((page) => page.items) ?? [];
 
 export function useCreateCourseReview() {
   const queryClient = useQueryClient();
@@ -279,6 +342,78 @@ export function useReviewDelete() {
       isPending: deleteReview.isPending,
       onCancel: closeDialog,
       onConfirm: () => void confirmDelete(),
+    },
+  };
+}
+
+export interface EditableReview {
+  id: number;
+  content: string;
+  rating?: number;
+  /** 유지 여부를 고를 기존 사진. imageKey가 있어야 PATCH에 다시 실을 수 있다. */
+  editableImages: { imageKey: string; imageUrl: string }[];
+}
+
+export interface ReviewEditSubmission {
+  rating: number;
+  content: string;
+  /** 화면에 보이는 순서 그대로. 기존 사진은 imageKey, 새로 고른 사진은 File. */
+  photos: ({ imageKey: string } | { file: File })[];
+}
+
+/**
+ * 후기 수정 흐름.
+ *
+ * 새로 고른 사진만 업로드하고, 유지하는 사진은 받아 둔 imageKey를 그대로
+ * 돌려보낸다. images는 전체 교체 규칙이라 유지분까지 함께 실어야 한다.
+ * 순서는 1부터 연속이어야 한다(REVIEW4002).
+ */
+export function useReviewEdit() {
+  const [editingReview, setEditingReview] = useState<EditableReview | null>(
+    null,
+  );
+  const { showToast } = useToast();
+  const updateReviewMutation = useUpdateReview();
+
+  const closeEditor = () => setEditingReview(null);
+
+  const submitEdit = async ({
+    rating,
+    content,
+    photos,
+  }: ReviewEditSubmission) => {
+    if (!editingReview || updateReviewMutation.isPending) {
+      return;
+    }
+
+    try {
+      const images: ReviewImageRequest[] = [];
+
+      for (const [index, photo] of photos.entries()) {
+        const imageKey =
+          'imageKey' in photo ? photo.imageKey : await uploadPhoto(photo.file);
+
+        images.push({ imageKey, imageOrder: index + 1 });
+      }
+
+      await updateReviewMutation.mutateAsync({
+        reviewId: editingReview.id,
+        request: { rating, content, images },
+      });
+      closeEditor();
+      showToast('후기를 수정했어요.');
+    } catch (error) {
+      showToast(getApiErrorMessage(error, '후기를 수정하지 못했어요.'));
+    }
+  };
+
+  return {
+    requestEdit: setEditingReview,
+    editorProps: {
+      review: editingReview ?? undefined,
+      isPending: updateReviewMutation.isPending,
+      onClose: closeEditor,
+      onSubmit: (submission: ReviewEditSubmission) => void submitEdit(submission),
     },
   };
 }
