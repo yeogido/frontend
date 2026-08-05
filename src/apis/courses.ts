@@ -13,6 +13,7 @@ export type CourseDetailItem =
       lotAddress: string;
       latitude: number;
       longitude: number;
+      imageUrl: string;
     }
   | {
       order: number;
@@ -27,6 +28,7 @@ export type CourseDetailItem =
       lotAddress: string;
       latitude: number;
       longitude: number;
+      imageUrl: string;
     };
 
 export interface CourseDetailAuthor {

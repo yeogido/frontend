@@ -18,6 +18,8 @@ interface LoginFormProps {
   submitError?: string;
   onKakaoLogin?: () => void;
   isKakaoLoading?: boolean;
+  onNaverLogin?: () => void;
+  isNaverLoading?: boolean;
 }
 
 function LoginForm({
@@ -25,6 +27,8 @@ function LoginForm({
   submitError,
   onKakaoLogin,
   isKakaoLoading,
+  onNaverLogin,
+  isNaverLoading,
 }: LoginFormProps) {
   const {
     register,
@@ -160,7 +164,9 @@ function LoginForm({
               <button
                 type="button"
                 aria-label="네이버로 로그인"
-                className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
+                onClick={onNaverLogin}
+                disabled={isNaverLoading}
+                className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <NaverIcon
                   width={20}

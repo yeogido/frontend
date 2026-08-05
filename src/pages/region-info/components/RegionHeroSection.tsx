@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
   RegionHero,
   RegionHeroSkeleton,
@@ -15,18 +17,40 @@ const DESCRIPTION_FONT_SIZE = 12;
 const DESCRIPTION_LINE_HEIGHT = 17;
 
 const HERO_MARGIN_TOP = 12;
+const ERROR_TEXT_SIZE = 13;
+const ERROR_GAP = 12;
+const RETRY_BUTTON_FONT_SIZE = 14;
+const RETRY_BUTTON_PADDING_X = 16;
+const RETRY_BUTTON_PADDING_Y = 8;
 
 interface RegionHeroSectionProps {
   regionInfo: RegionInfo;
+  heroImageUrl?: string;
+  heroDescription?: string;
+  isImageLoading: boolean;
+  isImageError: boolean;
+  onRetryImage: () => void;
 }
 
 function RegionHeroSection({
   regionInfo,
+  heroImageUrl,
+  heroDescription,
+  isImageLoading,
+  isImageError,
+  onRetryImage,
 }: RegionHeroSectionProps) {
   const scale = useGlobalScale();
+  const [failedImageUrl, setFailedImageUrl] = useState<string>();
 
-  const isLoading = false;
-  // const isLoading = true;
+  const hasImageLoadError =
+    heroImageUrl !== undefined && failedImageUrl === heroImageUrl;
+  const showError = isImageError || !heroImageUrl || hasImageLoadError;
+
+  const handleRetry = () => {
+    setFailedImageUrl(undefined);
+    onRetryImage();
+  };
 
   return (
     <>
@@ -36,49 +60,26 @@ function RegionHeroSection({
           paddingRight: PAGE_PADDING_X * scale,
         }}
       >
-        {isLoading ? (
-          <>
-            <div
-              className="animate-pulse rounded bg-[#EAEAEA]"
-              style={{
-                width: 180 * scale,
-                height: TITLE_LINE_HEIGHT * scale,
-              }}
-            />
+        <h1
+          className="font-semibold text-black"
+          style={{
+            fontSize: TITLE_FONT_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+          }}
+        >
+          {regionInfo.name}의 코스와 장소
+        </h1>
 
-            <div
-              className="animate-pulse rounded bg-[#EAEAEA]"
-              style={{
-                marginTop: DESCRIPTION_MARGIN_TOP * scale,
-                width: 260 * scale,
-                height: DESCRIPTION_LINE_HEIGHT * scale,
-              }}
-            />
-          </>
-        ) : (
-          <>
-            <h1
-              className="font-semibold text-black"
-              style={{
-                fontSize: TITLE_FONT_SIZE * scale,
-                lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
-              }}
-            >
-              {regionInfo.name}의 코스와 장소
-            </h1>
-
-            <p
-              className="text-gray-4 font-normal"
-              style={{
-                marginTop: DESCRIPTION_MARGIN_TOP * scale,
-                fontSize: DESCRIPTION_FONT_SIZE * scale,
-                lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
-              }}
-            >
-              {regionInfo.description}
-            </p>
-          </>
-        )}
+        <p
+          className="text-gray-4 font-normal"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: DESCRIPTION_FONT_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+          }}
+        >
+          {regionInfo.description}
+        </p>
       </div>
 
       <div
@@ -88,13 +89,41 @@ function RegionHeroSection({
           paddingRight: PAGE_PADDING_X * scale,
         }}
       >
-        {isLoading ? (
+        {isImageLoading ? (
           <RegionHeroSkeleton />
+        ) : showError ? (
+          <div
+            className="flex aspect-[342/129] w-full flex-col items-center justify-center rounded-xl bg-[#F9F9F9]"
+            style={{ gap: ERROR_GAP * scale }}
+          >
+            <p
+              className="text-gray-5 text-center font-medium"
+              style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+            >
+              대표 이미지를 불러오지 못했어요.
+            </p>
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="rounded-full border border-[#e4e4e4] bg-white font-medium text-[#505050]"
+              style={{
+                fontSize: RETRY_BUTTON_FONT_SIZE * scale,
+                paddingLeft: RETRY_BUTTON_PADDING_X * scale,
+                paddingRight: RETRY_BUTTON_PADDING_X * scale,
+                paddingTop: RETRY_BUTTON_PADDING_Y * scale,
+                paddingBottom: RETRY_BUTTON_PADDING_Y * scale,
+              }}
+            >
+              다시 시도
+            </button>
+          </div>
         ) : (
           <RegionHero
-            image={regionInfo.heroImage}
-            title={`${regionInfo.name} 대표 이미지`}
+            image={heroImageUrl}
+            title={regionInfo.name}
+            description={heroDescription ?? ''}
             alt={`${regionInfo.name} 대표 이미지`}
+            onImageError={() => setFailedImageUrl(heroImageUrl)}
           />
         )}
       </div>

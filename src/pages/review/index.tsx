@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { IoChevronBack } from 'react-icons/io5';
 
+import backIcon from '../../assets/icons/vector.svg';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import {
+  useSubmittedCourseReviewsStore,
+  type SubmittedCourseReviewType,
+} from '../../store/submitted-course-reviews.store';
 
 import {
   PhotoUploader,
@@ -64,15 +68,23 @@ function ReviewPage() {
   const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [isLoadingCourse, setIsLoadingCourse] = useState(Boolean(targetId));
 
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState<number | null>(null);
   const [review, setReview] = useState('');
   const [selectedPhotos, setSelectedPhotos] = useState<
     Array<{ file: File; previewUrl: string }>
   >([]);
   const photoPickerRef = useRef<HTMLInputElement>(null);
   const selectedPhotosRef = useRef(selectedPhotos);
+  const submittedPhotoUrlsRef = useRef(new Set<string>());
+  const addSubmittedReview = useSubmittedCourseReviewsStore(
+    (state) => state.addReview
+  );
   const isMaxPhotosReached = selectedPhotos.length >= MAX_REVIEW_PHOTOS;
-  const canSubmit = isReviewFormValid({ rating, review });
+  const canSubmit = isReviewFormValid({
+    rating,
+    review,
+    photoCount: selectedPhotos.length,
+  });
 
   // targetType 및 targetId에 맞춰 코스/장소 데이터 API 조회
   useEffect(() => {
@@ -109,10 +121,14 @@ function ReviewPage() {
   }, [selectedPhotos]);
 
   useEffect(() => {
+    const submittedPhotoUrls = submittedPhotoUrlsRef.current;
+
     return () => {
-      selectedPhotosRef.current.forEach(({ previewUrl }) =>
-        URL.revokeObjectURL(previewUrl)
-      );
+      selectedPhotosRef.current.forEach(({ previewUrl }) => {
+        if (!submittedPhotoUrls.has(previewUrl)) {
+          URL.revokeObjectURL(previewUrl);
+        }
+      });
     };
   }, []);
 
@@ -165,6 +181,27 @@ function ReviewPage() {
     event.preventDefault();
     if (!canSubmit) return;
 
+    if (
+      targetId &&
+      (targetType === 'yeogido-course' || targetType === 'local-course') &&
+      rating !== null
+    ) {
+      selectedPhotos.forEach(({ previewUrl }) =>
+        submittedPhotoUrlsRef.current.add(previewUrl)
+      );
+      addSubmittedReview({
+        courseType: targetType as SubmittedCourseReviewType,
+        courseId: targetId,
+        images: selectedPhotos.map(({ previewUrl }) => previewUrl),
+        content: review.trim(),
+        rating,
+      });
+      navigate(`/${targetType}/detail/${targetId}`, { replace: true });
+      return;
+    }
+
+    navigate(-1);
+
     // TODO: 백엔드 리뷰 작성 API 연동 (POST /api/reviews)
     // payload: { targetType, targetId, rating, review, photos: selectedPhotos }
   };
@@ -194,19 +231,28 @@ function ReviewPage() {
           marginTop: backButtonOverlap,
         }}
       >
-        <IoChevronBack
+        <img
+          src={backIcon}
+          alt=""
           aria-hidden="true"
-          style={{ fontSize: BACK_ICON_SIZE * scale }}
+          style={{
+            width: BACK_ICON_SIZE * scale,
+            height: BACK_ICON_SIZE * scale,
+            transform: 'rotate(180deg)',
+          }}
         />
       </button>
       <form onSubmit={handleSubmit}>
         <ReviewHeader />
         <ReviewCourseCard
-          title={courseData?.title}
-          image={courseData?.image}
-          duration={courseData?.duration}
-          courseType={courseData?.courseType}
-          companion={courseData?.companion}
+          course={{
+            id: targetId ?? 'fallback',
+            title: courseData?.title ?? '강릉 혼자 여행 코스',
+            thumbnailUrl: courseData?.image,
+            duration: courseData?.duration ?? '2박 3일',
+            transport: courseData?.courseType ?? '뚜벅이 코스',
+            companion: courseData?.companion ?? '혼자',
+          }}
         />
 
         <PhotoUploader

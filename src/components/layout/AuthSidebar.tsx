@@ -36,7 +36,7 @@ const LOGOUT_GAP = 12;
  */
 const MY_MENU: { label: string; path?: string }[] = [
   { label: '여행기록', path: '/travel-record' },
-  { label: '좋아요' },
+  { label: '좋아요', path: '/likes' },
   { label: '내가 등록한 게시물' },
 ];
 
@@ -72,32 +72,18 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
         {/* Overlay */}
         <div
           onClick={onClose}
-          className={`
-            absolute inset-0
-            bg-black/40
-            transition-opacity duration-300
-            ${
-              isOpen
-                ? 'visible opacity-100'
-                : 'invisible pointer-events-none opacity-0'
-            }
-          `}
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+            isOpen
+              ? 'visible opacity-100'
+              : 'pointer-events-none invisible opacity-0'
+          } `}
         />
 
         {/* Drawer */}
         <aside
-          className={`
-            absolute top-0 right-0
-            flex h-full w-[72%] flex-col
-            overflow-y-auto
-            bg-white
-            transition-transform duration-300 ease-in-out
-            ${
-              isOpen
-                ? 'translate-x-0 pointer-events-auto'
-                : 'translate-x-full'
-            }
-          `}
+          className={`absolute top-0 right-0 flex h-full w-[72%] flex-col overflow-y-auto bg-white transition-transform duration-300 ease-in-out ${
+            isOpen ? 'pointer-events-auto translate-x-0' : 'translate-x-full'
+          } `}
           style={{ maxWidth: DRAWER_MAX_WIDTH * scale }}
         >
           {/* Header: 프로필 요약 + 닫기 버튼 */}
@@ -123,7 +109,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
 
               <div className="flex min-w-0 flex-col">
                 <span
-                  className="truncate font-semibold leading-none text-[#1C1C1C]"
+                  className="truncate leading-none font-semibold text-[#1C1C1C]"
                   style={{ fontSize: NAME_TEXT_SIZE * scale }}
                 >
                   {displayName}
@@ -162,7 +148,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 }}
               >
                 <span
-                  className="font-medium leading-none"
+                  className="leading-none font-medium"
                   style={{ fontSize: TEXT_BASE * scale }}
                 >
                   {menu.label}
@@ -182,7 +168,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
             }}
           >
             <span
-              className="font-semibold leading-none text-[#FF6F41]"
+              className="leading-none font-semibold text-[#FF6F41]"
               style={{ fontSize: MY_LABEL_SIZE * scale }}
             >
               MY
@@ -208,7 +194,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 }}
               >
                 <span
-                  className="font-medium leading-none"
+                  className="leading-none font-medium"
                   style={{ fontSize: TEXT_BASE * scale }}
                 >
                   {menu.label}
@@ -219,7 +205,6 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
 
           {/* 로그아웃: 메뉴가 짧아도 항상 사이드바 하단에 붙도록 mt-auto로 민다 */}
           <div className="mt-auto">
-
             <button
               type="button"
               onClick={() => {
@@ -245,7 +230,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 }}
               />
               <span
-                className="font-medium leading-none text-[#1C1C1C]"
+                className="leading-none font-medium text-[#1C1C1C]"
                 style={{ fontSize: TEXT_BASE * scale }}
               >
                 로그아웃

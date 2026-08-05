@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { NormalizedApiError } from '../../../apis/common';
 import { socialLogin } from '../../../apis/auth.api';
 import { Logo } from '../../../components/common';
+import { getKakaoCallbackUrl } from '../../../hooks/useKakaoLogin';
 import { useAuthStore } from '../../../store/auth.store';
 
 const DEFAULT_ERROR_MESSAGE =
@@ -11,10 +12,15 @@ const DEFAULT_ERROR_MESSAGE =
 
 // social-login API에 실제로 매핑된 에러 코드만 반영.
 const SOCIAL_LOGIN_ERROR_MESSAGES: Record<string, string> = {
+  COMMON4001: '잘못된 요청입니다.',
   EXT4001: '지원하지 않는 소셜 로그인입니다.',
   AUTH4002:
     '이메일 제공에 동의해야 로그인할 수 있어요. 카카오 로그인 시 이메일 제공에 동의해 주세요.',
+  AUTH4005: '소셜 로그인 요청값이 올바르지 않습니다. 다시 시도해 주세요.',
   AUTH4011: '유효하지 않은 소셜 인증 정보입니다. 다시 시도해 주세요.',
+  AUTH4015: '카카오 인증이 만료되었거나 유효하지 않습니다. 다시 시도해 주세요.',
+  COMMON5001:
+    '카카오 서버와 통신 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
 };
 
 function isNormalizedApiError(error: unknown): error is NormalizedApiError {
@@ -62,13 +68,12 @@ function KakaoCallbackPage() {
       return;
     }
 
-    // TODO(백엔드 스펙 확정 대기): social-login이 accessToken 대신 code를
-    // 받도록 바뀌는 걸 전제로 한 잠정 구현. 필드명(code/redirectUri)이
-    // 확정되면 SocialLoginRequest 타입과 함께 여기도 맞춰야 한다.
+    // redirectUri는 authorize() 호출 때 넘긴 값과 정확히 일치해야 하므로
+    // useKakaoLogin.ts의 getKakaoCallbackUrl()을 그대로 공유해서 쓴다.
     socialLogin({
       provider: 'KAKAO',
-      code,
-      redirectUri: `${window.location.origin}/auth/kakao/callback`,
+      authorizationCode: code,
+      redirectUri: getKakaoCallbackUrl(),
     })
       .then((result) => {
         if (result.isNewUser) {
@@ -91,11 +96,11 @@ function KakaoCallbackPage() {
       })
       .catch((error: unknown) => {
         const errorCode = isNormalizedApiError(error) ? error.code : undefined;
+        const mappedMessage = errorCode
+          ? SOCIAL_LOGIN_ERROR_MESSAGES[errorCode]
+          : undefined;
 
-        setErrorMessage(
-          (errorCode && SOCIAL_LOGIN_ERROR_MESSAGES[errorCode]) ??
-            DEFAULT_ERROR_MESSAGE
-        );
+        setErrorMessage(mappedMessage ?? DEFAULT_ERROR_MESSAGE);
       });
   }, [navigate, setAuth]);
 

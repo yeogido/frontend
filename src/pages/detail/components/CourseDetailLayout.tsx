@@ -22,7 +22,15 @@ import { useShareToast } from '../hooks/useShareToast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
+import {
+  getSubmittedCourseReviewKey,
+  useSubmittedCourseReviewsStore,
+} from '../../../store/submitted-course-reviews.store';
 import BackButton from '../../local-recommendation/components/BackButton';
+import {
+  getCourseReviewsPath,
+  type CourseReviewType,
+} from '../../course-reviews/courseReviewRoute';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 25;
@@ -32,10 +40,11 @@ const MAP_MARGIN_TOP = 24;
 const STOP_LIST_MARGIN_TOP = 0;
 const REVIEW_MARGIN_TOP = 24;
 const REVIEW_BUTTON_MARGIN_TOP = 12;
+const EMPTY_REVIEWS: readonly CourseDetail['reviews'][number][] = [];
 
 export interface CourseDetailLayoutProps {
   readonly course: CourseDetail;
-  readonly reviewType: string;
+  readonly reviewType: CourseReviewType;
   readonly onFavoriteToggle?: (isLiked: boolean) => Promise<boolean>;
   readonly isFavoritePending?: boolean;
   readonly onPlaceLikeToggle?: (
@@ -94,6 +103,13 @@ function CourseDetailLayoutContent({
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
+  const submittedReviews = useSubmittedCourseReviewsStore(
+    (state) =>
+      state.reviewsByCourse[
+        getSubmittedCourseReviewKey(reviewType, course.id)
+      ] ?? EMPTY_REVIEWS
+  );
+  const reviews = [...submittedReviews, ...course.reviews];
 
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
@@ -175,6 +191,12 @@ function CourseDetailLayoutContent({
     }
 
     navigate(`/review?type=${reviewType}&id=${course.id}`);
+  };
+
+  const handleNavigateCourseReviews = () => {
+    navigate(getCourseReviewsPath(reviewType, course.id), {
+      state: { courseTitle: course.title, reviews },
+    });
   };
 
   return (
@@ -265,7 +287,10 @@ function CourseDetailLayoutContent({
 
       {/* 7. 최근 여행자들의 후기 */}
       <div style={{ marginTop: REVIEW_MARGIN_TOP * scale }}>
-        <DetailReviewSection reviews={course.reviews} />
+        <DetailReviewSection
+          reviews={reviews}
+          onActionClick={handleNavigateCourseReviews}
+        />
       </div>
 
       {/* 8. 하단 고정 리뷰 작성 버튼 */}

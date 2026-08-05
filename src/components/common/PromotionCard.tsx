@@ -63,6 +63,12 @@ function PromotionCard({
       <div
         ref={innerRef}
         onClick={onClick}
+        onKeyDown={(event) => {
+          if (!event.repeat && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            onClick?.();
+          }
+        }}
         role="button"
         tabIndex={0}
         className="flex cursor-pointer flex-col overflow-hidden rounded-xl bg-white text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"

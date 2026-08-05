@@ -12,6 +12,7 @@ import SignupPage from '../pages/auth/signup';
 import KakaoSignupPage from '../pages/auth/signup/kakao';
 import KakaoCallbackPage from '../pages/auth/kakao-callback';
 import NaverSignupPage from '../pages/auth/signup/naver';
+import NaverCallbackPage from '../pages/auth/naver-callback';
 import LocalCoursePage from '../pages/local-course';
 import LocalCoursePopularPage from '../pages/local-course/popular';
 import LocalCourseRecentPage from '../pages/local-course/recent';
@@ -46,6 +47,9 @@ import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
 import RegionInfoPage from '../pages/region-info';
+import LikesPage from '../pages/likes';
+import RecentReviewCoursesPage from '../pages/recent-review-courses';
+import CourseReviewsPage from '../pages/course-reviews';
 
 function AppRouter() {
   return (
@@ -104,10 +108,26 @@ function AppRouter() {
 
         <Route path="/local-business" element={<LocalBusinessPage />} />
 
+        <Route
+          path="/recent-review-courses"
+          element={<RecentReviewCoursesPage />}
+        />
+
+        <Route
+          path="/yeogido-course/detail/:courseId/reviews"
+          element={<CourseReviewsPage />}
+        />
+
+        <Route
+          path="/local-course/detail/:courseId/reviews"
+          element={<CourseReviewsPage />}
+        />
+
         <Route path="/admin" element={<AdminPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/travel-record" element={<TravelRecordPage />} />
+          <Route path="/likes" element={<LikesPage />} />
         </Route>
       </Route>
 
@@ -179,6 +199,7 @@ function AppRouter() {
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />
         <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
+        <Route path="/auth/naver/callback" element={<NaverCallbackPage />} />
       </Route>
       <Route
         path="/yeogido-course/detail/:courseId"

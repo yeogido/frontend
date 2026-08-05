@@ -6,10 +6,11 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 const SECTION_MARGIN_TOP = 31;
 const TITLE_FONT_SIZE = 16;
 const TITLE_LINE_HEIGHT = 24;
-const TEXTAREA_MARGIN_TOP = 9;
+const TEXTAREA_MARGIN_TOP = 12;
 const TEXTAREA_HEIGHT = 109;
 const TEXTAREA_RADIUS = 12;
-const TEXTAREA_PADDING = 12;
+const TEXTAREA_PADDING_X = 14;
+const TEXTAREA_PADDING_Y = 16;
 const TEXTAREA_FONT_SIZE = 12;
 const TEXTAREA_LINE_HEIGHT = 16;
 
@@ -54,7 +55,7 @@ function ReviewTextArea({
           marginTop: TEXTAREA_MARGIN_TOP * scale,
           height: TEXTAREA_HEIGHT * scale,
           borderRadius: TEXTAREA_RADIUS * scale,
-          padding: TEXTAREA_PADDING * scale,
+          padding: `${TEXTAREA_PADDING_Y * scale}px ${TEXTAREA_PADDING_X * scale}px`,
           fontSize: TEXTAREA_FONT_SIZE * scale,
           lineHeight: `${TEXTAREA_LINE_HEIGHT * scale}px`,
         }}
