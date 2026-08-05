@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
   RegionHero,
   RegionHeroSkeleton,
@@ -39,6 +41,16 @@ function RegionHeroSection({
   onRetryImage,
 }: RegionHeroSectionProps) {
   const scale = useGlobalScale();
+  const [failedImageUrl, setFailedImageUrl] = useState<string>();
+
+  const hasImageLoadError =
+    heroImageUrl !== undefined && failedImageUrl === heroImageUrl;
+  const showError = isImageError || !heroImageUrl || hasImageLoadError;
+
+  const handleRetry = () => {
+    setFailedImageUrl(undefined);
+    onRetryImage();
+  };
 
   return (
     <>
@@ -79,7 +91,7 @@ function RegionHeroSection({
       >
         {isImageLoading ? (
           <RegionHeroSkeleton />
-        ) : isImageError || !heroImageUrl ? (
+        ) : showError ? (
           <div
             className="flex aspect-[342/129] w-full flex-col items-center justify-center rounded-xl bg-[#F9F9F9]"
             style={{ gap: ERROR_GAP * scale }}
@@ -92,7 +104,7 @@ function RegionHeroSection({
             </p>
             <button
               type="button"
-              onClick={onRetryImage}
+              onClick={handleRetry}
               className="rounded-full border border-[#e4e4e4] bg-white font-medium text-[#505050]"
               style={{
                 fontSize: RETRY_BUTTON_FONT_SIZE * scale,
@@ -111,6 +123,7 @@ function RegionHeroSection({
             title={regionInfo.name}
             description={heroDescription ?? ''}
             alt={`${regionInfo.name} 대표 이미지`}
+            onImageError={() => setFailedImageUrl(heroImageUrl)}
           />
         )}
       </div>

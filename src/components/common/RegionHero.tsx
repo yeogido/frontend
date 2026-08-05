@@ -13,9 +13,16 @@ interface RegionHeroProps {
   title: string;
   description: string;
   alt: string;
+  onImageError?: () => void;
 }
 
-function RegionHero({ image, title, description, alt }: RegionHeroProps) {
+function RegionHero({
+  image,
+  title,
+  description,
+  alt,
+  onImageError,
+}: RegionHeroProps) {
   const scale = useGlobalScale();
 
   return (
@@ -27,6 +34,7 @@ function RegionHero({ image, title, description, alt }: RegionHeroProps) {
         src={image}
         alt=""
         aria-hidden="true"
+        onError={onImageError}
         className="absolute inset-0 h-full w-full object-cover"
       />
 
