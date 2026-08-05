@@ -128,6 +128,7 @@ function RecentReviewCoursesPage() {
             <CourseReviewCard
               key={review.id}
               image={review.image}
+              images={review.images}
               title={review.title}
               duration={review.duration}
               courseType={review.courseType}
