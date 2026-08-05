@@ -30,13 +30,13 @@ test('falls back to the raw value for unknown course enums', () => {
   assert.equal(findTransportLabel('BICYCLE'), undefined);
 });
 
-test('maps both age group enum sets the backend documents', () => {
-  // Swagger는 TEENS~HUNDRED_PLUS, 명세서는 TEEN~FIFTIES_PLUS로 서로 다르다.
+test('maps the age group values the backend actually returns', () => {
   assert.equal(toAgeGroupLabel('TEENS'), '10대');
-  assert.equal(toAgeGroupLabel('TEEN'), '10대');
   assert.equal(toAgeGroupLabel('FIFTIES'), '50대');
-  assert.equal(toAgeGroupLabel('FIFTIES_PLUS'), '50대 이상');
   assert.equal(toAgeGroupLabel('HUNDRED_PLUS'), '100대 이상');
+  // 명세서에만 있던 옛 값. 이제 오지 않으므로 라벨을 만들지 않는다.
+  assert.equal(toAgeGroupLabel('TEEN'), '');
+  assert.equal(toAgeGroupLabel('FIFTIES_PLUS'), '');
 });
 
 test('blanks out unknown age group and gender instead of leaking the enum', () => {
@@ -44,6 +44,11 @@ test('blanks out unknown age group and gender instead of leaking the enum', () =
   assert.equal(toAgeGroupLabel(undefined), '');
   assert.equal(toGenderLabel('OTHER'), '');
   assert.equal(toGenderLabel(undefined), '');
+});
+
+test('leaves the label empty for a user who did not set a gender', () => {
+  assert.equal(toGenderLabel('NONE'), '');
+  assert.equal(toReviewerMetaLabel('TWENTIES', 'NONE'), '20대');
 });
 
 test('builds the reviewer meta label from the fields that are available', () => {

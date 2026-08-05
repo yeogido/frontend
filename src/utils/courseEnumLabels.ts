@@ -1,9 +1,9 @@
 // 코스/리뷰 응답의 enum을 화면 문구로 바꾼다.
 //
 // 백엔드 문서와 실제 응답의 표기가 어긋난 사례가 반복돼(ONE_DAY/MORE vs
-// DAY_TRIP/THREE_PLUS, Swagger에 없는 PUBLIC, ageGroup의 TEEN vs TEENS 등)
-// 알려진 별칭을 함께 받아들이고, 모르는 값이 와도 화면이 비어 보이지 않게
-// 원문을 그대로 돌려준다. enum이 확정되면 별칭만 지우면 된다.
+// DAY_TRIP/THREE_PLUS, Swagger에 없는 PUBLIC 등) 알려진 별칭을 함께
+// 받아들이고, 모르는 값이 와도 화면이 비어 보이지 않게 원문을 그대로
+// 돌려준다. enum이 확정되면 별칭만 지우면 된다.
 
 const durationLabels: Record<string, string> = {
   DAY_TRIP: '당일치기',
@@ -34,16 +34,14 @@ const companionLabels: Record<string, string> = {
   PET: '반려동물과',
 };
 
-// Swagger는 TEENS~HUNDRED_PLUS 10단계, 백엔드 명세서는 TEEN~FIFTIES_PLUS
-// 5단계로 서로 다르다. 어느 쪽이 오더라도 라벨이 나오도록 둘 다 받는다.
+// 백엔드 확인 결과 실제 값은 아래 10단계다. 명세서에 있던 TEEN,
+// FIFTIES_PLUS는 코드와 맞지 않는 옛 값이라 받지 않는다.
 const ageGroupLabels: Record<string, string> = {
-  TEEN: '10대',
   TEENS: '10대',
   TWENTIES: '20대',
   THIRTIES: '30대',
   FORTIES: '40대',
   FIFTIES: '50대',
-  FIFTIES_PLUS: '50대 이상',
   SIXTIES: '60대',
   SEVENTIES: '70대',
   EIGHTIES: '80대',
@@ -51,9 +49,12 @@ const ageGroupLabels: Record<string, string> = {
   HUNDRED_PLUS: '100대 이상',
 };
 
+// NONE은 성별을 밝히지 않은 사용자다. 라벨을 만들지 않아 작성자 표기에서
+// 연령대만 남는다.
 const genderLabels: Record<string, string> = {
   MALE: '남',
   FEMALE: '여',
+  NONE: '',
 };
 
 function toLabel(

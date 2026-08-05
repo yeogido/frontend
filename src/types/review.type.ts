@@ -54,8 +54,10 @@ export interface GetReviewsResponse {
   items: ReviewDetail[];
   /**
    * 다음 페이지 기준값. 정렬에 따라 일시(LATEST)와 별점(RATING)이 모두 올 수
-   * 있어 좁히지 않는다. 요청에는 cursorValue를 받는 파라미터가 없어서 현재는
-   * 읽기만 하고 보내지 않는다(백엔드 확인 중).
+   * 있어 좁히지 않는다.
+   *
+   * 다음 요청에 되돌려 보낼 필요는 없다. 서버가 cursorId로 그 리뷰를 찾아
+   * 정렬 기준값을 직접 가져간다(RATING은 rating DESC, reviewId DESC).
    */
   cursorValue: string | number | null;
   cursorId: number | null;
