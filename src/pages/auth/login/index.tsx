@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 
 import type { NormalizedApiError } from '../../../apis/common';
 import { login } from '../../../apis/auth.api';
+import { useNaverLogin } from '../../../hooks/useNaverLogin';
 import { useAuthStore } from '../../../store/auth.store';
 
 import { LoginForm } from './components';
 import type { LoginFormValues } from './schema';
 
 const DEFAULT_ERROR_MESSAGE = '이메일 또는 비밀번호를 확인해 주세요.';
+const NAVER_START_ERROR_MESSAGE =
+  '네이버 로그인을 시작하지 못했습니다. 다시 시도해 주세요.';
 
 // 이메일 로그인 API에 실제로 매핑된 에러 코드만 반영 (Notion ErrorCode 문서 "코드" 열 기준).
 const LOGIN_ERROR_MESSAGES: Record<string, string> = {
@@ -30,6 +33,7 @@ function LoginPage() {
   const [submitError, setSubmitError] = useState('');
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const { loginWithNaver, isLoading: isNaverLoading } = useNaverLogin();
 
   const handleLogin = async (values: LoginFormValues) => {
     setSubmitError('');
@@ -48,10 +52,26 @@ function LoginPage() {
     }
   };
 
+  const handleNaverLogin = async () => {
+    setSubmitError('');
+
+    try {
+      // authorize()가 성공하면 네이버 로그인 페이지로 리다이렉트되어 이
+      // 함수 이후 코드는 실행되지 않는다. 이후 처리(신규/기존 회원 분기,
+      // 에러 코드 매핑)는 /auth/naver/callback(NaverCallbackPage)에서 한다.
+      await loginWithNaver();
+    } catch (error) {
+      console.error('[네이버 로그인 시작 실패]', error);
+      setSubmitError(NAVER_START_ERROR_MESSAGE);
+    }
+  };
+
   return (
     <LoginForm
       onSubmit={handleLogin}
       submitError={submitError}
+      onNaverLogin={handleNaverLogin}
+      isNaverLoading={isNaverLoading}
     />
   );
 }
