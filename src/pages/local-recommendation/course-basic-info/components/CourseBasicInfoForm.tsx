@@ -21,6 +21,7 @@ const LARGE_BORDER_RADIUS = 12;
 const SUBMIT_MARGIN_TOP = 40;
 const SUBMIT_HEIGHT = 52;
 const SUBMIT_FONT_SIZE = 16;
+const ERROR_FONT_SIZE = 14;
 
 interface CourseBasicInfoFormProps {
   onNext: (values: CourseBasicInfoValues) => void | Promise<void>;
@@ -124,7 +125,8 @@ function CourseBasicInfoForm({
           {errors.visitEndMonth?.type === 'custom' ? (
             <p
               key={invalidSubmitCount}
-              className="text-main-5 animate-blink-alert mt-2 text-sm"
+              className="text-main-5 animate-blink-alert mt-2"
+              style={{ fontSize: ERROR_FONT_SIZE * scale }}
               role="alert"
             >
               {errors.visitEndMonth.message}
