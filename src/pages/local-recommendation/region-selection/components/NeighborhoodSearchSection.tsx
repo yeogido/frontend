@@ -11,11 +11,13 @@ const SEARCH_MARGIN_TOP = 28;
 interface NeighborhoodSearchSectionProps {
   suggestions?: readonly string[];
   onSearch: (query: string) => void;
+  onQueryChange?: (query: string) => void;
 }
 
 function NeighborhoodSearchSection({
   suggestions = [],
   onSearch,
+  onQueryChange,
 }: NeighborhoodSearchSectionProps) {
   const scale = useGlobalScale();
 
@@ -48,6 +50,7 @@ function NeighborhoodSearchSection({
           label="추천 지역 검색"
           suggestions={suggestions}
           onSearch={onSearch}
+          onQueryChange={onQueryChange}
         />
       </div>
     </section>
