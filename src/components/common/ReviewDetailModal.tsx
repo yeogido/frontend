@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import closeRounded from '../../assets/icons/close-rounded.svg';
@@ -55,6 +55,49 @@ function ReviewDetailModal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  /**
+   * 닫기를 브라우저의 click 생성에 의존하지 않는다.
+   *
+   * 이 모달은 카드를 길게 누르는 중에 손가락(마우스) 아래에서 열린다. 그
+   * 포인터를 모달 위에서 떼면 pointerdown 대상(카드)과 pointerup 대상(모달)이
+   * 달라 브라우저가 click을 만들지 않는다. 그러면 X도 딤도 반응하지 않고,
+   * 딤이 화면 전체를 덮고 있어 페이지 전체가 멈춘 것처럼 보인다.
+   *
+   * 그래서 같은 요소에서 눌렀다 뗐는지를 직접 판정한다. 다만 pointerup으로
+   * 닫으면 뒤따르는 click이 모달이 사라진 자리의 요소로 떨어지므로(click
+   * through) 그 한 번은 삼킨다.
+   */
+  const pressedPointerIdRef = useRef<number | null>(null);
+
+  const closeAndSwallowClick = useCallback(() => {
+    const swallow = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+
+    document.addEventListener('click', swallow, true);
+    window.setTimeout(
+      () => document.removeEventListener('click', swallow, true),
+      0
+    );
+
+    onClose();
+  }, [onClose]);
+
+  const handleTapStart = (event: { pointerId: number }) => {
+    pressedPointerIdRef.current = event.pointerId;
+  };
+
+  const handleTapEnd = (event: { pointerId: number }) => {
+    const isSamePointer = pressedPointerIdRef.current === event.pointerId;
+    pressedPointerIdRef.current = null;
+
+    // 모달이 열리기 전에 시작된 포인터는 여기서 걸러진다.
+    if (isSamePointer) {
+      closeAndSwallowClick();
+    }
+  };
+
   if (!isOpen || typeof document === 'undefined') {
     return null;
   }
@@ -65,18 +108,24 @@ function ReviewDetailModal({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6"
-      onClick={onClose}
+      onPointerDown={handleTapStart}
+      onPointerUp={handleTapEnd}
     >
       <section
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        onClick={(event) => event.stopPropagation()}
+        // 모달 안을 누른 것은 딤까지 올라가지 않게 막는다.
+        onPointerDown={(event) => event.stopPropagation()}
+        onPointerUp={(event) => event.stopPropagation()}
         className="relative w-full max-w-[342px] rounded-xl bg-[#f9f9f9] px-6 pt-11 pb-5 shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
       >
         <button
           type="button"
           aria-label="닫기"
+          onPointerDown={handleTapStart}
+          onPointerUp={handleTapEnd}
+          // 키보드(Enter/Space)는 포인터 이벤트 없이 click만 보낸다.
           onClick={onClose}
           className="absolute top-5 right-5 flex size-6 items-center justify-center"
         >
