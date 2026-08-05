@@ -9,16 +9,20 @@ const PHOTO_SIZE = 129;
 const PHOTO_GAP = 12;
 const STAR_SIZE = 14;
 
-export interface ReviewDetailModalProps {
-  isOpen: boolean;
-  /** 코스명을 알 수 있을 때만 제목에 넣는다. 홈 후기 응답에는 코스 정보가 없다. */
-  courseTitle?: string;
+export interface ReviewDetailModalReview {
   images?: string[];
   content: string;
   profileImage: string;
   nickname: string;
   meta: string;
   rating?: number;
+}
+
+export interface ReviewDetailModalProps {
+  /** 열려 있을 때의 후기. 없으면 닫힌 상태다. */
+  review: ReviewDetailModalReview | undefined;
+  /** 코스명을 알 수 있을 때만 제목에 넣는다. */
+  courseTitle?: string;
   onClose: () => void;
   /** 코스를 특정할 수 있을 때만 '코스 바로가기'가 나온다. */
   onGoToCourse?: () => void;
@@ -30,17 +34,13 @@ export interface ReviewDetailModalProps {
  * 카드에서는 사진과 본문이 잘려 보이므로, 여기서는 자르지 않고 전부 보여준다.
  */
 function ReviewDetailModal({
-  isOpen,
+  review,
   courseTitle,
-  images = [],
-  content,
-  profileImage,
-  nickname,
-  meta,
-  rating = 5,
   onClose,
   onGoToCourse,
 }: ReviewDetailModalProps) {
+  const isOpen = Boolean(review);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -98,10 +98,12 @@ function ReviewDetailModal({
     }
   };
 
-  if (!isOpen || typeof document === 'undefined') {
+  if (!review || typeof document === 'undefined') {
     return null;
   }
 
+  const { images = [], content, profileImage, nickname, meta, rating = 5 } =
+    review;
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
   const title = courseTitle ? `${courseTitle}의 후기예요!` : '여행자의 후기예요!';
 

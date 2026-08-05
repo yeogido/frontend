@@ -8,7 +8,6 @@ const MOVE_TOLERANCE = 10;
 interface UseLongPressParams {
   onLongPress: () => void;
   onClick?: () => void;
-  delay?: number;
 }
 
 /**
@@ -18,11 +17,7 @@ interface UseLongPressParams {
  * 모바일에서 길게 누르면 브라우저가 컨텍스트 메뉴나 텍스트 선택을 띄우므로
  * 그것도 함께 막는다.
  */
-export function useLongPress({
-  onLongPress,
-  onClick,
-  delay = LONG_PRESS_DELAY,
-}: UseLongPressParams) {
+export function useLongPress({ onLongPress, onClick }: UseLongPressParams) {
   const timerRef = useRef<number | null>(null);
   const startPointRef = useRef<{ x: number; y: number } | null>(null);
   const didLongPressRef = useRef(false);
@@ -50,9 +45,9 @@ export function useLongPress({
       timerRef.current = window.setTimeout(() => {
         didLongPressRef.current = true;
         onLongPress();
-      }, delay);
+      }, LONG_PRESS_DELAY);
     },
-    [clearTimer, delay, onLongPress]
+    [clearTimer, onLongPress]
   );
 
   const handlePointerMove = useCallback(

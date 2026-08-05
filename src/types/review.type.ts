@@ -42,16 +42,6 @@ export interface ReviewDetail {
   course: ReviewCourseSummary;
 }
 
-/** GET /reviews/recent 아이템. 코스 정보가 없다. */
-export interface RecentReview {
-  reviewId: number;
-  content: string;
-  rating: number;
-  createdAt: string;
-  images: ReviewImage[];
-  author: ReviewAuthor;
-}
-
 export type ReviewSort = 'LATEST' | 'RATING';
 
 export interface GetReviewsParams {
@@ -70,10 +60,6 @@ export interface GetReviewsResponse {
   cursorValue: string | number | null;
   cursorId: number | null;
   hasNext: boolean;
-}
-
-export interface GetRecentReviewsResponse {
-  reviews: RecentReview[];
 }
 
 /** GET /courses/{courseId}/reviews 아이템. 이미지가 URL 배열이다. */
@@ -106,6 +92,13 @@ export interface CreateCourseReviewResponse {
   reviewId: number;
 }
 
+/*
+ * 여기부터는 리뷰 수정용. 아직 화면이 없다.
+ *
+ * 조회 응답이 imageKey를 안 내려줘서 "유지할 사진"을 지목할 수 없고, 그래서
+ * 사진을 부분 수정하는 화면을 만들 수 없다. 백엔드에 추가 요청해 둔 상태라
+ * 그때 바로 쓸 수 있게 남겨 둔다.
+ */
 export interface ReviewImageRequest {
   imageKey: string;
   imageOrder: number;

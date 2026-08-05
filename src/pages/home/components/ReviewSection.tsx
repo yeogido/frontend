@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 import {
-  ConfirmDialog,
   ReviewCard,
   ReviewCardSkeleton,
+  ReviewDeleteDialog,
   ReviewDetailModal,
   SectionHeader,
 } from '../../../components/common';
@@ -15,6 +15,7 @@ import {
   useMyReviewIds,
   useRecentReviews,
   useReviewDelete,
+  useReviewDetailModal,
 } from '../../../hooks/useReviews';
 import { toReviewCardProps } from '../../../utils/reviewCard';
 
@@ -36,23 +37,9 @@ function ReviewSection() {
   const reviews = (data?.items ?? []).map((review) =>
     toReviewCardProps(review, myReviewIds)
   );
-  const isLoading = isPending;
-
-  const {
-    isDeleteDialogOpen,
-    isDeletePending,
-    requestDelete,
-    cancelDelete,
-    confirmDelete,
-  } = useReviewDelete();
-  const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
-  const openedReview = reviews.find((review) => review.id === openedReviewId);
-  // 조회를 GET /reviews/recent로 되돌리면 course가 사라지므로, 없을 수도
-  // 있다고 보고 있을 때만 코스로 가는 길을 연다.
-  const openedReviewCourseId =
-    openedReview && 'courseId' in openedReview
-      ? openedReview.courseId
-      : undefined;
+  const { requestDelete, dialogProps } = useReviewDelete();
+  const { openedReview, openReview, closeReview } =
+    useReviewDetailModal(reviews);
   const { goToCourseDetail } = useNavigateToCourseDetail();
   const navigate = useNavigate();
   const scale = useGlobalScale();
@@ -110,7 +97,7 @@ function ReviewSection() {
   // 후기가 아직 없는 건 정상 상태라 섹션을 통째로 감춘다. 제목만 남고 캐러셀이
   // 비어 있으면 아직 로딩 중인 것처럼 보이기 때문이다. 반면 조회 실패는
   // 감추면 원인을 알 수 없으므로 안내를 남긴다.
-  if (!isLoading && !isError && reviews.length === 0) {
+  if (!isPending && !isError && reviews.length === 0) {
     return null;
   }
 
@@ -130,7 +117,7 @@ function ReviewSection() {
         onActionClick={() => navigate('/recent-review-courses')}
       />
 
-      {isError && !isLoading && (
+      {isError && !isPending && (
         <p
           className="text-gray-4 text-center font-medium"
           style={{ fontSize: ERROR_TEXT_SIZE * scale }}
@@ -145,7 +132,7 @@ function ReviewSection() {
         className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
         style={{ gap: REVIEW_CARD_GAP * scale }}
       >
-        {isLoading
+        {isPending
           ? Array.from({ length: 3 }).map((_, index) => (
               <div
                 key={index}
@@ -169,14 +156,14 @@ function ReviewSection() {
                   rating={review.rating}
                   isMine={review.isMine}
                   onDeleteClick={() => requestDelete(review.id)}
-                  onLongPress={() => setOpenedReviewId(review.id)}
+                  onLongPress={() => openReview(review.id)}
                 />
               </div>
             ))}
       </div>
 
       {/* Pagination dots */}
-      {!isLoading && reviews.length > 1 && (
+      {!isPending && reviews.length > 1 && (
         <div
           className="flex items-center justify-center"
           style={{ gap: DOT_GAP * scale }}
@@ -210,30 +197,15 @@ function ReviewSection() {
         모달의 '코스 바로가기'로만 연다.
       */}
       <ReviewDetailModal
-        isOpen={Boolean(openedReview)}
+        review={openedReview}
         courseTitle={openedReview?.courseTitle}
-        images={openedReview?.images}
-        content={openedReview?.content ?? ''}
-        profileImage={openedReview?.profileImage ?? ''}
-        nickname={openedReview?.nickname ?? ''}
-        meta={openedReview?.meta ?? ''}
-        rating={openedReview?.rating}
-        onClose={() => setOpenedReviewId(null)}
+        onClose={closeReview}
         onGoToCourse={
-          openedReviewCourseId === undefined
-            ? undefined
-            : () => void goToCourseDetail(openedReviewCourseId)
+          openedReview && (() => void goToCourseDetail(openedReview.courseId))
         }
       />
 
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        title="후기를 삭제할까요?"
-        description="삭제한 후기는 되돌릴 수 없어요."
-        isPending={isDeletePending}
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
+      <ReviewDeleteDialog {...dialogProps} />
     </section>
   );
 }

@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import {
-  ConfirmDialog,
   CourseReviewCard,
   LoadingSpinner,
+  ReviewDeleteDialog,
   ReviewDetailModal,
 } from '../../components/common';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
@@ -14,6 +14,7 @@ import {
   getReviewsFromPages,
   useMyReviewIds,
   useReviewDelete,
+  useReviewDetailModal,
   useReviews,
 } from '../../hooks/useReviews';
 import { toReviewCourseCardProps } from '../../utils/reviewCard';
@@ -43,21 +44,14 @@ function RecentReviewCoursesPage() {
     isFetchingNextPage,
   } = useReviews('LATEST');
   const myReviewIds = useMyReviewIds();
-  const {
-    isDeleteDialogOpen,
-    isDeletePending,
-    requestDelete,
-    cancelDelete,
-    confirmDelete,
-  } = useReviewDelete();
-
+  const { requestDelete, dialogProps } = useReviewDelete();
   const { goToCourseDetail } = useNavigateToCourseDetail();
-  const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
 
   const reviews = getReviewsFromPages(data?.pages).map((review) =>
     toReviewCourseCardProps(review, myReviewIds)
   );
-  const openedReview = reviews.find((review) => review.id === openedReviewId);
+  const { openedReview, openReview, closeReview } =
+    useReviewDetailModal(reviews);
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -149,7 +143,7 @@ function RecentReviewCoursesPage() {
               }
               onDeleteClick={() => requestDelete(review.id)}
               onClick={() => void goToCourseDetail(review.courseId)}
-              onLongPress={() => setOpenedReviewId(review.id)}
+              onLongPress={() => openReview(review.id)}
             />
           ))}
 
@@ -162,30 +156,15 @@ function RecentReviewCoursesPage() {
       )}
 
       <ReviewDetailModal
-        isOpen={Boolean(openedReview)}
+        review={openedReview}
         courseTitle={openedReview?.title}
-        images={openedReview?.images}
-        content={openedReview?.content ?? ''}
-        profileImage={openedReview?.profileImage ?? ''}
-        nickname={openedReview?.nickname ?? ''}
-        meta={openedReview?.meta ?? ''}
-        rating={openedReview?.rating}
-        onClose={() => setOpenedReviewId(null)}
-        onGoToCourse={() => {
-          if (openedReview) {
-            void goToCourseDetail(openedReview.courseId);
-          }
-        }}
+        onClose={closeReview}
+        onGoToCourse={
+          openedReview && (() => void goToCourseDetail(openedReview.courseId))
+        }
       />
 
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        title="후기를 삭제할까요?"
-        description="삭제한 후기는 되돌릴 수 없어요."
-        isPending={isDeletePending}
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
+      <ReviewDeleteDialog {...dialogProps} />
     </section>
   );
 }

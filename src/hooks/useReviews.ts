@@ -166,6 +166,13 @@ export function useCreateCourseReview() {
   });
 }
 
+/**
+ * 아직 쓰이는 화면이 없다.
+ *
+ * 조회 응답이 imageKey를 안 내려줘서 "유지할 사진"을 지목할 수 없고, 그래서
+ * 사진을 부분 수정하는 화면을 만들 수 없다. 백엔드에 추가 요청해 둔 상태라
+ * 그때 바로 붙일 수 있게 남겨 둔다.
+ */
 export function useUpdateReview() {
   const queryClient = useQueryClient();
 
@@ -179,7 +186,7 @@ export function useUpdateReview() {
   });
 }
 
-export function useDeleteReview() {
+function useDeleteReview() {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, number>({
@@ -239,9 +246,9 @@ export function useDeleteReview() {
 /**
  * 후기 삭제 확인 흐름.
  *
- * 후기 카드는 홈/코스 상세/후기 전체보기 세 곳에 같은 방식으로 놓이므로,
- * 확인 다이얼로그 상태와 삭제 처리를 한곳에 모은다. 화면은 반환값을
- * ConfirmDialog에 그대로 넘기면 된다.
+ * 후기 카드는 네 화면에 같은 방식으로 놓이므로 확인 다이얼로그 상태와 삭제
+ * 처리를 한곳에 모은다. 화면은 requestDelete만 연결하고 dialogProps를
+ * ReviewDeleteDialog에 그대로 펼치면 된다.
  */
 export function useReviewDelete() {
   const [targetReviewId, setTargetReviewId] = useState<number | null>(null);
@@ -266,11 +273,31 @@ export function useReviewDelete() {
   };
 
   return {
-    isDeleteDialogOpen: targetReviewId !== null,
-    isDeletePending: deleteReview.isPending,
     requestDelete: setTargetReviewId,
-    cancelDelete: closeDialog,
-    confirmDelete: () => void confirmDelete(),
+    dialogProps: {
+      isOpen: targetReviewId !== null,
+      isPending: deleteReview.isPending,
+      onCancel: closeDialog,
+      onConfirm: () => void confirmDelete(),
+    },
+  };
+}
+
+/**
+ * 길게 눌러 여는 후기 상세 모달의 열림 상태.
+ *
+ * 네 화면이 각자 다른 목록을 그리지만 "누른 후기 하나를 골라 띄운다"는 흐름은
+ * 같아서, id 보관과 조회를 여기로 모은다.
+ */
+export function useReviewDetailModal<Review extends { id: number }>(
+  reviews: readonly Review[],
+) {
+  const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
+
+  return {
+    openedReview: reviews.find((review) => review.id === openedReviewId),
+    openReview: setOpenedReviewId,
+    closeReview: () => setOpenedReviewId(null),
   };
 }
 

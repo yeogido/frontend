@@ -11,6 +11,10 @@ const MENU_ITEM_HEIGHT = 42;
 const MENU_GAP = 8;
 
 export interface ReviewActionMenuProps {
+  /**
+   * 아직 넘기는 화면이 없어 메뉴에는 '삭제'만 뜬다. 수정 화면을 못 만드는
+   * 이유는 types/review.type.ts의 수정 요청 타입 주석 참고.
+   */
   onEditClick?: () => void;
   onDeleteClick?: () => void;
   /** 카드마다 버튼이 놓이는 자리가 달라 트리거 배치는 밖에서 정한다. */

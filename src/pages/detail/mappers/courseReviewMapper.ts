@@ -10,7 +10,7 @@ import type { CourseReview } from '../types/courseDetail';
  * 틀린다). 그래서 내 리뷰 ID 집합을 밖에서 받아 대조한다 — useMyReviewIds 참고.
  * 백엔드가 isMine을 내려주면 이 인자를 걷어내면 된다.
  */
-export function mapCourseReviewPreview(
+function mapCourseReviewPreview(
   preview: CourseReviewPreview,
   myReviewIds: ReadonlySet<number> = new Set()
 ): CourseReview {

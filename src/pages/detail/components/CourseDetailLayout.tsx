@@ -19,13 +19,17 @@ import {
 
 import type { CourseDetail, CourseStop } from '../types/courseDetail';
 import { useShareToast } from '../hooks/useShareToast';
-import { ConfirmDialog, ReviewDetailModal } from '../../../components/common';
+import {
+  ReviewDeleteDialog,
+  ReviewDetailModal,
+} from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import {
   useCourseReviews,
   useMyReviewIds,
   useReviewDelete,
+  useReviewDetailModal,
 } from '../../../hooks/useReviews';
 import { useAuthStore } from '../../../store/auth.store';
 import { mapCourseReviewPreviews } from '../mappers/courseReviewMapper';
@@ -111,15 +115,9 @@ function CourseDetailLayoutContent({
   );
   const myReviewIds = useMyReviewIds();
   const reviews = mapCourseReviewPreviews(courseReviews, myReviewIds);
-  const {
-    isDeleteDialogOpen,
-    isDeletePending,
-    requestDelete,
-    cancelDelete,
-    confirmDelete,
-  } = useReviewDelete();
-  const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
-  const openedReview = reviews.find((review) => review.id === openedReviewId);
+  const { requestDelete, dialogProps } = useReviewDelete();
+  const { openedReview, openReview, closeReview } =
+    useReviewDetailModal(reviews);
 
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
@@ -303,7 +301,7 @@ function CourseDetailLayoutContent({
           reviews={reviews}
           onActionClick={handleNavigateCourseReviews}
           onReviewDelete={requestDelete}
-          onReviewLongPress={setOpenedReviewId}
+          onReviewLongPress={openReview}
         />
       </div>
 
@@ -318,25 +316,12 @@ function CourseDetailLayoutContent({
 
       {/* 이미 이 코스의 상세라 '코스 바로가기'는 넣지 않는다. */}
       <ReviewDetailModal
-        isOpen={Boolean(openedReview)}
+        review={openedReview}
         courseTitle={course.title}
-        images={openedReview?.images}
-        content={openedReview?.content ?? ''}
-        profileImage={openedReview?.profileImage ?? ''}
-        nickname={openedReview?.nickname ?? ''}
-        meta={openedReview?.meta ?? ''}
-        rating={openedReview?.rating}
-        onClose={() => setOpenedReviewId(null)}
+        onClose={closeReview}
       />
 
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        title="후기를 삭제할까요?"
-        description="삭제한 후기는 되돌릴 수 없어요."
-        isPending={isDeletePending}
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
+      <ReviewDeleteDialog {...dialogProps} />
     </ResponsivePageShell>
   );
 }

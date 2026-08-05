@@ -4,24 +4,11 @@ import type {
   CourseReviewPreview,
   CreateCourseReviewRequest,
   CreateCourseReviewResponse,
-  GetRecentReviewsResponse,
   GetReviewsParams,
   GetReviewsResponse,
   UpdateReviewRequest,
   UpdateReviewResponse,
 } from '../types/review.type';
-
-/** 홈 화면용 최근 후기 3개. 인증 없이 호출된다. */
-export async function getRecentReviews(): Promise<GetRecentReviewsResponse> {
-  try {
-    const { data } =
-      await apiClient.get<GetRecentReviewsResponse>('/reviews/recent');
-
-    return data;
-  } catch (error) {
-    throw normalizeApiError(error);
-  }
-}
 
 export async function getReviews(
   params: GetReviewsParams = {},
@@ -74,6 +61,7 @@ export async function createCourseReview(
   }
 }
 
+/** 수정 화면이 아직 없다. 사유는 types/review.type.ts 참고. */
 export async function updateReview(
   reviewId: number,
   request: UpdateReviewRequest,

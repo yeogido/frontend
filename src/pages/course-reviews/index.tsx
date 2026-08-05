@@ -3,9 +3,9 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import {
-  ConfirmDialog,
   LoadingSpinner,
   ReviewCard,
+  ReviewDeleteDialog,
   ReviewDetailModal,
 } from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
@@ -14,6 +14,7 @@ import {
   useCourseReviews,
   useMyReviewIds,
   useReviewDelete,
+  useReviewDetailModal,
 } from '../../hooks/useReviews';
 import { getGutter } from '../../utils/responsiveLayout';
 import { ReviewButton } from '../detail/components';
@@ -46,7 +47,6 @@ function CourseReviewsPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const [sort, setSort] = useState<CourseReviewSort>('latest');
-  const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
   const { courseTitle = '' } =
     (location.state as CourseReviewListLocationState | null) ?? {};
   const courseType: CourseReviewType = location.pathname.startsWith(
@@ -60,13 +60,7 @@ function CourseReviewsPage() {
     Number.isInteger(parsedCourseId) ? parsedCourseId : undefined
   );
   const myReviewIds = useMyReviewIds();
-  const {
-    isDeleteDialogOpen,
-    isDeletePending,
-    requestDelete,
-    cancelDelete,
-    confirmDelete,
-  } = useReviewDelete();
+  const { requestDelete, dialogProps } = useReviewDelete();
 
   // 코스별 리뷰 API에는 정렬 파라미터가 없어 받아온 목록을 여기서 정렬한다.
   // 페이징도 없어 전체가 한 번에 오므로 잘린 목록을 정렬할 위험은 없다.
@@ -79,11 +73,19 @@ function CourseReviewsPage() {
       : reviews;
   }, [data, myReviewIds, sort]);
 
-  const openedReview = sortedReviews.find(
-    (review) => review.id === openedReviewId
-  );
+  const { openedReview, openReview, closeReview } =
+    useReviewDetailModal(sortedReviews);
   // 이 화면은 이미 코스가 정해져 있어 타입 조회 없이 경로를 만들 수 있다.
   const courseDetailPath = `/${courseType}/detail/${courseId}`;
+
+  const renderMessage = (message: string) => (
+    <p
+      className="text-gray-4 text-center font-medium"
+      style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
+    >
+      {message}
+    </p>
+  );
 
   const reviewButton = (
     <div
@@ -149,19 +151,9 @@ function CourseReviewsPage() {
               label="코스 후기를 불러오는 중"
             />
           ) : isError ? (
-            <p
-              className="text-gray-4 text-center font-medium"
-              style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
-            >
-              후기를 불러오지 못했습니다.
-            </p>
+            renderMessage('후기를 불러오지 못했습니다.')
           ) : sortedReviews.length === 0 ? (
-            <p
-              className="text-gray-4 text-center font-medium"
-              style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
-            >
-              아직 등록된 후기가 없습니다.
-            </p>
+            renderMessage('아직 등록된 후기가 없습니다.')
           ) : (
             sortedReviews.map((review) => (
               <ReviewCard
@@ -175,7 +167,7 @@ function CourseReviewsPage() {
                 isMine={review.isMine}
                 onDeleteClick={() => requestDelete(review.id)}
                 onClick={() => navigate(courseDetailPath)}
-                onLongPress={() => setOpenedReviewId(review.id)}
+                onLongPress={() => openReview(review.id)}
                 className="[&>div>article]:!bg-[#F1F1F1]"
               />
             ))
@@ -184,26 +176,13 @@ function CourseReviewsPage() {
       </section>
 
       <ReviewDetailModal
-        isOpen={Boolean(openedReview)}
+        review={openedReview}
         courseTitle={courseTitle || undefined}
-        images={openedReview?.images}
-        content={openedReview?.content ?? ''}
-        profileImage={openedReview?.profileImage ?? ''}
-        nickname={openedReview?.nickname ?? ''}
-        meta={openedReview?.meta ?? ''}
-        rating={openedReview?.rating}
-        onClose={() => setOpenedReviewId(null)}
+        onClose={closeReview}
         onGoToCourse={() => navigate(courseDetailPath)}
       />
 
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        title="후기를 삭제할까요?"
-        description="삭제한 후기는 되돌릴 수 없어요."
-        isPending={isDeletePending}
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
+      <ReviewDeleteDialog {...dialogProps} />
 
       {typeof document === 'undefined'
         ? reviewButton

@@ -4,11 +4,7 @@ import {
   toTransportLabel,
 } from './courseEnumLabels.ts';
 
-import type {
-  RecentReview,
-  ReviewDetail,
-  ReviewImage,
-} from '../types/review.type';
+import type { ReviewDetail, ReviewImage } from '../types/review.type';
 
 // 응답이 순서대로 온다는 보장이 없어 imageOrder로 정렬한 뒤 URL만 추린다.
 function toImageUrls(images: ReviewImage[] | undefined): string[] {
@@ -25,13 +21,9 @@ function toImageUrls(images: ReviewImage[] | undefined): string[] {
  * (useMyReviewIds 참고). 백엔드가 isMine을 내려주면 인자를 걷어내면 된다.
  */
 export function toReviewCardProps(
-  review: RecentReview | ReviewDetail,
+  review: ReviewDetail,
   myReviewIds: ReadonlySet<number> = new Set()
 ) {
-  // GET /reviews/recent 응답에는 course가 없고 GET /reviews에는 있다. 어느
-  // 쪽으로 조회했든 같은 카드에 쓸 수 있도록 있을 때만 채운다.
-  const course = 'course' in review ? review.course : undefined;
-
   return {
     id: review.reviewId,
     images: toImageUrls(review.images),
@@ -41,9 +33,8 @@ export function toReviewCardProps(
     content: review.content,
     rating: review.rating,
     isMine: myReviewIds.has(review.reviewId),
-    ...(course
-      ? { courseTitle: course.title, courseId: course.courseId }
-      : {}),
+    courseTitle: review.course.title,
+    courseId: review.course.courseId,
   };
 }
 
