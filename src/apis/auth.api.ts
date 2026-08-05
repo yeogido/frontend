@@ -9,6 +9,7 @@ import type {
   SocialLoginRequest,
   SocialLoginResult,
   SocialSignupCompleteRequest,
+  VerifyEmailCodeResult,
 } from '../types/auth.type';
 
 export async function login(data: LoginRequest): Promise<LoginResult> {
@@ -37,6 +38,22 @@ export async function signup(data: SignupRequest): Promise<SignupResult> {
   const { data: result } = await apiClient.post<SignupResult>(
     '/auth/signup',
     data
+  );
+
+  return result;
+}
+
+export async function sendEmailCode(email: string): Promise<void> {
+  await apiClient.post('/auth/email/send-code', { email });
+}
+
+export async function verifyEmailCode(
+  email: string,
+  authCode: string
+): Promise<VerifyEmailCodeResult> {
+  const { data: result } = await apiClient.post<VerifyEmailCodeResult>(
+    '/auth/email/verify-code',
+    { email, authCode }
   );
 
   return result;

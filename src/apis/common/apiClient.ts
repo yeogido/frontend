@@ -21,8 +21,8 @@ const apiClient = axios.create({
 // 포함해야 만료된 accessToken이 재발급 요청 자체에 붙거나, 재발급
 // 요청의 401이 또 재발급을 트리거하는 무한 루프를 막을 수 있다.
 // /auth/social-login, /auth/social-signup/complete, /auth/check-email,
-// /auth/signup도 로그인 전(또는 temporaryToken 기반) 요청이라 이전
-// 세션 토큰과 무관해야 한다.
+// /auth/signup, /auth/email/send-code, /auth/email/verify-code도 로그인
+// 전(또는 temporaryToken 기반) 요청이라 이전 세션 토큰과 무관해야 한다.
 const AUTH_EXEMPT_PATHS = [
   '/auth/login',
   '/auth/reissue',
@@ -30,6 +30,8 @@ const AUTH_EXEMPT_PATHS = [
   '/auth/social-signup/complete',
   '/auth/check-email',
   '/auth/signup',
+  '/auth/email/send-code',
+  '/auth/email/verify-code',
 ];
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
