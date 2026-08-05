@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 
-import { useRegions } from '../../hooks/useRegions';
+import { useRegion, useRegions } from '../../hooks/useRegions';
 import RegionCourseSection from './components/RegionCourseSection';
 import RegionFestivalSection from './components/RegionFestivalSection';
 import RegionHeroSection from './components/RegionHeroSection';
@@ -18,10 +18,30 @@ function RegionInfoPage() {
   const regionId = regionsData?.regions.find(
     (candidate) => candidate.name === regionInfo.name
   )?.regionId;
+  const hasRegionId = regionId !== undefined;
+
+  const {
+    data: regionDetail,
+    isPending: isRegionDetailPending,
+    isError: isRegionDetailError,
+    refetch: refetchRegionDetail,
+  } = useRegion(regionId);
+
+  const isHeroImageLoading =
+    isRegionsPending || (hasRegionId && isRegionDetailPending);
+  const isHeroImageError =
+    !isRegionsPending && (!hasRegionId || isRegionDetailError);
 
   return (
     <main className="pb-8">
-      <RegionHeroSection regionInfo={regionInfo} />
+      <RegionHeroSection
+        regionInfo={regionInfo}
+        heroImageUrl={regionDetail?.imageUrl}
+        heroDescription={regionDetail?.description}
+        isImageLoading={isHeroImageLoading}
+        isImageError={isHeroImageError}
+        onRetryImage={() => void refetchRegionDetail()}
+      />
 
       <RegionCourseSection
         regionName={regionInfo.name}
