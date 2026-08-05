@@ -38,6 +38,7 @@ function CourseRegionSearchPage() {
     selectDistrict,
     selectRecentSearch,
     submitSearch,
+    updateSearchQuery,
   } = useCourseRegionSearch();
 
   return (
@@ -57,6 +58,7 @@ function CourseRegionSearchPage() {
             label={searchLabel}
             suggestions={searchSuggestions}
             onSearch={submitSearch}
+            onQueryChange={updateSearchQuery}
           />
 
 
