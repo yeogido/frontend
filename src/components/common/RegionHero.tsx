@@ -1,26 +1,59 @@
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+
+const TITLE_TOP = 24;
+const TITLE_LEFT = 16;
+const TITLE_WIDTH = 220;
+const TITLE_SIZE = 16;
+const DESCRIPTION_MARGIN_TOP = 10;
+const DESCRIPTION_SIZE = 10;
+const DESCRIPTION_LINE_HEIGHT = 12;
+
 interface RegionHeroProps {
   image: string;
   title: string;
+  description: string;
   alt: string;
 }
 
-function RegionHero({ image, title, alt }: RegionHeroProps) {
+function RegionHero({ image, title, description, alt }: RegionHeroProps) {
+  const scale = useGlobalScale();
+
   return (
     <section
       className="relative aspect-[342/129] w-full overflow-hidden rounded-xl"
-      aria-label={title}
+      aria-label={alt}
     >
       <img
         src={image}
-        alt={alt}
+        alt=""
+        aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"
       />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-black/30" />
 
-      <p className="absolute bottom-[10.8%] left-1/2 -translate-x-1/2 whitespace-nowrap text-center text-[14px] leading-[17px] font-semibold text-pure-white">
-        {title}
-      </p>
+      <div
+        className="absolute text-white"
+        style={{
+          top: TITLE_TOP * scale,
+          left: TITLE_LEFT * scale,
+          width: TITLE_WIDTH * scale,
+        }}
+      >
+        <p className="font-semibold" style={{ fontSize: TITLE_SIZE * scale }}>
+          {title}
+        </p>
+        <p
+          className="line-clamp-2 font-medium"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: DESCRIPTION_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+          }}
+        >
+          {description}
+        </p>
+      </div>
     </section>
   );
 }
