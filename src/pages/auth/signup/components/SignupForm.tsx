@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,6 +37,9 @@ function SignupForm() {
     message: string;
   }>({ status: 'idle', message: '' });
   const [submitError, setSubmitError] = useState('');
+  // 이메일이 바뀌거나 새 확인 요청이 시작되면 증가시켜, 응답이 늦게 온
+  // 이전 요청이 이후 상태를 덮어쓰지 않도록 막는다.
+  const emailCheckRequestIdRef = useRef(0);
 
   const {
     register,
@@ -60,15 +63,29 @@ function SignupForm() {
   const email = useWatch({ control, name: 'email' });
   const isEmailValid = SIGNUP_EMAIL_PATTERN.test(email.trim());
 
+  // 진행 중인 확인 요청이 있다면 이 시점에 무효화해, 나중에 응답이 와도
+  // 이미 바뀐 이메일의 상태를 덮어쓰지 못하게 한다.
+  const handleEmailChange = () => {
+    emailCheckRequestIdRef.current += 1;
+    setEmailCheck({ status: 'idle', message: '' });
+  };
+
   const handleEmailBlur = async () => {
     if (!isEmailValid) {
       return;
     }
 
+    const requestId = ++emailCheckRequestIdRef.current;
     setEmailCheck({ status: 'checking', message: '이메일 확인 중...' });
 
     try {
       const { isAvailable } = await checkEmail(email.trim());
+
+      // 응답을 받은 사이 이메일이 바뀌어 더 최신 요청이 시작됐다면
+      // (또는 onChange로 무효화됐다면) 이 응답은 버린다.
+      if (emailCheckRequestIdRef.current !== requestId) {
+        return;
+      }
 
       setEmailCheck({
         status: isAvailable ? 'available' : 'unavailable',
@@ -77,6 +94,10 @@ function SignupForm() {
           : '이미 가입된 이메일이에요.',
       });
     } catch (error) {
+      if (emailCheckRequestIdRef.current !== requestId) {
+        return;
+      }
+
       setEmailCheck({
         status: 'idle',
         message: getApiErrorMessage(error, EMAIL_CHECK_ERROR_MESSAGE),
@@ -149,9 +170,13 @@ function SignupForm() {
             <div className="space-y-2">
               <div className="flex gap-2">
                 <input
+                  // emailCheckRequestIdRef는 handleEmailChange/handleEmailBlur
+                  // 안에서만 읽고 쓴다 — 둘 다 실제 이벤트(change/blur)가
+                  // 발생해야 실행되는 콜백이라 렌더링 중엔 절대 접근되지
+                  // 않는데도, register()에 전달된다는 이유로 규칙이 오탐한다.
+                  // eslint-disable-next-line react-hooks/refs
                   {...register('email', {
-                    onChange: () =>
-                      setEmailCheck({ status: 'idle', message: '' }),
+                    onChange: handleEmailChange,
                     onBlur: handleEmailBlur,
                   })}
                   id="signup-email"
