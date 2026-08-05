@@ -60,4 +60,19 @@
       drop-shadow(1px -1px 0 #fff) drop-shadow(-1px -1px 0 #fff)
       drop-shadow(0 1px 2px rgb(0 0 0 / 0.25));
   }
+
+  /* 같은 에러가 이미 떠 있어도 제출을 반복할 때마다 다시 깜빡이도록 key remount와 함께 사용 */
+  .animate-blink-alert {
+    animation: blink-alert 0.5s ease-in-out 1;
+  }
+}
+
+@keyframes blink-alert {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
 }
