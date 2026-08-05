@@ -16,6 +16,8 @@ import {
 interface LoginFormProps {
   onSubmit: (values: LoginFormValues) => Promise<void>;
   submitError?: string;
+  infoMessage?: string;
+  defaultEmail?: string;
   onKakaoLogin?: () => void;
   isKakaoLoading?: boolean;
   onNaverLogin?: () => void;
@@ -27,6 +29,8 @@ interface LoginFormProps {
 function LoginForm({
   onSubmit,
   submitError,
+  infoMessage,
+  defaultEmail,
   onNaverLogin,
   isNaverLoading,
 }: LoginFormProps) {
@@ -41,8 +45,11 @@ function LoginForm({
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     mode: 'onChange',
+    // defaultValues는 최초 마운트 시점에만 반영된다. LoginPage가
+    // location.state를 동기적으로 먼저 읽은 뒤 이 컴포넌트를 렌더링하므로
+    // 회원가입 직후 넘어온 이메일이 시점 문제 없이 그대로 prefill된다.
     defaultValues: {
-      email: '',
+      email: defaultEmail ?? '',
       password: '',
     },
   });
@@ -54,6 +61,12 @@ function LoginForm({
           <h1 className="text-[28px] font-bold leading-none text-black">
             로그인
           </h1>
+
+          {infoMessage && (
+            <p className="mt-3 text-xs font-medium text-gray-4">
+              {infoMessage}
+            </p>
+          )}
 
           <form
             onSubmit={handleSubmit(onSubmit)}

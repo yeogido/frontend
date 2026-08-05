@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import type { NormalizedApiError } from '../../../apis/common';
 import { login } from '../../../apis/auth.api';
@@ -12,6 +12,13 @@ import type { LoginFormValues } from './schema';
 const DEFAULT_ERROR_MESSAGE = '이메일 또는 비밀번호를 확인해 주세요.';
 const NAVER_START_ERROR_MESSAGE =
   '네이버 로그인을 시작하지 못했습니다. 다시 시도해 주세요.';
+const SIGNUP_COMPLETED_MESSAGE =
+  '가입이 완료됐어요. 로그인해 주세요.';
+
+interface LoginLocationState {
+  signupCompleted?: boolean;
+  email?: string;
+}
 
 // 이메일 로그인 API에 실제로 매핑된 에러 코드만 반영 (Notion ErrorCode 문서 "코드" 열 기준).
 const LOGIN_ERROR_MESSAGES: Record<string, string> = {
@@ -32,6 +39,8 @@ function isNormalizedApiError(error: unknown): error is NormalizedApiError {
 function LoginPage() {
   const [submitError, setSubmitError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as LoginLocationState | null;
   const setAuth = useAuthStore((state) => state.setAuth);
   const { loginWithNaver, isLoading: isNaverLoading } = useNaverLogin();
 
@@ -45,10 +54,9 @@ function LoginPage() {
       navigate('/');
     } catch (error) {
       const code = isNormalizedApiError(error) ? error.code : undefined;
+      const mappedMessage = code ? LOGIN_ERROR_MESSAGES[code] : undefined;
 
-      setSubmitError(
-        (code && LOGIN_ERROR_MESSAGES[code]) ?? DEFAULT_ERROR_MESSAGE
-      );
+      setSubmitError(mappedMessage ?? DEFAULT_ERROR_MESSAGE);
     }
   };
 
@@ -70,6 +78,10 @@ function LoginPage() {
     <LoginForm
       onSubmit={handleLogin}
       submitError={submitError}
+      infoMessage={
+        locationState?.signupCompleted ? SIGNUP_COMPLETED_MESSAGE : undefined
+      }
+      defaultEmail={locationState?.email}
       onNaverLogin={handleNaverLogin}
       isNaverLoading={isNaverLoading}
     />
