@@ -4,6 +4,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addContentLike, removeContentLike } from '../apis/courses';
 import { useLoginModal } from './useLoginModal';
 import { useAuthStore } from '../store/auth.store';
+import {
+  getStoredContentLikeOverrides,
+  setStoredContentLikeOverride,
+} from '../utils/contentLikeOverrides';
 import { updateRecentCultureContentLikeState } from '../utils/recentCultureContents';
 
 interface ToggleContentLikeVariables {
@@ -17,7 +21,7 @@ export function useContentLikeToggle() {
   const queryClient = useQueryClient();
   const [likedOverrides, setLikedOverrides] = useState<
     Record<number, boolean>
-  >({});
+  >(() => getStoredContentLikeOverrides());
   const [pendingContentIds, setPendingContentIds] = useState<
     ReadonlySet<number>
   >(() => new Set());
@@ -37,6 +41,7 @@ export function useContentLikeToggle() {
         ...previous,
         [contentId]: result.isLiked,
       }));
+      setStoredContentLikeOverride(contentId, result.isLiked);
       updateRecentCultureContentLikeState(contentId, result.isLiked);
     },
     onError: (_error, { contentId, isLiked }) => {
