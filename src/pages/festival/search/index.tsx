@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -8,9 +8,8 @@ import {
 } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCultureContents } from '../../../hooks/useCultureContents';
+import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
-import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useAuthStore } from '../../../store/auth.store';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
@@ -53,11 +52,7 @@ const sortByFilterValue: Record<string, ContentSort> = {
 function FestivalSearchPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { openLoginModal } = useLoginModal();
-  const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
-    {}
-  );
+  const { getLiked, toggleLike } = useContentLikeToggle();
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
@@ -120,18 +115,6 @@ function FestivalSearchPage() {
     setSearchParams(nextSearchParams);
   };
 
-  const handleLikeClick = (festivalId: number | string, isLiked: boolean) => {
-    if (!isAuthenticated) {
-      openLoginModal();
-      return;
-    }
-
-    setLikedOverrides((previous) => ({
-      ...previous,
-      [String(festivalId)]: !isLiked,
-    }));
-  };
-
   return (
     <section
       className="mx-auto flex min-h-screen w-full flex-col bg-background"
@@ -182,19 +165,16 @@ function FestivalSearchPage() {
                 title={festival.title}
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                 secondInfo={festival.regionName}
-                liked={
-                  isAuthenticated &&
-                  (likedOverrides[String(festival.contentId)] ?? false)
-                }
+                liked={getLiked(festival.contentId, false)}
                 tags={toContentTagIds(festival.hashtags)}
                 className="w-full"
                 onClick={() =>
                   navigate(buildFestivalDetailPath(festival.contentId))
                 }
                 onLikeClick={() =>
-                  handleLikeClick(
+                  toggleLike(
                     festival.contentId,
-                    likedOverrides[String(festival.contentId)] ?? false
+                    getLiked(festival.contentId, false)
                   )
                 }
               />

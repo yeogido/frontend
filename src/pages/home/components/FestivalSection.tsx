@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -7,9 +6,8 @@ import {
   SectionHeader,
 } from '../../../components/common';
 import { useCultureContents } from '../../../hooks/useCultureContents';
+import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useAuthStore } from '../../../store/auth.store';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -21,9 +19,7 @@ const CARD_GAP = 16;
 function FestivalSection() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
-  const { openLoginModal } = useLoginModal();
-  const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
+  const { getLiked, toggleLike } = useContentLikeToggle();
   const {
     data: cultureContents,
     isPending: isLoading,
@@ -33,21 +29,6 @@ function FestivalSection() {
     size: 2,
   });
   const festivals = cultureContents?.pages[0]?.items ?? [];
-
-  const handleLikeClick = (contentId: number) => {
-    if (!isLoggedIn) {
-      openLoginModal();
-      return;
-    }
-
-    setLikedContentIds((previousIds) =>
-      previousIds.includes(contentId)
-        ? previousIds.filter((id) => id !== contentId)
-        : [...previousIds, contentId],
-    );
-
-    // TODO: 좋아요 API 연동
-  };
 
   return (
     <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
@@ -90,14 +71,16 @@ function FestivalSection() {
                   firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                   secondInfo={festival.regionName}
                   tags={toContentTagIds(festival.hashtags)}
-                  liked={
-                    isLoggedIn &&
-                    likedContentIds.includes(festival.contentId)
-                  }
+                  liked={getLiked(festival.contentId, false)}
                   onClick={() =>
                     navigate(buildFestivalDetailPath(festival.contentId))
                   }
-                  onLikeClick={() => handleLikeClick(festival.contentId)}
+                  onLikeClick={() =>
+                    toggleLike(
+                      festival.contentId,
+                      getLiked(festival.contentId, false)
+                    )
+                  }
                 />
               ))
             )}
