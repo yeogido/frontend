@@ -3,6 +3,10 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
+import {
+  getFolderPhotoSlotIndexes,
+  getVisibleFolderPhotos,
+} from '../components/folderPhotos';
 import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
@@ -117,6 +121,13 @@ function TravelRecordFolderDecorationPage() {
 
     return previewPhotoUrls.slice(0, 2) as [string, ...string[]];
   }, [previewPhotoUrls]);
+  const photoSlotIndexes = useMemo(
+    () =>
+      getFolderPhotoSlotIndexes(
+        getVisibleFolderPhotos(folderPhotos ?? []).length,
+      ),
+    [folderPhotos],
+  );
   const regionName =
     selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
   const periodLabel = selectedDateRange
@@ -144,9 +155,13 @@ function TravelRecordFolderDecorationPage() {
     replaceDecorations(result.decorations);
   };
   const appendDecorationRef = useRef(appendDecoration);
+  // 드롭 판정도 아트워크와 같은 슬롯을 봐야 한다. 아래 포인터 구독 effect가
+  // 빈 deps로 한 번만 붙으므로 ref로 최신 값을 전달한다.
+  const photoSlotIndexesRef = useRef(photoSlotIndexes);
 
   useEffect(() => {
     appendDecorationRef.current = appendDecoration;
+    photoSlotIndexesRef.current = photoSlotIndexes;
   });
 
   const handleStickerDragStart = (
@@ -219,6 +234,7 @@ function TravelRecordFolderDecorationPage() {
             canvasRect,
             event.clientX,
             event.clientY,
+            photoSlotIndexesRef.current,
           ),
       );
       const dropPoint = isDropTarget && canvasRect

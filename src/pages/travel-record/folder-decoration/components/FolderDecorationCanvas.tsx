@@ -11,6 +11,10 @@ import closeRoundedIcon from '../../../../assets/icons/close-rounded.svg';
 import { TravelFolderArtwork } from '../../components';
 import { getDecorationLayerStyle } from '../../components/decorationRender';
 import {
+  getFolderPhotoSlotIndexes,
+  getVisibleFolderPhotos,
+} from '../../components/folderPhotos';
+import {
   bringDecorationToFront,
   getDecorationDragPoint,
   getDecorationRotationFromPointerDelta,
@@ -49,6 +53,11 @@ export function FolderDecorationCanvas({
   const pointerEditStateRef = useRef<PointerEditState | null>(null);
   const selectedDecoration = decorations.find(
     (decoration) => decoration.id === selectedId,
+  );
+  // 아트워크가 쓰는 것과 같은 슬롯이어야 한다. 사진이 한 장이면 두 장일 때와
+  // 자리가 달라서, 이걸 넘기지 않으면 경계가 없는 사진 위에 걸린다.
+  const photoSlotIndexes = getFolderPhotoSlotIndexes(
+    getVisibleFolderPhotos(photos).length,
   );
 
   const updateDecoration = (
@@ -102,7 +111,7 @@ export function FolderDecorationCanvas({
     const rect = canvasRef.current.getBoundingClientRect();
     if (editorMode === 'drag') {
       const point = getDecorationDragPoint(rect, event.clientX, event.clientY);
-      if (!isPointInFolderDecorationLayout(point)) return;
+      if (!isPointInFolderDecorationLayout(point, photoSlotIndexes)) return;
 
       updateDecoration(
         selectedDecoration.id,
