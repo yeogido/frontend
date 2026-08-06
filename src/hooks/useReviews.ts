@@ -250,8 +250,9 @@ export function useCreateCourseReview() {
 /**
  * 후기 수정. useReviewEdit이 감싸서 쓴다.
  *
- * 홈과 최근 후기(GET /reviews)만 imageKey를 받아서, 수정 진입도 그 두 곳에만
- * 있다. 코스별 후기 목록은 이미지가 URL 배열이라 유지할 사진을 지목할 수 없다.
+ * 두 목록 응답(GET /reviews, GET /courses/{id}/reviews)이 모두 imageKey를
+ * 내려주므로, 후기가 보이는 네 화면(홈·최근 후기·코스 상세·후기 전체보기)
+ * 전부에서 수정에 들어갈 수 있다.
  */
 function useUpdateReview() {
   const queryClient = useQueryClient();
