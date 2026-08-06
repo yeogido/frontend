@@ -160,6 +160,7 @@ function ReviewSection() {
                   isMine={review.isMine}
                   onDeleteClick={() => requestDelete(review.id)}
                   onEditClick={() => requestEdit(review)}
+                  onClick={() => void goToCourseDetail(review.courseId)}
                   onLongPress={() => openReview(review.id)}
                 />
               </div>
@@ -196,9 +197,9 @@ function ReviewSection() {
       )}
 
       {/*
-        카드 자체에는 클릭 이동을 붙이지 않는다. 홈 후기는 좌우 스와이프로
-        넘기는 캐러셀이라 탭 판정이 스와이프와 부딪친다. 코스로 가는 길은
-        모달의 '코스 바로가기'로만 연다.
+        홈 후기는 좌우 스와이프로 넘기는 캐러셀이지만, useLongPress가 10px
+        넘게 움직이면 클릭도 함께 취소해서 스와이프 중에는 이동이 일어나지
+        않는다. 그래서 카드 탭으로도 코스 상세를 연다.
       */}
       <ReviewDetailModal
         review={openedReview}

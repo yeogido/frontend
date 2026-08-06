@@ -1,5 +1,8 @@
 export const MAX_REVIEW_PHOTOS = 5;
 
+/** 별점을 고르지 않은 상태의 기본값. 작성 화면과 수정 모달이 함께 쓴다. */
+export const DEFAULT_REVIEW_RATING = 5;
+
 interface ReviewFormValues {
   rating: number | null;
   review: string;

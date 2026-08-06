@@ -66,6 +66,7 @@ function ReviewCard({
 
   const isClickable = Boolean(onClick || onLongPress);
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
+  const hasSingleImage = images.length === 1;
   const longPressHandlers = useLongPress({
     onLongPress: () => onLongPress?.(),
     onClick,
@@ -113,19 +114,24 @@ function ReviewCard({
           {/* Images: 카드 내부 가로 스크롤, 다음 이미지가 살짝 보이는 peek 효과 */}
           {images.length > 0 && (
             <div
-              className="flex overflow-x-auto scrollbar-hide"
+              className={`flex scrollbar-hide ${
+                hasSingleImage ? 'overflow-hidden' : 'overflow-x-auto'
+              }`}
               style={{
                 gap: IMAGE_GAP,
                 paddingTop: CARD_PADDING,
                 paddingLeft: CARD_PADDING,
+                paddingRight: hasSingleImage ? CARD_PADDING : 0,
               }}
             >
               {images.map((src, index) => (
                 <div
                   key={index}
-                  className="shrink-0 overflow-hidden bg-[#D9D9D9]"
+                  className={`${
+                    hasSingleImage ? 'min-w-0 flex-1' : 'shrink-0'
+                  } overflow-hidden bg-[#D9D9D9]`}
                   style={{
-                    width: IMAGE_SIZE,
+                    width: hasSingleImage ? undefined : IMAGE_SIZE,
                     height: IMAGE_SIZE,
                     borderRadius: IMAGE_RADIUS,
                   }}
@@ -142,11 +148,13 @@ function ReviewCard({
               ))}
 
               {/* 마지막 이미지 뒤에도 카드 패딩만큼 여백 확보 */}
-              <div
-                className="shrink-0"
-                style={{ width: CARD_PADDING - IMAGE_GAP }}
-                aria-hidden="true"
-              />
+              {!hasSingleImage && (
+                <div
+                  className="shrink-0"
+                  style={{ width: CARD_PADDING - IMAGE_GAP }}
+                  aria-hidden="true"
+                />
+              )}
             </div>
           )}
 

@@ -22,6 +22,7 @@ import {
 } from './components';
 import {
   appendSelectedReviewPhotos,
+  DEFAULT_REVIEW_RATING,
   getSelectedReviewPhotos,
   isReviewFormValid,
   MAX_REVIEW_PHOTOS,
@@ -84,7 +85,9 @@ function ReviewPage() {
     ? mapCourseDetailToReviewCourse(courseDetail)
     : null;
 
-  const [rating, setRating] = useState<number | null>(null);
+  // 수정 모달과 마찬가지로 5점에서 시작한다. 0개로 두면 별점을 안 건드린
+  // 사람이 제출 버튼이 왜 비활성인지 알기 어렵다.
+  const [rating, setRating] = useState<number | null>(DEFAULT_REVIEW_RATING);
   const [review, setReview] = useState('');
   const [selectedPhotos, setSelectedPhotos] = useState<
     Array<{ file: File; previewUrl: string }>

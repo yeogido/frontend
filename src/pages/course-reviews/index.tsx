@@ -132,7 +132,7 @@ function CourseReviewsPage() {
       mode="main-layout"
       topPadding={PAGE_PADDING_TOP}
       bottomPadding={PAGE_PADDING_BOTTOM}
-      className="bg-[#F9F9F9]"
+      className="bg-[#F1F1F1]"
     >
       <section className="flex flex-col">
         <div>
@@ -194,7 +194,7 @@ function CourseReviewsPage() {
                   onDeleteClick={() => requestDelete(review.id)}
                   onClick={() => navigate(courseDetailPath)}
                   onLongPress={() => openReview(review.id)}
-                  className="[&>div>article]:!bg-[#F1F1F1]"
+                className="[&>div>article]:!bg-[#F9F9F9]"
                 />
               ))}
 

@@ -8,7 +8,10 @@ import {
   ReviewEditModal,
 } from '../../components/common';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
-import { useNavigateToCourseDetail } from '../../hooks/useCourses';
+import {
+  useCourseDetails,
+  useNavigateToCourseDetail,
+} from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import {
@@ -19,6 +22,8 @@ import {
   useReviewEdit,
   useReviews,
 } from '../../hooks/useReviews';
+import { toCompanionLabel } from '../../utils/courseEnumLabels';
+import { toContentTagIds } from '../../utils/contentTags';
 import { toReviewCourseCardProps } from '../../utils/reviewCard';
 
 const PAGE_PADDING_X = 24;
@@ -55,6 +60,14 @@ function RecentReviewCoursesPage() {
   );
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
+
+  // 후기 목록 응답의 course에는 해시태그와 동행이 없어 코스별 상세를 더 읽는다.
+  // 같은 코스의 후기가 여럿이면 캐시를 공유하므로 코스 수만큼만 나간다.
+  const courseIds = [...new Set(reviews.map((review) => review.courseId))];
+  const courseDetails = useCourseDetails(courseIds);
+  const courseById = new Map(
+    courseDetails.flatMap(({ data }) => (data ? [[data.courseId, data]] : []))
+  );
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -127,29 +140,40 @@ function RecentReviewCoursesPage() {
             gap: LIST_GAP * scale,
           }}
         >
-          {reviews.map((review) => (
-            <CourseReviewCard
-              key={review.id}
-              image={review.image}
-              title={review.title}
-              duration={review.duration}
-              courseType={review.courseType}
-              profileImage={review.profileImage}
-              nickname={review.nickname}
-              meta={review.meta}
-              content={review.content}
-              rating={review.rating}
-              isMine={review.isMine}
-              liked={getLiked(review.courseId, review.liked)}
-              onLikeClick={() =>
-                toggleLike(review.courseId, getLiked(review.courseId, review.liked))
-              }
-              onDeleteClick={() => requestDelete(review.id)}
-              onEditClick={() => requestEdit(review)}
-              onClick={() => void goToCourseDetail(review.courseId)}
-              onLongPress={() => openReview(review.id)}
-            />
-          ))}
+          {reviews.map((review) => {
+            const course = courseById.get(review.courseId);
+
+            return (
+              <CourseReviewCard
+                key={review.id}
+                image={review.image}
+                title={review.title}
+                duration={review.duration}
+                courseType={review.courseType}
+                companion={
+                  course ? toCompanionLabel(course.companionType) : undefined
+                }
+                tags={course ? toContentTagIds(course.tags) : undefined}
+                profileImage={review.profileImage}
+                nickname={review.nickname}
+                meta={review.meta}
+                content={review.content}
+                rating={review.rating}
+                isMine={review.isMine}
+                liked={getLiked(review.courseId, review.liked)}
+                onLikeClick={() =>
+                  toggleLike(
+                    review.courseId,
+                    getLiked(review.courseId, review.liked)
+                  )
+                }
+                onDeleteClick={() => requestDelete(review.id)}
+                onEditClick={() => requestEdit(review)}
+                onClick={() => void goToCourseDetail(review.courseId)}
+                onLongPress={() => openReview(review.id)}
+              />
+            );
+          })}
 
           <div ref={loadMoreRef} aria-hidden="true" />
 
