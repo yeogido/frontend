@@ -7,6 +7,7 @@ import {
   COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
   courseRegionRecentSearchKeywords,
 } from '../../../constants/recentSearches';
+import { REGION_INFO_ID_STATE_KEY } from '../../../constants/regions';
 import type { SubRegion } from '../../../types/region.type';
 import {
   addStoredRecentSearch,
@@ -121,9 +122,10 @@ function useCourseRegionSearch() {
   });
 
   // 로딩 중에는 '전체'만 보여줘서 목록이 비었다가 채워지는 깜빡임을 줄인다.
-  const visibleDistricts = currentParentRegionId
-    ? ['전체', ...(subRegionsQuery.data ?? []).map((region) => region.name)]
-    : [];
+  const visibleDistricts =
+    currentParentRegionId !== undefined
+      ? ['전체', ...(subRegionsQuery.data ?? []).map((region) => region.name)]
+      : [];
 
   const defaultSearchSuggestions = useMemo(
     () => getUniqueSearches([...recentSearches, ...cities.map((city) => city.name)]),
@@ -184,7 +186,9 @@ function useCourseRegionSearch() {
     const matchedCity = findMatchingCity(keyword);
 
     if (matchedCity) {
-      navigate(`/region-info/${encodeURIComponent(matchedCity.name)}`);
+      navigate(`/region-info/${encodeURIComponent(matchedCity.name)}`, {
+        state: { [REGION_INFO_ID_STATE_KEY]: matchedCity.regionId },
+      });
 
       return;
     }
@@ -254,7 +258,14 @@ function useCourseRegionSearch() {
     setSelectedDistrict(district);
 
     if (district === '전체') {
-      navigate(`/region-info/${encodeURIComponent(selectedCity.name)}`);
+      // 드릴다운해서 하위 지역을 보는 중이면 그 지역(예: 고양시) 기준 '전체',
+      // 아니면 도시 자체 기준 '전체'로 이동한다.
+      const targetName = selectedParentDistrict?.name ?? selectedCity.name;
+      const targetRegionId = selectedParentDistrict?.id ?? selectedCity.regionId;
+
+      navigate(`/region-info/${encodeURIComponent(targetName)}`, {
+        state: { [REGION_INFO_ID_STATE_KEY]: targetRegionId },
+      });
 
       return;
     }

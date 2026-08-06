@@ -1,6 +1,10 @@
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
-import { normalizeRegionName, regionCities } from '../../constants/regions';
+import {
+  REGION_INFO_ID_STATE_KEY,
+  normalizeRegionName,
+  regionCities,
+} from '../../constants/regions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useRegion } from '../../hooks/useRegions';
 import RegionCourseSection from './components/RegionCourseSection';
@@ -13,15 +17,32 @@ const NOT_FOUND_PADDING_X = 24;
 const NOT_FOUND_PADDING_Y = 96;
 const NOT_FOUND_TEXT_SIZE = 14;
 
+function getExplicitRegionId(state: unknown): number | undefined {
+  if (
+    typeof state === 'object' &&
+    state !== null &&
+    REGION_INFO_ID_STATE_KEY in state
+  ) {
+    const id = (state as Record<string, unknown>)[REGION_INFO_ID_STATE_KEY];
+
+    if (typeof id === 'number') {
+      return id;
+    }
+  }
+
+  return undefined;
+}
+
 function RegionInfoPage() {
   const { region } = useParams();
+  const location = useLocation();
   const scale = useGlobalScale();
 
   const {
     regionId,
     isPending: isRegionIdPending,
     isError: isRegionNotFound,
-  } = useResolvedRegion(region);
+  } = useResolvedRegion(region, getExplicitRegionId(location.state));
 
   const {
     data: regionDetail,

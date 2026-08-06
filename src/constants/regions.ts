@@ -67,9 +67,13 @@ const OFFICIAL_PROVINCE_NAME_MAP: Record<string, string> = {
   세종특별자치시: '세종',
   경기도: '경기',
   강원도: '강원',
+  // 실제 백엔드 응답(fullName)은 이미 새 행정구역명을 쓰지만, 지도 GeoJSON은
+  // 아직 옛 이름이라 둘 다 매핑해 둔다.
+  강원특별자치도: '강원',
   충청북도: '충북',
   충청남도: '충남',
   전라북도: '전북',
+  전북특별자치도: '전북',
   전라남도: '전남',
   경상북도: '경북',
   경상남도: '경남',
@@ -81,3 +85,10 @@ const OFFICIAL_PROVINCE_NAME_MAP: Record<string, string> = {
 export function normalizeRegionName(name: string): string {
   return OFFICIAL_PROVINCE_NAME_MAP[name] ?? name;
 }
+
+/**
+ * region-info로 navigate할 때 이 state key로 실제 regionId를 함께 넘기면,
+ * region-info는 이름 검색(동명 지역이 여럿일 수 있어 부정확할 수 있음)을
+ * 건너뛰고 이 id를 그대로 신뢰한다.
+ */
+export const REGION_INFO_ID_STATE_KEY = 'regionInfoRegionId';
