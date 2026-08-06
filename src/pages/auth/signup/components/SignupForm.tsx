@@ -1,30 +1,76 @@
-import type { KeyboardEvent, ReactNode } from 'react';
-import { useState } from 'react';
+import type { ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { getApiErrorMessage } from '../../../../apis/common';
+import {
+  checkEmail,
+  sendEmailCode,
+  signup,
+  verifyEmailCode,
+} from '../../../../apis/auth.api';
 import { AuthField, PasswordInput } from '../../../../components/auth';
 import { BIRTH_YEARS } from '../../../../constants/birthYears';
-import { SIGNUP_REGIONS } from '../../../../constants/signupRegions';
+import { useRegions } from '../../../../hooks/useRegions';
+import type { SignupGender } from '../../../../types/auth.type';
 import {
   signupSchema,
   SIGNUP_EMAIL_PATTERN,
   type SignupFormValues,
 } from '../schema';
 
-const genders = ['여성', '남성', '선택 안 함'];
+const genders: { label: string; value: SignupGender }[] = [
+  { label: '여성', value: 'FEMALE' },
+  { label: '남성', value: 'MALE' },
+  { label: '선택 안 함', value: 'NONE' },
+];
+
+const DEFAULT_SIGNUP_ERROR_MESSAGE =
+  '회원가입에 실패했습니다. 다시 시도해 주세요.';
+const EMAIL_CHECK_ERROR_MESSAGE =
+  '이메일 확인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+const SEND_CODE_ERROR_MESSAGE =
+  '인증번호 전송에 실패했습니다. 다시 시도해 주세요.';
+const SEND_CODE_SUCCESS_MESSAGE =
+  '인증번호를 전송했어요. 10분 안에 입력해 주세요.';
+const VERIFY_CODE_ERROR_MESSAGE =
+  '인증번호가 올바르지 않습니다. 다시 확인해 주세요.';
+const VERIFY_CODE_SUCCESS_MESSAGE = '이메일 인증이 완료됐어요.';
+
+type EmailCheckStatus = 'idle' | 'checking' | 'available' | 'unavailable';
+type EmailAuthStatus =
+  | 'idle'
+  | 'sending'
+  | 'sent'
+  | 'verifying'
+  | 'verified'
+  | 'error';
 
 function SignupForm() {
   const navigate = useNavigate();
-  const [isCodeSent, setIsCodeSent] = useState(false);
-  const [code, setCode] = useState('');
-  const [isCodeVerified, setIsCodeVerified] = useState(false);
+  const { data: regionsData } = useRegions();
+  const [emailCheck, setEmailCheck] = useState<{
+    status: EmailCheckStatus;
+    message: string;
+  }>({ status: 'idle', message: '' });
+  const [emailAuth, setEmailAuth] = useState<{
+    status: EmailAuthStatus;
+    message: string;
+    token: string | null;
+  }>({ status: 'idle', message: '', token: null });
+  const [authCode, setAuthCode] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  // 이메일이 바뀌거나 새 확인 요청이 시작되면 증가시켜, 응답이 늦게 온
+  // 이전 요청이 이후 상태를 덮어쓰지 않도록 막는다.
+  const emailCheckRequestIdRef = useRef(0);
 
   const {
     register,
     control,
-    formState: { isValid, errors },
+    handleSubmit,
+    formState: { isValid, isSubmitting, errors },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     mode: 'onChange',
@@ -33,7 +79,7 @@ function SignupForm() {
       email: '',
       password: '',
       passwordConfirm: '',
-      region: '',
+      regionId: '',
       gender: '',
       birthYear: '',
     },
@@ -41,68 +87,152 @@ function SignupForm() {
 
   const email = useWatch({ control, name: 'email' });
   const isEmailValid = SIGNUP_EMAIL_PATTERN.test(email.trim());
-  const isCodeFilled = code.trim().length > 0;
 
-  const isFormComplete = isValid && isCodeFilled && isCodeVerified;
+  // 진행 중인 확인 요청이 있다면 이 시점에 무효화해, 나중에 응답이 와도
+  // 이미 바뀐 이메일의 상태를 덮어쓰지 못하게 한다. 이메일 자체가
+  // 바뀌었으니 인증 상태(emailVerificationToken 포함)도 초기화해서
+  // 재인증을 요구한다.
+  const handleEmailChange = () => {
+    emailCheckRequestIdRef.current += 1;
+    setEmailCheck({ status: 'idle', message: '' });
+    setEmailAuth({ status: 'idle', message: '', token: null });
+    setAuthCode('');
+  };
 
-  const handleSendCode = () => {
+  const handleEmailBlur = async () => {
     if (!isEmailValid) {
       return;
     }
 
-    setIsCodeSent(true);
-    setIsCodeVerified(false);
-    setCode('');
+    const requestId = ++emailCheckRequestIdRef.current;
+    setEmailCheck({ status: 'checking', message: '이메일 확인 중...' });
+
+    try {
+      const { isAvailable } = await checkEmail(email.trim());
+
+      // 응답을 받은 사이 이메일이 바뀌어 더 최신 요청이 시작됐다면
+      // (또는 onChange로 무효화됐다면) 이 응답은 버린다.
+      if (emailCheckRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setEmailCheck({
+        status: isAvailable ? 'available' : 'unavailable',
+        message: isAvailable
+          ? '사용 가능한 이메일이에요.'
+          : '이미 가입된 이메일이에요.',
+      });
+    } catch (error) {
+      if (emailCheckRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setEmailCheck({
+        status: 'idle',
+        message: getApiErrorMessage(error, EMAIL_CHECK_ERROR_MESSAGE),
+      });
+    }
   };
 
-  const handleVerifyCode = () => {
-    if (!isCodeFilled) {
+  // 이미 "이미 가입된 이메일"임을 알고 있으면 인증번호 전송 자체를
+  // 막는다. 다만 이메일 입력 후 바로 옆 전송 버튼을 클릭하면 그 클릭이
+  // blur를 먼저 유발해 check-email 응답이 오기 전에 전송이 나갈 수도
+  // 있다 — 그 경우는 최종 signup() 시점에 USER4091로 걸러진다.
+  const canSendCode =
+    isEmailValid &&
+    emailCheck.status !== 'unavailable' &&
+    emailAuth.status !== 'sending' &&
+    emailAuth.status !== 'verifying' &&
+    emailAuth.status !== 'verified';
+  const canEnterCode = emailAuth.status === 'sent' || emailAuth.status === 'error';
+  const canVerifyCode = canEnterCode && authCode.trim().length > 0;
+
+  const handleSendCode = async () => {
+    if (!canSendCode) {
       return;
     }
 
-    setIsCodeVerified(true);
+    // 재전송 시 이전 인증번호는 서버에서 무효화되므로, 입력창도 함께
+    // 비워 사용자가 옛 번호를 다시 입력하지 않게 한다.
+    setAuthCode('');
+    setEmailAuth({ status: 'sending', message: '', token: null });
+
+    try {
+      await sendEmailCode(email.trim());
+
+      setEmailAuth({
+        status: 'sent',
+        message: SEND_CODE_SUCCESS_MESSAGE,
+        token: null,
+      });
+    } catch (error) {
+      setEmailAuth({
+        status: 'error',
+        message: getApiErrorMessage(error, SEND_CODE_ERROR_MESSAGE),
+        token: null,
+      });
+    }
   };
 
-  const handleSignup = () => {
-    if (!isFormComplete) {
+  const handleVerifyCode = async () => {
+    if (!canVerifyCode) {
       return;
     }
 
-    navigate('/login');
+    setEmailAuth((prev) => ({ ...prev, status: 'verifying', message: '' }));
+
+    try {
+      const { emailVerificationToken } = await verifyEmailCode(
+        email.trim(),
+        authCode.trim()
+      );
+
+      setEmailAuth({
+        status: 'verified',
+        message: VERIFY_CODE_SUCCESS_MESSAGE,
+        token: emailVerificationToken,
+      });
+    } catch (error) {
+      // 인증번호 입력은 그대로 남겨 재입력을 유도한다(입력창을 비우지 않음).
+      setEmailAuth({
+        status: 'error',
+        message: getApiErrorMessage(error, VERIFY_CODE_ERROR_MESSAGE),
+        token: null,
+      });
+    }
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
-    if (event.key !== 'Enter') {
+  const onSubmit = async (values: SignupFormValues) => {
+    if (!emailAuth.token) {
       return;
     }
 
-    const target = event.target as HTMLElement | null;
+    setSubmitError('');
 
-    if (target?.tagName === 'BUTTON') {
-      return;
+    try {
+      await signup({
+        email: values.email.trim(),
+        password: values.password,
+        nickname: values.name.trim(),
+        gender: values.gender as SignupGender,
+        birthYear: values.birthYear,
+        regionId: Number(values.regionId),
+        emailVerificationToken: emailAuth.token,
+      });
+
+      navigate('/login', {
+        state: { signupCompleted: true, email: values.email.trim() },
+      });
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, DEFAULT_SIGNUP_ERROR_MESSAGE));
     }
-
-    event.preventDefault();
-
-    if (!isCodeSent) {
-      handleSendCode();
-      return;
-    }
-
-    if (!isCodeVerified) {
-      handleVerifyCode();
-      return;
-    }
-
-    handleSignup();
   };
 
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
       <form
         className="flex-1"
-        onSubmit={(event) => event.preventDefault()}
-        onKeyDown={handleKeyDown}
+        onSubmit={handleSubmit(onSubmit)}
       >
         <h1 className="text-[28px] font-bold leading-none text-black">
           회원가입
@@ -135,12 +265,14 @@ function SignupForm() {
             <div className="space-y-2">
               <div className="flex gap-2">
                 <input
+                  // emailCheckRequestIdRef는 handleEmailChange/handleEmailBlur
+                  // 안에서만 읽고 쓴다 — 둘 다 실제 이벤트(change/blur)가
+                  // 발생해야 실행되는 콜백이라 렌더링 중엔 절대 접근되지
+                  // 않는데도, register()에 전달된다는 이유로 규칙이 오탐한다.
+                  // eslint-disable-next-line react-hooks/refs
                   {...register('email', {
-                    onChange: () => {
-                      setIsCodeSent(false);
-                      setIsCodeVerified(false);
-                      setCode('');
-                    },
+                    onChange: handleEmailChange,
+                    onBlur: handleEmailBlur,
                   })}
                   id="signup-email"
                   type="email"
@@ -151,39 +283,62 @@ function SignupForm() {
                 <button
                   type="button"
                   onClick={handleSendCode}
-                  disabled={!isEmailValid}
+                  disabled={!canSendCode}
                   className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] text-xs font-bold disabled:cursor-not-allowed disabled:bg-gray-2 disabled:text-gray-4 enabled:bg-main-5 enabled:text-white"
                 >
-                  인증번호 전송
+                  {emailAuth.status === 'sending' ? '전송 중...' : '인증번호 전송'}
                 </button>
               </div>
 
-              {isCodeSent && (
-                <div className="flex gap-2">
-                  <label
-                    htmlFor="signup-code"
-                    className="sr-only"
-                  >
-                    인증번호
-                  </label>
-                  <input
-                    id="signup-code"
-                    type="text"
-                    placeholder="인증번호"
-                    value={code}
-                    onChange={(event) => setCode(event.target.value)}
-                    className="block h-12 min-w-0 flex-1 rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
-                  />
+              {emailCheck.message && (
+                <p
+                  role="status"
+                  className={`text-xs font-medium ${
+                    emailCheck.status === 'unavailable'
+                      ? 'text-main-5'
+                      : 'text-gray-4'
+                  }`}
+                >
+                  {emailCheck.message}
+                </p>
+              )}
 
-                  <button
-                    type="button"
-                    onClick={handleVerifyCode}
-                    disabled={!isCodeFilled}
-                    className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] bg-gray-2 text-xs font-bold text-gray-4 disabled:cursor-not-allowed disabled:bg-gray-2 disabled:text-gray-4 enabled:bg-main-5 enabled:text-white"
-                  >
-                    인증하기
-                  </button>
-                </div>
+              <div className="flex gap-2">
+                <label
+                  htmlFor="signup-code"
+                  className="sr-only"
+                >
+                  인증번호
+                </label>
+                <input
+                  id="signup-code"
+                  type="text"
+                  placeholder="인증번호"
+                  value={authCode}
+                  onChange={(event) => setAuthCode(event.target.value)}
+                  disabled={!canEnterCode}
+                  className="block h-12 min-w-0 flex-1 rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 disabled:bg-gray-2 disabled:text-gray-4 focus:border-main-5"
+                />
+
+                <button
+                  type="button"
+                  onClick={handleVerifyCode}
+                  disabled={!canVerifyCode}
+                  className="h-12 w-[82px] shrink-0 cursor-pointer rounded-[12px] bg-gray-2 text-xs font-bold text-gray-4 disabled:cursor-not-allowed disabled:bg-gray-2 disabled:text-gray-4 enabled:bg-main-5 enabled:text-white"
+                >
+                  {emailAuth.status === 'verifying' ? '확인 중...' : '인증하기'}
+                </button>
+              </div>
+
+              {emailAuth.message && (
+                <p
+                  role="status"
+                  className={`text-xs font-medium ${
+                    emailAuth.status === 'error' ? 'text-main-5' : 'text-gray-4'
+                  }`}
+                >
+                  {emailAuth.message}
+                </p>
               )}
             </div>
           </SectionField>
@@ -236,21 +391,21 @@ function SignupForm() {
           <AuthField
             id="signup-region"
             label="사는 지역"
-            error={errors.region?.message}
+            error={errors.regionId?.message}
           >
             <SelectField>
               <select
-                {...register('region')}
+                {...register('regionId')}
                 id="signup-region"
                 className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
               >
                 <option value="">거주 중인 지역을 선택해 주세요</option>
-                {SIGNUP_REGIONS.map((region) => (
+                {(regionsData?.regions ?? []).map((region) => (
                   <option
-                    key={region}
-                    value={region}
+                    key={region.regionId}
+                    value={region.regionId}
                   >
-                    {region}
+                    {region.name}
                   </option>
                 ))}
               </select>
@@ -269,12 +424,12 @@ function SignupForm() {
                 className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
               >
                 <option value="">성별을 선택해 주세요</option>
-                {genders.map((gender) => (
+                {genders.map((genderOption) => (
                   <option
-                    key={gender}
-                    value={gender}
+                    key={genderOption.value}
+                    value={genderOption.value}
                   >
-                    {gender}
+                    {genderOption.label}
                   </option>
                 ))}
               </select>
@@ -306,13 +461,21 @@ function SignupForm() {
           </AuthField>
         </div>
 
+        {submitError && (
+          <p
+            role="alert"
+            className="mt-4 text-center text-xs font-medium text-main-5"
+          >
+            {submitError}
+          </p>
+        )}
+
         <button
-          type="button"
-          onClick={handleSignup}
-          disabled={!isFormComplete}
+          type="submit"
+          disabled={!isValid || isSubmitting || emailAuth.status !== 'verified'}
           className="mt-8 h-12 w-full cursor-pointer rounded-[12px] text-[15px] font-bold disabled:cursor-not-allowed disabled:bg-gray-2 disabled:text-gray-3 enabled:bg-main-5 enabled:text-white"
         >
-          여기도 시작하기
+          {isSubmitting ? '가입 처리 중...' : '여기도 시작하기'}
         </button>
       </form>
     </section>

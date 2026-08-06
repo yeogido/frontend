@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { searchRegions } from '../../../apis/regions.api';
 import {
   COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
   courseRegionRecentSearchKeywords,
@@ -94,6 +96,8 @@ function useCourseRegionSearch() {
   const [recentSearches, setRecentSearches] = useState<string[]>(
     () => getStoredRecentSearches(recentSearchStorageOptions)
   );
+  const [searchQuery, setSearchQuery] = useState('');
+  const trimmedSearchQuery = searchQuery.trim();
 
   const selectedCity = cities.find((city) => city.id === selectedCityId);
   const districtStepName = getDistrictStepName(location.state);
@@ -107,7 +111,7 @@ function useCourseRegionSearch() {
       selectedCity.districts.map((district) => district.name))
     : [];
 
-  const searchSuggestions = useMemo(() => {
+  const defaultSearchSuggestions = useMemo(() => {
     const districtSuggestions = createRegionSearchSuggestions(cities);
 
     return getUniqueSearches([
@@ -116,6 +120,33 @@ function useCourseRegionSearch() {
       ...districtSuggestions,
     ]);
   }, [cities, recentSearches]);
+
+  // 검색창에 입력하는 즉시(타이핑마다) 백엔드에 물어 연관 검색어를 채운다.
+  // 백엔드가 이름 LIKE(부분 문자열) 매칭이라 SearchBar의 로컬 재필터를
+  // 그대로 통과하므로, 이 목록을 suggestions로 넘기기만 하면 된다.
+  const searchResultsQuery = useQuery({
+    queryKey: ['regions', 'search', trimmedSearchQuery],
+    queryFn: () => searchRegions(trimmedSearchQuery),
+    enabled: trimmedSearchQuery.length > 0,
+    staleTime: 30_000,
+  });
+
+  // searchResultsQuery.data는 새 키워드로 바뀔 때마다 응답 전까지 잠깐
+  // undefined가 되는데, 그 사이 suggestions가 비어버리면 SearchBar가
+  // 드롭다운을 닫아버린다. 응답이 아직 없을 때는(로딩 중) 기본 목록을,
+  // 응답이 왔지만 결과가 없을 때는([]) 그대로 빈 목록을 보여준다.
+  const liveSearchSuggestions = searchResultsQuery.data?.map(
+    (region) => region.name
+  );
+
+  const searchSuggestions =
+    trimmedSearchQuery.length > 0
+      ? getUniqueSearches(liveSearchSuggestions ?? defaultSearchSuggestions)
+      : defaultSearchSuggestions;
+
+  const updateSearchQuery = (query: string) => {
+    setSearchQuery(query);
+  };
 
   const addRecentSearch = (keyword: string) => {
     const trimmedKeyword = keyword.trim();
@@ -281,6 +312,7 @@ function useCourseRegionSearch() {
     selectDistrict,
     selectRecentSearch,
     submitSearch,
+    updateSearchQuery,
   };
 }
 
