@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -10,9 +9,8 @@ import {
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
 import { useCultureContents } from '../../hooks/useCultureContents';
-import { useLoginModal } from '../../hooks/useLoginModal';
+import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
-import { useAuthStore } from '../../store/auth.store';
 import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
 
@@ -36,10 +34,7 @@ const LIST_GAP = 16;
 function FestivalPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
-  const { openLoginModal } = useLoginModal();
-  const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
-  const [likedRecentIds, setLikedRecentIds] = useState<number[]>([]);
+  const { getLiked, toggleLike } = useContentLikeToggle();
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
   const { data: cultureContentBanners } = useCultureContentBanners();
@@ -73,34 +68,6 @@ function FestivalPage() {
 
   const goToRecentFestivals = () => {
     navigate('/festival/recent');
-  };
-
-  const handleLikeClick = (contentId: number) => {
-    if (!isLoggedIn) {
-      openLoginModal();
-      return;
-    }
-
-    setLikedContentIds((previousIds) =>
-      previousIds.includes(contentId)
-        ? previousIds.filter((id) => id !== contentId)
-        : [...previousIds, contentId],
-    );
-
-    // TODO: 좋아요 API 연동
-  };
-
-  const handleRecentLikeClick = (festivalId: number) => {
-    if (!isLoggedIn) {
-      openLoginModal();
-      return;
-    }
-
-    setLikedRecentIds((previousIds) =>
-      previousIds.includes(festivalId)
-        ? previousIds.filter((id) => id !== festivalId)
-        : [...previousIds, festivalId],
-    );
   };
 
   return (
@@ -182,15 +149,17 @@ function FestivalPage() {
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                 secondInfo={festival.regionName}
                 tags={toContentTagIds(festival.hashtags)}
-                liked={
-                  isLoggedIn &&
-                  likedContentIds.includes(festival.contentId)
-                }
+                liked={getLiked(festival.contentId, false)}
                 className="w-full"
                 onClick={() =>
                   navigate(buildFestivalDetailPath(festival.contentId))
                 }
-                onLikeClick={() => handleLikeClick(festival.contentId)}
+                onLikeClick={() =>
+                  toggleLike(
+                    festival.contentId,
+                    getLiked(festival.contentId, false)
+                  )
+                }
               />
             ))
           )}
@@ -219,18 +188,17 @@ function FestivalPage() {
               title={festival.title}
               firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
               secondInfo={festival.regionName}
-              liked={
-                isLoggedIn &&
-                festival.liked !==
-                  likedRecentIds.includes(festival.contentId)
-              }
+              liked={getLiked(festival.contentId, festival.liked)}
               tags={toContentTagIds(festival.hashtags)}
               className="w-full"
               onClick={() =>
                 navigate(buildFestivalDetailPath(festival.contentId))
               }
               onLikeClick={() =>
-                handleRecentLikeClick(festival.contentId)
+                toggleLike(
+                  festival.contentId,
+                  getLiked(festival.contentId, festival.liked)
+                )
               }
             />
           ))}

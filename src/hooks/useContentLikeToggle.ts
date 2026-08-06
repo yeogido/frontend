@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addContentLike, removeContentLike } from '../apis/courses';
 import { useLoginModal } from './useLoginModal';
 import { useAuthStore } from '../store/auth.store';
+import { updateRecentCultureContentLikeState } from '../utils/recentCultureContents';
 
 function useContentLikeMutation() {
   return useMutation({
@@ -56,6 +57,7 @@ export function useContentLikeToggle() {
             ...previous,
             [contentId]: result.isLiked,
           }));
+          updateRecentCultureContentLikeState(contentId, result.isLiked);
         },
         onError: () => {
           setLikedOverrides((previous) => ({
