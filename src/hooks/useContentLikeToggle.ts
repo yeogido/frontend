@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { addContentLike, removeContentLike } from '../apis/courses';
 import { useLoginModal } from './useLoginModal';
@@ -21,6 +21,7 @@ export function useContentLikeToggle() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
   const likeMutation = useContentLikeMutation();
+  const queryClient = useQueryClient();
   const [likedOverrides, setLikedOverrides] = useState<
     Record<number, boolean>
   >({});
@@ -68,6 +69,8 @@ export function useContentLikeToggle() {
             next.delete(contentId);
             return next;
           });
+          queryClient.invalidateQueries({ queryKey: ['cultureContents'] });
+          queryClient.invalidateQueries({ queryKey: ['cultureContent', contentId] });
         },
       }
     );
