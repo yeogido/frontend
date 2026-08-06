@@ -85,8 +85,12 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
           style={{ maxWidth: DRAWER_MAX_WIDTH * scale }}
         >
           {/* Header */}
+          {/* shrink-0: 자식이 absolute뿐이라 min-height:auto가 0으로 계산돼,
+              내용이 뷰포트보다 길어지면 flex-shrink로 이 영역이 찌그러들며
+              아래 메뉴와 겹쳐 보인다. shrink-0로 높이를 고정하고 overflow-y-auto
+              스크롤에 맡긴다. */}
           <div
-            className="relative"
+            className="relative shrink-0"
             style={{ height: DRAWER_HEADER_HEIGHT * scale }}
           >
             <button
@@ -107,7 +111,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
               navigate('/login');
               onClose();
             }}
-            className="flex items-center"
+            className="flex shrink-0 items-center"
             style={{
               gap: LOGIN_GAP * scale,
               paddingLeft: LOGIN_PADDING_X * scale,
@@ -133,7 +137,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Divider />
 
           {/* Menu */}
-          <nav className="flex flex-col">
+          <nav className="flex shrink-0 flex-col">
             {guestSidebarMenu.map((menu) => (
               <button
                 key={menu.path}
@@ -162,7 +166,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Divider />
 
           {/* 임시 메뉴: 로그인/권한 기능 구현 전까지 테스트용으로 노출 */}
-          <nav className="flex flex-col">
+          <nav className="flex shrink-0 flex-col">
             {TEMP_MENU.map((menu) => (
               <button
                 key={menu.path}

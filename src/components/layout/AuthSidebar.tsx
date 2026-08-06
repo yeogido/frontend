@@ -87,8 +87,13 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
           style={{ maxWidth: DRAWER_MAX_WIDTH * scale }}
         >
           {/* Header: 프로필 요약 + 닫기 버튼 */}
+          {/* shrink-0: 내용이 뷰포트보다 길어지면 overflow-y-auto로
+              스크롤되어야 하는데, flex 자식은 기본적으로 shrink 가능해서
+              (특히 이 div는 자식이 전부 absolute라 min-height:auto가 0으로
+              계산됨) 공간이 부족하면 찌그러들며 프로필이 메뉴와 겹쳐
+              보였다. shrink-0로 항상 지정한 높이를 유지하고 스크롤에 맡긴다. */}
           <div
-            className="relative"
+            className="relative shrink-0"
             style={{ height: DRAWER_HEADER_HEIGHT * scale }}
           >
             <div
@@ -131,7 +136,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
           <Divider />
 
           {/* Menu */}
-          <nav className="flex flex-col">
+          <nav className="flex shrink-0 flex-col">
             {guestSidebarMenu.map((menu) => (
               <button
                 key={menu.path}
@@ -161,6 +166,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
 
           {/* MY: 마이페이지 메뉴 */}
           <div
+            className="shrink-0"
             style={{
               paddingLeft: MENU_PADDING_X * scale,
               paddingTop: MY_LABEL_PADDING_TOP * scale,
@@ -175,7 +181,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
             </span>
           </div>
 
-          <nav className="flex flex-col">
+          <nav className="flex shrink-0 flex-col">
             {MY_MENU.map((menu) => (
               <button
                 key={menu.label}
@@ -204,7 +210,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
           </nav>
 
           {/* 로그아웃: 메뉴가 짧아도 항상 사이드바 하단에 붙도록 mt-auto로 민다 */}
-          <div className="mt-auto">
+          <div className="mt-auto shrink-0">
             <button
               type="button"
               onClick={() => {
