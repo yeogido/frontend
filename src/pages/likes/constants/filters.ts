@@ -10,24 +10,6 @@ export const LIKED_CATEGORY_OPTIONS = [
   '장소',
 ] as const;
 
-/** 2번째 필터: 1번째 필터가 '행사'일 때 */
-export const LIKED_EVENT_DETAIL_OPTIONS = [
-  ALL_FILTER_OPTION,
-  '체험',
-  '전시',
-  '공연',
-  '축제',
-] as const;
-
-/** 2번째 필터: 1번째 필터가 '장소'일 때 */
-export const LIKED_PLACE_DETAIL_OPTIONS = [
-  ALL_FILTER_OPTION,
-  '음식점',
-  '카페 및 베이커리',
-  '지역명소',
-  '체험 및 활동',
-] as const;
-
 /** 3번째 필터: 정렬 */
 export const LIKED_SORT_OPTIONS = ['최신순', '오래된 순'] as const;
 

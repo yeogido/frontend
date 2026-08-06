@@ -38,6 +38,7 @@ export function getCurrentMapCoordinates(
   });
 }
 
+
 export function loadKakaoMapsSdk(appKey: string): Promise<void> {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return Promise.reject(
