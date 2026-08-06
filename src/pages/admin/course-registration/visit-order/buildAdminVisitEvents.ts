@@ -1,5 +1,6 @@
+import type { FestivalItem } from '../../../local-recommendation/event-selection/types';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
-import type { AdminCourseEventItem, AdminCoursePlaceItem } from '../types';
+import type { AdminCoursePlaceItem } from '../types';
 import {
   VISIT_EVENT_CONTENT_ID_PREFIX,
   VISIT_EVENT_PLACE_ID_PREFIX,
@@ -7,7 +8,7 @@ import {
 
 export function buildAdminVisitEvents(
   places: readonly AdminCoursePlaceItem[],
-  events: readonly AdminCourseEventItem[],
+  events: readonly FestivalItem[],
   fallbackImageSrc: string,
   // 스토어에 저장된 이전 방문 순서(id 목록). 순서를 매기는 용도로만 쓰고,
   // 실제 항목 데이터는 항상 현재 selectedPlaces/selectedEvents로 새로
@@ -29,14 +30,13 @@ export function buildAdminVisitEvents(
     imageKey: null,
   }));
 
-  const contentEvents: VisitEvent[] = events.map((event, index) => ({
+  const contentEvents: VisitEvent[] = events.map((event) => ({
     id: `${VISIT_EVENT_CONTENT_ID_PREFIX}${event.id}`,
     kind: 'CONTENT',
     name: event.title,
     address: event.address,
     imageSrc: event.imageSrc ?? fallbackImageSrc,
-    // Mock 행사에는 실제 contentId가 없다 — API 연동 전까지만 쓰는 채움값이다.
-    contentId: -(index + 1),
+    contentId: event.contentId,
   }));
 
   const combined = [...placeEvents, ...contentEvents];

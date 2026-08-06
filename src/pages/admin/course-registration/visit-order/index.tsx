@@ -26,7 +26,9 @@ function AdminCourseVisitOrderPage() {
     handleDragStart,
     handleDragCancel,
     handleDragEnd,
-    handleRegister,
+    handleSubmit,
+    isSubmitting,
+    submitError,
   } = useAdminCourseVisitOrder();
 
   useEffect(() => {
@@ -38,11 +40,6 @@ function AdminCourseVisitOrderPage() {
   }, [region, navigate]);
 
   if (!region) return null;
-
-  const handleSubmit = () => {
-    handleRegister();
-    navigate('/admin/course-registration/preview');
-  };
 
   return (
     <ResponsivePageShell
@@ -72,8 +69,14 @@ function AdminCourseVisitOrderPage() {
 
         <SubmitCourseButton
           onSubmit={handleSubmit}
-          disabled={visitEvents.length === 0}
+          disabled={isSubmitting || visitEvents.length === 0}
+          isSubmitting={isSubmitting}
         />
+        {submitError ? (
+          <p role="alert" className="text-main-5 mt-2 text-center text-sm">
+            {submitError}
+          </p>
+        ) : null}
       </main>
     </ResponsivePageShell>
   );

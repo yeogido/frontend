@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 
 import type { CourseBasicInfoValues } from '../pages/local-recommendation/course-basic-info/schema';
+import type { FestivalItem } from '../pages/local-recommendation/event-selection/types';
 import type { Neighborhood } from '../pages/local-recommendation/region-selection/types';
 import type { VisitEvent } from '../pages/local-recommendation/visit-order-selection/constants';
 import {
   VISIT_EVENT_CONTENT_ID_PREFIX,
   VISIT_EVENT_PLACE_ID_PREFIX,
-  type AdminCourseEventItem,
   type AdminCoursePhoto,
   type AdminCoursePlaceItem,
 } from '../pages/admin/course-registration/types';
@@ -17,14 +17,14 @@ interface AdminCourseRegistrationState {
   basicInfo: CourseBasicInfoValues | null;
   photo: AdminCoursePhoto | null;
   keywordTagIds: TagId[];
-  selectedEvents: AdminCourseEventItem[];
+  selectedEvents: FestivalItem[];
   selectedPlaces: AdminCoursePlaceItem[];
   visitOrder: VisitEvent[];
   setRegion: (region: Neighborhood | null) => void;
   setBasicInfo: (basicInfo: CourseBasicInfoValues) => void;
   setPhoto: (photo: AdminCoursePhoto | null) => void;
   setKeywordTagIds: (tagIds: TagId[]) => void;
-  setSelectedEvents: (events: AdminCourseEventItem[]) => void;
+  setSelectedEvents: (events: FestivalItem[]) => void;
   setSelectedPlaces: (places: AdminCoursePlaceItem[]) => void;
   setVisitOrder: (visitOrder: VisitEvent[]) => void;
   reset: () => void;

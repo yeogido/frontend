@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
@@ -8,7 +8,7 @@ import SelectionPageLayout from '../../../local-recommendation/components/Select
 import SelectionResultCard from '../../../local-recommendation/components/SelectionResultCard';
 import PlacePhotoModal from '../../../local-recommendation/place-selection/components/PlacePhotoModal';
 import { usePlacePhotoModal } from '../../../local-recommendation/place-selection/hooks/usePlacePhotoModal';
-import { mockCoursePlaces, searchMockCoursePlaces } from '../constants/mockPlaces';
+import { usePlaceSearch } from '../../../local-recommendation/place-selection/hooks/usePlaceSearch';
 import type { AdminCoursePlaceItem } from '../types';
 
 function AdminCoursePlaceSelectionPage() {
@@ -20,7 +20,7 @@ function AdminCoursePlaceSelectionPage() {
   const setSelectedPlacesInStore = useAdminCourseRegistrationStore(
     (state) => state.setSelectedPlaces
   );
-  const [query, setQuery] = useState('');
+  const { setQuery, searchResults } = usePlaceSearch();
   const {
     pendingPlace,
     pendingImageFile,
@@ -42,7 +42,6 @@ function AdminCoursePlaceSelectionPage() {
 
   if (!region) return null;
 
-  const searchResults = searchMockCoursePlaces(query);
   const selectedPlaceIds = new Set(selectedPlaces.map((place) => place.id));
 
   const handleConfirmImage = () => {
@@ -84,8 +83,7 @@ function AdminCoursePlaceSelectionPage() {
         description="코스에 등록할 장소를 검색해 보세요"
         searchPlaceholder="장소명을 검색해 주세요"
         searchLabel="장소명 검색"
-        searchSuggestions={mockCoursePlaces.map((place) => place.title)}
-        hideEmptySearchSuggestions
+        searchSuggestions={[]}
         items={searchResults}
         selectedItemIds={selectedPlaceIds}
         getItemId={(place) => place.id}
