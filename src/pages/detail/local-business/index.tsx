@@ -7,6 +7,8 @@ import {
   ResponsivePageShell,
 } from '../../../components/layout/ResponsivePageShell';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
+import { isValidGeoPoint } from '../../../components/kakaomap/types';
+import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import { useBusinessPromotionDetail } from '../../../hooks/useBusinessPromotionDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
@@ -24,10 +26,7 @@ import {
 } from '../components';
 import { useShareToast } from '../hooks/useShareToast';
 import { mapBusinessPromotionDetail } from '../mappers/businessPromotionDetailMapper';
-import {
-  toSafeExternalUrl,
-  toTelHref,
-} from '../mappers/festivalDetailMapper';
+import { toSafeExternalUrl, toTelHref } from '../mappers/festivalDetailMapper';
 
 const PAGE_PADDING_BOTTOM = 32;
 const TITLE_SECTION_PADDING_TOP = 24;
@@ -164,6 +163,15 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
               hours={businessDetail.hours}
               liked={likedOverride ?? businessDetail.liked}
               onLikeClick={handleFavoriteToggle}
+              onClick={
+                isValidGeoPoint(businessDetail.location)
+                  ? () =>
+                      openKakaoMapRoute(
+                        businessDetail.title,
+                        businessDetail.location
+                      )
+                  : undefined
+              }
             />
           </div>
         </ResponsivePageShell>

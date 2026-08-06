@@ -1,7 +1,7 @@
 export interface Region {
   regionId: number;
   name: string;
-  imageUrl: string;
+  imageUrl: string | null;
 }
 
 export interface GetRegionsResponse {
@@ -12,8 +12,8 @@ export interface RegionDetailResponse {
   regionId: number;
   name: string;
   fullName: string;
-  description: string;
-  imageUrl: string;
+  description: string | null;
+  imageUrl: string | null;
 }
 
 export interface SubRegion {
