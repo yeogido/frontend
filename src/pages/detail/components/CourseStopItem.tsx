@@ -170,6 +170,7 @@ export function CourseStopItem({
         aria-label={`${stop.name} 좋아요 ${isActive ? '취소' : '추가'}`}
         aria-pressed={isActive}
         onClick={handleLikeClick}
+        onKeyDown={(event) => event.stopPropagation()}
         disabled={!isLikeAvailable || isLikePending}
         className="flex items-center justify-center drop-shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         style={{
