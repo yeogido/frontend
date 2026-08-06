@@ -11,7 +11,6 @@ import BackButton from '../../../local-recommendation/components/BackButton';
 import RepresentativePhotoSection from '../../../local-recommendation/tag-selection/components/RepresentativePhotoSection';
 import KeywordSelectionSection from '../../../local-recommendation/tag-selection/components/KeywordSelectionSection';
 import { toggleTag } from '../../../local-recommendation/tag-selection/utils';
-import type { PhotoSelection } from '../../../local-recommendation/tag-selection/types';
 import CategorySelectionSection from './components/CategorySelectionSection';
 import type { EventCategoryId } from '../types';
 
@@ -28,7 +27,10 @@ const BUTTON_RADIUS = 12;
 function AdminEventPhotoTagPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const storedPhoto = useAdminEventRegistrationStore((state) => state.photo);
+  // photo는 URL.createObjectURL로 만든 blob URL을 들고 있어 store가 유일한 소유자여야 한다.
+  // (로컬 사본을 따로 두면 어느 쪽이 언제 revoke할지 애매해져 store가 아직 참조 중인 URL을
+  // 컴포넌트가 먼저 해제해버리는 문제가 생긴다.) 그래서 변경 즉시 store에 반영한다.
+  const photo = useAdminEventRegistrationStore((state) => state.photo);
   const setPhotoInStore = useAdminEventRegistrationStore(
     (state) => state.setPhoto
   );
@@ -45,7 +47,6 @@ function AdminEventPhotoTagPage() {
     (state) => state.setCategory
   );
 
-  const [photo, setPhoto] = useState<PhotoSelection | null>(storedPhoto);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(
     () => new Set(savedKeywordTagIds)
   );
@@ -55,10 +56,7 @@ function AdminEventPhotoTagPage() {
   );
 
   const handlePhotoChange = (file: File | null) => {
-    setPhoto((previousPhoto) => {
-      if (previousPhoto) URL.revokeObjectURL(previousPhoto.previewUrl);
-      return file ? { file, previewUrl: URL.createObjectURL(file) } : null;
-    });
+    setPhotoInStore(file ? { file, previewUrl: URL.createObjectURL(file) } : null);
   };
 
   const handleTagToggle = (tagId: TagId) => {
@@ -73,7 +71,6 @@ function AdminEventPhotoTagPage() {
 
   const handleSubmit = () => {
     if (!photo || !isReady) return;
-    setPhotoInStore(photo);
     setKeywordTagIds(Array.from(selectedTagIds));
     setCategoryInStore(category);
     navigate('/admin/event-registration/complete');
