@@ -8,10 +8,28 @@ const profileInfo = [
   { icon: cake, label: '태어난 연도', value: '등록된 출생 연도 정보가 없어요' },
 ];
 
-export function ProfileInfoList({ scale }: { scale: number }) {
+export function ProfileInfoList({
+  scale,
+  isBusinessProfile = false,
+  businessAddress,
+}: {
+  scale: number;
+  isBusinessProfile?: boolean;
+  businessAddress?: string;
+}) {
+  const visibleProfileInfo = isBusinessProfile
+    ? profileInfo
+        .slice(0, 2)
+        .map((info) =>
+          info.label === '사는지역' && businessAddress
+            ? { ...info, value: businessAddress }
+            : info
+        )
+    : profileInfo;
+
   return (
     <div className="w-full overflow-hidden rounded-xl bg-[#f9f9f9]">
-      {profileInfo.map((info) => (
+      {visibleProfileInfo.map((info) => (
         <ProfileInfoItem key={info.label} {...info} scale={scale} />
       ))}
     </div>

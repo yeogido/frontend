@@ -4,19 +4,34 @@ import { useNavigate } from 'react-router-dom';
 import { ResponsivePageShell } from '../../components/layout';
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useBusinessVerificationStore } from '../../store/businessVerification.store';
+import type { BusinessProfile } from '../business-verification/types';
 import {
-  BusinessVerificationCard,
-  ProfileInfoList,
+  ProfileDetailSection,
   ProfilePhotoEditor,
+  ProfileSummary,
   WithdrawalDialog,
 } from './components';
 
-function ProfilePage() {
+interface ProfilePageProps {
+  readonly businessProfileOverride?: BusinessProfile | null;
+}
+
+function ProfilePage({ businessProfileOverride }: ProfilePageProps) {
   const scale = useGlobalScale();
   const { userId } = useAuth();
   const navigate = useNavigate();
   const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false);
-  const name = userId ? `회원 #${userId}` : '회원';
+  const storedBusinessProfile = useBusinessVerificationStore(
+    (state) => state.profile
+  );
+  const businessProfile =
+    businessProfileOverride === undefined
+      ? storedBusinessProfile
+      : businessProfileOverride;
+  const name =
+    businessProfile?.representativeName ??
+    (userId ? `회원 #${userId}` : '회원');
 
   return (
     <ResponsivePageShell
@@ -29,35 +44,13 @@ function ProfilePage() {
         style={{ paddingTop: 32 * scale }}
       >
         <ProfilePhotoEditor scale={scale} />
-        <h1
-          className="font-semibold text-[#1c1c1c]"
-          style={{
-            marginTop: 12 * scale,
-            fontSize: 24 * scale,
-            lineHeight: `${29 * scale}px`,
-          }}
-        >
-          {name}
-        </h1>
-        <button
-          type="button"
-          onClick={() => navigate('/profile/edit')}
-          className="bg-main-5 rounded-lg font-semibold text-[#f9f9f9]"
-          style={{
-            marginTop: 8 * scale,
-            padding: `${8 * scale}px ${12 * scale}px`,
-            fontSize: 12 * scale,
-            lineHeight: `${14 * scale}px`,
-          }}
-        >
-          프로필 수정
-        </button>
-        <div className="w-full" style={{ marginTop: 24 * scale }}>
-          <ProfileInfoList scale={scale} />
-        </div>
-        <div className="w-full" style={{ marginTop: 24 * scale }}>
-          <BusinessVerificationCard scale={scale} />
-        </div>
+        <ProfileSummary
+          name={name}
+          isBusinessProfile={Boolean(businessProfile)}
+          scale={scale}
+          onEdit={() => navigate('/profile/edit')}
+        />
+        <ProfileDetailSection businessProfile={businessProfile} scale={scale} />
         <button
           type="button"
           onClick={() => setIsWithdrawalDialogOpen(true)}

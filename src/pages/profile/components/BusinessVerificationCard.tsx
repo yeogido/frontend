@@ -1,4 +1,7 @@
+import { useNavigate } from 'react-router-dom';
+
 export function BusinessVerificationCard({ scale }: { scale: number }) {
+  const navigate = useNavigate();
   return (
     <section
       className="bg-main-5 w-full rounded-xl text-[#f9f9f9]"
@@ -20,6 +23,7 @@ export function BusinessVerificationCard({ scale }: { scale: number }) {
         </div>
         <button
           type="button"
+          onClick={() => navigate('/business-verification')}
           className="text-main-5 w-fit rounded-full bg-[#f9f9f9] font-semibold"
           style={{
             padding: `${8 * scale}px ${12 * scale}px`,
