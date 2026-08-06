@@ -33,6 +33,12 @@ export function useLongPress({ onLongPress, onClick }: UseLongPressParams) {
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
+      // 주 버튼(왼쪽 클릭·터치·펜)만 다룬다. 그러지 않으면 데스크톱에서
+      // 우클릭만 해도 카드가 눌린 것으로 처리된다.
+      if (event.button !== 0) {
+        return;
+      }
+
       // 카드 위의 좋아요/더보기 같은 버튼을 누른 것이면 카드 동작을 걸지 않는다.
       if (event.target !== event.currentTarget && isInteractive(event.target)) {
         return;

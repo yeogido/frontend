@@ -73,7 +73,11 @@ function ReviewPage() {
       ? parsedCourseId
       : null;
 
-  const { data: courseDetail, isPending } = useCourseDetail(courseId);
+  const {
+    data: courseDetail,
+    isPending,
+    isError: isCourseError,
+  } = useCourseDetail(courseId);
   // courseId가 없으면 쿼리가 비활성이라 isPending이 계속 true로 남는다.
   const isLoadingCourse = courseId !== null && isPending;
   const course = courseDetail
@@ -95,8 +99,10 @@ function ReviewPage() {
     review,
     photoCount: selectedPhotos.length,
   });
+  // 어느 코스에 다는 후기인지 확인되기 전에는 보낼 수 없다. 코스를 못 찾은
+  // 상태에서 눌리면 작성한 내용이 그대로 날아간다.
   const isSubmittable =
-    canSubmit && !isLoadingCourse && !createReview.isPending;
+    canSubmit && course !== null && !isLoadingCourse && !createReview.isPending;
 
   useEffect(() => {
     selectedPhotosRef.current = selectedPhotos;
@@ -157,10 +163,10 @@ function ReviewPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canSubmit || createReview.isPending) return;
+    if (!isSubmittable || rating === null) return;
 
     // 추천 코스 외의 대상(소상공인 등)은 아직 후기 API가 없어 저장하지 않는다.
-    if (courseId === null || rating === null) {
+    if (courseId === null) {
       navigate(-1);
       return;
     }
@@ -217,7 +223,16 @@ function ReviewPage() {
       </button>
       <form onSubmit={handleSubmit}>
         <ReviewHeader />
-        {course && <ReviewCourseCard course={course} />}
+        {course ? (
+          <ReviewCourseCard course={course} />
+        ) : isCourseError ? (
+          <p
+            className="text-gray-4 text-center font-medium"
+            style={{ marginTop: 24 * scale, fontSize: 13 * scale }}
+          >
+            코스를 불러오지 못해 후기를 작성할 수 없습니다.
+          </p>
+        ) : null}
 
         <PhotoUploader
           inputRef={photoPickerRef}

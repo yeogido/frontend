@@ -173,7 +173,7 @@ function ReviewDetailModal({
 
         <p
           tabIndex={0}
-          className="scrollbar-hide mt-4 h-9 overflow-y-auto text-[14px] leading-[18px] whitespace-pre-line text-[#1c1c1c] focus-visible:outline-none"
+          className="scrollbar-hide mt-4 max-h-40 overflow-y-auto text-[14px] leading-[18px] whitespace-pre-line text-[#1c1c1c] focus-visible:outline-none"
         >
           {content}
         </p>

@@ -58,6 +58,9 @@ function CourseReviewsPage() {
     : 'yeogido-course';
 
   const parsedCourseId = Number(courseId);
+  const validCourseId = Number.isInteger(parsedCourseId)
+    ? parsedCourseId
+    : undefined;
   const {
     data,
     isPending,
@@ -65,10 +68,10 @@ function CourseReviewsPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useCourseReviews(
-    Number.isInteger(parsedCourseId) ? parsedCourseId : undefined,
-    sort === 'rating' ? 'RATING' : 'LATEST'
-  );
+  } = useCourseReviews(validCourseId, sort === 'rating' ? 'RATING' : 'LATEST');
+  // courseId가 잘못되면 쿼리가 비활성이라 isPending이 계속 true다. 그대로
+  // 두면 스피너가 멈추지 않으므로 로딩으로 보지 않는다.
+  const isLoading = validCourseId !== undefined && isPending;
   const myReviewIds = useMyReviewIds();
   const { requestDelete, dialogProps } = useReviewDelete();
 
@@ -159,11 +162,13 @@ function CourseReviewsPage() {
           className="flex flex-col"
           style={{ marginTop: LIST_MARGIN_TOP * scale, gap: LIST_GAP * scale }}
         >
-          {isPending ? (
+          {isLoading ? (
             <LoadingSpinner
               className="w-full"
               label="코스 후기를 불러오는 중"
             />
+          ) : validCourseId === undefined ? (
+            renderMessage('코스를 찾을 수 없습니다.')
           ) : isError ? (
             renderMessage('후기를 불러오지 못했습니다.')
           ) : reviews.length === 0 ? (

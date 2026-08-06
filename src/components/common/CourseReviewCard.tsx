@@ -64,19 +64,21 @@ function CourseReviewCard({
     useScaleFrame(CARD_DESIGN_WIDTH);
   const isClickable = Boolean(onClick || onLongPress);
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
-  // 길게 누르면 후기 상세, 짧게 누르면 코스 상세. 포인터로만 구분되므로
-  // 키보드는 기존대로 onClick만 실행한다.
   const longPressHandlers = useLongPress({
     onLongPress: () => onLongPress?.(),
     onClick,
   });
 
+  // 길게 누르기는 포인터로만 구분되므로, 키보드에서는 카드를 눌렀을 때 할 수
+  // 있는 일을 실행한다. 짧게 누르기가 없는 화면(홈)에서는 후기 상세를 연다.
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!onClick || event.currentTarget !== event.target) return;
+    const activate = onClick ?? onLongPress;
+
+    if (!activate || event.currentTarget !== event.target) return;
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      onClick();
+      activate();
     }
   };
 

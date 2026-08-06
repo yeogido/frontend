@@ -12,9 +12,9 @@ const MENU_GAP = 8;
 
 export interface ReviewActionMenuProps {
   /**
-   * 수정 화면이 아직 없어 넘기는 곳이 없다. 메뉴에는 항목이 보이지만 눌러도
-   * 아무 일도 일어나지 않는다. 화면을 못 만드는 이유는 types/review.type.ts의
-   * 수정 요청 타입 주석 참고.
+   * 넘기지 않으면 메뉴에서 '수정'이 빠진다. 코스별 후기 응답에는 imageKey가
+   * 없어 유지할 사진을 지목할 수 없으므로, 그 응답을 쓰는 화면(코스 상세·
+   * 코스 후기 전체보기)은 수정을 열지 않는다.
    */
   onEditClick?: () => void;
   onDeleteClick?: () => void;
@@ -108,12 +108,17 @@ function ReviewActionMenu({
     action?.();
   };
 
-  // 수정은 화면이 아직 없어 항상 자리만 잡아 둔다. 삭제는 동작이 붙어 있을
-  // 때만 내보낸다.
+  // 동작이 붙어 있는 항목만 내보낸다. 화면마다 할 수 있는 일이 달라서
+  // (코스별 후기 응답에 imageKey가 없어 그쪽에서는 수정을 못 연다),
+  // 눌러도 아무 일 없는 항목이 남지 않게 한다.
   const menuItems = [
     { key: 'edit', label: '수정', action: onEditClick },
     { key: 'delete', label: '삭제', action: onDeleteClick },
-  ].filter((item) => item.key === 'edit' || Boolean(item.action));
+  ].filter((item) => Boolean(item.action));
+
+  if (menuItems.length === 0) {
+    return null;
+  }
 
   return (
     <>
