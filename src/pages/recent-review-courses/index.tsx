@@ -69,6 +69,12 @@ function RecentReviewCoursesPage() {
     courseDetails.flatMap(({ data }) => (data ? [[data.courseId, data]] : []))
   );
 
+  // 후기 목록의 course.isLiked는 서버가 아직 임시 사용자 기준으로 계산해서
+  // 비로그인에도 남의 좋아요가 켜져 온다. 코스 상세는 사용자 기준으로 맞게
+  // 오므로 그 값을 우선 쓴다. 백엔드가 고치면 review.liked만 남기면 된다.
+  const likedByCourse = (review: { courseId: number; liked: boolean }) =>
+    courseById.get(review.courseId)?.isLiked ?? review.liked;
+
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage();
@@ -160,11 +166,11 @@ function RecentReviewCoursesPage() {
                 content={review.content}
                 rating={review.rating}
                 isMine={review.isMine}
-                liked={getLiked(review.courseId, review.liked)}
+                liked={getLiked(review.courseId, likedByCourse(review))}
                 onLikeClick={() =>
                   toggleLike(
                     review.courseId,
-                    getLiked(review.courseId, review.liked)
+                    getLiked(review.courseId, likedByCourse(review))
                   )
                 }
                 onDeleteClick={() => requestDelete(review.id)}

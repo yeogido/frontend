@@ -11,6 +11,7 @@ import {
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
+import { useCourseDetail } from '../../hooks/useCourses';
 import {
   getCourseReviewsFromPages,
   isCourseNotFoundError,
@@ -50,7 +51,7 @@ function CourseReviewsPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const [sort, setSort] = useState<CourseReviewSort>('latest');
-  const { courseTitle = '' } =
+  const { courseTitle: courseTitleFromState = '' } =
     (location.state as CourseReviewListLocationState | null) ?? {};
   const courseType: CourseReviewType = location.pathname.startsWith(
     '/local-course/'
@@ -71,6 +72,14 @@ function CourseReviewsPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useCourseReviews(validCourseId, sort === 'rating' ? 'RATING' : 'LATEST');
+  // 코스 상세에서 넘어오면 제목이 state에 실려 오지만, 주소로 바로 들어오면
+  // 없다. 그때만 코스를 읽어 채운다(state가 있으면 캐시가 없어도 조회하지
+  // 않는다).
+  const { data: courseDetail } = useCourseDetail(
+    courseTitleFromState ? null : (validCourseId ?? null)
+  );
+  const courseTitle = courseTitleFromState || (courseDetail?.title ?? '');
+
   // 코스가 없는 것과 후기 조회가 실패한 것은 사용자가 할 수 있는 일이 다르다.
   const isCourseMissing =
     validCourseId === undefined || (isError && isCourseNotFoundError(error));
@@ -185,6 +194,7 @@ function CourseReviewsPage() {
                 <ReviewCard
                   key={review.id}
                   images={review.images}
+                  courseTitle={courseTitle || undefined}
                   profileImage={review.profileImage}
                   nickname={review.nickname}
                   meta={review.meta}
@@ -194,7 +204,8 @@ function CourseReviewsPage() {
                   onDeleteClick={() => requestDelete(review.id)}
                   onClick={() => navigate(courseDetailPath)}
                   onLongPress={() => openReview(review.id)}
-                className="[&>div>article]:!bg-[#F9F9F9]"
+                  variant="course-review-list"
+                  className="[&>div>article]:!bg-[#F9F9F9]"
                 />
               ))}
 

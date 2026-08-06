@@ -11,6 +11,7 @@ import ReviewActionMenu from './ReviewActionMenu';
 // Figma 390 디자인 기준 리터럴 px (카드 자체 폭 290 기준)
 const CARD_DESIGN_WIDTH = 342;
 const CARD_DESIGN_HEIGHT = 286;
+const COURSE_REVIEW_LIST_CARD_HEIGHT = 278;
 const CARD_PADDING = 16;
 const SECTION_GAP = 12;
 const CARD_RADIUS = 12;
@@ -44,6 +45,7 @@ export interface ReviewCardProps {
   onLongPress?: () => void;
   onEditClick?: () => void;
   onDeleteClick?: () => void;
+  variant?: 'default' | 'course-review-list';
   className?: string;
 }
 
@@ -60,9 +62,14 @@ function ReviewCard({
   onLongPress,
   onEditClick,
   onDeleteClick,
+  variant = 'default',
   className = '',
 }: ReviewCardProps) {
   const scale = useGlobalScale();
+  const isCourseReviewList = variant === 'course-review-list';
+  const cardHeight = isCourseReviewList
+    ? COURSE_REVIEW_LIST_CARD_HEIGHT
+    : CARD_DESIGN_HEIGHT;
 
   const isClickable = Boolean(onClick || onLongPress);
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
@@ -90,13 +97,13 @@ function ReviewCard({
       className={`shrink-0 overflow-hidden ${className}`}
       style={{
         width: CARD_DESIGN_WIDTH * scale,
-        height: CARD_DESIGN_HEIGHT * scale,
+        height: cardHeight * scale,
       }}
     >
       <div
         style={{
           width: CARD_DESIGN_WIDTH,
-          height: CARD_DESIGN_HEIGHT,
+          height: cardHeight,
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
         }}
@@ -109,7 +116,7 @@ function ReviewCard({
           className={`flex flex-col overflow-hidden bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)] select-none ${
             isClickable ? 'cursor-pointer' : ''
           }`}
-          style={{ height: CARD_DESIGN_HEIGHT, borderRadius: CARD_RADIUS }}
+          style={{ height: cardHeight, borderRadius: CARD_RADIUS }}
         >
           {/* Images: 카드 내부 가로 스크롤, 다음 이미지가 살짝 보이는 peek 효과 */}
           {images.length > 0 && (
@@ -162,7 +169,7 @@ function ReviewCard({
           <div
             className="flex flex-col"
             style={{
-              gap: SECTION_GAP,
+              gap: isCourseReviewList ? 4 : SECTION_GAP,
               padding: CARD_PADDING,
               paddingTop: CARD_PADDING,
             }}
@@ -198,7 +205,10 @@ function ReviewCard({
 
             <div
               className="flex min-h-[30px] items-center"
-              style={{ gap: PROFILE_GAP }}
+              style={{
+                gap: PROFILE_GAP,
+                marginTop: isCourseReviewList ? 8 : 0,
+              }}
             >
               {profileImage ? (
                 <img
