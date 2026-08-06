@@ -7,6 +7,8 @@ export interface ConfirmDialogProps {
   description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  cancelClassName?: string;
+  confirmClassName?: string;
   isPending?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -24,6 +26,8 @@ function ConfirmDialog({
   description,
   confirmLabel = '삭제',
   cancelLabel = '취소',
+  cancelClassName,
+  confirmClassName,
   isPending = false,
   onConfirm,
   onCancel,
@@ -62,7 +66,7 @@ function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="h-11 flex-1 rounded-xl bg-[#e4e4e4] text-sm font-semibold text-[#505050]"
+            className={`h-11 flex-1 rounded-xl text-sm font-semibold ${cancelClassName ?? 'bg-[#e4e4e4] text-[#505050]'}`}
           >
             {cancelLabel}
           </button>
@@ -70,7 +74,7 @@ function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isPending}
-            className="h-11 flex-1 rounded-xl bg-[#ff6f41] text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className={`h-11 flex-1 rounded-xl text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${confirmClassName ?? 'bg-[#ff6f41] text-white'}`}
           >
             {confirmLabel}
           </button>
