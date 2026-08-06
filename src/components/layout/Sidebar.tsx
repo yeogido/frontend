@@ -31,7 +31,8 @@ interface SidebarProps {
  * 조건부 렌더링으로 교체 예정.
  */
 const TEMP_MENU = [
-  { path: '/admin', label: '관리자 페이지 (임시)' },
+  { path: '/admin', label: '행사 관리자 (임시)' },
+  { path: '/admin/courses', label: '여기도 코스 관리자 (임시)' },
 ];
 
 function Sidebar({ isOpen, onClose }: SidebarProps) {
