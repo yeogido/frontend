@@ -108,9 +108,9 @@ function ReviewActionMenu({
     action?.();
   };
 
-  // 동작이 붙어 있는 항목만 내보낸다. 화면마다 할 수 있는 일이 달라서
-  // (코스별 후기 응답에 imageKey가 없어 그쪽에서는 수정을 못 연다),
-  // 눌러도 아무 일 없는 항목이 남지 않게 한다.
+  // 동작이 붙어 있는 항목만 내보낸다. 후기 화면 넷은 모두 수정·삭제를 다
+  // 붙이지만, 핸들러를 넘기지 않은 호출부에서 눌러도 아무 일 없는 항목이
+  // 남지 않게 한다.
   const menuItems = [
     { key: 'edit', label: '수정', action: onEditClick },
     { key: 'delete', label: '삭제', action: onDeleteClick },

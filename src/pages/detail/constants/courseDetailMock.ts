@@ -65,6 +65,7 @@ export const courseDetailMockData: CourseDetailDto = {
     {
       id: 1,
       images: ['', '', ''],
+      editableImages: [],
       profileImage: courseImage,
       nickname: '민지',
       meta: '20대 여',
@@ -75,6 +76,7 @@ export const courseDetailMockData: CourseDetailDto = {
     {
       id: 2,
       images: ['', ''],
+      editableImages: [],
       profileImage: courseImage,
       nickname: '느린여행자',
       meta: '30대 남',

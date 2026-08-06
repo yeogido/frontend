@@ -7,6 +7,7 @@ import {
   ReviewCardSkeleton,
   ReviewDeleteDialog,
   ReviewDetailModal,
+  ReviewEditModal,
 } from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
@@ -19,6 +20,7 @@ import {
   useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
+  useReviewEdit,
 } from '../../hooks/useReviews';
 import { getGutter } from '../../utils/responsiveLayout';
 import { ReviewButton } from '../detail/components';
@@ -96,6 +98,7 @@ function CourseReviewsPage() {
   const isLoading = validCourseId !== undefined && isPending;
   const myReviewIds = useMyReviewIds();
   const { requestDelete, dialogProps } = useReviewDelete();
+  const { requestEdit, editorProps } = useReviewEdit();
 
   const reviews = mapCourseReviewPreviews(
     getCourseReviewsFromPages(data?.pages),
@@ -209,6 +212,7 @@ function CourseReviewsPage() {
                   rating={review.rating}
                   isMine={review.isMine}
                   onDeleteClick={() => requestDelete(review.id)}
+                  onEditClick={() => requestEdit(review)}
                   onClick={() => navigate(courseDetailPath)}
                   onLongPress={() => openReview(review.id)}
                   variant="course-review-list"
@@ -232,6 +236,8 @@ function CourseReviewsPage() {
         onClose={closeReview}
         onGoToCourse={() => navigate(courseDetailPath)}
       />
+
+      <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
 
       <ReviewDeleteDialog {...dialogProps} />
 
