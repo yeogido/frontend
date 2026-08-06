@@ -11,7 +11,7 @@ function sortImages(images: ReviewImage[] | undefined): ReviewImage[] {
   return [...(images ?? [])].sort((a, b) => a.imageOrder - b.imageOrder);
 }
 
-function toImageUrls(images: ReviewImage[] | undefined): string[] {
+export function toImageUrls(images: ReviewImage[] | undefined): string[] {
   return sortImages(images)
     .map((image) => image.imageUrl)
     .filter(Boolean);
@@ -21,10 +21,9 @@ function toImageUrls(images: ReviewImage[] | undefined): string[] {
  * 수정 화면이 쓰는 사진 목록.
  *
  * 유지할 사진을 PATCH에 다시 실어 보내려면 imageKey가 필요하고, 화면에는
- * imageUrl을 그려야 해서 둘을 함께 넘긴다. 코스별 후기 목록
- * (CourseReviewPreview)에는 imageKey가 없어 그 화면들은 수정할 수 없다.
+ * imageUrl을 그려야 해서 둘을 함께 넘긴다.
  */
-function toEditableImages(images: ReviewImage[] | undefined) {
+export function toEditableImages(images: ReviewImage[] | undefined) {
   return sortImages(images)
     .filter((image) => image.imageKey && image.imageUrl)
     .map(({ imageKey, imageUrl }) => ({ imageKey, imageUrl }));

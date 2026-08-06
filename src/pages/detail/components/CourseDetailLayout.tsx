@@ -22,6 +22,7 @@ import { useShareToast } from '../hooks/useShareToast';
 import {
   ReviewDeleteDialog,
   ReviewDetailModal,
+  ReviewEditModal,
 } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
@@ -34,6 +35,7 @@ import {
   useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
+  useReviewEdit,
 } from '../../../hooks/useReviews';
 import { useAuthStore } from '../../../store/auth.store';
 import { mapCourseReviewPreviews } from '../mappers/courseReviewMapper';
@@ -120,6 +122,7 @@ function CourseDetailLayoutContent({
   const myReviewIds = useMyReviewIds();
   const reviews = mapCourseReviewPreviews(courseReviews?.items, myReviewIds);
   const { requestDelete, dialogProps } = useReviewDelete();
+  const { requestEdit, editorProps } = useReviewEdit();
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
 
@@ -333,6 +336,7 @@ function CourseDetailLayoutContent({
           courseTitle={course.title}
           onActionClick={handleNavigateCourseReviews}
           onReviewDelete={requestDelete}
+          onReviewEdit={requestEdit}
           onReviewLongPress={openReview}
         />
       </div>
@@ -352,6 +356,8 @@ function CourseDetailLayoutContent({
         courseTitle={course.title}
         onClose={closeReview}
       />
+
+      <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
 
       <ReviewDeleteDialog {...dialogProps} />
     </ResponsivePageShell>

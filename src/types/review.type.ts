@@ -14,8 +14,8 @@ export interface ReviewAuthor {
   ageGroup: string;
   /** 프로필을 설정하지 않은 계정은 null로 온다(확인됨). */
   profileImageUrl: string | null;
-  /** 아직 리뷰 응답에는 없다. 추가되면 카드 메타가 "20대 여"로 완성된다. */
-  gender?: string;
+  /** MALE·FEMALE·NONE. 카드 메타를 "20대 여"까지 채운다. */
+  gender: string;
 }
 
 export interface ReviewCourseSummary {
@@ -65,15 +65,15 @@ export interface GetReviewsResponse {
 /**
  * GET /courses/{courseId}/reviews 아이템.
  *
- * 전체 후기 목록(ReviewDetail)과 달리 이미지가 URL 배열이라 imageKey가 없다.
- * 그래서 이 화면들에서는 사진을 유지한 채 수정할 수 없다.
+ * 전체 후기 목록(ReviewDetail)과 이미지 모양이 같아졌다(예전에는 URL 배열만
+ * 와서 imageKey가 없었고, 그래서 이 화면들에서는 수정을 막아 뒀었다).
  */
 export interface CourseReviewPreview {
   reviewId: number;
   author: ReviewAuthor;
   rating: number;
   content: string;
-  imageUrls: string[];
+  images: ReviewImage[];
   createdAt: string;
 }
 
@@ -115,9 +115,8 @@ export interface CreateCourseReviewResponse {
 /*
  * 여기부터는 리뷰 수정용.
  *
- * 홈과 최근 후기에서만 수정에 들어갈 수 있다. 코스별 후기 목록
- * (CourseReviewPreview)은 이미지가 URL 배열이라 "유지할 사진"을 지목할
- * imageKey가 없어서, 코스 상세와 후기 전체보기에서는 수정 진입을 막아 뒀다.
+ * 두 목록 응답 모두 imageKey를 내려주므로 후기가 보이는 네 화면 전부에서
+ * 수정에 들어갈 수 있다.
  */
 export interface ReviewImageRequest {
   imageKey: string;

@@ -10,6 +10,7 @@ import type { ReviewDetail } from '../src/types/review.type.ts';
 const author = {
   nickname: '민지',
   ageGroup: 'TWENTIES',
+  gender: 'FEMALE',
   profileImageUrl: 'https://example.com/profile.png',
 };
 
@@ -47,7 +48,7 @@ test('maps a review into review card props', () => {
     ],
     profileImage: 'https://example.com/profile.png',
     nickname: '민지',
-    meta: '20대',
+    meta: '20대 여',
     content: '지도 동선이 너무 편했어요.',
     rating: 4,
     isMine: false,
@@ -77,7 +78,7 @@ test('maps a review into course review card props', () => {
     transport: '대중교통',
     profileImage: 'https://example.com/profile.png',
     nickname: '민지',
-    meta: '20대',
+    meta: '20대 여',
     content: '지도 동선이 너무 편했어요.',
     rating: 4,
     liked: true,
