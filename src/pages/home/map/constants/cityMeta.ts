@@ -5,13 +5,13 @@
  * - 사진 있음: 여행 기록 상세 페이지(/travel-record/:folderId)로 이동
  */
 
-import { getRegionSlug } from './regionSlugs';
+import { normalizeRegionName } from '../../../../constants/regions';
 
 export function buildRecordPath(folderId: string): string {
   return `/travel-record/${encodeURIComponent(folderId)}`;
 }
 
 export function buildSearchPath(regionName: string): string {
-  const slug = getRegionSlug(regionName);
-  return `/region-info/${encodeURIComponent(slug)}`;
+  const normalized = normalizeRegionName(regionName);
+  return `/region-info/${encodeURIComponent(normalized)}`;
 }
