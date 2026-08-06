@@ -49,6 +49,8 @@ import RegionInfoPage from '../pages/region-info';
 import LikesPage from '../pages/likes';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
 import CourseReviewsPage from '../pages/course-reviews';
+import ProfilePage from '../pages/profile';
+import ProfileEditPage from '../pages/profile/edit';
 
 function AppRouter() {
   return (
@@ -127,10 +129,12 @@ function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route path="/travel-record" element={<TravelRecordPage />} />
           <Route path="/likes" element={<LikesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
 
       <Route element={<ProtectedRoute />}>
+        <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route
           path="/local-recommendation"
           element={<LocalRecommendationPage />}
