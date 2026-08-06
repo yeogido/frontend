@@ -88,9 +88,7 @@ export async function removeCourseLike(
   return data;
 }
 
-export async function addPlaceLike(
-  placeId: number
-): Promise<CourseLikeResult> {
+export async function addPlaceLike(placeId: number): Promise<CourseLikeResult> {
   const { data } = await apiClient.post<CourseLikeResult>(
     `/places/${placeId}/likes`
   );
