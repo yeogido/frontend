@@ -34,6 +34,11 @@ import type {
 const REVIEW_NOT_FOUND_CODE = 'REVIEW4041';
 const COURSE_NOT_FOUND_CODE = 'COURSE4041';
 
+/**
+ * 삭제하려는 리뷰가 이미 없는 경우. 여기는 code 없는 404까지 넓게 받는다.
+ * 넓게 잡아서 틀리더라도 "목록에서 사라진다"는 사용자가 원한 결과에
+ * 도달하기 때문이다(여행 기록 삭제와 같은 처리).
+ */
 const isReviewNotFoundError = (error: unknown) => {
   const { code, status } = normalizeApiError(error);
 
@@ -43,12 +48,14 @@ const isReviewNotFoundError = (error: unknown) => {
 /**
  * 코스가 없거나 삭제된 경우. 후기를 못 불러온 것과 원인이 달라서, 화면이
  * "일시적인 조회 실패"로 안내하지 않도록 구분한다.
+ *
+ * 삭제 판정과 달리 status는 보지 않고 코스 코드만 본다. 본문에 code가 없는
+ * 404는 normalizeApiError가 HTTP_404로 돌려주는데, 이건 배포 중이거나 경로가
+ * 틀렸을 때도 나온다. 그것까지 "삭제된 코스"로 단정하면 일시적 장애인데도
+ * 코스가 사라졌다고 안내하고 후기 작성 버튼까지 감춰버린다.
  */
-export const isCourseNotFoundError = (error: unknown) => {
-  const { code, status } = normalizeApiError(error);
-
-  return code === COURSE_NOT_FOUND_CODE || status === 404;
-};
+export const isCourseNotFoundError = (error: unknown) =>
+  normalizeApiError(error).code === COURSE_NOT_FOUND_CODE;
 
 interface ReviewsPageParam {
   cursor?: number;
