@@ -52,6 +52,7 @@ export function toReviewCardProps(
     isMine: myReviewIds.has(review.reviewId),
     courseTitle: review.course.title,
     courseId: review.course.courseId,
+    courseType: review.course.courseType,
   };
 }
 
@@ -68,6 +69,7 @@ export function toReviewCourseCardProps(
   return {
     id: review.reviewId,
     courseId: review.course.courseId,
+    courseType: review.course.courseType,
     isMine: myReviewIds.has(review.reviewId),
     // 카드에 그리는 건 코스 썸네일(image)이고, 후기 사진(images)은 길게 눌러
     // 여는 상세 모달에서 쓴다.
@@ -76,7 +78,7 @@ export function toReviewCourseCardProps(
     editableImages: toEditableImages(review.images),
     title: review.course.title,
     duration: toDurationLabel(review.course.durationType),
-    courseType: toTransportLabel(review.course.transportType),
+    transport: toTransportLabel(review.course.transportType),
     profileImage: review.author?.profileImageUrl ?? '',
     nickname: review.author?.nickname ?? '',
     meta: toReviewerMetaLabel(review.author?.ageGroup, review.author?.gender),

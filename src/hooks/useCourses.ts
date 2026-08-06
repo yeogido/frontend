@@ -1,16 +1,9 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   type InfiniteData,
   useInfiniteQuery,
   useQueries,
   useQuery,
-  useQueryClient,
 } from '@tanstack/react-query';
-
-import { getApiErrorMessage } from '../apis/common';
-import { useToast } from '../components/toast';
-import { buildCourseDetailPath } from '../utils/routes';
 
 import {
   getCourses,
@@ -123,41 +116,3 @@ export function useCourseDetails(courseIds: readonly number[]) {
   });
 }
 
-/**
- * 코스 상세로 이동한다.
- *
- * 후기 응답에는 코스 타입이 없어서 어느 상세 라우트로 보낼지 알 수 없다.
- * 상세를 먼저 받아 courseType을 보고 경로를 정한다. 잘못된 라우트로 보내면
- * 상세 페이지가 NotFound를 띄우기 때문에 추측으로 보낼 수 없다.
- * 백엔드가 ReviewCourse에 courseType을 추가하면 이 조회를 걷어낼 수 있다.
- */
-export function useNavigateToCourseDetail() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { showToast } = useToast();
-  const [isResolvingCourse, setIsResolvingCourse] = useState(false);
-
-  const goToCourseDetail = async (courseId: number) => {
-    if (isResolvingCourse) {
-      return;
-    }
-
-    setIsResolvingCourse(true);
-
-    try {
-      const course = await queryClient.fetchQuery({
-        queryKey: ['courseDetail', courseId],
-        queryFn: () => getCourseDetail(courseId),
-        staleTime: DETAIL_STALE_TIME,
-      });
-
-      navigate(buildCourseDetailPath(course.courseType, courseId));
-    } catch (error) {
-      showToast(getApiErrorMessage(error, '코스를 열지 못했어요.'));
-    } finally {
-      setIsResolvingCourse(false);
-    }
-  };
-
-  return { goToCourseDetail, isResolvingCourse };
-}

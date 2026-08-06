@@ -248,13 +248,12 @@ export function useCreateCourseReview() {
 }
 
 /**
- * 아직 쓰이는 화면이 없다.
+ * 후기 수정. useReviewEdit이 감싸서 쓴다.
  *
- * 조회 응답이 imageKey를 안 내려줘서 "유지할 사진"을 지목할 수 없고, 그래서
- * 사진을 부분 수정하는 화면을 만들 수 없다. 백엔드에 추가 요청해 둔 상태라
- * 그때 바로 붙일 수 있게 남겨 둔다.
+ * 홈과 최근 후기(GET /reviews)만 imageKey를 받아서, 수정 진입도 그 두 곳에만
+ * 있다. 코스별 후기 목록은 이미지가 URL 배열이라 유지할 사진을 지목할 수 없다.
  */
-export function useUpdateReview() {
+function useUpdateReview() {
   const queryClient = useQueryClient();
 
   return useMutation<UpdateReviewResponse, Error, UpdateReviewParams>({

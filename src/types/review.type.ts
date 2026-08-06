@@ -20,6 +20,8 @@ export interface ReviewAuthor {
 
 export interface ReviewCourseSummary {
   courseId: number;
+  /** OFFICIAL(여기도) | LOCAL(동네). 어느 상세 라우트로 보낼지 정하는 데 쓴다. */
+  courseType: string;
   title: string;
   thumbnailUrl: string;
   durationType: string;
@@ -111,11 +113,11 @@ export interface CreateCourseReviewResponse {
 }
 
 /*
- * 여기부터는 리뷰 수정용. 아직 화면이 없다.
+ * 여기부터는 리뷰 수정용.
  *
- * 조회 응답이 imageKey를 안 내려줘서 "유지할 사진"을 지목할 수 없고, 그래서
- * 사진을 부분 수정하는 화면을 만들 수 없다. 백엔드에 추가 요청해 둔 상태라
- * 그때 바로 쓸 수 있게 남겨 둔다.
+ * 홈과 최근 후기에서만 수정에 들어갈 수 있다. 코스별 후기 목록
+ * (CourseReviewPreview)은 이미지가 URL 배열이라 "유지할 사진"을 지목할
+ * imageKey가 없어서, 코스 상세와 후기 전체보기에서는 수정 진입을 막아 뒀다.
  */
 export interface ReviewImageRequest {
   imageKey: string;

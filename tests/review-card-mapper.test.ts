@@ -15,6 +15,7 @@ const author = {
 
 const course = {
   courseId: 15,
+  courseType: 'LOCAL',
   title: '강릉 혼자 여행 코스',
   thumbnailUrl: 'https://example.com/course.png',
   durationType: 'TWO_NIGHT',
@@ -52,6 +53,8 @@ test('maps a review into review card props', () => {
     isMine: false,
     courseTitle: '강릉 혼자 여행 코스',
     courseId: 15,
+    // 어느 상세 라우트로 보낼지는 이 값으로 정한다.
+    courseType: 'LOCAL',
   });
 });
 
@@ -59,6 +62,7 @@ test('maps a review into course review card props', () => {
   assert.deepEqual(toReviewCourseCardProps(review), {
     id: 101,
     courseId: 15,
+    courseType: 'LOCAL',
     isMine: false,
     // 카드에 그리는 건 코스 썸네일, images는 상세 모달용 후기 사진이다.
     image: 'https://example.com/course.png',
@@ -69,8 +73,8 @@ test('maps a review into course review card props', () => {
     ],
     title: '강릉 혼자 여행 코스',
     duration: '2박 3일',
-    // Swagger enum에는 없지만 실제로 내려오는 값이다.
-    courseType: '대중교통',
+    // 이동 수단 라벨. Swagger enum에는 없지만 실제로 내려오는 값이다.
+    transport: '대중교통',
     profileImage: 'https://example.com/profile.png',
     nickname: '민지',
     meta: '20대',
