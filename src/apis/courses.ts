@@ -13,6 +13,7 @@ export type CourseDetailItem =
       lotAddress: string;
       latitude: number;
       longitude: number;
+      imageUrl: string;
     }
   | {
       order: number;
@@ -27,6 +28,7 @@ export type CourseDetailItem =
       lotAddress: string;
       latitude: number;
       longitude: number;
+      imageUrl: string;
     };
 
 export interface CourseDetailAuthor {
@@ -86,9 +88,7 @@ export async function removeCourseLike(
   return data;
 }
 
-export async function addPlaceLike(
-  placeId: number
-): Promise<CourseLikeResult> {
+export async function addPlaceLike(placeId: number): Promise<CourseLikeResult> {
   const { data } = await apiClient.post<CourseLikeResult>(
     `/places/${placeId}/likes`
   );

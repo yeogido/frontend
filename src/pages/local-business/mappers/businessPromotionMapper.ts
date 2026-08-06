@@ -92,9 +92,7 @@ export function mapBusinessPromotionItemToBusinessItem(
     description: item.shortDescription,
     location: item.regionName,
     category: mapApiCategoryToLabel(item.promotionCategory),
-    // 목록 API에 작성자 정보가 없어 업체명/대표 이미지로 임시 대체한다.
-    // TODO: 백엔드가 목록 API에 author 필드 추가 시 복구 필요
-    author: item.placeName,
+    author: item.author.nickname,
     date: formatBusinessPromotionDate(item.createdAt),
     image: item.thumbnailImageUrl,
   };

@@ -64,9 +64,7 @@ function formatMonthRange(startMonth: number, endMonth: number): string {
     : `${startMonth}월 - ${endMonth}월`;
 }
 
-function toCourseStops(
-  course: CourseDetailResult
-): readonly CourseStopDto[] {
+function toCourseStops(course: CourseDetailResult): readonly CourseStopDto[] {
   return course.courseItems.map((item) => ({
     id: item.order,
     placeId: item.type === 'PLACE' ? item.placeId : undefined,
@@ -75,7 +73,7 @@ function toCourseStops(
     name: item.name,
     address: item.roadAddress || item.lotAddress || '',
     hours: '',
-    image: course.thumbnailUrl,
+    image: item.imageUrl || course.thumbnailUrl,
     liked: item.isLiked,
     latitude: item.latitude,
     longitude: item.longitude,
@@ -165,9 +163,7 @@ function toCanonicalTransportType(transportType: string): CourseTransportType {
   }
 }
 
-function toCanonicalCompanionType(
-  companionType: string
-): CourseCompanionType {
+function toCanonicalCompanionType(companionType: string): CourseCompanionType {
   switch (companionType) {
     case 'FRIEND':
       return 'FRIEND';

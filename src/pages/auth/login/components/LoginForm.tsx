@@ -16,9 +16,24 @@ import {
 interface LoginFormProps {
   onSubmit: (values: LoginFormValues) => Promise<void>;
   submitError?: string;
+  infoMessage?: string;
+  defaultEmail?: string;
+  onKakaoLogin?: () => void;
+  isKakaoLoading?: boolean;
+  onNaverLogin?: () => void;
+  isNaverLoading?: boolean;
 }
 
-function LoginForm({ onSubmit, submitError }: LoginFormProps) {
+// 이 브랜치는 네이버 소셜 로그인만 다룬다. onKakaoLogin/isKakaoLoading은
+// 카카오 작업 재개 시 쓸 수 있도록 타입만 유지하고, 여기서는 받지 않는다.
+function LoginForm({
+  onSubmit,
+  submitError,
+  infoMessage,
+  defaultEmail,
+  onNaverLogin,
+  isNaverLoading,
+}: LoginFormProps) {
   const {
     register,
     handleSubmit,
@@ -30,8 +45,11 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     mode: 'onChange',
+    // defaultValues는 최초 마운트 시점에만 반영된다. LoginPage가
+    // location.state를 동기적으로 먼저 읽은 뒤 이 컴포넌트를 렌더링하므로
+    // 회원가입 직후 넘어온 이메일이 시점 문제 없이 그대로 prefill된다.
     defaultValues: {
-      email: '',
+      email: defaultEmail ?? '',
       password: '',
     },
   });
@@ -43,6 +61,12 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
           <h1 className="text-[28px] font-bold leading-none text-black">
             로그인
           </h1>
+
+          {infoMessage && (
+            <p className="mt-3 text-xs font-medium text-gray-4">
+              {infoMessage}
+            </p>
+          )}
 
           <form
             onSubmit={handleSubmit(onSubmit)}
@@ -151,7 +175,9 @@ function LoginForm({ onSubmit, submitError }: LoginFormProps) {
               <button
                 type="button"
                 aria-label="네이버로 로그인"
-                className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)]"
+                onClick={onNaverLogin}
+                disabled={isNaverLoading}
+                className="flex size-13.5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#03C75A] text-white shadow-[0_1px_4px_rgba(0,0,0,0.05)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <NaverIcon
                   width={20}

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { PromotionCardSkeleton, RegionImageCarousel } from '../../components/common';
-import { DEFAULT_REGION_CITY_ID } from '../../constants/regions';
+import { DEFAULT_REGION_CITY_ID, REGION_CITY_IDS } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { buildLocalBusinessDetailPath } from '../../utils/routes';
@@ -33,13 +33,19 @@ const PENDING_SKELETON_COUNT = 4;
 function LocalBusinessPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const [searchParams] = useSearchParams();
+  const regionParam = searchParams.get('region');
+  const initialRegionId = REGION_CITY_IDS.includes(
+    regionParam as RegionCityId
+  )
+    ? (regionParam as RegionCityId)
+    : DEFAULT_REGION_CITY_ID;
   const [selectedCategory, setSelectedCategory] =
     useState<BusinessCategory>('전체');
   const [sortBy, setSortBy] = useState<BusinessSort>('추천순');
   const [viewMode, setViewMode] = useState<BusinessViewMode>('grid');
-  const [selectedRegionId, setSelectedRegionId] = useState<RegionCityId>(
-    DEFAULT_REGION_CITY_ID
-  );
+  const [selectedRegionId, setSelectedRegionId] =
+    useState<RegionCityId>(initialRegionId);
 
   const {
     businesses,
