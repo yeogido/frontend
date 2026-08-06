@@ -1,4 +1,7 @@
+import heart from '../../../assets/icons/heart.svg';
 import location from '../../../assets/icons/location.svg';
+import oheart from '../../../assets/icons/oheart.svg';
+import TagChip from '../../../components/common/TagChip';
 
 import { useScaleFrame } from '../../../hooks/useScaleFrame';
 
@@ -6,10 +9,11 @@ import type { BusinessItem } from '../types';
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px (2열 그리드 셀 폭 163 기준)
 const CARD_DESIGN_WIDTH = 163;
-// 태그 영역(구분선+칩) 제거로 기존 222에서 36(구분선 margin 8 + 태그 margin 8 +
-// 태그 높이 20) 만큼 줄인 값. 태그 영역 복구 시 이 값도 222로 되돌릴 것.
-const CARD_HEIGHT = 186;
+const CARD_HEIGHT = 222;
 const IMAGE_HEIGHT = 115;
+const HEART_SIZE = 16;
+const HEART_TOP = 8;
+const HEART_RIGHT = 8;
 
 const CONTENT_PADDING_X = 8;
 const CONTENT_PADDING_TOP = 8;
@@ -26,16 +30,24 @@ const LOCATION_GAP = 4;
 const LOCATION_ICON_SIZE = 14;
 const LOCATION_TEXT_SIZE = 12;
 
-// TODO: 백엔드가 목록 API(GET /business-promotions)에 태그 필드
-// (hashtags 또는 tags 형태) 추가 시 이 영역(구분선+태그칩) 복구 필요.
-// festival 목록 API는 이미 hashtags 필드를 제공 중이므로 그쪽 구현 참고 가능.
+const DIVIDER_MARGIN_TOP = 8;
+
+const TAG_MARGIN_TOP = 8;
+const TAG_GAP = 4;
+const TAG_HEIGHT = 20;
+const TAG_WIDTH = 46;
 
 interface BusinessGridCardProps {
   business: BusinessItem;
   onClick: () => void;
+  onLikeClick?: () => void;
 }
 
-function BusinessGridCard({ business, onClick }: BusinessGridCardProps) {
+function BusinessGridCard({
+  business,
+  onClick,
+  onLikeClick,
+}: BusinessGridCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
 
@@ -58,12 +70,30 @@ function BusinessGridCard({ business, onClick }: BusinessGridCardProps) {
           transformOrigin: 'top left',
         }}
       >
-        <img
-          src={business.image}
-          alt={business.title}
-          className="w-full rounded-t-lg object-cover"
-          style={{ height: IMAGE_HEIGHT }}
-        />
+        <div className="relative overflow-hidden rounded-t-lg">
+          <img
+            src={business.image}
+            alt={business.title}
+            className="w-full object-cover"
+            style={{ height: IMAGE_HEIGHT }}
+          />
+
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onLikeClick?.();
+            }}
+            className="absolute"
+            style={{ right: HEART_RIGHT, top: HEART_TOP }}
+          >
+            <img
+              src={business.liked ? oheart : heart}
+              alt="좋아요"
+              style={{ height: HEART_SIZE, width: HEART_SIZE }}
+            />
+          </button>
+        </div>
 
         <div
           className="flex min-h-0 flex-1 flex-col"
@@ -113,6 +143,24 @@ function BusinessGridCard({ business, onClick }: BusinessGridCardProps) {
             >
               {business.location}
             </span>
+          </div>
+
+          <div
+            className="border-t border-[#E4E4E4]"
+            style={{ marginTop: DIVIDER_MARGIN_TOP }}
+          />
+
+          <div
+            className="flex w-full flex-nowrap justify-start"
+            style={{ marginTop: TAG_MARGIN_TOP, gap: TAG_GAP }}
+          >
+            {business.tags.slice(0, 3).map((tag) => (
+              <TagChip
+                key={`${business.id}-${tag}`}
+                type={tag}
+                style={{ height: TAG_HEIGHT, width: TAG_WIDTH }}
+              />
+            ))}
           </div>
         </div>
       </div>

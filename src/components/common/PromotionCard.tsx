@@ -1,10 +1,15 @@
+import heart from '../../assets/icons/heart.svg';
 import location from '../../assets/icons/location.svg';
+import oheart from '../../assets/icons/oheart.svg';
 
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
 // 개별 scale 계산 대신 useScaleFrame이 전체를 한 번에 scale한다.
 const CARD_DESIGN_WIDTH = 342;
+const HEART_SIZE = 16;
+const HEART_TOP = 8;
+const HEART_RIGHT = 8;
 
 const AVATAR_SIZE = 40;
 const PROFILE_GAP = 8;
@@ -36,7 +41,9 @@ export interface PromotionCardProps {
   title: string;
   description: string;
   location: string;
+  liked?: boolean;
   onClick?: () => void;
+  onLikeClick?: () => void;
   className?: string;
 }
 
@@ -48,7 +55,9 @@ function PromotionCard({
   title,
   description,
   location: locationText,
+  liked = false,
   onClick,
+  onLikeClick,
   className = '',
 }: PromotionCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
@@ -115,12 +124,32 @@ function PromotionCard({
         </div>
 
         {/* Image */}
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full object-cover"
-          style={{ height: IMAGE_HEIGHT }}
-        />
+        <div className="relative overflow-hidden">
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-full object-cover"
+            style={{ height: IMAGE_HEIGHT }}
+          />
+
+          {onLikeClick && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onLikeClick();
+              }}
+              className="absolute"
+              style={{ right: HEART_RIGHT, top: HEART_TOP }}
+            >
+              <img
+                src={liked ? oheart : heart}
+                alt="좋아요"
+                style={{ height: HEART_SIZE, width: HEART_SIZE }}
+              />
+            </button>
+          )}
+        </div>
 
         {/* Body */}
         <div
