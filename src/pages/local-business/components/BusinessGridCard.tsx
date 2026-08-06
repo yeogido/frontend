@@ -35,7 +35,6 @@ const DIVIDER_MARGIN_TOP = 8;
 const TAG_MARGIN_TOP = 8;
 const TAG_GAP = 4;
 const TAG_HEIGHT = 20;
-const TAG_WIDTH = 46;
 
 interface BusinessGridCardProps {
   business: BusinessItem;
@@ -151,7 +150,8 @@ function BusinessGridCard({
                 <TagChip
                   key={`${business.id}-${tag}`}
                   type={tag}
-                  style={{ height: TAG_HEIGHT, width: TAG_WIDTH }}
+                  className="w-auto"
+                  style={{ height: TAG_HEIGHT }}
                 />
               ))}
             </div>
