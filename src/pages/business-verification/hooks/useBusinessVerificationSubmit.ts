@@ -4,13 +4,14 @@ import {
   createPresignedUrl,
   uploadFileToPresignedUrl,
 } from '../../../apis/files.api';
+import { getSubRegions } from '../../../apis/regions.api';
 import { verifyBusiness } from '../../../apis/users.api';
 import { MY_BUSINESSES_QUERY_KEY } from '../../../hooks/useMyBusinesses';
 import { useRegions } from '../../../hooks/useRegions';
 import { useAuthStore } from '../../../store/auth.store';
 import type { BusinessVerifyResult } from '../../../types/business.type';
 import type { PlaceItem } from '../../local-recommendation/place-selection/types';
-import { resolveBusinessRegionId } from '../regionId';
+import { resolveProvinceRegionId, resolveSubRegionId } from '../regionId';
 import { toBusinessNumber } from '../validation';
 
 export const REGION_RESOLVE_ERROR_MESSAGE =
@@ -44,16 +45,23 @@ export function useBusinessVerificationSubmit() {
 
   return useMutation<BusinessVerifyResult, unknown, BusinessVerificationSubmitValues>({
     mutationFn: async (values) => {
-      const regionId = resolveBusinessRegionId(
+      const provinceRegionId = resolveProvinceRegionId(
         values.businessAddress,
         regionsData?.regions
       );
 
       // 임의의 ID로 보내면 백엔드가 REGION4041로 거절하므로, 해석에 실패하면
       // 업로드도 하지 않고 여기서 멈춘다.
-      if (regionId === undefined) {
+      if (provinceRegionId === undefined) {
         throw new RegionResolveError();
       }
+
+      // 운영 데이터가 시·군·구 단위를 쓰므로 한 단계 더 좁힌다. 세종·제주·
+      // 강원처럼 하위 지역이 없는 곳은 빈 배열이 와서 광역 ID로 폴백한다.
+      const subRegions = await getSubRegions(provinceRegionId);
+      const regionId =
+        resolveSubRegionId(values.businessAddress, subRegions) ??
+        provinceRegionId;
 
       // presigned 서명에 content-type이 포함돼 있어, 발급 요청과 실제 업로드의
       // content-type이 다르면 S3가 서명 불일치로 거부한다. 값을 한 번만 읽어

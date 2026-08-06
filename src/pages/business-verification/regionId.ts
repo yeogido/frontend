@@ -1,15 +1,20 @@
-import type { Region } from '../../types/region.type';
+import type { Region, SubRegion } from '../../types/region.type';
 
-// 카카오 장소 검색 결과에는 백엔드 regionId가 없다. 그래서 주소의 첫 토큰
-// (시·도)을 GET /regions가 주는 17개 광역 지역명과 맞춰 해석한다.
+// 카카오 장소 검색 결과에는 백엔드 regionId가 없어서 주소로 역산한다.
 //
-// 시·군·구까지 좁히려면 /regions/search로 한 번 더 물어야 하지만, 명세서
-// 예시가 '서울특별시 강남구 테헤란로 123' 주소에 regionId 1(서울, 광역)을
-// 쓰고 있어 광역 단위로 맞춘다. 호출 한 번을 아끼면서 REGION4041(존재하지
-// 않는 지역 ID)도 확실히 피할 수 있다.
+// 어느 단위를 보내야 하는지는 운영 데이터로 확인했다. GET /business-promotions
+// 응답을 보면 '부산 수영구 …' 사업장이 regionId 31(수영구, 부산 광역은 27),
+// '대전 동구 …'가 74(동구, 대전 광역은 72)를 쓴다. 홍보글의 지역은 인증된
+// 사업장의 Place에서 오므로 PlaceRequest.regionId는 시·군·구 단위다.
+// (명세서 예시의 regionId 1은 광역이지만 실제 데이터와 맞지 않는다.)
+//
+// 광역과 시·군·구가 하나의 ID 공간을 공유한다 — 1 서울, 2~26 서울의 구,
+// 27 부산, 28~43 부산의 구 순이다. 그래서 광역 ID도 그 자체로 유효하며,
+// 하위 지역이 없는 곳(세종·제주·강원은 sub-regions가 빈 배열이다)에서는
+// 광역 ID를 그대로 쓴다.
 //
 // 카카오는 '부산 수영구 …'처럼 축약형을, 명세서 예시는 '서울특별시 …'처럼
-// 전체 표기를 쓰므로 양쪽 표기를 모두 받는다.
+// 전체 표기를 쓰므로 양쪽을 모두 받는다.
 const REGION_NAME_BY_ADDRESS_PREFIX: Record<string, string> = {
   서울: '서울',
   서울시: '서울',
@@ -58,9 +63,13 @@ const REGION_NAME_BY_ADDRESS_PREFIX: Record<string, string> = {
   제주특별자치도: '제주',
 };
 
+function splitAddress(address: string) {
+  return address.trim().split(/\s+/);
+}
+
 // 매칭에 실패하면 undefined를 돌려준다. 임의의 ID를 넣어 보내면 백엔드가
 // REGION4041로 거절하므로, 호출부가 제출을 막고 장소를 다시 고르게 한다.
-export function resolveBusinessRegionId(
+export function resolveProvinceRegionId(
   address: string,
   regions: readonly Region[] | undefined
 ): number | undefined {
@@ -68,7 +77,7 @@ export function resolveBusinessRegionId(
     return undefined;
   }
 
-  const [addressPrefix] = address.trim().split(/\s+/);
+  const [addressPrefix] = splitAddress(address);
 
   if (!addressPrefix) {
     return undefined;
@@ -81,4 +90,25 @@ export function resolveBusinessRegionId(
   }
 
   return regions.find((region) => region.name === regionName)?.regionId;
+}
+
+// 주소의 두 번째 토큰이 시·군·구다. 경기는 '성남시'까지만 하위 지역으로
+// 두므로 '경기도 성남시 분당구'에서도 두 번째 토큰이 맞는다.
+// 못 찾으면 undefined를 돌려주고 호출부가 광역 ID로 폴백한다.
+export function resolveSubRegionId(
+  address: string,
+  subRegions: readonly SubRegion[] | undefined
+): number | undefined {
+  if (!subRegions || subRegions.length === 0) {
+    return undefined;
+  }
+
+  const [, subRegionName] = splitAddress(address);
+
+  if (!subRegionName) {
+    return undefined;
+  }
+
+  return subRegions.find((subRegion) => subRegion.name === subRegionName)
+    ?.subRegionId;
 }
