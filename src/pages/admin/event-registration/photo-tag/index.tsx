@@ -53,8 +53,14 @@ function AdminEventPhotoTagPage() {
   const savedKeywordTagIds = useAdminEventRegistrationStore(
     (state) => state.keywordTagIds
   );
+  const setKeywordTagIdsInStore = useAdminEventRegistrationStore(
+    (state) => state.setKeywordTagIds
+  );
   const savedCategory = useAdminEventRegistrationStore(
     (state) => state.category
+  );
+  const setCategoryInStore = useAdminEventRegistrationStore(
+    (state) => state.setCategory
   );
 
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(
@@ -82,9 +88,15 @@ function AdminEventPhotoTagPage() {
   const handleTagToggle = (tagId: TagId) => {
     const result = toggleTag(selectedTagIds, tagId);
     setSelectedTagIds(result.selectedTagIds);
+    setKeywordTagIdsInStore(Array.from(result.selectedTagIds));
     setLimitMessage(
       result.limitReached ? '키워드는 최대 5개까지 선택할 수 있어요.' : ''
     );
+  };
+
+  const handleCategorySelect = (nextCategory: EventCategoryId) => {
+    setCategory(nextCategory);
+    setCategoryInStore(nextCategory);
   };
 
   const isReady = Boolean(photo) && selectedTagIds.size > 0 && category !== null;
@@ -102,7 +114,7 @@ function AdminEventPhotoTagPage() {
       });
       await uploadFileToPresignedUrl(uploadUrl, photo.file, photo.file.type);
 
-      const hashtags = await fetchHashtags().catch(() => []);
+      const hashtags = await fetchHashtags();
       const hashtagIds = mapTagIdsToHashtagIds(
         Array.from(selectedTagIds),
         hashtags,
@@ -180,7 +192,7 @@ function AdminEventPhotoTagPage() {
         />
         <CategorySelectionSection
           selectedCategory={category}
-          onSelect={setCategory}
+          onSelect={handleCategorySelect}
         />
       </main>
 
@@ -196,7 +208,7 @@ function AdminEventPhotoTagPage() {
           borderRadius: BUTTON_RADIUS * scale,
         }}
       >
-        {isSubmitting ? '등록 중...' : '장소 등록하기'}
+        {isSubmitting ? '등록 중...' : '행사 등록하기'}
       </button>
 
       {submitError ? (
