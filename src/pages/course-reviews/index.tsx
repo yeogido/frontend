@@ -13,6 +13,7 @@ import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import {
   getCourseReviewsFromPages,
+  isCourseNotFoundError,
   useCourseReviews,
   useMyReviewIds,
   useReviewDelete,
@@ -63,12 +64,16 @@ function CourseReviewsPage() {
     : undefined;
   const {
     data,
+    error,
     isPending,
     isError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useCourseReviews(validCourseId, sort === 'rating' ? 'RATING' : 'LATEST');
+  // 코스가 없는 것과 후기 조회가 실패한 것은 사용자가 할 수 있는 일이 다르다.
+  const isCourseMissing =
+    validCourseId === undefined || (isError && isCourseNotFoundError(error));
   // courseId가 잘못되면 쿼리가 비활성이라 isPending이 계속 true다. 그대로
   // 두면 스피너가 멈추지 않으므로 로딩으로 보지 않는다.
   const isLoading = validCourseId !== undefined && isPending;
@@ -104,7 +109,8 @@ function CourseReviewsPage() {
     </p>
   );
 
-  const reviewButton = (
+  // 없는 코스에 후기를 쓰러 갈 수는 없다.
+  const reviewButton = isCourseMissing ? null : (
     <div
       className="pointer-events-none fixed bottom-0 left-1/2 z-30 flex w-full max-w-[500px] -translate-x-1/2"
       style={{
@@ -167,8 +173,8 @@ function CourseReviewsPage() {
               className="w-full"
               label="코스 후기를 불러오는 중"
             />
-          ) : validCourseId === undefined ? (
-            renderMessage('코스를 찾을 수 없습니다.')
+          ) : isCourseMissing ? (
+            renderMessage('삭제되었거나 존재하지 않는 코스입니다.')
           ) : isError ? (
             renderMessage('후기를 불러오지 못했습니다.')
           ) : reviews.length === 0 ? (
@@ -214,7 +220,7 @@ function CourseReviewsPage() {
 
       <ReviewDeleteDialog {...dialogProps} />
 
-      {typeof document === 'undefined'
+      {!reviewButton || typeof document === 'undefined'
         ? reviewButton
         : createPortal(reviewButton, document.body)}
     </ResponsivePageShell>

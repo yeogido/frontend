@@ -32,11 +32,22 @@ import type {
 } from '../types/review.type';
 
 const REVIEW_NOT_FOUND_CODE = 'REVIEW4041';
+const COURSE_NOT_FOUND_CODE = 'COURSE4041';
 
 const isReviewNotFoundError = (error: unknown) => {
   const { code, status } = normalizeApiError(error);
 
   return code === REVIEW_NOT_FOUND_CODE || status === 404;
+};
+
+/**
+ * 코스가 없거나 삭제된 경우. 후기를 못 불러온 것과 원인이 달라서, 화면이
+ * "일시적인 조회 실패"로 안내하지 않도록 구분한다.
+ */
+export const isCourseNotFoundError = (error: unknown) => {
+  const { code, status } = normalizeApiError(error);
+
+  return code === COURSE_NOT_FOUND_CODE || status === 404;
 };
 
 interface ReviewsPageParam {
