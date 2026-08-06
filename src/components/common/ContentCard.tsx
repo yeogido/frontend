@@ -191,6 +191,14 @@ function ContentCard({
     >
       <div
         onClick={onClick}
+        onKeyDown={(event) => {
+          if (!onClick || (event.key !== 'Enter' && event.key !== ' ')) {
+            return;
+          }
+
+          event.preventDefault();
+          onClick();
+        }}
         role={isClickable ? 'button' : undefined}
         tabIndex={isClickable ? 0 : undefined}
         className={`flex flex-col overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)] ${isClickable ? 'cursor-pointer' : ''} `}

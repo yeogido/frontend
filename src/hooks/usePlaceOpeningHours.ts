@@ -12,6 +12,30 @@ export interface PlaceHoursLookupItem extends PlaceHoursLookup {
 
 const PLACE_HOURS_STALE_TIME = 1000 * 60 * 5;
 const PLACE_HOURS_GC_TIME = 1000 * 60 * 30;
+const PLACE_HOURS_CONCURRENCY = 4;
+let activePlaceHoursRequests = 0;
+const pendingPlaceHoursRequests: Array<() => void> = [];
+
+function runNextPlaceHoursRequest() {
+  if (activePlaceHoursRequests >= PLACE_HOURS_CONCURRENCY) {
+    return;
+  }
+
+  pendingPlaceHoursRequests.shift()?.();
+}
+
+function queuePlaceHoursRequest<T>(request: () => Promise<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    pendingPlaceHoursRequests.push(() => {
+      activePlaceHoursRequests += 1;
+      void request().then(resolve, reject).finally(() => {
+        activePlaceHoursRequests -= 1;
+        runNextPlaceHoursRequest();
+      });
+    });
+    runNextPlaceHoursRequest();
+  });
+}
 
 export function usePlaceOpeningHours(
   places: readonly PlaceHoursLookupItem[]
@@ -26,7 +50,7 @@ export function usePlaceOpeningHours(
         place.longitude ?? null,
       ],
       queryFn: ({ signal }: { signal: AbortSignal }) =>
-        getPlaceHours(place, signal),
+        queuePlaceHoursRequest(() => getPlaceHours(place, signal)),
       staleTime: PLACE_HOURS_STALE_TIME,
       gcTime: PLACE_HOURS_GC_TIME,
       retry: false,
@@ -67,9 +91,9 @@ function getKoreanWeekdayLabel() {
 
 export function formatTodayOpeningHours(hours: PlaceHours): string | undefined {
   const descriptions =
-    hours.regularWeekdayDescriptions.length > 0
-      ? hours.regularWeekdayDescriptions
-      : hours.currentWeekdayDescriptions;
+    hours.currentWeekdayDescriptions.length > 0
+      ? hours.currentWeekdayDescriptions
+      : hours.regularWeekdayDescriptions;
   const weekday = getKoreanWeekdayLabel();
   const description =
     descriptions.find((item) => weekday && item.startsWith(weekday)) ??

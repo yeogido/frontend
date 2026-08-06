@@ -272,7 +272,11 @@ function LikesPage() {
                 tags={toContentTagIds(item.hashtags)}
                 liked
                 className="w-full"
-                onClick={() => handleCardClick(item)}
+                onClick={
+                  item.category === 'PLACE'
+                    ? undefined
+                    : () => handleCardClick(item)
+                }
                 onLikeClick={() => void handleUnlike(item)}
               />
             );

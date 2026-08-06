@@ -91,7 +91,7 @@ export async function lookupPlaceHours(
   }
 
   const detailsResponse = await fetch(
-    `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+    `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=ko`,
     {
       headers: {
         'X-Goog-Api-Key': apiKey,
