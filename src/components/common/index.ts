@@ -7,6 +7,7 @@ export { default as FloatingActionButton } from './FloatingActionButton';
 export { default as CourseCard } from './CourseCard';
 export { default as CourseCardSkeleton } from './CourseCardSkeleton';
 export { default as CourseReviewCard } from './CourseReviewCard';
+export { default as CourseReviewCardSkeleton } from './CourseReviewCardSkeleton';
 export { default as CourseFilterBar } from './CourseFilterBar';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as Logo } from './Logo';

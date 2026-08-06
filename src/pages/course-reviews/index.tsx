@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import {
-  LoadingSpinner,
   ReviewCard,
+  ReviewCardSkeleton,
   ReviewDeleteDialog,
   ReviewDetailModal,
 } from '../../components/common';
@@ -178,10 +178,9 @@ function CourseReviewsPage() {
           style={{ marginTop: LIST_MARGIN_TOP * scale, gap: LIST_GAP * scale }}
         >
           {isLoading ? (
-            <LoadingSpinner
-              className="w-full"
-              label="코스 후기를 불러오는 중"
-            />
+            Array.from({ length: 1 }).map((_, index) => (
+              <ReviewCardSkeleton key={index} variant="course-review-list" />
+            ))
           ) : isCourseMissing ? (
             renderMessage('삭제되었거나 존재하지 않는 코스입니다.')
           ) : isError ? (
@@ -212,10 +211,7 @@ function CourseReviewsPage() {
               <div ref={loadMoreRef} aria-hidden="true" />
 
               {isFetchingNextPage && (
-                <LoadingSpinner
-                  className="w-full"
-                  label="후기를 더 불러오는 중"
-                />
+                <ReviewCardSkeleton variant="course-review-list" />
               )}
             </>
           )}

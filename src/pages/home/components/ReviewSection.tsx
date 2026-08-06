@@ -136,7 +136,7 @@ function ReviewSection() {
         style={{ gap: REVIEW_CARD_GAP * scale }}
       >
         {isPending
-          ? Array.from({ length: 3 }).map((_, index) => (
+          ? Array.from({ length: 1 }).map((_, index) => (
               <div
                 key={index}
                 className="w-full shrink-0 snap-start snap-always"

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import {
   CourseReviewCard,
-  LoadingSpinner,
+  CourseReviewCardSkeleton,
   ReviewDeleteDialog,
   ReviewDetailModal,
   ReviewEditModal,
@@ -137,8 +137,10 @@ function RecentReviewCoursesPage() {
       </div>
 
       {isPending ? (
-        <div style={{ marginTop: MESSAGE_MARGIN_TOP * scale }}>
-          <LoadingSpinner className="w-full" label="최근 후기를 불러오는 중" />
+        <div className="flex flex-col gap-4" style={{ marginTop: LIST_MARGIN_TOP * scale }}>
+          {Array.from({ length: 1 }).map((_, index) => (
+            <CourseReviewCardSkeleton key={index} />
+          ))}
         </div>
       ) : isError ? (
         renderMessage('후기를 불러오지 못했습니다.')
@@ -190,7 +192,7 @@ function RecentReviewCoursesPage() {
           <div ref={loadMoreRef} aria-hidden="true" />
 
           {isFetchingNextPage && (
-            <LoadingSpinner className="w-full" label="후기를 더 불러오는 중" />
+            <CourseReviewCardSkeleton />
           )}
         </div>
       )}
