@@ -1,13 +1,21 @@
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
 import type { AdminCourseEventItem, AdminCoursePlaceItem } from '../types';
+import {
+  VISIT_EVENT_CONTENT_ID_PREFIX,
+  VISIT_EVENT_PLACE_ID_PREFIX,
+} from '../types';
 
 export function buildAdminVisitEvents(
   places: readonly AdminCoursePlaceItem[],
   events: readonly AdminCourseEventItem[],
-  fallbackImageSrc: string
+  fallbackImageSrc: string,
+  // 스토어에 저장된 이전 방문 순서(id 목록). 순서를 매기는 용도로만 쓰고,
+  // 실제 항목 데이터는 항상 현재 selectedPlaces/selectedEvents로 새로
+  // 만든다 — 그래야 뒤로 가서 항목을 빼거나 추가해도 반영된다.
+  visitOrder: readonly string[] = []
 ): VisitEvent[] {
   const placeEvents: VisitEvent[] = places.map((place) => ({
-    id: place.id,
+    id: `${VISIT_EVENT_PLACE_ID_PREFIX}${place.id}`,
     kind: 'PLACE',
     name: place.title,
     address: place.address,
@@ -22,7 +30,7 @@ export function buildAdminVisitEvents(
   }));
 
   const contentEvents: VisitEvent[] = events.map((event, index) => ({
-    id: event.id,
+    id: `${VISIT_EVENT_CONTENT_ID_PREFIX}${event.id}`,
     kind: 'CONTENT',
     name: event.title,
     address: event.address,
@@ -31,5 +39,19 @@ export function buildAdminVisitEvents(
     contentId: -(index + 1),
   }));
 
-  return [...placeEvents, ...contentEvents];
+  const combined = [...placeEvents, ...contentEvents];
+
+  if (visitOrder.length === 0) {
+    return combined;
+  }
+
+  const byId = new Map(combined.map((event) => [event.id, event]));
+  const ordered = visitOrder.flatMap((id) => {
+    const event = byId.get(id);
+    return event ? [event] : [];
+  });
+  const orderedIds = new Set(ordered.map((event) => event.id));
+  const remaining = combined.filter((event) => !orderedIds.has(event.id));
+
+  return [...ordered, ...remaining];
 }

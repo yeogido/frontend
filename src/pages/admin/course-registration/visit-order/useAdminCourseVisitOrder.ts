@@ -28,10 +28,16 @@ export function useAdminCourseVisitOrder() {
     (state) => state.setVisitOrder
   );
 
+  // storedVisitOrder는 순서를 매기는 힌트로만 쓰고, 실제 항목은 항상 현재
+  // selectedPlaces/selectedEvents로 새로 만든다 — 그대로 쓰면 뒤로 가서
+  // 장소/행사를 빼거나 추가한 뒤 다시 들어왔을 때 반영되지 않는다.
   const [visitEvents, setVisitEvents] = useState<VisitEvent[]>(() =>
-    storedVisitOrder.length > 0
-      ? storedVisitOrder
-      : buildAdminVisitEvents(selectedPlaces, selectedEvents, eventThumbnail)
+    buildAdminVisitEvents(
+      selectedPlaces,
+      selectedEvents,
+      eventThumbnail,
+      storedVisitOrder.map((event) => event.id)
+    )
   );
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const sensors = useSensors(

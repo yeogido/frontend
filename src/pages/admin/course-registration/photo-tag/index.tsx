@@ -32,16 +32,13 @@ function AdminCoursePhotoTagPage() {
   const setPhotoInStore = useAdminCourseRegistrationStore(
     (state) => state.setPhoto
   );
-  const savedKeywordTagIds = useAdminCourseRegistrationStore(
+  const keywordTagIds = useAdminCourseRegistrationStore(
     (state) => state.keywordTagIds
   );
   const setKeywordTagIdsInStore = useAdminCourseRegistrationStore(
     (state) => state.setKeywordTagIds
   );
-
-  const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(
-    () => new Set(savedKeywordTagIds)
-  );
+  const selectedTagIds = new Set(keywordTagIds);
   const [limitMessage, setLimitMessage] = useState('');
 
   useEffect(() => {
@@ -62,7 +59,6 @@ function AdminCoursePhotoTagPage() {
 
   const handleTagToggle = (tagId: TagId) => {
     const result = toggleTag(selectedTagIds, tagId);
-    setSelectedTagIds(result.selectedTagIds);
     setKeywordTagIdsInStore(Array.from(result.selectedTagIds));
     setLimitMessage(
       result.limitReached ? '키워드는 최대 5개까지 선택할 수 있어요.' : ''

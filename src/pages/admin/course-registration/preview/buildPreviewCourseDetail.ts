@@ -19,7 +19,7 @@ import type { AdminCoursePhoto } from '../types';
 
 const TRANSPORT_BADGE_ICON: Record<CourseBasicInfoValues['transport'], BadgeId> = {
   walking: 'walk',
-  public: 'walk',
+  public: 'people',
   car: 'car',
 };
 

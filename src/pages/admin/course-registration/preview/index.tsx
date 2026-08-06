@@ -21,8 +21,13 @@ function AdminCourseRegistrationPreviewPage() {
       navigate('/admin/course-registration/region-selection', {
         replace: true,
       });
+      return;
     }
-  }, [region, basicInfo, navigate]);
+
+    if (visitOrder.length === 0) {
+      navigate('/admin/course-registration/visit-order', { replace: true });
+    }
+  }, [region, basicInfo, visitOrder, navigate]);
 
   const courseDetail = useMemo(() => {
     if (!basicInfo) return null;
@@ -37,13 +42,15 @@ function AdminCourseRegistrationPreviewPage() {
     return mapCourseDetailDtoToViewModel(dto);
   }, [basicInfo, photo, keywordTagIds, visitOrder]);
 
-  if (!region || !basicInfo || !courseDetail) return null;
+  if (!region || !basicInfo || visitOrder.length === 0 || !courseDetail) {
+    return null;
+  }
 
   return (
     <CourseDetailLayout
       course={courseDetail}
       reviewType="yeogido-course"
-      onBack={() => navigate('/admin/courses')}
+      onBack={() => navigate('/admin/course-registration/visit-order')}
     />
   );
 }

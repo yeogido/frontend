@@ -5,12 +5,23 @@ import type { Neighborhood } from '../../../local-recommendation/region-selectio
 const STORAGE_KEY = 'admin-course-registration-recent-regions';
 const MAX_RECENT = 5;
 
+function isNeighborhood(value: unknown): value is Neighborhood {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.id === 'number' &&
+    typeof candidate.name === 'string' &&
+    typeof candidate.parentName === 'string'
+  );
+}
+
 function readStoredRecentRegions(): Neighborhood[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : [];
 
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.filter(isNeighborhood) : [];
   } catch {
     return [];
   }

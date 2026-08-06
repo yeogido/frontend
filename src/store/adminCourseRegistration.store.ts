@@ -3,10 +3,12 @@ import { create } from 'zustand';
 import type { CourseBasicInfoValues } from '../pages/local-recommendation/course-basic-info/schema';
 import type { Neighborhood } from '../pages/local-recommendation/region-selection/types';
 import type { VisitEvent } from '../pages/local-recommendation/visit-order-selection/constants';
-import type {
-  AdminCourseEventItem,
-  AdminCoursePhoto,
-  AdminCoursePlaceItem,
+import {
+  VISIT_EVENT_CONTENT_ID_PREFIX,
+  VISIT_EVENT_PLACE_ID_PREFIX,
+  type AdminCourseEventItem,
+  type AdminCoursePhoto,
+  type AdminCoursePlaceItem,
 } from '../pages/admin/course-registration/types';
 import type { TagId } from '../types/tag.type';
 
@@ -61,10 +63,30 @@ export const useAdminCourseRegistrationStore =
       set({ photo });
     },
     setKeywordTagIds: (keywordTagIds) => set({ keywordTagIds }),
-    setSelectedEvents: (selectedEvents) => set({ selectedEvents }),
+    setSelectedEvents: (selectedEvents) => {
+      // 방문 순서에 이미 반영된 행사가 빠지면(뒤로 가서 삭제) visitOrder에도
+      // 유령 항목으로 남지 않도록 같이 정리한다.
+      const contentIds = new Set(
+        selectedEvents.map((event) => `${VISIT_EVENT_CONTENT_ID_PREFIX}${event.id}`)
+      );
+      set((state) => ({
+        selectedEvents,
+        visitOrder: state.visitOrder.filter(
+          (event) => event.kind !== 'CONTENT' || contentIds.has(event.id)
+        ),
+      }));
+    },
     setSelectedPlaces: (selectedPlaces) => {
       revokeRemovedPlacePhotos(get().selectedPlaces, selectedPlaces);
-      set({ selectedPlaces });
+      const placeIds = new Set(
+        selectedPlaces.map((place) => `${VISIT_EVENT_PLACE_ID_PREFIX}${place.id}`)
+      );
+      set((state) => ({
+        selectedPlaces,
+        visitOrder: state.visitOrder.filter(
+          (event) => event.kind !== 'PLACE' || placeIds.has(event.id)
+        ),
+      }));
     },
     setVisitOrder: (visitOrder) => set({ visitOrder }),
     reset: () => {

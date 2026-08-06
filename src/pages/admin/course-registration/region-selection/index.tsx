@@ -38,9 +38,6 @@ function AdminCourseRegionSelectionPage() {
   const { recentRegions, addRecentRegion } = useRecentCourseRegions();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState<Neighborhood | null>(
-    region
-  );
 
   const trimmedSearchQuery = searchQuery.trim();
   // SearchBar가 suggestions를 통째로 받아 내부에서 직접 필터링하는 구조라,
@@ -56,19 +53,16 @@ function AdminCourseRegionSelectionPage() {
   const handleSelectNeighborhood = (candidate: Neighborhood) => {
     setSearchQuery('');
 
-    if (selectedRegion?.id === candidate.id) {
-      setSelectedRegion(null);
+    if (region?.id === candidate.id) {
       setRegionInStore(null);
       return;
     }
 
-    setSelectedRegion(candidate);
     setRegionInStore(candidate);
     addRecentRegion(candidate);
   };
 
   const handleClearSelection = () => {
-    setSelectedRegion(null);
     setRegionInStore(null);
   };
 
@@ -103,14 +97,14 @@ function AdminCourseRegionSelectionPage() {
           onQueryChange={handleQueryChange}
         />
 
-        {selectedRegion && !trimmedSearchQuery ? (
+        {region && !trimmedSearchQuery ? (
           <SelectedNeighborhoodCard
-            neighborhood={selectedRegion}
+            neighborhood={region}
             onClear={handleClearSelection}
           />
         ) : null}
 
-        {!trimmedSearchQuery && !selectedRegion ? (
+        {!trimmedSearchQuery && !region ? (
           <RecentSearchSection
             neighborhoods={recentRegions}
             onSelect={handleSelectNeighborhood}
@@ -119,13 +113,15 @@ function AdminCourseRegionSelectionPage() {
 
         <PopularRegionGrid
           regions={mockPopularRegions}
-          onSelect={(region) => handleSelectNeighborhood(fromRegion(region))}
+          onSelect={(popularRegion) =>
+            handleSelectNeighborhood(fromRegion(popularRegion))
+          }
         />
       </main>
 
       <button
         type="button"
-        disabled={!selectedRegion}
+        disabled={!region}
         onClick={() => navigate('/admin/course-registration/basic-info')}
         className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full font-semibold"
         style={{
