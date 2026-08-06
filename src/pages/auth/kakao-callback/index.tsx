@@ -4,11 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import type { NormalizedApiError } from '../../../apis/common';
 import { socialLogin } from '../../../apis/auth.api';
 import { Logo } from '../../../components/common';
-import { getKakaoCallbackUrl } from '../../../hooks/useKakaoLogin';
+import {
+  getKakaoCallbackUrl,
+  KAKAO_OAUTH_STATE_KEY,
+} from '../../../hooks/useKakaoLogin';
 import { useAuthStore } from '../../../store/auth.store';
 
 const DEFAULT_ERROR_MESSAGE =
   '카카오 로그인에 실패했습니다. 다시 시도해 주세요.';
+const STATE_MISMATCH_ERROR_MESSAGE =
+  '로그인 요청이 유효하지 않습니다. 다시 시도해 주세요.';
 
 // social-login API에 실제로 매핑된 에러 코드만 반영.
 const SOCIAL_LOGIN_ERROR_MESSAGES: Record<string, string> = {
@@ -35,7 +40,11 @@ function isNormalizedApiError(error: unknown): error is NormalizedApiError {
 function parseKakaoCallbackParams() {
   const params = new URLSearchParams(window.location.search);
 
-  return { code: params.get('code'), kakaoError: params.get('error') };
+  return {
+    code: params.get('code'),
+    kakaoError: params.get('error'),
+    state: params.get('state'),
+  };
 }
 
 function KakaoCallbackPage() {
@@ -62,9 +71,30 @@ function KakaoCallbackPage() {
     }
     hasHandledRef.current = true;
 
-    const { code, kakaoError } = parseKakaoCallbackParams();
+    const { code, kakaoError, state } = parseKakaoCallbackParams();
+
+    // 이번 콜백에서 소모할 state는 성공/실패/취소 여부와 무관하게 여기서
+    // 즉시 꺼내 지운다 — 같은 값이 재사용되는 것을 막기 위함이다.
+    const storedState = sessionStorage.getItem(KAKAO_OAUTH_STATE_KEY);
+    sessionStorage.removeItem(KAKAO_OAUTH_STATE_KEY);
 
     if (kakaoError || !code) {
+      return;
+    }
+
+    // CSRF 방지: authorize() 호출 시 세션스토리지에 저장해둔 state와
+    // 카카오가 돌려준 state가 일치하는지 확인한다. 일치하지 않으면(또는
+    // 둘 중 하나라도 없으면) social-login을 호출하지 않고 여기서
+    // 종료한다 — isNewUser 분기나 setAuth()는 이 아래에서만 실행되므로
+    // 이 return으로 자연스럽게 막힌다.
+    if (!state || !storedState || state !== storedState) {
+      // sessionStorage 소비(위)는 hasHandledRef로 이미 1회로 보장되고,
+      // 이 페이지는 콜백 처리 전용이라 여기서 setState해도 추가
+      // 리렌더가 다른 상태와 연쇄되지 않는다 — lazy initializer로
+      // 옮기면 StrictMode 개발 모드에서 두 번 실행돼 sessionStorage
+      // 값을 조기 소비해버리므로 여기 남겨둔다.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setErrorMessage(STATE_MISMATCH_ERROR_MESSAGE);
       return;
     }
 
