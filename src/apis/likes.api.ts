@@ -25,6 +25,40 @@ const LIKED_ITEM_QUERY_CATEGORY_PARAM: Record<LikedItemQueryCategory, string> =
     PLACE: 'PLACE',
   };
 
+/** 서버 응답 category 표기. CONTENT는 앱에서 EVENT로 다룬다. */
+type LikedItemResponseCategory = 'COURSE' | 'CONTENT' | 'PLACE';
+
+const LIKED_ITEM_RESPONSE_CATEGORY: Record<
+  LikedItemResponseCategory,
+  LikedItemCategory
+> = {
+  COURSE: 'COURSE',
+  CONTENT: 'EVENT',
+  PLACE: 'PLACE',
+};
+
+interface RawLikedItemResponse {
+  id: number;
+  category: LikedItemResponseCategory;
+  title: string;
+  externalPlaceId?: string;
+  thumbnailImage: string | null;
+  duration: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  location: string;
+  distance: number | null;
+  hashtags: string[];
+  likedAt: string;
+}
+
+interface RawGetLikedItemsResponse {
+  items: RawLikedItemResponse[];
+  cursorValue: string | null;
+  cursorId: number | null;
+  hasNext: boolean;
+}
+
 export interface LikedItemResponse {
   id: number;
   category: LikedItemCategory;
@@ -52,7 +86,7 @@ export async function getLikedItems(
   signal?: AbortSignal
 ): Promise<GetLikedItemsResponse> {
   try {
-    const { data } = await apiClient.get<GetLikedItemsResponse>(
+    const { data } = await apiClient.get<RawGetLikedItemsResponse>(
       '/users/me/likes',
       {
         params: {
@@ -63,7 +97,13 @@ export async function getLikedItems(
       }
     );
 
-    return data;
+    return {
+      ...data,
+      items: data.items.map((item) => ({
+        ...item,
+        category: LIKED_ITEM_RESPONSE_CATEGORY[item.category],
+      })),
+    };
   } catch (error) {
     throw normalizeApiError(error);
   }

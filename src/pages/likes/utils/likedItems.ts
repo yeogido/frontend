@@ -127,6 +127,12 @@ interface LikedItemInfoLines {
   thirdInfo?: string;
 }
 
+function toYearMonthLabel(date: string): string {
+  const match = date.match(/^(\d{4})[-./](\d{2})/);
+
+  return match ? `${match[1]}.${match[2]}` : date;
+}
+
 /** 카드 본문 두 줄(기간 / 위치·동행)을 카테고리에 맞게 만든다. */
 export function toLikedItemInfoLines(item: LikedItem): LikedItemInfoLines {
   if (item.category === 'COURSE') {
@@ -139,6 +145,7 @@ export function toLikedItemInfoLines(item: LikedItem): LikedItemInfoLines {
 
   const period = [item.startDate, item.endDate]
     .filter((date): date is string => Boolean(date))
+    .map(toYearMonthLabel)
     .join(' ~ ');
 
   return {
