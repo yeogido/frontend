@@ -26,11 +26,13 @@ function RegionSelectionLayout({
 }: RegionSelectionLayoutProps) {
   return (
     <FixedMobilePageFrame className="bg-[#f9f9f9] px-6 pt-[60px]">
+      {/* 아이콘은 24px 그대로 두고 히트 영역만 44px(MIN_TOUCH_TARGET)로 넓힌다.
+          패딩만큼 음수 마진을 줘서 아래 요소들의 위치는 변하지 않는다. */}
       <button
         type="button"
         onClick={onBack}
         aria-label={backAriaLabel}
-        className="flex size-6 shrink-0 items-center justify-start"
+        className="-m-[10px] flex size-6 shrink-0 items-center justify-start p-[10px] box-content"
       >
         <img src={backIcon} alt="" aria-hidden="true" className="size-6" />
       </button>
