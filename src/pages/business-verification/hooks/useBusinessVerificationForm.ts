@@ -2,7 +2,11 @@ import { useState } from 'react';
 
 import { usePlaceSearch } from '../../local-recommendation/place-selection/hooks/usePlaceSearch';
 import type { PlaceItem } from '../../local-recommendation/place-selection/types';
-import { isBusinessVerificationSubmittable } from '../validation';
+import {
+  formatBusinessNumberInput,
+  getBusinessNumberHint,
+  isBusinessVerificationSubmittable,
+} from '../validation';
 
 export function useBusinessVerificationForm() {
   const [certificate, setCertificate] = useState<File | null>(null);
@@ -32,6 +36,11 @@ export function useBusinessVerificationForm() {
     setQuery('');
   };
 
+  // 숫자만 쳐도 123-45-67890 형태가 되도록 입력을 받는 자리에서 정형화한다.
+  const changeRegistrationNumber = (value: string) => {
+    setRegistrationNumber(formatBusinessNumberInput(value));
+  };
+
   const isSubmittable = isBusinessVerificationSubmittable({
     certificate,
     place,
@@ -48,6 +57,7 @@ export function useBusinessVerificationForm() {
     businessName,
     representativeName,
     registrationNumber,
+    registrationNumberHint: getBusinessNumberHint(registrationNumber),
     openedAt,
     query,
     searchResults,
@@ -59,7 +69,7 @@ export function useBusinessVerificationForm() {
     clearPlace,
     setBusinessName,
     setRepresentativeName,
-    setRegistrationNumber,
+    setRegistrationNumber: changeRegistrationNumber,
     setOpenedAt,
   };
 }

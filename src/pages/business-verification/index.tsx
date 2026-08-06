@@ -79,6 +79,7 @@ function BusinessVerificationPage() {
           businessName={form.businessName}
           representativeName={form.representativeName}
           registrationNumber={form.registrationNumber}
+          registrationNumberHint={form.registrationNumberHint}
           openedAt={form.openedAt}
           onCertificateChange={form.setCertificate}
           onQueryChange={form.setQuery}

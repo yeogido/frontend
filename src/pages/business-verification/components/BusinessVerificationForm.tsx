@@ -13,6 +13,7 @@ interface BusinessVerificationFormProps {
   readonly businessName: string;
   readonly representativeName: string;
   readonly registrationNumber: string;
+  readonly registrationNumberHint: string;
   readonly openedAt: string;
   readonly onCertificateChange: (certificate: File | null) => void;
   readonly onQueryChange: (value: string) => void;
@@ -33,6 +34,7 @@ export function BusinessVerificationForm({
   businessName,
   representativeName,
   registrationNumber,
+  registrationNumberHint,
   openedAt,
   onCertificateChange,
   onQueryChange,
@@ -79,6 +81,10 @@ export function BusinessVerificationForm({
         placeholder="예) 123-45-67890"
         scale={scale}
         onChange={onRegistrationNumberChange}
+        hint={registrationNumberHint}
+        inputMode="numeric"
+        // 하이픈 2개까지 포함한 완성 형태의 길이
+        maxLength={12}
       />
       <BusinessVerificationDateField
         label="개업일자"
