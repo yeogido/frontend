@@ -1,18 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { getApiErrorMessage } from '../../../../apis/common';
+import { createCultureContent } from '../../../../apis/contents.api';
+import {
+  createPresignedUrl,
+  uploadFileToPresignedUrl,
+} from '../../../../apis/files.api';
+import { fetchHashtags } from '../../../../apis/hashtags';
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
+import { tagDefinitionMap } from '../../../../constants/tags';
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminEventRegistrationStore } from '../../../../store/adminEventRegistration.store';
 import type { TagId } from '../../../../types/tag.type';
+import { buildFestivalDetailPath } from '../../../../utils/routes';
 
 import BackButton from '../../../local-recommendation/components/BackButton';
 import RepresentativePhotoSection from '../../../local-recommendation/tag-selection/components/RepresentativePhotoSection';
 import KeywordSelectionSection from '../../../local-recommendation/tag-selection/components/KeywordSelectionSection';
 import { toggleTag } from '../../../local-recommendation/tag-selection/utils';
+import { mapTagIdsToHashtagIds } from '../../../local-recommendation/tag-selection/hashtagMapping';
 import CategorySelectionSection from './components/CategorySelectionSection';
-import type { EventCategoryId } from '../types';
+import { toContentCategory, type EventCategoryId } from '../types';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_TOP = 48;
@@ -23,10 +33,16 @@ const BUTTON_MARGIN_TOP = 32;
 const BUTTON_HEIGHT = 53;
 const BUTTON_TEXT_SIZE = 14;
 const BUTTON_RADIUS = 12;
+const SUBMIT_ERROR_MARGIN_TOP = 8;
+const SUBMIT_ERROR_FONT_SIZE = 12;
+
+const REGISTER_ERROR_MESSAGE = '행사 등록에 실패했습니다. 다시 시도해 주세요.';
 
 function AdminEventPhotoTagPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const place = useAdminEventRegistrationStore((state) => state.place);
+  const basicInfo = useAdminEventRegistrationStore((state) => state.basicInfo);
   // photo는 URL.createObjectURL로 만든 blob URL을 들고 있어 store가 유일한 소유자여야 한다.
   // (로컬 사본을 따로 두면 어느 쪽이 언제 revoke할지 애매해져 store가 아직 참조 중인 URL을
   // 컴포넌트가 먼저 해제해버리는 문제가 생긴다.) 그래서 변경 즉시 store에 반영한다.
@@ -37,14 +53,8 @@ function AdminEventPhotoTagPage() {
   const savedKeywordTagIds = useAdminEventRegistrationStore(
     (state) => state.keywordTagIds
   );
-  const setKeywordTagIds = useAdminEventRegistrationStore(
-    (state) => state.setKeywordTagIds
-  );
   const savedCategory = useAdminEventRegistrationStore(
     (state) => state.category
-  );
-  const setCategoryInStore = useAdminEventRegistrationStore(
-    (state) => state.setCategory
   );
 
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(
@@ -54,6 +64,16 @@ function AdminEventPhotoTagPage() {
   const [category, setCategory] = useState<EventCategoryId | null>(
     savedCategory
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  useEffect(() => {
+    if (!place) {
+      navigate('/admin', { replace: true });
+    }
+  }, [place, navigate]);
+
+  if (!place) return null;
 
   const handlePhotoChange = (file: File | null) => {
     setPhotoInStore(file ? { file, previewUrl: URL.createObjectURL(file) } : null);
@@ -69,11 +89,56 @@ function AdminEventPhotoTagPage() {
 
   const isReady = Boolean(photo) && selectedTagIds.size > 0 && category !== null;
 
-  const handleSubmit = () => {
-    if (!photo || !isReady) return;
-    setKeywordTagIds(Array.from(selectedTagIds));
-    setCategoryInStore(category);
-    navigate('/admin/event-registration/complete');
+  const handleSubmit = async () => {
+    if (!photo || !isReady || !category || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const { uploadUrl, objectKey } = await createPresignedUrl({
+        fileName: photo.file.name,
+        contentType: photo.file.type,
+      });
+      await uploadFileToPresignedUrl(uploadUrl, photo.file, photo.file.type);
+
+      const hashtags = await fetchHashtags().catch(() => []);
+      const hashtagIds = mapTagIdsToHashtagIds(
+        Array.from(selectedTagIds),
+        hashtags,
+        (tagId) => tagDefinitionMap[tagId]?.label
+      );
+
+      const result = await createCultureContent({
+        place: {
+          externalPlaceId: place.externalPlaceId,
+          source: 'KAKAO',
+          name: place.title,
+          roadAddress: place.roadAddress,
+          lotAddress: place.lotAddress,
+          latitude: place.latitude,
+          longitude: place.longitude,
+        },
+        title: basicInfo.placeName,
+        description: basicInfo.placeIntro,
+        category: toContentCategory(category),
+        startDate: basicInfo.startDate,
+        endDate: basicInfo.endDate,
+        contactPhone: basicInfo.phone,
+        officialUrl: basicInfo.homepage,
+        thumbnailImageKey: objectKey,
+        hashtagIds,
+      });
+
+      // 여기서 스토어를 reset하면 place가 비워지면서 이 페이지의 가드(useEffect)가
+      // /admin으로 되돌려버리는 것과 경쟁 상태가 생긴다. 다음 등록을 시작할 때
+      // FAB(admin/index.tsx)가 이미 reset을 호출하므로 여기서는 이동만 한다.
+      navigate(buildFestivalDetailPath(result.contentId));
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, REGISTER_ERROR_MESSAGE));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -121,7 +186,7 @@ function AdminEventPhotoTagPage() {
 
       <button
         type="button"
-        disabled={!isReady}
+        disabled={!isReady || isSubmitting}
         onClick={handleSubmit}
         className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full shrink-0 font-semibold"
         style={{
@@ -131,8 +196,21 @@ function AdminEventPhotoTagPage() {
           borderRadius: BUTTON_RADIUS * scale,
         }}
       >
-        장소 등록하기
+        {isSubmitting ? '등록 중...' : '장소 등록하기'}
       </button>
+
+      {submitError ? (
+        <p
+          className="text-main-5"
+          style={{
+            marginTop: SUBMIT_ERROR_MARGIN_TOP * scale,
+            fontSize: SUBMIT_ERROR_FONT_SIZE * scale,
+          }}
+          role="alert"
+        >
+          {submitError}
+        </p>
+      ) : null}
     </ResponsivePageShell>
   );
 }

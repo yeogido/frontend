@@ -33,7 +33,6 @@ import AdminPage from '../pages/admin';
 import AdminPlaceSelectionPage from '../pages/admin/event-registration/place-selection';
 import AdminEventBasicInfoPage from '../pages/admin/event-registration/basic-info';
 import AdminEventPhotoTagPage from '../pages/admin/event-registration/photo-tag';
-import AdminEventCompletePage from '../pages/admin/event-registration/complete';
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
 import EventSelectionPage from '../pages/local-recommendation/event-selection';
 import PlaceSelectionPage from '../pages/local-recommendation/place-selection';
@@ -233,10 +232,6 @@ function AppRouter() {
         <Route
           path="/admin/event-registration/photo-tag"
           element={<AdminEventPhotoTagPage />}
-        />
-        <Route
-          path="/admin/event-registration/complete"
-          element={<AdminEventCompletePage />}
         />
       </Route>
 
