@@ -102,17 +102,32 @@ function ReviewEditModal({
     !isPending &&
     isReviewFormValid({ rating, review: content, photoCount: photos.length });
 
+  // 사진을 손대지 않았으면 목록을 보내지 않는다. 서버가 기존 이미지를 그대로
+  // 두므로 헛된 삭제/삽입이 없고, 지금은 이미 붙어 있는 imageKey를 다시
+  // 보내면 500이 나는 서버 버그도 피해 간다(별점·내용 수정이 그래서 막혀 있었다).
+  const initialImageKeys = review.editableImages
+    .slice(0, MAX_REVIEW_PHOTOS)
+    .map(({ imageKey }) => imageKey);
+  const isPhotosUnchanged =
+    photos.length === initialImageKeys.length &&
+    photos.every(
+      (photo, index) =>
+        photo.kind === 'existing' && photo.imageKey === initialImageKeys[index]
+    );
+
   const handleSubmit = () => {
     if (!canSubmit) return;
 
     onSubmit({
       rating,
       content: content.trim(),
-      photos: photos.map((photo) =>
-        photo.kind === 'existing'
-          ? { imageKey: photo.imageKey }
-          : { file: photo.file }
-      ),
+      photos: isPhotosUnchanged
+        ? undefined
+        : photos.map((photo) =>
+            photo.kind === 'existing'
+              ? { imageKey: photo.imageKey }
+              : { file: photo.file }
+          ),
     });
   };
 

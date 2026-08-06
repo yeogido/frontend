@@ -357,8 +357,14 @@ export interface EditableReview {
 export interface ReviewEditSubmission {
   rating: number;
   content: string;
-  /** 화면에 보이는 순서 그대로. 기존 사진은 imageKey, 새로 고른 사진은 File. */
-  photos: ({ imageKey: string } | { file: File })[];
+  /**
+   * 화면에 보이는 순서 그대로. 기존 사진은 imageKey, 새로 고른 사진은 File.
+   *
+   * 사진을 하나도 건드리지 않았으면 undefined다. 그때는 요청에서 images를
+   * 빼서 서버가 기존 이미지를 그대로 두게 한다(명세상 생략 = 유지). 같은
+   * 목록을 다시 보내면 서버가 지웠다 넣는 일을 헛하게 된다.
+   */
+  photos?: ({ imageKey: string } | { file: File })[];
 }
 
 /**
@@ -387,18 +393,22 @@ export function useReviewEdit() {
     }
 
     try {
-      const images: ReviewImageRequest[] = [];
+      let images: ReviewImageRequest[] | undefined;
 
-      for (const [index, photo] of photos.entries()) {
-        const imageKey =
-          'imageKey' in photo ? photo.imageKey : await uploadPhoto(photo.file);
+      if (photos) {
+        images = [];
 
-        images.push({ imageKey, imageOrder: index + 1 });
+        for (const [index, photo] of photos.entries()) {
+          const imageKey =
+            'imageKey' in photo ? photo.imageKey : await uploadPhoto(photo.file);
+
+          images.push({ imageKey, imageOrder: index + 1 });
+        }
       }
 
       await updateReviewMutation.mutateAsync({
         reviewId: editingReview.id,
-        request: { rating, content, images },
+        request: { rating, content, ...(images ? { images } : {}) },
       });
       closeEditor();
       showToast('후기를 수정했어요.');
