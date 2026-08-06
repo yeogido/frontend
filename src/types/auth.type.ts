@@ -44,3 +44,36 @@ export interface SocialSignupCompleteRequest {
   birthYear: string;
   regionId: number;
 }
+
+// 이메일 회원가입 전용 gender. 소셜 로그인 프로필 완성 폼(SocialGender)과
+// 달리 '선택 안 함'(NONE)을 허용한다 (스웨거 기준: POST /api/v1/auth/signup).
+export type SignupGender = 'MALE' | 'FEMALE' | 'NONE';
+
+export interface CheckEmailResult {
+  isAvailable: boolean;
+}
+
+// result 필드에 의미 있는 데이터가 없고, 발송 성공 여부는 isSuccess로만
+// 판단한다 (스웨거 기준: POST /api/v1/auth/email/send-code).
+export type SendEmailCodeResult = string;
+
+// 서버 응답의 result 필드 구조 (스웨거 기준: POST /api/v1/auth/email/verify-code)
+// emailVerificationToken은 UUID, Redis에 10분 TTL로 저장된다.
+export interface VerifyEmailCodeResult {
+  emailVerificationToken: string;
+}
+
+export interface SignupRequest {
+  email: string;
+  password: string;
+  nickname: string;
+  gender: SignupGender;
+  birthYear: string;
+  regionId: number;
+  emailVerificationToken: string;
+}
+
+// 서버 응답의 result 필드 구조 (스웨거 기준: POST /api/v1/auth/signup)
+export interface SignupResult {
+  userId: number;
+}

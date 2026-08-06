@@ -19,13 +19,20 @@ import {
 
 import type { CourseDetail, CourseStop } from '../types/courseDetail';
 import { useShareToast } from '../hooks/useShareToast';
+import {
+  ReviewDeleteDialog,
+  ReviewDetailModal,
+} from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useAuthStore } from '../../../store/auth.store';
 import {
-  getSubmittedCourseReviewKey,
-  useSubmittedCourseReviewsStore,
-} from '../../../store/submitted-course-reviews.store';
+  useCourseReviewPreviews,
+  useMyReviewIds,
+  useReviewDelete,
+  useReviewDetailModal,
+} from '../../../hooks/useReviews';
+import { useAuthStore } from '../../../store/auth.store';
+import { mapCourseReviewPreviews } from '../mappers/courseReviewMapper';
 import BackButton from '../../local-recommendation/components/BackButton';
 import {
   getCourseReviewsPath,
@@ -40,7 +47,6 @@ const MAP_MARGIN_TOP = 24;
 const STOP_LIST_MARGIN_TOP = 0;
 const REVIEW_MARGIN_TOP = 24;
 const REVIEW_BUTTON_MARGIN_TOP = 12;
-const EMPTY_REVIEWS: readonly CourseDetail['reviews'][number][] = [];
 
 export interface CourseDetailLayoutProps {
   readonly course: CourseDetail;
@@ -103,13 +109,15 @@ function CourseDetailLayoutContent({
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
-  const submittedReviews = useSubmittedCourseReviewsStore(
-    (state) =>
-      state.reviewsByCourse[
-        getSubmittedCourseReviewKey(reviewType, course.id)
-      ] ?? EMPTY_REVIEWS
+  const numericCourseId = Number(course.id);
+  const { data: courseReviews } = useCourseReviewPreviews(
+    Number.isInteger(numericCourseId) ? numericCourseId : undefined
   );
-  const reviews = [...submittedReviews, ...course.reviews];
+  const myReviewIds = useMyReviewIds();
+  const reviews = mapCourseReviewPreviews(courseReviews?.items, myReviewIds);
+  const { requestDelete, dialogProps } = useReviewDelete();
+  const { openedReview, openReview, closeReview } =
+    useReviewDetailModal(reviews);
 
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
@@ -194,8 +202,10 @@ function CourseDetailLayoutContent({
   };
 
   const handleNavigateCourseReviews = () => {
+    // 후기 목록은 전체보기 화면이 직접 조회한다. 제목만 넘겨서 헤더 문구가
+    // 조회를 기다리지 않고 바로 나오게 한다.
     navigate(getCourseReviewsPath(reviewType, course.id), {
-      state: { courseTitle: course.title, reviews },
+      state: { courseTitle: course.title },
     });
   };
 
@@ -289,7 +299,10 @@ function CourseDetailLayoutContent({
       <div style={{ marginTop: REVIEW_MARGIN_TOP * scale }}>
         <DetailReviewSection
           reviews={reviews}
+          courseTitle={course.title}
           onActionClick={handleNavigateCourseReviews}
+          onReviewDelete={requestDelete}
+          onReviewLongPress={openReview}
         />
       </div>
 
@@ -301,6 +314,15 @@ function CourseDetailLayoutContent({
       >
         <ReviewButton onClick={handleNavigateReview} />
       </div>
+
+      {/* 이미 이 코스의 상세라 '코스 바로가기'는 넣지 않는다. */}
+      <ReviewDetailModal
+        review={openedReview}
+        courseTitle={course.title}
+        onClose={closeReview}
+      />
+
+      <ReviewDeleteDialog {...dialogProps} />
     </ResponsivePageShell>
   );
 }
