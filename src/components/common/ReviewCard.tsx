@@ -1,24 +1,27 @@
 import type { KeyboardEvent } from 'react';
 
-import more from '../../assets/icons/more.svg';
 import darkStar from '../../assets/icons/dark star.svg';
 import star from '../../assets/icons/star.svg';
 
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { useMeasuredScaledHeight } from '../../hooks/useMeasuredScaledHeight';
+import { useLongPress } from '../../hooks/useLongPress';
+
+import ReviewActionMenu from './ReviewActionMenu';
 
 // Figma 390 디자인 기준 리터럴 px (카드 자체 폭 290 기준)
 const CARD_DESIGN_WIDTH = 342;
+const CARD_DESIGN_HEIGHT = 286;
+const COURSE_REVIEW_LIST_CARD_HEIGHT = 278;
 const CARD_PADDING = 16;
 const SECTION_GAP = 12;
-const CARD_RADIUS = 16; // Figma에 명시된 값이 없어 앱 다른 카드들과 톤을 맞춘 값
+const CARD_RADIUS = 12;
 
 const IMAGE_SIZE = 129;
 const IMAGE_GAP = 12;
 const IMAGE_RADIUS = 10;
 
 const TEXT_FONT_SIZE = 14;
-const TEXT_LINE_HEIGHT = 17;
+const TEXT_LINE_HEIGHT = 18;
 
 const AVATAR_SIZE = 28;
 const PROFILE_GAP = 8;
@@ -31,6 +34,7 @@ const STAR_GAP = 2;
 
 export interface ReviewCardProps {
   images?: string[];
+  courseTitle?: string;
   profileImage: string;
   nickname: string;
   meta: string;
@@ -38,12 +42,16 @@ export interface ReviewCardProps {
   rating?: number;
   isMine?: boolean;
   onClick?: () => void;
-  onMoreClick?: () => void;
+  onLongPress?: () => void;
+  onEditClick?: () => void;
+  onDeleteClick?: () => void;
+  variant?: 'default' | 'course-review-list';
   className?: string;
 }
 
 function ReviewCard({
   images = [],
+  courseTitle,
   profileImage,
   nickname,
   meta,
@@ -51,63 +59,86 @@ function ReviewCard({
   rating = 5,
   isMine = false,
   onClick,
-  onMoreClick,
+  onLongPress,
+  onEditClick,
+  onDeleteClick,
+  variant = 'default',
   className = '',
 }: ReviewCardProps) {
   const scale = useGlobalScale();
-  const { innerRef, scaledHeight } = useMeasuredScaledHeight(scale);
+  const isCourseReviewList = variant === 'course-review-list';
+  const cardHeight = isCourseReviewList
+    ? COURSE_REVIEW_LIST_CARD_HEIGHT
+    : CARD_DESIGN_HEIGHT;
 
-  const isClickable = Boolean(onClick);
+  const isClickable = Boolean(onClick || onLongPress);
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
+  const hasSingleImage = images.length === 1;
+  const longPressHandlers = useLongPress({
+    onLongPress: () => onLongPress?.(),
+    onClick,
+  });
 
+  // 길게 누르기는 포인터로만 구분되므로, 키보드에서는 카드를 눌렀을 때 할 수
+  // 있는 일을 실행한다. 짧게 누르기가 없는 화면(홈)에서는 후기 상세를 연다.
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!onClick || event.currentTarget !== event.target) return;
+    const activate = onClick ?? onLongPress;
+
+    if (!activate || event.currentTarget !== event.target) return;
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      onClick();
+      activate();
     }
   };
 
   return (
     <div
       className={`shrink-0 overflow-hidden ${className}`}
-      style={{ width: CARD_DESIGN_WIDTH * scale, height: scaledHeight }}
+      style={{
+        width: CARD_DESIGN_WIDTH * scale,
+        height: cardHeight * scale,
+      }}
     >
       <div
-        ref={innerRef}
         style={{
           width: CARD_DESIGN_WIDTH,
+          height: cardHeight,
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
         }}
       >
         <article
-          onClick={onClick}
+          {...(isClickable ? longPressHandlers : {})}
           onKeyDown={handleKeyDown}
           role={isClickable ? 'button' : undefined}
           tabIndex={isClickable ? 0 : undefined}
-          className={`flex flex-col overflow-hidden bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)] ${
+          className={`flex flex-col overflow-hidden bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)] select-none ${
             isClickable ? 'cursor-pointer' : ''
           }`}
-          style={{ borderRadius: CARD_RADIUS }}
+          style={{ height: cardHeight, borderRadius: CARD_RADIUS }}
         >
           {/* Images: 카드 내부 가로 스크롤, 다음 이미지가 살짝 보이는 peek 효과 */}
           {images.length > 0 && (
             <div
-              className="flex overflow-x-auto scrollbar-hide"
+              className={`flex scrollbar-hide ${
+                hasSingleImage ? 'overflow-hidden' : 'overflow-x-auto'
+              }`}
               style={{
                 gap: IMAGE_GAP,
                 paddingTop: CARD_PADDING,
                 paddingLeft: CARD_PADDING,
+                paddingRight: hasSingleImage ? CARD_PADDING : 0,
               }}
             >
               {images.map((src, index) => (
                 <div
                   key={index}
-                  className="shrink-0 overflow-hidden bg-[#D9D9D9]"
+                  className={`${
+                    hasSingleImage ? 'min-w-0 flex-1' : 'shrink-0'
+                  } overflow-hidden bg-[#D9D9D9]`}
                   style={{
-                    width: IMAGE_SIZE,
+                    width: hasSingleImage ? undefined : IMAGE_SIZE,
                     height: IMAGE_SIZE,
                     borderRadius: IMAGE_RADIUS,
                   }}
@@ -124,11 +155,13 @@ function ReviewCard({
               ))}
 
               {/* 마지막 이미지 뒤에도 카드 패딩만큼 여백 확보 */}
-              <div
-                className="shrink-0"
-                style={{ width: CARD_PADDING - IMAGE_GAP }}
-                aria-hidden="true"
-              />
+              {!hasSingleImage && (
+                <div
+                  className="shrink-0"
+                  style={{ width: CARD_PADDING - IMAGE_GAP }}
+                  aria-hidden="true"
+                />
+              )}
             </div>
           )}
 
@@ -136,44 +169,47 @@ function ReviewCard({
           <div
             className="flex flex-col"
             style={{
-              gap: SECTION_GAP,
+              gap: isCourseReviewList ? 4 : SECTION_GAP,
               padding: CARD_PADDING,
-              paddingTop: images.length > 0 ? SECTION_GAP : CARD_PADDING,
+              paddingTop: CARD_PADDING,
             }}
           >
-            <div className="flex min-w-0 items-start">
+            <div className="flex h-[19px] min-w-0 items-start">
               <p
-                className="line-clamp-2 min-w-0 flex-1 font-normal text-[#1C1C1C]"
+                className="truncate min-w-0 flex-1 font-medium text-[#1C1C1C]"
                 style={{
-                  fontSize: TEXT_FONT_SIZE,
-                  lineHeight: `${TEXT_LINE_HEIGHT}px`,
+                  fontSize: 16,
+                  lineHeight: '19px',
                 }}
               >
-                {content}
+                {courseTitle ?? ''}
               </p>
 
-              {isMine && onMoreClick ? (
-                <button
-                  type="button"
-                  aria-label="리뷰 메뉴"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onMoreClick?.();
-                  }}
-                  className="-mt-[3px] -mr-[3px] ml-2 flex shrink-0 items-center justify-center"
-                  style={{ width: 20, height: 20 }}
-                >
-                  <img
-                    src={more}
-                    alt=""
-                    aria-hidden="true"
-                    style={{ width: 20, height: 20 }}
-                  />
-                </button>
+              {isMine ? (
+                <ReviewActionMenu
+                  onEditClick={onEditClick}
+                  onDeleteClick={onDeleteClick}
+                />
               ) : null}
             </div>
 
-            <div className="flex items-center" style={{ gap: PROFILE_GAP }}>
+            <p
+              className="line-clamp-2 h-9 font-normal text-[#1C1C1C]"
+              style={{
+                fontSize: TEXT_FONT_SIZE,
+                lineHeight: `${TEXT_LINE_HEIGHT}px`,
+              }}
+            >
+              {content}
+            </p>
+
+            <div
+              className="flex min-h-[30px] items-center"
+              style={{
+                gap: PROFILE_GAP,
+                marginTop: isCourseReviewList ? 8 : 0,
+              }}
+            >
               {profileImage ? (
                 <img
                   src={profileImage}

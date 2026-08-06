@@ -22,14 +22,21 @@ const EMPTY_STATE_FONT_SIZE = 14;
 
 export interface DetailReviewSectionProps {
   readonly reviews: readonly CourseReview[];
+  /** 코스별 후기 응답에는 코스 제목이 없어 상세 화면이 알려준다. */
+  readonly courseTitle?: string;
   readonly className?: string;
   readonly onActionClick?: () => void;
+  readonly onReviewDelete?: (reviewId: number) => void;
+  readonly onReviewLongPress?: (reviewId: number) => void;
 }
 
 export function DetailReviewSection({
   reviews,
+  courseTitle,
   className = '',
   onActionClick,
+  onReviewDelete,
+  onReviewLongPress,
 }: DetailReviewSectionProps) {
   const scale = useGlobalScale();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -119,12 +126,21 @@ export function DetailReviewSection({
             >
               <ReviewCard
                 images={review.images}
+                courseTitle={courseTitle}
                 profileImage={review.profileImage}
                 nickname={review.nickname}
                 meta={review.meta}
                 content={review.content}
                 rating={review.rating}
                 isMine={review.isMine}
+                onDeleteClick={
+                  onReviewDelete ? () => onReviewDelete(review.id) : undefined
+                }
+                onLongPress={
+                  onReviewLongPress
+                    ? () => onReviewLongPress(review.id)
+                    : undefined
+                }
                 className="[&>div>article]:!bg-background"
               />
             </div>

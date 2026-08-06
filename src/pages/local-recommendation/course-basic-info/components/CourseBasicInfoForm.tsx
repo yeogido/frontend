@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -20,6 +21,7 @@ const LARGE_BORDER_RADIUS = 12;
 const SUBMIT_MARGIN_TOP = 40;
 const SUBMIT_HEIGHT = 52;
 const SUBMIT_FONT_SIZE = 16;
+const ERROR_FONT_SIZE = 14;
 
 interface CourseBasicInfoFormProps {
   onNext: (values: CourseBasicInfoValues) => void | Promise<void>;
@@ -31,12 +33,13 @@ function CourseBasicInfoForm({
   defaultValues,
 }: CourseBasicInfoFormProps) {
   const scale = useGlobalScale();
+  const [invalidSubmitCount, setInvalidSubmitCount] = useState(0);
 
   const {
     register,
     control,
     handleSubmit,
-    formState: { isSubmitting, isValid },
+    formState: { isSubmitting, errors },
   } = useForm<CourseBasicInfoValues>({
     resolver: zodResolver(courseBasicInfoSchema),
     mode: 'onChange',
@@ -62,7 +65,9 @@ function CourseBasicInfoForm({
 
   return (
     <form
-      onSubmit={handleSubmit(onNext)}
+      onSubmit={handleSubmit(onNext, () =>
+        setInvalidSubmitCount((count) => count + 1)
+      )}
       style={{ marginTop: FORM_MARGIN_TOP * scale }}
     >
       <div className="flex flex-col" style={{ gap: FIELD_GAP * scale }}>
@@ -98,24 +103,36 @@ function CourseBasicInfoForm({
           />
         </FormField>
 
-        <Controller
-          control={control}
-          name="visitStartMonth"
-          render={({ field: startField }) => (
-            <Controller
-              control={control}
-              name="visitEndMonth"
-              render={({ field: endField }) => (
-                <VisitMonthRange
-                  startValue={startField.value}
-                  endValue={endField.value}
-                  onStartChange={startField.onChange}
-                  onEndChange={endField.onChange}
-                />
-              )}
-            />
-          )}
-        />
+        <div>
+          <Controller
+            control={control}
+            name="visitStartMonth"
+            render={({ field: startField }) => (
+              <Controller
+                control={control}
+                name="visitEndMonth"
+                render={({ field: endField }) => (
+                  <VisitMonthRange
+                    startValue={startField.value}
+                    endValue={endField.value}
+                    onStartChange={startField.onChange}
+                    onEndChange={endField.onChange}
+                  />
+                )}
+              />
+            )}
+          />
+          {errors.visitEndMonth?.type === 'custom' ? (
+            <p
+              key={invalidSubmitCount}
+              className="text-main-5 animate-blink-alert mt-2"
+              style={{ fontSize: ERROR_FONT_SIZE * scale }}
+              role="alert"
+            >
+              {errors.visitEndMonth.message}
+            </p>
+          ) : null}
+        </div>
 
         <Controller
           control={control}
@@ -136,7 +153,7 @@ function CourseBasicInfoForm({
 
       <button
         type="submit"
-        disabled={!isValid || isSubmitting}
+        disabled={isSubmitting}
         className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full font-semibold disabled:cursor-not-allowed"
         style={{
           marginTop: SUBMIT_MARGIN_TOP * scale,

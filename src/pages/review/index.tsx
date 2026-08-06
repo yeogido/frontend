@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { getApiErrorMessage } from '../../apis/common';
 import backIcon from '../../assets/icons/vector.svg';
 import { ResponsivePageShell } from '../../components/layout';
+import { useToast } from '../../components/toast';
+import { useCourseDetail } from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import {
-  useSubmittedCourseReviewsStore,
-  type SubmittedCourseReviewType,
-} from '../../store/submitted-course-reviews.store';
+import { useCreateCourseReview } from '../../hooks/useReviews';
 
+import { mapCourseDetailToReviewCourse } from './reviewCourse';
 import {
   PhotoUploader,
   ReviewCourseCard,
@@ -21,6 +22,7 @@ import {
 } from './components';
 import {
   appendSelectedReviewPhotos,
+  DEFAULT_REVIEW_RATING,
   getSelectedReviewPhotos,
   isReviewFormValid,
   MAX_REVIEW_PHOTOS,
@@ -44,13 +46,13 @@ export type ReviewTargetType =
   | 'local-business'
   | string;
 
-interface CourseData {
-  title: string;
-  image?: string;
-  duration?: string;
-  courseType?: string;
-  companion?: string;
-  type?: ReviewTargetType;
+// 리뷰 작성 API는 추천 코스(GET/POST /courses/{courseId}/reviews)만 지원한다.
+const REVIEWABLE_TARGET_TYPES = ['yeogido-course', 'local-course'] as const;
+
+function isReviewableTargetType(
+  targetType: ReviewTargetType
+): targetType is (typeof REVIEWABLE_TARGET_TYPES)[number] {
+  return REVIEWABLE_TARGET_TYPES.some((type) => type === targetType);
 }
 
 function ReviewPage() {
@@ -65,69 +67,54 @@ function ReviewPage() {
     searchParams.get('targetId') ||
     searchParams.get('courseId');
 
-  const [courseData, setCourseData] = useState<CourseData | null>(null);
-  const [isLoadingCourse, setIsLoadingCourse] = useState(Boolean(targetId));
+  const isReviewableTarget = isReviewableTargetType(targetType);
+  const parsedCourseId = Number(targetId);
+  const courseId =
+    isReviewableTarget && targetId && Number.isInteger(parsedCourseId)
+      ? parsedCourseId
+      : null;
 
-  const [rating, setRating] = useState<number | null>(null);
+  const {
+    data: courseDetail,
+    isPending,
+    isError: isCourseError,
+  } = useCourseDetail(courseId);
+  // courseId가 없으면 쿼리가 비활성이라 isPending이 계속 true로 남는다.
+  const isLoadingCourse = courseId !== null && isPending;
+  const course = courseDetail
+    ? mapCourseDetailToReviewCourse(courseDetail)
+    : null;
+
+  // 수정 모달과 마찬가지로 5점에서 시작한다. 0개로 두면 별점을 안 건드린
+  // 사람이 제출 버튼이 왜 비활성인지 알기 어렵다.
+  const [rating, setRating] = useState<number | null>(DEFAULT_REVIEW_RATING);
   const [review, setReview] = useState('');
   const [selectedPhotos, setSelectedPhotos] = useState<
     Array<{ file: File; previewUrl: string }>
   >([]);
   const photoPickerRef = useRef<HTMLInputElement>(null);
   const selectedPhotosRef = useRef(selectedPhotos);
-  const submittedPhotoUrlsRef = useRef(new Set<string>());
-  const addSubmittedReview = useSubmittedCourseReviewsStore(
-    (state) => state.addReview
-  );
+  const { showToast } = useToast();
+  const createReview = useCreateCourseReview();
   const isMaxPhotosReached = selectedPhotos.length >= MAX_REVIEW_PHOTOS;
   const canSubmit = isReviewFormValid({
     rating,
     review,
     photoCount: selectedPhotos.length,
   });
-
-  // targetType 및 targetId에 맞춰 코스/장소 데이터 API 조회
-  useEffect(() => {
-    if (!targetId) return;
-
-    // TODO: 백엔드 API 연동 시 targetType별 분기 처리
-    // 예: targetType === 'local-recommendation' ? fetchLocalRecommendation(targetId) : fetchYeogidoCourse(targetId)
-    const timer = setTimeout(() => {
-      if (targetType === 'local-recommendation') {
-        setCourseData({
-          title: '로컬 추천 산책 코스',
-          duration: '당일치기',
-          courseType: '추천 코스',
-          companion: '친구와 함께',
-          type: targetType,
-        });
-      } else {
-        setCourseData({
-          title: '강릉 혼자 여행 코스',
-          duration: '2박 3일',
-          courseType: '뚜벅이 코스',
-          companion: '혼자',
-          type: targetType,
-        });
-      }
-      setIsLoadingCourse(false);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [targetType, targetId]);
+  // 어느 코스에 다는 후기인지 확인되기 전에는 보낼 수 없다. 코스를 못 찾은
+  // 상태에서 눌리면 작성한 내용이 그대로 날아간다.
+  const isSubmittable =
+    canSubmit && course !== null && !isLoadingCourse && !createReview.isPending;
 
   useEffect(() => {
     selectedPhotosRef.current = selectedPhotos;
   }, [selectedPhotos]);
 
   useEffect(() => {
-    const submittedPhotoUrls = submittedPhotoUrlsRef.current;
-
     return () => {
       selectedPhotosRef.current.forEach(({ previewUrl }) => {
-        if (!submittedPhotoUrls.has(previewUrl)) {
-          URL.revokeObjectURL(previewUrl);
-        }
+        URL.revokeObjectURL(previewUrl);
       });
     };
   }, []);
@@ -177,33 +164,28 @@ function ReviewPage() {
     photoPickerRef.current?.click();
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canSubmit) return;
+    if (!isSubmittable || rating === null) return;
 
-    if (
-      targetId &&
-      (targetType === 'yeogido-course' || targetType === 'local-course') &&
-      rating !== null
-    ) {
-      selectedPhotos.forEach(({ previewUrl }) =>
-        submittedPhotoUrlsRef.current.add(previewUrl)
-      );
-      addSubmittedReview({
-        courseType: targetType as SubmittedCourseReviewType,
-        courseId: targetId,
-        images: selectedPhotos.map(({ previewUrl }) => previewUrl),
-        content: review.trim(),
-        rating,
-      });
-      navigate(`/${targetType}/detail/${targetId}`, { replace: true });
+    // 추천 코스 외의 대상(소상공인 등)은 아직 후기 API가 없어 저장하지 않는다.
+    if (courseId === null) {
+      navigate(-1);
       return;
     }
 
-    navigate(-1);
+    try {
+      await createReview.mutateAsync({
+        courseId,
+        rating,
+        content: review.trim(),
+        photos: selectedPhotos.map(({ file }) => file),
+      });
 
-    // TODO: 백엔드 리뷰 작성 API 연동 (POST /api/reviews)
-    // payload: { targetType, targetId, rating, review, photos: selectedPhotos }
+      navigate(`/${targetType}/detail/${courseId}`, { replace: true });
+    } catch (error) {
+      showToast(getApiErrorMessage(error, '후기를 등록하지 못했습니다.'));
+    }
   };
 
   const navigate = useNavigate();
@@ -244,16 +226,16 @@ function ReviewPage() {
       </button>
       <form onSubmit={handleSubmit}>
         <ReviewHeader />
-        <ReviewCourseCard
-          course={{
-            id: targetId ?? 'fallback',
-            title: courseData?.title ?? '강릉 혼자 여행 코스',
-            thumbnailUrl: courseData?.image,
-            duration: courseData?.duration ?? '2박 3일',
-            transport: courseData?.courseType ?? '뚜벅이 코스',
-            companion: courseData?.companion ?? '혼자',
-          }}
-        />
+        {course ? (
+          <ReviewCourseCard course={course} />
+        ) : isCourseError ? (
+          <p
+            className="text-gray-4 text-center font-medium"
+            style={{ marginTop: 24 * scale, fontSize: 13 * scale }}
+          >
+            코스를 불러오지 못해 후기를 작성할 수 없습니다.
+          </p>
+        ) : null}
 
         <PhotoUploader
           inputRef={photoPickerRef}
@@ -278,11 +260,9 @@ function ReviewPage() {
 
         <button
           type="submit"
-          disabled={!canSubmit || isLoadingCourse}
+          disabled={!isSubmittable}
           className={`w-full font-semibold transition-colors disabled:cursor-not-allowed ${
-            canSubmit && !isLoadingCourse
-              ? 'bg-main-5 text-white'
-              : 'bg-gray-2 text-gray-4'
+            isSubmittable ? 'bg-main-5 text-white' : 'bg-gray-2 text-gray-4'
           }`}
           style={{
             marginTop: SUBMIT_BUTTON_MARGIN_TOP * scale,
@@ -291,7 +271,7 @@ function ReviewPage() {
             fontSize: SUBMIT_BUTTON_FONT_SIZE * scale,
           }}
         >
-          후기 남기기
+          {createReview.isPending ? '등록 중...' : '후기 남기기'}
         </button>
       </form>
     </ResponsivePageShell>

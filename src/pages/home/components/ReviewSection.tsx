@@ -3,59 +3,47 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ReviewCard,
   ReviewCardSkeleton,
+  ReviewDeleteDialog,
+  ReviewDetailModal,
+  ReviewEditModal,
   SectionHeader,
 } from '../../../components/common';
 import { useNavigate } from 'react-router-dom';
 
+import { useNavigateToCourseDetail } from '../../../hooks/useCourses';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import {
+  useMyReviewIds,
+  useRecentReviews,
+  useReviewDelete,
+  useReviewDetailModal,
+  useReviewEdit,
+} from '../../../hooks/useReviews';
+import { toReviewCardProps } from '../../../utils/reviewCard';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 32;
 const SECTION_GAP = 12;
 const SECTION_PADDING_X = 24;
+const REVIEW_CARD_GAP = 12;
 
 const DOT_GAP = 4;
 const DOT_SIZE = 4;
 const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
-
-const reviews = [
-  {
-    id: 1,
-    images: ['', ''],
-    profileImage: '',
-    nickname: '민지',
-    meta: '20대 여',
-    content:
-      '혼자 떠난 강릉 여행이었는데 바다도 예쁘고 코스도 알차서 정말 만족스러웠어요.',
-    rating: 5,
-  },
-  {
-    id: 2,
-    images: [''],
-    profileImage: '',
-    nickname: '준호',
-    meta: '30대 남',
-    content:
-      '맛집과 카페 동선이 잘 짜여 있어서 하루 동안 편하게 여행했습니다.',
-    rating: 5,
-  },
-  {
-    id: 3,
-    images: ['', '', ''],
-    profileImage: '',
-    nickname: '수진',
-    meta: '20대 여',
-    content:
-      '사진 찍기 좋은 장소가 많고 코스가 자연스럽게 이어져서 즐거운 여행이었어요.',
-    rating: 5,
-  },
-];
+const ERROR_TEXT_SIZE = 13;
 
 function ReviewSection() {
-  const isLoading = false;
-  // const isLoading = true; 스켈레톤 확인용
-
+  const { data, isPending, isError } = useRecentReviews();
+  const myReviewIds = useMyReviewIds();
+  const reviews = (data?.items ?? []).map((review) =>
+    toReviewCardProps(review, myReviewIds)
+  );
+  const { requestDelete, dialogProps } = useReviewDelete();
+  const { requestEdit, editorProps } = useReviewEdit();
+  const { openedReview, openReview, closeReview } =
+    useReviewDetailModal(reviews);
+  const { goToCourseDetail } = useNavigateToCourseDetail();
   const navigate = useNavigate();
   const scale = useGlobalScale();
 
@@ -81,7 +69,9 @@ function ReviewSection() {
           return;
         }
 
-        const index = Math.round(container.scrollLeft / itemWidth);
+        const index = Math.round(
+          container.scrollLeft / (itemWidth + REVIEW_CARD_GAP * scale)
+        );
         setActiveIndex(index);
       });
     };
@@ -92,7 +82,7 @@ function ReviewSection() {
       container.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [scale]);
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current;
@@ -102,10 +92,17 @@ function ReviewSection() {
     }
 
     container.scrollTo({
-      left: container.clientWidth * index,
+      left: (container.clientWidth + REVIEW_CARD_GAP * scale) * index,
       behavior: 'smooth',
     });
   };
+
+  // 후기가 아직 없는 건 정상 상태라 섹션을 통째로 감춘다. 제목만 남고 캐러셀이
+  // 비어 있으면 아직 로딩 중인 것처럼 보이기 때문이다. 반면 조회 실패는
+  // 감추면 원인을 알 수 없으므로 안내를 남긴다.
+  if (!isPending && !isError && reviews.length === 0) {
+    return null;
+  }
 
   return (
     <section
@@ -123,13 +120,23 @@ function ReviewSection() {
         onActionClick={() => navigate('/recent-review-courses')}
       />
 
+      {isError && !isPending && (
+        <p
+          className="text-gray-4 text-center font-medium"
+          style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+        >
+          후기를 불러오지 못했습니다.
+        </p>
+      )}
+
       {/* Carousel: 카드 1개가 화면을 꽉 채우며 스와이프로 다음 카드로 스냅 이동 */}
       <div
         ref={scrollRef}
         className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
+        style={{ gap: REVIEW_CARD_GAP * scale }}
       >
-        {isLoading
-          ? Array.from({ length: 3 }).map((_, index) => (
+        {isPending
+          ? Array.from({ length: 1 }).map((_, index) => (
               <div
                 key={index}
                 className="w-full shrink-0 snap-start snap-always"
@@ -144,18 +151,24 @@ function ReviewSection() {
               >
                 <ReviewCard
                   images={review.images}
+                  courseTitle={review.courseTitle}
                   profileImage={review.profileImage}
                   nickname={review.nickname}
                   meta={review.meta}
                   content={review.content}
                   rating={review.rating}
+                  isMine={review.isMine}
+                  onDeleteClick={() => requestDelete(review.id)}
+                  onEditClick={() => requestEdit(review)}
+                  onClick={() => void goToCourseDetail(review.courseId)}
+                  onLongPress={() => openReview(review.id)}
                 />
               </div>
             ))}
       </div>
 
       {/* Pagination dots */}
-      {!isLoading && reviews.length > 1 && (
+      {!isPending && reviews.length > 1 && (
         <div
           className="flex items-center justify-center"
           style={{ gap: DOT_GAP * scale }}
@@ -182,6 +195,24 @@ function ReviewSection() {
           ))}
         </div>
       )}
+
+      {/*
+        홈 후기는 좌우 스와이프로 넘기는 캐러셀이지만, useLongPress가 10px
+        넘게 움직이면 클릭도 함께 취소해서 스와이프 중에는 이동이 일어나지
+        않는다. 그래서 카드 탭으로도 코스 상세를 연다.
+      */}
+      <ReviewDetailModal
+        review={openedReview}
+        courseTitle={openedReview?.courseTitle}
+        onClose={closeReview}
+        onGoToCourse={
+          openedReview && (() => void goToCourseDetail(openedReview.courseId))
+        }
+      />
+
+      <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
+
+      <ReviewDeleteDialog {...dialogProps} />
     </section>
   );
 }

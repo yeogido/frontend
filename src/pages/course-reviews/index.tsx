@@ -1,16 +1,30 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { ReviewCard } from '../../components/common';
+import {
+  ReviewCard,
+  ReviewCardSkeleton,
+  ReviewDeleteDialog,
+  ReviewDetailModal,
+} from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
+import { useCourseDetail } from '../../hooks/useCourses';
+import {
+  getCourseReviewsFromPages,
+  isCourseNotFoundError,
+  useCourseReviews,
+  useMyReviewIds,
+  useReviewDelete,
+  useReviewDetailModal,
+} from '../../hooks/useReviews';
 import { getGutter } from '../../utils/responsiveLayout';
 import { ReviewButton } from '../detail/components';
-import type { CourseReview } from '../detail/types/courseDetail';
+import { mapCourseReviewPreviews } from '../detail/mappers/courseReviewMapper';
 
 import CourseReviewSortDropdown from './CourseReviewSortDropdown';
-import { getCourseReviewList } from './courseReviewData';
 import type { CourseReviewType } from './courseReviewRoute';
 import type { CourseReviewSort } from './courseReviewSort';
 
@@ -25,10 +39,10 @@ const FILTER_MARGIN_TOP = 11;
 const LIST_MARGIN_TOP = 12;
 const LIST_GAP = 16;
 const REVIEW_BUTTON_BOTTOM = 32;
+const MESSAGE_TEXT_SIZE = 13;
 
 interface CourseReviewListLocationState {
   courseTitle?: string;
-  reviews?: readonly CourseReview[];
 }
 
 function CourseReviewsPage() {
@@ -37,24 +51,83 @@ function CourseReviewsPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const [sort, setSort] = useState<CourseReviewSort>('latest');
-  const { courseTitle = '', reviews = [] } =
+  const { courseTitle: courseTitleFromState = '' } =
     (location.state as CourseReviewListLocationState | null) ?? {};
   const courseType: CourseReviewType = location.pathname.startsWith(
     '/local-course/'
   )
     ? 'local-course'
     : 'yeogido-course';
-  const displayReviews = getCourseReviewList(reviews);
-  const sortedReviews = useMemo(
-    () =>
-      sort === 'rating'
-        ? [...displayReviews].sort(
-            (first, second) => second.rating - first.rating
-          )
-        : displayReviews,
-    [displayReviews, sort]
+
+  const parsedCourseId = Number(courseId);
+  const validCourseId = Number.isInteger(parsedCourseId)
+    ? parsedCourseId
+    : undefined;
+  const {
+    data,
+    error,
+    isPending,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useCourseReviews(validCourseId, sort === 'rating' ? 'RATING' : 'LATEST');
+  // 코스 상세에서 넘어오면 제목이 state에 실려 오지만, 주소로 바로 들어오면
+  // 없다. 그때만 코스를 읽어 채운다(state가 있으면 캐시가 없어도 조회하지
+  // 않는다).
+  const {
+    data: courseDetail,
+    error: courseError,
+    isError: isCourseError,
+  } = useCourseDetail(courseTitleFromState ? null : (validCourseId ?? null));
+  const courseTitle = courseTitleFromState || (courseDetail?.title ?? '');
+
+  // 코스가 없는 것과 후기 조회가 실패한 것은 사용자가 할 수 있는 일이 다르다.
+  //
+  // 주소로 바로 들어오면 코스가 없다는 사실을 코스 조회가 먼저 알려준다.
+  // 후기 목록은 없는 코스에도 빈 결과를 돌려줄 수 있어, 후기 쪽만 보면
+  // "아직 등록된 후기가 없습니다"로 잘못 안내하고 작성 버튼까지 남는다.
+  const isCourseMissing =
+    validCourseId === undefined ||
+    (isError && isCourseNotFoundError(error)) ||
+    (isCourseError && isCourseNotFoundError(courseError));
+  // courseId가 잘못되면 쿼리가 비활성이라 isPending이 계속 true다. 그대로
+  // 두면 스피너가 멈추지 않으므로 로딩으로 보지 않는다.
+  const isLoading = validCourseId !== undefined && isPending;
+  const myReviewIds = useMyReviewIds();
+  const { requestDelete, dialogProps } = useReviewDelete();
+
+  const reviews = mapCourseReviewPreviews(
+    getCourseReviewsFromPages(data?.pages),
+    myReviewIds
   );
-  const reviewButton = (
+  const { openedReview, openReview, closeReview } =
+    useReviewDetailModal(reviews);
+
+  const handleIntersect = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadMoreRef = useInfiniteScroll({
+    enabled: Boolean(hasNextPage) && !isFetchingNextPage,
+    onIntersect: handleIntersect,
+  });
+  // 이 화면은 이미 코스가 정해져 있어 타입 조회 없이 경로를 만들 수 있다.
+  const courseDetailPath = `/${courseType}/detail/${courseId}`;
+
+  const renderMessage = (message: string) => (
+    <p
+      className="text-gray-4 text-center font-medium"
+      style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
+    >
+      {message}
+    </p>
+  );
+
+  // 없는 코스에 후기를 쓰러 갈 수는 없다.
+  const reviewButton = isCourseMissing ? null : (
     <div
       className="pointer-events-none fixed bottom-0 left-1/2 z-30 flex w-full max-w-[500px] -translate-x-1/2"
       style={{
@@ -76,7 +149,7 @@ function CourseReviewsPage() {
       mode="main-layout"
       topPadding={PAGE_PADDING_TOP}
       bottomPadding={PAGE_PADDING_BOTTOM}
-      className="bg-[#F9F9F9]"
+      className="bg-[#F1F1F1]"
     >
       <section className="flex flex-col">
         <div>
@@ -112,22 +185,57 @@ function CourseReviewsPage() {
           className="flex flex-col"
           style={{ marginTop: LIST_MARGIN_TOP * scale, gap: LIST_GAP * scale }}
         >
-          {sortedReviews.map((review) => (
-            <ReviewCard
-              key={review.id}
-              images={review.images}
-              profileImage={review.profileImage}
-              nickname={review.nickname}
-              meta={review.meta}
-              content={review.content}
-              rating={review.rating}
-              isMine={review.isMine}
-              className="[&>div>article]:!bg-[#F1F1F1]"
-            />
-          ))}
+          {isLoading ? (
+            Array.from({ length: 1 }).map((_, index) => (
+              <ReviewCardSkeleton key={index} variant="course-review-list" />
+            ))
+          ) : isCourseMissing ? (
+            renderMessage('삭제되었거나 존재하지 않는 코스입니다.')
+          ) : isError ? (
+            renderMessage('후기를 불러오지 못했습니다.')
+          ) : reviews.length === 0 ? (
+            renderMessage('아직 등록된 후기가 없습니다.')
+          ) : (
+            <>
+              {reviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  images={review.images}
+                  courseTitle={courseTitle || undefined}
+                  profileImage={review.profileImage}
+                  nickname={review.nickname}
+                  meta={review.meta}
+                  content={review.content}
+                  rating={review.rating}
+                  isMine={review.isMine}
+                  onDeleteClick={() => requestDelete(review.id)}
+                  onClick={() => navigate(courseDetailPath)}
+                  onLongPress={() => openReview(review.id)}
+                  variant="course-review-list"
+                  className="[&>div>article]:!bg-[#F9F9F9]"
+                />
+              ))}
+
+              <div ref={loadMoreRef} aria-hidden="true" />
+
+              {isFetchingNextPage && (
+                <ReviewCardSkeleton variant="course-review-list" />
+              )}
+            </>
+          )}
         </div>
       </section>
-      {typeof document === 'undefined'
+
+      <ReviewDetailModal
+        review={openedReview}
+        courseTitle={courseTitle || undefined}
+        onClose={closeReview}
+        onGoToCourse={() => navigate(courseDetailPath)}
+      />
+
+      <ReviewDeleteDialog {...dialogProps} />
+
+      {!reviewButton || typeof document === 'undefined'
         ? reviewButton
         : createPortal(reviewButton, document.body)}
     </ResponsivePageShell>
