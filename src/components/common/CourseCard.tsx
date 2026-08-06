@@ -1,4 +1,11 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import {
+  FaDog,
+  FaHeart,
+  FaPeopleGroup,
+  FaPeopleRoof,
+  FaUser,
+} from 'react-icons/fa6';
 
 import calendar from '../../assets/icons/calendar.svg';
 import heart from '../../assets/icons/heart.svg';
@@ -9,6 +16,34 @@ import people from '../../assets/icons/people.svg';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 
 import TagChip, { type TagType } from './TagChip';
+
+function getCompanionIcon(label?: string | null) {
+  if (!label) return null;
+
+  const key = label.trim().toUpperCase();
+
+  if (key === 'SOLO' || key === 'ALONE' || label.includes('혼자')) {
+    return FaUser;
+  }
+  if (key === 'FRIEND' || label.includes('친구')) {
+    return FaPeopleGroup;
+  }
+  if (key === 'COUPLE' || label.includes('연인')) {
+    return FaHeart;
+  }
+  if (key === 'FAMILY' || label.includes('가족')) {
+    return FaPeopleRoof;
+  }
+  if (
+    key === 'PET' ||
+    label.includes('반려동물') ||
+    label.includes('반려견')
+  ) {
+    return FaDog;
+  }
+
+  return null;
+}
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
 // 개별 vw 계산 대신 useScaleFrame이 전체를 한 번에 scale한다.
@@ -207,23 +242,37 @@ function CourseCard({
             ref={metaContainerRef}
             className="mt-2 flex flex-nowrap items-center gap-1 overflow-hidden"
           >
-            {metaItems.slice(0, visibleMetaCount).map((item) => (
-              <div
-                key={item.key}
-                className="flex shrink-0 items-center gap-[2px]"
-              >
-                <img
-                  src={item.icon}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-[14px] w-[14px] shrink-0"
-                />
+            {metaItems.slice(0, visibleMetaCount).map((item) => {
+              const CompanionIcon =
+                item.key === 'companion' ? getCompanionIcon(item.label) : null;
 
-                <span className="text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]">
-                  {item.label}
-                </span>
-              </div>
-            ))}
+              return (
+                <div
+                  key={item.key}
+                  className="flex shrink-0 items-center gap-[2px]"
+                >
+                  {CompanionIcon ? (
+                    <span
+                      className="flex h-[14px] w-[14px] shrink-0 items-center justify-center text-[#7F7F7F]"
+                      aria-hidden="true"
+                    >
+                      <CompanionIcon style={{ fontSize: 11 }} />
+                    </span>
+                  ) : (
+                    <img
+                      src={item.icon}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-[14px] w-[14px] shrink-0"
+                    />
+                  )}
+
+                  <span className="text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]">
+                    {item.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           {/* Tags: 측정 전용 hidden 영역 */}

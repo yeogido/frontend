@@ -18,6 +18,8 @@ export type CourseInfoBadgeTuple = readonly [
 export interface CourseReview {
   readonly id: number;
   readonly images: string[];
+  /** 수정 화면이 "유지할 사진"을 지목하는 데 쓴다. */
+  readonly editableImages: { imageKey: string; imageUrl: string }[];
   readonly profileImage: string;
   readonly nickname: string;
   readonly meta: string;

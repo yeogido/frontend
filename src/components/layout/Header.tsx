@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import menu from '../../assets/icons/menu.svg';
 import search from '../../assets/icons/search.svg';
@@ -20,7 +20,9 @@ interface HeaderProps {
 
 function Header({ onMenuClick }: HeaderProps) {
   const scale = useGlobalScale();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
+  const isProfilePage = pathname === '/profile';
 
   const iconFrameSize = Math.max(ICON_FRAME_SIZE, ICON_FRAME_SIZE * scale);
   const iconGap = ICON_GAP * scale;
@@ -59,6 +61,7 @@ function Header({ onMenuClick }: HeaderProps) {
           <div
             className="relative shrink-0"
             style={{
+              display: isProfilePage ? 'none' : undefined,
               width: iconFrameSize,
               height: iconFrameSize,
             }}

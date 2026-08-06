@@ -27,6 +27,7 @@ export interface DetailReviewSectionProps {
   readonly className?: string;
   readonly onActionClick?: () => void;
   readonly onReviewDelete?: (reviewId: number) => void;
+  readonly onReviewEdit?: (review: CourseReview) => void;
   readonly onReviewLongPress?: (reviewId: number) => void;
 }
 
@@ -36,6 +37,7 @@ export function DetailReviewSection({
   className = '',
   onActionClick,
   onReviewDelete,
+  onReviewEdit,
   onReviewLongPress,
 }: DetailReviewSectionProps) {
   const scale = useGlobalScale();
@@ -135,6 +137,9 @@ export function DetailReviewSection({
                 isMine={review.isMine}
                 onDeleteClick={
                   onReviewDelete ? () => onReviewDelete(review.id) : undefined
+                }
+                onEditClick={
+                  onReviewEdit ? () => onReviewEdit(review) : undefined
                 }
                 onLongPress={
                   onReviewLongPress

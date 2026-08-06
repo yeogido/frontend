@@ -1,4 +1,5 @@
 import { toReviewerMetaLabel } from '../../../utils/courseEnumLabels.ts';
+import { toEditableImages, toImageUrls } from '../../../utils/reviewCard.ts';
 
 import type { CourseReviewPreview } from '../../../types/review.type';
 import type { CourseReview } from '../types/courseDetail';
@@ -16,7 +17,8 @@ function mapCourseReviewPreview(
 ): CourseReview {
   return {
     id: preview.reviewId,
-    images: preview.imageUrls ?? [],
+    images: toImageUrls(preview.images),
+    editableImages: toEditableImages(preview.images),
     profileImage: preview.author?.profileImageUrl ?? '',
     nickname: preview.author?.nickname ?? '',
     meta: toReviewerMetaLabel(preview.author?.ageGroup, preview.author?.gender),

@@ -6,6 +6,35 @@ export type ContentCategory =
 
 export type ContentSort = 'RECOMMEND' | 'LIKE' | 'DISTANCE' | 'DEADLINE';
 
+export type ContentPlaceSource = 'KAKAO' | 'TOUR_API';
+
+export interface ContentCreatePlace {
+  externalPlaceId: string;
+  source: ContentPlaceSource;
+  name: string;
+  roadAddress: string;
+  lotAddress: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface ContentCreateRequest {
+  place: ContentCreatePlace;
+  title: string;
+  description: string;
+  category: ContentCategory;
+  startDate: string;
+  endDate: string;
+  contactPhone: string;
+  officialUrl: string;
+  thumbnailImageKey: string;
+  hashtagIds: number[];
+}
+
+export interface ContentCreateResult {
+  contentId: number;
+}
+
 export interface CultureContent {
   contentId: number;
   placeId: number;
