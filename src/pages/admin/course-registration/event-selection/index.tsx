@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { getCultureContents } from '../../../../apis/contents.api';
+import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 
 import SelectedItemsSheet from '../../../local-recommendation/components/SelectedItemsSheet';
@@ -13,9 +14,12 @@ import { searchFestivals } from '../../../local-recommendation/event-selection/f
 import type { FestivalItem } from '../../../local-recommendation/event-selection/types';
 
 const SEARCH_DEBOUNCE_MS = 300;
+// Figma 390 디자인 기준 리터럴 px
+const STATUS_MESSAGE_FONT_SIZE = 14;
 
 function AdminCourseEventSelectionPage() {
   const navigate = useNavigate();
+  const scale = useGlobalScale();
   const region = useAdminCourseRegistrationStore((state) => state.region);
   const selectedEvents = useAdminCourseRegistrationStore(
     (state) => state.selectedEvents
@@ -44,6 +48,12 @@ function AdminCourseEventSelectionPage() {
     return () => window.clearTimeout(timeoutId);
   }, [trimmedQuery]);
 
+  // debouncedQuery가 trimmedQuery를 따라잡기 전(디바운스 대기 구간)에는
+  // 이전 검색어 기준 결과가 여전히 남아있어, 타이핑 중인데도 stale한
+  // 이전 결과가 그대로 보이는 문제가 있었다. 이 구간은 isFetching과 별도로
+  // "검색 대기 중"으로 취급해 이전 결과를 숨기고 검색 중 상태를 보여준다.
+  const isDebouncePending = trimmedQuery !== debouncedQuery;
+
   const {
     data: searchResults = [],
     isFetching,
@@ -56,13 +66,15 @@ function AdminCourseEventSelectionPage() {
     staleTime: 30_000,
   });
 
+  const visibleResults = isDebouncePending ? [] : searchResults;
+
   const statusMessage = useMemo(() => {
     if (!trimmedQuery) return null;
-    if (isFetching) return '행사를 검색하고 있어요...';
+    if (isDebouncePending || isFetching) return '행사를 검색하고 있어요...';
     if (isError) return '행사를 불러오지 못했어요. 다시 시도해 주세요.';
     if (searchResults.length === 0) return '검색 결과가 없어요.';
     return null;
-  }, [trimmedQuery, isFetching, isError, searchResults.length]);
+  }, [trimmedQuery, isDebouncePending, isFetching, isError, searchResults.length]);
 
   const selectedEventIds = useMemo(
     () => new Set(selectedEvents.map((event) => event.id)),
@@ -97,7 +109,7 @@ function AdminCourseEventSelectionPage() {
         searchLabel="행사명 검색"
         searchSuggestions={festivalSearchSuggestions}
         hideEmptySearchSuggestions
-        items={searchResults}
+        items={visibleResults}
         selectedItemIds={selectedEventIds}
         getItemId={(event) => event.id}
         onSearchChange={setQuery}
@@ -107,7 +119,10 @@ function AdminCourseEventSelectionPage() {
         }
         statusMessage={
           statusMessage ? (
-            <p className="text-gray-5 text-center text-sm font-medium">
+            <p
+              className="text-gray-5 text-center font-medium"
+              style={{ fontSize: STATUS_MESSAGE_FONT_SIZE * scale }}
+            >
               {statusMessage}
             </p>
           ) : undefined

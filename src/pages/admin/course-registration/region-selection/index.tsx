@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -29,6 +29,7 @@ const BUTTON_MARGIN_TOP = 32;
 const BUTTON_HEIGHT = 52;
 const BUTTON_RADIUS = 12;
 const BUTTON_TEXT_SIZE = 14;
+const STATUS_MESSAGE_FONT_SIZE = 14;
 
 function AdminCourseRegionSelectionPage() {
   const navigate = useNavigate();
@@ -64,6 +65,20 @@ function AdminCourseRegionSelectionPage() {
   });
 
   const searchSuggestions = searchResultsQuery.data?.map((n) => n.name) ?? [];
+
+  // 검색 API가 실패하면 searchSuggestions가 빈 배열이 되어 "결과 없음"과
+  // 구분이 안 됐다 - 로딩/에러 상태를 별도로 안내한다.
+  const searchStatusMessage = useMemo(() => {
+    if (!trimmedSearchQuery) return null;
+    if (searchResultsQuery.isFetching) return '지역을 검색하고 있어요...';
+    if (searchResultsQuery.isError)
+      return '지역을 불러오지 못했어요. 다시 시도해 주세요.';
+    return null;
+  }, [
+    trimmedSearchQuery,
+    searchResultsQuery.isFetching,
+    searchResultsQuery.isError,
+  ]);
 
   const handleQueryChange = (query: string) => {
     setSearchQuery(query);
@@ -125,6 +140,16 @@ function AdminCourseRegionSelectionPage() {
           suggestions={searchSuggestions}
           onSearch={handleSearch}
           onQueryChange={handleQueryChange}
+          statusMessage={
+            searchStatusMessage ? (
+              <p
+                className="text-gray-5 text-center font-medium"
+                style={{ fontSize: STATUS_MESSAGE_FONT_SIZE * scale }}
+              >
+                {searchStatusMessage}
+              </p>
+            ) : undefined
+          }
         />
 
         {region && !trimmedSearchQuery ? (
