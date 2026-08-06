@@ -51,6 +51,30 @@ export function saveRecentCultureContent(content: RecentCultureContent): void {
   }
 }
 
+export function updateRecentCultureContentLikeState(
+  contentId: number,
+  liked: boolean,
+): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const contents = getStoredRecentCultureContents();
+
+    if (!contents.some((content) => content.contentId === contentId)) return;
+
+    const updatedContents = contents.map((content) =>
+      content.contentId === contentId ? { ...content, liked } : content,
+    );
+
+    window.localStorage.setItem(
+      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      JSON.stringify(updatedContents),
+    );
+  } catch {
+    return;
+  }
+}
+
 function isRecentCultureContent(value: unknown): value is RecentCultureContent {
   if (typeof value !== 'object' || value === null) return false;
 

@@ -12,6 +12,7 @@ import {
   ResponsivePageShell,
 } from '../../../components/layout/ResponsivePageShell';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
@@ -62,7 +63,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const contentError = isValidContentId
     ? queryError
     : new Error('Invalid content ID');
-  const [likedOverride, setLikedOverride] = useState<boolean | null>(null);
+  const { getLiked, toggleLike } = useContentLikeToggle();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null,
   );
@@ -99,9 +100,9 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   };
 
   const handleFavoriteToggle = () => {
-    runAuthAction(() =>
-      setLikedOverride((previous) => !(previous ?? festival?.liked ?? false)),
-    );
+    if (!festival) return;
+
+    toggleLike(contentId, getLiked(contentId, festival.liked));
   };
 
   const handlePlaceLikeToggle = () => {
@@ -142,7 +143,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                 title={festivalDetail.title}
                 rightAction={
                   <FavoriteButton
-                    isActive={likedOverride ?? festivalDetail.liked}
+                    isActive={getLiked(contentId, festivalDetail.liked)}
                     label={festivalDetail.title}
                     onClick={handleFavoriteToggle}
                   />

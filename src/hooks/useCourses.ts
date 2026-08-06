@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   type InfiniteData,
   useInfiniteQuery,
-  useMutation,
   useQueries,
   useQuery,
   useQueryClient,
@@ -18,11 +17,7 @@ import {
   getPopularCourses,
   getRecommendedCourses,
 } from '../apis/courses.api';
-import {
-  addCourseLike,
-  getCourseDetail,
-  removeCourseLike,
-} from '../apis/courses';
+import { getCourseDetail } from '../apis/courses';
 import type { CourseDetailResult } from '../apis/courses';
 import type { NormalizedApiError } from '../apis/common';
 import type {
@@ -165,16 +160,4 @@ export function useNavigateToCourseDetail() {
   };
 
   return { goToCourseDetail, isResolvingCourse };
-}
-
-export function useCourseLikeMutation() {
-  return useMutation({
-    mutationFn: ({
-      courseId,
-      isLiked,
-    }: {
-      courseId: number;
-      isLiked: boolean;
-    }) => (isLiked ? removeCourseLike(courseId) : addCourseLike(courseId)),
-  });
 }
