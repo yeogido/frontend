@@ -46,6 +46,15 @@ const folderPhotoSlots: FolderPhotoSlot[] = [
     cropClassName:
       'absolute top-[calc(50%-8px)] left-1/2 h-[110px] w-[83.008px] -translate-x-1/2 -translate-y-1/2',
   },
+  {
+    // 사진 한 장은 폴더 앞면 안쪽으로 더 들어간 전용 슬롯을 사용한다.
+    wrapperClassName:
+      'absolute top-[27px] left-[55px] z-11 flex size-[106.675px] items-center justify-center',
+    frameClassName:
+      'flex size-[88px] rotate-[14deg] items-center justify-center overflow-hidden rounded-xl bg-[#f9f9f9] shadow-[2px_2px_2px_rgba(0,0,0,0.15)]',
+    cropClassName:
+      'absolute top-[calc(50%-8px)] left-1/2 h-[110px] w-[83.008px] -translate-x-1/2 -translate-y-1/2',
+  },
 ];
 
 const folderClipPathData =
