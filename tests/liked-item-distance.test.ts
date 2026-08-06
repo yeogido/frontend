@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  getDetailFilterOptions,
   toDistanceLabel,
   toLikedItemInfoLines,
 } from '../src/pages/likes/utils/likedItems.ts';
@@ -52,4 +53,15 @@ test('코스 카드에는 거리 줄이 없다', () => {
   };
 
   assert.equal(toLikedItemInfoLines(course).distanceInfo, undefined);
+});
+
+test('행사/장소는 서버가 분류를 안 주므로 2번째 필터에 "전체"만 남는다', () => {
+  assert.deepEqual(getDetailFilterOptions('행사', [place]), ['전체']);
+  assert.deepEqual(getDetailFilterOptions('장소', [place]), ['전체']);
+});
+
+test('코스는 좋아요한 코스의 지역으로 2번째 필터를 채운다', () => {
+  const course: LikedItem = { ...place, category: 'COURSE', region: '부산' };
+
+  assert.deepEqual(getDetailFilterOptions('코스', [course]), ['전체', '부산']);
 });

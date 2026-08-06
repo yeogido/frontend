@@ -53,13 +53,16 @@ export function getDistanceInMeters(
   const deltaLat = toRadians(to.latitude - from.latitude);
   const deltaLng = toRadians(to.longitude - from.longitude);
 
-  const a =
+  // 대척점에 가까우면 부동소수점 오차로 a가 1을 살짝 넘어 asin이 NaN이 된다.
+  const a = Math.min(
+    1,
     Math.sin(deltaLat / 2) ** 2 +
-    Math.cos(toRadians(from.latitude)) *
-      Math.cos(toRadians(to.latitude)) *
-      Math.sin(deltaLng / 2) ** 2;
+      Math.cos(toRadians(from.latitude)) *
+        Math.cos(toRadians(to.latitude)) *
+        Math.sin(deltaLng / 2) ** 2
+  );
 
-  return EARTH_RADIUS_METERS * 2 * Math.asin(Math.sqrt(a));
+  return EARTH_RADIUS_METERS * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 export function formatDistance(meters: number): string {
