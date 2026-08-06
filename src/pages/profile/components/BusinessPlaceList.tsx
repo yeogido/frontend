@@ -1,5 +1,4 @@
 import addIcon from '../../../assets/icons/material-symbols_add-2-rounded.svg';
-import location from '../../../assets/icons/location.svg';
 import { useNavigate } from 'react-router-dom';
 import type { BusinessProfile } from '../../business-verification/types';
 
@@ -31,14 +30,7 @@ export function BusinessPlaceList({
           <span
             className="flex shrink-0 items-center justify-center rounded-xl bg-[#f1f1f1]"
             style={{ width: 56 * scale, height: 56 * scale }}
-          >
-            <img
-              src={location}
-              alt=""
-              aria-hidden="true"
-              style={{ width: 24 * scale, height: 24 * scale }}
-            />
-          </span>
+          />
           <div className="min-w-0">
             <p
               className="truncate font-semibold text-[#1c1c1c]"
