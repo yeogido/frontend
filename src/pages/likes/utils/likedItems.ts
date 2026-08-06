@@ -4,8 +4,8 @@ import {
   LIKED_PLACE_DETAIL_OPTIONS,
   LIKED_SORT_LATEST,
   likedCategoryByLabel,
-} from '../constants/filters';
-import { durationLabelByType } from '../../../utils/courseCard';
+} from '../constants/filters.ts';
+import { durationLabelByType } from '../../../utils/courseCard.ts';
 import type { CourseDurationType } from '../../../types/course.type';
 import type { LikedItem } from '../types';
 import type { LikedItemResponse } from '../../../apis/likes.api';
@@ -32,6 +32,7 @@ export function mapLikedItemResponse(item: LikedItemResponse): LikedItem {
     endDate: item.endDate,
     location: item.location,
     companion: null,
+    distance: item.category === 'PLACE' ? item.distance : null,
     region: item.category === 'COURSE' ? item.location : null,
     detailType: null,
     hashtags: item.hashtags,
@@ -125,6 +126,16 @@ interface LikedItemInfoLines {
   firstInfo: string;
   secondInfo: string;
   thirdInfo?: string;
+  distanceInfo?: string;
+}
+
+/** 장소 카드 세 번째 줄. 소수점 한 자리까지만 남긴다. */
+export function toDistanceLabel(distance: number | null): string | undefined {
+  if (distance === null || !Number.isFinite(distance)) {
+    return undefined;
+  }
+
+  return `현위치와 ${Math.round(distance * 10) / 10}KM`;
 }
 
 function toYearMonthLabel(date: string): string {
@@ -151,5 +162,6 @@ export function toLikedItemInfoLines(item: LikedItem): LikedItemInfoLines {
   return {
     firstInfo: period,
     secondInfo: item.location,
+    distanceInfo: toDistanceLabel(item.distance),
   };
 }

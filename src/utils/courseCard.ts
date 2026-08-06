@@ -1,4 +1,4 @@
-import { toContentTagIds } from './contentTags';
+import { toContentTagIds } from './contentTags.ts';
 
 import type {
   Course,

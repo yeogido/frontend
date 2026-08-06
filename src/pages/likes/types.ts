@@ -1,4 +1,3 @@
-
 /** GET /api/v1/users/me/likes 의 category 값과 동일하게 맞춘다. */
 export type LikedItemCategory = 'COURSE' | 'EVENT' | 'PLACE';
 export type LikedItemQueryCategory = 'ALL' | LikedItemCategory;
@@ -23,6 +22,8 @@ export interface LikedItem {
   location: string;
   /** 코스 카드 두 번째 줄의 보조 정보(동행 유형) */
   companion: string | null;
+  /** 현 위치 기준 거리(km). 장소만 내려온다 */
+  distance: number | null;
   /** 코스를 선택했을 때 2번째 필터에 동적으로 채워지는 지역명 */
   region: string | null;
   /** 행사/장소를 선택했을 때 2번째 필터에서 비교할 분류값 */

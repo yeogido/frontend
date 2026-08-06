@@ -220,7 +220,7 @@ function LikesPage() {
         >
           {likedItems.map((item) => {
             const itemKey = `${item.category}-${item.id}`;
-            const { firstInfo, secondInfo, thirdInfo } =
+            const { firstInfo, secondInfo, thirdInfo, distanceInfo } =
               toLikedItemInfoLines(item);
 
             return (
@@ -231,6 +231,7 @@ function LikesPage() {
                 firstInfo={firstInfo}
                 secondInfo={secondInfo}
                 thirdInfo={thirdInfo}
+                distanceInfo={distanceInfo}
                 tags={toContentTagIds(item.hashtags)}
                 liked
                 className="w-full"

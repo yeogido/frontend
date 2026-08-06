@@ -3,6 +3,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import calendar from '../../assets/icons/calendar.svg';
 import heart from '../../assets/icons/heart.svg';
 import location from '../../assets/icons/location.svg';
+import near from '../../assets/icons/near.svg';
 import oheart from '../../assets/icons/oheart.svg';
 import people from '../../assets/icons/people.svg';
 
@@ -18,7 +19,14 @@ const CONTENT_HEIGHT = 107;
 const CONTENT_PADDING = 8;
 const TITLE_SIZE = 14;
 const INFO_SIZE = 12;
+/** 아이콘 슬롯. 아이콘은 원본 비율 그대로 이 슬롯 가운데에 놓는다(중심 x = 15). */
 const ICON_SIZE = 14;
+const ICON_GAP = 2;
+/** 태그 줄이 없는 카드(장소)는 남는 높이만큼 정보 줄을 넓게 벌린다. */
+const INFO_MARGIN_TOP = 8;
+const INFO_ROW_GAP = 4;
+const INFO_MARGIN_TOP_WIDE = 17;
+const INFO_ROW_GAP_WIDE = 8;
 const HEART_SIZE = 16;
 const HEART_TOP = 8;
 const HEART_RIGHT = 8;
@@ -32,6 +40,8 @@ interface ContentCardProps {
   secondInfo: string;
   /** 두 번째 정보 줄에 함께 붙는 보조 정보(예: 동행 유형). 없으면 렌더링하지 않는다. */
   thirdInfo?: string;
+  /** 현 위치 기준 거리 줄(예: '현위치와 314KM'). 없으면 렌더링하지 않는다. */
+  distanceInfo?: string;
   liked?: boolean;
   className?: string;
   tags?: TagType[];
@@ -101,12 +111,26 @@ function useResponsiveTagCount(tags: TagType[] | undefined) {
   return { visibleContainerRef, hiddenContainerRef, visibleCount };
 }
 
+/** 아이콘은 늘리지 않고 원본 크기 그대로 14px 슬롯 가운데에 놓는다. */
+function InfoIcon({ src }: { src: string }) {
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center"
+      style={{ height: ICON_SIZE, width: ICON_SIZE }}
+      aria-hidden="true"
+    >
+      <img src={src} alt="" />
+    </span>
+  );
+}
+
 function ContentCard({
   image,
   title,
   firstInfo,
   secondInfo,
   thirdInfo,
+  distanceInfo,
   liked = false,
   className = '',
   tags,
@@ -118,6 +142,7 @@ function ContentCard({
   const { visibleContainerRef, hiddenContainerRef, visibleCount } =
     useResponsiveTagCount(tags);
 
+  const hasTags = Boolean(tags && tags.length > 0);
   const isClickable = Boolean(onClick);
   const hasCustomWidth = /(?:^|\s)(?:w-|min-w|max-w)/.test(className);
 
@@ -188,15 +213,18 @@ function ContentCard({
           </h3>
 
           {/* Info */}
-          <div className="mt-2 flex flex-col gap-1">
-            <div className="flex items-center gap-1">
-              <img
-                src={calendar}
-                alt=""
-                aria-hidden="true"
-                className="shrink-0"
-                style={{ height: ICON_SIZE, width: ICON_SIZE }}
-              />
+          <div
+            className="flex flex-col"
+            style={{
+              marginTop: hasTags ? INFO_MARGIN_TOP : INFO_MARGIN_TOP_WIDE,
+              gap: hasTags ? INFO_ROW_GAP : INFO_ROW_GAP_WIDE,
+            }}
+          >
+            <div
+              className="flex items-center"
+              style={{ height: ICON_SIZE, gap: ICON_GAP }}
+            >
+              <InfoIcon src={calendar} />
 
               <span
                 className="min-w-0 truncate leading-none font-medium text-[#7F7F7F]"
@@ -206,14 +234,11 @@ function ContentCard({
               </span>
             </div>
 
-            <div className="flex items-center gap-1">
-              <img
-                src={location}
-                alt=""
-                aria-hidden="true"
-                className="shrink-0"
-                style={{ height: ICON_SIZE, width: ICON_SIZE }}
-              />
+            <div
+              className="flex items-center"
+              style={{ height: ICON_SIZE, gap: ICON_GAP }}
+            >
+              <InfoIcon src={location} />
 
               <span
                 className="min-w-0 truncate leading-none font-medium text-[#7F7F7F]"
@@ -224,13 +249,7 @@ function ContentCard({
 
               {thirdInfo ? (
                 <>
-                  <img
-                    src={people}
-                    alt=""
-                    aria-hidden="true"
-                    className="shrink-0"
-                    style={{ height: ICON_SIZE, width: ICON_SIZE }}
-                  />
+                  <InfoIcon src={people} />
 
                   <span
                     className="shrink-0 truncate leading-none font-medium text-[#7F7F7F]"
@@ -241,10 +260,26 @@ function ContentCard({
                 </>
               ) : null}
             </div>
+
+            {distanceInfo ? (
+              <div
+                className="flex items-center"
+                style={{ height: ICON_SIZE, gap: ICON_GAP }}
+              >
+                <InfoIcon src={near} />
+
+                <span
+                  className="min-w-0 truncate leading-none font-medium text-[#7F7F7F]"
+                  style={{ fontSize: INFO_SIZE }}
+                >
+                  {distanceInfo}
+                </span>
+              </div>
+            ) : null}
           </div>
 
           {/* Tags */}
-          {tags && tags.length > 0 && (
+          {hasTags && tags && (
             <>
               <div
                 ref={hiddenContainerRef}
