@@ -10,7 +10,18 @@ import type {
   CultureContentDetail,
   GetCultureContentsParams,
   GetCultureContentsResponse,
+  OngoingContent,
 } from '../types/content.type';
+
+export async function getOngoingContents(): Promise<OngoingContent[]> {
+  try {
+    const { data } = await apiClient.get<OngoingContent[]>('/contents/ongoing');
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function getCultureContents(
   params: GetCultureContentsParams = {},

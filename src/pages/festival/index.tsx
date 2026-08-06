@@ -8,7 +8,7 @@ import {
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
-import { useCultureContents } from '../../hooks/useCultureContents';
+import { useOngoingContents } from '../../hooks/useOngoingContents';
 import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
 import { toContentTagIds } from '../../utils/contentTags';
@@ -16,6 +16,8 @@ import { buildFestivalDetailPath } from '../../utils/routes';
 
 import { FeaturedFestivalBanner } from './components';
 import useFestivalPreviews from './hooks/useFestivalPreviews';
+
+const ONGOING_PREVIEW_ITEM_COUNT = 2;
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -38,15 +40,12 @@ function FestivalPage() {
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
   const { data: cultureContentBanners } = useCultureContentBanners();
-  const {
-    data: cultureContents,
-    isPending: isCultureContentsPending,
-  } = useCultureContents({
-    category: 'FESTIVAL',
-    sort: 'RECOMMEND',
-    size: 2,
-  });
-  const ongoingFestivals = cultureContents?.pages[0]?.items ?? [];
+  const { data: ongoingContents, isPending: isOngoingContentsPending } =
+    useOngoingContents();
+  const ongoingFestivals = (ongoingContents ?? []).slice(
+    0,
+    ONGOING_PREVIEW_ITEM_COUNT
+  );
   const banner = cultureContentBanners?.[0];
   const displayedBanner = banner
     ? {
@@ -135,7 +134,7 @@ function FestivalPage() {
             gap: LIST_GAP * scale,
           }}
         >
-          {isCultureContentsPending ? (
+          {isOngoingContentsPending ? (
             <>
               <ContentCardSkeleton />
               <ContentCardSkeleton />
@@ -144,12 +143,12 @@ function FestivalPage() {
             ongoingFestivals.map((festival) => (
               <ContentCard
                 key={festival.contentId}
-                image={festival.thumbnailImageUrl}
+                image={festival.thumbnailImage}
                 title={festival.title}
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-                secondInfo={festival.regionName}
+                secondInfo={festival.region}
                 tags={toContentTagIds(festival.hashtags)}
-                liked={getLiked(festival.contentId, false)}
+                liked={getLiked(festival.contentId, festival.liked)}
                 className="w-full"
                 onClick={() =>
                   navigate(buildFestivalDetailPath(festival.contentId))
@@ -157,7 +156,7 @@ function FestivalPage() {
                 onLikeClick={() =>
                   toggleLike(
                     festival.contentId,
-                    getLiked(festival.contentId, false)
+                    getLiked(festival.contentId, festival.liked)
                   )
                 }
               />
