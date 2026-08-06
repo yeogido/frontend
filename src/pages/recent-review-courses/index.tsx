@@ -7,6 +7,7 @@ import {
   ReviewDetailModal,
   ReviewEditModal,
 } from '../../components/common';
+import { useAuth } from '../../hooks/useAuth';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import {
   useCourseDetails,
@@ -41,6 +42,7 @@ const MESSAGE_TEXT_SIZE = 13;
 
 function RecentReviewCoursesPage() {
   const scale = useGlobalScale();
+  const { isAuthenticated } = useAuth();
   const { getLiked, toggleLike } = useCourseLikeToggle();
   const {
     data,
@@ -70,10 +72,14 @@ function RecentReviewCoursesPage() {
   );
 
   // 후기 목록의 course.isLiked는 서버가 아직 임시 사용자 기준으로 계산해서
-  // 비로그인에도 남의 좋아요가 켜져 온다. 코스 상세는 사용자 기준으로 맞게
-  // 오므로 그 값을 우선 쓴다. 백엔드가 고치면 review.liked만 남기면 된다.
-  const likedByCourse = (review: { courseId: number; liked: boolean }) =>
-    courseById.get(review.courseId)?.isLiked ?? review.liked;
+  // 비로그인에도 남의 좋아요가 켜져 온다. 로그인하지 않았으면 좋아요가 있을
+  // 수 없으므로 무조건 끈다. 로그인 상태에서는 사용자 기준으로 맞게 오는
+  // 코스 상세 값을 우선 쓴다. 백엔드가 고치면 review.liked만 남기면 된다.
+  const likedByCourse = (review: { courseId: number; liked: boolean }) => {
+    if (!isAuthenticated) return false;
+
+    return courseById.get(review.courseId)?.isLiked ?? review.liked;
+  };
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
