@@ -1,16 +1,28 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { ReviewCard } from '../../components/common';
+import {
+  LoadingSpinner,
+  ReviewCard,
+  ReviewDeleteDialog,
+  ReviewDetailModal,
+} from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
+import {
+  getCourseReviewsFromPages,
+  useCourseReviews,
+  useMyReviewIds,
+  useReviewDelete,
+  useReviewDetailModal,
+} from '../../hooks/useReviews';
 import { getGutter } from '../../utils/responsiveLayout';
 import { ReviewButton } from '../detail/components';
-import type { CourseReview } from '../detail/types/courseDetail';
+import { mapCourseReviewPreviews } from '../detail/mappers/courseReviewMapper';
 
 import CourseReviewSortDropdown from './CourseReviewSortDropdown';
-import { getCourseReviewList } from './courseReviewData';
 import type { CourseReviewType } from './courseReviewRoute';
 import type { CourseReviewSort } from './courseReviewSort';
 
@@ -25,10 +37,10 @@ const FILTER_MARGIN_TOP = 11;
 const LIST_MARGIN_TOP = 12;
 const LIST_GAP = 16;
 const REVIEW_BUTTON_BOTTOM = 32;
+const MESSAGE_TEXT_SIZE = 13;
 
 interface CourseReviewListLocationState {
   courseTitle?: string;
-  reviews?: readonly CourseReview[];
 }
 
 function CourseReviewsPage() {
@@ -37,23 +49,61 @@ function CourseReviewsPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const [sort, setSort] = useState<CourseReviewSort>('latest');
-  const { courseTitle = '', reviews = [] } =
+  const { courseTitle = '' } =
     (location.state as CourseReviewListLocationState | null) ?? {};
   const courseType: CourseReviewType = location.pathname.startsWith(
     '/local-course/'
   )
     ? 'local-course'
     : 'yeogido-course';
-  const displayReviews = getCourseReviewList(reviews);
-  const sortedReviews = useMemo(
-    () =>
-      sort === 'rating'
-        ? [...displayReviews].sort(
-            (first, second) => second.rating - first.rating
-          )
-        : displayReviews,
-    [displayReviews, sort]
+
+  const parsedCourseId = Number(courseId);
+  const validCourseId = Number.isInteger(parsedCourseId)
+    ? parsedCourseId
+    : undefined;
+  const {
+    data,
+    isPending,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useCourseReviews(validCourseId, sort === 'rating' ? 'RATING' : 'LATEST');
+  // courseId가 잘못되면 쿼리가 비활성이라 isPending이 계속 true다. 그대로
+  // 두면 스피너가 멈추지 않으므로 로딩으로 보지 않는다.
+  const isLoading = validCourseId !== undefined && isPending;
+  const myReviewIds = useMyReviewIds();
+  const { requestDelete, dialogProps } = useReviewDelete();
+
+  const reviews = mapCourseReviewPreviews(
+    getCourseReviewsFromPages(data?.pages),
+    myReviewIds
   );
+  const { openedReview, openReview, closeReview } =
+    useReviewDetailModal(reviews);
+
+  const handleIntersect = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadMoreRef = useInfiniteScroll({
+    enabled: Boolean(hasNextPage) && !isFetchingNextPage,
+    onIntersect: handleIntersect,
+  });
+  // 이 화면은 이미 코스가 정해져 있어 타입 조회 없이 경로를 만들 수 있다.
+  const courseDetailPath = `/${courseType}/detail/${courseId}`;
+
+  const renderMessage = (message: string) => (
+    <p
+      className="text-gray-4 text-center font-medium"
+      style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
+    >
+      {message}
+    </p>
+  );
+
   const reviewButton = (
     <div
       className="pointer-events-none fixed bottom-0 left-1/2 z-30 flex w-full max-w-[500px] -translate-x-1/2"
@@ -112,21 +162,58 @@ function CourseReviewsPage() {
           className="flex flex-col"
           style={{ marginTop: LIST_MARGIN_TOP * scale, gap: LIST_GAP * scale }}
         >
-          {sortedReviews.map((review) => (
-            <ReviewCard
-              key={review.id}
-              images={review.images}
-              profileImage={review.profileImage}
-              nickname={review.nickname}
-              meta={review.meta}
-              content={review.content}
-              rating={review.rating}
-              isMine={review.isMine}
-              className="[&>div>article]:!bg-[#F1F1F1]"
+          {isLoading ? (
+            <LoadingSpinner
+              className="w-full"
+              label="코스 후기를 불러오는 중"
             />
-          ))}
+          ) : validCourseId === undefined ? (
+            renderMessage('코스를 찾을 수 없습니다.')
+          ) : isError ? (
+            renderMessage('후기를 불러오지 못했습니다.')
+          ) : reviews.length === 0 ? (
+            renderMessage('아직 등록된 후기가 없습니다.')
+          ) : (
+            <>
+              {reviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  images={review.images}
+                  profileImage={review.profileImage}
+                  nickname={review.nickname}
+                  meta={review.meta}
+                  content={review.content}
+                  rating={review.rating}
+                  isMine={review.isMine}
+                  onDeleteClick={() => requestDelete(review.id)}
+                  onClick={() => navigate(courseDetailPath)}
+                  onLongPress={() => openReview(review.id)}
+                  className="[&>div>article]:!bg-[#F1F1F1]"
+                />
+              ))}
+
+              <div ref={loadMoreRef} aria-hidden="true" />
+
+              {isFetchingNextPage && (
+                <LoadingSpinner
+                  className="w-full"
+                  label="후기를 더 불러오는 중"
+                />
+              )}
+            </>
+          )}
         </div>
       </section>
+
+      <ReviewDetailModal
+        review={openedReview}
+        courseTitle={courseTitle || undefined}
+        onClose={closeReview}
+        onGoToCourse={() => navigate(courseDetailPath)}
+      />
+
+      <ReviewDeleteDialog {...dialogProps} />
+
       {typeof document === 'undefined'
         ? reviewButton
         : createPortal(reviewButton, document.body)}
