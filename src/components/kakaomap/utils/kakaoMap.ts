@@ -38,40 +38,6 @@ export function getCurrentMapCoordinates(
   });
 }
 
-const EARTH_RADIUS_METERS = 6371000;
-const METERS_PER_KILOMETER = 1000;
-
-function toRadians(degrees: number): number {
-  return (degrees * Math.PI) / 180;
-}
-
-/** 두 좌표 사이의 직선 거리(m). 카카오맵 SDK엔 거리 계산 API가 없어 하버사인 공식으로 직접 구한다. */
-export function getDistanceInMeters(
-  from: MapCoordinates,
-  to: MapCoordinates
-): number {
-  const deltaLat = toRadians(to.latitude - from.latitude);
-  const deltaLng = toRadians(to.longitude - from.longitude);
-
-  // 대척점에 가까우면 부동소수점 오차로 a가 1을 살짝 넘어 asin이 NaN이 된다.
-  const a = Math.min(
-    1,
-    Math.sin(deltaLat / 2) ** 2 +
-      Math.cos(toRadians(from.latitude)) *
-        Math.cos(toRadians(to.latitude)) *
-        Math.sin(deltaLng / 2) ** 2
-  );
-
-  return EARTH_RADIUS_METERS * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-export function formatDistance(meters: number): string {
-  if (meters >= METERS_PER_KILOMETER) {
-    return `${(meters / METERS_PER_KILOMETER).toFixed(1)}km`;
-  }
-
-  return `${Math.round(meters)}m`;
-}
 
 export function loadKakaoMapsSdk(appKey: string): Promise<void> {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
