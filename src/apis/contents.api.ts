@@ -4,6 +4,8 @@ import {
 } from './common';
 
 import type {
+  ContentCreateRequest,
+  ContentCreateResult,
   CultureContentBanner,
   CultureContentDetail,
   GetCultureContentsParams,
@@ -46,6 +48,21 @@ export async function getCultureContentBanners(): Promise<
   try {
     const { data } = await apiClient.get<CultureContentBanner[]>(
       '/contents/banner',
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function createCultureContent(
+  payload: ContentCreateRequest,
+): Promise<ContentCreateResult> {
+  try {
+    const { data } = await apiClient.post<ContentCreateResult>(
+      '/contents',
+      payload,
     );
 
     return data;
