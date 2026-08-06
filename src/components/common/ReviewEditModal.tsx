@@ -11,6 +11,7 @@ import type {
   ReviewEditSubmission,
 } from '../../hooks/useReviews';
 import {
+  DEFAULT_REVIEW_RATING,
   isReviewFormValid,
   MAX_REVIEW_PHOTOS,
 } from '../../pages/review/reviewForm';
@@ -54,7 +55,7 @@ function ReviewEditModal({
       }))
   );
   const [rating, setRating] = useState(() =>
-    Math.min(Math.max(Math.round(review?.rating ?? 5), 1), 5)
+    Math.min(Math.max(Math.round(review?.rating ?? DEFAULT_REVIEW_RATING), 1), 5)
   );
   const [content, setContent] = useState(() => review?.content ?? '');
   const photosRef = useRef(photos);

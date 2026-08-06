@@ -22,6 +22,8 @@ const EMPTY_STATE_FONT_SIZE = 14;
 
 export interface DetailReviewSectionProps {
   readonly reviews: readonly CourseReview[];
+  /** 코스별 후기 응답에는 코스 제목이 없어 상세 화면이 알려준다. */
+  readonly courseTitle?: string;
   readonly className?: string;
   readonly onActionClick?: () => void;
   readonly onReviewDelete?: (reviewId: number) => void;
@@ -30,6 +32,7 @@ export interface DetailReviewSectionProps {
 
 export function DetailReviewSection({
   reviews,
+  courseTitle,
   className = '',
   onActionClick,
   onReviewDelete,
@@ -123,6 +126,7 @@ export function DetailReviewSection({
             >
               <ReviewCard
                 images={review.images}
+                courseTitle={courseTitle}
                 profileImage={review.profileImage}
                 nickname={review.nickname}
                 meta={review.meta}

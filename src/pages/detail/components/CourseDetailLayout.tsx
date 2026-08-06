@@ -299,6 +299,7 @@ function CourseDetailLayoutContent({
       <div style={{ marginTop: REVIEW_MARGIN_TOP * scale }}>
         <DetailReviewSection
           reviews={reviews}
+          courseTitle={course.title}
           onActionClick={handleNavigateCourseReviews}
           onReviewDelete={requestDelete}
           onReviewLongPress={openReview}

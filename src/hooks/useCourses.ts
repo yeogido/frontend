@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   type InfiniteData,
   useInfiniteQuery,
+  useQueries,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
@@ -97,6 +98,28 @@ export function useCourseDetail(courseId: number | null) {
     staleTime: DETAIL_STALE_TIME,
     gcTime: DETAIL_GC_TIME,
     refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * 여러 코스의 상세를 한꺼번에 읽는다.
+ *
+ * 후기 목록 응답의 course에는 해시태그와 동행이 없어서, 후기 카드에 그리려면
+ * 코스별로 상세를 더 받아야 한다. useCourseDetail과 캐시 키가 같아 카드를
+ * 눌러 이동할 때의 타입 조회도 이 캐시를 그대로 쓴다.
+ *
+ * 백엔드가 ReviewCourse에 tags·companionType·courseType을 넣어주면 이 조회
+ * 전체를 걷어낼 수 있다.
+ */
+export function useCourseDetails(courseIds: readonly number[]) {
+  return useQueries({
+    queries: courseIds.map((courseId) => ({
+      queryKey: ['courseDetail', courseId],
+      queryFn: () => getCourseDetail(courseId),
+      staleTime: DETAIL_STALE_TIME,
+      gcTime: DETAIL_GC_TIME,
+      refetchOnWindowFocus: false,
+    })),
   });
 }
 

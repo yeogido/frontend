@@ -6,9 +6,9 @@ import { useGlobalScale } from '../../hooks/useGlobalScale';
 
 // 여행 기록 상세의 작업 메뉴와 같은 치수/생김새를 쓴다.
 const TRIGGER_SIZE = 20;
-const MENU_WIDTH = 104;
-const MENU_ITEM_HEIGHT = 42;
-const MENU_GAP = 8;
+const MENU_WIDTH = 80;
+const MENU_ITEM_HEIGHT = 36;
+const MENU_GAP = 4;
 
 export interface ReviewActionMenuProps {
   /**
@@ -153,7 +153,7 @@ function ReviewActionMenu({
               role="menu"
               aria-labelledby={triggerId}
               onClick={(event) => event.stopPropagation()}
-              className="fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+              className="fixed z-50 flex flex-col overflow-hidden rounded-xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
               style={{ ...panelStyle, width: MENU_WIDTH * scale }}
             >
               {menuItems.map((item) => (
@@ -165,8 +165,8 @@ function ReviewActionMenu({
                   className="flex w-full items-center border-b border-[#e4e4e4] text-left font-medium text-[#7f7f7f] last:border-b-0 hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none"
                   style={{
                     height: MENU_ITEM_HEIGHT * scale,
-                    paddingInline: 16 * scale,
-                    fontSize: 14 * scale,
+                    paddingInline: 12 * scale,
+                    fontSize: 13 * scale,
                   }}
                 >
                   {item.label}
