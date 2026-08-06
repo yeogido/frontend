@@ -1,17 +1,41 @@
 import { useState } from 'react';
 
+import { usePlaceSearch } from '../../local-recommendation/place-selection/hooks/usePlaceSearch';
+import type { PlaceItem } from '../../local-recommendation/place-selection/types';
 import { isBusinessVerificationSubmittable } from '../validation';
 
 export function useBusinessVerificationForm() {
   const [certificate, setCertificate] = useState<File | null>(null);
-  const [address, setAddress] = useState('');
+  const [place, setPlace] = useState<PlaceItem | null>(null);
+  const [businessName, setBusinessName] = useState('');
   const [representativeName, setRepresentativeName] = useState('');
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [openedAt, setOpenedAt] = useState('');
+  const { query, setQuery, searchResults, isLoading } = usePlaceSearch();
+
+  // 사업장 주소는 직접 입력받지 않고 선택한 카카오 장소에서 끌어온다.
+  // 도로명이 없는 장소가 있어 지번으로 폴백한다.
+  const businessAddress = place
+    ? place.roadAddress || place.lotAddress || place.address
+    : '';
+
+  const selectPlace = (nextPlace: PlaceItem) => {
+    setPlace(nextPlace);
+    // 상호명 기본값을 채워주되 이후 수정은 열어둔다. 카카오 장소명과 사업자
+    // 등록상 상호명이 다른 경우가 있어서다.
+    setBusinessName(nextPlace.title);
+    setQuery('');
+  };
+
+  const clearPlace = () => {
+    setPlace(null);
+    setQuery('');
+  };
 
   const isSubmittable = isBusinessVerificationSubmittable({
     certificate,
-    address,
+    place,
+    businessName,
     representativeName,
     registrationNumber,
     openedAt,
@@ -19,13 +43,21 @@ export function useBusinessVerificationForm() {
 
   return {
     certificate,
-    address,
+    place,
+    businessAddress,
+    businessName,
     representativeName,
     registrationNumber,
     openedAt,
+    query,
+    searchResults,
+    isSearching: isLoading,
     isSubmittable,
     setCertificate,
-    setAddress,
+    setQuery,
+    selectPlace,
+    clearPlace,
+    setBusinessName,
     setRepresentativeName,
     setRegistrationNumber,
     setOpenedAt,

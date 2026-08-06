@@ -4,6 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { ResponsivePageShell } from '../../components/layout';
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useMyBusinesses } from '../../hooks/useMyBusinesses';
+import {
+  toBusinessProfile,
+  toPreviewBusiness,
+} from '../business-verification/mappers/businessProfile';
 import type { BusinessProfile } from '../business-verification/types';
 import {
   ProfileDetailSection,
@@ -18,10 +23,20 @@ interface ProfilePageProps {
 
 function ProfilePage({ businessProfileOverride }: ProfilePageProps) {
   const scale = useGlobalScale();
-  const { userId } = useAuth();
+  const { userId, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false);
-  const businessProfile = businessProfileOverride ?? null;
+  const { data } = useMyBusinesses(isAuthenticated);
+
+  // 인증 사업장이 없으면 빈 배열이 정상 응답이다(404가 아니다).
+  const businesses = data ?? [];
+  const businessProfile =
+    businessProfileOverride ??
+    (businesses[0] ? toBusinessProfile(businesses[0]) : null);
+  const visibleBusinesses =
+    businesses.length === 0 && businessProfileOverride
+      ? [toPreviewBusiness(businessProfileOverride)]
+      : businesses;
   const name =
     businessProfile?.representativeName ??
     (userId ? `회원 #${userId}` : '회원');
@@ -43,7 +58,11 @@ function ProfilePage({ businessProfileOverride }: ProfilePageProps) {
           scale={scale}
           onEdit={() => navigate('/profile/edit')}
         />
-        <ProfileDetailSection businessProfile={businessProfile} scale={scale} />
+        <ProfileDetailSection
+          businessProfile={businessProfile}
+          businesses={visibleBusinesses}
+          scale={scale}
+        />
         <button
           type="button"
           onClick={() => setIsWithdrawalDialogOpen(true)}

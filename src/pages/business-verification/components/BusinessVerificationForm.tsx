@@ -1,15 +1,24 @@
+import type { PlaceItem } from '../../local-recommendation/place-selection/types';
 import { BusinessCertificateUpload } from './BusinessCertificateUpload';
+import { BusinessPlaceSearchField } from './BusinessPlaceSearchField';
 import { BusinessVerificationDateField } from './BusinessVerificationDateField';
 import { BusinessVerificationField } from './BusinessVerificationField';
 
 interface BusinessVerificationFormProps {
   readonly scale: number;
-  readonly address: string;
+  readonly query: string;
+  readonly searchResults: readonly PlaceItem[];
+  readonly isSearching: boolean;
+  readonly place: PlaceItem | null;
+  readonly businessName: string;
   readonly representativeName: string;
   readonly registrationNumber: string;
   readonly openedAt: string;
   readonly onCertificateChange: (certificate: File | null) => void;
-  readonly onAddressChange: (value: string) => void;
+  readonly onQueryChange: (value: string) => void;
+  readonly onPlaceSelect: (place: PlaceItem) => void;
+  readonly onPlaceClear: () => void;
+  readonly onBusinessNameChange: (value: string) => void;
   readonly onRepresentativeNameChange: (value: string) => void;
   readonly onRegistrationNumberChange: (value: string) => void;
   readonly onOpenedAtChange: (value: string) => void;
@@ -17,12 +26,19 @@ interface BusinessVerificationFormProps {
 
 export function BusinessVerificationForm({
   scale,
-  address,
+  query,
+  searchResults,
+  isSearching,
+  place,
+  businessName,
   representativeName,
   registrationNumber,
   openedAt,
   onCertificateChange,
-  onAddressChange,
+  onQueryChange,
+  onPlaceSelect,
+  onPlaceClear,
+  onBusinessNameChange,
   onRepresentativeNameChange,
   onRegistrationNumberChange,
   onOpenedAtChange,
@@ -33,13 +49,22 @@ export function BusinessVerificationForm({
       style={{ marginTop: 32 * scale, gap: 24 * scale }}
     >
       <BusinessCertificateUpload scale={scale} onChange={onCertificateChange} />
-      <BusinessVerificationField
-        label="사업장 주소"
-        value={address}
-        placeholder="사업장 주소"
+      <BusinessPlaceSearchField
         scale={scale}
-        onChange={onAddressChange}
-        icon="search"
+        query={query}
+        results={searchResults}
+        isLoading={isSearching}
+        selectedPlace={place}
+        onQueryChange={onQueryChange}
+        onSelect={onPlaceSelect}
+        onClear={onPlaceClear}
+      />
+      <BusinessVerificationField
+        label="상호명"
+        value={businessName}
+        placeholder="사업자등록증상 상호명"
+        scale={scale}
+        onChange={onBusinessNameChange}
       />
       <BusinessVerificationField
         label="대표자 명"
