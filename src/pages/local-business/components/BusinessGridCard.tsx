@@ -9,7 +9,7 @@ import type { BusinessItem } from '../types';
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px (2열 그리드 셀 폭 163 기준)
 const CARD_DESIGN_WIDTH = 163;
-const CARD_HEIGHT = 222;
+const CARD_HEIGHT = 225;
 const IMAGE_HEIGHT = 115;
 const HEART_SIZE = 16;
 const HEART_TOP = 8;
@@ -57,12 +57,13 @@ function BusinessGridCard({
       className="w-full overflow-hidden"
       style={{ height: scaledHeight }}
     >
+      {/* 카드 이동(role="button")과 좋아요 버튼을 형제 컨트롤로 분리하기
+          위한 래퍼. transform/치수는 원래 카드 요소가 갖던 것을 그대로
+          옮겨왔고, useScaleFrame의 innerRef는 안쪽 카드 요소(w-full
+          h-full)에 둬서 offsetHeight 계산(CARD_HEIGHT 그대로)에는
+          영향이 없다. */}
       <div
-        ref={innerRef}
-        onClick={onClick}
-        role="button"
-        tabIndex={0}
-        className="flex cursor-pointer flex-col overflow-hidden rounded-xl bg-white text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+        className="relative"
         style={{
           width: CARD_DESIGN_WIDTH,
           height: CARD_HEIGHT,
@@ -70,7 +71,13 @@ function BusinessGridCard({
           transformOrigin: 'top left',
         }}
       >
-        <div className="relative overflow-hidden rounded-t-lg">
+        <div
+          ref={innerRef}
+          onClick={onClick}
+          role="button"
+          tabIndex={0}
+          className="flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-xl bg-white text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+        >
           <img
             src={business.image}
             alt={business.title}
@@ -78,91 +85,92 @@ function BusinessGridCard({
             style={{ height: IMAGE_HEIGHT }}
           />
 
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onLikeClick?.();
-            }}
-            className="absolute"
-            style={{ right: HEART_RIGHT, top: HEART_TOP }}
-          >
-            <img
-              src={business.liked ? oheart : heart}
-              alt="좋아요"
-              style={{ height: HEART_SIZE, width: HEART_SIZE }}
-            />
-          </button>
-        </div>
-
-        <div
-          className="flex min-h-0 flex-1 flex-col"
-          style={{
-            paddingLeft: CONTENT_PADDING_X,
-            paddingRight: CONTENT_PADDING_X,
-            paddingTop: CONTENT_PADDING_TOP,
-            paddingBottom: CONTENT_PADDING_BOTTOM,
-          }}
-        >
-          <h2
-            className="truncate font-medium text-[#1C1C1C]"
-            style={{
-              fontSize: TITLE_SIZE,
-              lineHeight: `${TITLE_LINE_HEIGHT}px`,
-            }}
-          >
-            {business.title}
-          </h2>
-
-          <p
-            className="truncate font-normal text-[#7F7F7F]"
-            style={{
-              marginTop: DESCRIPTION_MARGIN_TOP,
-              fontSize: DESCRIPTION_SIZE,
-              lineHeight: `${DESCRIPTION_LINE_HEIGHT}px`,
-            }}
-          >
-            {business.description}
-          </p>
-
           <div
-            className="flex items-center"
-            style={{ marginTop: LOCATION_MARGIN_TOP, gap: LOCATION_GAP }}
+            className="flex min-h-0 flex-1 flex-col"
+            style={{
+              paddingLeft: CONTENT_PADDING_X,
+              paddingRight: CONTENT_PADDING_X,
+              paddingTop: CONTENT_PADDING_TOP,
+              paddingBottom: CONTENT_PADDING_BOTTOM,
+            }}
           >
-            <img
-              src={location}
-              alt=""
-              aria-hidden="true"
-              className="shrink-0"
-              style={{ width: LOCATION_ICON_SIZE, height: LOCATION_ICON_SIZE }}
-            />
-
-            <span
-              className="font-medium leading-none text-[#7F7F7F]"
-              style={{ fontSize: LOCATION_TEXT_SIZE }}
+            <h2
+              className="truncate font-medium text-[#1C1C1C]"
+              style={{
+                fontSize: TITLE_SIZE,
+                lineHeight: `${TITLE_LINE_HEIGHT}px`,
+              }}
             >
-              {business.location}
-            </span>
-          </div>
+              {business.title}
+            </h2>
 
-          <div
-            className="border-t border-[#E4E4E4]"
-            style={{ marginTop: DIVIDER_MARGIN_TOP }}
-          />
+            <p
+              className="truncate font-normal text-[#7F7F7F]"
+              style={{
+                marginTop: DESCRIPTION_MARGIN_TOP,
+                fontSize: DESCRIPTION_SIZE,
+                lineHeight: `${DESCRIPTION_LINE_HEIGHT}px`,
+              }}
+            >
+              {business.description}
+            </p>
 
-          <div
-            className="flex w-full flex-nowrap justify-start"
-            style={{ marginTop: TAG_MARGIN_TOP, gap: TAG_GAP }}
-          >
-            {business.tags.slice(0, 3).map((tag) => (
-              <TagChip
-                key={`${business.id}-${tag}`}
-                type={tag}
-                style={{ height: TAG_HEIGHT, width: TAG_WIDTH }}
+            <div
+              className="flex items-center"
+              style={{ marginTop: LOCATION_MARGIN_TOP, gap: LOCATION_GAP }}
+            >
+              <img
+                src={location}
+                alt=""
+                aria-hidden="true"
+                className="shrink-0"
+                style={{
+                  width: LOCATION_ICON_SIZE,
+                  height: LOCATION_ICON_SIZE,
+                }}
               />
-            ))}
+
+              <span
+                className="font-medium leading-none text-[#7F7F7F]"
+                style={{ fontSize: LOCATION_TEXT_SIZE }}
+              >
+                {business.location}
+              </span>
+            </div>
+
+            <div
+              className="border-t border-[#E4E4E4]"
+              style={{ marginTop: DIVIDER_MARGIN_TOP }}
+            />
+
+            <div
+              className="flex w-full flex-nowrap justify-start"
+              style={{ marginTop: TAG_MARGIN_TOP, gap: TAG_GAP }}
+            >
+              {business.tags.slice(0, 3).map((tag) => (
+                <TagChip
+                  key={`${business.id}-${tag}`}
+                  type={tag}
+                  style={{ height: TAG_HEIGHT, width: TAG_WIDTH }}
+                />
+              ))}
+            </div>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => onLikeClick?.()}
+          aria-pressed={business.liked}
+          className="absolute"
+          style={{ right: HEART_RIGHT, top: HEART_TOP }}
+        >
+          <img
+            src={business.liked ? oheart : heart}
+            alt="좋아요"
+            style={{ height: HEART_SIZE, width: HEART_SIZE }}
+          />
+        </button>
       </div>
     </div>
   );
