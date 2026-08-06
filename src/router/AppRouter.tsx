@@ -221,22 +221,24 @@ function AppRouter() {
       />
       <Route path="/review" element={<ReviewPage />} />
 
-      <Route
-        path="/admin/event-registration/place-selection"
-        element={<AdminPlaceSelectionPage />}
-      />
-      <Route
-        path="/admin/event-registration/basic-info"
-        element={<AdminEventBasicInfoPage />}
-      />
-      <Route
-        path="/admin/event-registration/photo-tag"
-        element={<AdminEventPhotoTagPage />}
-      />
-      <Route
-        path="/admin/event-registration/complete"
-        element={<AdminEventCompletePage />}
-      />
+      <Route element={<ProtectedRoute />}>
+        <Route
+          path="/admin/event-registration/place-selection"
+          element={<AdminPlaceSelectionPage />}
+        />
+        <Route
+          path="/admin/event-registration/basic-info"
+          element={<AdminEventBasicInfoPage />}
+        />
+        <Route
+          path="/admin/event-registration/photo-tag"
+          element={<AdminEventPhotoTagPage />}
+        />
+        <Route
+          path="/admin/event-registration/complete"
+          element={<AdminEventCompletePage />}
+        />
+      </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route

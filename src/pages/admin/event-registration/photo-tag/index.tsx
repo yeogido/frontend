@@ -13,6 +13,7 @@ import KeywordSelectionSection from '../../../local-recommendation/tag-selection
 import { toggleTag } from '../../../local-recommendation/tag-selection/utils';
 import type { PhotoSelection } from '../../../local-recommendation/tag-selection/types';
 import CategorySelectionSection from './components/CategorySelectionSection';
+import type { EventCategoryId } from '../types';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_TOP = 48;
@@ -37,8 +38,10 @@ function AdminEventPhotoTagPage() {
   const setKeywordTagIds = useAdminEventRegistrationStore(
     (state) => state.setKeywordTagIds
   );
-  const category = useAdminEventRegistrationStore((state) => state.category);
-  const setCategory = useAdminEventRegistrationStore(
+  const savedCategory = useAdminEventRegistrationStore(
+    (state) => state.category
+  );
+  const setCategoryInStore = useAdminEventRegistrationStore(
     (state) => state.setCategory
   );
 
@@ -47,14 +50,15 @@ function AdminEventPhotoTagPage() {
     () => new Set(savedKeywordTagIds)
   );
   const [limitMessage, setLimitMessage] = useState('');
+  const [category, setCategory] = useState<EventCategoryId | null>(
+    savedCategory
+  );
 
   const handlePhotoChange = (file: File | null) => {
-    if (!file) {
-      setPhoto(null);
-      return;
-    }
-
-    setPhoto({ file, previewUrl: URL.createObjectURL(file) });
+    setPhoto((previousPhoto) => {
+      if (previousPhoto) URL.revokeObjectURL(previousPhoto.previewUrl);
+      return file ? { file, previewUrl: URL.createObjectURL(file) } : null;
+    });
   };
 
   const handleTagToggle = (tagId: TagId) => {
@@ -71,6 +75,7 @@ function AdminEventPhotoTagPage() {
     if (!photo || !isReady) return;
     setPhotoInStore(photo);
     setKeywordTagIds(Array.from(selectedTagIds));
+    setCategoryInStore(category);
     navigate('/admin/event-registration/complete');
   };
 

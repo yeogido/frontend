@@ -1,3 +1,4 @@
+import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import type { DetailTag } from '../../../types/detail';
 import type { TagId } from '../../../types/tag.type';
 import type {
@@ -50,8 +51,8 @@ export function buildMockEventDetail({
     address: place.address,
     period: formatEventPeriod(basicInfo.startDate, basicInfo.endDate),
     phone: basicInfo.phone || '-',
-    homepageUrl: basicInfo.homepage,
-    homepageLabel: basicInfo.homepage || '공식홈페이지',
+    homepageUrl: basicInfo.homepage || '-',
+    homepageLabel: basicInfo.homepage || '-',
     place: {
       id: 0,
       name: place.title,
@@ -59,7 +60,12 @@ export function buildMockEventDetail({
       hours: formatEventPeriod(basicInfo.startDate, basicInfo.endDate),
       image: heroImageUrl,
       liked: false,
-      location: { latitude: place.latitude, longitude: place.longitude },
+      location: isValidGeoPoint({
+        latitude: place.latitude,
+        longitude: place.longitude,
+      })
+        ? { latitude: place.latitude, longitude: place.longitude }
+        : undefined,
     },
     relatedCourses: [],
   };

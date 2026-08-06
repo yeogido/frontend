@@ -2,7 +2,12 @@ import { useState } from 'react';
 
 import CustomSelect from '../../../../local-recommendation/course-basic-info/components/CustomSelect';
 import { useGlobalScale } from '../../../../../hooks/useGlobalScale';
-import { dayOptions, monthOptions, yearOptions } from '../constants/dateOptions';
+import {
+  getDayOptions,
+  getDaysInMonth,
+  monthOptions,
+  yearOptions,
+} from '../constants/dateOptions';
 
 // Figma 390 디자인 기준 리터럴 px
 const LEGEND_MARGIN_BOTTOM = 8;
@@ -24,18 +29,23 @@ function EventDateGroup({ id, legend, value, onChange }: EventDateGroupProps) {
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
   const [day, setDay] = useState(initialDay);
+  const dayOptions = getDayOptions(year, month);
 
   const applyChange = (
     nextYear: string,
     nextMonth: string,
     nextDay: string
   ) => {
+    // 월이 바뀌어 기존에 고른 일자가 더 이상 유효하지 않으면(예: 31일 -> 2월) 초기화한다.
+    const maxDay = getDaysInMonth(nextYear, nextMonth);
+    const clampedDay = nextDay && Number(nextDay) > maxDay ? '' : nextDay;
+
     setYear(nextYear);
     setMonth(nextMonth);
-    setDay(nextDay);
+    setDay(clampedDay);
     onChange(
-      nextYear && nextMonth && nextDay
-        ? `${nextYear}-${nextMonth}-${nextDay}`
+      nextYear && nextMonth && clampedDay
+        ? `${nextYear}-${nextMonth}-${clampedDay}`
         : ''
     );
   };

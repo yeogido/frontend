@@ -34,7 +34,9 @@ export const useAdminEventRegistrationStore =
     setBasicInfo: (basicInfo) => set({ basicInfo }),
     setPhoto: (photo) => {
       const previousPhoto = get().photo;
-      if (previousPhoto) URL.revokeObjectURL(previousPhoto.previewUrl);
+      if (previousPhoto && previousPhoto.previewUrl !== photo?.previewUrl) {
+        URL.revokeObjectURL(previousPhoto.previewUrl);
+      }
       set({ photo });
     },
     setKeywordTagIds: (keywordTagIds) => set({ keywordTagIds }),

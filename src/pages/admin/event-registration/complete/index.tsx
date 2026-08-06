@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import BaseKakaoMap from '../../../../components/kakaomap/BaseKakaoMap';
+import { isValidGeoPoint } from '../../../../components/kakaomap/types';
 import {
   ResponsiveFullBleed,
   ResponsivePageShell,
@@ -147,7 +148,7 @@ function AdminEventCompletePage() {
       </section>
 
       <div style={{ marginTop: MAP_MARGIN_TOP * scale }}>
-        {festivalDetail.place.location ? (
+        {isValidGeoPoint(festivalDetail.place.location) ? (
           <BaseKakaoMap
             center={festivalDetail.place.location}
             markers={[festivalDetail.place.location]}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
@@ -43,6 +43,14 @@ function AdminEventBasicInfoPage() {
     placeName: basicInfo.placeName || place?.title || '',
   }));
 
+  useEffect(() => {
+    if (!place) {
+      navigate('/admin', { replace: true });
+    }
+  }, [place, navigate]);
+
+  if (!place) return null;
+
   const inputHeight = Math.max(44, INPUT_HEIGHT * scale);
   const inputStyle = {
     height: inputHeight,
@@ -58,7 +66,7 @@ function AdminEventBasicInfoPage() {
   const isPhoneValid =
     form.phone.trim() === '' || PHONE_PATTERN.test(form.phone.trim());
   const isReady = Boolean(
-    form.placeName &&
+    form.placeName.trim() &&
       form.startDate &&
       form.endDate &&
       !isEndDateBeforeStart &&

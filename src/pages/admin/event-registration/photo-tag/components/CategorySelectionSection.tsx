@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { MIN_TOUCH_TARGET } from '../../../../../constants/layout';
 import { useGlobalScale } from '../../../../../hooks/useGlobalScale';
 import { eventCategoryOptions, type EventCategoryId } from '../../types';
@@ -21,14 +23,15 @@ function CategorySelectionSection({
   onSelect,
 }: CategorySelectionSectionProps) {
   const scale = useGlobalScale();
+  const titleId = useId();
 
   return (
     <section
       style={{ marginTop: SECTION_MARGIN_TOP * scale }}
-      aria-labelledby="category-title"
+      aria-labelledby={titleId}
     >
       <h2
-        id="category-title"
+        id={titleId}
         className="font-semibold"
         style={{ fontSize: TITLE_SIZE * scale }}
       >
