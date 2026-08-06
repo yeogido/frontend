@@ -15,6 +15,10 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
 import { useLoginModal } from '../../../hooks/useLoginModal';
+import {
+  formatTodayOpeningHours,
+  usePlaceOpeningHours,
+} from '../../../hooks/usePlaceOpeningHours';
 import { useAuthStore } from '../../../store/auth.store';
 import { buildCourseSearchPath } from '../../../utils/routes';
 import { saveRecentCultureContent } from '../../../utils/recentCultureContents';
@@ -73,6 +77,27 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const festival = content
     ? mapCultureContentDetailToFestivalDetail(content)
     : null;
+  const openingHoursByPlaceId = usePlaceOpeningHours(
+    festival
+      ? [
+          {
+            id: festival.place.id,
+            name: festival.place.name,
+            address: festival.place.address,
+            latitude: festival.place.location?.latitude,
+            longitude: festival.place.location?.longitude,
+          },
+        ]
+      : [],
+  );
+  const festivalPlaceHours = festival
+    ? formatTodayOpeningHours(
+        openingHoursByPlaceId.get(festival.place.id) ?? {
+          currentWeekdayDescriptions: [],
+          regularWeekdayDescriptions: [],
+        },
+      )
+    : undefined;
 
   useEffect(() => {
     if (!content) return;
@@ -176,7 +201,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
             <section style={{ marginTop: INFO_CARD_MARGIN_TOP * scale }}>
               <DetailInfoCard
                 address={festivalDetail.address}
-                hours={festivalDetail.period}
+                hours={festivalDetail.period || '영업시간 정보 없음'}
                 phone={festivalDetail.phone}
                 website={festivalDetail.homepageLabel}
                 phoneHref={toTelHref(festivalDetail.phone)}
@@ -207,7 +232,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                 imageUrl={festivalDetail.place.image}
                 title={festivalDetail.place.name}
                 address={festivalDetail.place.address}
-                hours={festivalDetail.place.hours}
+                hours={festivalPlaceHours ?? '영업시간 정보 없음'}
                 liked={placeLikedOverride ?? festivalDetail.place.liked}
                 onLikeClick={handlePlaceLikeToggle}
               />

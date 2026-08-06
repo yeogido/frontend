@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   ContentCard,
@@ -15,9 +16,15 @@ import {
   removeCourseLike,
   removePlaceLike,
 } from '../../apis/courses';
+import { useNavigateToCourseDetail } from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
+import {
+  formatTodayOpeningHours,
+  usePlaceOpeningHours,
+} from '../../hooks/usePlaceOpeningHours';
 import { toContentTagIds } from '../../utils/contentTags';
+import { buildFestivalDetailPath } from '../../utils/routes';
 
 import {
   LIKED_CATEGORY_OPTIONS,
@@ -55,8 +62,10 @@ const ERROR_MARGIN_TOP = 24;
 const LOAD_MORE_HEIGHT = 40;
 
 function LikesPage() {
+  const navigate = useNavigate();
   const scale = useGlobalScale();
   const { showToast } = useToast();
+  const { goToCourseDetail } = useNavigateToCourseDetail();
   const [keyword, setKeyword] = useState('');
   const [unlikedIds, setUnlikedIds] = useState<ReadonlySet<string>>(new Set());
 
@@ -123,6 +132,24 @@ function LikesPage() {
         selectedFilters.sort
       ),
     [activeLikedItems, keyword, selectedFilters]
+  );
+  const openingHoursByItemId = usePlaceOpeningHours(
+    likedItems.flatMap((item) =>
+      item.category === 'PLACE'
+        ? [{ id: item.id, name: item.title, address: item.location }]
+        : []
+    )
+  );
+
+  const handleCardClick = useCallback(
+    (item: LikedItem) => {
+      if (item.category === 'COURSE') {
+        void goToCourseDetail(item.id);
+      } else if (item.category === 'EVENT') {
+        navigate(buildFestivalDetailPath(item.id));
+      }
+    },
+    [goToCourseDetail, navigate]
   );
 
   const handleUnlike = async (item: LikedItem) => {
@@ -222,19 +249,30 @@ function LikesPage() {
             const itemKey = `${item.category}-${item.id}`;
             const { firstInfo, secondInfo, thirdInfo, distanceInfo } =
               toLikedItemInfoLines(item);
+            const placeHours =
+              item.category === 'PLACE'
+                ? openingHoursByItemId.get(item.id)
+                : undefined;
+            const openingHours =
+              placeHours && formatTodayOpeningHours(placeHours);
 
             return (
               <ContentCard
                 key={itemKey}
                 image={item.thumbnailUrl}
                 title={item.title}
-                firstInfo={firstInfo}
+                firstInfo={
+                  item.category === 'PLACE'
+                    ? (openingHours ?? '영업시간 정보 없음')
+                    : firstInfo
+                }
                 secondInfo={secondInfo}
                 thirdInfo={thirdInfo}
                 distanceInfo={distanceInfo}
                 tags={toContentTagIds(item.hashtags)}
                 liked
                 className="w-full"
+                onClick={() => handleCardClick(item)}
                 onLikeClick={() => void handleUnlike(item)}
               />
             );
