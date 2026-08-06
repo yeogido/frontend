@@ -60,6 +60,9 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
   const [submitError, setSubmitError] = useState('');
   const { loginWithKakao, isLoading: isKakaoLoading } = useKakaoLogin();
   const { loginWithNaver, isLoading: isNaverLoading } = useNaverLogin();
+  // 한 SDK가 로딩되는 동안 다른 소셜 버튼을 눌러 authorize()가 동시에
+  // 두 번 시작되지 않도록, 두 버튼을 하나의 로딩 상태로 함께 잠근다.
+  const isSocialLoginLoading = isKakaoLoading || isNaverLoading;
 
   // 로그인 화면의 아이콘 버튼과 동일한 authorize() 호출을 그대로 쓴다.
   // 콜백(/auth/kakao|naver/callback)은 어느 화면에서 시작했는지와
@@ -164,7 +167,7 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
             <button
               type="button"
               onClick={handleKakaoStart}
-              disabled={isKakaoLoading}
+              disabled={isSocialLoginLoading}
               className="flex items-center justify-center rounded-xl bg-[#FEE500] font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
               style={{
                 height: s(BUTTON_HEIGHT),
@@ -189,7 +192,7 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
             <button
               type="button"
               onClick={handleNaverStart}
-              disabled={isNaverLoading}
+              disabled={isSocialLoginLoading}
               className="flex items-center justify-center rounded-xl bg-[#03C75A] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
               style={{
                 height: s(BUTTON_HEIGHT),
