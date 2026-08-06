@@ -47,6 +47,8 @@ interface RawLikedItemResponse {
   startDate: string | null;
   endDate: string | null;
   location: string;
+  transportType?: string | null;
+  companionType?: string | null;
   distance: number | null;
   hashtags: string[];
   likedAt: string;
@@ -69,6 +71,8 @@ export interface LikedItemResponse {
   startDate: string | null;
   endDate: string | null;
   location: string;
+  transportType?: string | null;
+  companionType?: string | null;
   distance: number | null;
   hashtags: string[];
   likedAt: string;

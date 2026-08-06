@@ -22,6 +22,10 @@ export interface LikedItem {
   location: string;
   /** 코스 카드 두 번째 줄의 보조 정보(동행 유형) */
   companion: string | null;
+  /** 원본 이동 수단 enum (CAR, WALK 등) */
+  transportType?: string | null;
+  /** 원본 동행 유형 enum (FRIEND, SOLO 등) */
+  companionType?: string | null;
   /** 현 위치 기준 거리(km). 장소만 내려온다 */
   distance: number | null;
   /** 코스를 선택했을 때 2번째 필터에 동적으로 채워지는 지역명 */

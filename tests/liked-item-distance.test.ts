@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   getDetailFilterOptions,
+  mapLikedItemResponse,
   toDistanceLabel,
   toLikedItemInfoLines,
 } from '../src/pages/likes/utils/likedItems.ts';
@@ -64,4 +65,30 @@ test('코스는 좋아요한 코스의 지역으로 2번째 필터를 채운다'
   const course: LikedItem = { ...place, category: 'COURSE', region: '부산' };
 
   assert.deepEqual(getDetailFilterOptions('코스', [course]), ['전체', '부산']);
+});
+
+test('코스 카테고리 응답의 transportType과 companionType을 한글 라벨로 매핑한다', () => {
+  const mapped = mapLikedItemResponse({
+    id: 1,
+    category: 'COURSE',
+    title: '서울 명소 투어',
+    thumbnailImage: null,
+    duration: 'DAY_TRIP',
+    startDate: null,
+    endDate: null,
+    location: '서울특별시',
+    transportType: 'CAR',
+    companionType: 'FRIEND',
+    distance: null,
+    hashtags: ['힐링'],
+    likedAt: '2026-08-06T00:00:00Z',
+  });
+
+  assert.equal(mapped.location, '자동차');
+  assert.equal(mapped.companion, '친구와');
+  assert.equal(mapped.duration, '당일치기');
+
+  const infoLines = toLikedItemInfoLines(mapped);
+  assert.equal(infoLines.secondInfo, '자동차');
+  assert.equal(infoLines.thirdInfo, '친구와');
 });

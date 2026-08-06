@@ -3,7 +3,11 @@ import {
   LIKED_SORT_LATEST,
   likedCategoryByLabel,
 } from '../constants/filters.ts';
-import { toDurationLabel } from '../../../utils/courseEnumLabels.ts';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels.ts';
 import type { LikedItem } from '../types';
 import type { LikedItemResponse } from '../../../apis/likes.api';
 
@@ -16,21 +20,32 @@ function toCourseDurationLabel(duration: string | null): string | null {
 }
 
 export function mapLikedItemResponse(item: LikedItemResponse): LikedItem {
+  const isCourse = item.category === 'COURSE';
+
+  const mappedLocation = isCourse
+    ? item.transportType
+      ? toTransportLabel(item.transportType)
+      : toTransportLabel(item.location)
+    : item.location;
+
+  const mappedCompanion = item.companionType
+    ? toCompanionLabel(item.companionType)
+    : null;
+
   return {
     id: item.id,
     category: item.category,
     title: item.title,
     thumbnailUrl: item.thumbnailImage,
-    duration:
-      item.category === 'COURSE'
-        ? toCourseDurationLabel(item.duration)
-        : item.duration,
+    duration: isCourse ? toCourseDurationLabel(item.duration) : item.duration,
     startDate: item.startDate,
     endDate: item.endDate,
-    location: item.location,
-    companion: null,
+    location: mappedLocation,
+    companion: mappedCompanion,
+    transportType: item.transportType ?? null,
+    companionType: item.companionType ?? null,
     distance: item.category === 'PLACE' ? item.distance : null,
-    region: item.category === 'COURSE' ? item.location : null,
+    region: isCourse ? item.location : null,
     detailType: null,
     hashtags: item.hashtags,
     likedAt: item.likedAt,
