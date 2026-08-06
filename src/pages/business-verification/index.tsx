@@ -1,18 +1,22 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { BusinessVerificationForm } from './components';
+import {
+  BusinessVerificationForm,
+  BusinessVerificationSuccessDialog,
+} from './components';
 import { getBusinessVerificationErrorMessage } from './errorMessage';
 import { useBusinessVerificationForm } from './hooks/useBusinessVerificationForm';
 import { useBusinessVerificationSubmit } from './hooks/useBusinessVerificationSubmit';
-import type { BusinessProfile } from './types';
 
 function BusinessVerificationPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const form = useBusinessVerificationForm();
   const { mutate, isPending, error } = useBusinessVerificationSubmit();
+  const [isVerified, setIsVerified] = useState(false);
 
   const handleSubmit = () => {
     if (!form.isSubmittable || isPending) return;
@@ -28,22 +32,18 @@ function BusinessVerificationPage() {
         registrationNumber: form.registrationNumber,
         openedAt: form.openedAt,
       },
-      {
-        onSuccess: () => {
-          // 인증 응답은 role/businessInfoId만 준다. 개업일자는 사업장 목록
-          // 조회에도 없어서, 방금 제출한 값을 미리보기로 그대로 넘긴다.
-          const profile: BusinessProfile = {
-            businessName: form.businessName.trim(),
-            businessAddress: form.businessAddress,
-            representativeName: form.representativeName.trim(),
-            registrationNumber: form.registrationNumber,
-            openedAt: form.openedAt,
-          };
-
-          navigate('/profile/business-preview', { state: { profile } });
-        },
-      }
+      { onSuccess: () => setIsVerified(true) }
     );
+  };
+
+  const handleSuccessConfirm = () => {
+    // 프로필은 GET /users/me/businesses로 스스로 채운다. 인증 성공 시
+    // 그 쿼리를 무효화해 두었으므로 넘겨줄 값이 없다.
+    navigate('/profile', {
+      // 뒤로 가기로 인증 폼에 돌아오면 이미 인증된 정보를 다시 제출하게 된다
+      // (BUSINESS_VERIFY4091). 폼을 히스토리에서 치운다.
+      replace: true,
+    });
   };
 
   return (
@@ -112,6 +112,11 @@ function BusinessVerificationPage() {
       >
         {isPending ? '인증 중...' : '사업자 인증하기'}
       </button>
+      <BusinessVerificationSuccessDialog
+        isOpen={isVerified}
+        scale={scale}
+        onConfirm={handleSuccessConfirm}
+      />
     </ResponsivePageShell>
   );
 }

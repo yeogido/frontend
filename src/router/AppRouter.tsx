@@ -54,7 +54,6 @@ import LikesPage from '../pages/likes';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
 import CourseReviewsPage from '../pages/course-reviews';
 import ProfilePage from '../pages/profile';
-import BusinessProfilePreviewPage from '../pages/profile/business-preview';
 import ProfileEditPage from '../pages/profile/edit';
 import BusinessVerificationPage from '../pages/business-verification';
 
@@ -136,10 +135,6 @@ function AppRouter() {
           <Route path="/travel-record" element={<TravelRecordPage />} />
           <Route path="/likes" element={<LikesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route
-            path="/profile/business-preview"
-            element={<BusinessProfilePreviewPage />}
-          />
         </Route>
       </Route>
 
