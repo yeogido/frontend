@@ -71,7 +71,7 @@ export async function getCourseDetail(
 export async function addCourseLike(
   courseId: number
 ): Promise<CourseLikeResult> {
-  const { data } = await apiClient.post<CourseLikeResult>(
+  const { data } = await apiClient.put<CourseLikeResult>(
     `/courses/${courseId}/likes`
   );
 
@@ -109,7 +109,7 @@ export async function removePlaceLike(
 export async function addContentLike(
   contentId: number
 ): Promise<CourseLikeResult> {
-  const { data } = await apiClient.post<CourseLikeResult>(
+  const { data } = await apiClient.put<CourseLikeResult>(
     `/contents/${contentId}/likes`
   );
 

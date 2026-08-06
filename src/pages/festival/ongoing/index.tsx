@@ -1,7 +1,4 @@
-import {
-  useCallback,
-  useState,
-} from 'react';
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -9,10 +6,9 @@ import {
   ContentCardSkeleton,
 } from '../../../components/common';
 import { useCultureContents } from '../../../hooks/useCultureContents';
+import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
-import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useAuthStore } from '../../../store/auth.store';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 
@@ -45,9 +41,7 @@ const contentSortByFestivalSort = {
 function FestivalOngoingPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
-  const { openLoginModal } = useLoginModal();
-  const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
+  const { getLiked, toggleLike } = useContentLikeToggle();
   const {
     selectedFilters,
     handleSortSelect,
@@ -82,21 +76,6 @@ function FestivalOngoingPage() {
     enabled: Boolean(hasNextPage) && !isPending,
     onIntersect: handleIntersect,
   });
-
-  const handleLikeClick = (contentId: number) => {
-    if (!isLoggedIn) {
-      openLoginModal();
-      return;
-    }
-
-    setLikedContentIds((previousIds) =>
-      previousIds.includes(contentId)
-        ? previousIds.filter((id) => id !== contentId)
-        : [...previousIds, contentId],
-    );
-
-    // TODO: 좋아요 API 연동
-  };
 
   return (
     <section
@@ -161,15 +140,17 @@ function FestivalOngoingPage() {
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                 secondInfo={festival.regionName}
                 tags={toContentTagIds(festival.hashtags)}
-                liked={
-                  isLoggedIn &&
-                  likedContentIds.includes(festival.contentId)
-                }
+                liked={getLiked(festival.contentId, false)}
                 className="w-full"
                 onClick={() =>
                   navigate(buildFestivalDetailPath(festival.contentId))
                 }
-                onLikeClick={() => handleLikeClick(festival.contentId)}
+                onLikeClick={() =>
+                  toggleLike(
+                    festival.contentId,
+                    getLiked(festival.contentId, false)
+                  )
+                }
               />
             ))}
 

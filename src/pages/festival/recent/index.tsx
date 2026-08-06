@@ -1,11 +1,9 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ContentCard } from '../../../components/common';
+import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useRecentCultureContents } from '../../../hooks/useRecentCultureContents';
-import { useAuthStore } from '../../../store/auth.store';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 
@@ -25,23 +23,8 @@ const MESSAGE_TEXT_SIZE = 13;
 function FestivalRecentPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
-  const { openLoginModal } = useLoginModal();
-  const [likedContentIds, setLikedContentIds] = useState<number[]>([]);
+  const { getLiked, toggleLike } = useContentLikeToggle();
   const recentFestivals = useRecentCultureContents();
-
-  const handleLikeClick = (contentId: number) => {
-    if (!isLoggedIn) {
-      openLoginModal();
-      return;
-    }
-
-    setLikedContentIds((previousIds) =>
-      previousIds.includes(contentId)
-        ? previousIds.filter((id) => id !== contentId)
-        : [...previousIds, contentId],
-    );
-  };
 
   return (
     <section
@@ -92,16 +75,17 @@ function FestivalRecentPage() {
               firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
               secondInfo={festival.regionName}
               tags={toContentTagIds(festival.hashtags)}
-              liked={
-                isLoggedIn &&
-                festival.liked !==
-                  likedContentIds.includes(festival.contentId)
-              }
+              liked={getLiked(festival.contentId, festival.liked)}
               className="w-full"
               onClick={() =>
                 navigate(buildFestivalDetailPath(festival.contentId))
               }
-              onLikeClick={() => handleLikeClick(festival.contentId)}
+              onLikeClick={() =>
+                toggleLike(
+                  festival.contentId,
+                  getLiked(festival.contentId, festival.liked)
+                )
+              }
             />
           ))}
         </div>

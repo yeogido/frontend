@@ -3,8 +3,7 @@ import {
   LIKED_SORT_LATEST,
   likedCategoryByLabel,
 } from '../constants/filters.ts';
-import { durationLabelByType } from '../../../utils/courseCard.ts';
-import type { CourseDurationType } from '../../../types/course.type';
+import { toDurationLabel } from '../../../utils/courseEnumLabels.ts';
 import type { LikedItem } from '../types';
 import type { LikedItemResponse } from '../../../apis/likes.api';
 
@@ -13,7 +12,7 @@ function toCourseDurationLabel(duration: string | null): string | null {
     return duration;
   }
 
-  return durationLabelByType[duration as CourseDurationType] ?? duration;
+  return toDurationLabel(duration);
 }
 
 export function mapLikedItemResponse(item: LikedItemResponse): LikedItem {
