@@ -25,14 +25,15 @@ export function useBusinessVerificationForm() {
 
   const selectPlace = (nextPlace: PlaceItem) => {
     setPlace(nextPlace);
-    // 상호명 기본값을 채워주되 이후 수정은 열어둔다. 카카오 장소명과 사업자
-    // 등록상 상호명이 다른 경우가 있어서다.
+    // 상호명은 선택한 장소명을 그대로 쓴다. 직접 입력받지 않으므로 장소를
+    // 바꾸는 것 말고는 바뀌지 않는다.
     setBusinessName(nextPlace.title);
     setQuery('');
   };
 
   const clearPlace = () => {
     setPlace(null);
+    setBusinessName('');
     setQuery('');
   };
 
@@ -67,7 +68,6 @@ export function useBusinessVerificationForm() {
     setQuery,
     selectPlace,
     clearPlace,
-    setBusinessName,
     setRepresentativeName,
     setRegistrationNumber: changeRegistrationNumber,
     setOpenedAt,

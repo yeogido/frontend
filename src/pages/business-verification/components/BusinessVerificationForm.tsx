@@ -19,7 +19,6 @@ interface BusinessVerificationFormProps {
   readonly onQueryChange: (value: string) => void;
   readonly onPlaceSelect: (place: PlaceItem) => void;
   readonly onPlaceClear: () => void;
-  readonly onBusinessNameChange: (value: string) => void;
   readonly onRepresentativeNameChange: (value: string) => void;
   readonly onRegistrationNumberChange: (value: string) => void;
   readonly onOpenedAtChange: (value: string) => void;
@@ -40,7 +39,6 @@ export function BusinessVerificationForm({
   onQueryChange,
   onPlaceSelect,
   onPlaceClear,
-  onBusinessNameChange,
   onRepresentativeNameChange,
   onRegistrationNumberChange,
   onOpenedAtChange,
@@ -61,12 +59,14 @@ export function BusinessVerificationForm({
         onSelect={onPlaceSelect}
         onClear={onPlaceClear}
       />
+      {/* 상호명은 선택한 카카오 장소에서 그대로 가져온다. 직접 고칠 수 없다는
+          걸 알 수 있도록 비활성 스타일로 보여준다. */}
       <BusinessVerificationField
         label="상호명"
         value={businessName}
-        placeholder="사업자등록증상 상호명"
+        placeholder="사업장을 선택하면 자동으로 입력돼요"
         scale={scale}
-        onChange={onBusinessNameChange}
+        disabled
       />
       <BusinessVerificationField
         label="대표자 명"

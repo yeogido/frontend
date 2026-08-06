@@ -64,7 +64,7 @@ export function BusinessPlaceSearchField({
             type="button"
             onClick={onClear}
             className="text-main-5 shrink-0 font-semibold"
-            style={{ fontSize: 12 * scale, lineHeight: `${14 * scale}px` }}
+            style={{ fontSize: 14 * scale, lineHeight: `${17 * scale}px` }}
           >
             변경
           </button>

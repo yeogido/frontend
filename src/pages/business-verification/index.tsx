@@ -85,7 +85,6 @@ function BusinessVerificationPage() {
           onQueryChange={form.setQuery}
           onPlaceSelect={form.selectPlace}
           onPlaceClear={form.clearPlace}
-          onBusinessNameChange={form.setBusinessName}
           onRepresentativeNameChange={form.setRepresentativeName}
           onRegistrationNumberChange={form.setRegistrationNumber}
           onOpenedAtChange={form.setOpenedAt}
