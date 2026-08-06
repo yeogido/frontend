@@ -96,7 +96,12 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
             className="relative shrink-0"
             style={{ height: DRAWER_HEADER_HEIGHT * scale }}
           >
-            <div
+            <button
+              type="button"
+              onClick={() => {
+                navigate('/profile');
+                onClose();
+              }}
               className="absolute flex min-w-0 items-center"
               style={{
                 top: PROFILE_TOP * scale,
@@ -120,7 +125,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                   {displayName}
                 </span>
               </div>
-            </div>
+            </button>
 
             <button
               type="button"
