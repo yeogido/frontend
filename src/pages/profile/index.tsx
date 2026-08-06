@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { ResponsivePageShell } from '../../components/layout';
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { useBusinessVerificationStore } from '../../store/businessVerification.store';
 import type { BusinessProfile } from '../business-verification/types';
 import {
   ProfileDetailSection,
@@ -22,13 +21,7 @@ function ProfilePage({ businessProfileOverride }: ProfilePageProps) {
   const { userId } = useAuth();
   const navigate = useNavigate();
   const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false);
-  const storedBusinessProfile = useBusinessVerificationStore(
-    (state) => state.profile
-  );
-  const businessProfile =
-    businessProfileOverride === undefined
-      ? storedBusinessProfile
-      : businessProfileOverride;
+  const businessProfile = businessProfileOverride ?? null;
   const name =
     businessProfile?.representativeName ??
     (userId ? `회원 #${userId}` : '회원');

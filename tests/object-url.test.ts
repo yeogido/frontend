@@ -12,14 +12,15 @@ test('releases an existing object URL', () => {
     value: { revokeObjectURL: (url: string) => revokedUrls.push(url) },
   });
 
-  revokeObjectUrl('blob:certificate-preview');
-
-  assert.deepEqual(revokedUrls, ['blob:certificate-preview']);
-
-  Object.defineProperty(globalThis, 'URL', {
-    configurable: true,
-    value: originalUrl,
-  });
+  try {
+    revokeObjectUrl('blob:certificate-preview');
+    assert.deepEqual(revokedUrls, ['blob:certificate-preview']);
+  } finally {
+    Object.defineProperty(globalThis, 'URL', {
+      configurable: true,
+      value: originalUrl,
+    });
+  }
 });
 
 test('does not attempt to release an empty object URL', () => {

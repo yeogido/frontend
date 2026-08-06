@@ -32,6 +32,14 @@ function ProfileEditPage() {
   const [birthYear, setBirthYear] = useState('');
   const [isPhotoChanged, setIsPhotoChanged] = useState(false);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
+  const previousInitialNameRef = useRef(initialName);
+
+  useEffect(() => {
+    setName((current) =>
+      current === previousInitialNameRef.current ? initialName : current
+    );
+    previousInitialNameRef.current = initialName;
+  }, [initialName]);
 
   const regionOptions = useMemo(
     () => [
@@ -354,13 +362,13 @@ function SelectField({
             <div
               id={listboxId}
               ref={panelRef}
-              role="listbox"
-              aria-labelledby={buttonId}
               className="fixed z-[60] overflow-hidden rounded-xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
               style={{ ...panelStyle, height: panelHeight }}
             >
               <div
                 ref={listboxRef}
+                role="listbox"
+                aria-labelledby={buttonId}
                 onScroll={() => {
                   const listbox = listboxRef.current;
                   if (!listbox || !scrollThumb) return;
@@ -391,9 +399,10 @@ function SelectField({
                         onChange(option.value);
                         setIsOpen(false);
                       }}
-                      className={`flex w-full items-center border-b border-[#e4e4e4] px-[14px] text-left font-medium text-[#7f7f7f] last:border-b-0 ${isSelected ? 'bg-[#e4e4e4]' : 'bg-[#f9f9f9]'}`}
+                      className={`flex w-full items-center border-b border-[#e4e4e4] text-left font-medium text-[#7f7f7f] last:border-b-0 ${isSelected ? 'bg-[#e4e4e4]' : 'bg-[#f9f9f9]'}`}
                       style={{
                         height: 46 * scale,
+                        paddingInline: 14 * scale,
                         fontSize: 12 * scale,
                         lineHeight: `${14 * scale}px`,
                       }}

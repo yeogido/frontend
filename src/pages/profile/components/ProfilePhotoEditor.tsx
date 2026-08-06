@@ -26,6 +26,7 @@ export function ProfilePhotoEditor({
   const [isTransforming, setIsTransforming] = useState(false);
   const [isAdjustmentEnabled, setIsAdjustmentEnabled] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileSelectionIdRef = useRef(0);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const dragRef = useRef<{
     x: number;
@@ -47,6 +48,7 @@ export function ProfilePhotoEditor({
   const handleFileChange = async (file: File | undefined) => {
     if (!file || !file.type.startsWith('image/')) return;
 
+    const selectionId = ++fileSelectionIdRef.current;
     const src = await readImageFile(file);
     const nextPhoto: ProfilePhoto = {
       src,
@@ -55,6 +57,8 @@ export function ProfilePhotoEditor({
       positionY: 0,
       aspectRatio: await getImageAspectRatio(src),
     };
+
+    if (selectionId !== fileSelectionIdRef.current) return;
 
     setSavedPhoto(nextPhoto);
     setDraftPhoto(nextPhoto);

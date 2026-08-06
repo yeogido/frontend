@@ -19,12 +19,12 @@ export function ProfileFormField({
       >
         {label}
       </span>
-      <span
-        className={`flex h-full items-center overflow-hidden rounded-xl border border-[#e4e4e4] px-[14px] py-[16px] ${isEmail ? 'bg-[#f1f1f1]' : 'bg-[#f9f9f9]'}`}
-        style={{ height: 46 * scale }}
+      <div
+        className={`flex h-full items-center overflow-hidden rounded-xl border border-[#e4e4e4] ${isEmail ? 'bg-[#f1f1f1]' : 'bg-[#f9f9f9]'}`}
+        style={{ height: 46 * scale, paddingInline: 14 * scale }}
       >
         {children}
-      </span>
+      </div>
     </div>
   );
 }
