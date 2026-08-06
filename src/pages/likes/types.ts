@@ -1,7 +1,7 @@
-import type { TagId } from '../../types/tag.type';
 
 /** GET /api/v1/users/me/likes 의 category 값과 동일하게 맞춘다. */
 export type LikedItemCategory = 'COURSE' | 'EVENT' | 'PLACE';
+export type LikedItemQueryCategory = 'ALL' | LikedItemCategory;
 
 /**
  * 좋아요 목록 카드 하나의 표시 데이터.
@@ -27,7 +27,7 @@ export interface LikedItem {
   region: string | null;
   /** 행사/장소를 선택했을 때 2번째 필터에서 비교할 분류값 */
   detailType: string | null;
-  hashtags: TagId[];
+  hashtags: string[];
   /** 최신순/오래된 순 정렬 기준 (ISO 8601) */
   likedAt: string;
 }

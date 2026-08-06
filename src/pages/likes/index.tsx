@@ -1,29 +1,41 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   ContentCard,
   CourseFilterBar,
   SearchBar,
 } from '../../components/common';
+import { useToast } from '../../components/toast';
 import {
   LIKED_ITEM_FILTER_GRID_CLASS_NAME,
   getLikedItemFilterColumnClassName,
 } from '../../constants/courseFilterLayout';
+import {
+  removeContentLike,
+  removeCourseLike,
+  removePlaceLike,
+} from '../../apis/courses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
+import { toContentTagIds } from '../../utils/contentTags';
 
 import {
   LIKED_CATEGORY_OPTIONS,
+  LIKED_SORT_LATEST,
   LIKED_SORT_OPTIONS,
+  likedCategoryByLabel,
   type LikedItemFilterKey,
 } from './constants/filters';
-import { MOCK_LIKED_ITEMS } from './constants/mockLikedItems';
 import useLikedItemFilters from './hooks/useLikedItemFilters';
+import { useLikedItems } from './hooks/useLikedItems';
 import {
   filterLikedItems,
   getDetailFilterOptions,
+  mapLikedItemResponse,
   sortLikedItems,
   toLikedItemInfoLines,
 } from './utils/likedItems';
+import type { LikedItem } from './types';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -39,11 +51,13 @@ const LIST_MARGIN_TOP = 24;
 const LIST_GAP = 16;
 const EMPTY_MARGIN_TOP = 40;
 const EMPTY_TEXT_SIZE = 13;
+const ERROR_MARGIN_TOP = 24;
+const LOAD_MORE_HEIGHT = 40;
 
 function LikesPage() {
   const scale = useGlobalScale();
+  const { showToast } = useToast();
   const [keyword, setKeyword] = useState('');
-  // ponytail: 좋아요 해제는 화면 상태로만 반영한다. API 연동 시 뮤테이션으로 교체.
   const [unlikedIds, setUnlikedIds] = useState<ReadonlySet<string>>(new Set());
 
   const {
@@ -54,12 +68,28 @@ function LikesPage() {
     handleFilterSelect,
   } = useLikedItemFilters();
 
+  const category = likedCategoryByLabel[selectedFilters.category] ?? 'ALL';
+  const sort = selectedFilters.sort === LIKED_SORT_LATEST ? 'LATEST' : 'OLDEST';
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isError,
+    isFetchingNextPage,
+    isPending,
+  } = useLikedItems({
+    category,
+    keyword: keyword.trim() || undefined,
+    sort,
+  });
+
   const activeLikedItems = useMemo(
     () =>
-      MOCK_LIKED_ITEMS.filter(
-        (item) => !unlikedIds.has(`${item.category}-${item.id}`)
-      ),
-    [unlikedIds]
+      (
+        data?.pages.flatMap((page) => page.items).map(mapLikedItemResponse) ??
+        []
+      ).filter((item) => !unlikedIds.has(`${item.category}-${item.id}`)),
+    [data, unlikedIds]
   );
 
   const filterGroups = useMemo(
@@ -95,19 +125,36 @@ function LikesPage() {
     [activeLikedItems, keyword, selectedFilters]
   );
 
-  const toggleLike = (itemKey: string) => {
-    setUnlikedIds((currentIds) => {
-      const nextIds = new Set(currentIds);
-
-      if (nextIds.has(itemKey)) {
-        nextIds.delete(itemKey);
+  const handleUnlike = async (item: LikedItem) => {
+    try {
+      if (item.category === 'COURSE') {
+        await removeCourseLike(item.id);
+      } else if (item.category === 'PLACE') {
+        await removePlaceLike(item.id);
       } else {
-        nextIds.add(itemKey);
+        await removeContentLike(item.id);
       }
 
-      return nextIds;
-    });
+      setUnlikedIds((currentIds) =>
+        new Set(currentIds).add(`${item.category}-${item.id}`)
+      );
+    } catch {
+      showToast('좋아요 취소에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
   };
+
+  const handleIntersect = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadMoreRef = useInfiniteScroll({
+    enabled: Boolean(hasNextPage) && !isPending,
+    onIntersect: handleIntersect,
+  });
+
+  const hasEmptyResult = !isPending && !isError && likedItems.length === 0;
 
   return (
     <section
@@ -137,13 +184,13 @@ function LikesPage() {
             lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
           }}
         >
-          마음에 들었던 여행을 다시 만나보세요
+          마음에 들었던 여행을 다시 만나보세요.
         </p>
       </div>
 
       <div style={{ marginTop: SEARCH_MARGIN_TOP * scale }}>
         <SearchBar
-          placeholder="좋아요 누른 코스나 장소를 검색해 보세요"
+          placeholder="좋아요한 코스와 장소를 검색해 보세요"
           label="좋아요 목록 검색"
           onQueryChange={setKeyword}
           onSearch={setKeyword}
@@ -184,15 +231,17 @@ function LikesPage() {
                 firstInfo={firstInfo}
                 secondInfo={secondInfo}
                 thirdInfo={thirdInfo}
-                tags={item.hashtags}
-                liked={!unlikedIds.has(itemKey)}
+                tags={toContentTagIds(item.hashtags)}
+                liked
                 className="w-full"
-                onLikeClick={() => toggleLike(itemKey)}
+                onLikeClick={() => void handleUnlike(item)}
               />
             );
           })}
         </div>
-      ) : (
+      ) : null}
+
+      {hasEmptyResult ? (
         <p
           className="text-gray-4 text-center font-medium"
           style={{
@@ -202,7 +251,25 @@ function LikesPage() {
         >
           좋아요한 항목이 없습니다.
         </p>
-      )}
+      ) : null}
+
+      {isError ? (
+        <p
+          className="text-main-5 text-center font-medium"
+          style={{
+            marginTop: ERROR_MARGIN_TOP * scale,
+            fontSize: EMPTY_TEXT_SIZE * scale,
+          }}
+        >
+          좋아요 목록을 불러오지 못했어요.
+        </p>
+      ) : null}
+
+      <div
+        ref={loadMoreRef}
+        style={{ height: LOAD_MORE_HEIGHT * scale }}
+        aria-hidden="true"
+      />
     </section>
   );
 }

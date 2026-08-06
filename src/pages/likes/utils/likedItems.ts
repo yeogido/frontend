@@ -5,7 +5,39 @@ import {
   LIKED_SORT_LATEST,
   likedCategoryByLabel,
 } from '../constants/filters';
+import { durationLabelByType } from '../../../utils/courseCard';
+import type { CourseDurationType } from '../../../types/course.type';
 import type { LikedItem } from '../types';
+import type { LikedItemResponse } from '../../../apis/likes.api';
+
+function toCourseDurationLabel(duration: string | null): string | null {
+  if (!duration) {
+    return duration;
+  }
+
+  return durationLabelByType[duration as CourseDurationType] ?? duration;
+}
+
+export function mapLikedItemResponse(item: LikedItemResponse): LikedItem {
+  return {
+    id: item.id,
+    category: item.category,
+    title: item.title,
+    thumbnailUrl: item.thumbnailImage,
+    duration:
+      item.category === 'COURSE'
+        ? toCourseDurationLabel(item.duration)
+        : item.duration,
+    startDate: item.startDate,
+    endDate: item.endDate,
+    location: item.location,
+    companion: null,
+    region: item.category === 'COURSE' ? item.location : null,
+    detailType: null,
+    hashtags: item.hashtags,
+    likedAt: item.likedAt,
+  };
+}
 
 const normalizeSearchText = (text: string) => text.replace(/\s/g, '');
 

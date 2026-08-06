@@ -6,7 +6,7 @@ import type {
   CourseDurationType,
 } from '../types/course.type';
 
-const durationLabelByType: Record<CourseDurationType, string> = {
+export const durationLabelByType: Record<CourseDurationType, string> = {
   DAY_TRIP: '당일치기',
   ONE_NIGHT: '1박 2일',
   TWO_NIGHT: '2박 3일',
