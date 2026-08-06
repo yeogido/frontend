@@ -1,11 +1,12 @@
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 
-const TITLE_TOP = 24;
-const TITLE_LEFT = 16;
-const TITLE_WIDTH = 220;
-const TITLE_SIZE = 16;
-const DESCRIPTION_MARGIN_TOP = 10;
-const DESCRIPTION_SIZE = 10;
+const TITLE_TOP = 53;
+const TITLE_LEFT = 20;
+const TITLE_WIDTH = 192;
+const TITLE_SIZE = 20;
+const TITLE_LINE_HEIGHT = 20;
+const DESCRIPTION_MARGIN_TOP = 4;
+const DESCRIPTION_SIZE = 12;
 const DESCRIPTION_LINE_HEIGHT = 12;
 
 interface RegionHeroProps {
@@ -48,7 +49,13 @@ function RegionHero({
           width: TITLE_WIDTH * scale,
         }}
       >
-        <p className="font-semibold" style={{ fontSize: TITLE_SIZE * scale }}>
+        <p
+          className="font-semibold"
+          style={{
+            fontSize: TITLE_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+          }}
+        >
           {title}
         </p>
         <p
