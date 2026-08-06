@@ -1,8 +1,3 @@
-export interface RegionDistrict {
-  name: string;
-  subDistricts?: readonly string[];
-}
-
 export const REGION_CITY_IDS = [
   'seoul',
   'busan',
@@ -28,357 +23,61 @@ export type RegionCityId = (typeof REGION_CITY_IDS)[number];
 export interface RegionCity {
   id: RegionCityId;
   name: string;
-  districts: readonly RegionDistrict[];
 }
-
-const createDistricts = (districts: readonly string[]): RegionDistrict[] =>
-  districts.map((name) => ({ name }));
 
 export const DEFAULT_REGION_CITY_ID = 'seoul';
 
+// 시/도 목록. 하위 지역(구/군/동)은 더 이상 정적 데이터가 아니라
+// GET /regions/{regionId}/sub-regions 로 실시간 조회한다.
 export const regionCities: readonly RegionCity[] = [
-  {
-    id: 'seoul',
-    name: '서울',
-    districts: createDistricts([
-      '전체',
-      '강남구',
-      '강동구',
-      '강북구',
-      '강서구',
-      '관악구',
-      '광진구',
-      '구로구',
-      '금천구',
-      '노원구',
-      '도봉구',
-      '동대문구',
-      '동작구',
-      '마포구',
-      '서대문구',
-      '서초구',
-      '성동구',
-      '성북구',
-      '송파구',
-      '양천구',
-      '영등포구',
-      '용산구',
-      '은평구',
-      '종로구',
-      '중구',
-      '중랑구',
-    ]),
-  },
-  {
-    id: 'busan',
-    name: '부산',
-    districts: createDistricts([
-      '전체',
-      '강서구',
-      '금정구',
-      '기장군',
-      '남구',
-      '동구',
-      '동래구',
-      '부산진구',
-      '북구',
-      '사상구',
-      '사하구',
-      '서구',
-      '수영구',
-      '연제구',
-      '영도구',
-      '중구',
-      '해운대구',
-    ]),
-  },
-  {
-    id: 'daegu',
-    name: '대구',
-    districts: createDistricts([
-      '전체',
-      '군위군',
-      '남구',
-      '달서구',
-      '달성군',
-      '동구',
-      '북구',
-      '서구',
-      '수성구',
-      '중구',
-    ]),
-  },
-  {
-    id: 'gwangju',
-    name: '광주',
-    districts: createDistricts(['전체', '광산구', '남구', '동구', '북구', '서구']),
-  },
-  {
-    id: 'incheon',
-    name: '인천',
-    districts: createDistricts([
-      '전체',
-      '강화군',
-      '계양구',
-      '남동구',
-      '동구',
-      '미추홀구',
-      '부평구',
-      '서구',
-      '연수구',
-      '옹진군',
-      '중구',
-    ]),
-  },
-  {
-    id: 'daejeon',
-    name: '대전',
-    districts: createDistricts(['전체', '대덕구', '동구', '서구', '유성구', '중구']),
-  },
-  {
-    id: 'ulsan',
-    name: '울산',
-    districts: createDistricts(['전체', '남구', '동구', '북구', '울주군', '중구']),
-  },
-  {
-    id: 'sejong',
-    name: '세종',
-    districts: createDistricts(['전체']),
-  },
-  {
-    id: 'gyeonggi',
-    name: '경기',
-    districts: [
-      { name: '전체' },
-      { name: '가평군' },
-      { name: '고양시', subDistricts: ['전체', '덕양구', '일산동구', '일산서구'] },
-      { name: '과천시' },
-      { name: '광명시' },
-      { name: '광주시' },
-      { name: '구리시' },
-      { name: '군포시' },
-      { name: '김포시' },
-      { name: '남양주시' },
-      { name: '동두천시' },
-      { name: '부천시', subDistricts: ['전체', '소사구', '오정구', '원미구'] },
-      { name: '성남시', subDistricts: ['전체', '분당구', '수정구', '중원구'] },
-      { name: '수원시', subDistricts: ['전체', '권선구', '영통구', '장안구', '팔달구'] },
-      { name: '시흥시' },
-      { name: '안산시', subDistricts: ['전체', '단원구', '상록구'] },
-      { name: '안성시' },
-      { name: '안양시', subDistricts: ['전체', '동안구', '만안구'] },
-      { name: '양주시' },
-      { name: '양평군' },
-      { name: '여주시' },
-      { name: '연천군' },
-      { name: '오산시' },
-      { name: '용인시', subDistricts: ['전체', '기흥구', '수지구', '처인구'] },
-      { name: '의왕시' },
-      { name: '의정부시' },
-      { name: '이천시' },
-      { name: '파주시' },
-      { name: '평택시' },
-      { name: '포천시' },
-      { name: '하남시' },
-      { name: '화성시', subDistricts: ['전체', '동탄구', '만세구', '병점구', '효행구'] },
-    ],
-  },
-  {
-    id: 'gangwon',
-    name: '강원',
-    districts: createDistricts([
-      '전체',
-      '강릉시',
-      '고성군',
-      '동해시',
-      '삼척시',
-      '속초시',
-      '양구군',
-      '양양군',
-      '영월군',
-      '원주시',
-      '인제군',
-      '정선군',
-      '철원군',
-      '춘천시',
-      '태백시',
-      '평창군',
-      '홍천군',
-      '화천군',
-      '횡성군',
-    ]),
-  },
-  {
-    id: 'chungbuk',
-    name: '충북',
-    districts: [
-      { name: '전체' },
-      { name: '괴산군' },
-      { name: '단양군' },
-      { name: '보은군' },
-      { name: '영동군' },
-      { name: '옥천군' },
-      { name: '음성군' },
-      { name: '제천시' },
-      { name: '증평군' },
-      { name: '진천군' },
-      { name: '청주시', subDistricts: ['전체', '상당구', '서원구', '청원구', '흥덕구'] },
-      { name: '충주시' },
-    ],
-  },
-  {
-    id: 'chungnam',
-    name: '충남',
-    districts: [
-      { name: '전체' },
-      { name: '계룡시' },
-      { name: '공주시' },
-      { name: '금산군' },
-      { name: '논산시' },
-      { name: '당진시' },
-      { name: '보령시' },
-      { name: '부여군' },
-      { name: '서산시' },
-      { name: '서천군' },
-      { name: '아산시' },
-      { name: '예산군' },
-      { name: '천안시', subDistricts: ['전체', '동남구', '서북구'] },
-      { name: '청양군' },
-      { name: '태안군' },
-      { name: '홍성군' },
-    ],
-  },
-  {
-    id: 'gyeongbuk',
-    name: '경북',
-    districts: [
-      { name: '전체' },
-      { name: '경산시' },
-      { name: '경주시' },
-      { name: '고령군' },
-      { name: '구미시' },
-      { name: '김천시' },
-      { name: '문경시' },
-      { name: '봉화군' },
-      { name: '상주시' },
-      { name: '성주군' },
-      { name: '안동시' },
-      { name: '영덕군' },
-      { name: '영양군' },
-      { name: '영주시' },
-      { name: '영천시' },
-      { name: '예천군' },
-      { name: '울릉군' },
-      { name: '울진군' },
-      { name: '의성군' },
-      { name: '청도군' },
-      { name: '청송군' },
-      { name: '칠곡군' },
-      { name: '포항시', subDistricts: ['전체', '남구', '북구'] },
-    ],
-  },
-  {
-    id: 'gyeongnam',
-    name: '경남',
-    districts: [
-      { name: '전체' },
-      { name: '거제시' },
-      { name: '거창군' },
-      { name: '고성군' },
-      { name: '김해시' },
-      { name: '남해군' },
-      { name: '밀양시' },
-      { name: '사천시' },
-      { name: '산청군' },
-      { name: '양산시' },
-      { name: '의령군' },
-      { name: '진주시' },
-      { name: '창녕군' },
-      { name: '창원시', subDistricts: ['전체', '마산합포구', '마산회원구', '성산구', '의창구', '진해구'] },
-      { name: '통영시' },
-      { name: '하동군' },
-      { name: '함안군' },
-      { name: '함양군' },
-      { name: '합천군' },
-    ],
-  },
-  {
-    id: 'jeonbuk',
-    name: '전북',
-    districts: [
-      { name: '전체' },
-      { name: '고창군' },
-      { name: '군산시' },
-      { name: '김제시' },
-      { name: '남원시' },
-      { name: '무주군' },
-      { name: '부안군' },
-      { name: '순창군' },
-      { name: '완주군' },
-      { name: '익산시' },
-      { name: '임실군' },
-      { name: '장수군' },
-      { name: '전주시', subDistricts: ['전체', '덕진구', '완산구'] },
-      { name: '정읍시' },
-      { name: '진안군' },
-    ],
-  },
-  {
-    id: 'jeonnam',
-    name: '전남',
-    districts: createDistricts([
-      '전체',
-      '강진군',
-      '고흥군',
-      '곡성군',
-      '광양시',
-      '구례군',
-      '나주시',
-      '담양군',
-      '목포시',
-      '무안군',
-      '보성군',
-      '순천시',
-      '신안군',
-      '여수시',
-      '영광군',
-      '영암군',
-      '완도군',
-      '장성군',
-      '장흥군',
-      '진도군',
-      '함평군',
-      '해남군',
-      '화순군',
-    ]),
-  },
-  {
-    id: 'jeju',
-    name: '제주',
-    districts: createDistricts(['전체', '서귀포시', '제주시']),
-  },
-] as const;
+  { id: 'seoul', name: '서울' },
+  { id: 'busan', name: '부산' },
+  { id: 'daegu', name: '대구' },
+  { id: 'gwangju', name: '광주' },
+  { id: 'incheon', name: '인천' },
+  { id: 'daejeon', name: '대전' },
+  { id: 'ulsan', name: '울산' },
+  { id: 'sejong', name: '세종' },
+  { id: 'gyeonggi', name: '경기' },
+  { id: 'gangwon', name: '강원' },
+  { id: 'chungbuk', name: '충북' },
+  { id: 'chungnam', name: '충남' },
+  { id: 'gyeongbuk', name: '경북' },
+  { id: 'gyeongnam', name: '경남' },
+  { id: 'jeonbuk', name: '전북' },
+  { id: 'jeonnam', name: '전남' },
+  { id: 'jeju', name: '제주' },
+];
 
-const createRegionSearchAliases = (keyword: string) => {
-  const suffixRemovedKeyword = keyword.replace(/[시군구]$/, '');
+export const regionSearchKeywords = regionCities.map((city) => city.name);
 
-  if (suffixRemovedKeyword.length < 2 || suffixRemovedKeyword === keyword) {
-    return [keyword];
-  }
-
-  return [keyword, suffixRemovedKeyword];
+/**
+ * 지도 GeoJSON 등에서 쓰는 공식 행정구역명(예: "경기도")을 지역 API가 쓰는
+ * 짧은 이름(예: "경기")으로 정규화한다. 시/군/구 단위 이름은 이미 API와
+ * 형태가 같아 변환이 필요 없다.
+ */
+const OFFICIAL_PROVINCE_NAME_MAP: Record<string, string> = {
+  서울특별시: '서울',
+  부산광역시: '부산',
+  대구광역시: '대구',
+  인천광역시: '인천',
+  광주광역시: '광주',
+  대전광역시: '대전',
+  울산광역시: '울산',
+  세종특별자치시: '세종',
+  경기도: '경기',
+  강원도: '강원',
+  충청북도: '충북',
+  충청남도: '충남',
+  전라북도: '전북',
+  전라남도: '전남',
+  경상북도: '경북',
+  경상남도: '경남',
+  제주특별자치도: '제주',
+  // 지도 GeoJSON 원본 데이터에 있는 오타("특별별")까지 함께 매핑해 둔다.
+  제주특별별자치도: '제주',
 };
 
-export const regionSearchKeywords = Array.from(
-  new Set(
-    regionCities.flatMap((city) =>
-      [
-        city.name,
-        ...city.districts.flatMap((district) => [
-          district.name,
-          ...(district.subDistricts ?? []),
-        ]),
-      ].flatMap(createRegionSearchAliases)
-    )
-  )
-).filter((keyword) => keyword !== '전체');
+export function normalizeRegionName(name: string): string {
+  return OFFICIAL_PROVINCE_NAME_MAP[name] ?? name;
+}
