@@ -17,11 +17,7 @@ export function ProfileDetailSection({
   return (
     <>
       <div className="w-full" style={{ marginTop: 24 * scale }}>
-        <ProfileInfoList
-          scale={scale}
-          isBusinessProfile={isBusinessProfile}
-          businessAddress={businesses[0]?.businessAddress}
-        />
+        <ProfileInfoList scale={scale} isBusinessProfile={isBusinessProfile} />
       </div>
       <div className="w-full" style={{ marginTop: 24 * scale }}>
         {isBusinessProfile ? (

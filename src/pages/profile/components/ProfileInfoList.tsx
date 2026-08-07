@@ -11,20 +11,15 @@ const profileInfo = [
 export function ProfileInfoList({
   scale,
   isBusinessProfile = false,
-  businessAddress,
 }: {
   scale: number;
   isBusinessProfile?: boolean;
-  businessAddress?: string;
 }) {
+  // '사는지역'은 가입할 때 고른 거주 지역이다. 사업장 주소를 여기에 넣으면
+  // 사업장이 여럿일 때 어느 쪽인지도 알 수 없고 의미도 다르다. 사업장 주소는
+  // 아래 '내 사업장' 목록이 이미 보여준다.
   const visibleProfileInfo = isBusinessProfile
-    ? profileInfo
-        .slice(0, 2)
-        .map((info) =>
-          info.label === '사는지역' && businessAddress
-            ? { ...info, value: businessAddress }
-            : info
-        )
+    ? profileInfo.slice(0, 2)
     : profileInfo;
 
   return (
