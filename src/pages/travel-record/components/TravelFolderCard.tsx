@@ -2,7 +2,10 @@ import { useId } from 'react';
 
 import folderShadowLayerImage from '../assets/travel-folder-shadow-layer.svg';
 import type { TravelRecordFolder } from '../types';
-import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
+import {
+  FOLDER_PHOTO_FRAMES,
+  type TravelFolderDecoration,
+} from '../folder-decoration/folderDecoration';
 
 import { FolderDecorationRenderer } from './FolderDecorationRenderer';
 import {
@@ -46,6 +49,15 @@ const folderPhotoSlots: FolderPhotoSlot[] = [
     cropClassName:
       'absolute top-[calc(50%-8px)] left-1/2 h-[110px] w-[83.008px] -translate-x-1/2 -translate-y-1/2',
   },
+  {
+    // 사진 한 장은 폴더 앞면 안쪽으로 더 들어간 전용 슬롯을 사용한다.
+    wrapperClassName:
+      'absolute top-[27px] left-[55px] z-11 flex size-[106.675px] items-center justify-center',
+    frameClassName:
+      'flex size-[88px] rotate-[14deg] items-center justify-center overflow-hidden rounded-xl bg-[#f9f9f9] shadow-[2px_2px_2px_rgba(0,0,0,0.15)]',
+    cropClassName:
+      'absolute top-[calc(50%-8px)] left-1/2 h-[110px] w-[83.008px] -translate-x-1/2 -translate-y-1/2',
+  },
 ];
 
 const folderClipPathData =
@@ -70,26 +82,25 @@ function FolderDecorationClip({
     >
       <defs>
         <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
-          {photoSlotIndexes.includes(0) ? (
-            <rect
-              x="5.1865"
-              y="8.1865"
-              width="88"
-              height="88"
-              rx="12"
-              transform="rotate(-12 49.1865 52.1865)"
-            />
-          ) : null}
-          {photoSlotIndexes.includes(1) ? (
-            <rect
-              x="64.3375"
-              y="28.3375"
-              width="88"
-              height="88"
-              rx="12"
-              transform="rotate(14 108.3375 72.3375)"
-            />
-          ) : null}
+          {/* 드래그 경계와 같은 값을 써야 스티커가 놓일 수 있는 자리와 실제로
+              그려지는 자리가 어긋나지 않는다. 사진이 한 장이면 슬롯 2가 온다. */}
+          {photoSlotIndexes.map((slotIndex) => {
+            const frame = FOLDER_PHOTO_FRAMES[slotIndex];
+
+            if (!frame) return null;
+
+            return (
+              <rect
+                key={slotIndex}
+                x={frame.centerX - frame.width / 2}
+                y={frame.centerY - frame.height / 2}
+                width={frame.width}
+                height={frame.height}
+                rx={frame.radius}
+                transform={`rotate(${frame.rotation} ${frame.centerX} ${frame.centerY})`}
+              />
+            );
+          })}
           <path d={folderClipPathData} transform="translate(0 53)" />
         </clipPath>
       </defs>

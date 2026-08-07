@@ -53,6 +53,63 @@ export const FOLDER_DECORATION_CANVAS_BOUNDS: CanvasBounds = {
 const FOLDER_ARTWORK_WIDTH = 159;
 const FOLDER_ARTWORK_HEIGHT = 183;
 
+export interface FolderPhotoFrame {
+  centerX: number;
+  centerY: number;
+  width: number;
+  height: number;
+  radius: number;
+  rotation: number;
+}
+
+/**
+ * 사진 프레임의 아트워크 좌표. 인덱스는 TravelFolderCard의 folderPhotoSlots와
+ * 같은 순서다(0 왼쪽, 1 오른쪽 대표, 2 사진 한 장 전용).
+ *
+ * 스티커 클립 패스와 드래그 경계가 같은 값을 봐야 한다. 따로 들고 있으면
+ * 사진이 한 장일 때처럼 슬롯이 바뀌는 경우에 한쪽만 갱신되어, 스티커가 사진
+ * 위로 갈 수는 있는데 그려지지는 않는 식으로 어긋난다.
+ */
+export const FOLDER_PHOTO_FRAMES: readonly FolderPhotoFrame[] = [
+  {
+    centerX: 49.1865,
+    centerY: 52.1865,
+    width: 88,
+    height: 88,
+    radius: 12,
+    rotation: -12,
+  },
+  {
+    centerX: 108.3375,
+    centerY: 72.3375,
+    width: 88,
+    height: 88,
+    radius: 12,
+    rotation: 14,
+  },
+  // 사진 한 장은 폴더 앞면 안쪽으로 8px 더 내려간 자리에 놓인다.
+  {
+    centerX: 108.3375,
+    centerY: 80.3375,
+    width: 88,
+    height: 88,
+    radius: 12,
+    rotation: 14,
+  },
+];
+
+/** 폴더 앞면. 사진 장수와 무관하게 항상 스티커를 받는다. */
+const FOLDER_FRONT_FRAME = {
+  centerX: 79.5,
+  centerY: 118,
+  width: 159,
+  height: 130,
+  radius: 15,
+};
+
+/** 사진이 두 장일 때의 슬롯. 인자를 생략한 호출의 기본값이다. */
+export const FOLDER_TWO_PHOTO_SLOT_INDEXES: readonly number[] = [1, 0];
+
 const isPointInRoundedRectangle = (
   point: { x: number; y: number },
   rectangle: {
@@ -77,40 +134,32 @@ const isPointInRoundedRectangle = (
   return Math.hypot(x - nearestX, y - nearestY) <= rectangle.radius;
 };
 
-export const isPointInFolderDecorationLayout = (point: {
-  x: number;
-  y: number;
-}) => {
+/**
+ * 스티커 중심이 폴더 앞면이나 실제로 놓인 사진 위에 있는지 본다.
+ *
+ * 사진이 한 장이면 두 장일 때와 슬롯이 달라서(전용 슬롯을 쓴다) 슬롯 목록을
+ * 받아야 한다. 두 장 기준으로 굳혀 두면 한 장일 때 사진 아래쪽이 경계 밖으로
+ * 빠지고, 정작 사진이 없는 왼쪽 자리는 열려 버린다.
+ */
+export const isPointInFolderDecorationLayout = (
+  point: {
+    x: number;
+    y: number;
+  },
+  photoSlotIndexes: readonly number[] = FOLDER_TWO_PHOTO_SLOT_INDEXES,
+) => {
   const canvasPoint = {
     x: point.x * FOLDER_ARTWORK_WIDTH,
     y: point.y * FOLDER_ARTWORK_HEIGHT,
   };
 
-  return (
-    isPointInRoundedRectangle(canvasPoint, {
-      centerX: 49.1865,
-      centerY: 52.1865,
-      width: 88,
-      height: 88,
-      radius: 12,
-      rotation: -12,
-    }) ||
-    isPointInRoundedRectangle(canvasPoint, {
-      centerX: 108.3375,
-      centerY: 72.3375,
-      width: 88,
-      height: 88,
-      radius: 12,
-      rotation: 14,
-    }) ||
-    isPointInRoundedRectangle(canvasPoint, {
-      centerX: 79.5,
-      centerY: 118,
-      width: 159,
-      height: 130,
-      radius: 15,
-    })
-  );
+  const isOnPhoto = photoSlotIndexes.some((slotIndex) => {
+    const frame = FOLDER_PHOTO_FRAMES[slotIndex];
+
+    return frame ? isPointInRoundedRectangle(canvasPoint, frame) : false;
+  });
+
+  return isOnPhoto || isPointInRoundedRectangle(canvasPoint, FOLDER_FRONT_FRAME);
 };
 
 /** \uD3F4\uB354 \uD558\uB098\uC5D0 \uBC30\uCE58\uD560 \uC218 \uC788\uB294 \uC2A4\uD2F0\uCEE4 \uC218. \uC11C\uBC84 \uC81C\uD55C\uC740 \uC5C6\uACE0 \uD504\uB860\uD2B8 \uC815\uCC45\uC774\uB2E4. */
@@ -254,11 +303,15 @@ export const isFolderDecorationDropTarget = (
   rect: CanvasRect,
   clientX: number,
   clientY: number,
+  photoSlotIndexes?: readonly number[],
 ) =>
-  isPointInFolderDecorationLayout({
-    x: (clientX - rect.left) / rect.width,
-    y: (clientY - rect.top) / rect.height,
-  });
+  isPointInFolderDecorationLayout(
+    {
+      x: (clientX - rect.left) / rect.width,
+      y: (clientY - rect.top) / rect.height,
+    },
+    photoSlotIndexes,
+  );
 
 export const getDecorationRotation = (
   center: { x: number; y: number },

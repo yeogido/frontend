@@ -6,6 +6,7 @@ import type {
   BusinessPromotionSortParam,
 } from '../../../types/businessPromotion.type';
 import type { Region } from '../../../types/region.type';
+import { toContentTagIds } from '../../../utils/contentTags';
 import type { BusinessCategory, BusinessItem, BusinessSort } from '../types';
 
 const CATEGORY_PARAM_BY_LABEL: Record<
@@ -93,7 +94,10 @@ export function mapBusinessPromotionItemToBusinessItem(
     location: item.regionName,
     category: mapApiCategoryToLabel(item.promotionCategory),
     author: item.author.nickname,
+    authorAvatarUrl: item.author.profileImageUrl,
     date: formatBusinessPromotionDate(item.createdAt),
     image: item.thumbnailImageUrl,
+    tags: toContentTagIds(item.hashtags),
+    liked: item.isLiked,
   };
 }

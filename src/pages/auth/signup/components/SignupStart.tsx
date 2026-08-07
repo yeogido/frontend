@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { KakaoIcon, NaverIcon } from '../../../../components/auth';
@@ -6,6 +7,8 @@ import logo from '../../../../assets/icons/logo.svg';
 import yeogido from '../../../../assets/icons/yeogido.svg';
 
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
+import { useKakaoLogin } from '../../../../hooks/useKakaoLogin';
+import { useNaverLogin } from '../../../../hooks/useNaverLogin';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 56;
@@ -38,6 +41,13 @@ const KAKAO_ICON_SIZE = 18;
 const NAVER_ICON_SIZE = 16;
 const BUTTON_ICON_GAP = 10;
 
+const ERROR_MESSAGE_MARGIN_TOP = 12;
+
+const KAKAO_START_ERROR_MESSAGE =
+  '카카오로 시작하지 못했습니다. 다시 시도해 주세요.';
+const NAVER_START_ERROR_MESSAGE =
+  '네이버로 시작하지 못했습니다. 다시 시도해 주세요.';
+
 interface SignupStartProps {
   onEmailStart: () => void;
 }
@@ -46,6 +56,39 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
   const scale = useGlobalScale();
 
   const s = (value: number) => value * scale;
+
+  const [submitError, setSubmitError] = useState('');
+  const { loginWithKakao, isLoading: isKakaoLoading } = useKakaoLogin();
+  const { loginWithNaver, isLoading: isNaverLoading } = useNaverLogin();
+  // 한 SDK가 로딩되는 동안 다른 소셜 버튼을 눌러 authorize()가 동시에
+  // 두 번 시작되지 않도록, 두 버튼을 하나의 로딩 상태로 함께 잠근다.
+  const isSocialLoginLoading = isKakaoLoading || isNaverLoading;
+
+  // 로그인 화면의 아이콘 버튼과 동일한 authorize() 호출을 그대로 쓴다.
+  // 콜백(/auth/kakao|naver/callback)은 어느 화면에서 시작했는지와
+  // 무관하게 백엔드 응답의 isNewUser로만 신규/기존 회원을 분기하므로,
+  // 회원가입 화면 전용 로직이 따로 필요 없다.
+  const handleKakaoStart = async () => {
+    setSubmitError('');
+
+    try {
+      await loginWithKakao();
+    } catch (error) {
+      console.error('[카카오로 시작하기 실패]', error);
+      setSubmitError(KAKAO_START_ERROR_MESSAGE);
+    }
+  };
+
+  const handleNaverStart = async () => {
+    setSubmitError('');
+
+    try {
+      await loginWithNaver();
+    } catch (error) {
+      console.error('[네이버로 시작하기 실패]', error);
+      setSubmitError(NAVER_START_ERROR_MESSAGE);
+    }
+  };
 
   return (
     <div className="min-h-dvh w-full bg-background">
@@ -121,9 +164,11 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
               gap: s(BUTTON_GAP),
             }}
           >
-            <Link
-              to="/signup/kakao"
-              className="flex items-center justify-center rounded-xl bg-[#FEE500] font-bold text-black"
+            <button
+              type="button"
+              onClick={handleKakaoStart}
+              disabled={isSocialLoginLoading}
+              className="flex items-center justify-center rounded-xl bg-[#FEE500] font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
               style={{
                 height: s(BUTTON_HEIGHT),
                 fontSize: s(16),
@@ -143,10 +188,12 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
 
                 <span>카카오로 시작하기</span>
               </div>
-            </Link>
-            <Link
-              to="/signup/naver"
-              className="flex items-center justify-center rounded-xl bg-[#03C75A] font-bold text-white"
+            </button>
+            <button
+              type="button"
+              onClick={handleNaverStart}
+              disabled={isSocialLoginLoading}
+              className="flex items-center justify-center rounded-xl bg-[#03C75A] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
               style={{
                 height: s(BUTTON_HEIGHT),
                 fontSize: s(16),
@@ -166,7 +213,7 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
 
                 <span>네이버로 시작하기</span>
               </div>
-            </Link>
+            </button>
 
             <button
               type="button"
@@ -179,6 +226,20 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
             >
               이메일로 시작하기
             </button>
+
+            {submitError && (
+              <p
+                role="alert"
+                className="text-center font-medium text-main-5"
+                style={{
+                  marginTop: s(ERROR_MESSAGE_MARGIN_TOP),
+                  fontSize: s(12),
+                  lineHeight: `${s(12)}px`,
+                }}
+              >
+                {submitError}
+              </p>
+            )}
           </div>
 
           <div

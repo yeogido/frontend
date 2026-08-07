@@ -16,9 +16,9 @@ const createSelectedPhoto = (id: string): SelectedPhoto => ({
   url: `blob:${id}`,
 });
 
-test('puts a single travel photo in the right folder slot', () => {
+test('puts a single travel photo in its deeper right folder slot', () => {
   assert.deepEqual(getVisibleFolderPhotos(['first-photo']), ['first-photo']);
-  assert.deepEqual(getFolderPhotoSlotIndexes(1), [1]);
+  assert.deepEqual(getFolderPhotoSlotIndexes(1), [2]);
 });
 
 test('keeps the cover photo in the right folder slot whatever the count', () => {
@@ -29,7 +29,10 @@ test('keeps the cover photo in the right folder slot whatever the count', () => 
   // 첫 사진이 대표 사진이므로 장수와 무관하게 오른쪽에 놓인다. 한 장일 때는
   // 오른쪽, 두 장일 때는 왼쪽으로 가던 모순을 없앤다.
   assert.deepEqual(getFolderPhotoSlotIndexes(2), [1, 0]);
-  assert.equal(getFolderPhotoSlotIndexes(1)[0], getFolderPhotoSlotIndexes(2)[0]);
+  assert.notEqual(
+    getFolderPhotoSlotIndexes(1)[0],
+    getFolderPhotoSlotIndexes(2)[0]
+  );
 });
 
 test('ignores empty travel photo fallback urls', () => {

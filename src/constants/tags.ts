@@ -11,6 +11,10 @@ import seaInactive from '../assets/tag-chip/inactive/sea.svg';
 import springInactive from '../assets/tag-chip/inactive/spring.svg';
 import summerInactive from '../assets/tag-chip/inactive/summer.svg';
 import winterInactive from '../assets/tag-chip/inactive/winter.svg';
+import drinkInactive from '../assets/tag-chip/inactive/drink.svg';
+import gameInactive from '../assets/tag-chip/inactive/game.svg';
+import musicInactive from '../assets/tag-chip/inactive/music.svg';
+import sportInactive from '../assets/tag-chip/inactive/sport.svg';
 
 import autumnSelected from '../assets/tag-chip/selected/autumn.svg';
 import bakerySelected from '../assets/tag-chip/selected/bakery.svg';
@@ -25,6 +29,10 @@ import seaSelected from '../assets/tag-chip/selected/sea.svg';
 import springSelected from '../assets/tag-chip/selected/spring.svg';
 import summerSelected from '../assets/tag-chip/selected/summer.svg';
 import winterSelected from '../assets/tag-chip/selected/winter.svg';
+import drinkSelected from '../assets/tag-chip/selected/drink.svg';
+import gameSelected from '../assets/tag-chip/selected/game.svg';
+import musicSelected from '../assets/tag-chip/selected/music.svg';
+import sportSelected from '../assets/tag-chip/selected/sport.svg';
 
 import cardAutumnInactive from '../assets/card-tag-chip/inactive/autumn.svg';
 import cardBakeryInactive from '../assets/card-tag-chip/inactive/bakery.svg';
@@ -53,6 +61,13 @@ import cardSeaSelected from '../assets/card-tag-chip/selected/sea.svg';
 import cardSpringSelected from '../assets/card-tag-chip/selected/spring.svg';
 import cardSummerSelected from '../assets/card-tag-chip/selected/summer.svg';
 import cardWinterSelected from '../assets/card-tag-chip/selected/winter.svg';
+// card-tag-chip은 선택된(selected) 상태만 실제로 쓰여서(components/common/TagChip.tsx가
+// cardTagChip.selected만 참조) drink/game/music/sport는 inactive SVG가 따로 없다.
+// TagAssetState가 두 필드를 다 요구해 selected를 inactive 자리에도 그대로 넣는다.
+import cardDrinkSelected from '../assets/card-tag-chip/selected/drink.svg';
+import cardGameSelected from '../assets/card-tag-chip/selected/game.svg';
+import cardMusicSelected from '../assets/card-tag-chip/selected/music.svg';
+import cardSportSelected from '../assets/card-tag-chip/selected/sport.svg';
 
 import type { ApiTagCode, TagDefinition, TagId } from '../types/tag.type';
 
@@ -202,6 +217,50 @@ export const tagDefinitions = [
       cardTagChip: {
         inactive: cardLocalAttractionInactive,
         selected: cardLocalAttractionSelected,
+      },
+    },
+  },
+  {
+    id: 'drink',
+    label: '술',
+    assets: {
+      tagChip: { inactive: drinkInactive, selected: drinkSelected },
+      cardTagChip: {
+        inactive: cardDrinkSelected,
+        selected: cardDrinkSelected,
+      },
+    },
+  },
+  {
+    id: 'game',
+    label: '게임',
+    assets: {
+      tagChip: { inactive: gameInactive, selected: gameSelected },
+      cardTagChip: {
+        inactive: cardGameSelected,
+        selected: cardGameSelected,
+      },
+    },
+  },
+  {
+    id: 'music',
+    label: '음악',
+    assets: {
+      tagChip: { inactive: musicInactive, selected: musicSelected },
+      cardTagChip: {
+        inactive: cardMusicSelected,
+        selected: cardMusicSelected,
+      },
+    },
+  },
+  {
+    id: 'sport',
+    label: '스포츠',
+    assets: {
+      tagChip: { inactive: sportInactive, selected: sportSelected },
+      cardTagChip: {
+        inactive: cardSportSelected,
+        selected: cardSportSelected,
       },
     },
   },

@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { searchRegions } from '../../../apis/regions.api';
+import { getSubRegions, searchRegions } from '../../../apis/regions.api';
 import {
   COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
   courseRegionRecentSearchKeywords,
 } from '../../../constants/recentSearches';
+import { REGION_INFO_ID_STATE_KEY } from '../../../constants/regions';
+import type { SubRegion } from '../../../types/region.type';
 import {
   addStoredRecentSearch,
   getStoredRecentSearches,
@@ -20,32 +22,34 @@ import {
   getCourseRegionSearchTarget,
 } from '../constants/searchTargets';
 import type { CityOption } from '../types';
-import { createRegionSearchSuggestions } from '../utils/regionSuggestions';
 
 import useRegionOptions from './useRegionOptions';
 
-const DISTRICT_STEP_STATE_KEY = 'courseRegionDistrictStep';
+interface RegionPathStep {
+  id: number;
+  name: string;
+}
+
+const REGION_PATH_STATE_KEY = 'courseRegionPath';
 const recentSearchStorageOptions = {
   storageKey: COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
   fallbackSearches: courseRegionRecentSearchKeywords,
 };
 
-const getDistrictStepName = (state: unknown) => {
+const getRegionPathFromState = (state: unknown): RegionPathStep[] => {
   if (
     typeof state === 'object' &&
     state !== null &&
-    DISTRICT_STEP_STATE_KEY in state
+    REGION_PATH_STATE_KEY in state
   ) {
-    const districtStep = (state as Record<string, unknown>)[
-      DISTRICT_STEP_STATE_KEY
-    ];
+    const path = (state as Record<string, unknown>)[REGION_PATH_STATE_KEY];
 
-    if (typeof districtStep === 'string') {
-      return districtStep;
+    if (Array.isArray(path)) {
+      return path as RegionPathStep[];
     }
   }
 
-  return undefined;
+  return [];
 };
 
 function createSearchResultLocation(params: {
@@ -79,6 +83,7 @@ function createSearchResultLocation(params: {
 function useCourseRegionSearch() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const {
     cities,
@@ -100,26 +105,32 @@ function useCourseRegionSearch() {
   const trimmedSearchQuery = searchQuery.trim();
 
   const selectedCity = cities.find((city) => city.id === selectedCityId);
-  const districtStepName = getDistrictStepName(location.state);
-  const selectedParentDistrict = selectedCity?.districts.find(
-    (district) =>
-      district.name === districtStepName && Boolean(district.subDistricts)
+  const regionPath = getRegionPathFromState(location.state);
+  const selectedParentDistrict = regionPath.at(-1);
+
+  // 지금 보고 있는 단계(도시 바로 아래, 혹은 그 아래로 한 번 더 들어간 지역)의
+  // 상위 regionId. 이게 바뀔 때마다 그 하위 지역 목록을 새로 조회한다.
+  const currentParentRegionId = selectedParentDistrict
+    ? selectedParentDistrict.id
+    : selectedCity?.regionId;
+
+  const subRegionsQuery = useQuery({
+    queryKey: ['regions', currentParentRegionId, 'sub-regions'],
+    queryFn: () => getSubRegions(currentParentRegionId as number),
+    enabled: currentParentRegionId !== undefined,
+    staleTime: 5 * 60_000,
+  });
+
+  // 로딩 중에는 '전체'만 보여줘서 목록이 비었다가 채워지는 깜빡임을 줄인다.
+  const visibleDistricts =
+    currentParentRegionId !== undefined
+      ? ['전체', ...(subRegionsQuery.data ?? []).map((region) => region.name)]
+      : [];
+
+  const defaultSearchSuggestions = useMemo(
+    () => getUniqueSearches([...recentSearches, ...cities.map((city) => city.name)]),
+    [cities, recentSearches]
   );
-
-  const visibleDistricts = selectedCity
-    ? (selectedParentDistrict?.subDistricts ??
-      selectedCity.districts.map((district) => district.name))
-    : [];
-
-  const defaultSearchSuggestions = useMemo(() => {
-    const districtSuggestions = createRegionSearchSuggestions(cities);
-
-    return getUniqueSearches([
-      ...recentSearches,
-      ...cities.map((city) => city.name),
-      ...districtSuggestions,
-    ]);
-  }, [cities, recentSearches]);
 
   // 검색창에 입력하는 즉시(타이핑마다) 백엔드에 물어 연관 검색어를 채운다.
   // 백엔드가 이름 LIKE(부분 문자열) 매칭이라 SearchBar의 로컬 재필터를
@@ -175,7 +186,9 @@ function useCourseRegionSearch() {
     const matchedCity = findMatchingCity(keyword);
 
     if (matchedCity) {
-      navigate(`/region-info/${matchedCity.id}`);
+      navigate(`/region-info/${encodeURIComponent(matchedCity.name)}`, {
+        state: { [REGION_INFO_ID_STATE_KEY]: matchedCity.regionId },
+      });
 
       return;
     }
@@ -218,11 +231,7 @@ function useCourseRegionSearch() {
     setRecentSearches([]);
   };
 
-  const updateDistrictStepState = (districtStep?: string, replace = false) => {
-    const nextState = districtStep
-      ? { [DISTRICT_STEP_STATE_KEY]: districtStep }
-      : null;
-
+  const updateRegionPathState = (path: RegionPathStep[], replace = false) => {
     navigate(
       {
         pathname: location.pathname,
@@ -230,66 +239,79 @@ function useCourseRegionSearch() {
       },
       {
         replace,
-        state: nextState,
+        state: path.length > 0 ? { [REGION_PATH_STATE_KEY]: path } : null,
       }
     );
   };
 
   const selectCity = (city: CityOption) => {
-    updateDistrictStepState(undefined, true);
+    updateRegionPathState([], true);
     setSelectedCityId(city.id);
     setSelectedDistrict('전체');
   };
 
-  const selectDistrict = (district: string) => {
+  const selectDistrict = async (district: string) => {
     if (!selectedCity) {
-      return;
-    }
-
-    if (selectedParentDistrict) {
-      setSelectedDistrict(district);
-
-      if (district === '전체') {
-        navigate(`/region-info/${selectedCity.id}`);
-
-        return;
-      }
-
-      navigate(
-        createSearchResultLocation({
-          targetPathname: searchTargetPathname,
-          city: selectedCity.name,
-          district: `${selectedParentDistrict.name} ${district}`,
-        })
-      );
-
-      return;
-    }
-
-    const nextDistrict = selectedCity.districts.find(
-      (cityDistrict) => cityDistrict.name === district
-    );
-
-    if (nextDistrict?.subDistricts && district !== '전체') {
-      updateDistrictStepState(nextDistrict.name);
-      setSelectedDistrict('전체');
-
       return;
     }
 
     setSelectedDistrict(district);
 
     if (district === '전체') {
-      navigate(`/region-info/${selectedCity.id}`);
+      // 드릴다운해서 하위 지역을 보는 중이면 그 지역(예: 고양시) 기준 '전체',
+      // 아니면 도시 자체 기준 '전체'로 이동한다.
+      const targetName = selectedParentDistrict?.name ?? selectedCity.name;
+      const targetRegionId = selectedParentDistrict?.id ?? selectedCity.regionId;
+
+      navigate(`/region-info/${encodeURIComponent(targetName)}`, {
+        state: { [REGION_INFO_ID_STATE_KEY]: targetRegionId },
+      });
 
       return;
     }
+
+    const clicked = (subRegionsQuery.data ?? []).find(
+      (region) => region.name === district
+    );
+
+    if (!clicked) {
+      return;
+    }
+
+    // 이 지역이 더 하위 지역을 갖고 있는지 확인해서, 있으면 한 단계 더
+    // 들어가고 없으면(리프) 검색 결과로 바로 넘어간다. 조회에 실패하면
+    // 사용자가 더 못 넘어가고 멈추기보다는 리프인 것처럼 진행시킨다.
+    let children: SubRegion[];
+
+    try {
+      children = await queryClient.fetchQuery({
+        queryKey: ['regions', clicked.subRegionId, 'sub-regions'],
+        queryFn: () => getSubRegions(clicked.subRegionId),
+        staleTime: 5 * 60_000,
+      });
+    } catch {
+      children = [];
+    }
+
+    if (children.length > 0) {
+      updateRegionPathState([
+        ...regionPath,
+        { id: clicked.subRegionId, name: clicked.name },
+      ]);
+      setSelectedDistrict('전체');
+
+      return;
+    }
+
+    const districtLabel = [...regionPath.map((step) => step.name), clicked.name].join(
+      ' '
+    );
 
     navigate(
       createSearchResultLocation({
         targetPathname: searchTargetPathname,
         city: selectedCity.name,
-        district,
+        district: districtLabel,
       })
     );
   };

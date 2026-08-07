@@ -34,10 +34,16 @@ export function useKakaoLogin() {
       // 않고, redirectUri(KAKAO_CALLBACK_PATH)로 돌아오면서 이어진다.
       // 콜백 페이지가 social-login에 보낼 redirectUri는 반드시 이 값과
       // 동일해야 하므로 getKakaoCallbackUrl()을 그대로 공유해서 쓴다.
+      // throughTalk 기본값(true)은 카카오톡 앱 실행을 먼저 시도하는데,
+      // 데스크톱/카카오톡 미설치 환경에서 웹 로그인으로의 폴백이
+      // 제대로 안 돼 "Failed to launch intent:..."만 찍히고 멈추는
+      // 문제가 있어 false로 고정해 바로 웹 로그인(kauth.kakao.com)으로
+      // 이동시킨다.
       window.Kakao!.Auth.authorize({
         redirectUri: getKakaoCallbackUrl(),
         scope: KAKAO_LOGIN_SCOPE,
         state,
+        throughTalk: false,
       });
     } catch (error) {
       setIsLoading(false);

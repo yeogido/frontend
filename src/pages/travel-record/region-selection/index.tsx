@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { IoChevronBack } from 'react-icons/io5';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
@@ -21,6 +20,8 @@ import {
 import { getTravelRecordDraftRegion } from '../utils/draftStorage';
 import { mapPopularRegionToTravelRecordRegion } from '../mappers/travelRecordApiMapper';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { getInitialTravelRecordRegion } from './initialSelectedRegion';
+import backIcon from '../../../assets/icons/back.svg';
 
 function TravelRecordRegionSelectionPage() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ function TravelRecordRegionSelectionPage() {
     updateQuery,
   } = useTravelRecordRegionSelection(
     popularRegions,
-    storedDraftRegion ? { ...storedDraftRegion, imageSrc: '' } : null,
+    getInitialTravelRecordRegion(isEditing, storedDraftRegion),
   );
 
   useEffect(() => {
@@ -65,7 +66,7 @@ function TravelRecordRegionSelectionPage() {
         aria-label="보관 화면으로 돌아가기"
         className="text-gray-5 flex size-6 shrink-0 items-center justify-start"
       >
-        <IoChevronBack aria-hidden="true" className="text-[24px]" />
+        <img src={backIcon} alt="" aria-hidden="true" className="size-6" />
       </button>
 
       <section className="mt-4 flex shrink-0 flex-col gap-3">
