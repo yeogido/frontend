@@ -8,7 +8,18 @@ import type {
 import type {
   GetMyPostsParams,
   GetMyPostsResponse,
+  UserProfileResponse,
 } from '../types/user.type';
+
+export async function getMyProfile(): Promise<UserProfileResponse> {
+  try {
+    const { data } = await apiClient.get<UserProfileResponse>('/users/me');
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function getMyPosts(
   params: GetMyPostsParams = {},

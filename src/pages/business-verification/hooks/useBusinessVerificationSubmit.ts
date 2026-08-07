@@ -7,9 +7,10 @@ import {
 import { getSubRegions } from '../../../apis/regions.api';
 import { verifyBusiness } from '../../../apis/users.api';
 import { MY_BUSINESSES_QUERY_KEY } from '../../../hooks/useMyBusinesses';
+import { MY_PROFILE_QUERY_KEY } from '../../../hooks/useMyProfile';
 import { useRegions } from '../../../hooks/useRegions';
-import { useAuthStore } from '../../../store/auth.store';
 import type { BusinessVerifyResult } from '../../../types/business.type';
+import type { UserProfileResponse } from '../../../types/user.type';
 import type { PlaceItem } from '../../local-recommendation/place-selection/types';
 import { resolveProvinceRegionId, resolveSubRegionId } from '../regionId';
 import { toBusinessNumber } from '../validation';
@@ -40,7 +41,6 @@ interface BusinessVerificationSubmitValues {
 
 export function useBusinessVerificationSubmit() {
   const { data: regionsData } = useRegions();
-  const setRole = useAuthStore((state) => state.setRole);
   const queryClient = useQueryClient();
 
   return useMutation<BusinessVerifyResult, unknown, BusinessVerificationSubmitValues>({
@@ -94,9 +94,14 @@ export function useBusinessVerificationSubmit() {
       });
     },
     onSuccess: (result) => {
-      // 명세서 요구사항: 성공 시 클라이언트가 들고 있는 Role을 즉시 갱신해
-      // 홍보 글쓰기 권한을 열어준다.
-      setRole(result.role);
+      // 명세서 요구사항: 성공 시 들고 있는 Role을 즉시 갱신해 홍보 글쓰기
+      // 권한을 열어준다. 캐시에 응답의 role을 먼저 반영해 재조회를 기다리지
+      // 않게 하고, 이어서 무효화해 서버 값으로 확정한다.
+      queryClient.setQueryData<UserProfileResponse>(
+        MY_PROFILE_QUERY_KEY,
+        (profile) => (profile ? { ...profile, role: result.role } : profile)
+      );
+      queryClient.invalidateQueries({ queryKey: MY_PROFILE_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: MY_BUSINESSES_QUERY_KEY });
     },
   });
