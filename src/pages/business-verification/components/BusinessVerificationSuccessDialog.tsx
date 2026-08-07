@@ -46,39 +46,78 @@ export function BusinessVerificationSuccessDialog({
   scale,
   onConfirm,
 }: BusinessVerificationSuccessDialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
+  // 배경 스크롤 잠금.
   useEffect(() => {
     if (!isOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // aria-modal은 포커스를 옮겨주지 않는다. 직접 확인 버튼으로 보내지
-    // 않으면 배경의 '사업자 인증하기' 버튼에 포커스가 남는다.
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
+  /*
+   * 포커스를 다이얼로그 안으로 옮기고 가둔다.
+   *
+   * aria-modal은 포커스를 옮겨주지도, 가둬주지도 않는다. 그대로 두면 배경의
+   * '사업자 인증하기' 버튼에 포커스가 남는다.
+   *
+   * Tab만 막으면 새는 길이 남는다. 브라우저 주소창을 거쳐 돌아오거나 스크린
+   * 리더가 커서를 옮기는 등 키 이벤트를 거치지 않는 경로가 있어서, focusin을
+   * 함께 감시해 다이얼로그 밖으로 나간 포커스를 끌어온다.
+   *
+   * onConfirm은 부모가 매 렌더 새로 만들어 넘기므로 의존성에서 뺀다. 넣으면
+   * 부모가 리렌더될 때마다 포커스를 확인 버튼으로 되돌려 버린다.
+   */
+  const onConfirmRef = useRef(onConfirm);
+  useEffect(() => {
+    onConfirmRef.current = onConfirm;
+  });
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     confirmButtonRef.current?.focus();
+
+    const handleFocusIn = (event: FocusEvent) => {
+      const dialog = dialogRef.current;
+
+      if (dialog && !dialog.contains(event.target as Node)) {
+        confirmButtonRef.current?.focus();
+      }
+    };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onConfirm();
+        onConfirmRef.current();
         return;
       }
 
-      // 초점을 가둔다. 이 다이얼로그의 포커스 대상은 확인 버튼 하나뿐이라
-      // Tab과 Shift+Tab 모두 제자리로 되돌리면 된다.
+      // 포커스 대상이 확인 버튼 하나뿐이라 Tab과 Shift+Tab 모두 제자리로
+      // 되돌리면 된다.
       if (event.key === 'Tab') {
         event.preventDefault();
         confirmButtonRef.current?.focus();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('keydown', handleKeyDown);
+      // 닫히면 원래 있던 곳으로 돌려준다. 이 다이얼로그는 확인 후 화면을
+      // 옮기지만, 그때는 대상이 사라져 focus()가 아무 일도 하지 않는다.
+      previouslyFocused?.focus?.();
     };
-  }, [isOpen, onConfirm]);
+  }, [isOpen]);
 
   if (!isOpen || typeof document === 'undefined') {
     return null;
@@ -90,6 +129,7 @@ export function BusinessVerificationSuccessDialog({
       onClick={onConfirm}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="business-verification-success-title"
