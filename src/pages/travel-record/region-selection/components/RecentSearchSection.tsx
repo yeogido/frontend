@@ -41,12 +41,12 @@ function RecentSearchSection({
         {searches.map((search, index) => (
           <div
             key={`${search}-${index}`}
-            className="border-gray-2 bg-pure-white text-gray-4 flex h-8 min-w-[65px] shrink-0 items-center gap-1 rounded-full border pt-2 pr-2.5 pb-2 pl-3.5 text-[12px] leading-normal font-medium"
+            className="bg-[#f1f1f1] text-[#1c1c1c] flex h-8 min-w-[65px] shrink-0 items-center gap-1 rounded-full pt-2 pr-2.5 pb-2 pl-3.5 text-[12px] leading-normal font-medium"
           >
             <button
               type="button"
               onClick={() => onSelect(search)}
-              className="text-gray-4 min-w-0 text-[12px] leading-normal font-medium"
+              className="text-[#1c1c1c] min-w-0 text-[12px] leading-normal font-medium"
             >
               {search}
             </button>

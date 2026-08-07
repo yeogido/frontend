@@ -205,6 +205,72 @@ test('accepts drag positions only inside the folder or either photo frame', () =
   assert.equal(isPointInFolderDecorationLayout({ x: 1, y: 0 }), false);
 });
 
+test('follows the single photo slot instead of the two photo slots', () => {
+  const { isPointInFolderDecorationLayout } =
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration');
+
+  // 사진 한 장은 전용 슬롯(중심 y 80.3375)을 쓴다. 두 장일 때의 오른쪽
+  // 슬롯(중심 y 72.3375)보다 8px 내려가 있어 위아래 경계가 서로 다르다.
+  const aboveSingleSlot = { x: 108.3375 / 159, y: 30 / 183 };
+  const belowSingleSlot = { x: 108.3375 / 159, y: 122 / 183 };
+
+  // 두 장 기준으로는 사진 위쪽이 열려 있지만, 한 장일 때는 사진이 더
+  // 내려와 있어 같은 지점이 폴더 밖이다.
+  assert.equal(isPointInFolderDecorationLayout(aboveSingleSlot, [1, 0]), true);
+  assert.equal(isPointInFolderDecorationLayout(aboveSingleSlot, [2]), false);
+
+  // 반대로 아래쪽은 한 장일 때만 사진에 걸린다.
+  assert.equal(isPointInFolderDecorationLayout(belowSingleSlot, [2]), true);
+});
+
+test('closes the empty left photo slot when only one photo is placed', () => {
+  const { isPointInFolderDecorationLayout } =
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration');
+
+  // 왼쪽 슬롯 자리. 사진이 한 장이면 그 자리에 사진이 없으므로 스티커도
+  // 갈 수 없어야 한다.
+  const leftPhotoSlot = { x: 0.31, y: 0.2 };
+
+  assert.equal(isPointInFolderDecorationLayout(leftPhotoSlot, [1, 0]), true);
+  assert.equal(isPointInFolderDecorationLayout(leftPhotoSlot, [2]), false);
+});
+
+test('keeps the folder front open regardless of how many photos there are', () => {
+  const { isPointInFolderDecorationLayout } =
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration');
+
+  const folderFront = { x: 0.5, y: 0.75 };
+
+  assert.equal(isPointInFolderDecorationLayout(folderFront, [1, 0]), true);
+  assert.equal(isPointInFolderDecorationLayout(folderFront, [2]), true);
+  assert.equal(isPointInFolderDecorationLayout({ x: 1, y: 0 }, [2]), false);
+});
+
+test('reuses one photo frame table for the clip path and the drag bounds', () => {
+  const { FOLDER_PHOTO_FRAMES } =
+    folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration');
+
+  // 슬롯 인덱스는 TravelFolderCard의 folderPhotoSlots와 같은 순서여야 한다.
+  // 두 표가 어긋나면 스티커가 놓이는 자리와 그려지는 자리가 달라진다.
+  assert.equal(FOLDER_PHOTO_FRAMES.length, 3);
+  assert.deepEqual(FOLDER_PHOTO_FRAMES[0], {
+    centerX: 49.1865,
+    centerY: 52.1865,
+    width: 88,
+    height: 88,
+    radius: 12,
+    rotation: -12,
+  });
+  assert.deepEqual(FOLDER_PHOTO_FRAMES[2], {
+    centerX: 108.3375,
+    centerY: 80.3375,
+    width: 88,
+    height: 88,
+    radius: 12,
+    rotation: 14,
+  });
+});
+
 test('rejects a dropped sticker outside the folder without clamping it to the edge', () => {
   const isFolderDecorationDropTarget = (
     folderDecoration as typeof import('../src/pages/travel-record/folder-decoration/folderDecoration')

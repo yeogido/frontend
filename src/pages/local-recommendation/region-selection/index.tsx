@@ -1,45 +1,45 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getPopularRegions, searchRegions } from '../../../apis/regions.api';
 import { LoadingSpinner } from '../../../components/common';
-import { ResponsivePageShell } from '../../../components/layout';
-import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { RegionSelectionLayout } from '../../../components/region-selection';
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
-
-import BackButton from '../components/BackButton';
 import {
-  NeighborhoodSearchSection,
   PopularRegionGrid,
   RecentSearchSection,
-  SelectedNeighborhoodCard,
-} from './components';
+  RegionSearchInput,
+  RegionSuggestionList,
+  SelectedRegionSearchBar,
+} from '../../travel-record/region-selection/components';
+import { mapPopularRegionToTravelRecordRegion } from '../../travel-record/mappers/travelRecordApiMapper';
+
 import type { Neighborhood } from './types';
 import { useRecentRegions } from './useRecentRegions';
-import { fromRegion, fromSearchResult } from './utils';
-
-// Figma 390 디자인 기준 리터럴 px
-const PAGE_PADDING_BOTTOM = 32;
-const MAIN_PADDING_TOP = 48;
-const BUTTON_MARGIN_TOP = 32;
-const BUTTON_HEIGHT = 52;
-const BUTTON_RADIUS = 12;
-const BUTTON_TEXT_SIZE = 14;
+import {
+  fromRegion,
+  fromSearchResult,
+  getNeighborhoodLabel,
+} from './utils';
 
 function LocalRecommendationPage() {
   const navigate = useNavigate();
-  const scale = useGlobalScale();
+  const queryClient = useQueryClient();
   const draftNeighborhood = useLocalRecommendationStore(
-    (state) => state.draft.neighborhood
+    (state) => state.draft.neighborhood,
   );
   const setNeighborhood = useLocalRecommendationStore(
-    (state) => state.setNeighborhood
+    (state) => state.setNeighborhood,
   );
-  const { recentRegions, addRecentRegion } = useRecentRegions();
-  const queryClient = useQueryClient();
-
+  const {
+    recentRegions,
+    addRecentRegion,
+    clearRecentRegions,
+    removeRecentRegion,
+  } = useRecentRegions();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const [selectedNeighborhood, setSelectedNeighborhood] =
     useState<Neighborhood | null>(draftNeighborhood);
 
@@ -48,59 +48,33 @@ function LocalRecommendationPage() {
     queryFn: getPopularRegions,
     staleTime: 5 * 60_000,
   });
-
   const trimmedSearchQuery = searchQuery.trim();
-
   const searchNeighborhoods = async (query: string) =>
     (await searchRegions(query)).map(fromSearchResult);
-
-  // 검색창에 입력하는 즉시(타이핑마다) 백엔드에 물어 연관 검색어를 채운다.
-  // 백엔드가 이름 LIKE(부분 문자열) 매칭이라 SearchBar의 로컬 재필터를
-  // 그대로 통과하므로, 이 목록을 suggestions로 넘기기만 하면 된다.
   const searchResultsQuery = useQuery({
     queryKey: ['regions', 'search', trimmedSearchQuery],
     queryFn: () => searchNeighborhoods(trimmedSearchQuery),
     enabled: trimmedSearchQuery.length > 0,
     staleTime: 30_000,
   });
-
-  const searchSuggestions = searchResultsQuery.data?.map((n) => n.name) ?? [];
-
-  const handleQueryChange = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  // 추천 목록에서 클릭했거나(정확한 이름이 그대로 들어옴) 검색어를 그대로
-  // 입력해 제출한 경우, 현재 검색 결과 중 이름이 일치하는 지역을 선택한다.
-  // 아직 응답이 없는 상태(빠른 타이핑 후 즉시 Enter)라면 결과를 기다렸다가
-  // 판단해서, 유효한 일치 결과를 조용히 놓치지 않도록 한다.
-  const handleSearch = async (query: string) => {
-    const trimmedQuery = query.trim();
-
-    if (!trimmedQuery) {
-      return;
-    }
-
-    const results =
-      trimmedQuery === trimmedSearchQuery && searchResultsQuery.data
-        ? searchResultsQuery.data
-        : await queryClient.fetchQuery({
-            queryKey: ['regions', 'search', trimmedQuery],
-            queryFn: () => searchNeighborhoods(trimmedQuery),
-            staleTime: 30_000,
-          });
-
-    const matched = results.find(
-      (neighborhood) => neighborhood.name === trimmedQuery
-    );
-
-    if (matched) {
-      handleSelectNeighborhood(matched);
-    }
-  };
+  const popularRegions =
+    regionsQuery.data?.map(mapPopularRegionToTravelRecordRegion) ?? [];
+  const selectedRegion = selectedNeighborhood
+    ? {
+        id: String(selectedNeighborhood.id),
+        regionId: selectedNeighborhood.id,
+        name: selectedNeighborhood.name,
+        province: selectedNeighborhood.parentName,
+        selectionName: selectedNeighborhood.name,
+        imageSrc: '',
+      }
+    : null;
+  const searchSuggestions =
+    searchResultsQuery.data?.map((region) => region.name) ?? [];
 
   const handleSelectNeighborhood = (candidate: Neighborhood) => {
     setSearchQuery('');
+    setIsSuggestionOpen(false);
 
     if (selectedNeighborhood?.id === candidate.id) {
       setSelectedNeighborhood(null);
@@ -113,72 +87,117 @@ function LocalRecommendationPage() {
     addRecentRegion(candidate);
   };
 
-  const handleClearSelection = () => {
-    setSelectedNeighborhood(null);
-    setNeighborhood(null);
+  const handleSearch = async (query: string) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+
+    const results =
+      trimmedQuery === trimmedSearchQuery && searchResultsQuery.data
+        ? searchResultsQuery.data
+        : await queryClient.fetchQuery({
+            queryKey: ['regions', 'search', trimmedQuery],
+            queryFn: () => searchNeighborhoods(trimmedQuery),
+            staleTime: 30_000,
+          });
+    const matched = results.find((region) => region.name === trimmedQuery);
+
+    if (matched) handleSelectNeighborhood(matched);
+  };
+
+  const handleQueryChange = (query: string) => {
+    setSearchQuery(query);
+    setIsSuggestionOpen(query.trim().length > 0);
+  };
+
+  const handleSuggestionSelect = (suggestion: string) => {
+    setIsSuggestionOpen(false);
+    void handleSearch(suggestion);
+  };
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void handleSearch(searchQuery);
   };
 
   return (
-    <ResponsivePageShell
-      mode="main-layout"
-      topPadding={MAIN_PADDING_TOP}
-      bottomPadding={PAGE_PADDING_BOTTOM}
-      className="bg-white"
-    >
-      <BackButton onClick={() => navigate('/local-course')} />
-      <main className="flex-1">
-        <NeighborhoodSearchSection
-          suggestions={searchSuggestions}
-          onSearch={handleSearch}
-          onQueryChange={handleQueryChange}
+    <RegionSelectionLayout
+      onBack={() => navigate('/local-course')}
+      backAriaLabel="이전 화면으로 돌아가기"
+      title={<>어디를<br />추천하시겠어요?</>}
+      description="코스를 등록할 지역을 검색하거나 선택해 주세요."
+      search={
+        <form role="search" onSubmit={handleSearchSubmit} className="relative">
+          {selectedRegion ? (
+            <SelectedRegionSearchBar
+              region={selectedRegion}
+              onClear={() => {
+                setSelectedNeighborhood(null);
+                setNeighborhood(null);
+              }}
+            />
+          ) : (
+            <RegionSearchInput
+              query={searchQuery}
+              onQueryChange={handleQueryChange}
+              onFocus={() => setIsSuggestionOpen(searchQuery.trim().length > 0)}
+            />
+          )}
+          {!selectedRegion && isSuggestionOpen ? (
+            <RegionSuggestionList
+              query={searchQuery}
+              suggestions={searchSuggestions}
+              onSelect={handleSuggestionSelect}
+            />
+          ) : null}
+        </form>
+      }
+      recentSearches={
+        <RecentSearchSection
+          searches={recentRegions.map(getNeighborhoodLabel)}
+          onClear={clearRecentRegions}
+          onRemove={(index) => {
+            const region = recentRegions[index];
+            if (region) removeRecentRegion(region.id);
+          }}
+          onSelect={(label) => {
+            const region = recentRegions.find(
+              (item) => getNeighborhoodLabel(item) === label,
+            );
+            if (region) handleSelectNeighborhood(region);
+          }}
         />
-
-        {selectedNeighborhood && !searchQuery.trim() ? (
-          <SelectedNeighborhoodCard
-            neighborhood={selectedNeighborhood}
-            onClear={handleClearSelection}
-          />
-        ) : null}
-
-        {!searchQuery.trim() && !selectedNeighborhood ? (
-          <RecentSearchSection
-            neighborhoods={recentRegions}
-            onSelect={handleSelectNeighborhood}
-          />
-        ) : null}
-
-        {regionsQuery.isLoading ? (
-          <LoadingSpinner label="지역 정보를 불러오는 중" />
+      }
+      popularRegions={
+        regionsQuery.isLoading ? (
+          <div className="mt-8 flex justify-center"><LoadingSpinner label="인기 지역을 불러오는 중" /></div>
         ) : regionsQuery.isError ? (
-          <section aria-live="polite" className="text-center">
-            <p>지역 정보를 불러오지 못했습니다.</p>
-            <button type="button" onClick={() => regionsQuery.refetch()}>
-              다시 시도
-            </button>
+          <section aria-live="polite" className="mt-8 text-center text-[14px] text-[#505050]">
+            인기 지역을 불러오지 못했습니다.
           </section>
         ) : (
           <PopularRegionGrid
-            regions={regionsQuery.data ?? []}
-            onSelect={(region) => handleSelectNeighborhood(fromRegion(region))}
+            regions={popularRegions}
+            selectedRegionId={selectedRegion?.id}
+            onSelect={(region) => {
+              const candidate = regionsQuery.data?.find(
+                (item) => item.regionId === region.regionId,
+              );
+              if (candidate) handleSelectNeighborhood(fromRegion(candidate));
+            }}
           />
-        )}
-      </main>
-
-      <button
-        type="button"
-        disabled={!selectedNeighborhood}
-        onClick={() => navigate('/local-recommendation/course-info')}
-        className="bg-main-5 text-pure-white disabled:bg-gray-2 disabled:text-gray-4 w-full font-semibold"
-        style={{
-          marginTop: BUTTON_MARGIN_TOP * scale,
-          height: BUTTON_HEIGHT * scale,
-          borderRadius: BUTTON_RADIUS * scale,
-          fontSize: BUTTON_TEXT_SIZE * scale,
-        }}
-      >
-        기본 정보 입력하기
-      </button>
-    </ResponsivePageShell>
+        )
+      }
+      action={
+        <button
+          type="button"
+          disabled={!selectedNeighborhood}
+          onClick={() => navigate('/local-recommendation/course-info')}
+          className="bg-gray-2 text-gray-4 enabled:bg-main-5 flex h-[53px] w-full items-center justify-center rounded-xl text-[18px] leading-none font-semibold enabled:text-white"
+        >
+          기본 정보 입력하기
+        </button>
+      }
+    />
   );
 }
 

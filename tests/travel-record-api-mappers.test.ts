@@ -16,6 +16,7 @@ import {
   normalizeTravelMapSelectedRegion,
 } from '../src/pages/travel-record/constants/travelRecordRegionCodes.ts';
 import { getTravelRecordRegionSuggestions } from '../src/pages/travel-record/region-selection/regionSuggestions.ts';
+import { getInitialTravelRecordRegion } from '../src/pages/travel-record/region-selection/initialSelectedRegion.ts';
 import { getTravelRecordRegionPhotoRecords } from '../src/pages/travel-record/utils/regionPhotoRecords.ts';
 
 import type { TravelFolderDecoration } from '../src/pages/travel-record/folder-decoration/folderDecoration.ts';
@@ -28,6 +29,22 @@ import type {
   TravelRecordSummary,
   TravelRecordDetailResponse,
 } from '../src/types/travelRecord.type.ts';
+
+test('uses a stored region only when editing a travel record', () => {
+  const storedRegion = {
+    id: '27',
+    regionId: 27,
+    name: 'Busan',
+    province: 'Busan Metropolitan City',
+    selectionName: 'Busan',
+  };
+
+  assert.equal(getInitialTravelRecordRegion(false, storedRegion), null);
+  assert.deepEqual(getInitialTravelRecordRegion(true, storedRegion), {
+    ...storedRegion,
+    imageSrc: '',
+  });
+});
 
 test('maps Region API responses to travel record selectable regions', () => {
   const popularRegion: PopularRegionResponse = {

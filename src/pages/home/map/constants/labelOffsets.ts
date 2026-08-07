@@ -14,4 +14,6 @@ export interface LabelOffset {
  *
  * 자동 배치로 해결되지 않는 지역이 생기면 여기에 다시 넣는다.
  */
-export const LABEL_OFFSETS: Record<string, LabelOffset> = {};
+export const LABEL_OFFSETS: Record<string, LabelOffset> = {
+  광주광역시: { x: -2, y: 2 },
+};
