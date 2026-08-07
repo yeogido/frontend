@@ -8,6 +8,7 @@ import people from '../../assets/icons/people.svg';
 
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 
+import ReviewActionMenu from './ReviewActionMenu';
 import TagChip, { type TagType } from './TagChip';
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
@@ -32,8 +33,12 @@ export interface CourseCardProps {
   companion: string;
   tags: TagType[];
   liked?: boolean;
+  /** 본인이 등록한 코스면 좋아요 대신 더보기(수정/삭제) 메뉴를 같은 자리에 띄운다. */
+  isMine?: boolean;
   onClick?: () => void;
   onLikeClick?: () => void;
+  onEditClick?: () => void;
+  onDeleteClick?: () => void;
 }
 
 function useVisibleItemCount(itemsKey: string, itemCount: number) {
@@ -103,8 +108,11 @@ function CourseCard({
   companion,
   tags,
   liked = false,
+  isMine = false,
   onClick,
   onLikeClick,
+  onEditClick,
+  onDeleteClick,
 }: CourseCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
@@ -113,7 +121,7 @@ function CourseCard({
     { key: 'duration', icon: calendar, label: duration },
     { key: 'courseType', icon: location, label: courseType },
     { key: 'companion', icon: people, label: companion },
-  ];
+  ].filter((item) => Boolean(item.label));
 
   const metaKey = metaItems.map((item) => item.label).join('|');
   const tagsKey = tags.join('|');
@@ -260,23 +268,31 @@ function CourseCard({
           </div>
         </div>
 
-        {/* Like */}
-        <button
-          type="button"
-          aria-pressed={liked}
-          onClick={(e) => {
-            e.stopPropagation();
-            onLikeClick?.();
-          }}
-          className="absolute"
-          style={{ top: HEART_TOP, right: HEART_RIGHT }}
-        >
-          <img
-            src={liked ? oheart : heart}
-            alt="좋아요"
-            style={{ height: HEART_SIZE, width: HEART_SIZE }}
+        {/* Like / 더보기: 본인 코스는 좋아요 대신 같은 자리에 수정·삭제 메뉴를 띄운다. */}
+        {isMine ? (
+          <ReviewActionMenu
+            onEditClick={onEditClick}
+            onDeleteClick={onDeleteClick}
+            triggerClassName="absolute top-[12px] right-[12px]"
           />
-        </button>
+        ) : (
+          <button
+            type="button"
+            aria-pressed={liked}
+            onClick={(e) => {
+              e.stopPropagation();
+              onLikeClick?.();
+            }}
+            className="absolute"
+            style={{ top: HEART_TOP, right: HEART_RIGHT }}
+          >
+            <img
+              src={liked ? oheart : heart}
+              alt="좋아요"
+              style={{ height: HEART_SIZE, width: HEART_SIZE }}
+            />
+          </button>
+        )}
       </div>
     </div>
   );

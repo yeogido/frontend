@@ -2,6 +2,8 @@ import location from '../../assets/icons/location.svg';
 
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 
+import ReviewActionMenu from './ReviewActionMenu';
+
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
 // 개별 scale 계산 대신 useScaleFrame이 전체를 한 번에 scale한다.
 const CARD_DESIGN_WIDTH = 342;
@@ -36,7 +38,10 @@ export interface PromotionCardProps {
   title: string;
   description: string;
   location: string;
+  isMine?: boolean;
   onClick?: () => void;
+  onEditClick?: () => void;
+  onDeleteClick?: () => void;
   className?: string;
 }
 
@@ -48,7 +53,10 @@ function PromotionCard({
   title,
   description,
   location: locationText,
+  isMine = false,
   onClick,
+  onEditClick,
+  onDeleteClick,
   className = '',
 }: PromotionCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
@@ -80,38 +88,49 @@ function PromotionCard({
       >
         {/* Profile header */}
         <div
-          className="flex items-center"
+          className="flex items-center justify-between"
           style={{
-            gap: PROFILE_GAP,
             paddingLeft: HEADER_PADDING_X,
             paddingRight: HEADER_PADDING_X,
             paddingTop: HEADER_PADDING_TOP,
             paddingBottom: HEADER_PADDING_BOTTOM,
           }}
         >
-          <img
-            src={avatarUrl}
-            alt=""
-            aria-hidden="true"
-            className="shrink-0 rounded-full object-cover"
-            style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
-          />
+          <div
+            className="flex min-w-0 items-center"
+            style={{ gap: PROFILE_GAP }}
+          >
+            <img
+              src={avatarUrl}
+              alt=""
+              aria-hidden="true"
+              className="shrink-0 rounded-full object-cover"
+              style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
+            />
 
-          <div className="min-w-0">
-            <p
-              className="truncate font-semibold leading-none text-[#1C1C1C]"
-              style={{ fontSize: NAME_SIZE }}
-            >
-              {profileName}
-            </p>
+            <div className="min-w-0">
+              <p
+                className="truncate leading-none font-semibold text-[#1C1C1C]"
+                style={{ fontSize: NAME_SIZE }}
+              >
+                {profileName}
+              </p>
 
-            <p
-              className="font-normal leading-none text-[#7F7F7F]"
-              style={{ fontSize: DATE_SIZE, marginTop: DATE_GAP }}
-            >
-              {date}
-            </p>
+              <p
+                className="leading-none font-normal text-[#7F7F7F]"
+                style={{ fontSize: DATE_SIZE, marginTop: DATE_GAP }}
+              >
+                {date}
+              </p>
+            </div>
           </div>
+
+          {isMine ? (
+            <ReviewActionMenu
+              onEditClick={onEditClick}
+              onDeleteClick={onDeleteClick}
+            />
+          ) : null}
         </div>
 
         {/* Image */}
@@ -132,14 +151,14 @@ function PromotionCard({
           }}
         >
           <h2
-            className="font-semibold leading-tight text-[#1C1C1C]"
+            className="leading-tight font-semibold text-[#1C1C1C]"
             style={{ fontSize: TITLE_SIZE }}
           >
             {title}
           </h2>
 
           <p
-            className="line-clamp-2 font-normal leading-[1.45] text-[#7F7F7F]"
+            className="line-clamp-2 leading-[1.45] font-normal text-[#7F7F7F]"
             style={{ fontSize: DESCRIPTION_SIZE, marginTop: DESCRIPTION_GAP }}
           >
             {description}
@@ -162,7 +181,7 @@ function PromotionCard({
               />
 
               <span
-                className="font-medium leading-none text-[#7F7F7F]"
+                className="leading-none font-medium text-[#7F7F7F]"
                 style={{ fontSize: LOCATION_TEXT_SIZE }}
               >
                 {locationText}
