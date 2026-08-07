@@ -1,29 +1,27 @@
-import type { BusinessProfile } from '../../business-verification/types';
+import type { BusinessInfoResponse } from '../../../types/business.type';
 import { BusinessPlaceList } from './BusinessPlaceList';
 import { BusinessVerificationCard } from './BusinessVerificationCard';
 import { ProfileInfoList } from './ProfileInfoList';
 
 interface ProfileDetailSectionProps {
-  readonly businessProfile: BusinessProfile | null;
+  readonly businesses: readonly BusinessInfoResponse[];
   readonly scale: number;
 }
 
 export function ProfileDetailSection({
-  businessProfile,
+  businesses,
   scale,
 }: ProfileDetailSectionProps) {
+  const isBusinessProfile = businesses.length > 0;
+
   return (
     <>
       <div className="w-full" style={{ marginTop: 24 * scale }}>
-        <ProfileInfoList
-          scale={scale}
-          isBusinessProfile={Boolean(businessProfile)}
-          businessAddress={businessProfile?.businessAddress}
-        />
+        <ProfileInfoList scale={scale} isBusinessProfile={isBusinessProfile} />
       </div>
       <div className="w-full" style={{ marginTop: 24 * scale }}>
-        {businessProfile ? (
-          <BusinessPlaceList profile={businessProfile} scale={scale} />
+        {isBusinessProfile ? (
+          <BusinessPlaceList businesses={businesses} scale={scale} />
         ) : (
           <BusinessVerificationCard scale={scale} />
         )}
