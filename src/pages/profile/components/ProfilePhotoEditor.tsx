@@ -89,29 +89,36 @@ export function ProfilePhotoEditor({
     if (!file || !file.type.startsWith('image/')) return;
 
     const selectionId = ++fileSelectionIdRef.current;
-    const src = await readImageFile(file);
-    const nextPhoto: ProfilePhoto = {
-      src,
-      zoom: MIN_ZOOM,
-      positionX: 0,
-      positionY: 0,
-      aspectRatio: await getImageAspectRatio(src),
-    };
+    // 미리보기 생성(FileReader/이미지 디코딩)도 큰 파일에서는 시간이 걸려,
+    // 이 구간에도 저장 버튼이 눌릴 수 있다. 업로드 대상일 때는 파일 선택
+    // 직후부터 isUploading을 켜서 전체 구간 동안 저장을 막는다.
+    const tracksUploadState = Boolean(onPhotoUploaded);
 
-    if (selectionId !== fileSelectionIdRef.current) return;
-
-    setSavedPhoto(nextPhoto);
-    setDraftPhoto(nextPhoto);
-    setIsTransforming(false);
-    setIsAdjustmentEnabled(true);
-    onPhotoChange?.();
-
-    if (!onPhotoUploaded) return;
-
-    setIsUploading(true);
-    onUploadingChange?.(true);
+    if (tracksUploadState) {
+      setIsUploading(true);
+      onUploadingChange?.(true);
+    }
 
     try {
+      const src = await readImageFile(file);
+      const nextPhoto: ProfilePhoto = {
+        src,
+        zoom: MIN_ZOOM,
+        positionX: 0,
+        positionY: 0,
+        aspectRatio: await getImageAspectRatio(src),
+      };
+
+      if (selectionId !== fileSelectionIdRef.current) return;
+
+      setSavedPhoto(nextPhoto);
+      setDraftPhoto(nextPhoto);
+      setIsTransforming(false);
+      setIsAdjustmentEnabled(true);
+      onPhotoChange?.();
+
+      if (!onPhotoUploaded) return;
+
       const presignedUrl = await createPresignedUrl({
         fileName: file.name,
         contentType: file.type || 'application/octet-stream',
@@ -126,7 +133,7 @@ export function ProfilePhotoEditor({
 
       showToast(getApiErrorMessage(error, UPLOAD_ERROR_MESSAGE));
     } finally {
-      if (selectionId === fileSelectionIdRef.current) {
+      if (selectionId === fileSelectionIdRef.current && tracksUploadState) {
         setIsUploading(false);
         onUploadingChange?.(false);
       }
