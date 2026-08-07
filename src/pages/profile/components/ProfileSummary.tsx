@@ -7,7 +7,7 @@ const ROLE_LABEL: Partial<Record<UserRole, string>> = {
 
 interface ProfileSummaryProps {
   readonly name: string;
-  readonly role?: UserRole;
+  readonly role?: string;
   readonly scale: number;
   readonly onEdit: () => void;
 }
@@ -18,7 +18,7 @@ export function ProfileSummary({
   scale,
   onEdit,
 }: ProfileSummaryProps) {
-  const roleLabel = role ? ROLE_LABEL[role] : undefined;
+  const roleLabel = role ? ROLE_LABEL[role as UserRole] : undefined;
 
   return (
     <>

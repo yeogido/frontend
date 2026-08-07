@@ -3,6 +3,20 @@
 
 export type MyPostCategory = 'ALL' | 'COURSE' | 'REVIEW';
 
+export type UserRole = 'USER' | 'BUSINESS' | 'ADMIN';
+
+// 스웨거 기준: GET /users/me
+// role은 USER | ADMIN | BUSINESS지만 유니온으로 좁히지 않는다.
+export interface UserProfileResponse {
+  userId: number;
+  email: string;
+  name: string;
+  region: string;
+  birthYear: string;
+  role: string;
+  profileImageUrl: string | null;
+}
+
 export interface MyReview {
   reviewId: number;
   reviewerName: string;
@@ -34,22 +48,10 @@ export interface GetMyPostsResponse {
   hasNext: boolean;
 }
 
-export type UserRole = 'USER' | 'BUSINESS' | 'ADMIN';
-
-export interface MyProfile {
-  userId: number;
-  email: string;
-  name: string;
-  region: string;
-  birthYear: number;
-  role: UserRole;
-  profileImageUrl: string | null;
-}
-
 // "변경할 필드만" 보낸다는 스펙이라 전부 optional로 둔다.
 export interface UpdateMyProfileRequest {
   nickname?: string;
-  birthYear?: number;
+  birthYear?: string;
   regionId?: number;
 }
 

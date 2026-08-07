@@ -128,7 +128,7 @@ function ProfileEditPage() {
     const payload: UpdateMyProfileRequest = {};
     if (name !== initialName) payload.nickname = name;
     if (birthYear !== initialBirthYear && birthYear)
-      payload.birthYear = Number(birthYear);
+      payload.birthYear = birthYear;
     if (regionId !== initialRegionId && regionId)
       payload.regionId = Number(regionId);
 

@@ -1,24 +1,28 @@
-import search from '../../../assets/icons/search.svg';
-
 export function BusinessVerificationField({
   label,
   value,
   placeholder,
   scale,
   onChange,
-  icon,
+  hint,
+  inputMode,
+  maxLength,
+  disabled = false,
 }: {
   label: string;
   value: string;
   placeholder: string;
   scale: number;
-  onChange: (value: string) => void;
-  icon?: 'search';
+  onChange?: (value: string) => void;
+  hint?: string;
+  inputMode?: 'numeric';
+  maxLength?: number;
+  disabled?: boolean;
 }) {
-  const isDropdownField = icon === 'search';
-
   return (
     <label className="flex flex-col" style={{ gap: 12 * scale }}>
+      {/* 라벨은 항상 또렷하게 둔다. 비활성이라는 건 아래 입력 영역으로만
+          알린다. */}
       <span
         className="font-semibold text-[#1c1c1c]"
         style={{ fontSize: 16 * scale, lineHeight: `${19 * scale}px` }}
@@ -26,27 +30,32 @@ export function BusinessVerificationField({
         {label}
       </span>
       <span
-        className="relative flex items-center rounded-xl border border-[#e4e4e4] bg-[#f9f9f9] px-[14px]"
-        style={{ height: (isDropdownField ? 42 : 46) * scale }}
+        className={`relative flex items-center rounded-xl border border-[#e4e4e4] ${
+          disabled ? 'cursor-not-allowed bg-[#f1f1f1]' : 'bg-[#f9f9f9]'
+        }`}
+        style={{ height: 46 * scale, paddingInline: 14 * scale }}
       >
         <input
           type="text"
           value={value}
           placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
-          className="h-full min-w-0 flex-1 bg-transparent pr-6 font-medium text-[#7f7f7f] outline-none placeholder:text-[#7f7f7f]"
+          inputMode={inputMode}
+          maxLength={maxLength}
+          disabled={disabled}
+          readOnly={!onChange}
+          onChange={(event) => onChange?.(event.target.value)}
+          className="h-full min-w-0 flex-1 bg-transparent font-medium text-[#7f7f7f] outline-none placeholder:text-[#7f7f7f] disabled:cursor-not-allowed disabled:text-[#a1a1a1] disabled:placeholder:text-[#a1a1a1]"
           style={{ fontSize: 12 * scale, lineHeight: `${12 * scale}px` }}
         />
-        {icon === 'search' && (
-          <img
-            src={search}
-            alt=""
-            aria-hidden="true"
-            className="absolute top-1/2 right-[14px] -translate-y-1/2"
-            style={{ width: 18 * scale, height: 18 * scale }}
-          />
-        )}
       </span>
+      {hint && (
+        <span
+          className="text-[#e5484d]"
+          style={{ fontSize: 12 * scale, lineHeight: `${14 * scale}px` }}
+        >
+          {hint}
+        </span>
+      )}
     </label>
   );
 }
