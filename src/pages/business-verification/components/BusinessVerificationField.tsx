@@ -30,10 +30,10 @@ export function BusinessVerificationField({
         {label}
       </span>
       <span
-        className={`relative flex items-center rounded-xl border border-[#e4e4e4] px-[14px] ${
+        className={`relative flex items-center rounded-xl border border-[#e4e4e4] ${
           disabled ? 'cursor-not-allowed bg-[#f1f1f1]' : 'bg-[#f9f9f9]'
         }`}
-        style={{ height: 46 * scale }}
+        style={{ height: 46 * scale, paddingInline: 14 * scale }}
       >
         <input
           type="text"
@@ -44,7 +44,7 @@ export function BusinessVerificationField({
           disabled={disabled}
           readOnly={!onChange}
           onChange={(event) => onChange?.(event.target.value)}
-          className="h-full min-w-0 flex-1 bg-transparent pr-6 font-medium text-[#7f7f7f] outline-none placeholder:text-[#7f7f7f] disabled:cursor-not-allowed disabled:text-[#a1a1a1] disabled:placeholder:text-[#a1a1a1]"
+          className="h-full min-w-0 flex-1 bg-transparent font-medium text-[#7f7f7f] outline-none placeholder:text-[#7f7f7f] disabled:cursor-not-allowed disabled:text-[#a1a1a1] disabled:placeholder:text-[#a1a1a1]"
           style={{ fontSize: 12 * scale, lineHeight: `${12 * scale}px` }}
         />
       </span>

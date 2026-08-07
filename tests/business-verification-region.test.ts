@@ -81,18 +81,51 @@ test('resolves a Gyeonggi city even when the address has a general district', ()
   );
 });
 
-test('returns undefined so the caller falls back to the province id', () => {
-  // 세종·제주·강원은 하위 지역이 빈 배열로 온다.
+test('returns undefined when the province has no sub-regions at all', () => {
+  // 세종처럼 하위 지역이 빈 배열로 오는 곳. 호출부가 광역 ID로 폴백한다.
   assert.equal(resolveSubRegionId('세종특별자치시 한누리대로 2130', []), undefined);
   assert.equal(
     resolveSubRegionId('부산 수영구 광안해변로 219', undefined),
     undefined
   );
-  // 목록에 없는 구는 폴백 대상이다.
+});
+
+test('returns undefined when the district is missing from a non-empty list', () => {
+  // 목록이 있는데 못 찾은 경우다. 호출부는 이때 광역으로 폴백하지 않고
+  // 제출을 막아야 한다 — 사업장이 엉뚱한 지역에 조용히 묶이기 때문이다.
   assert.equal(
     resolveSubRegionId('부산 사하구 낙동대로', busanSubRegions),
     undefined
   );
-  // 시·도만 있고 구가 없는 주소도 폴백한다.
+  // 시·도만 있고 구가 없는 주소도 같은 취급이다.
   assert.equal(resolveSubRegionId('부산', busanSubRegions), undefined);
+});
+
+test('only falls back to the province id when no sub-regions exist', () => {
+  // 두 경우를 구분하는 책임은 호출부에 있다. 계약을 코드로 고정해 둔다.
+  const resolveRegionIdForRequest = (
+    address: string,
+    subRegions: readonly SubRegion[]
+  ) => {
+    const subRegionId = resolveSubRegionId(address, subRegions);
+
+    if (subRegionId === undefined && subRegions.length > 0) {
+      return 'blocked';
+    }
+
+    return subRegionId ?? 'province';
+  };
+
+  assert.equal(
+    resolveRegionIdForRequest('부산 수영구 광안해변로 219', busanSubRegions),
+    31
+  );
+  assert.equal(
+    resolveRegionIdForRequest('부산 사하구 낙동대로', busanSubRegions),
+    'blocked'
+  );
+  assert.equal(
+    resolveRegionIdForRequest('세종특별자치시 한누리대로 2130', []),
+    'province'
+  );
 });

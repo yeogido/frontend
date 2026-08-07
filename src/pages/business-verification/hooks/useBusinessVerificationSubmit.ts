@@ -6,9 +6,13 @@ import {
 } from '../../../apis/files.api';
 import { getSubRegions } from '../../../apis/regions.api';
 import { verifyBusiness } from '../../../apis/users.api';
-import { MY_BUSINESSES_QUERY_KEY } from '../../../hooks/useMyBusinesses';
-import { MY_PROFILE_QUERY_KEY } from '../../../hooks/useMyProfile';
+import { MY_BUSINESSES_QUERY_PREFIX } from '../../../hooks/useMyBusinesses';
+import {
+  MY_PROFILE_QUERY_PREFIX,
+  getMyProfileQueryKey,
+} from '../../../hooks/useMyProfile';
 import { useRegions } from '../../../hooks/useRegions';
+import { useAuthStore } from '../../../store/auth.store';
 import type { BusinessVerifyResult } from '../../../types/business.type';
 import type { UserProfileResponse } from '../../../types/user.type';
 import type { PlaceItem } from '../../local-recommendation/place-selection/types';
@@ -41,6 +45,7 @@ interface BusinessVerificationSubmitValues {
 
 export function useBusinessVerificationSubmit() {
   const { data: regionsData } = useRegions();
+  const userId = useAuthStore((state) => state.userId);
   const queryClient = useQueryClient();
 
   return useMutation<BusinessVerifyResult, unknown, BusinessVerificationSubmitValues>({
@@ -56,12 +61,18 @@ export function useBusinessVerificationSubmit() {
         throw new RegionResolveError();
       }
 
-      // 운영 데이터가 시·군·구 단위를 쓰므로 한 단계 더 좁힌다. 세종·제주·
-      // 강원처럼 하위 지역이 없는 곳은 빈 배열이 와서 광역 ID로 폴백한다.
+      // 운영 데이터가 시·군·구 단위를 쓰므로 한 단계 더 좁힌다.
       const subRegions = await getSubRegions(provinceRegionId);
-      const regionId =
-        resolveSubRegionId(values.businessAddress, subRegions) ??
-        provinceRegionId;
+      const subRegionId = resolveSubRegionId(values.businessAddress, subRegions);
+
+      // 하위 지역 목록이 있는데 못 찾았다면 주소 형태가 예상과 다른 것이다.
+      // 그대로 광역으로 보내면 사업장이 엉뚱한 지역에 조용히 묶이므로 멈춘다.
+      // 광역 폴백은 세종처럼 하위 지역이 아예 없는 곳에만 허용한다.
+      if (subRegionId === undefined && subRegions.length > 0) {
+        throw new RegionResolveError();
+      }
+
+      const regionId = subRegionId ?? provinceRegionId;
 
       // presigned 서명에 content-type이 포함돼 있어, 발급 요청과 실제 업로드의
       // content-type이 다르면 S3가 서명 불일치로 거부한다. 값을 한 번만 읽어
@@ -98,11 +109,12 @@ export function useBusinessVerificationSubmit() {
       // 권한을 열어준다. 캐시에 응답의 role을 먼저 반영해 재조회를 기다리지
       // 않게 하고, 이어서 무효화해 서버 값으로 확정한다.
       queryClient.setQueryData<UserProfileResponse>(
-        MY_PROFILE_QUERY_KEY,
+        getMyProfileQueryKey(userId),
         (profile) => (profile ? { ...profile, role: result.role } : profile)
       );
-      queryClient.invalidateQueries({ queryKey: MY_PROFILE_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: MY_BUSINESSES_QUERY_KEY });
+      // 무효화는 prefix로 건다. 계정별 key라도 현재 계정 것만 살아 있다.
+      queryClient.invalidateQueries({ queryKey: MY_PROFILE_QUERY_PREFIX });
+      queryClient.invalidateQueries({ queryKey: MY_BUSINESSES_QUERY_PREFIX });
     },
   });
 }

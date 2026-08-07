@@ -4,15 +4,21 @@ import { getMyProfile } from '../apis/users.api';
 import { useAuthStore } from '../store/auth.store';
 import { isBusinessRole } from '../utils/role';
 
-export const MY_PROFILE_QUERY_KEY = ['myProfile'];
+// 계정별로 캐시를 분리한다. 이유는 useMyBusinesses의 주석 참고.
+export const MY_PROFILE_QUERY_PREFIX = ['myProfile'];
+
+export const getMyProfileQueryKey = (userId: number | null) => [
+  ...MY_PROFILE_QUERY_PREFIX,
+  userId,
+];
 
 export function useMyProfile() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userId = useAuthStore((state) => state.userId);
 
   return useQuery({
-    queryKey: MY_PROFILE_QUERY_KEY,
+    queryKey: getMyProfileQueryKey(userId),
     queryFn: getMyProfile,
-    enabled: isAuthenticated,
+    enabled: userId !== null,
   });
 }
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import { GLOBAL_CONTENT_WIDTH } from '../../../constants/layout';
@@ -46,15 +46,29 @@ export function BusinessVerificationSuccessDialog({
   scale,
   onConfirm,
 }: BusinessVerificationSuccessDialogProps) {
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (!isOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
+    // aria-modal은 포커스를 옮겨주지 않는다. 직접 확인 버튼으로 보내지
+    // 않으면 배경의 '사업자 인증하기' 버튼에 포커스가 남는다.
+    confirmButtonRef.current?.focus();
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onConfirm();
+        return;
+      }
+
+      // 초점을 가둔다. 이 다이얼로그의 포커스 대상은 확인 버튼 하나뿐이라
+      // Tab과 Shift+Tab 모두 제자리로 되돌리면 된다.
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        confirmButtonRef.current?.focus();
       }
     };
 
@@ -116,6 +130,7 @@ export function BusinessVerificationSuccessDialog({
         </div>
 
         <button
+          ref={confirmButtonRef}
           type="button"
           onClick={onConfirm}
           className="bg-main-5 w-full font-semibold text-[#f9f9f9]"
