@@ -13,6 +13,14 @@ interface TagChipProps {
 
 function TagChip({ tag, selected, onToggle }: TagChipProps) {
   const scale = useGlobalScale();
+  // 44px 터치 타깃은 접근성 때문에 유지하되, 아이콘(25px*scale)보다 큰
+  // 만큼의 높이가 줄 사이 문서 흐름에도 그대로 잡혀 줄 간격이 Figma보다
+  // 훨씬 넓어 보였다. 음수 마진으로 버튼이 차지하는 흐름상 높이만 아이콘
+  // 높이로 줄이고, 실제 44px 터치 영역은 위아래로 넘치게 둔다.
+  const verticalOverflow = Math.max(
+    0,
+    (MIN_TOUCH_TARGET - TAG_IMAGE_MAX_HEIGHT * scale) / 2
+  );
 
   return (
     <button
@@ -24,6 +32,8 @@ function TagChip({ tag, selected, onToggle }: TagChipProps) {
       style={{
         minWidth: MIN_TOUCH_TARGET,
         minHeight: MIN_TOUCH_TARGET,
+        marginTop: -verticalOverflow,
+        marginBottom: -verticalOverflow,
       }}
     >
       <img
