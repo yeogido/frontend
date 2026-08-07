@@ -73,6 +73,7 @@ export interface CourseCardProps {
   onClick?: () => void;
   onLikeClick?: () => void;
   onEditClick?: () => void;
+  showEdit?: boolean;
   onDeleteClick?: () => void;
 }
 
@@ -147,6 +148,7 @@ function CourseCard({
   onClick,
   onLikeClick,
   onEditClick,
+  showEdit,
   onDeleteClick,
 }: CourseCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
@@ -321,6 +323,7 @@ function CourseCard({
         {isMine && (onEditClick || onDeleteClick) ? (
           <ReviewActionMenu
             onEditClick={onEditClick}
+            showEdit={showEdit}
             onDeleteClick={onDeleteClick}
             triggerClassName="absolute top-[12px] right-[12px]"
             ariaLabel="코스 메뉴"

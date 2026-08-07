@@ -293,6 +293,7 @@ function MyPostsPage() {
                   tags={toContentTagIds(course.hashtags)}
                   isMine
                   onClick={() => void goToCourseDetail(course.id)}
+                  showEdit
                   onDeleteClick={() => requestCourseDelete(course.id)}
                 />
               );
