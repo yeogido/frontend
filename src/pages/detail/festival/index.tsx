@@ -195,7 +195,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
             <section style={{ marginTop: INFO_CARD_MARGIN_TOP * scale }}>
               <DetailInfoCard
                 address={festivalDetail.address}
-                hours={festivalPlaceHours ?? '영업시간 정보 없음'}
+                hours={festivalDetail.period}
                 phone={festivalDetail.phone}
                 website={festivalDetail.homepageLabel}
                 phoneHref={toTelHref(festivalDetail.phone)}

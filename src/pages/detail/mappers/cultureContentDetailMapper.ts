@@ -54,7 +54,7 @@ export function mapCultureContentDetailToFestivalDetail(
     tags: mapTags(content.hashtags),
     overview: content.description,
     address: content.place.roadAddress,
-    period: `${content.startDate} ~ ${content.endDate}`,
+    period: `${content.startDate.replace(/-/g, '.')} ~ ${content.endDate.replace(/-/g, '.')}`,
     phone: content.phone,
     homepageUrl: content.officialUrl,
     homepageLabel: '공식 홈페이지',
