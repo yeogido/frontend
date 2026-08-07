@@ -7,6 +7,7 @@ import {
 } from '../../constants/regions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useRegion } from '../../hooks/useRegions';
+import { COURSE_SEARCH_PATH } from '../../utils/routes';
 import RegionCourseSection from './components/RegionCourseSection';
 import RegionFestivalSection from './components/RegionFestivalSection';
 import RegionHeroSection from './components/RegionHeroSection';
@@ -110,7 +111,7 @@ function RegionInfoPage() {
         isRegionLoading={isRegionLoading}
         courseType="OFFICIAL"
         title={`${regionInfo.name}, 여기도 가볼까?`}
-        searchPath="/yeogido-course/search"
+        searchPath={COURSE_SEARCH_PATH.OFFICIAL}
       />
 
       <RegionCourseSection
@@ -119,7 +120,7 @@ function RegionInfoPage() {
         isRegionLoading={isRegionLoading}
         courseType="LOCAL"
         title={`${regionInfo.name}, 우리 동네 어때?`}
-        searchPath="/local-course/search"
+        searchPath={COURSE_SEARCH_PATH.LOCAL}
       />
 
       <RegionFestivalSection

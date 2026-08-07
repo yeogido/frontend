@@ -10,7 +10,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { toContentTagIds } from '../../../utils/contentTags';
-import { toDurationLabel } from '../../../utils/courseEnumLabels.ts';
+import { toDurationLabel } from '../../../utils/courseEnumLabels';
 import { buildCourseDetailPath } from '../../../utils/routes';
 import type { CourseSort, CourseType } from '../../../types/course.type';
 
@@ -24,6 +24,7 @@ const REGION_COURSE_PREVIEW_COUNT = 2;
 const RETRY_BUTTON_FONT_SIZE = 14;
 const RETRY_BUTTON_PADDING_X = 16;
 const RETRY_BUTTON_PADDING_Y = 8;
+const LIST_SCROLL_PADDING_BOTTOM = 8;
 
 // LOCAL 코스는 추천순(RECOMMEND) 정렬을 지원하지 않아(COURSE4008) 최신순으로
 // 대체한다 - /yeogido-course, /local-course 홈 화면의 "인기 추천 코스"
@@ -97,13 +98,15 @@ function RegionCourseSection({
           paddingRight: SECTION_PADDING_X * scale,
         }}
       >
-        <div className="overflow-x-auto pb-2">
+        <div
+          className="overflow-x-auto"
+          style={{ paddingBottom: LIST_SCROLL_PADDING_BOTTOM * scale }}
+        >
           <div className="flex min-w-max" style={{ gap: CARD_GAP * scale }}>
             {isPending ? (
-              <>
-                <ContentCardSkeleton />
-                <ContentCardSkeleton />
-              </>
+              Array.from({ length: REGION_COURSE_PREVIEW_COUNT }, (_, index) => (
+                <ContentCardSkeleton key={index} />
+              ))
             ) : (
               courses.map((course) => (
                 <ContentCard
