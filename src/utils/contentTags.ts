@@ -14,6 +14,10 @@ const tagIdByHashtag: Record<string, TagId> = {
   체험: 'experience',
   행사: 'event',
   지역명소: 'local-attraction',
+  음료: 'drink',
+  게임: 'game',
+  음악: 'music',
+  스포츠: 'sport',
 };
 
 export function toContentTagId(hashtag: string): TagId | undefined {
