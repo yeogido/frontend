@@ -221,17 +221,6 @@ export const tagDefinitions = [
     },
   },
   {
-    id: 'drink',
-    label: '술',
-    assets: {
-      tagChip: { inactive: drinkInactive, selected: drinkSelected },
-      cardTagChip: {
-        inactive: cardDrinkSelected,
-        selected: cardDrinkSelected,
-      },
-    },
-  },
-  {
     id: 'game',
     label: '게임',
     assets: {
@@ -250,6 +239,17 @@ export const tagDefinitions = [
       cardTagChip: {
         inactive: cardMusicSelected,
         selected: cardMusicSelected,
+      },
+    },
+  },
+  {
+    id: 'drink',
+    label: '술',
+    assets: {
+      tagChip: { inactive: drinkInactive, selected: drinkSelected },
+      cardTagChip: {
+        inactive: cardDrinkSelected,
+        selected: cardDrinkSelected,
       },
     },
   },

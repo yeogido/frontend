@@ -17,6 +17,7 @@ const tagRows = [
   tagDefinitions.slice(0, 4),
   tagDefinitions.slice(4, 9),
   tagDefinitions.slice(9, 13),
+  tagDefinitions.slice(13, 17),
 ];
 
 interface KeywordSelectionSectionProps {
