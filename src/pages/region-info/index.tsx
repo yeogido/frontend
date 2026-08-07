@@ -108,6 +108,18 @@ function RegionInfoPage() {
         regionName={regionInfo.name}
         regionId={regionId}
         isRegionLoading={isRegionLoading}
+        courseType="OFFICIAL"
+        title={`${regionInfo.name}, 여기도 가볼까?`}
+        searchPath="/yeogido-course/search"
+      />
+
+      <RegionCourseSection
+        regionName={regionInfo.name}
+        regionId={regionId}
+        isRegionLoading={isRegionLoading}
+        courseType="LOCAL"
+        title={`${regionInfo.name}, 우리 동네 어때?`}
+        searchPath="/local-course/search"
       />
 
       <RegionFestivalSection

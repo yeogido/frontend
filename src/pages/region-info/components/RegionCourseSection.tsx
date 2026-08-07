@@ -1,15 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 
 import {
-  CourseCard,
-  CourseCardSkeleton,
+  ContentCard,
+  ContentCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useCourses, usePopularCourses } from '../../../hooks/useCourses';
+import { useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
-import { toCourseCardProps } from '../../../utils/courseCard';
+import { toContentTagIds } from '../../../utils/contentTags';
+import { toDurationLabel } from '../../../utils/courseEnumLabels.ts';
+import { buildCourseDetailPath } from '../../../utils/routes';
+import type { CourseSort, CourseType } from '../../../types/course.type';
 
 const SECTION_MARGIN_TOP = 32;
 const SECTION_PADDING_X = 24;
@@ -22,53 +25,51 @@ const RETRY_BUTTON_FONT_SIZE = 14;
 const RETRY_BUTTON_PADDING_X = 16;
 const RETRY_BUTTON_PADDING_Y = 8;
 
+// LOCAL 코스는 추천순(RECOMMEND) 정렬을 지원하지 않아(COURSE4008) 최신순으로
+// 대체한다 - /yeogido-course, /local-course 홈 화면의 "인기 추천 코스"
+// 섹션과 동일한 정렬 기준.
+const SORT_BY_COURSE_TYPE: Record<CourseType, CourseSort> = {
+  OFFICIAL: 'RECOMMEND',
+  LOCAL: 'LATEST',
+};
+
 interface RegionCourseSectionProps {
   regionName: string;
   regionId?: number;
   isRegionLoading?: boolean;
+  courseType: CourseType;
+  title: string;
+  searchPath: string;
 }
 
 function RegionCourseSection({
   regionName,
   regionId,
   isRegionLoading = false,
+  courseType,
+  title,
+  searchPath,
 }: RegionCourseSectionProps) {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { getLiked, toggleLike } = useCourseLikeToggle();
 
-  // regionId를 찾지 못한 지역(예: /regions 목록에 없는 지역)은
-  // 인기 코스 API 대신 일반 코스 목록을 지역명 키워드로 검색해 대체한다.
-  // 지역 목록이 아직 로딩 중일 때는 둘 다 대기시켜, regionId 미확정 상태에서
-  // 키워드 검색이 먼저 떴다가 인기 코스로 바뀌는 깜빡임을 막는다.
-  const hasRegionId = regionId !== undefined;
-
-  const popularQuery = usePopularCourses(
-    { courseType: 'OFFICIAL', regionId },
-    { enabled: hasRegionId }
-  );
-
-  const fallbackQuery = useCourses(
+  // regionId를 찾지 못한 지역(예: /regions 목록에 없는 지역)은 regionId 필터
+  // 대신 지역명을 키워드로 검색해 대체한다. 지역 목록이 아직 로딩 중일 때는
+  // 대기시켜, regionId 미확정 상태에서 키워드 검색이 먼저 떴다가 지역
+  // 필터로 바뀌는 깜빡임을 막는다.
+  const { data, isPending, isError, refetch } = useCourses(
     {
-      courseType: 'OFFICIAL',
-      keyword: regionName,
-      sort: 'RECOMMEND',
+      courseType,
+      regionId,
+      keyword: regionId === undefined ? regionName : undefined,
+      sort: SORT_BY_COURSE_TYPE[courseType],
       size: REGION_COURSE_PREVIEW_COUNT,
     },
-    { enabled: !hasRegionId && !isRegionLoading }
+    { enabled: !isRegionLoading }
   );
 
-  const isPending = hasRegionId
-    ? popularQuery.isPending
-    : fallbackQuery.isPending;
-  const isError = hasRegionId ? popularQuery.isError : fallbackQuery.isError;
-  const refetch = hasRegionId ? popularQuery.refetch : fallbackQuery.refetch;
-  const rawCourses = hasRegionId
-    ? (popularQuery.data ?? [])
-    : (fallbackQuery.data?.pages[0]?.items ?? []);
-  const courses = rawCourses
-    .slice(0, REGION_COURSE_PREVIEW_COUNT)
-    .map(toCourseCardProps);
+  const courses = data?.pages[0]?.items ?? [];
 
   return (
     <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
@@ -79,89 +80,98 @@ function RegionCourseSection({
         }}
       >
         <SectionHeader
-          title={`${regionName}의 인기 코스`}
+          title={title}
           actionText="전체보기"
           onActionClick={() =>
             navigate(
-              `/yeogido-course/search?${new URLSearchParams({ region: regionName }).toString()}`
+              `${searchPath}?${new URLSearchParams({ region: regionName }).toString()}`
             )
           }
         />
       </div>
 
       <div
-        className="flex flex-col"
         style={{
           marginTop: LIST_MARGIN_TOP * scale,
-          gap: CARD_GAP * scale,
           paddingLeft: SECTION_PADDING_X * scale,
           paddingRight: SECTION_PADDING_X * scale,
         }}
       >
-        {isPending ? (
-          <>
-            <CourseCardSkeleton />
-            <CourseCardSkeleton />
-          </>
-        ) : (
-          courses.map((course) => (
-            <CourseCard
-              key={course.id}
-              {...course}
-              liked={getLiked(course.id, course.liked)}
-              onClick={() => navigate(`/yeogido-course/detail/${course.id}`)}
-              onLikeClick={() =>
-                toggleLike(course.id, getLiked(course.id, course.liked))
-              }
-            />
-          ))
-        )}
-      </div>
+        <div className="overflow-x-auto pb-2">
+          <div className="flex min-w-max" style={{ gap: CARD_GAP * scale }}>
+            {isPending ? (
+              <>
+                <ContentCardSkeleton />
+                <ContentCardSkeleton />
+              </>
+            ) : (
+              courses.map((course) => (
+                <ContentCard
+                  key={course.courseId}
+                  image={course.thumbnailUrl}
+                  title={course.title}
+                  firstInfo={toDurationLabel(course.durationType)}
+                  secondInfo={course.region}
+                  tags={toContentTagIds(course.tags)}
+                  liked={getLiked(course.courseId, course.isLiked)}
+                  onClick={() =>
+                    navigate(buildCourseDetailPath(courseType, course.courseId))
+                  }
+                  onLikeClick={() =>
+                    toggleLike(
+                      course.courseId,
+                      getLiked(course.courseId, course.isLiked)
+                    )
+                  }
+                />
+              ))
+            )}
+          </div>
+        </div>
 
-      {!isPending && isError ? (
-        <div
-          className="flex flex-col items-center"
-          style={{
-            marginTop: ERROR_MARGIN_TOP * scale,
-            gap: ERROR_MARGIN_TOP * scale,
-            paddingLeft: SECTION_PADDING_X * scale,
-            paddingRight: SECTION_PADDING_X * scale,
-          }}
-        >
-          <p
-            className="text-main-5 text-center font-medium"
-            style={{ fontSize: ERROR_TEXT_SIZE * scale }}
-          >
-            코스를 불러오지 못했어요.
-          </p>
-          <button
-            type="button"
-            onClick={() => void refetch()}
-            className="rounded-full border border-[#e4e4e4] font-medium text-[#505050]"
+        {!isPending && isError ? (
+          <div
+            className="flex flex-col items-center"
             style={{
-              fontSize: RETRY_BUTTON_FONT_SIZE * scale,
-              paddingLeft: RETRY_BUTTON_PADDING_X * scale,
-              paddingRight: RETRY_BUTTON_PADDING_X * scale,
-              paddingTop: RETRY_BUTTON_PADDING_Y * scale,
-              paddingBottom: RETRY_BUTTON_PADDING_Y * scale,
+              marginTop: ERROR_MARGIN_TOP * scale,
+              gap: ERROR_MARGIN_TOP * scale,
             }}
           >
-            다시 시도
-          </button>
-        </div>
-      ) : null}
+            <p
+              className="text-main-5 text-center font-medium"
+              style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+            >
+              코스를 불러오지 못했어요.
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="rounded-full border border-[#e4e4e4] font-medium text-[#505050]"
+              style={{
+                fontSize: RETRY_BUTTON_FONT_SIZE * scale,
+                paddingLeft: RETRY_BUTTON_PADDING_X * scale,
+                paddingRight: RETRY_BUTTON_PADDING_X * scale,
+                paddingTop: RETRY_BUTTON_PADDING_Y * scale,
+                paddingBottom: RETRY_BUTTON_PADDING_Y * scale,
+              }}
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : null}
 
-      {!isPending && !isError && courses.length === 0 ? (
-        <p
-          className="text-gray-4 text-center font-medium"
-          style={{
-            marginTop: ERROR_MARGIN_TOP * scale,
-            fontSize: ERROR_TEXT_SIZE * scale,
-          }}
-        >
-          등록된 코스가 없습니다.
-        </p>
-      ) : null}
+        {!isPending && !isError && courses.length === 0 ? (
+          <p
+            className="text-gray-4 text-center font-medium"
+            style={{
+              marginTop: ERROR_MARGIN_TOP * scale,
+              fontSize: ERROR_TEXT_SIZE * scale,
+            }}
+          >
+            등록된 코스가 없습니다.
+          </p>
+        ) : null}
+      </div>
     </section>
   );
 }
