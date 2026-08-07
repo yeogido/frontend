@@ -6,6 +6,7 @@ import {
   CourseCardSkeleton,
   CourseFilterBar,
   CourseReviewCard,
+  ConfirmDialog,
   PromotionCard,
   ReviewDeleteDialog,
   ReviewDetailModal,
@@ -17,6 +18,7 @@ import {
   MY_POST_FILTER_GRID_CLASS_NAME,
 } from '../../constants/courseFilterLayout';
 import { useAuth } from '../../hooks/useAuth';
+import { useCourseDelete, useNavigateToCourseDetail } from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import { getMyPostsFromPages, useMyPosts } from '../../hooks/useMyPosts';
@@ -67,6 +69,7 @@ function MyPostsPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { userId } = useAuth();
+  const { goToCourseDetail } = useNavigateToCourseDetail();
   const [keyword, setKeyword] = useState('');
 
   const {
@@ -93,6 +96,10 @@ function MyPostsPage() {
   const items = getMyPostsFromPages(data?.pages);
 
   const { requestDelete, dialogProps } = useReviewDelete();
+  const {
+    requestDelete: requestCourseDelete,
+    dialogProps: courseDeleteDialogProps,
+  } = useCourseDelete();
   const { requestEdit, editorProps } = useReviewEdit();
 
   const reviewsForModal = items.flatMap((item) =>
@@ -253,6 +260,11 @@ function MyPostsPage() {
                   content={reviewCard.content}
                   rating={reviewCard.rating}
                   isMine
+                  onClick={
+                    reviewCard.courseId !== undefined
+                      ? () => void goToCourseDetail(reviewCard.courseId as number)
+                      : undefined
+                  }
                   onLongPress={() => openReview(reviewCard.id)}
                   onEditClick={() =>
                     requestEdit({
@@ -280,6 +292,9 @@ function MyPostsPage() {
                   companion={toCompanionLabel(course.companionType)}
                   tags={toContentTagIds(course.hashtags)}
                   isMine
+                  onClick={() => void goToCourseDetail(course.id)}
+                  onEditClick={() => undefined}
+                  onDeleteClick={() => requestCourseDelete(course.id)}
                 />
               );
             }
@@ -316,6 +331,11 @@ function MyPostsPage() {
 
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
       <ReviewDeleteDialog {...dialogProps} />
+      <ConfirmDialog
+        {...courseDeleteDialogProps}
+        title="코스를 삭제할까요?"
+        description="삭제한 코스는 되돌릴 수 없어요."
+      />
       <ReviewDetailModal review={openedReview} onClose={closeReview} />
     </section>
   );

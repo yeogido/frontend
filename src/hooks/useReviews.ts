@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   type InfiniteData,
+  type QueryKey,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -30,6 +31,7 @@ import type {
   UpdateReviewRequest,
   UpdateReviewResponse,
 } from '../types/review.type';
+import type { GetMyPostsResponse } from '../types/user.type';
 
 const REVIEW_NOT_FOUND_CODE = 'REVIEW4041';
 const COURSE_NOT_FOUND_CODE = 'COURSE4041';
@@ -71,6 +73,10 @@ interface CreateCourseReviewParams {
 interface UpdateReviewParams {
   reviewId: number;
   request: UpdateReviewRequest;
+}
+
+interface MyPostsSnapshot {
+  previousMyPosts: [QueryKey, InfiniteData<GetMyPostsResponse> | undefined][];
 }
 
 const REVIEWS_PAGE_SIZE = 10;
@@ -243,6 +249,7 @@ export function useCreateCourseReview() {
       void queryClient.invalidateQueries({ queryKey: ['reviews'] });
       void queryClient.invalidateQueries({ queryKey: ['recentReviews'] });
       void queryClient.invalidateQueries({ queryKey: ['myReviewIds'] });
+      void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
   });
 }
@@ -271,7 +278,7 @@ function useUpdateReview() {
 function useDeleteReview() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, number>({
+  return useMutation<void, Error, number, MyPostsSnapshot>({
     mutationFn: async (reviewId) => {
       try {
         await deleteReview(reviewId);
@@ -283,6 +290,36 @@ function useDeleteReview() {
           throw error;
         }
       }
+    },
+    onMutate: async (reviewId) => {
+      await queryClient.cancelQueries({ queryKey: ['myPosts'] });
+
+      const previousMyPosts = queryClient.getQueriesData<
+        InfiniteData<GetMyPostsResponse>
+      >({ queryKey: ['myPosts'] });
+
+      queryClient.setQueriesData<InfiniteData<GetMyPostsResponse>>(
+        { queryKey: ['myPosts'] },
+        (data) =>
+          data
+            ? {
+                ...data,
+                pages: data.pages.map((page) => ({
+                  ...page,
+                  items: page.items.filter(
+                    (item) => item.review?.reviewId !== reviewId,
+                  ),
+                })),
+              }
+            : data,
+      );
+
+      return { previousMyPosts };
+    },
+    onError: (_, __, context) => {
+      context?.previousMyPosts.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
     },
     onSuccess: (_, reviewId) => {
       // invalidateQueries의 재조회를 기다리는 동안 목록이 삭제된 리뷰를
@@ -321,6 +358,9 @@ function useDeleteReview() {
       void queryClient.invalidateQueries({ queryKey: ['reviews'] });
       void queryClient.invalidateQueries({ queryKey: ['recentReviews'] });
       void queryClient.invalidateQueries({ queryKey: ['myReviewIds'] });
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
   });
 }

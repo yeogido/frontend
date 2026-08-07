@@ -23,6 +23,7 @@ export function toMyPostReviewCardProps(
 
   return {
     id: review.reviewId,
+    courseId: course?.id,
     image: course?.thumbnailUrl ?? '',
     title: course?.title ?? '',
     duration: course ? toDurationLabel(course.durationType) : '',
