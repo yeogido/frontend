@@ -2,21 +2,26 @@ import cake from '../../../assets/icons/cake.svg';
 import location from '../../../assets/icons/location.svg';
 import mail from '../../../assets/icons/mail.svg';
 
-const profileInfo = [
-  { icon: mail, label: '이메일', value: '등록된 이메일 정보가 없어요' },
-  { icon: location, label: '사는지역', value: '등록된 지역 정보가 없어요' },
-  { icon: cake, label: '태어난 연도', value: '등록된 출생 연도 정보가 없어요' },
-];
-
 export function ProfileInfoList({
   scale,
+  email,
+  region,
+  birthYear,
   isBusinessProfile = false,
   businessAddress,
 }: {
   scale: number;
+  email: string;
+  region: string;
+  birthYear: string;
   isBusinessProfile?: boolean;
   businessAddress?: string;
 }) {
+  const profileInfo = [
+    { icon: mail, label: '이메일', value: email },
+    { icon: location, label: '사는지역', value: region },
+    { icon: cake, label: '태어난 연도', value: birthYear },
+  ];
   const visibleProfileInfo = isBusinessProfile
     ? profileInfo
         .slice(0, 2)

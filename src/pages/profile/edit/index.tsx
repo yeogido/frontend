@@ -10,36 +10,78 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
 import vector from '../../../assets/icons/vector.svg';
+import { getApiErrorMessage } from '../../../apis/common';
 import { ResponsivePageShell } from '../../../components/layout';
+import { useToast } from '../../../components/toast';
 import { BIRTH_YEARS } from '../../../constants/birthYears';
 import { useAuth } from '../../../hooks/useAuth';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useMyProfile, useUpdateMyProfile } from '../../../hooks/useMyProfile';
 import { useRegions } from '../../../hooks/useRegions';
+import type { UpdateMyProfileRequest } from '../../../types/user.type';
 import { ProfilePhotoEditor } from '../components/ProfilePhotoEditor';
 import { ProfileFormField, UnsavedChangesDialog } from './components';
+
+const NICKNAME_MIN_LENGTH = 2;
+const NICKNAME_MAX_LENGTH = 10;
+const NICKNAME_LENGTH_ERROR_MESSAGE =
+  '닉네임 길이는 2자 이상 10자 이하여야 합니다.';
+
+function getNicknameError(nickname: string): string | null {
+  const length = nickname.trim().length;
+
+  return length < NICKNAME_MIN_LENGTH || length > NICKNAME_MAX_LENGTH
+    ? NICKNAME_LENGTH_ERROR_MESSAGE
+    : null;
+}
 
 function ProfileEditPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { userId } = useAuth();
+  const { showToast } = useToast();
+  const { data: profile } = useMyProfile();
   const { data: regionsData } = useRegions();
-  const initialName = useMemo(
-    () => (userId ? `회원 #${userId}` : '회원'),
-    [userId]
-  );
+  const updateMyProfile = useUpdateMyProfile();
+
+  const initialName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
+  const initialRegionId =
+    profile?.region && regionsData?.regions
+      ? String(
+          regionsData.regions.find((region) => region.name === profile.region)
+            ?.regionId ?? ''
+        )
+      : '';
+  const initialBirthYear = profile?.birthYear ? String(profile.birthYear) : '';
+
   const [name, setName] = useState(initialName);
-  const [regionId, setRegionId] = useState('');
-  const [birthYear, setBirthYear] = useState('');
+  const [regionId, setRegionId] = useState(initialRegionId);
+  const [birthYear, setBirthYear] = useState(initialBirthYear);
   const [isPhotoChanged, setIsPhotoChanged] = useState(false);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
-  const previousInitialNameRef = useRef(initialName);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const previousInitialRef = useRef({
+    name: initialName,
+    regionId: initialRegionId,
+    birthYear: initialBirthYear,
+  });
 
   useEffect(() => {
-    setName((current) =>
-      current === previousInitialNameRef.current ? initialName : current
+    const previous = previousInitialRef.current;
+
+    setName((current) => (current === previous.name ? initialName : current));
+    setRegionId((current) =>
+      current === previous.regionId ? initialRegionId : current
     );
-    previousInitialNameRef.current = initialName;
-  }, [initialName]);
+    setBirthYear((current) =>
+      current === previous.birthYear ? initialBirthYear : current
+    );
+    previousInitialRef.current = {
+      name: initialName,
+      regionId: initialRegionId,
+      birthYear: initialBirthYear,
+    };
+  }, [initialName, initialRegionId, initialBirthYear]);
 
   const regionOptions = useMemo(
     () => [
@@ -59,11 +101,13 @@ function ProfileEditPage() {
     []
   );
 
+  const nicknameError = name !== initialName ? getNicknameError(name) : null;
   const isEdited =
     name !== initialName ||
-    regionId !== '' ||
-    birthYear !== '' ||
+    regionId !== initialRegionId ||
+    birthYear !== initialBirthYear ||
     isPhotoChanged;
+  const canSave = isEdited && !nicknameError && !updateMyProfile.isPending;
 
   const handleBack = () => {
     if (isEdited) {
@@ -74,13 +118,27 @@ function ProfileEditPage() {
     navigate('/profile');
   };
 
-  const handleSave = () => {
-    if (!isEdited) {
+  const handleSave = async () => {
+    if (!canSave) {
       return;
     }
 
-    // 프로필 수정 API가 준비되면 이 값들을 저장한 뒤 프로필 화면을 갱신한다.
-    navigate('/profile');
+    setSubmitError(null);
+
+    const payload: UpdateMyProfileRequest = {};
+    if (name !== initialName) payload.nickname = name;
+    if (birthYear !== initialBirthYear && birthYear)
+      payload.birthYear = Number(birthYear);
+    if (regionId !== initialRegionId && regionId)
+      payload.regionId = Number(regionId);
+
+    try {
+      await updateMyProfile.mutateAsync(payload);
+      showToast('프로필을 저장했어요.');
+      navigate('/profile');
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, '프로필 저장에 실패했어요.'));
+    }
   };
 
   return (
@@ -115,6 +173,7 @@ function ProfileEditPage() {
       >
         <ProfilePhotoEditor
           scale={scale}
+          initialPhotoUrl={profile?.profileImageUrl}
           onPhotoChange={() => setIsPhotoChanged(true)}
         />
 
@@ -123,10 +182,14 @@ function ProfileEditPage() {
           style={{ marginTop: 24 * scale, gap: 24 * scale }}
           onSubmit={(event) => {
             event.preventDefault();
-            handleSave();
+            void handleSave();
           }}
         >
-          <ProfileFormField label="이름" scale={scale}>
+          <ProfileFormField
+            label="이름"
+            scale={scale}
+            error={nicknameError ?? undefined}
+          >
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -141,7 +204,7 @@ function ProfileEditPage() {
               className="font-medium text-[#7f7f7f]"
               style={{ fontSize: 12 * scale, lineHeight: `${14 * scale}px` }}
             >
-              등록된 이메일 정보가 없어요
+              {profile?.email ?? '등록된 이메일 정보가 없어요'}
             </span>
           </ProfileFormField>
 
@@ -164,13 +227,23 @@ function ProfileEditPage() {
               ariaLabel="태어난 연도"
             />
           </ProfileFormField>
+
+          {submitError && (
+            <p
+              role="alert"
+              className="text-main-5 font-medium"
+              style={{ fontSize: 12 * scale, lineHeight: `${14 * scale}px` }}
+            >
+              {submitError}
+            </p>
+          )}
         </form>
       </main>
 
       <button
         type="button"
-        disabled={!isEdited}
-        onClick={handleSave}
+        disabled={!canSave}
+        onClick={() => void handleSave()}
         className="enabled:bg-main-5 mt-auto flex w-full items-center justify-center rounded-xl font-semibold enabled:text-[#f9f9f9] disabled:bg-[#e4e4e4] disabled:text-[#7f7f7f]"
         style={{
           height: 52 * scale,

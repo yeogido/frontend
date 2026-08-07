@@ -33,3 +33,26 @@ export interface GetMyPostsResponse {
   cursorId: number | null;
   hasNext: boolean;
 }
+
+export type UserRole = 'USER' | 'BUSINESS' | 'ADMIN';
+
+export interface MyProfile {
+  userId: number;
+  email: string;
+  name: string;
+  region: string;
+  birthYear: number;
+  role: UserRole;
+  profileImageUrl: string | null;
+}
+
+// "변경할 필드만" 보낸다는 스펙이라 전부 optional로 둔다.
+export interface UpdateMyProfileRequest {
+  nickname?: string;
+  birthYear?: number;
+  regionId?: number;
+}
+
+export interface UpdateMyProfileResponse {
+  userId: number;
+}

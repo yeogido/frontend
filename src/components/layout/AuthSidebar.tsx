@@ -9,6 +9,7 @@ import { Divider } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useLogout } from '../../hooks/useLogout';
+import { useMyProfile } from '../../hooks/useMyProfile';
 import { APP_MAX_WIDTH } from '../../constants/layout';
 
 const DRAWER_MAX_WIDTH = 280;
@@ -50,9 +51,10 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
   const scale = useGlobalScale();
   const handleLogout = useLogout();
   const { userId } = useAuth();
-  // 닉네임/이메일을 내려주는 사용자 프로필 API가 아직 없어, 지어낸 값 대신
-  // 실제로 존재하는 userId 기반의 안전한 표시값만 사용한다.
-  const displayName = userId ? `회원 #${userId}` : '회원';
+  const { data: profile } = useMyProfile();
+  // 프로필 조회가 끝나기 전에는 실제로 존재하는 userId 기반의 안전한
+  // 표시값으로 대체한다.
+  const displayName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
 
   return (
     // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
@@ -109,13 +111,26 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 gap: PROFILE_GAP * scale,
               }}
             >
-              <div
-                className="shrink-0 rounded-full bg-[#E4E4E4]"
-                style={{
-                  width: AVATAR_SIZE * scale,
-                  height: AVATAR_SIZE * scale,
-                }}
-              />
+              {profile?.profileImageUrl ? (
+                <img
+                  src={profile.profileImageUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="shrink-0 rounded-full object-cover"
+                  style={{
+                    width: AVATAR_SIZE * scale,
+                    height: AVATAR_SIZE * scale,
+                  }}
+                />
+              ) : (
+                <div
+                  className="shrink-0 rounded-full bg-[#E4E4E4]"
+                  style={{
+                    width: AVATAR_SIZE * scale,
+                    height: AVATAR_SIZE * scale,
+                  }}
+                />
+              )}
 
               <div className="flex min-w-0 flex-col">
                 <span

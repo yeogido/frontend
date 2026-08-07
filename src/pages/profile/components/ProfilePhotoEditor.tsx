@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -15,11 +16,15 @@ const MAX_ZOOM = 3;
 interface ProfilePhotoEditorProps {
   readonly scale: number;
   readonly onPhotoChange?: () => void;
+  // 서버에서 내려주는 기존 프로필 이미지를 초기 미리보기로만 보여준다.
+  // 실제 업로드 연동은 별도 업로드 API 확인 후 다음 작업에서 진행한다.
+  readonly initialPhotoUrl?: string | null;
 }
 
 export function ProfilePhotoEditor({
   scale,
   onPhotoChange,
+  initialPhotoUrl,
 }: ProfilePhotoEditorProps) {
   const [savedPhoto, setSavedPhoto] = useState<ProfilePhoto | null>(null);
   const [draftPhoto, setDraftPhoto] = useState<ProfilePhoto | null>(null);
@@ -35,7 +40,31 @@ export function ProfilePhotoEditor({
     positionY: number;
   } | null>(null);
   const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
+  const hasSeededInitialPhotoRef = useRef(false);
   const photo = draftPhoto ?? savedPhoto;
+
+  useEffect(() => {
+    if (!initialPhotoUrl || hasSeededInitialPhotoRef.current) return;
+
+    hasSeededInitialPhotoRef.current = true;
+    let isCancelled = false;
+
+    void getImageAspectRatio(initialPhotoUrl).then((aspectRatio) => {
+      if (isCancelled) return;
+
+      setSavedPhoto({
+        src: initialPhotoUrl,
+        zoom: MIN_ZOOM,
+        positionX: 0,
+        positionY: 0,
+        aspectRatio,
+      });
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [initialPhotoUrl]);
 
   const updateTransform = (update: (current: ProfilePhoto) => ProfilePhoto) => {
     setDraftPhoto((current) => {
