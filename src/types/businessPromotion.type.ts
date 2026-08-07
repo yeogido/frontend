@@ -29,6 +29,7 @@ export interface BusinessPromotionItem {
   regionName: string;
   thumbnailImageUrl: string;
   shortDescription: string;
+  hashtags: string[];
   author: BusinessPromotionAuthor;
   likeCount: number;
   isLiked: boolean;

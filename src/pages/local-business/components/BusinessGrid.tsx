@@ -4,6 +4,7 @@ import BusinessGridCard from './BusinessGridCard';
 interface BusinessGridProps {
   businesses: BusinessItem[];
   onCardClick: (businessId: string) => void;
+  onLikeClick?: (businessId: string) => void;
   gapX?: number;
   gapY?: number;
 }
@@ -11,6 +12,7 @@ interface BusinessGridProps {
 function BusinessGrid({
   businesses,
   onCardClick,
+  onLikeClick,
   gapX = 16,
   gapY = 18,
 }: BusinessGridProps) {
@@ -24,6 +26,9 @@ function BusinessGrid({
           key={business.id}
           business={business}
           onClick={() => onCardClick(business.id)}
+          onLikeClick={
+            onLikeClick ? () => onLikeClick(business.id) : undefined
+          }
         />
       ))}
     </div>
