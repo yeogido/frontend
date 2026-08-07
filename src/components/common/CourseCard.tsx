@@ -318,11 +318,12 @@ function CourseCard({
         </div>
 
         {/* Like / 더보기: 본인 코스는 좋아요 대신 같은 자리에 수정·삭제 메뉴를 띄운다. */}
-        {isMine ? (
+        {isMine && (onEditClick || onDeleteClick) ? (
           <ReviewActionMenu
             onEditClick={onEditClick}
             onDeleteClick={onDeleteClick}
             triggerClassName="absolute top-[12px] right-[12px]"
+            ariaLabel="코스 메뉴"
           />
         ) : (
           <button

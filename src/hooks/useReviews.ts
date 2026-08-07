@@ -263,6 +263,7 @@ function useUpdateReview() {
       void queryClient.invalidateQueries({ queryKey: ['courseReviews'] });
       void queryClient.invalidateQueries({ queryKey: ['reviews'] });
       void queryClient.invalidateQueries({ queryKey: ['recentReviews'] });
+      void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
   });
 }

@@ -135,10 +135,11 @@ function PromotionCard({
               </div>
             </div>
 
-            {isMine ? (
+            {isMine && (onEditClick || onDeleteClick) ? (
               <ReviewActionMenu
                 onEditClick={onEditClick}
                 onDeleteClick={onDeleteClick}
+                ariaLabel="홍보글 메뉴"
               />
             ) : null}
           </div>

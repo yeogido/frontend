@@ -20,6 +20,8 @@ export interface ReviewActionMenuProps {
   onDeleteClick?: () => void;
   /** 카드마다 버튼이 놓이는 자리가 달라 트리거 배치는 밖에서 정한다. */
   triggerClassName?: string;
+  /** 카드 종류마다 스크린리더 안내를 다르게 하려면 넘긴다. */
+  ariaLabel?: string;
 }
 
 /**
@@ -32,6 +34,7 @@ function ReviewActionMenu({
   onEditClick,
   onDeleteClick,
   triggerClassName = '-mt-[3px] -mr-[3px] ml-2',
+  ariaLabel = '리뷰 메뉴',
 }: ReviewActionMenuProps) {
   const scale = useGlobalScale();
   const triggerId = useId();
@@ -126,7 +129,7 @@ function ReviewActionMenu({
         id={triggerId}
         ref={triggerRef}
         type="button"
-        aria-label="리뷰 메뉴"
+        aria-label={ariaLabel}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={menuId}

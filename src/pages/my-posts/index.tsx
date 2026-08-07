@@ -25,7 +25,6 @@ import {
   useReviewDetailModal,
   useReviewEdit,
 } from '../../hooks/useReviews';
-import { useToast } from '../../components/toast';
 import { formatBusinessPromotionDate } from '../local-business/mappers/businessPromotionMapper';
 import { toContentTagIds } from '../../utils/contentTags';
 import {
@@ -59,13 +58,15 @@ const LIST_MARGIN_TOP = 24;
 const LIST_GAP = 16;
 const EMPTY_MARGIN_TOP = 40;
 const EMPTY_TEXT_SIZE = 13;
+const RETRY_BUTTON_PADDING_X = 16;
+const RETRY_BUTTON_PADDING_Y = 8;
+const RETRY_BUTTON_TEXT_SIZE = 14;
 const SKELETON_COUNT = 3;
 
 function MyPostsPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { userId } = useAuth();
-  const { showToast } = useToast();
   const [keyword, setKeyword] = useState('');
 
   const {
@@ -120,12 +121,6 @@ function MyPostsPage() {
     key: MyPostFilterKey;
     options: readonly string[];
   }[];
-
-  // ponytail: 코스·홍보글 수정/삭제 API가 아직 없어 안내만 한다.
-  // deleteCourse/updateCourse, deletePromotion/updatePromotion API가 생기면
-  // 이 핸들러들을 실제 뮤테이션으로 교체한다.
-  const notImplemented = (label: string) => () =>
-    showToast(`${label} 기능은 준비 중이에요.`);
 
   const authorDisplayName = userId ? `회원 #${userId}` : '나';
 
@@ -219,7 +214,14 @@ function MyPostsPage() {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+            className="rounded-full border border-[#e4e4e4] font-medium text-[#505050]"
+            style={{
+              paddingLeft: RETRY_BUTTON_PADDING_X * scale,
+              paddingRight: RETRY_BUTTON_PADDING_X * scale,
+              paddingTop: RETRY_BUTTON_PADDING_Y * scale,
+              paddingBottom: RETRY_BUTTON_PADDING_Y * scale,
+              fontSize: RETRY_BUTTON_TEXT_SIZE * scale,
+            }}
           >
             다시 시도
           </button>
@@ -278,8 +280,6 @@ function MyPostsPage() {
                   companion={toCompanionLabel(course.companionType)}
                   tags={toContentTagIds(course.hashtags)}
                   isMine
-                  onEditClick={notImplemented('코스 수정')}
-                  onDeleteClick={notImplemented('코스 삭제')}
                 />
               );
             }
@@ -301,8 +301,6 @@ function MyPostsPage() {
                   onClick={() =>
                     navigate(buildLocalBusinessDetailPath(promotion.placeId))
                   }
-                  onEditClick={notImplemented('홍보글 수정')}
-                  onDeleteClick={notImplemented('홍보글 삭제')}
                 />
               );
             }
