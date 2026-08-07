@@ -21,6 +21,8 @@ const PROFILE_LEFT = 24;
 const AVATAR_SIZE = 40;
 const PROFILE_GAP = 12;
 const NAME_TEXT_SIZE = 16;
+const EMAIL_TEXT_SIZE = 12;
+const EMAIL_MARGIN_TOP = 2;
 const MENU_ITEM_HEIGHT = 51;
 const MENU_PADDING_X = 24;
 const TEXT_BASE = 16;
@@ -132,13 +134,24 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 />
               )}
 
-              <div className="flex min-w-0 flex-col">
+              <div className="flex min-w-0 flex-col items-start text-left">
                 <span
                   className="truncate leading-none font-semibold text-[#1C1C1C]"
                   style={{ fontSize: NAME_TEXT_SIZE * scale }}
                 >
                   {displayName}
                 </span>
+                {profile?.email && (
+                  <span
+                    className="truncate leading-none font-medium text-[#7f7f7f]"
+                    style={{
+                      fontSize: EMAIL_TEXT_SIZE * scale,
+                      marginTop: EMAIL_MARGIN_TOP * scale,
+                    }}
+                  >
+                    {profile.email}
+                  </span>
+                )}
               </div>
             </button>
 

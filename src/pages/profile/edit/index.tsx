@@ -17,7 +17,7 @@ import { BIRTH_YEARS } from '../../../constants/birthYears';
 import { useAuth } from '../../../hooks/useAuth';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useMyProfile, useUpdateMyProfile } from '../../../hooks/useMyProfile';
-import { useRegions } from '../../../hooks/useRegions';
+import { useRegion, useRegions } from '../../../hooks/useRegions';
 import type { UpdateMyProfileRequest } from '../../../types/user.type';
 import { ProfilePhotoEditor } from '../components/ProfilePhotoEditor';
 import { ProfileFormField, UnsavedChangesDialog } from './components';
@@ -45,19 +45,23 @@ function ProfileEditPage() {
   const updateMyProfile = useUpdateMyProfile();
 
   const initialName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
-  const initialRegionId =
-    profile?.region && regionsData?.regions
-      ? String(
-          regionsData.regions.find((region) => region.name === profile.region)
-            ?.regionId ?? ''
-        )
-      : '';
+  const initialRegionId = profile?.regionId ? String(profile.regionId) : '';
   const initialBirthYear = profile?.birthYear ? String(profile.birthYear) : '';
 
   const [name, setName] = useState(initialName);
   const [regionId, setRegionId] = useState(initialRegionId);
   const [birthYear, setBirthYear] = useState(initialBirthYear);
+  // GET /regions 목록의 name은 축약형("서울")이고, 풀네임("서울특별시")은
+  // 단건 상세(GET /regions/{id})의 fullName에만 있다. 목록 26개를 전부
+  // 상세 조회로 바꾸는 대신, 현재 선택된 값의 트리거 표시만 우선 맞춘다.
+  const { data: selectedRegionDetail } = useRegion(
+    regionId ? Number(regionId) : undefined
+  );
   const [isPhotoChanged, setIsPhotoChanged] = useState(false);
+  const [profileImageKey, setProfileImageKey] = useState<string | undefined>(
+    undefined
+  );
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const previousInitialRef = useRef({
@@ -107,7 +111,11 @@ function ProfileEditPage() {
     regionId !== initialRegionId ||
     birthYear !== initialBirthYear ||
     isPhotoChanged;
-  const canSave = isEdited && !nicknameError && !updateMyProfile.isPending;
+  const canSave =
+    isEdited &&
+    !nicknameError &&
+    !updateMyProfile.isPending &&
+    !isPhotoUploading;
 
   const handleBack = () => {
     if (isEdited) {
@@ -131,10 +139,12 @@ function ProfileEditPage() {
       payload.birthYear = birthYear;
     if (regionId !== initialRegionId && regionId)
       payload.regionId = Number(regionId);
+    if (profileImageKey) payload.profileImageUrl = profileImageKey;
 
-    // 지역/출생연도를 빈 값으로 되돌리거나 사진만 바꾼 경우(사진 업로드
-    // 연동은 아직 없음) isEdited는 true지만 실제로 보낼 필드가 없다.
-    // 빈 PATCH를 보내고 성공 토스트를 띄우면 사용자에게는 거짓 성공이 된다.
+    // 지역/출생연도를 빈 값으로 되돌리거나, 사진을 골랐지만 업로드가 아직
+    // 끝나지 않았거나 실패한 경우 isEdited는 true지만 실제로 보낼 필드가
+    // 없다. 빈 PATCH를 보내고 성공 토스트를 띄우면 사용자에게는 거짓
+    // 성공이 된다.
     if (Object.keys(payload).length === 0) {
       navigate('/profile');
       return;
@@ -182,7 +192,12 @@ function ProfileEditPage() {
         <ProfilePhotoEditor
           scale={scale}
           initialPhotoUrl={profile?.profileImageUrl}
-          onPhotoChange={() => setIsPhotoChanged(true)}
+          onPhotoChange={() => {
+            setIsPhotoChanged(true);
+            setProfileImageKey(undefined);
+          }}
+          onPhotoUploaded={setProfileImageKey}
+          onUploadingChange={setIsPhotoUploading}
         />
 
         <form
@@ -223,6 +238,7 @@ function ProfileEditPage() {
               options={regionOptions}
               scale={scale}
               ariaLabel="사는 지역"
+              triggerLabel={selectedRegionDetail?.fullName}
             />
           </ProfileFormField>
 
@@ -278,12 +294,16 @@ function SelectField({
   options,
   scale,
   ariaLabel,
+  triggerLabel,
 }: {
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
   scale: number;
   ariaLabel: string;
+  // 옵션 목록은 그대로 두고, 닫힌 상태에서 보이는 트리거 텍스트만 다른
+  // 값(예: 축약형 대신 풀네임)으로 보여주고 싶을 때 쓴다.
+  triggerLabel?: string;
 }) {
   const buttonId = useId();
   const listboxId = useId();
@@ -302,6 +322,7 @@ function SelectField({
   }>();
   const selectedOption =
     options.find((option) => option.value === value) ?? options[0];
+  const displayLabel = triggerLabel ?? selectedOption?.label;
   const panelHeight = Math.min(options.length * 46, 184) * scale;
 
   useEffect(() => {
@@ -424,7 +445,7 @@ function SelectField({
         className="flex h-full w-full items-center justify-between bg-transparent text-left font-medium text-[#7f7f7f] outline-none"
         style={{ fontSize: 12 * scale, lineHeight: `${14 * scale}px` }}
       >
-        <span className="truncate">{selectedOption?.label}</span>
+        <span className="truncate">{displayLabel}</span>
         <img
           src={vector}
           alt=""

@@ -6,30 +6,41 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from 'react';
 
+import loadingIcon from '../../../assets/icons/loading.svg';
 import pen from '../../../assets/icons/pen.svg';
+import { getApiErrorMessage } from '../../../apis/common';
+import { createPresignedUrl, uploadFileToPresignedUrl } from '../../../apis/files.api';
+import { useToast } from '../../../components/toast';
 import { ProfilePhotoPreview, type ProfilePhoto } from './ProfilePhotoPreview';
 
 const PHOTO_FRAME_SIZE = 120;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
+const UPLOAD_ERROR_MESSAGE = '사진 업로드에 실패했어요.';
 
 interface ProfilePhotoEditorProps {
   readonly scale: number;
   readonly onPhotoChange?: () => void;
-  // 서버에서 내려주는 기존 프로필 이미지를 초기 미리보기로만 보여준다.
-  // 실제 업로드 연동은 별도 업로드 API 확인 후 다음 작업에서 진행한다.
+  // objectKey 업로드가 성공할 때마다 호출된다. 실제 계정에 반영하는 건
+  // 폼의 다른 필드와 동일하게 "프로필 저장" 시점(PATCH)이다.
+  readonly onPhotoUploaded?: (objectKey: string) => void;
+  readonly onUploadingChange?: (isUploading: boolean) => void;
   readonly initialPhotoUrl?: string | null;
 }
 
 export function ProfilePhotoEditor({
   scale,
   onPhotoChange,
+  onPhotoUploaded,
+  onUploadingChange,
   initialPhotoUrl,
 }: ProfilePhotoEditorProps) {
+  const { showToast } = useToast();
   const [savedPhoto, setSavedPhoto] = useState<ProfilePhoto | null>(null);
   const [draftPhoto, setDraftPhoto] = useState<ProfilePhoto | null>(null);
   const [isTransforming, setIsTransforming] = useState(false);
   const [isAdjustmentEnabled, setIsAdjustmentEnabled] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileSelectionIdRef = useRef(0);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
@@ -94,6 +105,32 @@ export function ProfilePhotoEditor({
     setIsTransforming(false);
     setIsAdjustmentEnabled(true);
     onPhotoChange?.();
+
+    if (!onPhotoUploaded) return;
+
+    setIsUploading(true);
+    onUploadingChange?.(true);
+
+    try {
+      const presignedUrl = await createPresignedUrl({
+        fileName: file.name,
+        contentType: file.type || 'application/octet-stream',
+      });
+      await uploadFileToPresignedUrl(presignedUrl.uploadUrl, file, file.type);
+
+      if (selectionId !== fileSelectionIdRef.current) return;
+
+      onPhotoUploaded(presignedUrl.objectKey);
+    } catch (error) {
+      if (selectionId !== fileSelectionIdRef.current) return;
+
+      showToast(getApiErrorMessage(error, UPLOAD_ERROR_MESSAGE));
+    } finally {
+      if (selectionId === fileSelectionIdRef.current) {
+        setIsUploading(false);
+        onUploadingChange?.(false);
+      }
+    }
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -206,13 +243,26 @@ export function ProfilePhotoEditor({
       <button
         type="button"
         onClick={handleActionClick}
+        disabled={isUploading}
         aria-label={
-          isTransforming ? '프로필 사진 편집 저장' : '프로필 사진 수정'
+          isUploading
+            ? '프로필 사진 업로드 중'
+            : isTransforming
+              ? '프로필 사진 편집 저장'
+              : '프로필 사진 수정'
         }
-        className="absolute right-0 bottom-0 flex items-center justify-center rounded-full bg-[#f9f9f9]/80"
+        className="absolute right-0 bottom-0 flex items-center justify-center rounded-full bg-[#f9f9f9]/80 disabled:opacity-70"
         style={{ width: 30 * scale, height: 30 * scale }}
       >
-        {isTransforming ? (
+        {isUploading ? (
+          <img
+            src={loadingIcon}
+            alt=""
+            aria-hidden="true"
+            className="animate-spin"
+            style={{ width: 18 * scale, height: 18 * scale }}
+          />
+        ) : isTransforming ? (
           <RoundedCheck scale={scale} />
         ) : (
           <img

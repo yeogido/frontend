@@ -8,6 +8,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useMyBusinesses } from '../../hooks/useMyBusinesses';
 import { useDeleteMyAccount, useMyProfile } from '../../hooks/useMyProfile';
+import { useRegion } from '../../hooks/useRegions';
 import { useAuthStore } from '../../store/auth.store';
 import {
   ProfileDetailSection,
@@ -35,6 +36,11 @@ function ProfilePage() {
     primaryBusiness?.representativeName ??
     profile?.name ??
     (userId ? `회원 #${userId}` : '회원');
+  // GET /regions 목록의 name은 축약형("서울")이라, 풀네임("서울특별시")이
+  // 있는 단건 상세(GET /regions/{id})를 regionId로 조회해서 우선 쓴다.
+  // 아직 로딩 중이거나 목록에 없으면 서버가 준 region 문자열로 대체한다.
+  const { data: selectedRegionDetail } = useRegion(profile?.regionId);
+  const regionName = selectedRegionDetail?.fullName ?? profile?.region;
 
   const handleWithdrawalConfirm = async () => {
     try {
@@ -71,7 +77,7 @@ function ProfilePage() {
           businesses={businesses}
           role={profile?.role}
           email={profile?.email ?? '등록된 이메일 정보가 없어요'}
-          region={profile?.region ?? '등록된 지역 정보가 없어요'}
+          region={regionName ?? '등록된 지역 정보가 없어요'}
           birthYear={
             profile?.birthYear
               ? String(profile.birthYear)

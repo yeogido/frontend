@@ -12,6 +12,7 @@ export interface UserProfileResponse {
   email: string;
   name: string;
   region: string;
+  regionId: number;
   birthYear: string;
   role: string;
   profileImageUrl: string | null;
@@ -53,6 +54,7 @@ export interface UpdateMyProfileRequest {
   nickname?: string;
   birthYear?: string;
   regionId?: number;
+  profileImageUrl?: string;
 }
 
 export interface UpdateMyProfileResponse {

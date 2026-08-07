@@ -26,6 +26,7 @@ const SOCIAL_LOGIN_ERROR_MESSAGES: Record<string, string> = {
   AUTH4015: '카카오 인증이 만료되었거나 유효하지 않습니다. 다시 시도해 주세요.',
   COMMON5001:
     '카카오 서버와 통신 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+  USER4101: '이미 탈퇴한 회원입니다.',
 };
 
 function isNormalizedApiError(error: unknown): error is NormalizedApiError {
