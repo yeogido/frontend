@@ -1,6 +1,17 @@
+import type { CourseType } from '../types/course.type';
+
 export function buildFestivalDetailPath(festivalId: number | string) {
   return `/festival/detail/${festivalId}`;
 }
+
+/**
+ * 코스 검색 경로. 코스 상세와 마찬가지로 여기도(OFFICIAL)와
+ * 동네(LOCAL) 검색 화면이 나뉘어 있다.
+ */
+export const COURSE_SEARCH_PATH: Record<CourseType, string> = {
+  OFFICIAL: '/yeogido-course/search',
+  LOCAL: '/local-course/search',
+};
 
 export function buildCourseSearchPath(keyword: string) {
   const searchParams = new URLSearchParams({ keyword });

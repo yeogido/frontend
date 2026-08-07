@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ResponsivePageShell } from '../../components/layout';
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import type { BusinessProfile } from '../business-verification/types';
+import { useMyBusinesses } from '../../hooks/useMyBusinesses';
 import {
   ProfileDetailSection,
   ProfilePhotoEditor,
@@ -12,19 +12,19 @@ import {
   WithdrawalDialog,
 } from './components';
 
-interface ProfilePageProps {
-  readonly businessProfileOverride?: BusinessProfile | null;
-}
-
-function ProfilePage({ businessProfileOverride }: ProfilePageProps) {
+function ProfilePage() {
   const scale = useGlobalScale();
-  const { userId } = useAuth();
+  const { userId, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false);
-  const businessProfile = businessProfileOverride ?? null;
+  const { data } = useMyBusinesses(isAuthenticated);
+
+  // 인증 사업장이 없으면 빈 배열이 정상 응답이다(404가 아니다).
+  // 목록은 businessInfoId 최신순이라 첫 항목이 가장 최근 인증 사업장이다.
+  const businesses = data ?? [];
+  const primaryBusiness = businesses[0] ?? null;
   const name =
-    businessProfile?.representativeName ??
-    (userId ? `회원 #${userId}` : '회원');
+    primaryBusiness?.representativeName ?? (userId ? `회원 #${userId}` : '회원');
 
   return (
     <ResponsivePageShell
@@ -39,11 +39,11 @@ function ProfilePage({ businessProfileOverride }: ProfilePageProps) {
         <ProfilePhotoEditor scale={scale} />
         <ProfileSummary
           name={name}
-          isBusinessProfile={Boolean(businessProfile)}
+          isBusinessProfile={primaryBusiness !== null}
           scale={scale}
           onEdit={() => navigate('/profile/edit')}
         />
-        <ProfileDetailSection businessProfile={businessProfile} scale={scale} />
+        <ProfileDetailSection businesses={businesses} scale={scale} />
         <button
           type="button"
           onClick={() => setIsWithdrawalDialogOpen(true)}

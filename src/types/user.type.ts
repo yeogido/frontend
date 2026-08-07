@@ -22,6 +22,18 @@ export interface MyCourse extends MyCourseSummary {
   createdAt: string;
 }
 
+// 스웨거 기준: GET /users/me
+// role은 USER | ADMIN | BUSINESS지만 유니온으로 좁히지 않는다.
+export interface UserProfileResponse {
+  userId: number;
+  email: string;
+  name: string;
+  region: string;
+  birthYear: string;
+  role: string;
+  profileImageUrl: string | null;
+}
+
 export interface MyReview {
   reviewId: number;
   reviewerName: string;
