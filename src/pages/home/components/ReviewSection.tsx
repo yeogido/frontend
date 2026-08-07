@@ -10,7 +10,6 @@ import {
 } from '../../../components/common';
 import { useNavigate } from 'react-router-dom';
 
-import { useNavigateToCourseDetail } from '../../../hooks/useCourses';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
   useMyReviewIds,
@@ -19,6 +18,7 @@ import {
   useReviewDetailModal,
   useReviewEdit,
 } from '../../../hooks/useReviews';
+import { buildCourseDetailPath } from '../../../utils/routes';
 import { toReviewCardProps } from '../../../utils/reviewCard';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -43,9 +43,10 @@ function ReviewSection() {
   const { requestEdit, editorProps } = useReviewEdit();
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
-  const { goToCourseDetail } = useNavigateToCourseDetail();
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const goToCourseDetail = (review: { courseType: string; courseId: number }) =>
+    navigate(buildCourseDetailPath(review.courseType, review.courseId));
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -160,7 +161,7 @@ function ReviewSection() {
                   isMine={review.isMine}
                   onDeleteClick={() => requestDelete(review.id)}
                   onEditClick={() => requestEdit(review)}
-                  onClick={() => void goToCourseDetail(review.courseId)}
+                  onClick={() => goToCourseDetail(review)}
                   onLongPress={() => openReview(review.id)}
                 />
               </div>
@@ -205,9 +206,7 @@ function ReviewSection() {
         review={openedReview}
         courseTitle={openedReview?.courseTitle}
         onClose={closeReview}
-        onGoToCourse={
-          openedReview && (() => void goToCourseDetail(openedReview.courseId))
-        }
+        onGoToCourse={openedReview && (() => goToCourseDetail(openedReview))}
       />
 
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />

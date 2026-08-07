@@ -21,7 +21,8 @@ export interface CourseReviewCardProps {
   image: string;
   title: string;
   duration: string;
-  courseType: string;
+  /** 이동 수단 라벨(걷기·자동차). 코스 타입(OFFICIAL·LOCAL)과 다르다. */
+  transport: string;
   // 리뷰 목록 API의 코스 정보에는 동행·해시태그가 없어, 값이 없으면 해당
   // 항목만 빼고 그린다. 백엔드에 추가 요청해 둔 상태다.
   companion?: string;
@@ -44,7 +45,7 @@ function CourseReviewCard({
   image,
   title,
   duration,
-  courseType,
+  transport,
   companion,
   tags = [],
   profileImage,
@@ -84,7 +85,7 @@ function CourseReviewCard({
 
   const metaItems = [
     { icon: calendar, label: duration },
-    { icon: location, label: courseType },
+    { icon: location, label: transport },
     { icon: people, label: companion },
   ].filter((item) => Boolean(item.label));
 

@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from 'react';
-import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
@@ -24,6 +23,7 @@ import {
   type TravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import backIcon from '../../../assets/icons/back.svg';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -128,7 +128,7 @@ function TravelRecordPhotoSelectionPage() {
         aria-label={previousPageLabel}
         className="absolute top-[60px] left-6 flex size-6 items-center justify-start text-[#505050]"
       >
-        <IoChevronBack aria-hidden="true" className="text-[24px]" />
+        <img src={backIcon} alt="" aria-hidden="true" className="size-6" />
       </button>
 
       <section className="absolute top-[100px] left-6 flex flex-col gap-3">

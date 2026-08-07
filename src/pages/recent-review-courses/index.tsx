@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   CourseReviewCard,
@@ -9,10 +10,7 @@ import {
 } from '../../components/common';
 import { useAuth } from '../../hooks/useAuth';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
-import {
-  useCourseDetails,
-  useNavigateToCourseDetail,
-} from '../../hooks/useCourses';
+import { useCourseDetails } from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import {
@@ -26,6 +24,7 @@ import {
 import { toCompanionLabel } from '../../utils/courseEnumLabels';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toReviewCourseCardProps } from '../../utils/reviewCard';
+import { buildCourseDetailPath } from '../../utils/routes';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -55,7 +54,9 @@ function RecentReviewCoursesPage() {
   const myReviewIds = useMyReviewIds();
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
-  const { goToCourseDetail } = useNavigateToCourseDetail();
+  const navigate = useNavigate();
+  const goToCourseDetail = (review: { courseType: string; courseId: number }) =>
+    navigate(buildCourseDetailPath(review.courseType, review.courseId));
 
   const reviews = getReviewsFromPages(data?.pages).map((review) =>
     toReviewCourseCardProps(review, myReviewIds)
@@ -71,10 +72,10 @@ function RecentReviewCoursesPage() {
     courseDetails.flatMap(({ data }) => (data ? [[data.courseId, data]] : []))
   );
 
-  // 후기 목록의 course.isLiked는 서버가 아직 임시 사용자 기준으로 계산해서
-  // 비로그인에도 남의 좋아요가 켜져 온다. 로그인하지 않았으면 좋아요가 있을
-  // 수 없으므로 무조건 끈다. 로그인 상태에서는 사용자 기준으로 맞게 오는
-  // 코스 상세 값을 우선 쓴다. 백엔드가 고치면 review.liked만 남기면 된다.
+  // 후기 목록의 course.isLiked는 한때 임시 사용자 기준으로 계산돼 비로그인에도
+  // 남의 좋아요가 켜져 왔다. 지금은 비로그인 응답이 false로 오는 것까지
+  // 확인했지만, 해시태그 때문에 어차피 읽는 코스 상세가 사용자 기준으로 맞는
+  // 값이라 그쪽을 우선 쓴다. 추가 비용이 없어 방어를 남겨 둔다.
   const likedByCourse = (review: { courseId: number; liked: boolean }) => {
     if (!isAuthenticated) return false;
 
@@ -163,7 +164,7 @@ function RecentReviewCoursesPage() {
                 image={review.image}
                 title={review.title}
                 duration={review.duration}
-                courseType={review.courseType}
+                transport={review.transport}
                 companion={
                   course ? toCompanionLabel(course.companionType) : undefined
                 }
@@ -183,7 +184,7 @@ function RecentReviewCoursesPage() {
                 }
                 onDeleteClick={() => requestDelete(review.id)}
                 onEditClick={() => requestEdit(review)}
-                onClick={() => void goToCourseDetail(review.courseId)}
+                onClick={() => goToCourseDetail(review)}
                 onLongPress={() => openReview(review.id)}
               />
             );
@@ -201,9 +202,7 @@ function RecentReviewCoursesPage() {
         review={openedReview}
         courseTitle={openedReview?.title}
         onClose={closeReview}
-        onGoToCourse={
-          openedReview && (() => void goToCourseDetail(openedReview.courseId))
-        }
+        onGoToCourse={openedReview && (() => goToCourseDetail(openedReview))}
       />
 
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />

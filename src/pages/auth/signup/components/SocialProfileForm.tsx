@@ -13,6 +13,7 @@ import type { SocialGender } from '../../../../types/auth.type';
 const genders: { label: string; value: SocialGender }[] = [
   { label: '여성', value: 'FEMALE' },
   { label: '남성', value: 'MALE' },
+  { label: '선택 안 함', value: 'NONE' },
 ];
 
 const DEFAULT_ERROR_MESSAGE = '회원가입에 실패했습니다. 다시 시도해 주세요.';

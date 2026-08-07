@@ -1,12 +1,11 @@
-import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import CourseCard from '../../../components/common/CourseCard';
 import SectionHeader from '../../../components/common/SectionHeader';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
+import { isValidGeoPoint } from '../../../components/kakaomap/types';
+import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import {
   ResponsiveFullBleed,
   ResponsivePageShell,
@@ -15,6 +14,10 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
 import { useLoginModal } from '../../../hooks/useLoginModal';
+import {
+  formatTodayOpeningHours,
+  usePlaceOpeningHours,
+} from '../../../hooks/usePlaceOpeningHours';
 import { useAuthStore } from '../../../store/auth.store';
 import { buildCourseSearchPath } from '../../../utils/routes';
 import { saveRecentCultureContent } from '../../../utils/recentCultureContents';
@@ -31,10 +34,7 @@ import {
   ShareToast,
 } from '../components';
 import { mapCultureContentDetailToFestivalDetail } from '../mappers/cultureContentDetailMapper';
-import {
-  toSafeExternalUrl,
-  toTelHref,
-} from '../mappers/festivalDetailMapper';
+import { toSafeExternalUrl, toTelHref } from '../mappers/festivalDetailMapper';
 import { useShareToast } from '../hooks/useShareToast';
 
 const PAGE_PADDING_BOTTOM = 32;
@@ -56,16 +56,14 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
   const isValidContentId = Number.isInteger(contentId) && contentId > 0;
-  const {
-    data: content,
-    error: queryError,
-  } = useCultureContentDetail(contentId);
+  const { data: content, error: queryError } =
+    useCultureContentDetail(contentId);
   const contentError = isValidContentId
     ? queryError
     : new Error('Invalid content ID');
   const { getLiked, toggleLike } = useContentLikeToggle();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
-    null,
+    null
   );
   const [likedCourseIds, setLikedCourseIds] = useState<readonly number[]>([]);
   const { copied, isToastVisible, handleShare } = useShareToast();
@@ -73,6 +71,27 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const festival = content
     ? mapCultureContentDetailToFestivalDetail(content)
     : null;
+  const openingHoursByPlaceId = usePlaceOpeningHours(
+    festival
+      ? [
+          {
+            id: festival.place.id,
+            name: festival.place.name,
+            address: festival.place.address,
+            latitude: festival.place.location?.latitude,
+            longitude: festival.place.location?.longitude,
+          },
+        ]
+      : []
+  );
+  const festivalPlaceHours = festival
+    ? formatTodayOpeningHours(
+        openingHoursByPlaceId.get(festival.place.id) ?? {
+          currentWeekdayDescriptions: [],
+          regularWeekdayDescriptions: [],
+        }
+      )
+    : undefined;
 
   useEffect(() => {
     if (!content) return;
@@ -108,8 +127,8 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const handlePlaceLikeToggle = () => {
     runAuthAction(() =>
       setPlaceLikedOverride(
-        (previous) => !(previous ?? festival?.place.liked ?? false),
-      ),
+        (previous) => !(previous ?? festival?.place.liked ?? false)
+      )
     );
   };
 
@@ -118,7 +137,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
       setLikedCourseIds((previousIds) =>
         previousIds.includes(courseId)
           ? previousIds.filter((id) => id !== courseId)
-          : [...previousIds, courseId],
+          : [...previousIds, courseId]
       );
     });
   };
@@ -207,9 +226,18 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                 imageUrl={festivalDetail.place.image}
                 title={festivalDetail.place.name}
                 address={festivalDetail.place.address}
-                hours={festivalDetail.place.hours}
+                hours={festivalPlaceHours ?? '영업시간 정보 없음'}
                 liked={placeLikedOverride ?? festivalDetail.place.liked}
                 onLikeClick={handlePlaceLikeToggle}
+                onClick={
+                  isValidGeoPoint(festivalDetail.place.location)
+                    ? () =>
+                        openKakaoMapRoute(
+                          festivalDetail.place.name,
+                          festivalDetail.place.location
+                        )
+                    : undefined
+                }
               />
             </div>
 

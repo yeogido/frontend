@@ -4,11 +4,24 @@ import {
 } from './common';
 
 import type {
+  ContentCreateRequest,
+  ContentCreateResult,
   CultureContentBanner,
   CultureContentDetail,
   GetCultureContentsParams,
   GetCultureContentsResponse,
+  OngoingContent,
 } from '../types/content.type';
+
+export async function getOngoingContents(): Promise<OngoingContent[]> {
+  try {
+    const { data } = await apiClient.get<OngoingContent[]>('/contents/ongoing');
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function getCultureContents(
   params: GetCultureContentsParams = {},
@@ -46,6 +59,21 @@ export async function getCultureContentBanners(): Promise<
   try {
     const { data } = await apiClient.get<CultureContentBanner[]>(
       '/contents/banner',
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function createCultureContent(
+  payload: ContentCreateRequest,
+): Promise<ContentCreateResult> {
+  try {
+    const { data } = await apiClient.post<ContentCreateResult>(
+      '/contents',
+      payload,
     );
 
     return data;

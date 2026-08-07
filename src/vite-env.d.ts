@@ -77,6 +77,8 @@ interface KakaoAuth {
     scope?: string;
     prompt?: string;
     loginHint?: string;
+    state?: string;
+    throughTalk?: boolean;
   }): void;
 }
 

@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { IoChevronBack } from 'react-icons/io5';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
+import {
+  getFolderPhotoSlotIndexes,
+  getVisibleFolderPhotos,
+} from '../components/folderPhotos';
 import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
@@ -37,6 +40,7 @@ import {
   type TravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import backIcon from '../../../assets/icons/back.svg';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -117,6 +121,13 @@ function TravelRecordFolderDecorationPage() {
 
     return previewPhotoUrls.slice(0, 2) as [string, ...string[]];
   }, [previewPhotoUrls]);
+  const photoSlotIndexes = useMemo(
+    () =>
+      getFolderPhotoSlotIndexes(
+        getVisibleFolderPhotos(folderPhotos ?? []).length,
+      ),
+    [folderPhotos],
+  );
   const regionName =
     selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
   const periodLabel = selectedDateRange
@@ -144,9 +155,13 @@ function TravelRecordFolderDecorationPage() {
     replaceDecorations(result.decorations);
   };
   const appendDecorationRef = useRef(appendDecoration);
+  // 드롭 판정도 아트워크와 같은 슬롯을 봐야 한다. 아래 포인터 구독 effect가
+  // 빈 deps로 한 번만 붙으므로 ref로 최신 값을 전달한다.
+  const photoSlotIndexesRef = useRef(photoSlotIndexes);
 
   useEffect(() => {
     appendDecorationRef.current = appendDecoration;
+    photoSlotIndexesRef.current = photoSlotIndexes;
   });
 
   const handleStickerDragStart = (
@@ -219,6 +234,7 @@ function TravelRecordFolderDecorationPage() {
             canvasRect,
             event.clientX,
             event.clientY,
+            photoSlotIndexesRef.current,
           ),
       );
       const dropPoint = isDropTarget && canvasRect
@@ -402,7 +418,7 @@ function TravelRecordFolderDecorationPage() {
         aria-label={previousPageLabel}
         className="absolute top-[60px] left-6 flex size-6 items-center justify-start text-[#505050]"
       >
-        <IoChevronBack aria-hidden="true" className="text-[24px]" />
+        <img src={backIcon} alt="" aria-hidden="true" className="size-6" />
       </button>
 
       <section className="absolute top-[100px] left-6 flex flex-col gap-3 text-[#1c1c1c]">

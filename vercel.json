@@ -5,6 +5,10 @@
       "destination": "/api/kakao-routing/walk"
     },
     {
+      "source": "/google-places/hours",
+      "destination": "/api/google-places/hours"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

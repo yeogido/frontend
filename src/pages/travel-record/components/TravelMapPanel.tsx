@@ -1,7 +1,6 @@
 import Map from '../../home/map/components/Map';
 import { toRegionPhotoMap } from '../../home/map/types/regionPhoto';
 
-import type { MapMarker } from '../../home/map/types/map';
 import type { TravelRecordFolder } from '../types';
 import { getTravelRecordRegionPhotoRecords } from '../utils/regionPhotoRecords';
 
@@ -13,32 +12,8 @@ const mapPanelLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
 const mapTitle = '\uC804\uAD6D \uC9C0\uB3C4';
 const mapDescription =
   '\uB2E4\uB140\uC628 \uC9C0\uC5ED\uC744 \uD55C\uB208\uC5D0 \uD655\uC778\uD574 \uBCF4\uC138\uC694';
-const recordCountSuffix = '\uAC1C';
 
 function TravelMapPanel({ folders }: TravelMapPanelProps) {
-  const markers = folders.reduce<MapMarker[]>(
-    (accumulator, folder) => {
-      const marker = accumulator.find(
-        ({ regionCode }) => regionCode === folder.regionCode,
-      );
-
-      if (marker) {
-        marker.count += 1;
-        return accumulator;
-      }
-
-      accumulator.push({
-        regionCode: folder.regionCode,
-        regionName: folder.regionName,
-        count: 1,
-      });
-
-      return accumulator;
-    },
-    [],
-  );
-
-  const totalRecordCount = folders.length;
   const regionPhotos = toRegionPhotoMap(
     getTravelRecordRegionPhotoRecords(folders),
   );
@@ -57,18 +32,12 @@ function TravelMapPanel({ folders }: TravelMapPanelProps) {
         </p>
       </div>
 
-      <div className="absolute top-4 right-4 z-10 rounded-full bg-main-2 px-3 py-1 text-[12px] leading-none font-semibold text-main-5">
-        {totalRecordCount}
-        {recordCountSuffix}
-      </div>
-
       <div className="absolute inset-0 pt-[55px]">
         <Map
           baseScale={1.62}
           labelBaseScale={2.5}
           minZoom={0.8}
           initialZoom={0.9}
-          markers={markers}
           regionPhotos={regionPhotos}
         />
       </div>

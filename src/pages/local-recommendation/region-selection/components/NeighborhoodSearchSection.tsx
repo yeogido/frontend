@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { SearchBar } from '../../../../components/common';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
@@ -7,17 +9,21 @@ const DESCRIPTION_MARGIN_TOP = 12;
 const DESCRIPTION_SIZE = 14;
 const DESCRIPTION_LINE_HEIGHT = 20;
 const SEARCH_MARGIN_TOP = 28;
+const STATUS_MESSAGE_MARGIN_TOP = 12;
 
 interface NeighborhoodSearchSectionProps {
   suggestions?: readonly string[];
   onSearch: (query: string) => void;
   onQueryChange?: (query: string) => void;
+  /** Optional loading/error message shown below the search input. */
+  statusMessage?: ReactNode;
 }
 
 function NeighborhoodSearchSection({
   suggestions = [],
   onSearch,
   onQueryChange,
+  statusMessage,
 }: NeighborhoodSearchSectionProps) {
   const scale = useGlobalScale();
 
@@ -53,6 +59,12 @@ function NeighborhoodSearchSection({
           onQueryChange={onQueryChange}
         />
       </div>
+
+      {statusMessage ? (
+        <div style={{ marginTop: STATUS_MESSAGE_MARGIN_TOP * scale }}>
+          {statusMessage}
+        </div>
+      ) : null}
     </section>
   );
 }

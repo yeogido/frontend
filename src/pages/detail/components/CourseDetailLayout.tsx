@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CourseInfoBadgesCard } from './CourseInfoBadgesCard';
@@ -22,14 +22,20 @@ import { useShareToast } from '../hooks/useShareToast';
 import {
   ReviewDeleteDialog,
   ReviewDetailModal,
+  ReviewEditModal,
 } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
+import {
+  formatTodayOpeningHours,
+  usePlaceOpeningHours,
+} from '../../../hooks/usePlaceOpeningHours';
 import {
   useCourseReviewPreviews,
   useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
+  useReviewEdit,
 } from '../../../hooks/useReviews';
 import { useAuthStore } from '../../../store/auth.store';
 import { mapCourseReviewPreviews } from '../mappers/courseReviewMapper';
@@ -116,12 +122,40 @@ function CourseDetailLayoutContent({
   const myReviewIds = useMyReviewIds();
   const reviews = mapCourseReviewPreviews(courseReviews?.items, myReviewIds);
   const { requestDelete, dialogProps } = useReviewDelete();
+  const { requestEdit, editorProps } = useReviewEdit();
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
 
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
   const { copied, isToastVisible, handleShare } = useShareToast();
+  const openingHoursByStopId = usePlaceOpeningHours(
+    stops.flatMap((stop) =>
+      stop.placeId !== undefined
+        ? [
+            {
+              id: stop.id,
+              name: stop.name,
+              address: stop.address,
+              latitude: stop.location?.latitude,
+              longitude: stop.location?.longitude,
+            },
+          ]
+        : []
+    )
+  );
+  const stopsWithOpeningHours = useMemo(
+    () =>
+      stops.map((stop) => {
+        const hours = openingHoursByStopId.get(stop.id);
+        const formattedHours = hours && formatTodayOpeningHours(hours);
+
+        return stop.placeId !== undefined
+          ? { ...stop, hours: formattedHours ?? '영업시간 정보 없음' }
+          : stop;
+      }),
+    [openingHoursByStopId, stops]
+  );
 
   const handleStopLikeToggle = (stopId: number) => {
     if (!isAuthenticated || !accessToken) {
@@ -278,7 +312,7 @@ function CourseDetailLayoutContent({
           marginTop: MAP_MARGIN_TOP * scale,
         }}
       >
-        <CourseRouteMap stops={stops} />
+        <CourseRouteMap stops={stopsWithOpeningHours} />
       </div>
 
       {/* 6. 코스 장소 리스트 */}
@@ -288,7 +322,7 @@ function CourseDetailLayoutContent({
         }}
       >
         <CourseStopList
-          stops={stops}
+          stops={stopsWithOpeningHours}
           onStopLikeToggle={handleStopLikeToggle}
           pendingPlaceIds={pendingPlaceIds}
           pendingContentIds={pendingContentIds}
@@ -302,6 +336,7 @@ function CourseDetailLayoutContent({
           courseTitle={course.title}
           onActionClick={handleNavigateCourseReviews}
           onReviewDelete={requestDelete}
+          onReviewEdit={requestEdit}
           onReviewLongPress={openReview}
         />
       </div>
@@ -321,6 +356,8 @@ function CourseDetailLayoutContent({
         courseTitle={course.title}
         onClose={closeReview}
       />
+
+      <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
 
       <ReviewDeleteDialog {...dialogProps} />
     </ResponsivePageShell>

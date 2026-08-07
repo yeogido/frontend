@@ -242,7 +242,7 @@ function MyPostsPage() {
                   image={reviewCard.image}
                   title={reviewCard.title}
                   duration={reviewCard.duration}
-                  courseType={reviewCard.courseType}
+                  transport={reviewCard.courseType}
                   companion={reviewCard.companion}
                   tags={reviewCard.tags}
                   profileImage={reviewCard.profileImage}

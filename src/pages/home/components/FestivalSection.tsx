@@ -5,11 +5,13 @@ import {
   ContentCardSkeleton,
   SectionHeader,
 } from '../../../components/common';
-import { useCultureContents } from '../../../hooks/useCultureContents';
+import { useOngoingContents } from '../../../hooks/useOngoingContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import { toContentTagIds } from '../../../utils/contentTags';
+
+const PREVIEW_ITEM_COUNT = 2;
 
 const SECTION_MARGIN_TOP = 32;
 const SECTION_PADDING_X = 24;
@@ -20,15 +22,8 @@ function FestivalSection() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useContentLikeToggle();
-  const {
-    data: cultureContents,
-    isPending: isLoading,
-  } = useCultureContents({
-    category: 'FESTIVAL',
-    sort: 'RECOMMEND',
-    size: 2,
-  });
-  const festivals = cultureContents?.pages[0]?.items ?? [];
+  const { data: ongoingContents, isPending: isLoading } = useOngoingContents();
+  const festivals = (ongoingContents ?? []).slice(0, PREVIEW_ITEM_COUNT);
 
   return (
     <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
