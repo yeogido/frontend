@@ -40,12 +40,15 @@ function FestivalOngoingPage() {
   } = useFestivalFilters();
   const { data: ongoingContents, isPending, isError } = useOngoingContents();
 
-  // /contents/ongoing 응답에는 category 필드가 없어 카테고리 필터(체험/전시/
-  // 공연/축제)를 적용할 데이터가 없다. 정렬도 종료 임박순(endDate)만 응답
-  // 필드로 계산 가능하고, 추천순/저장순/거리순은 추천 점수·좋아요 수·좌표가
-  // 응답에 없어 그대로 원본 순서를 유지한다. 필터 바 UI/상태는 그대로 두되,
-  // 실제 필터링·정렬은 API가 관련 필드/파라미터를 지원해야 완전히 동작한다
-  // - 백엔드에 카테고리 필드 및 정렬/페이지네이션 파라미터 추가를 요청해야 한다.
+  // /contents/ongoing은 쿼리 파라미터를 아예 받지 않는 엔드포인트로 확인됨
+  // (category/sort/cursor 등 어떤 값을 보내도, 심지어 존재하지 않는 값을
+  // 보내도 항상 동일한 결과가 옴 - curl로 재확인). 응답 필드에도 category가
+  // 없어 카테고리 필터(체험/전시/공연/축제)를 적용할 데이터가 없다. 정렬도
+  // 종료 임박순(endDate)만 응답 필드로 계산 가능하고, 추천순/저장순/거리순은
+  // 추천 점수·좋아요 수·좌표가 응답에 없어 그대로 원본 순서를 유지한다.
+  // 필터 바 UI/상태는 그대로 두되, 실제 필터링·정렬은 API가 관련 필드/
+  // 파라미터를 지원해야 완전히 동작한다 - 백엔드에 카테고리 필드 및
+  // 정렬/페이지네이션 파라미터 추가를 요청해야 한다.
   const festivals = useMemo(() => {
     const items = ongoingContents ?? [];
 
@@ -116,12 +119,12 @@ function FestivalOngoingPage() {
           : festivals.map((festival) => (
               <ContentCard
                 key={festival.contentId}
-                image={festival.thumbnailImage}
+                image={festival.thumbnailImageUrl}
                 title={festival.title}
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-                secondInfo={festival.region}
+                secondInfo={festival.regionName}
                 tags={toContentTagIds(festival.hashtags)}
-                liked={getLiked(festival.contentId, festival.liked)}
+                liked={getLiked(festival.contentId, false)}
                 className="w-full"
                 onClick={() =>
                   navigate(buildFestivalDetailPath(festival.contentId))
@@ -129,7 +132,7 @@ function FestivalOngoingPage() {
                 onLikeClick={() =>
                   toggleLike(
                     festival.contentId,
-                    getLiked(festival.contentId, festival.liked)
+                    getLiked(festival.contentId, false)
                   )
                 }
               />

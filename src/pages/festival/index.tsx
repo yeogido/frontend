@@ -143,12 +143,12 @@ function FestivalPage() {
             ongoingFestivals.map((festival) => (
               <ContentCard
                 key={festival.contentId}
-                image={festival.thumbnailImage}
+                image={festival.thumbnailImageUrl}
                 title={festival.title}
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-                secondInfo={festival.region}
+                secondInfo={festival.regionName}
                 tags={toContentTagIds(festival.hashtags)}
-                liked={getLiked(festival.contentId, festival.liked)}
+                liked={getLiked(festival.contentId, false)}
                 className="w-full"
                 onClick={() =>
                   navigate(buildFestivalDetailPath(festival.contentId))
@@ -156,7 +156,7 @@ function FestivalPage() {
                 onLikeClick={() =>
                   toggleLike(
                     festival.contentId,
-                    getLiked(festival.contentId, festival.liked)
+                    getLiked(festival.contentId, false)
                   )
                 }
               />

@@ -96,12 +96,11 @@ export interface CultureContentDetail {
 export interface OngoingContent {
   contentId: number;
   title: string;
-  thumbnailImage: string | null;
+  thumbnailImageUrl: string | null;
   startDate: string;
   endDate: string;
-  region: string;
+  regionName: string;
   hashtags: string[];
-  liked: boolean;
 }
 
 export interface RecentCultureContent {
