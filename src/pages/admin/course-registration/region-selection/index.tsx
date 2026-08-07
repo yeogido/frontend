@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { getPopularRegions, searchRegions } from '../../../../apis/regions.api';
+import { LoadingSpinner } from '../../../../components/common';
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
@@ -17,7 +20,6 @@ import {
   fromRegion,
   fromSearchResult,
 } from '../../../local-recommendation/region-selection/utils';
-import { mockPopularRegions, searchMockRegions } from '../constants/mockRegions';
 import { useRecentCourseRegions } from './useRecentCourseRegions';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -27,6 +29,7 @@ const BUTTON_MARGIN_TOP = 32;
 const BUTTON_HEIGHT = 52;
 const BUTTON_RADIUS = 12;
 const BUTTON_TEXT_SIZE = 14;
+const STATUS_MESSAGE_FONT_SIZE = 14;
 
 function AdminCourseRegionSelectionPage() {
   const navigate = useNavigate();
@@ -36,15 +39,46 @@ function AdminCourseRegionSelectionPage() {
     (state) => state.setRegion
   );
   const { recentRegions, addRecentRegion } = useRecentCourseRegions();
+  const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  const regionsQuery = useQuery({
+    queryKey: ['regions', 'popular'],
+    queryFn: getPopularRegions,
+    staleTime: 5 * 60_000,
+  });
+
   const trimmedSearchQuery = searchQuery.trim();
-  // SearchBar가 suggestions를 통째로 받아 내부에서 직접 필터링하는 구조라,
-  // 여기서 미리 걸러서 넘기면 필터 결과가 0개일 때 suggestions 배열 자체가
-  // 비어버려 SearchBar가 "검색 결과가 없습니다" 안내조차 렌더링하지 않는다.
-  // 항상 전체 목록을 넘기고 필터링은 SearchBar에 맡긴다.
-  const searchSuggestions = mockPopularRegions.map((region) => region.name);
+
+  const searchNeighborhoods = async (query: string) =>
+    (await searchRegions(query)).map(fromSearchResult);
+
+  // 검색창에 입력하는 즉시(타이핑마다) 백엔드에 물어 연관 검색어를 채운다.
+  // 백엔드가 이름 LIKE(부분 문자열) 매칭이라 SearchBar의 로컬 재필터를
+  // 그대로 통과하므로, 이 목록을 suggestions로 넘기기만 하면 된다.
+  const searchResultsQuery = useQuery({
+    queryKey: ['regions', 'search', trimmedSearchQuery],
+    queryFn: () => searchNeighborhoods(trimmedSearchQuery),
+    enabled: trimmedSearchQuery.length > 0,
+    staleTime: 30_000,
+  });
+
+  const searchSuggestions = searchResultsQuery.data?.map((n) => n.name) ?? [];
+
+  // 검색 API가 실패하면 searchSuggestions가 빈 배열이 되어 "결과 없음"과
+  // 구분이 안 됐다 - 로딩/에러 상태를 별도로 안내한다.
+  const searchStatusMessage = useMemo(() => {
+    if (!trimmedSearchQuery) return null;
+    if (searchResultsQuery.isFetching) return '지역을 검색하고 있어요...';
+    if (searchResultsQuery.isError)
+      return '지역을 불러오지 못했어요. 다시 시도해 주세요.';
+    return null;
+  }, [
+    trimmedSearchQuery,
+    searchResultsQuery.isFetching,
+    searchResultsQuery.isError,
+  ]);
 
   const handleQueryChange = (query: string) => {
     setSearchQuery(query);
@@ -66,19 +100,30 @@ function AdminCourseRegionSelectionPage() {
     setRegionInStore(null);
   };
 
-  const handleSearch = (query: string) => {
+  // 추천 목록에서 클릭했거나(정확한 이름이 그대로 들어옴) 검색어를 그대로
+  // 입력해 제출한 경우, 현재 검색 결과 중 이름이 일치하는 지역을 선택한다.
+  // 아직 응답이 없는 상태(빠른 타이핑 후 즉시 Enter)라면 결과를 기다렸다가
+  // 판단해서, 유효한 일치 결과를 조용히 놓치지 않도록 한다.
+  const handleSearch = async (query: string) => {
     const trimmed = query.trim();
 
     if (!trimmed) {
       return;
     }
 
-    const matched = searchMockRegions(trimmed).find(
-      (result) => result.name === trimmed
-    );
+    const results =
+      trimmed === trimmedSearchQuery && searchResultsQuery.data
+        ? searchResultsQuery.data
+        : await queryClient.fetchQuery({
+            queryKey: ['regions', 'search', trimmed],
+            queryFn: () => searchNeighborhoods(trimmed),
+            staleTime: 30_000,
+          });
+
+    const matched = results.find((neighborhood) => neighborhood.name === trimmed);
 
     if (matched) {
-      handleSelectNeighborhood(fromSearchResult(matched));
+      handleSelectNeighborhood(matched);
     }
   };
 
@@ -95,6 +140,16 @@ function AdminCourseRegionSelectionPage() {
           suggestions={searchSuggestions}
           onSearch={handleSearch}
           onQueryChange={handleQueryChange}
+          statusMessage={
+            searchStatusMessage ? (
+              <p
+                className="text-gray-5 text-center font-medium"
+                style={{ fontSize: STATUS_MESSAGE_FONT_SIZE * scale }}
+              >
+                {searchStatusMessage}
+              </p>
+            ) : undefined
+          }
         />
 
         {region && !trimmedSearchQuery ? (
@@ -111,12 +166,23 @@ function AdminCourseRegionSelectionPage() {
           />
         ) : null}
 
-        <PopularRegionGrid
-          regions={mockPopularRegions}
-          onSelect={(popularRegion) =>
-            handleSelectNeighborhood(fromRegion(popularRegion))
-          }
-        />
+        {regionsQuery.isLoading ? (
+          <LoadingSpinner label="지역 정보를 불러오는 중" />
+        ) : regionsQuery.isError ? (
+          <section aria-live="polite" className="text-center">
+            <p>지역 정보를 불러오지 못했습니다.</p>
+            <button type="button" onClick={() => regionsQuery.refetch()}>
+              다시 시도
+            </button>
+          </section>
+        ) : (
+          <PopularRegionGrid
+            regions={regionsQuery.data ?? []}
+            onSelect={(popularRegion) =>
+              handleSelectNeighborhood(fromRegion(popularRegion))
+            }
+          />
+        )}
       </main>
 
       <button

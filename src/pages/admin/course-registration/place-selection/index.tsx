@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 
 import SelectedItemsSheet from '../../../local-recommendation/components/SelectedItemsSheet';
@@ -8,11 +9,15 @@ import SelectionPageLayout from '../../../local-recommendation/components/Select
 import SelectionResultCard from '../../../local-recommendation/components/SelectionResultCard';
 import PlacePhotoModal from '../../../local-recommendation/place-selection/components/PlacePhotoModal';
 import { usePlacePhotoModal } from '../../../local-recommendation/place-selection/hooks/usePlacePhotoModal';
-import { mockCoursePlaces, searchMockCoursePlaces } from '../constants/mockPlaces';
+import { usePlaceSearch } from '../../../local-recommendation/place-selection/hooks/usePlaceSearch';
 import type { AdminCoursePlaceItem } from '../types';
+
+// Figma 390 디자인 기준 리터럴 px
+const STATUS_MESSAGE_FONT_SIZE = 14;
 
 function AdminCoursePlaceSelectionPage() {
   const navigate = useNavigate();
+  const scale = useGlobalScale();
   const region = useAdminCourseRegistrationStore((state) => state.region);
   const selectedPlaces = useAdminCourseRegistrationStore(
     (state) => state.selectedPlaces
@@ -20,7 +25,17 @@ function AdminCoursePlaceSelectionPage() {
   const setSelectedPlacesInStore = useAdminCourseRegistrationStore(
     (state) => state.setSelectedPlaces
   );
-  const [query, setQuery] = useState('');
+  const { query, setQuery, searchResults, isLoading, hasError } =
+    usePlaceSearch();
+  const trimmedQuery = query.trim();
+
+  const statusMessage = useMemo(() => {
+    if (!trimmedQuery) return null;
+    if (isLoading) return '장소를 검색하고 있어요...';
+    if (hasError) return '장소를 불러오지 못했어요. 다시 시도해 주세요.';
+    if (searchResults.length === 0) return '검색 결과가 없어요.';
+    return null;
+  }, [trimmedQuery, isLoading, hasError, searchResults.length]);
   const {
     pendingPlace,
     pendingImageFile,
@@ -42,7 +57,6 @@ function AdminCoursePlaceSelectionPage() {
 
   if (!region) return null;
 
-  const searchResults = searchMockCoursePlaces(query);
   const selectedPlaceIds = new Set(selectedPlaces.map((place) => place.id));
 
   const handleConfirmImage = () => {
@@ -84,8 +98,7 @@ function AdminCoursePlaceSelectionPage() {
         description="코스에 등록할 장소를 검색해 보세요"
         searchPlaceholder="장소명을 검색해 주세요"
         searchLabel="장소명 검색"
-        searchSuggestions={mockCoursePlaces.map((place) => place.title)}
-        hideEmptySearchSuggestions
+        searchSuggestions={[]}
         items={searchResults}
         selectedItemIds={selectedPlaceIds}
         getItemId={(place) => place.id}
@@ -96,6 +109,16 @@ function AdminCoursePlaceSelectionPage() {
           navigate('/admin/course-registration/event-selection', {
             replace: true,
           })
+        }
+        statusMessage={
+          statusMessage ? (
+            <p
+              className="text-gray-5 text-center font-medium"
+              style={{ fontSize: STATUS_MESSAGE_FONT_SIZE * scale }}
+            >
+              {statusMessage}
+            </p>
+          ) : undefined
         }
         renderItem={(place, isSelected, onItemAdd) => (
           <SelectionResultCard

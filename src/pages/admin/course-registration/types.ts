@@ -5,13 +5,6 @@ export interface AdminCoursePhoto {
   previewUrl: string;
 }
 
-export interface AdminCourseEventItem {
-  id: string;
-  title: string;
-  address: string;
-  imageSrc: string | null;
-}
-
 export interface AdminCoursePlaceItem extends PlaceItem {
   photoFile: File | null;
   photoPreviewUrl: string | null;

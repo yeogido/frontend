@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
+import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 
 import {
@@ -14,9 +15,11 @@ import { useAdminCourseVisitOrder } from './useAdminCourseVisitOrder';
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_TOP = 60;
 const PAGE_PADDING_BOTTOM = 30;
+const SUBMIT_ERROR_FONT_SIZE = 14;
 
 function AdminCourseVisitOrderPage() {
   const navigate = useNavigate();
+  const scale = useGlobalScale();
   const region = useAdminCourseRegistrationStore((state) => state.region);
   const {
     visitEvents,
@@ -26,7 +29,9 @@ function AdminCourseVisitOrderPage() {
     handleDragStart,
     handleDragCancel,
     handleDragEnd,
-    handleRegister,
+    handleSubmit,
+    isSubmitting,
+    submitError,
   } = useAdminCourseVisitOrder();
 
   useEffect(() => {
@@ -38,11 +43,6 @@ function AdminCourseVisitOrderPage() {
   }, [region, navigate]);
 
   if (!region) return null;
-
-  const handleSubmit = () => {
-    handleRegister();
-    navigate('/admin/course-registration/preview');
-  };
 
   return (
     <ResponsivePageShell
@@ -72,8 +72,18 @@ function AdminCourseVisitOrderPage() {
 
         <SubmitCourseButton
           onSubmit={handleSubmit}
-          disabled={visitEvents.length === 0}
+          disabled={isSubmitting || visitEvents.length === 0}
+          isSubmitting={isSubmitting}
         />
+        {submitError ? (
+          <p
+            role="alert"
+            className="text-main-5 mt-2 text-center"
+            style={{ fontSize: SUBMIT_ERROR_FONT_SIZE * scale }}
+          >
+            {submitError}
+          </p>
+        ) : null}
       </main>
     </ResponsivePageShell>
   );

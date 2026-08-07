@@ -9,6 +9,7 @@ export function usePlaceSearch() {
   const [query, setQueryState] = useState('');
   const [searchResults, setSearchResults] = useState<PlaceItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
@@ -27,10 +28,12 @@ export function usePlaceSearch() {
         const results = await searchPlaces(query);
         if (!isCancelled) {
           setSearchResults(results);
+          setHasError(false);
         }
       } catch {
         if (!isCancelled) {
           setSearchResults([]);
+          setHasError(true);
         }
       } finally {
         if (!isCancelled) {
@@ -53,11 +56,13 @@ export function usePlaceSearch() {
     if (!nextQuery.trim()) {
       setSearchResults([]);
       setIsLoading(false);
+      setHasError(false);
       return;
     }
 
     if (nextQuery !== query) {
       setIsLoading(true);
+      setHasError(false);
     }
   };
 
@@ -66,5 +71,6 @@ export function usePlaceSearch() {
     setQuery,
     searchResults,
     isLoading,
+    hasError,
   };
 }
