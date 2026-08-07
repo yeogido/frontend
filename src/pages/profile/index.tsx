@@ -79,7 +79,7 @@ function ProfilePage() {
           }
           scale={scale}
         />
-        {profile?.role !== 'ADMIN' && (
+        {profile && profile.role !== 'ADMIN' && (
           <button
             type="button"
             onClick={() => setIsWithdrawalDialogOpen(true)}

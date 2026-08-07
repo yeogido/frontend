@@ -132,6 +132,14 @@ function ProfileEditPage() {
     if (regionId !== initialRegionId && regionId)
       payload.regionId = Number(regionId);
 
+    // 지역/출생연도를 빈 값으로 되돌리거나 사진만 바꾼 경우(사진 업로드
+    // 연동은 아직 없음) isEdited는 true지만 실제로 보낼 필드가 없다.
+    // 빈 PATCH를 보내고 성공 토스트를 띄우면 사용자에게는 거짓 성공이 된다.
+    if (Object.keys(payload).length === 0) {
+      navigate('/profile');
+      return;
+    }
+
     try {
       await updateMyProfile.mutateAsync(payload);
       showToast('프로필을 저장했어요.');

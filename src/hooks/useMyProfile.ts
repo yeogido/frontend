@@ -54,7 +54,15 @@ export function useUpdateMyProfile() {
 }
 
 export function useDeleteMyAccount() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.userId);
+
   return useMutation({
     mutationFn: deleteMyAccount,
+    onSuccess: () => {
+      // 탈퇴한 계정의 프로필 값이 캐시에 남아있으면, 이후 같은 userId가
+      // 재사용되는 예외적인 경우에도 잠깐 노출될 수 있다.
+      queryClient.removeQueries({ queryKey: getMyProfileQueryKey(userId) });
+    },
   });
 }
