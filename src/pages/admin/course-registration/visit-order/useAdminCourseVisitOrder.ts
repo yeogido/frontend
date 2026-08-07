@@ -160,7 +160,7 @@ export function useAdminCourseVisitOrder() {
 
       return createLocalRecommendation(payload);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       showToast('코스가 등록되었어요.');
       // 여기서 reset()을 호출하면 region이 비워지면서 이 페이지의 가드
@@ -168,7 +168,11 @@ export function useAdminCourseVisitOrder() {
       // 반응해 의도한 navigate보다 먼저 튕겨나가는 레이스가 생긴다
       // (관리자 행사 등록 때도 같은 문제가 있었다). 다음 등록을 시작할 때
       // /admin/courses의 FAB가 이미 reset을 호출하므로 여기서는 이동만 한다.
-      navigate('/admin/courses');
+      // local-recommendation의 실제 등록 흐름(visit-order-selection/index.tsx)과
+      // 동일하게, 방금 만든 코스를 바로 미리 볼 수 있도록 실제 상세페이지로
+      // 이동한다. 관리자 계정으로 호출하면 서버가 courseType을 OFFICIAL로
+      // 만들어 여기도 추천 코스 상세(/yeogido-course/detail)에서 조회된다.
+      navigate(`/yeogido-course/detail/${result.courseId}`);
     },
   });
 
