@@ -61,7 +61,7 @@ function ProfileEditPage() {
   const [profileImageKey, setProfileImageKey] = useState<string | undefined>(
     undefined
   );
-  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+  const [isPhotoPending, setIsPhotoPending] = useState(false);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const previousInitialRef = useRef({
@@ -115,7 +115,7 @@ function ProfileEditPage() {
     isEdited &&
     !nicknameError &&
     !updateMyProfile.isPending &&
-    !isPhotoUploading;
+    !isPhotoPending;
 
   const handleBack = () => {
     if (isEdited) {
@@ -197,7 +197,7 @@ function ProfileEditPage() {
             setProfileImageKey(undefined);
           }}
           onPhotoUploaded={setProfileImageKey}
-          onUploadingChange={setIsPhotoUploading}
+          onPendingChange={setIsPhotoPending}
         />
 
         <form
