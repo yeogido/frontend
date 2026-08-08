@@ -60,7 +60,7 @@ function SelectionResultCard<T>({
   const onAction = isAddAction ? onItemAdd : onItemRemove;
   const cardHeight = REMOVE_CARD_HEIGHT * scale;
   const cardPadding = REMOVE_CARD_PADDING * scale;
-  const imageSize = isAddAction ? ADD_IMAGE_SIZE : REMOVE_IMAGE_SIZE * scale;
+  const imageSize = (isAddAction ? ADD_IMAGE_SIZE : REMOVE_IMAGE_SIZE) * scale;
   const actionButtonSize = ACTION_BUTTON_SIZE * scale;
   const actionVisualSize = ACTION_BUTTON_SIZE * scale;
   const actionOverlap = (actionButtonSize - actionVisualSize) / -2;

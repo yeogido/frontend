@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from './fetchWithTimeout.js';
 import { toOptionalCoordinate, toOptionalString } from './parseRequest.js';
 
 export interface PlacePhotoRequest {
@@ -30,14 +31,58 @@ const PHOTO_MAX_WIDTH_PX = 800;
 
 export class InvalidPlacePhotoRequestError extends Error {}
 
+function fetchTextSearch(
+  textSearchBody: Record<string, unknown>,
+  apiKey: string
+): Promise<Response> {
+  return fetchWithTimeout(
+    'https://places.googleapis.com/v1/places:searchText',
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.id',
+      },
+      body: JSON.stringify(textSearchBody),
+    }
+  );
+}
+
+function fetchPlaceDetails(placeId: string, apiKey: string): Promise<Response> {
+  return fetchWithTimeout(
+    `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=ko`,
+    {
+      headers: {
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'photos',
+      },
+    }
+  );
+}
+
+function fetchMedia(photoName: string, apiKey: string): Promise<Response> {
+  return fetchWithTimeout(
+    `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${PHOTO_MAX_WIDTH_PX}&skipHttpRedirect=true`,
+    {
+      headers: { 'X-Goog-Api-Key': apiKey },
+    }
+  );
+}
+
 export async function lookupPlacePhoto(
-  requestBody: PlacePhotoRequest,
+  requestBody: unknown,
   apiKey: string
 ): Promise<PlacePhotoResponse | null> {
-  const name = toOptionalString(requestBody.name);
-  const address = toOptionalString(requestBody.address);
-  const latitude = toOptionalCoordinate(requestBody.latitude);
-  const longitude = toOptionalCoordinate(requestBody.longitude);
+  if (typeof requestBody !== 'object' || requestBody === null) {
+    throw new InvalidPlacePhotoRequestError('Request body must be an object.');
+  }
+
+  const body = requestBody as PlacePhotoRequest;
+  const name = toOptionalString(body.name);
+  const address = toOptionalString(body.address);
+  const latitude = toOptionalCoordinate(body.latitude);
+  const longitude = toOptionalCoordinate(body.longitude);
 
   if (!name) {
     throw new InvalidPlacePhotoRequestError('Place name is required.');
@@ -57,18 +102,7 @@ export async function lookupPlacePhoto(
     };
   }
 
-  const searchResponse = await fetch(
-    'https://places.googleapis.com/v1/places:searchText',
-    {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'places.id',
-      },
-      body: JSON.stringify(textSearchBody),
-    }
-  );
+  const searchResponse = await fetchTextSearch(textSearchBody, apiKey);
 
   if (!searchResponse.ok) {
     throw new Error('Google place search failed.');
@@ -82,15 +116,7 @@ export async function lookupPlacePhoto(
     return null;
   }
 
-  const detailsResponse = await fetch(
-    `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=ko`,
-    {
-      headers: {
-        'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'photos',
-      },
-    }
-  );
+  const detailsResponse = await fetchPlaceDetails(placeId, apiKey);
 
   if (!detailsResponse.ok) {
     throw new Error('Google place details failed.');
@@ -103,12 +129,7 @@ export async function lookupPlacePhoto(
     return null;
   }
 
-  const mediaResponse = await fetch(
-    `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${PHOTO_MAX_WIDTH_PX}&skipHttpRedirect=true`,
-    {
-      headers: { 'X-Goog-Api-Key': apiKey },
-    }
-  );
+  const mediaResponse = await fetchMedia(photoName, apiKey);
 
   if (!mediaResponse.ok) {
     throw new Error('Google place photo media failed.');

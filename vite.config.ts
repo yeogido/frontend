@@ -12,6 +12,7 @@ import {
   lookupPlacePhoto,
   type PlacePhotoRequest,
 } from './api/google-places/placePhoto.ts';
+import { fetchGoogleImage } from './api/google-places/imageProxy.ts';
 
 function sendJson(
   response: import('node:http').ServerResponse,
@@ -118,6 +119,33 @@ function googlePlacesDevPlugin(apiKey: string | undefined): Plugin {
               502
             );
           }
+        }
+      );
+
+      server.middlewares.use(
+        '/google-places/image',
+        async (request, response) => {
+          if (request.method !== 'GET') {
+            response.statusCode = 405;
+            response.end();
+            return;
+          }
+
+          const targetUrl = new URL(
+            request.url ?? '',
+            'http://localhost'
+          ).searchParams.get('url');
+
+          if (!targetUrl) {
+            response.statusCode = 400;
+            response.end();
+            return;
+          }
+
+          const result = await fetchGoogleImage(targetUrl);
+          response.statusCode = result.status;
+          response.setHeader('content-type', result.contentType);
+          response.end(result.body ? Buffer.from(result.body) : undefined);
         }
       );
     },

@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from './fetchWithTimeout.js';
 import { toOptionalCoordinate, toOptionalString } from './parseRequest.js';
 
 export interface PlaceHoursRequest {
@@ -59,7 +60,7 @@ export async function lookupPlaceHours(
     };
   }
 
-  const searchResponse = await fetch(
+  const searchResponse = await fetchWithTimeout(
     'https://places.googleapis.com/v1/places:searchText',
     {
       method: 'POST',
@@ -84,7 +85,7 @@ export async function lookupPlaceHours(
     return null;
   }
 
-  const detailsResponse = await fetch(
+  const detailsResponse = await fetchWithTimeout(
     `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=ko`,
     {
       headers: {

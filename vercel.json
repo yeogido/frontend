@@ -13,6 +13,10 @@
       "destination": "/api/google-places/photo"
     },
     {
+      "source": "/google-places/image",
+      "destination": "/api/google-places/image"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -33,50 +33,140 @@ import type { AdminCoursePlaceItem } from '../types';
 // Figma 390 디자인 기준 리터럴 px
 const STATUS_MESSAGE_FONT_SIZE = 14;
 
-function getCategoryFallbackIcon(categoryGroupCode: string) {
-  const iconClassName = 'text-main-5 h-7 w-7';
+const CATEGORY_FALLBACK_ICON_SIZE = 28;
+
+function getCategoryFallbackIcon(categoryGroupCode: string, scale: number) {
+  const iconClassName = 'text-main-5';
+  const iconStyle = {
+    width: CATEGORY_FALLBACK_ICON_SIZE * scale,
+    height: CATEGORY_FALLBACK_ICON_SIZE * scale,
+  };
 
   switch (categoryGroupCode) {
     case 'FD6':
       return (
-        <IoRestaurantOutline aria-hidden="true" className={iconClassName} />
+        <IoRestaurantOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
       );
     case 'CE7':
-      return <IoCafeOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoCafeOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'AD5':
-      return <IoBedOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoBedOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'MT1':
     case 'CS2':
       return (
-        <IoStorefrontOutline aria-hidden="true" className={iconClassName} />
+        <IoStorefrontOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
       );
     case 'PS3':
-      return <IoPeopleOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoPeopleOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'SC4':
     case 'AC5':
-      return <IoSchoolOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoSchoolOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'PK6':
     case 'OL7':
-      return <IoCarOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoCarOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'SW8':
-      return <IoTrainOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoTrainOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'BK9':
-      return <IoWalletOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoWalletOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'CT1':
-      return <IoFilmOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoFilmOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'AG2':
     case 'PO3':
-      return <IoBusinessOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoBusinessOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'AT4':
       return (
-        <IoConstructOutline aria-hidden="true" className={iconClassName} />
+        <IoConstructOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
       );
     case 'HP8':
-      return <IoMedicalOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoMedicalOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     case 'PM9':
-      return <IoBandageOutline aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoBandageOutline
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
     default:
-      return <IoLocation aria-hidden="true" className={iconClassName} />;
+      return (
+        <IoLocation
+          aria-hidden="true"
+          className={iconClassName}
+          style={iconStyle}
+        />
+      );
   }
 }
 
@@ -218,7 +308,7 @@ function AdminCoursePlaceSelectionPage() {
               imageSrc={place.imageSrc}
               imageFallback={
                 showCategoryFallback
-                  ? getCategoryFallbackIcon(place.categoryGroupCode)
+                  ? getCategoryFallbackIcon(place.categoryGroupCode, scale)
                   : undefined
               }
               imageAlt={`${place.title} 장소 이미지`}
@@ -245,7 +335,10 @@ function AdminCoursePlaceSelectionPage() {
             title={place.title}
             description={place.address}
             imageSrc={place.photoPreviewUrl ?? place.imageSrc}
-            imageFallback={getCategoryFallbackIcon(place.categoryGroupCode)}
+            imageFallback={getCategoryFallbackIcon(
+              place.categoryGroupCode,
+              scale
+            )}
             imageAlt={`${place.title} 장소 이미지`}
             action="remove"
             onItemRemove={onItemRemove}
