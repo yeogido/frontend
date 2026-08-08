@@ -5,7 +5,7 @@ import darkStar from '../../assets/icons/dark star.svg';
 import location from '../../assets/icons/location.svg';
 import people from '../../assets/icons/people.svg';
 import star from '../../assets/icons/star.svg';
-import { useLongPress } from '../../hooks/useLongPress';
+import { useCardTap } from '../../hooks/useCardTap';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 import { useVisibleItemCount } from '../../hooks/useVisibleItemCount';
 import type { TagId } from '../../types/tag.type';
@@ -33,7 +33,6 @@ export interface CourseReviewCardProps {
   rating?: number;
   isMine?: boolean;
   onClick?: () => void;
-  onLongPress?: () => void;
   onEditClick?: () => void;
   onDeleteClick?: () => void;
 }
@@ -52,29 +51,22 @@ function CourseReviewCard({
   rating = 5,
   isMine = false,
   onClick,
-  onLongPress,
   onEditClick,
   onDeleteClick,
 }: CourseReviewCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
-  const isClickable = Boolean(onClick || onLongPress);
+  const isClickable = Boolean(onClick);
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
-  const longPressHandlers = useLongPress({
-    onLongPress: () => onLongPress?.(),
-    onClick,
-  });
+  const tapHandlers = useCardTap({ onTap: () => onClick?.() });
 
-  // 길게 누르기는 포인터로만 구분되므로, 키보드에서는 카드를 눌렀을 때 할 수
-  // 있는 일을 실행한다. 짧게 누르기가 없는 화면(홈)에서는 후기 상세를 연다.
+  // 탭은 포인터로만 판정하므로 키보드 경로를 따로 둔다.
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    const activate = onClick ?? onLongPress;
-
-    if (!activate || event.currentTarget !== event.target) return;
+    if (!onClick || event.currentTarget !== event.target) return;
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      activate();
+      onClick();
     }
   };
 
@@ -107,7 +99,7 @@ function CourseReviewCard({
     >
       <article
         ref={innerRef}
-        {...(isClickable ? longPressHandlers : {})}
+        {...(isClickable ? tapHandlers : {})}
         onKeyDown={handleKeyDown}
         role={isClickable ? 'button' : undefined}
         tabIndex={isClickable ? 0 : undefined}

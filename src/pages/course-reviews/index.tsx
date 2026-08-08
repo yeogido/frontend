@@ -213,8 +213,7 @@ function CourseReviewsPage() {
                   isMine={review.isMine}
                   onDeleteClick={() => requestDelete(review.id)}
                   onEditClick={() => requestEdit(review)}
-                  onClick={() => navigate(courseDetailPath)}
-                  onLongPress={() => openReview(review.id)}
+                  onClick={() => openReview(review.id)}
                   variant="course-review-list"
                   className="[&>div>article]:!bg-[#F9F9F9]"
                 />

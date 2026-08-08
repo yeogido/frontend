@@ -163,8 +163,7 @@ function RecentReviewCoursesPage() {
                 isMine={review.isMine}
                 onDeleteClick={() => requestDelete(review.id)}
                 onEditClick={() => requestEdit(review)}
-                onClick={() => goToCourseDetail(review)}
-                onLongPress={() => openReview(review.id)}
+                onClick={() => openReview(review.id)}
               />
             );
           })}
