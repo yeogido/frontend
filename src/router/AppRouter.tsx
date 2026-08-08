@@ -62,6 +62,7 @@ import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
 import RegionInfoPage from '../pages/region-info';
 import LikesPage from '../pages/likes';
+import MyPostsPage from '../pages/my-posts';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
 import CourseReviewsPage from '../pages/course-reviews';
 import ProfilePage from '../pages/profile';
@@ -160,6 +161,7 @@ function AppRouter() {
           <Route path="/travel-record" element={<TravelRecordPage />} />
           <Route path="/likes" element={<LikesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/my-posts" element={<MyPostsPage />} />
         </Route>
       </Route>
 

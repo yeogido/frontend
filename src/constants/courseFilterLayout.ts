@@ -26,6 +26,21 @@ const LIKED_ITEM_FILTER_COLUMN_CLASS_NAMES: Record<string, string> = {
 export const getLikedItemFilterColumnClassName = (filterKey: string) =>
   LIKED_ITEM_FILTER_COLUMN_CLASS_NAMES[filterKey] ?? 'col-start-1';
 
+/**
+ * 내가 등록한 게시물 필터는 칩이 2개(분류/정렬)뿐이라, 좋아요 필터와 같은
+ * auto + 1fr 스페이서로 정렬 칩만 오른쪽 끝에 붙인다.
+ */
+export const MY_POST_FILTER_GRID_CLASS_NAME =
+  'grid w-[342px] origin-top-left grid-cols-[auto_1fr_auto] items-center gap-2 max-[389px]:[transform:scale(calc((100vw_-_48px)/342px))]';
+
+const MY_POST_FILTER_COLUMN_CLASS_NAMES: Record<string, string> = {
+  category: 'col-start-1',
+  sort: 'col-start-3 justify-self-end',
+};
+
+export const getMyPostFilterColumnClassName = (filterKey: string) =>
+  MY_POST_FILTER_COLUMN_CLASS_NAMES[filterKey] ?? 'col-start-1';
+
 const COURSE_FILTER_COLUMN_CLASS_NAMES: Record<string, string> = {
   transport: 'col-start-1',
   duration: 'col-start-3',

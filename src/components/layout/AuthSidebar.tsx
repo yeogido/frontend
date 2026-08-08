@@ -40,7 +40,7 @@ const LOGOUT_GAP = 12;
 const MY_MENU: { label: string; path?: string }[] = [
   { label: '여행기록', path: '/travel-record' },
   { label: '좋아요', path: '/likes' },
-  { label: '내가 등록한 게시물' },
+  { label: '내가 등록한 게시물', path: '/my-posts' },
 ];
 
 interface AuthSidebarProps {
