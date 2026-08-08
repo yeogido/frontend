@@ -23,6 +23,7 @@ const apiClient = axios.create({
 // /auth/social-login, /auth/social-signup/complete, /auth/check-email,
 // /auth/signup, /auth/email/send-code, /auth/email/verify-code도 로그인
 // 전(또는 temporaryToken 기반) 요청이라 이전 세션 토큰과 무관해야 한다.
+// /auth/password/* (비밀번호 찾기)도 마찬가지로 로그인 전 흐름이다.
 const AUTH_EXEMPT_PATHS = [
   '/auth/login',
   '/auth/reissue',
@@ -32,6 +33,9 @@ const AUTH_EXEMPT_PATHS = [
   '/auth/signup',
   '/auth/email/send-code',
   '/auth/email/verify-code',
+  '/auth/password/send-code',
+  '/auth/password/verify-code',
+  '/auth/password/reset',
 ];
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
