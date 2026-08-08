@@ -15,11 +15,14 @@ interface AdminEventRegistrationState {
   photo: AdminEventPhoto | null;
   keywordTagIds: TagId[];
   category: EventCategoryId | null;
+  /** null이면 새로 등록, 값이 있으면 해당 문화콘텐츠를 수정하는 흐름이다. */
+  editingContentId: number | null;
   setPlace: (place: PlaceItem | null) => void;
   setBasicInfo: (basicInfo: AdminEventBasicInfo) => void;
   setPhoto: (photo: AdminEventPhoto | null) => void;
   setKeywordTagIds: (tagIds: TagId[]) => void;
   setCategory: (category: EventCategoryId | null) => void;
+  setEditingContentId: (contentId: number | null) => void;
   reset: () => void;
 }
 
@@ -30,6 +33,7 @@ export const useAdminEventRegistrationStore =
     photo: null,
     keywordTagIds: [],
     category: null,
+    editingContentId: null,
     setPlace: (place) => set({ place }),
     setBasicInfo: (basicInfo) => set({ basicInfo }),
     setPhoto: (photo) => {
@@ -41,6 +45,7 @@ export const useAdminEventRegistrationStore =
     },
     setKeywordTagIds: (keywordTagIds) => set({ keywordTagIds }),
     setCategory: (category) => set({ category }),
+    setEditingContentId: (editingContentId) => set({ editingContentId }),
     reset: () => {
       const previousPhoto = get().photo;
       if (previousPhoto) URL.revokeObjectURL(previousPhoto.previewUrl);
@@ -50,6 +55,7 @@ export const useAdminEventRegistrationStore =
         photo: null,
         keywordTagIds: [],
         category: null,
+        editingContentId: null,
       });
     },
   }));

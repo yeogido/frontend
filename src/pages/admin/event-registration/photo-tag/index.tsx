@@ -1,18 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { getApiErrorMessage } from '../../../../apis/common';
-import { createCultureContent } from '../../../../apis/contents.api';
+import {
+  createCultureContent,
+  updateCultureContent,
+} from '../../../../apis/contents.api';
 import {
   createPresignedUrl,
   uploadFileToPresignedUrl,
 } from '../../../../apis/files.api';
 import { fetchHashtags } from '../../../../apis/hashtags';
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
+import { useToast } from '../../../../components/toast';
 import { tagDefinitionMap } from '../../../../constants/tags';
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminEventRegistrationStore } from '../../../../store/adminEventRegistration.store';
+import type { ContentCreateRequest } from '../../../../types/content.type';
 import type { TagId } from '../../../../types/tag.type';
 import { buildFestivalDetailPath } from '../../../../utils/routes';
 
@@ -37,12 +43,18 @@ const SUBMIT_ERROR_MARGIN_TOP = 8;
 const SUBMIT_ERROR_FONT_SIZE = 12;
 
 const REGISTER_ERROR_MESSAGE = '행사 등록에 실패했습니다. 다시 시도해 주세요.';
+const UPDATE_ERROR_MESSAGE = '행사 수정에 실패했습니다. 다시 시도해 주세요.';
 
 function AdminEventPhotoTagPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const place = useAdminEventRegistrationStore((state) => state.place);
   const basicInfo = useAdminEventRegistrationStore((state) => state.basicInfo);
+  const editingContentId = useAdminEventRegistrationStore(
+    (state) => state.editingContentId
+  );
   // photo는 URL.createObjectURL로 만든 blob URL을 들고 있어 store가 유일한 소유자여야 한다.
   // (로컬 사본을 따로 두면 어느 쪽이 언제 revoke할지 애매해져 store가 아직 참조 중인 URL을
   // 컴포넌트가 먼저 해제해버리는 문제가 생긴다.) 그래서 변경 즉시 store에 반영한다.
@@ -72,6 +84,18 @@ function AdminEventPhotoTagPage() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  const updateContentMutation = useMutation({
+    mutationFn: (payload: ContentCreateRequest) =>
+      updateCultureContent(editingContentId as number, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['cultureContents'] });
+      void queryClient.invalidateQueries({ queryKey: ['contents', 'ongoing'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['cultureContent', editingContentId],
+      });
+    },
+  });
 
   useEffect(() => {
     if (!place) {
@@ -121,7 +145,7 @@ function AdminEventPhotoTagPage() {
         (tagId) => tagDefinitionMap[tagId]?.label
       );
 
-      const result = await createCultureContent({
+      const payload: ContentCreateRequest = {
         place: {
           externalPlaceId: place.externalPlaceId,
           source: 'KAKAO',
@@ -140,14 +164,27 @@ function AdminEventPhotoTagPage() {
         officialUrl: basicInfo.homepage,
         thumbnailImageKey: objectKey,
         hashtagIds,
-      });
+      };
+
+      const result = editingContentId
+        ? await updateContentMutation.mutateAsync(payload)
+        : await createCultureContent(payload);
+
+      if (editingContentId) {
+        showToast('행사를 수정했어요.');
+      }
 
       // 여기서 스토어를 reset하면 place가 비워지면서 이 페이지의 가드(useEffect)가
       // /admin으로 되돌려버리는 것과 경쟁 상태가 생긴다. 다음 등록을 시작할 때
       // FAB(admin/index.tsx)가 이미 reset을 호출하므로 여기서는 이동만 한다.
       navigate(buildFestivalDetailPath(result.contentId));
     } catch (error) {
-      setSubmitError(getApiErrorMessage(error, REGISTER_ERROR_MESSAGE));
+      setSubmitError(
+        getApiErrorMessage(
+          error,
+          editingContentId ? UPDATE_ERROR_MESSAGE : REGISTER_ERROR_MESSAGE
+        )
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -208,7 +245,13 @@ function AdminEventPhotoTagPage() {
           borderRadius: BUTTON_RADIUS * scale,
         }}
       >
-        {isSubmitting ? '등록 중...' : '행사 등록하기'}
+        {isSubmitting
+          ? editingContentId
+            ? '수정 중...'
+            : '등록 중...'
+          : editingContentId
+            ? '행사 수정하기'
+            : '행사 등록하기'}
       </button>
 
       {submitError ? (
