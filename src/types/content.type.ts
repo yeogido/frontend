@@ -93,6 +93,16 @@ export interface CultureContentDetail {
   courses: CultureContentCourse[];
 }
 
+export interface OngoingContent {
+  contentId: number;
+  title: string;
+  thumbnailImageUrl: string | null;
+  startDate: string;
+  endDate: string;
+  regionName: string;
+  hashtags: string[];
+}
+
 export interface RecentCultureContent {
   contentId: number;
   title: string;

@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
 
-import backIcon from './assets/back-icon.svg';
+import backIcon from '../../../assets/icons/back.svg';
 import {
   TravelDateCalendarSection,
   TravelDatePresetSelectorSection,

@@ -1,3 +1,5 @@
+import type { TagType } from '../../components/common/TagChip';
+
 import { businessCategories, businessSortOptions } from './constants';
 
 export type BusinessCategory = (typeof businessCategories)[number];
@@ -11,6 +13,9 @@ export interface BusinessItem {
   location: string;
   category: Exclude<BusinessCategory, '전체'>;
   author: string;
+  authorAvatarUrl: string;
   date: string;
   image: string;
+  tags: TagType[];
+  liked: boolean;
 }

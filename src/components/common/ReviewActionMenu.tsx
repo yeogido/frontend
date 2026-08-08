@@ -17,9 +17,12 @@ export interface ReviewActionMenuProps {
    * 코스 후기 전체보기)은 수정을 열지 않는다.
    */
   onEditClick?: () => void;
+  showEdit?: boolean;
   onDeleteClick?: () => void;
   /** 카드마다 버튼이 놓이는 자리가 달라 트리거 배치는 밖에서 정한다. */
   triggerClassName?: string;
+  /** 카드 종류마다 스크린리더 안내를 다르게 하려면 넘긴다. */
+  ariaLabel?: string;
 }
 
 /**
@@ -30,8 +33,10 @@ export interface ReviewActionMenuProps {
  */
 function ReviewActionMenu({
   onEditClick,
+  showEdit = false,
   onDeleteClick,
   triggerClassName = '-mt-[3px] -mr-[3px] ml-2',
+  ariaLabel = '리뷰 메뉴',
 }: ReviewActionMenuProps) {
   const scale = useGlobalScale();
   const triggerId = useId();
@@ -95,11 +100,9 @@ function ReviewActionMenu({
 
     updatePanelStyle();
     window.addEventListener('resize', updatePanelStyle);
-    window.addEventListener('scroll', updatePanelStyle, true);
 
     return () => {
       window.removeEventListener('resize', updatePanelStyle);
-      window.removeEventListener('scroll', updatePanelStyle, true);
     };
   }, [isOpen, scale]);
 
@@ -112,9 +115,14 @@ function ReviewActionMenu({
   // 붙이지만, 핸들러를 넘기지 않은 호출부에서 눌러도 아무 일 없는 항목이
   // 남지 않게 한다.
   const menuItems = [
-    { key: 'edit', label: '수정', action: onEditClick },
-    { key: 'delete', label: '삭제', action: onDeleteClick },
-  ].filter((item) => Boolean(item.action));
+    {
+      key: 'edit',
+      label: '수정',
+      action: onEditClick,
+      show: showEdit || Boolean(onEditClick),
+    },
+    { key: 'delete', label: '삭제', action: onDeleteClick, show: Boolean(onDeleteClick) },
+  ].filter((item) => item.show);
 
   if (menuItems.length === 0) {
     return null;
@@ -126,7 +134,7 @@ function ReviewActionMenu({
         id={triggerId}
         ref={triggerRef}
         type="button"
-        aria-label="리뷰 메뉴"
+        aria-label={ariaLabel}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={menuId}

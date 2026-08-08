@@ -39,6 +39,19 @@ export function useRecentRegions() {
     );
   };
 
-  return { recentRegions, addRecentRegion };
+  const removeRecentRegion = (regionId: number) => {
+    setRecentRegions((current) =>
+      current.filter((region) => region.id !== regionId),
+    );
+  };
+
+  const clearRecentRegions = () => setRecentRegions([]);
+
+  return {
+    recentRegions,
+    addRecentRegion,
+    removeRecentRegion,
+    clearRecentRegions,
+  };
 }
 

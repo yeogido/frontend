@@ -11,7 +11,11 @@ export type TagId =
   | 'bakery'
   | 'experience'
   | 'event'
-  | 'local-attraction';
+  | 'local-attraction'
+  | 'drink'
+  | 'game'
+  | 'music'
+  | 'sport';
 
 export type ApiTagCode =
   | 'SPRING'

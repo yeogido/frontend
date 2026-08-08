@@ -2,29 +2,29 @@ import cake from '../../../assets/icons/cake.svg';
 import location from '../../../assets/icons/location.svg';
 import mail from '../../../assets/icons/mail.svg';
 
-const profileInfo = [
-  { icon: mail, label: '이메일', value: '등록된 이메일 정보가 없어요' },
-  { icon: location, label: '사는지역', value: '등록된 지역 정보가 없어요' },
-  { icon: cake, label: '태어난 연도', value: '등록된 출생 연도 정보가 없어요' },
-];
-
 export function ProfileInfoList({
   scale,
+  email,
+  region,
+  birthYear,
   isBusinessProfile = false,
-  businessAddress,
 }: {
   scale: number;
+  email: string;
+  region: string;
+  birthYear: string;
   isBusinessProfile?: boolean;
-  businessAddress?: string;
 }) {
+  // '사는지역'은 가입할 때 고른 거주 지역이다. 사업장 주소를 여기에 넣으면
+  // 사업장이 여럿일 때 어느 쪽인지도 알 수 없고 의미도 다르다. 사업장 주소는
+  // 아래 '내 사업장' 목록이 이미 보여준다.
+  const profileInfo = [
+    { icon: mail, label: '이메일', value: email },
+    { icon: location, label: '사는지역', value: region },
+    { icon: cake, label: '태어난 연도', value: birthYear },
+  ];
   const visibleProfileInfo = isBusinessProfile
-    ? profileInfo
-        .slice(0, 2)
-        .map((info) =>
-          info.label === '사는지역' && businessAddress
-            ? { ...info, value: businessAddress }
-            : info
-        )
+    ? profileInfo.slice(0, 2)
     : profileInfo;
 
   return (

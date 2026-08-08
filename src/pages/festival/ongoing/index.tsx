@@ -1,14 +1,13 @@
-import { useCallback } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
   ContentCard,
   ContentCardSkeleton,
 } from '../../../components/common';
-import { useCultureContents } from '../../../hooks/useCultureContents';
+import { useOngoingContents } from '../../../hooks/useOngoingContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 
@@ -29,14 +28,6 @@ const LIST_GAP = 16;
 const EMPTY_MARGIN_TOP = 40;
 const ERROR_MARGIN_TOP = 24;
 const MESSAGE_TEXT_SIZE = 13;
-const LOAD_MORE_HEIGHT = 40;
-
-const contentSortByFestivalSort = {
-  RECOMMENDED: 'RECOMMEND',
-  SAVED: 'LIKE',
-  DISTANCE: 'DISTANCE',
-  ENDING_SOON: 'DEADLINE',
-} as const;
 
 function FestivalOngoingPage() {
   const navigate = useNavigate();
@@ -47,35 +38,28 @@ function FestivalOngoingPage() {
     handleSortSelect,
     handleCategorySelect,
   } = useFestivalFilters();
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isError,
-    isFetchingNextPage,
-    isPending,
-  } = useCultureContents({
-    category:
-      selectedFilters.category === 'ALL'
-        ? undefined
-        : selectedFilters.category,
-    sort: contentSortByFestivalSort[selectedFilters.sort],
-    size: 20,
-  });
+  const { data: ongoingContents, isPending, isError } = useOngoingContents();
 
-  const festivals = data?.pages.flatMap((page) => page.items) ?? [];
-  const hasEmptyResult = !isPending && !isError && festivals.length === 0;
+  // /contents/ongoing은 쿼리 파라미터를 아예 받지 않는 엔드포인트로 확인됨
+  // (category/sort/cursor 등 어떤 값을 보내도, 심지어 존재하지 않는 값을
+  // 보내도 항상 동일한 결과가 옴 - curl로 재확인). 응답 필드에도 category가
+  // 없어 카테고리 필터(체험/전시/공연/축제)를 적용할 데이터가 없다. 정렬도
+  // 종료 임박순(endDate)만 응답 필드로 계산 가능하고, 추천순/저장순/거리순은
+  // 추천 점수·좋아요 수·좌표가 응답에 없어 그대로 원본 순서를 유지한다.
+  // 필터 바 UI/상태는 그대로 두되, 실제 필터링·정렬은 API가 관련 필드/
+  // 파라미터를 지원해야 완전히 동작한다 - 백엔드에 카테고리 필드 및
+  // 정렬/페이지네이션 파라미터 추가를 요청해야 한다.
+  const festivals = useMemo(() => {
+    const items = ongoingContents ?? [];
 
-  const handleIntersect = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+    if (selectedFilters.sort !== 'ENDING_SOON') {
+      return items;
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  const loadMoreRef = useInfiniteScroll({
-    enabled: Boolean(hasNextPage) && !isPending,
-    onIntersect: handleIntersect,
-  });
+    return [...items].sort((a, b) => a.endDate.localeCompare(b.endDate));
+  }, [ongoingContents, selectedFilters.sort]);
+
+  const hasEmptyResult = !isPending && !isError && festivals.length === 0;
 
   return (
     <section
@@ -153,16 +137,6 @@ function FestivalOngoingPage() {
                 }
               />
             ))}
-
-        {isFetchingNextPage
-          ? FESTIVAL_SKELETON_ITEMS.slice(0, 4).map((item) => (
-              <ContentCardSkeleton
-                key={`next-page-${item}`}
-                className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
-              />
-            ))
-          : null}
       </div>
 
       {hasEmptyResult ? (
@@ -188,12 +162,6 @@ function FestivalOngoingPage() {
           행사 목록을 불러오지 못했어요.
         </p>
       ) : null}
-
-      <div
-        ref={loadMoreRef}
-        style={{ height: LOAD_MORE_HEIGHT * scale }}
-        aria-hidden="true"
-      />
     </section>
   );
 }
