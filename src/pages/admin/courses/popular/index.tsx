@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ContentCard } from '../../../../components/common';
+import { EditableContentCard } from '../../../../components/common';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
 import { mockPopularCourseCards } from '../constants/mockCourseCards';
@@ -20,22 +19,9 @@ const LIST_GAP = 16;
 function AdminCoursesPopularPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const [likedCourseIds, setLikedCourseIds] = useState<Set<string>>(
-    () => new Set()
-  );
 
-  const toggleLike = (courseId: string) => {
-    setLikedCourseIds((current) => {
-      const next = new Set(current);
-
-      if (next.has(courseId)) {
-        next.delete(courseId);
-      } else {
-        next.add(courseId);
-      }
-
-      return next;
-    });
+  const handleDeleteCourse = (courseId: string) => {
+    console.log('코스 삭제:', courseId);
   };
 
   return (
@@ -79,17 +65,16 @@ function AdminCoursesPopularPage() {
         }}
       >
         {mockPopularCourseCards.map((course) => (
-          <ContentCard
+          <EditableContentCard
             key={course.id}
             image={course.image}
             title={course.title}
             firstInfo={course.firstInfo}
             secondInfo={course.secondInfo}
             tags={course.tags}
-            liked={likedCourseIds.has(course.id)}
             className="w-full"
             onClick={() => navigate(`/admin/courses/detail/${course.id}`)}
-            onLikeClick={() => toggleLike(course.id)}
+            onDelete={() => handleDeleteCourse(course.id)}
           />
         ))}
       </div>

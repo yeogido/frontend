@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { CourseCard } from '../../../../components/common';
+import { EditableCourseCard } from '../../../../components/common';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
 import { mockRecentCourseCards } from '../constants/mockCourseCards';
@@ -18,22 +17,9 @@ const LIST_GAP = 16;
 function AdminCoursesRecentPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const [likedCourseIds, setLikedCourseIds] = useState<Set<string>>(
-    () => new Set()
-  );
 
-  const toggleLike = (courseId: string) => {
-    setLikedCourseIds((current) => {
-      const next = new Set(current);
-
-      if (next.has(courseId)) {
-        next.delete(courseId);
-      } else {
-        next.add(courseId);
-      }
-
-      return next;
-    });
+  const handleDeleteCourse = (courseId: string) => {
+    console.log('코스 삭제:', courseId);
   };
 
   return (
@@ -69,7 +55,7 @@ function AdminCoursesRecentPage() {
         style={{ marginTop: LIST_MARGIN_TOP * scale, gap: LIST_GAP * scale }}
       >
         {mockRecentCourseCards.map((course) => (
-          <CourseCard
+          <EditableCourseCard
             key={course.id}
             image={course.image}
             title={course.title}
@@ -77,9 +63,8 @@ function AdminCoursesRecentPage() {
             courseType={course.courseType}
             companion={course.companion}
             tags={course.tags}
-            liked={likedCourseIds.has(course.id)}
             onClick={() => navigate(`/admin/courses/detail/${course.id}`)}
-            onLikeClick={() => toggleLike(course.id)}
+            onDelete={() => handleDeleteCourse(course.id)}
           />
         ))}
       </div>

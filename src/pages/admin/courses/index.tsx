@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
-  ContentCard,
-  CourseCard,
+  EditableContentCard,
+  EditableCourseCard,
   FloatingActionButton,
   SearchTriggerButton,
   SectionHeader,
@@ -58,27 +57,14 @@ function AdminCoursesPage() {
   const resetRegistration = useAdminCourseRegistrationStore(
     (state) => state.reset
   );
-  const [likedCourseIds, setLikedCourseIds] = useState<Set<string>>(
-    () => new Set()
-  );
-
-  const toggleLike = (courseId: string) => {
-    setLikedCourseIds((current) => {
-      const next = new Set(current);
-
-      if (next.has(courseId)) {
-        next.delete(courseId);
-      } else {
-        next.add(courseId);
-      }
-
-      return next;
-    });
-  };
 
   const handleStartRegistration = () => {
     resetRegistration();
     navigate('/admin/course-registration/region-selection');
+  };
+
+  const handleDeleteCourse = (courseId: string) => {
+    console.log('코스 삭제:', courseId);
   };
 
   return (
@@ -214,16 +200,15 @@ function AdminCoursesPage() {
           style={{ marginTop: LIST_MARGIN_TOP * scale, gap: LIST_GAP * scale }}
         >
           {mockPopularCourseCards.map((course) => (
-            <ContentCard
+            <EditableContentCard
               key={course.id}
               image={course.image}
               title={course.title}
               firstInfo={course.firstInfo}
               secondInfo={course.secondInfo}
               tags={course.tags}
-              liked={likedCourseIds.has(course.id)}
               onClick={() => navigate(`/admin/courses/detail/${course.id}`)}
-              onLikeClick={() => toggleLike(course.id)}
+              onDelete={() => handleDeleteCourse(course.id)}
             />
           ))}
         </div>
@@ -240,7 +225,7 @@ function AdminCoursesPage() {
           style={{ marginTop: LIST_MARGIN_TOP * scale, gap: LIST_GAP * scale }}
         >
           {mockRecentCourseCards.map((course) => (
-            <CourseCard
+            <EditableCourseCard
               key={course.id}
               image={course.image}
               title={course.title}
@@ -248,9 +233,8 @@ function AdminCoursesPage() {
               courseType={course.courseType}
               companion={course.companion}
               tags={course.tags}
-              liked={likedCourseIds.has(course.id)}
               onClick={() => navigate(`/admin/courses/detail/${course.id}`)}
-              onLikeClick={() => toggleLike(course.id)}
+              onDelete={() => handleDeleteCourse(course.id)}
             />
           ))}
         </div>
