@@ -1,49 +1,14 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import {
-  FaDog,
-  FaHeart,
-  FaPeopleGroup,
-  FaPeopleRoof,
-  FaUser,
-} from 'react-icons/fa6';
-
 import calendar from '../../assets/icons/calendar.svg';
 import location from '../../assets/icons/location.svg';
 import near from '../../assets/icons/near.svg';
 import people from '../../assets/icons/people.svg';
 
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useVisibleItemCount } from '../../hooks/useVisibleItemCount';
+import { getCompanionIcon } from '../../utils/companionIcon';
 
 import CardActionMenu from './CardActionMenu';
 import TagChip, { type TagType } from './TagChip';
-
-function getCompanionIcon(label?: string | null) {
-  if (!label) return null;
-
-  const key = label.trim().toUpperCase();
-
-  if (key === 'SOLO' || key === 'ALONE' || label.includes('혼자')) {
-    return FaUser;
-  }
-  if (key === 'FRIEND' || label.includes('친구')) {
-    return FaPeopleGroup;
-  }
-  if (key === 'COUPLE' || label.includes('연인')) {
-    return FaHeart;
-  }
-  if (key === 'FAMILY' || label.includes('가족')) {
-    return FaPeopleRoof;
-  }
-  if (
-    key === 'PET' ||
-    label.includes('반려동물') ||
-    label.includes('반려견')
-  ) {
-    return FaDog;
-  }
-
-  return null;
-}
 
 // 모든 수치는 Figma 390 디자인 기준(카드 자체 폭 163 기준) 리터럴 px
 const CARD_DESIGN_WIDTH = 163;
@@ -81,68 +46,6 @@ export interface EditableContentCardProps {
   onDelete?: () => void;
 }
 
-function useResponsiveTagCount(tags: TagType[] | undefined) {
-  const visibleContainerRef = useRef<HTMLDivElement>(null);
-  const hiddenContainerRef = useRef<HTMLDivElement>(null);
-
-  const [visibleCount, setVisibleCount] = useState(0);
-
-  const tagsKey = tags?.join('|') ?? '';
-
-  useLayoutEffect(() => {
-    const container = visibleContainerRef.current;
-    const hidden = hiddenContainerRef.current;
-
-    if (!container || !hidden || !tags || tags.length === 0) {
-      setVisibleCount(0);
-      return;
-    }
-
-    const recalculate = () => {
-      const elements = Array.from(hidden.children) as HTMLElement[];
-      const widths = elements.map((el) => el.getBoundingClientRect().width);
-
-      if (widths.length === 0 || widths.some((w) => w === 0)) {
-        return;
-      }
-
-      const style = getComputedStyle(container);
-      const gap = Number.parseFloat(style.columnGap || style.gap || '0') || 0;
-
-      const containerWidth = container.getBoundingClientRect().width;
-      const EPSILON = 0.5;
-
-      let total = 0;
-      let count = 0;
-
-      for (let i = 0; i < widths.length; i++) {
-        const width = widths[i];
-        const next = count === 0 ? width : total + gap + width;
-
-        if (next > containerWidth + EPSILON) {
-          break;
-        }
-
-        total = next;
-        count++;
-      }
-
-      setVisibleCount(count);
-    };
-
-    recalculate();
-
-    const observer = new ResizeObserver(recalculate);
-    observer.observe(container);
-    observer.observe(hidden);
-
-    return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tagsKey]);
-
-  return { visibleContainerRef, hiddenContainerRef, visibleCount };
-}
-
 /** 아이콘은 늘리지 않고 원본 크기 그대로 14px 슬롯 가운데에 놓는다. */
 function InfoIcon({ src }: { src: string }) {
   return (
@@ -172,8 +75,12 @@ function EditableContentCard({
 }: EditableContentCardProps) {
   const scale = useGlobalScale();
 
-  const { visibleContainerRef, hiddenContainerRef, visibleCount } =
-    useResponsiveTagCount(tags);
+  const tagsKey = tags?.join('|') ?? '';
+  const {
+    containerRef: visibleContainerRef,
+    hiddenRef: hiddenContainerRef,
+    visibleCount,
+  } = useVisibleItemCount(tagsKey, tags?.length ?? 0);
 
   const hasTags = Boolean(tags && tags.length > 0);
   const isClickable = Boolean(onClick);

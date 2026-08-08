@@ -1,48 +1,13 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import {
-  FaDog,
-  FaHeart,
-  FaPeopleGroup,
-  FaPeopleRoof,
-  FaUser,
-} from 'react-icons/fa6';
-
 import calendar from '../../assets/icons/calendar.svg';
 import location from '../../assets/icons/location.svg';
 import people from '../../assets/icons/people.svg';
 
 import { useScaleFrame } from '../../hooks/useScaleFrame';
+import { useVisibleItemCount } from '../../hooks/useVisibleItemCount';
+import { getCompanionIcon } from '../../utils/companionIcon';
 
 import CardActionMenu from './CardActionMenu';
 import TagChip, { type TagType } from './TagChip';
-
-function getCompanionIcon(label?: string | null) {
-  if (!label) return null;
-
-  const key = label.trim().toUpperCase();
-
-  if (key === 'SOLO' || key === 'ALONE' || label.includes('혼자')) {
-    return FaUser;
-  }
-  if (key === 'FRIEND' || label.includes('친구')) {
-    return FaPeopleGroup;
-  }
-  if (key === 'COUPLE' || label.includes('연인')) {
-    return FaHeart;
-  }
-  if (key === 'FAMILY' || label.includes('가족')) {
-    return FaPeopleRoof;
-  }
-  if (
-    key === 'PET' ||
-    label.includes('반려동물') ||
-    label.includes('반려견')
-  ) {
-    return FaDog;
-  }
-
-  return null;
-}
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
 // 개별 vw 계산 대신 useScaleFrame이 전체를 한 번에 scale한다.
@@ -66,65 +31,6 @@ export interface EditableCourseCardProps {
   onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-}
-
-function useVisibleItemCount(itemsKey: string, itemCount: number) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const hiddenRef = useRef<HTMLDivElement>(null);
-
-  const [visibleCount, setVisibleCount] = useState(0);
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    const hidden = hiddenRef.current;
-
-    if (!container || !hidden || itemCount === 0) {
-      setVisibleCount(0);
-      return;
-    }
-
-    const recalculate = () => {
-      const elements = Array.from(hidden.children) as HTMLElement[];
-      const widths = elements.map((el) => el.getBoundingClientRect().width);
-
-      if (widths.length === 0 || widths.some((w) => w === 0)) {
-        return;
-      }
-
-      const style = getComputedStyle(container);
-      const gap = Number.parseFloat(style.columnGap || style.gap || '0') || 0;
-
-      const containerWidth = container.getBoundingClientRect().width;
-      const EPSILON = 0.5;
-
-      let total = 0;
-      let count = 0;
-
-      for (let i = 0; i < widths.length; i++) {
-        const width = widths[i];
-        const next = count === 0 ? width : total + gap + width;
-
-        if (next > containerWidth + EPSILON) {
-          break;
-        }
-
-        total = next;
-        count++;
-      }
-
-      setVisibleCount(count);
-    };
-
-    recalculate();
-
-    const observer = new ResizeObserver(recalculate);
-    observer.observe(container);
-    observer.observe(hidden);
-
-    return () => observer.disconnect();
-  }, [itemsKey, itemCount]);
-
-  return { containerRef, hiddenRef, visibleCount };
 }
 
 /** 수정/삭제 메뉴가 달린 CourseCard. 목록 소유자 화면(마이페이지 등)에서 좋아요 대신 사용한다. */
@@ -163,6 +69,8 @@ function EditableCourseCard({
     visibleCount: visibleTagCount,
   } = useVisibleItemCount(tagsKey, tags.length);
 
+  const isClickable = Boolean(onClick);
+
   return (
     <div
       ref={outerRef}
@@ -172,9 +80,17 @@ function EditableCourseCard({
       <div
         ref={innerRef}
         onClick={onClick}
-        role="button"
-        tabIndex={0}
-        className="relative flex cursor-pointer overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+        onKeyDown={(event) => {
+          if (!onClick || (event.key !== 'Enter' && event.key !== ' ')) {
+            return;
+          }
+
+          event.preventDefault();
+          onClick();
+        }}
+        role={isClickable ? 'button' : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        className={`relative flex overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)] ${isClickable ? 'cursor-pointer' : ''}`}
         style={{
           width: CARD_DESIGN_WIDTH,
           minHeight: CARD_MIN_HEIGHT,

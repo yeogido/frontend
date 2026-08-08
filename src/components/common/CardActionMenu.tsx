@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import fix from '../../assets/icons/fix.svg';
@@ -74,7 +74,7 @@ function CardActionMenu({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen) return;
 
     const updatePanelStyle = () => {
@@ -87,7 +87,7 @@ function CardActionMenu({
       setPanelStyle({
         top: rect.bottom + MENU_GAP * scale,
         left: Math.max(
-          MENU_GAP,
+          MENU_GAP * scale,
           Math.min(rect.right - width, window.innerWidth - width - MENU_GAP)
         ),
       });
@@ -95,8 +95,12 @@ function CardActionMenu({
 
     updatePanelStyle();
     window.addEventListener('resize', updatePanelStyle);
+    window.addEventListener('scroll', updatePanelStyle, true);
 
-    return () => window.removeEventListener('resize', updatePanelStyle);
+    return () => {
+      window.removeEventListener('resize', updatePanelStyle);
+      window.removeEventListener('scroll', updatePanelStyle, true);
+    };
   }, [isOpen, scale]);
 
   const handleSelect = (action?: () => void) => {
@@ -123,6 +127,7 @@ function CardActionMenu({
           event.stopPropagation();
           setIsOpen((current) => !current);
         }}
+        onKeyDown={(event) => event.stopPropagation()}
         className={`flex shrink-0 items-center justify-center ${triggerClassName}`}
         style={{ width: triggerSize, height: triggerSize }}
       >
