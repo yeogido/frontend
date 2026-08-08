@@ -8,8 +8,6 @@ import {
   ReviewDetailModal,
   ReviewEditModal,
 } from '../../components/common';
-import { useAuth } from '../../hooks/useAuth';
-import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useCourseDetails } from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
@@ -41,8 +39,6 @@ const MESSAGE_TEXT_SIZE = 13;
 
 function RecentReviewCoursesPage() {
   const scale = useGlobalScale();
-  const { isAuthenticated } = useAuth();
-  const { getLiked, toggleLike } = useCourseLikeToggle();
   const {
     data,
     isPending,
@@ -71,16 +67,6 @@ function RecentReviewCoursesPage() {
   const courseById = new Map(
     courseDetails.flatMap(({ data }) => (data ? [[data.courseId, data]] : []))
   );
-
-  // 후기 목록의 course.isLiked는 한때 임시 사용자 기준으로 계산돼 비로그인에도
-  // 남의 좋아요가 켜져 왔다. 지금은 비로그인 응답이 false로 오는 것까지
-  // 확인했지만, 해시태그 때문에 어차피 읽는 코스 상세가 사용자 기준으로 맞는
-  // 값이라 그쪽을 우선 쓴다. 추가 비용이 없어 방어를 남겨 둔다.
-  const likedByCourse = (review: { courseId: number; liked: boolean }) => {
-    if (!isAuthenticated) return false;
-
-    return courseById.get(review.courseId)?.isLiked ?? review.liked;
-  };
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -175,13 +161,6 @@ function RecentReviewCoursesPage() {
                 content={review.content}
                 rating={review.rating}
                 isMine={review.isMine}
-                liked={getLiked(review.courseId, likedByCourse(review))}
-                onLikeClick={() =>
-                  toggleLike(
-                    review.courseId,
-                    getLiked(review.courseId, likedByCourse(review))
-                  )
-                }
                 onDeleteClick={() => requestDelete(review.id)}
                 onEditClick={() => requestEdit(review)}
                 onClick={() => goToCourseDetail(review)}

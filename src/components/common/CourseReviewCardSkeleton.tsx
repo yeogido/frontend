@@ -1,5 +1,4 @@
 import darkStar from '../../assets/icons/dark star.svg';
-import heart from '../../assets/icons/heart.svg';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 
 // CourseReviewCard와 같은 값이어야 로딩 중과 로딩 후의 카드 크기가 맞는다.
@@ -40,13 +39,6 @@ function CourseReviewCardSkeleton() {
               <div className="h-5 w-10 rounded-full bg-[#E4E4E4]" />
             </div>
           </div>
-
-          <img
-            src={heart}
-            alt=""
-            aria-hidden="true"
-            className="absolute top-3 right-3 size-5 opacity-30"
-          />
         </div>
 
         <div className="mx-4 border-t border-[#E4E4E4]" />
