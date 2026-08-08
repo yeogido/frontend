@@ -88,7 +88,8 @@ function ReviewEditModal({
   // 상태 갱신 함수 안에서 읽으면 그때는 이미 비어 있어 아무 사진도 안 붙는다.
   // 여기서 즉시 배열로 떠 두고, 미리보기 URL도 업데이터 밖에서 만든다.
   const handleFiles = (files: FileList | null) => {
-    const remaining = MAX_REVIEW_PHOTOS - photos.length;
+    // 음수면 slice가 뒤에서 잘라내 오히려 상한을 넘겨 담는다.
+    const remaining = Math.max(MAX_REVIEW_PHOTOS - photos.length, 0);
     const additions = Array.from(files ?? [])
       .slice(0, remaining)
       .map((file) => {
