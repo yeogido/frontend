@@ -84,19 +84,21 @@ function ReviewEditModal({
     });
   };
 
+  // FileList는 input에 묶인 live 객체라 input.value를 비우면 함께 비워진다.
+  // 상태 갱신 함수 안에서 읽으면 그때는 이미 비어 있어 아무 사진도 안 붙는다.
+  // 여기서 즉시 배열로 떠 두고, 미리보기 URL도 업데이터 밖에서 만든다.
   const handleFiles = (files: FileList | null) => {
-    if (!files) return;
+    const remaining = MAX_REVIEW_PHOTOS - photos.length;
+    const additions = Array.from(files ?? [])
+      .slice(0, remaining)
+      .map((file) => {
+        const src = URL.createObjectURL(file);
+        return { id: src, kind: 'new' as const, file, src };
+      });
 
-    setPhotos((current) => {
-      const remaining = MAX_REVIEW_PHOTOS - current.length;
-      const additions = Array.from(files)
-        .slice(0, remaining)
-        .map((file) => {
-          const src = URL.createObjectURL(file);
-          return { id: src, kind: 'new' as const, file, src };
-        });
-      return [...current, ...additions];
-    });
+    if (additions.length === 0) return;
+
+    setPhotos((current) => [...current, ...additions]);
   };
 
   const canSubmit =
