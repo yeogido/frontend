@@ -8,6 +8,9 @@ import { countFittingItems } from '../utils/visibleItemCount';
  * 알 수 없으므로, 같은 항목을 invisible 영역에 한 번 그려 폭을 재고
  * 컨테이너에 들어가는 개수만 돌려준다.
  *
+ * CourseCard·CourseReviewCard·ContentCard와 관리자 화면의
+ * EditableCourseCard·EditableContentCard가 함께 쓴다.
+ *
  * itemsKey는 항목 내용이 바뀌었을 때 다시 재도록 하는 키다.
  */
 export function useVisibleItemCount(itemsKey: string, itemCount: number) {
