@@ -38,6 +38,9 @@ function AdminCoursePhotoTagPage() {
   const setKeywordTagIdsInStore = useAdminCourseRegistrationStore(
     (state) => state.setKeywordTagIds
   );
+  const existingThumbnailKey = useAdminCourseRegistrationStore(
+    (state) => state.existingThumbnailKey
+  );
   const selectedTagIds = new Set(keywordTagIds);
   const [limitMessage, setLimitMessage] = useState('');
 
@@ -65,7 +68,9 @@ function AdminCoursePhotoTagPage() {
     );
   };
 
-  const isReady = Boolean(photo) && selectedTagIds.size > 0;
+  const isReady =
+    (Boolean(photo) || Boolean(existingThumbnailKey)) &&
+    selectedTagIds.size > 0;
 
   const handleSubmit = () => {
     if (!isReady) return;

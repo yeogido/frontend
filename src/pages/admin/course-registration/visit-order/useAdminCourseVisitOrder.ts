@@ -57,6 +57,9 @@ export function useAdminCourseVisitOrder() {
   const editingCourseId = useAdminCourseRegistrationStore(
     (state) => state.editingCourseId
   );
+  const existingThumbnailKey = useAdminCourseRegistrationStore(
+    (state) => state.existingThumbnailKey
+  );
 
   // storedVisitOrder는 순서를 매기는 힌트로만 쓰고, 실제 항목은 항상 현재
   // selectedPlaces/selectedEvents로 새로 만든다 — 그대로 쓰면 뒤로 가서
@@ -107,23 +110,30 @@ export function useAdminCourseVisitOrder() {
         region,
         basicInfo,
         photo,
+        existingThumbnailKey,
         visitEvents,
       });
 
-      if (validationError || !photo) {
-        throw new Error(validationError ?? '대표 사진을 등록해 주세요.');
+      if (validationError) {
+        throw new Error(validationError);
       }
 
       // 장소별 사진은 선택 사항이라, 실제로 파일을 등록한 장소만 업로드 대상에
-      // 넣는다. 대표 사진은 항상 맨 앞에 넣어 결과 배열의 첫 번째가 되게 한다.
+      // 넣는다. 대표 사진은 새로 고른 경우에만 업로드하고(맨 앞에 넣어 결과
+      // 배열의 첫 번째가 되게 한다), 수정 중 그대로 둔 경우 상세 조회로
+      // 알아낸 기존 key를 재사용한다.
       const placeImageUploads = selectedPlaces.flatMap((place) =>
         place.photoFile ? [{ placeId: place.id, file: place.photoFile }] : []
       );
-      const uploadedKeys = await uploadAdminCourseImages([
-        photo.file,
-        ...placeImageUploads.map((upload) => upload.file),
-      ]);
-      const [thumbnailKey, ...placeImageKeys] = uploadedKeys;
+      const uploadedKeys = await uploadAdminCourseImages(
+        photo
+          ? [photo.file, ...placeImageUploads.map((upload) => upload.file)]
+          : placeImageUploads.map((upload) => upload.file)
+      );
+      const thumbnailKey = photo
+        ? uploadedKeys[0]
+        : (existingThumbnailKey as string);
+      const placeImageKeys = photo ? uploadedKeys.slice(1) : uploadedKeys;
       const imageKeyByPlaceId = new Map(
         placeImageUploads.map((upload, index) => [
           upload.placeId,
@@ -155,6 +165,7 @@ export function useAdminCourseVisitOrder() {
           region,
           basicInfo,
           photo,
+          existingThumbnailKey,
           visitEvents: eventsWithImageKeys,
           thumbnailKey,
           hashtagIds,
@@ -171,6 +182,7 @@ export function useAdminCourseVisitOrder() {
         region,
         basicInfo,
         photo,
+        existingThumbnailKey,
         visitEvents: eventsWithImageKeys,
         thumbnailKey,
         hashtagIds,

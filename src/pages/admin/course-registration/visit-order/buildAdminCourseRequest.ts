@@ -45,17 +45,19 @@ interface AdminCourseRequestParams {
   region: Neighborhood | null;
   basicInfo: CourseBasicInfoValues | null;
   photo: AdminCoursePhoto | null;
+  /** 수정 중 대표 사진을 새로 고르지 않았을 때 재사용할 기존 key. */
+  existingThumbnailKey?: string | null;
   visitEvents: readonly VisitEvent[];
 }
 
 export function getAdminCourseRequestValidationError(
   params: AdminCourseRequestParams
 ): string | null {
-  const { region, basicInfo, photo, visitEvents } = params;
+  const { region, basicInfo, photo, existingThumbnailKey, visitEvents } = params;
 
   if (!region) return '지역 선택 단계에서 지역을 선택해 주세요.';
   if (!basicInfo) return '기본 정보 입력 단계에서 코스 정보를 입력해 주세요.';
-  if (!photo) return '대표 사진을 등록해 주세요.';
+  if (!photo && !existingThumbnailKey) return '대표 사진을 등록해 주세요.';
   if (visitEvents.length === 0) {
     return '방문할 장소 또는 행사를 하나 이상 추가해 주세요.';
   }

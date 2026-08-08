@@ -22,6 +22,12 @@ interface AdminCourseRegistrationState {
   visitOrder: VisitEvent[];
   /** null이면 새로 등록, 값이 있으면 해당 코스를 수정하는 흐름이다. */
   editingCourseId: number | null;
+  /**
+   * 수정 진입 시 상세 조회의 thumbnailUrl에서 유추한 기존 대표 사진 key.
+   * photo(새로 고른 파일)가 없으면 제출 시 이 값을 그대로 재사용해 대표
+   * 사진을 매번 다시 올리지 않아도 되게 한다.
+   */
+  existingThumbnailKey: string | null;
   setRegion: (region: Neighborhood | null) => void;
   setBasicInfo: (basicInfo: CourseBasicInfoValues) => void;
   setPhoto: (photo: AdminCoursePhoto | null) => void;
@@ -30,6 +36,7 @@ interface AdminCourseRegistrationState {
   setSelectedPlaces: (places: AdminCoursePlaceItem[]) => void;
   setVisitOrder: (visitOrder: VisitEvent[]) => void;
   setEditingCourseId: (courseId: number | null) => void;
+  setExistingThumbnailKey: (key: string | null) => void;
   reset: () => void;
 }
 
@@ -57,6 +64,7 @@ export const useAdminCourseRegistrationStore =
     selectedPlaces: [],
     visitOrder: [],
     editingCourseId: null,
+    existingThumbnailKey: null,
     setRegion: (region) => set({ region }),
     setBasicInfo: (basicInfo) => set({ basicInfo }),
     setPhoto: (photo) => {
@@ -94,6 +102,8 @@ export const useAdminCourseRegistrationStore =
     },
     setVisitOrder: (visitOrder) => set({ visitOrder }),
     setEditingCourseId: (editingCourseId) => set({ editingCourseId }),
+    setExistingThumbnailKey: (existingThumbnailKey) =>
+      set({ existingThumbnailKey }),
     reset: () => {
       const { photo, selectedPlaces } = get();
       if (photo) URL.revokeObjectURL(photo.previewUrl);
@@ -109,6 +119,7 @@ export const useAdminCourseRegistrationStore =
         selectedPlaces: [],
         visitOrder: [],
         editingCourseId: null,
+        existingThumbnailKey: null,
       });
     },
   }));

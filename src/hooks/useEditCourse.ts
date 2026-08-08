@@ -33,13 +33,30 @@ const COMPANION_TYPE_TO_FORM: Record<string, CourseBasicInfoValues['companion']>
 };
 
 /**
+ * 상세 조회는 대표 사진의 원본 key를 따로 주지 않고 완성된 URL만 준다.
+ * PLACE 항목의 imageKey/imageUrl을 비교해보면 URL의 경로 부분이 곧 key와
+ * 정확히 일치해(예: `.../courses/xxxx.svg` → `courses/xxxx.svg`) 같은
+ * 방식으로 대표 사진 key도 유추할 수 있다. 형식이 예상과 다르면(파싱 실패)
+ * null을 반환해 새로 올리도록 만든다.
+ */
+function deriveImageKeyFromUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+
+  try {
+    return new URL(url).pathname.replace(/^\//, '');
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 관리자 코스 목록(홈/인기/최근)에서 "수정" 클릭 시 공통으로 쓰는 진입 로직.
  * 지역(regionId)은 상세 조회 응답에 없고 PATCH에도 필요 없어(라이브
  * CourseUpdateRequest에 필드 자체가 없다) 마법사 단계 가드만 통과하도록
  * 자리표시 지역을 넣는다 — 실제 제출 페이로드에는 쓰이지 않는다.
- * 대표 사진은 상세 조회로 원본 key를 알 수 없어(URL만 옴) 새로 올려야
- * 하지만, 장소별 사진은 courseItems[].imageKey로 원본 key를 그대로 알 수
- * 있어 새로 고르지 않으면 기존 사진이 유지된다.
+ * 대표 사진과 장소별 사진 모두, 새로 고르지 않으면 기존 이미지 key를
+ * 재사용해 다시 올리지 않아도 되게 한다(대표 사진은 thumbnailUrl에서
+ * key를 유추, 장소는 courseItems[].imageKey를 그대로 사용).
  */
 export function useEditCourse() {
   const navigate = useNavigate();
@@ -64,6 +81,9 @@ export function useEditCourse() {
   const setEditingCourseId = useAdminCourseRegistrationStore(
     (state) => state.setEditingCourseId
   );
+  const setExistingThumbnailKey = useAdminCourseRegistrationStore(
+    (state) => state.setExistingThumbnailKey
+  );
 
   const editCourse = async (courseId: number) => {
     try {
@@ -71,6 +91,7 @@ export function useEditCourse() {
 
       setRegion({ id: -1, name: detail.title, parentName: '' });
       setPhoto(null);
+      setExistingThumbnailKey(deriveImageKeyFromUrl(detail.thumbnailUrl));
       setBasicInfo({
         courseName: detail.title,
         summary: detail.description,

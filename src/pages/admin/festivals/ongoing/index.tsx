@@ -26,6 +26,9 @@ const EMPTY_MARGIN_TOP = 40;
 const ERROR_MARGIN_TOP = 24;
 const MESSAGE_TEXT_SIZE = 13;
 const SKELETON_ITEMS = [0, 1, 2, 3];
+const RETRY_PADDING_X = 16;
+const RETRY_PADDING_Y = 8;
+const RETRY_TEXT_SIZE = 14;
 
 /** 관리자 전용 "진행 중인 행사" 전체보기 — 좋아요 대신 수정/삭제 카드로 보여준다. */
 function AdminFestivalsOngoingPage() {
@@ -139,7 +142,14 @@ function AdminFestivalsOngoingPage() {
             <button
               type="button"
               onClick={() => void refetch()}
-              className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+              className="rounded-full border border-[#e4e4e4] font-medium text-[#505050]"
+              style={{
+                paddingLeft: RETRY_PADDING_X * scale,
+                paddingRight: RETRY_PADDING_X * scale,
+                paddingTop: RETRY_PADDING_Y * scale,
+                paddingBottom: RETRY_PADDING_Y * scale,
+                fontSize: RETRY_TEXT_SIZE * scale,
+              }}
             >
               다시 시도
             </button>

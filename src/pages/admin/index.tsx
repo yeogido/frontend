@@ -22,6 +22,11 @@ import { FeaturedFestivalBanner } from '../festival/components';
 import useFestivalPreviews from '../festival/hooks/useFestivalPreviews';
 
 const ONGOING_PREVIEW_COUNT = 2;
+const RETRY_PADDING_X = 16;
+const RETRY_PADDING_Y = 8;
+const RETRY_TEXT_SIZE = 14;
+const ERROR_MARGIN_TOP = 16;
+const ERROR_TEXT_SIZE = 13;
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -43,8 +48,12 @@ function AdminPage() {
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
   const { data: cultureContentBanners } = useCultureContentBanners();
-  const { data: ongoingContents, isPending: isOngoingContentsPending } =
-    useOngoingContents();
+  const {
+    data: ongoingContents,
+    isPending: isOngoingContentsPending,
+    isError: isOngoingContentsError,
+    refetch: refetchOngoingContents,
+  } = useOngoingContents();
   const resetRegistration = useAdminEventRegistrationStore(
     (state) => state.reset
   );
@@ -172,6 +181,37 @@ function AdminPage() {
               ))
             )}
           </div>
+
+          {!isOngoingContentsPending && isOngoingContentsError ? (
+            <div
+              className="flex flex-col items-center"
+              style={{
+                marginTop: ERROR_MARGIN_TOP * scale,
+                gap: ERROR_MARGIN_TOP * scale,
+              }}
+            >
+              <p
+                className="text-main-5 text-center font-medium"
+                style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+              >
+                행사 목록을 불러오지 못했어요.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refetchOngoingContents()}
+                className="rounded-full border border-[#e4e4e4] font-medium text-[#505050]"
+                style={{
+                  paddingLeft: RETRY_PADDING_X * scale,
+                  paddingRight: RETRY_PADDING_X * scale,
+                  paddingTop: RETRY_PADDING_Y * scale,
+                  paddingBottom: RETRY_PADDING_Y * scale,
+                  fontSize: RETRY_TEXT_SIZE * scale,
+                }}
+              >
+                다시 시도
+              </button>
+            </div>
+          ) : null}
         </section>
 
         {recentFestivals.length > 0 ? (
