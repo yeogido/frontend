@@ -54,9 +54,12 @@ function ReviewTextArea({
         테두리는 바깥 상자가 그리고 textarea는 그 안을 채운다. 카운터를
         textarea 위에 겹쳐 놓으면 글이 스크롤될 때 그 아래로 지나가 겹쳐
         보인다. 줄을 따로 두어 글이 카운터 윗줄까지만 차게 한다.
+
+        상자를 label로 두면 여백이나 카운터 줄을 눌러도 입력으로 포커스가
+        간다. div로 두면 textarea가 차지한 부분만 눌러야 해서 좁아진다.
       */}
-      <div
-        className="border-gray-2 focus-within:border-main-5 flex flex-col border bg-white"
+      <label
+        className="border-gray-2 focus-within:border-main-5 flex cursor-text flex-col border bg-white"
         style={{
           marginTop: TEXTAREA_MARGIN_TOP * scale,
           height: TEXTAREA_HEIGHT * scale,
@@ -79,18 +82,20 @@ function ReviewTextArea({
             lineHeight: `${TEXTAREA_LINE_HEIGHT * scale}px`,
           }}
         />
-        {/* 입력이 조용히 막히지 않도록 현재 글자 수를 보여준다. */}
+        {/*
+          입력이 조용히 막히지 않도록 현재 글자 수를 보여준다. aria-live는
+          쓰지 않는다 — 글자마다 다시 읽혀 스크린리더에서는 소음이 된다.
+        */}
         <span
           className="text-gray-4 shrink-0 text-right"
           style={{
             fontSize: HINT_FONT_SIZE * scale,
             lineHeight: `${COUNTER_LINE_HEIGHT * scale}px`,
           }}
-          aria-live="polite"
         >
           {value.length}/{maxLength}
         </span>
-      </div>
+      </label>
     </section>
   );
 }

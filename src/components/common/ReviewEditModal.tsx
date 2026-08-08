@@ -253,8 +253,9 @@ function ReviewEditModal({
           {/*
             테두리는 바깥 상자가 그린다. 카운터를 textarea 위에 겹쳐 놓으면
             글이 스크롤될 때 그 아래로 지나가 겹쳐 보이므로 줄을 따로 둔다.
+            label로 두면 여백이나 카운터 줄을 눌러도 입력으로 포커스가 간다.
           */}
-          <div className="mt-3 flex h-[109px] flex-col rounded-xl border border-[#e4e4e4] bg-white px-[14px] pt-4 pb-[10px] focus-within:border-[#ff6f41]">
+          <label className="mt-3 flex h-[109px] cursor-text flex-col rounded-xl border border-[#e4e4e4] bg-white px-[14px] pt-4 pb-[10px] focus-within:border-[#ff6f41]">
             <textarea
               value={content}
               maxLength={REVIEW_CONTENT_MAX_LENGTH}
@@ -263,14 +264,14 @@ function ReviewEditModal({
               placeholder={REVIEW_CONTENT_PLACEHOLDER}
               className="scrollbar-hide min-h-0 w-full flex-1 resize-none bg-transparent text-[12px] leading-4 text-[#1c1c1c] outline-none placeholder:text-[#7f7f7f]"
             />
-            {/* 입력이 조용히 막히지 않도록 현재 글자 수를 보여준다. */}
-            <span
-              className="shrink-0 text-right text-[11px] leading-[14px] text-[#a1a1a1]"
-              aria-live="polite"
-            >
+            {/*
+              입력이 조용히 막히지 않도록 현재 글자 수를 보여준다. aria-live는
+              쓰지 않는다 — 글자마다 다시 읽혀 스크린리더에서는 소음이 된다.
+            */}
+            <span className="shrink-0 text-right text-[11px] leading-[14px] text-[#a1a1a1]">
               {content.length}/{REVIEW_CONTENT_MAX_LENGTH}
             </span>
-          </div>
+          </label>
         </section>
 
         <button

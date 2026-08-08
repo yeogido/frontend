@@ -28,11 +28,13 @@ interface UseCardTapParams {
 export function useCardTap({ onTap }: UseCardTapParams) {
   const startPointRef = useRef<{ x: number; y: number } | null>(null);
   const isCanceledRef = useRef(true);
+  const sawPointerDownRef = useRef(false);
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
       startPointRef.current = null;
       isCanceledRef.current = true;
+      sawPointerDownRef.current = true;
 
       // 주 버튼(왼쪽 클릭·터치·펜)만 다룬다. 그러지 않으면 데스크톱에서
       // 우클릭만 해도 카드가 눌린 것으로 처리된다.
@@ -75,17 +77,26 @@ export function useCardTap({ onTap }: UseCardTapParams) {
   const handleClick = useCallback(
     (event: ReactMouseEvent<HTMLElement>) => {
       const isCanceled = isCanceledRef.current;
+      const sawPointerDown = sawPointerDownRef.current;
 
       // 다음 눌림 전까지는 어떤 click도 탭으로 보지 않는다.
       isCanceledRef.current = true;
       startPointRef.current = null;
-
-      if (isCanceled) return;
+      sawPointerDownRef.current = false;
 
       // 포인터가 움직여 카드 위 버튼에서 끝났을 수 있어 여기서 한 번 더 본다.
       if (event.target !== event.currentTarget && isInteractive(event.target)) {
         return;
       }
+
+      // 스크린리더나 스크립트가 만든 click은 포인터 없이 detail 0으로 온다.
+      // 카드가 role="button"으로 노출되므로 이 경로로도 열려야 한다.
+      if (!sawPointerDown && event.detail === 0) {
+        onTap();
+        return;
+      }
+
+      if (isCanceled) return;
 
       onTap();
     },
