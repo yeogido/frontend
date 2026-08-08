@@ -76,7 +76,7 @@ export async function deleteCourse(courseId: number): Promise<void> {
   }
 }
 
-// 코스·문화콘텐츠 좋아요 등록은 PUT이다(장소만 POST). 여러 번 눌러도 같은
+// 코스·문화콘텐츠·장소 좋아요 등록은 모두 PUT이다. 여러 번 눌러도 같은
 // 결과가 되도록 백엔드가 바꿨다.
 export async function addCourseLike(
   courseId: number
@@ -99,7 +99,7 @@ export async function removeCourseLike(
 }
 
 export async function addPlaceLike(placeId: number): Promise<CourseLikeResult> {
-  const { data } = await apiClient.post<CourseLikeResult>(
+  const { data } = await apiClient.put<CourseLikeResult>(
     `/places/${placeId}/likes`
   );
 

@@ -1,48 +1,46 @@
 import { toOptionalCoordinate, toOptionalString } from './parseRequest.js';
 
-export interface PlaceHoursRequest {
+export interface PlacePhotoRequest {
   readonly name?: unknown;
   readonly address?: unknown;
   readonly latitude?: unknown;
   readonly longitude?: unknown;
 }
-export interface PlaceHoursResponse {
-  readonly currentWeekdayDescriptions: readonly string[];
-  readonly regularWeekdayDescriptions: readonly string[];
-  readonly openNow?: boolean;
-  readonly nextOpenTime?: string;
-  readonly nextCloseTime?: string;
+export interface PlacePhotoResponse {
+  readonly photoUri: string;
 }
 
-interface GoogleOpeningHours {
-  readonly weekdayDescriptions?: readonly string[];
-  readonly openNow?: boolean;
-  readonly nextOpenTime?: string;
-  readonly nextCloseTime?: string;
+interface GooglePlacePhoto {
+  readonly name?: string;
 }
 
 interface GooglePlaceDetails {
-  readonly currentOpeningHours?: GoogleOpeningHours;
-  readonly regularOpeningHours?: GoogleOpeningHours;
+  readonly photos?: readonly GooglePlacePhoto[];
 }
 
 interface GoogleTextSearchResponse {
   readonly places?: readonly { readonly id?: string }[];
 }
 
-export class InvalidPlaceHoursRequestError extends Error {}
+interface GooglePhotoMedia {
+  readonly photoUri?: string;
+}
 
-export async function lookupPlaceHours(
-  requestBody: PlaceHoursRequest,
+const PHOTO_MAX_WIDTH_PX = 800;
+
+export class InvalidPlacePhotoRequestError extends Error {}
+
+export async function lookupPlacePhoto(
+  requestBody: PlacePhotoRequest,
   apiKey: string
-): Promise<PlaceHoursResponse | null> {
+): Promise<PlacePhotoResponse | null> {
   const name = toOptionalString(requestBody.name);
   const address = toOptionalString(requestBody.address);
   const latitude = toOptionalCoordinate(requestBody.latitude);
   const longitude = toOptionalCoordinate(requestBody.longitude);
 
   if (!name) {
-    throw new InvalidPlaceHoursRequestError('Place name is required.');
+    throw new InvalidPlacePhotoRequestError('Place name is required.');
   }
 
   const textSearchBody: Record<string, unknown> = {
@@ -89,7 +87,7 @@ export async function lookupPlaceHours(
     {
       headers: {
         'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'currentOpeningHours,regularOpeningHours',
+        'X-Goog-FieldMask': 'photos',
       },
     }
   );
@@ -99,18 +97,24 @@ export async function lookupPlaceHours(
   }
 
   const details = (await detailsResponse.json()) as GooglePlaceDetails;
-  const currentHours = details.currentOpeningHours;
-  const regularHours = details.regularOpeningHours;
+  const photoName = details.photos?.[0]?.name;
 
-  if (!currentHours && !regularHours) {
+  if (!photoName) {
     return null;
   }
 
-  return {
-    currentWeekdayDescriptions: currentHours?.weekdayDescriptions ?? [],
-    regularWeekdayDescriptions: regularHours?.weekdayDescriptions ?? [],
-    openNow: currentHours?.openNow,
-    nextOpenTime: currentHours?.nextOpenTime,
-    nextCloseTime: currentHours?.nextCloseTime,
-  };
+  const mediaResponse = await fetch(
+    `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${PHOTO_MAX_WIDTH_PX}&skipHttpRedirect=true`,
+    {
+      headers: { 'X-Goog-Api-Key': apiKey },
+    }
+  );
+
+  if (!mediaResponse.ok) {
+    throw new Error('Google place photo media failed.');
+  }
+
+  const media = (await mediaResponse.json()) as GooglePhotoMedia;
+
+  return media.photoUri ? { photoUri: media.photoUri } : null;
 }

@@ -25,3 +25,22 @@ export async function uploadAdminCourseImages(
 ): Promise<string[]> {
   return Promise.all(files.map(uploadAdminCourseImage));
 }
+
+// 장소를 추가할 때 사진을 직접 올리지 않고 구글 이미지로 넘어간 경우, imageSrc는
+// 구글이 호스팅하는 원격 URL일 뿐 백엔드에 업로드된 파일이 아니다. 백엔드는
+// imageKey(업로드된 오브젝트 키)만 받으므로, 원격 URL을 그대로 쓸 수 있게
+// 여기서 바이트를 내려받아 File로 감싼 뒤 나머지 업로드 파이프라인에 태운다.
+export async function fetchImageAsFile(
+  url: string,
+  fileName: string
+): Promise<File> {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error('구글 이미지를 불러오지 못했습니다.');
+  }
+
+  const blob = await response.blob();
+
+  return new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+}

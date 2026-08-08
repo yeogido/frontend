@@ -16,6 +16,8 @@ interface PlacePhotoModalProps {
   onFileChange: (file: File) => void;
   onClose: () => void;
   onConfirm: () => void;
+  /** true (default): confirm stays disabled until a photo is picked. false: confirm is always enabled (skippable). */
+  requirePhoto?: boolean;
 }
 
 function PlacePhotoModal({
@@ -24,6 +26,7 @@ function PlacePhotoModal({
   onFileChange,
   onClose,
   onConfirm,
+  requirePhoto = true,
 }: PlacePhotoModalProps) {
   const scale = useGlobalScale();
   const overlayPaddingX = OVERLAY_PADDING_X * scale;
@@ -57,7 +60,7 @@ function PlacePhotoModal({
           borderRadius: DIALOG_RADIUS * scale,
         }}
       >
-        <div className="min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="scrollbar-hide min-h-0 [scrollbar-width:none] overflow-x-hidden overflow-y-auto overscroll-contain [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <PlacePhotoModalHeader onClose={onClose} />
           <PlacePhotoUploader
             placeTitle={placeTitle}
@@ -65,7 +68,10 @@ function PlacePhotoModal({
             onFileChange={onFileChange}
           />
         </div>
-        <PlacePhotoModalFooter onConfirm={onConfirm} />
+        <PlacePhotoModalFooter
+          onConfirm={onConfirm}
+          disabled={requirePhoto && !previewUrl}
+        />
       </section>
     </div>
   );

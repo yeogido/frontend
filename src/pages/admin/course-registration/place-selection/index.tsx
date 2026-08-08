@@ -1,7 +1,25 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  IoBedOutline,
+  IoBandageOutline,
+  IoBusinessOutline,
+  IoCafeOutline,
+  IoCarOutline,
+  IoConstructOutline,
+  IoFilmOutline,
+  IoLocation,
+  IoMedicalOutline,
+  IoPeopleOutline,
+  IoRestaurantOutline,
+  IoSchoolOutline,
+  IoStorefrontOutline,
+  IoTrainOutline,
+  IoWalletOutline,
+} from 'react-icons/io5';
 
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
+import { usePlacePhotos } from '../../../../hooks/usePlacePhotos';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 
 import SelectedItemsSheet from '../../../local-recommendation/components/SelectedItemsSheet';
@@ -15,6 +33,53 @@ import type { AdminCoursePlaceItem } from '../types';
 // Figma 390 디자인 기준 리터럴 px
 const STATUS_MESSAGE_FONT_SIZE = 14;
 
+function getCategoryFallbackIcon(categoryGroupCode: string) {
+  const iconClassName = 'text-main-5 h-7 w-7';
+
+  switch (categoryGroupCode) {
+    case 'FD6':
+      return (
+        <IoRestaurantOutline aria-hidden="true" className={iconClassName} />
+      );
+    case 'CE7':
+      return <IoCafeOutline aria-hidden="true" className={iconClassName} />;
+    case 'AD5':
+      return <IoBedOutline aria-hidden="true" className={iconClassName} />;
+    case 'MT1':
+    case 'CS2':
+      return (
+        <IoStorefrontOutline aria-hidden="true" className={iconClassName} />
+      );
+    case 'PS3':
+      return <IoPeopleOutline aria-hidden="true" className={iconClassName} />;
+    case 'SC4':
+    case 'AC5':
+      return <IoSchoolOutline aria-hidden="true" className={iconClassName} />;
+    case 'PK6':
+    case 'OL7':
+      return <IoCarOutline aria-hidden="true" className={iconClassName} />;
+    case 'SW8':
+      return <IoTrainOutline aria-hidden="true" className={iconClassName} />;
+    case 'BK9':
+      return <IoWalletOutline aria-hidden="true" className={iconClassName} />;
+    case 'CT1':
+      return <IoFilmOutline aria-hidden="true" className={iconClassName} />;
+    case 'AG2':
+    case 'PO3':
+      return <IoBusinessOutline aria-hidden="true" className={iconClassName} />;
+    case 'AT4':
+      return (
+        <IoConstructOutline aria-hidden="true" className={iconClassName} />
+      );
+    case 'HP8':
+      return <IoMedicalOutline aria-hidden="true" className={iconClassName} />;
+    case 'PM9':
+      return <IoBandageOutline aria-hidden="true" className={iconClassName} />;
+    default:
+      return <IoLocation aria-hidden="true" className={iconClassName} />;
+  }
+}
+
 function AdminCoursePlaceSelectionPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
@@ -27,6 +92,23 @@ function AdminCoursePlaceSelectionPage() {
   );
   const { query, setQuery, searchResults, isLoading, hasError } =
     usePlaceSearch();
+  const placePhotos = usePlacePhotos(
+    searchResults.map((place) => ({
+      id: place.id,
+      name: place.title,
+      address: place.address,
+      latitude: place.latitude,
+      longitude: place.longitude,
+    }))
+  );
+  const searchResultsWithPhotos = useMemo(
+    () =>
+      searchResults.map((place) => ({
+        ...place,
+        imageSrc: placePhotos.get(place.id)?.photoUri ?? place.imageSrc,
+      })),
+    [searchResults, placePhotos]
+  );
   const trimmedQuery = query.trim();
 
   const statusMessage = useMemo(() => {
@@ -99,7 +181,7 @@ function AdminCoursePlaceSelectionPage() {
         searchPlaceholder="장소명을 검색해 주세요"
         searchLabel="장소명 검색"
         searchSuggestions={[]}
-        items={searchResults}
+        items={searchResultsWithPhotos}
         selectedItemIds={selectedPlaceIds}
         getItemId={(place) => place.id}
         onSearchChange={setQuery}
@@ -120,19 +202,32 @@ function AdminCoursePlaceSelectionPage() {
             </p>
           ) : undefined
         }
-        renderItem={(place, isSelected, onItemAdd) => (
-          <SelectionResultCard
-            key={place.id}
-            item={place}
-            title={place.title}
-            description={place.address}
-            imageSrc={place.imageSrc}
-            imageAlt={`${place.title} 장소 이미지`}
-            action="add"
-            disabled={isSelected}
-            onItemAdd={onItemAdd}
-          />
-        )}
+        renderItem={(place, isSelected, onItemAdd) => {
+          const photoState = placePhotos.get(place.id);
+          const showCategoryFallback =
+            photoState !== undefined &&
+            !photoState.isLoading &&
+            !photoState.photoUri;
+
+          return (
+            <SelectionResultCard
+              key={place.id}
+              item={place}
+              title={place.title}
+              description={place.address}
+              imageSrc={place.imageSrc}
+              imageFallback={
+                showCategoryFallback
+                  ? getCategoryFallbackIcon(place.categoryGroupCode)
+                  : undefined
+              }
+              imageAlt={`${place.title} 장소 이미지`}
+              action="add"
+              disabled={isSelected}
+              onItemAdd={onItemAdd}
+            />
+          );
+        }}
       />
       <SelectedItemsSheet
         selectedSectionTitle="추가된 장소"
@@ -149,7 +244,8 @@ function AdminCoursePlaceSelectionPage() {
             item={place}
             title={place.title}
             description={place.address}
-            imageSrc={place.photoPreviewUrl}
+            imageSrc={place.photoPreviewUrl ?? place.imageSrc}
+            imageFallback={getCategoryFallbackIcon(place.categoryGroupCode)}
             imageAlt={`${place.title} 장소 이미지`}
             action="remove"
             onItemRemove={onItemRemove}
@@ -163,6 +259,7 @@ function AdminCoursePlaceSelectionPage() {
           onFileChange={handleImageFileChange}
           onClose={closeImageModal}
           onConfirm={handleConfirmImage}
+          requirePhoto={false}
         />
       ) : null}
     </>

@@ -9,6 +9,10 @@
       "destination": "/api/google-places/hours"
     },
     {
+      "source": "/google-places/photo",
+      "destination": "/api/google-places/photo"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
