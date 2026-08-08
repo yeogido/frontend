@@ -1,9 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 
-import { EditableContentCard } from '../../../../components/common';
+import {
+  ContentCardSkeleton,
+  EditableContentCard,
+} from '../../../../components/common';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-
-import { mockPopularCourseCards } from '../constants/mockCourseCards';
+import { usePopularCourses } from '../../../../hooks/useCourses';
+import { toContentTagIds } from '../../../../utils/contentTags';
+import { toDurationLabel } from '../../../../utils/courseEnumLabels';
+import { buildCourseDetailPath } from '../../../../utils/routes';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -15,12 +20,26 @@ const DESCRIPTION_SIZE = 12;
 const DESCRIPTION_LINE_HEIGHT = 17;
 const LIST_MARGIN_TOP = 24;
 const LIST_GAP = 16;
+const ERROR_MARGIN_TOP = 24;
+const ERROR_TEXT_SIZE = 13;
+const SKELETON_ITEMS = [0, 1, 2, 3];
 
 function AdminCoursesPopularPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
 
-  const handleDeleteCourse = (courseId: string) => {
+  const {
+    data: popularCourses,
+    isPending,
+    isError,
+    refetch,
+  } = usePopularCourses({ courseType: 'OFFICIAL' });
+
+  const goToCourseDetail = (courseId: number) => {
+    navigate(buildCourseDetailPath('OFFICIAL', courseId));
+  };
+
+  const handleDeleteCourse = (courseId: number) => {
     console.log('코스 삭제:', courseId);
   };
 
@@ -64,20 +83,52 @@ function AdminCoursesPopularPage() {
           rowGap: LIST_GAP * scale,
         }}
       >
-        {mockPopularCourseCards.map((course) => (
-          <EditableContentCard
-            key={course.id}
-            image={course.image}
-            title={course.title}
-            firstInfo={course.firstInfo}
-            secondInfo={course.secondInfo}
-            tags={course.tags}
-            className="w-full"
-            onClick={() => navigate(`/admin/courses/detail/${course.id}`)}
-            onDelete={() => handleDeleteCourse(course.id)}
-          />
-        ))}
+        {isPending
+          ? SKELETON_ITEMS.map((item) => (
+              <ContentCardSkeleton
+                key={item}
+                className="w-full"
+                imageClassName="aspect-[163/115] h-auto"
+              />
+            ))
+          : (popularCourses ?? []).map((course) => (
+              <EditableContentCard
+                key={course.courseId}
+                image={course.thumbnailUrl}
+                title={course.title}
+                firstInfo={toDurationLabel(course.durationType)}
+                secondInfo={course.region}
+                tags={toContentTagIds(course.tags)}
+                className="w-full"
+                onClick={() => goToCourseDetail(course.courseId)}
+                onDelete={() => handleDeleteCourse(course.courseId)}
+              />
+            ))}
       </div>
+
+      {!isPending && isError ? (
+        <div
+          className="flex flex-col items-center"
+          style={{
+            marginTop: ERROR_MARGIN_TOP * scale,
+            gap: ERROR_MARGIN_TOP * scale,
+          }}
+        >
+          <p
+            className="text-main-5 text-center font-medium"
+            style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+          >
+            코스 목록을 불러오지 못했어요.
+          </p>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+          >
+            다시 시도
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
