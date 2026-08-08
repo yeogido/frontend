@@ -71,7 +71,9 @@ function ForgotPasswordForm() {
     revisionRef.current += 1;
     setCode(value);
     setCodeAuth((prev) =>
-      prev.status === 'verified' || prev.status === 'verifyError'
+      prev.status === 'verified' ||
+      prev.status === 'verifyError' ||
+      prev.status === 'verifying'
         ? { ...prev, status: 'sent', message: '', resetToken: null }
         : prev
     );
