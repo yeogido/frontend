@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   type InfiniteData,
   useInfiniteQuery,
+  useMutation,
   useQueries,
   useQuery,
   useQueryClient,
@@ -17,7 +18,7 @@ import {
   getPopularCourses,
   getRecommendedCourses,
 } from '../apis/courses.api';
-import { getCourseDetail } from '../apis/courses';
+import { deleteCourse, getCourseDetail } from '../apis/courses';
 import type { CourseDetailResult } from '../apis/courses';
 import type { NormalizedApiError } from '../apis/common';
 import type {
@@ -27,6 +28,7 @@ import type {
   GetPopularCoursesParams,
   RecommendedCourse,
 } from '../types/course.type';
+import type { GetMyPostsResponse } from '../types/user.type';
 
 const DETAIL_STALE_TIME = 1000 * 60;
 const DETAIL_GC_TIME = 1000 * 60 * 5;
@@ -82,6 +84,80 @@ export function useRecommendedCourses() {
     queryKey: ['recommendedCourses'],
     queryFn: getRecommendedCourses,
   });
+}
+
+export function useCourseDelete() {
+  const [targetCourseId, setTargetCourseId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  const deleteCourseMutation = useMutation({
+    mutationFn: deleteCourse,
+    onMutate: async (courseId) => {
+      await queryClient.cancelQueries({ queryKey: ['myPosts'] });
+
+      const previousMyPosts = queryClient.getQueriesData<
+        InfiniteData<GetMyPostsResponse>
+      >({ queryKey: ['myPosts'] });
+
+      queryClient.setQueriesData<InfiniteData<GetMyPostsResponse>>(
+        { queryKey: ['myPosts'] },
+        (data) =>
+          data
+            ? {
+                ...data,
+                pages: data.pages.map((page) => ({
+                  ...page,
+                  items: page.items.filter(
+                    (item) => item.course?.id !== courseId,
+                  ),
+                })),
+              }
+            : data,
+      );
+
+      return { previousMyPosts };
+    },
+    onError: (_, __, context) => {
+      context?.previousMyPosts.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+    },
+    onSuccess: (_, courseId) => {
+      void queryClient.invalidateQueries({ queryKey: ['courses'] });
+      void queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
+      void queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
+      queryClient.removeQueries({ queryKey: ['courseDetail', courseId] });
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+    },
+  });
+
+  const closeDialog = () => setTargetCourseId(null);
+
+  const confirmDelete = async () => {
+    if (targetCourseId === null || deleteCourseMutation.isPending) return;
+
+    try {
+      await deleteCourseMutation.mutateAsync(targetCourseId);
+      closeDialog();
+      showToast('코스를 삭제했어요.');
+    } catch (error) {
+      closeDialog();
+      showToast(getApiErrorMessage(error, '코스를 삭제하지 못했어요.'));
+    }
+  };
+
+  return {
+    requestDelete: setTargetCourseId,
+    dialogProps: {
+      isOpen: targetCourseId !== null,
+      isPending: deleteCourseMutation.isPending,
+      onCancel: closeDialog,
+      onConfirm: () => void confirmDelete(),
+    },
+  };
 }
 
 /**
@@ -164,4 +240,3 @@ export function useNavigateToCourseDetail() {
 
   return { goToCourseDetail, isResolvingCourse };
 }
-

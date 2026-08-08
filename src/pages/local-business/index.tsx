@@ -5,6 +5,8 @@ import { PromotionCardSkeleton, RegionImageCarousel } from '../../components/com
 import { DEFAULT_REGION_CITY_ID, REGION_CITY_IDS } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useLoginModal } from '../../hooks/useLoginModal';
+import { useAuthStore } from '../../store/auth.store';
 import { buildLocalBusinessDetailPath } from '../../utils/routes';
 
 import { BusinessGrid, BusinessList, BusinessToolbar } from './components';
@@ -33,6 +35,8 @@ const PENDING_SKELETON_COUNT = 4;
 function LocalBusinessPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { openLoginModal } = useLoginModal();
   const [searchParams] = useSearchParams();
   const regionParam = searchParams.get('region');
   const initialRegionId = REGION_CITY_IDS.includes(
@@ -60,8 +64,34 @@ function LocalBusinessPage() {
   });
   const hasEmptyResult = !isPending && !isError && businesses.length === 0;
 
+  // 소상공인 홍보 좋아요는 아직 백엔드 API가 없어, 상세페이지와 동일하게
+  // 로컬 상태로만 토글한다(새로고침하면 초기화됨).
+  const [likedOverrides, setLikedOverrides] = useState<
+    Record<string, boolean>
+  >({});
+  const businessesWithLikeOverrides = businesses.map((business) => ({
+    ...business,
+    liked: likedOverrides[business.id] ?? business.liked,
+  }));
+
   const handleCardClick = (businessId: string) => {
     navigate(buildLocalBusinessDetailPath(businessId));
+  };
+
+  const handleLikeClick = (businessId: string) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    const current = businessesWithLikeOverrides.find(
+      (business) => business.id === businessId
+    )?.liked;
+
+    setLikedOverrides((previous) => ({
+      ...previous,
+      [businessId]: !(current ?? false),
+    }));
   };
 
   const handleSelectRegion = (region: { id: string }) => {
@@ -139,15 +169,17 @@ function LocalBusinessPage() {
           )
         ) : viewMode === 'grid' ? (
           <BusinessGrid
-            businesses={businesses}
+            businesses={businessesWithLikeOverrides}
             onCardClick={handleCardClick}
+            onLikeClick={handleLikeClick}
             gapX={GRID_GAP_X * scale}
             gapY={GRID_GAP_Y * scale}
           />
         ) : (
           <BusinessList
-            businesses={businesses}
+            businesses={businessesWithLikeOverrides}
             onCardClick={handleCardClick}
+            onLikeClick={handleLikeClick}
             gap={LIST_GAP * scale}
           />
         )}

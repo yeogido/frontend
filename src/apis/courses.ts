@@ -1,4 +1,4 @@
-import { apiClient } from './common';
+import { apiClient, normalizeApiError } from './common';
 
 export type CourseDetailItem =
   | {
@@ -66,6 +66,14 @@ export async function getCourseDetail(
   );
 
   return data;
+}
+
+export async function deleteCourse(courseId: number): Promise<void> {
+  try {
+    await apiClient.delete(`/courses/${courseId}`);
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
 }
 
 // 코스·문화콘텐츠 좋아요 등록은 PUT이다(장소만 POST). 여러 번 눌러도 같은

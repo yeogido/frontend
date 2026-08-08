@@ -9,7 +9,7 @@ export const getVisibleFolderPhotos = (photos: string[]) =>
  */
 export const getFolderPhotoSlotIndexes = (photoCount: number) => {
   if (photoCount === 1) {
-    return [1];
+    return [2];
   }
 
   return photoCount > 1 ? [1, 0] : [];

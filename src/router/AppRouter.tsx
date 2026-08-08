@@ -34,6 +34,17 @@ import AdminPage from '../pages/admin';
 import AdminPlaceSelectionPage from '../pages/admin/event-registration/place-selection';
 import AdminEventBasicInfoPage from '../pages/admin/event-registration/basic-info';
 import AdminEventPhotoTagPage from '../pages/admin/event-registration/photo-tag';
+import AdminCoursesPage from '../pages/admin/courses';
+import AdminCoursesPopularPage from '../pages/admin/courses/popular';
+import AdminCoursesRecentPage from '../pages/admin/courses/recent';
+import AdminCourseMockDetailPage from '../pages/admin/courses/detail';
+import AdminCourseRegionSelectionPage from '../pages/admin/course-registration/region-selection';
+import AdminCourseBasicInfoPage from '../pages/admin/course-registration/basic-info';
+import AdminCoursePhotoTagPage from '../pages/admin/course-registration/photo-tag';
+import AdminCourseEventSelectionPage from '../pages/admin/course-registration/event-selection';
+import AdminCoursePlaceSelectionPage from '../pages/admin/course-registration/place-selection';
+import AdminCourseVisitOrderPage from '../pages/admin/course-registration/visit-order';
+import AdminCourseRegistrationPreviewPage from '../pages/admin/course-registration/preview';
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
 import EventSelectionPage from '../pages/local-recommendation/event-selection';
 import PlaceSelectionPage from '../pages/local-recommendation/place-selection';
@@ -51,10 +62,10 @@ import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
 import RegionInfoPage from '../pages/region-info';
 import LikesPage from '../pages/likes';
+import MyPostsPage from '../pages/my-posts';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
 import CourseReviewsPage from '../pages/course-reviews';
 import ProfilePage from '../pages/profile';
-import BusinessProfilePreviewPage from '../pages/profile/business-preview';
 import ProfileEditPage from '../pages/profile/edit';
 import BusinessVerificationPage from '../pages/business-verification';
 
@@ -132,14 +143,25 @@ function AppRouter() {
 
         <Route path="/admin" element={<AdminPage />} />
 
+        <Route path="/admin/courses" element={<AdminCoursesPage />} />
+        <Route
+          path="/admin/courses/popular"
+          element={<AdminCoursesPopularPage />}
+        />
+        <Route
+          path="/admin/courses/recent"
+          element={<AdminCoursesRecentPage />}
+        />
+        <Route
+          path="/admin/courses/detail/:courseId"
+          element={<AdminCourseMockDetailPage />}
+        />
+
         <Route element={<ProtectedRoute />}>
           <Route path="/travel-record" element={<TravelRecordPage />} />
           <Route path="/likes" element={<LikesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route
-            path="/profile/business-preview"
-            element={<BusinessProfilePreviewPage />}
-          />
+          <Route path="/my-posts" element={<MyPostsPage />} />
         </Route>
       </Route>
 
@@ -248,6 +270,35 @@ function AppRouter() {
         <Route
           path="/admin/event-registration/photo-tag"
           element={<AdminEventPhotoTagPage />}
+        />
+
+        <Route
+          path="/admin/course-registration/region-selection"
+          element={<AdminCourseRegionSelectionPage />}
+        />
+        <Route
+          path="/admin/course-registration/basic-info"
+          element={<AdminCourseBasicInfoPage />}
+        />
+        <Route
+          path="/admin/course-registration/photo-tag"
+          element={<AdminCoursePhotoTagPage />}
+        />
+        <Route
+          path="/admin/course-registration/event-selection"
+          element={<AdminCourseEventSelectionPage />}
+        />
+        <Route
+          path="/admin/course-registration/place-selection"
+          element={<AdminCoursePlaceSelectionPage />}
+        />
+        <Route
+          path="/admin/course-registration/visit-order"
+          element={<AdminCourseVisitOrderPage />}
+        />
+        <Route
+          path="/admin/course-registration/preview"
+          element={<AdminCourseRegistrationPreviewPage />}
         />
       </Route>
 
