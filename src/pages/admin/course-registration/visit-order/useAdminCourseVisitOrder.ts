@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../../../apis/common';
+import { updateCourse } from '../../../../apis/courses';
 import { fetchHashtags } from '../../../../apis/hashtags';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
 import { useToast } from '../../../../components/toast';
@@ -23,6 +24,7 @@ import { mapTagIdsToHashtagIds } from '../../../local-recommendation/tag-selecti
 import { VISIT_EVENT_PLACE_ID_PREFIX } from '../types';
 import {
   buildAdminCourseRequest,
+  buildAdminCourseUpdateRequest,
   getAdminCourseRequestValidationError,
 } from './buildAdminCourseRequest';
 import { buildAdminVisitEvents } from './buildAdminVisitEvents';
@@ -51,6 +53,9 @@ export function useAdminCourseVisitOrder() {
   );
   const setVisitOrderInStore = useAdminCourseRegistrationStore(
     (state) => state.setVisitOrder
+  );
+  const editingCourseId = useAdminCourseRegistrationStore(
+    (state) => state.editingCourseId
   );
 
   // storedVisitOrder는 순서를 매기는 힌트로만 쓰고, 실제 항목은 항상 현재
@@ -145,6 +150,23 @@ export function useAdminCourseVisitOrder() {
         (tagId) => tagDefinitionMap[tagId]?.label
       );
 
+      if (editingCourseId) {
+        const updatePayload = buildAdminCourseUpdateRequest({
+          region,
+          basicInfo,
+          photo,
+          visitEvents: eventsWithImageKeys,
+          thumbnailKey,
+          hashtagIds,
+        });
+
+        if (!updatePayload) {
+          throw new Error('코스 정보가 모두 입력되어야 수정할 수 있습니다.');
+        }
+
+        return updateCourse(editingCourseId, updatePayload);
+      }
+
       const payload = buildAdminCourseRequest({
         region,
         basicInfo,
@@ -162,16 +184,24 @@ export function useAdminCourseVisitOrder() {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      showToast('코스가 등록되었어요.');
+      queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
+      queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
+      if (editingCourseId) {
+        queryClient.invalidateQueries({
+          queryKey: ['courseDetail', editingCourseId],
+        });
+      }
+      showToast(editingCourseId ? '코스를 수정했어요.' : '코스가 등록되었어요.');
       // 여기서 reset()을 호출하면 region이 비워지면서 이 페이지의 가드
       // (useEffect: !region이면 region-selection으로 리다이렉트)가 먼저
       // 반응해 의도한 navigate보다 먼저 튕겨나가는 레이스가 생긴다
       // (관리자 행사 등록 때도 같은 문제가 있었다). 다음 등록을 시작할 때
       // /admin/courses의 FAB가 이미 reset을 호출하므로 여기서는 이동만 한다.
       // local-recommendation의 실제 등록 흐름(visit-order-selection/index.tsx)과
-      // 동일하게, 방금 만든 코스를 바로 미리 볼 수 있도록 실제 상세페이지로
-      // 이동한다. 관리자 계정으로 호출하면 서버가 courseType을 OFFICIAL로
-      // 만들어 여기도 추천 코스 상세(/yeogido-course/detail)에서 조회된다.
+      // 동일하게, 방금 만든/수정한 코스를 바로 미리 볼 수 있도록 실제
+      // 상세페이지로 이동한다. 관리자 계정으로 호출하면 서버가 courseType을
+      // OFFICIAL로 만들어 여기도 추천 코스 상세(/yeogido-course/detail)에서
+      // 조회된다.
       navigate(`/yeogido-course/detail/${result.courseId}`);
     },
   });

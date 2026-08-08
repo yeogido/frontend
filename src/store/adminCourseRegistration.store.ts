@@ -20,6 +20,8 @@ interface AdminCourseRegistrationState {
   selectedEvents: FestivalItem[];
   selectedPlaces: AdminCoursePlaceItem[];
   visitOrder: VisitEvent[];
+  /** null이면 새로 등록, 값이 있으면 해당 코스를 수정하는 흐름이다. */
+  editingCourseId: number | null;
   setRegion: (region: Neighborhood | null) => void;
   setBasicInfo: (basicInfo: CourseBasicInfoValues) => void;
   setPhoto: (photo: AdminCoursePhoto | null) => void;
@@ -27,6 +29,7 @@ interface AdminCourseRegistrationState {
   setSelectedEvents: (events: FestivalItem[]) => void;
   setSelectedPlaces: (places: AdminCoursePlaceItem[]) => void;
   setVisitOrder: (visitOrder: VisitEvent[]) => void;
+  setEditingCourseId: (courseId: number | null) => void;
   reset: () => void;
 }
 
@@ -53,6 +56,7 @@ export const useAdminCourseRegistrationStore =
     selectedEvents: [],
     selectedPlaces: [],
     visitOrder: [],
+    editingCourseId: null,
     setRegion: (region) => set({ region }),
     setBasicInfo: (basicInfo) => set({ basicInfo }),
     setPhoto: (photo) => {
@@ -89,6 +93,7 @@ export const useAdminCourseRegistrationStore =
       }));
     },
     setVisitOrder: (visitOrder) => set({ visitOrder }),
+    setEditingCourseId: (editingCourseId) => set({ editingCourseId }),
     reset: () => {
       const { photo, selectedPlaces } = get();
       if (photo) URL.revokeObjectURL(photo.previewUrl);
@@ -103,6 +108,7 @@ export const useAdminCourseRegistrationStore =
         selectedEvents: [],
         selectedPlaces: [],
         visitOrder: [],
+        editingCourseId: null,
       });
     },
   }));
