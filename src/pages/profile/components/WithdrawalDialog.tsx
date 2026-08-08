@@ -2,16 +2,19 @@ import ConfirmDialog from '../../../components/common/ConfirmDialog';
 
 export function WithdrawalDialog({
   isOpen,
+  isPending,
   onCancel,
   onConfirm,
 }: {
   isOpen: boolean;
+  isPending?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
   return (
     <ConfirmDialog
       isOpen={isOpen}
+      isPending={isPending}
       title="정말 탈퇴하시겠습니까?"
       description="탈퇴한 경우 회원의 기록(등록한 콘텐츠, 후기 글 작성 등)이 모두 삭제될 수 있습니다."
       confirmLabel="탈퇴하기"

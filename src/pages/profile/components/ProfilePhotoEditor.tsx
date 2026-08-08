@@ -1,30 +1,46 @@
 import {
+  useEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
   type WheelEvent as ReactWheelEvent,
 } from 'react';
 
+import loadingIcon from '../../../assets/icons/loading.svg';
 import pen from '../../../assets/icons/pen.svg';
+import { getApiErrorMessage } from '../../../apis/common';
+import { createPresignedUrl, uploadFileToPresignedUrl } from '../../../apis/files.api';
+import { useToast } from '../../../components/toast';
 import { ProfilePhotoPreview, type ProfilePhoto } from './ProfilePhotoPreview';
 
 const PHOTO_FRAME_SIZE = 120;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
+const UPLOAD_ERROR_MESSAGE = '사진 업로드에 실패했어요.';
 
 interface ProfilePhotoEditorProps {
   readonly scale: number;
   readonly onPhotoChange?: () => void;
+  // objectKey 업로드가 성공할 때마다 호출된다. 실제 계정에 반영하는 건
+  // 폼의 다른 필드와 동일하게 "프로필 저장" 시점(PATCH)이다.
+  readonly onPhotoUploaded?: (objectKey: string) => void;
+  readonly onUploadingChange?: (isUploading: boolean) => void;
+  readonly initialPhotoUrl?: string | null;
 }
 
 export function ProfilePhotoEditor({
   scale,
   onPhotoChange,
+  onPhotoUploaded,
+  onUploadingChange,
+  initialPhotoUrl,
 }: ProfilePhotoEditorProps) {
+  const { showToast } = useToast();
   const [savedPhoto, setSavedPhoto] = useState<ProfilePhoto | null>(null);
   const [draftPhoto, setDraftPhoto] = useState<ProfilePhoto | null>(null);
   const [isTransforming, setIsTransforming] = useState(false);
   const [isAdjustmentEnabled, setIsAdjustmentEnabled] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileSelectionIdRef = useRef(0);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
@@ -35,7 +51,31 @@ export function ProfilePhotoEditor({
     positionY: number;
   } | null>(null);
   const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
+  const hasSeededInitialPhotoRef = useRef(false);
   const photo = draftPhoto ?? savedPhoto;
+
+  useEffect(() => {
+    if (!initialPhotoUrl || hasSeededInitialPhotoRef.current) return;
+
+    hasSeededInitialPhotoRef.current = true;
+    let isCancelled = false;
+
+    void getImageAspectRatio(initialPhotoUrl).then((aspectRatio) => {
+      if (isCancelled) return;
+
+      setSavedPhoto({
+        src: initialPhotoUrl,
+        zoom: MIN_ZOOM,
+        positionX: 0,
+        positionY: 0,
+        aspectRatio,
+      });
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [initialPhotoUrl]);
 
   const updateTransform = (update: (current: ProfilePhoto) => ProfilePhoto) => {
     setDraftPhoto((current) => {
@@ -49,22 +89,55 @@ export function ProfilePhotoEditor({
     if (!file || !file.type.startsWith('image/')) return;
 
     const selectionId = ++fileSelectionIdRef.current;
-    const src = await readImageFile(file);
-    const nextPhoto: ProfilePhoto = {
-      src,
-      zoom: MIN_ZOOM,
-      positionX: 0,
-      positionY: 0,
-      aspectRatio: await getImageAspectRatio(src),
-    };
+    // 미리보기 생성(FileReader/이미지 디코딩)도 큰 파일에서는 시간이 걸려,
+    // 이 구간에도 저장 버튼이 눌릴 수 있다. 업로드 대상일 때는 파일 선택
+    // 직후부터 isUploading을 켜서 전체 구간 동안 저장을 막는다.
+    const tracksUploadState = Boolean(onPhotoUploaded);
 
-    if (selectionId !== fileSelectionIdRef.current) return;
+    if (tracksUploadState) {
+      setIsUploading(true);
+      onUploadingChange?.(true);
+    }
 
-    setSavedPhoto(nextPhoto);
-    setDraftPhoto(nextPhoto);
-    setIsTransforming(false);
-    setIsAdjustmentEnabled(true);
-    onPhotoChange?.();
+    try {
+      const src = await readImageFile(file);
+      const nextPhoto: ProfilePhoto = {
+        src,
+        zoom: MIN_ZOOM,
+        positionX: 0,
+        positionY: 0,
+        aspectRatio: await getImageAspectRatio(src),
+      };
+
+      if (selectionId !== fileSelectionIdRef.current) return;
+
+      setSavedPhoto(nextPhoto);
+      setDraftPhoto(nextPhoto);
+      setIsTransforming(false);
+      setIsAdjustmentEnabled(true);
+      onPhotoChange?.();
+
+      if (!onPhotoUploaded) return;
+
+      const presignedUrl = await createPresignedUrl({
+        fileName: file.name,
+        contentType: file.type || 'application/octet-stream',
+      });
+      await uploadFileToPresignedUrl(presignedUrl.uploadUrl, file, file.type);
+
+      if (selectionId !== fileSelectionIdRef.current) return;
+
+      onPhotoUploaded(presignedUrl.objectKey);
+    } catch (error) {
+      if (selectionId !== fileSelectionIdRef.current) return;
+
+      showToast(getApiErrorMessage(error, UPLOAD_ERROR_MESSAGE));
+    } finally {
+      if (selectionId === fileSelectionIdRef.current && tracksUploadState) {
+        setIsUploading(false);
+        onUploadingChange?.(false);
+      }
+    }
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -177,13 +250,26 @@ export function ProfilePhotoEditor({
       <button
         type="button"
         onClick={handleActionClick}
+        disabled={isUploading}
         aria-label={
-          isTransforming ? '프로필 사진 편집 저장' : '프로필 사진 수정'
+          isUploading
+            ? '프로필 사진 업로드 중'
+            : isTransforming
+              ? '프로필 사진 편집 저장'
+              : '프로필 사진 수정'
         }
-        className="absolute right-0 bottom-0 flex items-center justify-center rounded-full bg-[#f9f9f9]/80"
+        className="absolute right-0 bottom-0 flex items-center justify-center rounded-full bg-[#f9f9f9]/80 disabled:opacity-70"
         style={{ width: 30 * scale, height: 30 * scale }}
       >
-        {isTransforming ? (
+        {isUploading ? (
+          <img
+            src={loadingIcon}
+            alt=""
+            aria-hidden="true"
+            className="animate-spin"
+            style={{ width: 18 * scale, height: 18 * scale }}
+          />
+        ) : isTransforming ? (
           <RoundedCheck scale={scale} />
         ) : (
           <img

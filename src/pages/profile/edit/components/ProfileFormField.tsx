@@ -3,10 +3,12 @@ import type { ReactNode } from 'react';
 export function ProfileFormField({
   label,
   scale,
+  error,
   children,
 }: {
   label: string;
   scale: number;
+  error?: string;
   children: ReactNode;
 }) {
   const isEmail = label === '이메일';
@@ -25,6 +27,15 @@ export function ProfileFormField({
       >
         {children}
       </div>
+      {error && (
+        <p
+          role="alert"
+          className="font-medium text-main-5"
+          style={{ fontSize: 12 * scale, lineHeight: `${14 * scale}px` }}
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }

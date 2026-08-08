@@ -17,6 +17,7 @@ const SOCIAL_LOGIN_ERROR_MESSAGES: Record<string, string> = {
   AUTH4002:
     '이메일 제공에 동의해야 로그인할 수 있어요. 네이버 로그인 시 이메일 제공에 동의해 주세요.',
   AUTH4011: '유효하지 않은 소셜 인증 정보입니다. 다시 시도해 주세요.',
+  USER4101: '이미 탈퇴한 회원입니다.',
 };
 
 const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID ?? '';
