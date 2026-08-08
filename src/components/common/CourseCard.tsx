@@ -1,4 +1,3 @@
-import { useLayoutEffect, useRef, useState } from 'react';
 import {
   FaDog,
   FaHeart,
@@ -14,6 +13,7 @@ import oheart from '../../assets/icons/oheart.svg';
 import people from '../../assets/icons/people.svg';
 
 import { useScaleFrame } from '../../hooks/useScaleFrame';
+import { useVisibleItemCount } from '../../hooks/useVisibleItemCount';
 
 import ReviewActionMenu from './ReviewActionMenu';
 import TagChip, { type TagType } from './TagChip';
@@ -75,65 +75,6 @@ export interface CourseCardProps {
   onEditClick?: () => void;
   showEdit?: boolean;
   onDeleteClick?: () => void;
-}
-
-function useVisibleItemCount(itemsKey: string, itemCount: number) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const hiddenRef = useRef<HTMLDivElement>(null);
-
-  const [visibleCount, setVisibleCount] = useState(0);
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    const hidden = hiddenRef.current;
-
-    if (!container || !hidden || itemCount === 0) {
-      setVisibleCount(0);
-      return;
-    }
-
-    const recalculate = () => {
-      const elements = Array.from(hidden.children) as HTMLElement[];
-      const widths = elements.map((el) => el.getBoundingClientRect().width);
-
-      if (widths.length === 0 || widths.some((w) => w === 0)) {
-        return;
-      }
-
-      const style = getComputedStyle(container);
-      const gap = Number.parseFloat(style.columnGap || style.gap || '0') || 0;
-
-      const containerWidth = container.getBoundingClientRect().width;
-      const EPSILON = 0.5;
-
-      let total = 0;
-      let count = 0;
-
-      for (let i = 0; i < widths.length; i++) {
-        const width = widths[i];
-        const next = count === 0 ? width : total + gap + width;
-
-        if (next > containerWidth + EPSILON) {
-          break;
-        }
-
-        total = next;
-        count++;
-      }
-
-      setVisibleCount(count);
-    };
-
-    recalculate();
-
-    const observer = new ResizeObserver(recalculate);
-    observer.observe(container);
-    observer.observe(hidden);
-
-    return () => observer.disconnect();
-  }, [itemsKey, itemCount]);
-
-  return { containerRef, hiddenRef, visibleCount };
 }
 
 function CourseCard({
