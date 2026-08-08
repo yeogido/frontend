@@ -47,7 +47,12 @@ export function buildCourseItemsFromVisitEvents(
         order,
         type: 'PLACE',
         externalPlaceId: event.externalPlaceId,
-        categoryGroupCode: event.categoryGroupCode,
+        // 라이브 스펙에서 선택 필드다. 모르는 값(수정 진입 시 상세 조회에
+        // 없어 빈 문자열로 채워진 경우)을 그대로 보내면 서버가 기존 값을
+        // 빈 값으로 덮어쓸 위험이 있어, 실제로 아는 경우에만 필드를 넣는다.
+        ...(event.categoryGroupCode
+          ? { categoryGroupCode: event.categoryGroupCode }
+          : {}),
         name: event.name,
         roadAddress: event.roadAddress,
         lotAddress: event.lotAddress,
