@@ -9,6 +9,7 @@ import people from '../../assets/icons/people.svg';
 import star from '../../assets/icons/star.svg';
 import { useLongPress } from '../../hooks/useLongPress';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
+import { useVisibleItemCount } from '../../hooks/useVisibleItemCount';
 import type { TagId } from '../../types/tag.type';
 
 import ReviewActionMenu from './ReviewActionMenu';
@@ -84,10 +85,25 @@ function CourseReviewCard({
   };
 
   const metaItems = [
-    { icon: calendar, label: duration },
-    { icon: location, label: transport },
-    { icon: people, label: companion },
+    { key: 'duration', icon: calendar, label: duration },
+    { key: 'transport', icon: location, label: transport },
+    { key: 'companion', icon: people, label: companion },
   ].filter((item) => Boolean(item.label));
+
+  const {
+    containerRef: metaContainerRef,
+    hiddenRef: hiddenMetaRef,
+    visibleCount: visibleMetaCount,
+  } = useVisibleItemCount(
+    metaItems.map((item) => item.label).join('|'),
+    metaItems.length,
+  );
+
+  const {
+    containerRef: tagContainerRef,
+    hiddenRef: hiddenTagRef,
+    visibleCount: visibleTagCount,
+  } = useVisibleItemCount(tags.join('|'), tags.length);
 
   return (
     <div
@@ -122,31 +138,80 @@ function CourseReviewCard({
             )}
           </div>
 
-          <div className="min-w-0 flex-1 pt-1 pr-5">
+          <div className="relative min-w-0 flex-1 pt-1 pr-5">
             <h2 className="truncate text-[16px] leading-none font-medium text-[#1C1C1C]">
               {title}
             </h2>
 
-            <div className="mt-2 flex items-center gap-1 overflow-hidden">
+            {/* 메타: 폭 측정 전용 */}
+            <div
+              ref={hiddenMetaRef}
+              className="invisible absolute flex gap-1"
+              aria-hidden="true"
+            >
               {metaItems.map((item) => (
                 <span
-                  key={item.label}
-                  className="flex shrink-0 items-center gap-[2px] text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]"
+                  key={`measure-${item.key}`}
+                  className="flex items-center gap-[2px] text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]"
                 >
                   <img
                     src={item.icon}
                     alt=""
                     aria-hidden="true"
-                    className="h-[14px] w-[14px]"
+                    className="h-[14px] w-[14px] shrink-0"
                   />
                   {item.label}
                 </span>
               ))}
             </div>
 
-            <div className="mt-[15px] flex h-5 items-center gap-1 overflow-hidden">
-              {tags.map((tag) => (
-                <TagChip key={tag} type={tag} className="h-5 w-auto" />
+            {/* 메타: 한 줄에 들어가는 만큼만 */}
+            <div
+              ref={metaContainerRef}
+              className="mt-2 flex h-[14px] flex-nowrap items-center gap-1 overflow-hidden"
+            >
+              {metaItems.slice(0, visibleMetaCount).map((item) => (
+                <span
+                  key={item.key}
+                  className="flex shrink-0 items-center gap-[2px] text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]"
+                >
+                  <img
+                    src={item.icon}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-[14px] w-[14px] shrink-0"
+                  />
+                  {item.label}
+                </span>
+              ))}
+            </div>
+
+            {/* 태그: 폭 측정 전용 */}
+            <div
+              ref={hiddenTagRef}
+              className="invisible absolute flex gap-1"
+              aria-hidden="true"
+            >
+              {tags.map((tag, index) => (
+                <TagChip
+                  key={`measure-${tag}-${index}`}
+                  type={tag}
+                  className="h-5 w-auto"
+                />
+              ))}
+            </div>
+
+            {/* 태그: 한 줄에 들어가는 만큼만 */}
+            <div
+              ref={tagContainerRef}
+              className="mt-[15px] flex h-5 flex-nowrap items-center gap-1 overflow-hidden"
+            >
+              {tags.slice(0, visibleTagCount).map((tag, index) => (
+                <TagChip
+                  key={`${tag}-${index}`}
+                  type={tag}
+                  className="h-5 w-auto"
+                />
               ))}
             </div>
           </div>
