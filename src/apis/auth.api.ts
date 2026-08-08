@@ -4,12 +4,14 @@ import type {
   CheckEmailResult,
   LoginRequest,
   LoginResult,
+  ResetPasswordRequest,
   SignupRequest,
   SignupResult,
   SocialLoginRequest,
   SocialLoginResult,
   SocialSignupCompleteRequest,
   VerifyEmailCodeResult,
+  VerifyPasswordResetCodeResult,
 } from '../types/auth.type';
 
 export async function login(data: LoginRequest): Promise<LoginResult> {
@@ -79,4 +81,26 @@ export async function completeSocialSignup(
   );
 
   return result;
+}
+
+export async function sendPasswordResetCode(email: string): Promise<void> {
+  await apiClient.post('/auth/password/send-code', { email });
+}
+
+export async function verifyPasswordResetCode(
+  email: string,
+  authCode: string
+): Promise<VerifyPasswordResetCodeResult> {
+  const { data: result } = await apiClient.post<VerifyPasswordResetCodeResult>(
+    '/auth/password/verify-code',
+    { email, authCode }
+  );
+
+  return result;
+}
+
+export async function resetPassword(
+  data: ResetPasswordRequest
+): Promise<void> {
+  await apiClient.patch('/auth/password/reset', data);
 }
