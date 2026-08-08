@@ -1,4 +1,3 @@
-import { useLayoutEffect, useRef, useState } from 'react';
 import {
   FaDog,
   FaHeart,
@@ -15,6 +14,7 @@ import oheart from '../../assets/icons/oheart.svg';
 import people from '../../assets/icons/people.svg';
 
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useVisibleItemCount } from '../../hooks/useVisibleItemCount';
 
 import TagChip, { type TagType } from './TagChip';
 
@@ -84,68 +84,6 @@ interface ContentCardProps {
   onLikeClick?: () => void;
 }
 
-function useResponsiveTagCount(tags: TagType[] | undefined) {
-  const visibleContainerRef = useRef<HTMLDivElement>(null);
-  const hiddenContainerRef = useRef<HTMLDivElement>(null);
-
-  const [visibleCount, setVisibleCount] = useState(0);
-
-  const tagsKey = tags?.join('|') ?? '';
-
-  useLayoutEffect(() => {
-    const container = visibleContainerRef.current;
-    const hidden = hiddenContainerRef.current;
-
-    if (!container || !hidden || !tags || tags.length === 0) {
-      setVisibleCount(0);
-      return;
-    }
-
-    const recalculate = () => {
-      const elements = Array.from(hidden.children) as HTMLElement[];
-      const widths = elements.map((el) => el.getBoundingClientRect().width);
-
-      if (widths.length === 0 || widths.some((w) => w === 0)) {
-        return;
-      }
-
-      const style = getComputedStyle(container);
-      const gap = Number.parseFloat(style.columnGap || style.gap || '0') || 0;
-
-      const containerWidth = container.getBoundingClientRect().width;
-      const EPSILON = 0.5;
-
-      let total = 0;
-      let count = 0;
-
-      for (let i = 0; i < widths.length; i++) {
-        const width = widths[i];
-        const next = count === 0 ? width : total + gap + width;
-
-        if (next > containerWidth + EPSILON) {
-          break;
-        }
-
-        total = next;
-        count++;
-      }
-
-      setVisibleCount(count);
-    };
-
-    recalculate();
-
-    const observer = new ResizeObserver(recalculate);
-    observer.observe(container);
-    observer.observe(hidden);
-
-    return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tagsKey]);
-
-  return { visibleContainerRef, hiddenContainerRef, visibleCount };
-}
-
 /** 아이콘은 늘리지 않고 원본 크기 그대로 14px 슬롯 가운데에 놓는다. */
 function InfoIcon({ src }: { src: string }) {
   return (
@@ -174,8 +112,11 @@ function ContentCard({
 }: ContentCardProps) {
   const scale = useGlobalScale();
 
-  const { visibleContainerRef, hiddenContainerRef, visibleCount } =
-    useResponsiveTagCount(tags);
+  const {
+    containerRef: visibleContainerRef,
+    hiddenRef: hiddenContainerRef,
+    visibleCount,
+  } = useVisibleItemCount(tags?.join('|') ?? '', tags?.length ?? 0);
 
   const hasTags = Boolean(tags && tags.length > 0);
   const isClickable = Boolean(onClick);

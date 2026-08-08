@@ -172,7 +172,7 @@ function CourseCard({
             {metaItems.map((item) => (
               <div
                 key={`measure-${item.key}`}
-                className="flex items-center gap-[2px]"
+                className="flex shrink-0 items-center gap-[2px]"
               >
                 <img
                   src={item.icon}

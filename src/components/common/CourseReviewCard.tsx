@@ -146,7 +146,7 @@ function CourseReviewCard({
               {metaItems.map((item) => (
                 <span
                   key={`measure-${item.key}`}
-                  className="flex items-center gap-[2px] text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]"
+                  className="flex shrink-0 items-center gap-[2px] text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]"
                 >
                   <img
                     src={item.icon}

@@ -1,5 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
+import { countFittingItems } from '../utils/visibleItemCount';
+
 /**
  * 한 줄에 다 못 들어가는 항목(메타 문구·태그 칩)을 잘린 채로 보여주지 않고
  * 통째로 감추기 위한 훅. 실제 폭은 글자 수에 따라 달라져서 계산으로는
@@ -27,32 +29,12 @@ export function useVisibleItemCount(itemsKey: string, itemCount: number) {
       const elements = Array.from(hidden.children) as HTMLElement[];
       const widths = elements.map((el) => el.getBoundingClientRect().width);
 
-      if (widths.length === 0 || widths.some((w) => w === 0)) {
-        return;
-      }
-
       const style = getComputedStyle(container);
       const gap = Number.parseFloat(style.columnGap || style.gap || '0') || 0;
 
       const containerWidth = container.getBoundingClientRect().width;
-      const EPSILON = 0.5;
 
-      let total = 0;
-      let count = 0;
-
-      for (let i = 0; i < widths.length; i++) {
-        const width = widths[i];
-        const next = count === 0 ? width : total + gap + width;
-
-        if (next > containerWidth + EPSILON) {
-          break;
-        }
-
-        total = next;
-        count++;
-      }
-
-      setVisibleCount(count);
+      setVisibleCount(countFittingItems(widths, gap, containerWidth));
     };
 
     recalculate();
