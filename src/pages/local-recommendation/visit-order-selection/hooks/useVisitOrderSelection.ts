@@ -185,6 +185,9 @@ export function useVisitOrderSelection() {
         void queryClient.invalidateQueries({ queryKey: ['courses'] });
         void queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
         void queryClient.invalidateQueries({
+          queryKey: ['popularLocalCourses'],
+        });
+        void queryClient.invalidateQueries({
           queryKey: ['recommendedCourses'],
         });
         void queryClient.invalidateQueries({ queryKey: ['myCourseIds'] });
