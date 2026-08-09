@@ -40,6 +40,12 @@ const COMPANION_TYPE_MAP: Record<
   pet: 'PET',
 };
 
+function toNullableAddress(address: string): string | null {
+  const trimmedAddress = address.trim();
+
+  return trimmedAddress || null;
+}
+
 export function buildCourseItemsFromVisitEvents(
   visitEvents: readonly VisitEvent[],
   travelData?: VisitEventTravelData
@@ -67,8 +73,8 @@ export function buildCourseItemsFromVisitEvents(
           ? { categoryGroupCode: event.categoryGroupCode }
           : {}),
         name: event.name,
-        roadAddress: event.roadAddress,
-        lotAddress: event.lotAddress,
+        roadAddress: toNullableAddress(event.roadAddress),
+        lotAddress: toNullableAddress(event.lotAddress),
         latitude: event.latitude,
         longitude: event.longitude,
         imageKey: event.imageKey,

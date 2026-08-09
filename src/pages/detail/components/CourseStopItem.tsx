@@ -2,14 +2,15 @@ import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { FaHeart as FilledHeartIcon } from 'react-icons/fa6';
 import { IoChevronDown } from 'react-icons/io5';
 import carIcon from '../../../assets/icons/transport-car.svg';
+import operatingStatusClockIcon from '../../../assets/icons/operating-status-clock.svg';
 import transitIcon from '../../../assets/icons/transport-transit.svg';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import type { PlaceHours } from '../../../apis/googlePlacesHours';
 import {
+  formatOperatingDay,
+  formatTodayOperatingHours,
   isOperatingNow,
-  parseWeekdayDescriptionsToOperatingDays,
 } from '../../../utils/operatingHours';
 import type { CourseStop } from '../types/courseDetail';
 
@@ -34,7 +35,9 @@ const TRANSPORT_MARGIN_TOP = 4;
 const TRANSPORT_GAP = 10;
 const TRANSPORT_ICON_GAP = 4;
 const TRANSPORT_ICON_SIZE = 12;
-const HOURS_GAP = 2;
+const HOURS_STATUS_ICON_SIZE = 12;
+const HOURS_STATUS_ICON_GAP = 5;
+const HOURS_STATUS_TO_CHEVRON_GAP = 6;
 const HOURS_CHEVRON_SIZE = 10;
 const HOURS_LIST_MARGIN_TOP = 2;
 const LIKE_BUTTON_MARGIN_TOP = 2;
@@ -50,10 +53,7 @@ export interface CourseStopItemProps {
   readonly isLikeAvailable?: boolean;
   readonly isLikePending?: boolean;
   /** 있으면 영업시간이 드롭다운(영업중/영업종료 + 요일별 시간)으로 표시된다. */
-  readonly placeHours?: PlaceHours;
   /** 바로 이전 코스 아이템과의 이동 소요시간. 첫 번째 아이템은 비교 대상이 없어 항상 undefined다. */
-  readonly carDurationMinutes?: number;
-  readonly transitDurationMinutes?: number;
 }
 
 export function CourseStopItem({
@@ -62,26 +62,28 @@ export function CourseStopItem({
   onLikeToggle,
   isLikeAvailable = true,
   isLikePending = false,
-  placeHours,
-  carDurationMinutes,
-  transitDurationMinutes,
 }: CourseStopItemProps) {
   const scale = useGlobalScale();
   const [isHoursOpen, setIsHoursOpen] = useState(false);
-  const weekdayHours = placeHours?.regularWeekdayDescriptions ?? [];
-  const canExpandHours = weekdayHours.length > 0;
+  const operatingDays = stop.operatingDays ?? [];
+  const canExpandHours = operatingDays.length > 0;
   // 요일별 영업시간을 파싱할 수 있으면 현재 요일·시각 기준으로 직접 계산하고,
   // 파싱할 수 없는 경우(휴무 표기만 있거나 형식이 다른 경우)에만 구글이
   // 내려준 openNow 값으로 대체한다.
-  const isOpenNow =
-    isOperatingNow(parseWeekdayDescriptionsToOperatingDays(weekdayHours)) ??
-    placeHours?.openNow;
+  const isOpenNow = isOperatingNow(operatingDays);
   const hoursStatusLabel =
     isOpenNow === undefined
       ? undefined
       : isOpenNow
         ? OPEN_STATUS_LABEL
         : CLOSED_STATUS_LABEL;
+  const todayHours = formatTodayOperatingHours(operatingDays);
+  const carDurationMinutes = stop.timesFromPrevious.find(
+    (time) => time.transportMode === 'CAR'
+  )?.durationMinutes;
+  const transitDurationMinutes = stop.timesFromPrevious.find(
+    (time) => time.transportMode === 'PUBLIC'
+  )?.durationMinutes;
   const isActive = stop.liked;
   const location = stop.location;
   const canRoute = isValidGeoPoint(location);
@@ -174,7 +176,7 @@ export function CourseStopItem({
         >
           {stop.address}
         </p>
-        {stop.hours &&
+        {(todayHours || stop.placeId !== undefined) &&
           (canExpandHours ? (
             <div>
               <button
@@ -186,18 +188,34 @@ export function CourseStopItem({
                 onKeyDown={(event) => event.stopPropagation()}
                 aria-expanded={isHoursOpen}
                 className="text-gray-3 flex max-w-full items-center"
-                style={{ gap: HOURS_GAP * scale }}
+                style={{ gap: HOURS_STATUS_TO_CHEVRON_GAP * scale }}
               >
                 <span
-                  className="truncate font-sans"
-                  style={{
-                    fontSize: META_FONT_SIZE * scale,
-                    lineHeight: `${META_LINE_HEIGHT * scale}px`,
-                  }}
+                  className="flex min-w-0 items-center"
+                  style={{ gap: HOURS_STATUS_ICON_GAP * scale }}
                 >
-                  {isHoursOpen && hoursStatusLabel
-                    ? hoursStatusLabel
-                    : stop.hours}
+                  {isHoursOpen && hoursStatusLabel ? (
+                    <img
+                      src={operatingStatusClockIcon}
+                      alt=""
+                      aria-hidden="true"
+                      style={{
+                        width: HOURS_STATUS_ICON_SIZE * scale,
+                        height: HOURS_STATUS_ICON_SIZE * scale,
+                      }}
+                    />
+                  ) : null}
+                  <span
+                    className="truncate font-sans"
+                    style={{
+                      fontSize: META_FONT_SIZE * scale,
+                      lineHeight: `${META_LINE_HEIGHT * scale}px`,
+                    }}
+                  >
+                    {isHoursOpen && hoursStatusLabel
+                      ? hoursStatusLabel
+                      : (todayHours ?? '영업시간 정보 없음')}
+                  </span>
                 </span>
                 <IoChevronDown
                   aria-hidden="true"
@@ -208,16 +226,16 @@ export function CourseStopItem({
 
               {isHoursOpen && (
                 <ul style={{ marginTop: HOURS_LIST_MARGIN_TOP * scale }}>
-                  {weekdayHours.map((line) => (
+                  {operatingDays.map((operatingDay) => (
                     <li
-                      key={line}
+                      key={operatingDay.dayOfWeek}
                       className="text-gray-3 font-sans"
                       style={{
                         fontSize: META_FONT_SIZE * scale,
                         lineHeight: `${META_LINE_HEIGHT * scale}px`,
                       }}
                     >
-                      {line}
+                      {formatOperatingDay(operatingDay)}
                     </li>
                   ))}
                 </ul>
@@ -231,7 +249,7 @@ export function CourseStopItem({
                 lineHeight: `${META_LINE_HEIGHT * scale}px`,
               }}
             >
-              {stop.hours}
+              {todayHours ?? '영업시간 정보 없음'}
             </p>
           ))}
 
@@ -244,7 +262,7 @@ export function CourseStopItem({
               gap: TRANSPORT_GAP * scale,
             }}
           >
-            {transitDurationMinutes !== undefined && (
+            {carDurationMinutes !== undefined && (
               <span
                 className="flex items-center"
                 style={{ gap: TRANSPORT_ICON_GAP * scale }}
@@ -264,11 +282,11 @@ export function CourseStopItem({
                     lineHeight: `${META_LINE_HEIGHT * scale}px`,
                   }}
                 >
-                  {transitDurationMinutes}분
+                  {carDurationMinutes}분
                 </span>
               </span>
             )}
-            {carDurationMinutes !== undefined && (
+            {transitDurationMinutes !== undefined && (
               <span
                 className="flex items-center"
                 style={{ gap: TRANSPORT_ICON_GAP * scale }}
@@ -288,7 +306,7 @@ export function CourseStopItem({
                     lineHeight: `${META_LINE_HEIGHT * scale}px`,
                   }}
                 >
-                  {carDurationMinutes}분
+                  {transitDurationMinutes}분
                 </span>
               </span>
             )}

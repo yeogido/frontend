@@ -83,6 +83,7 @@ export function buildPreviewCourseDetail(params: {
     hours: '',
     image: event.imageSrc || courseImage,
     liked: false,
+    timesFromPrevious: [],
     latitude: event.kind === 'PLACE' ? event.latitude : undefined,
     longitude: event.kind === 'PLACE' ? event.longitude : undefined,
   }));

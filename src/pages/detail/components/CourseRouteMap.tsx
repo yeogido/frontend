@@ -42,6 +42,15 @@ export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
   }, [stops]);
 
   const center = validLocations[0] ?? null;
+  const imageMarkers = useMemo(
+    () =>
+      stops.flatMap((stop) =>
+        isValidGeoPoint(stop.location) && stop.image
+          ? [{ location: stop.location, imageUrl: stop.image }]
+          : []
+      ),
+    [stops]
+  );
 
   useEffect(() => {
     if (validLocations.length < 2) {
@@ -107,6 +116,7 @@ export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
       <BaseKakaoMap
         center={center}
         markers={validLocations}
+        imageMarkers={imageMarkers}
         routePath={routePath}
       />
     </section>

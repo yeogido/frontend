@@ -1,5 +1,9 @@
 import { apiClient, normalizeApiError } from './common';
-import type { CourseItem as UpdateCourseItem } from './localRecommendations';
+import type {
+  CourseItem as UpdateCourseItem,
+  OperatingDay,
+  TimeFromPrevious,
+} from './localRecommendations';
 
 export type CourseDetailItem =
   | {
@@ -9,6 +13,7 @@ export type CourseDetailItem =
       isLiked: boolean;
       source: string;
       externalPlaceId: string;
+      categoryGroupCode: string;
       name: string;
       roadAddress: string;
       lotAddress: string;
@@ -16,6 +21,8 @@ export type CourseDetailItem =
       longitude: number;
       imageUrl: string;
       imageKey?: string;
+      operatingDays: OperatingDay[];
+      timesFromPrevious: TimeFromPrevious[];
     }
   | {
       order: number;
@@ -25,12 +32,14 @@ export type CourseDetailItem =
       contentStatus: string;
       source: string;
       externalPlaceId: string;
+      categoryGroupCode: string;
       name: string;
       roadAddress: string;
       lotAddress: string;
       latitude: number;
       longitude: number;
       imageUrl: string;
+      timesFromPrevious: TimeFromPrevious[];
     };
 
 export interface CourseDetailAuthor {

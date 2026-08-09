@@ -115,6 +115,36 @@ function getSeoulNow(now: Date): { dayOfWeek: DayOfWeek; minutes: number } {
   };
 }
 
+const KOREAN_WEEKDAY_LABELS: Record<DayOfWeek, string> = {
+  MONDAY: '월요일',
+  TUESDAY: '화요일',
+  WEDNESDAY: '수요일',
+  THURSDAY: '목요일',
+  FRIDAY: '금요일',
+  SATURDAY: '토요일',
+  SUNDAY: '일요일',
+};
+
+function toHourMinute(time: string): string {
+  return time.slice(0, 5);
+}
+
+export function formatOperatingDay(operatingDay: OperatingDay): string {
+  return `${KOREAN_WEEKDAY_LABELS[operatingDay.dayOfWeek]} ${toHourMinute(operatingDay.openTime)} - ${toHourMinute(operatingDay.closeTime)}`;
+}
+
+export function formatTodayOperatingHours(
+  operatingDays: readonly OperatingDay[],
+  now: Date = new Date()
+): string | undefined {
+  const { dayOfWeek } = getSeoulNow(now);
+  const today = operatingDays.find((day) => day.dayOfWeek === dayOfWeek);
+
+  return today
+    ? `${toHourMinute(today.openTime)} - ${toHourMinute(today.closeTime)}`
+    : undefined;
+}
+
 /**
  * 한국 표준시(Asia/Seoul) 기준 현재 요일·시각을 영업시간 목록과 비교해
  * 영업 중 여부를 계산한다. 오늘자 영업시간 정보가 없으면(휴무로 파싱됐거나

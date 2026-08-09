@@ -1,7 +1,5 @@
 import CourseStopItem from './CourseStopItem';
-import type { PlaceHours } from '../../../apis/googlePlacesHours';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useStopTravelDurations } from '../hooks/useStopTravelDurations';
 import type { CourseStop } from '../types/courseDetail';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -13,7 +11,6 @@ export interface CourseStopListProps {
   readonly onStopLikeToggle: (stopId: number) => void;
   readonly pendingPlaceIds?: ReadonlySet<number>;
   readonly pendingContentIds?: ReadonlySet<number>;
-  readonly placeHoursByStopId?: ReadonlyMap<string | number, PlaceHours>;
   readonly className?: string;
 }
 
@@ -22,11 +19,9 @@ export function CourseStopList({
   onStopLikeToggle,
   pendingPlaceIds = new Set<number>(),
   pendingContentIds = new Set<number>(),
-  placeHoursByStopId = new Map<string | number, PlaceHours>(),
   className = '',
 }: CourseStopListProps) {
   const scale = useGlobalScale();
-  const travelDurationsByStopId = useStopTravelDurations(stops);
 
   return (
     <div
@@ -46,11 +41,6 @@ export function CourseStopList({
             (stop.placeId !== undefined && pendingPlaceIds.has(stop.placeId)) ||
             (stop.contentId !== undefined &&
               pendingContentIds.has(stop.contentId))
-          }
-          placeHours={placeHoursByStopId.get(stop.id)}
-          carDurationMinutes={travelDurationsByStopId.get(stop.id)?.carMinutes}
-          transitDurationMinutes={
-            travelDurationsByStopId.get(stop.id)?.transitMinutes
           }
         />
       ))}

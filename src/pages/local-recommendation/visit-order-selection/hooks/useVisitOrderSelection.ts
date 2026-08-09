@@ -26,7 +26,7 @@ import {
 } from '../buildCourseRequest';
 import { buildVisitEvents } from '../buildVisitEvents';
 import type { VisitEvent } from '../constants';
-import { useVisitEventTravelData } from '../useVisitEventTravelData';
+import { fetchVisitEventTravelData } from '../useVisitEventTravelData';
 
 export function useVisitOrderSelection() {
   const draft = useLocalRecommendationStore((state) => state.draft);
@@ -60,7 +60,6 @@ export function useVisitOrderSelection() {
     )
   );
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
-  const travelData = useVisitEventTravelData(visitEvents);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const sensors = useSensors(
@@ -159,6 +158,7 @@ export function useVisitOrderSelection() {
         eventsWithImageKeys
       );
       if (validationError) throw new Error(validationError);
+      const travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
 
       let result: { courseId: number };
 

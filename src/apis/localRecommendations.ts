@@ -24,8 +24,8 @@ export type CourseItem =
       /** 라이브 스펙에서 PLACE의 선택 필드 — 모르면 아예 보내지 않는다(빈 문자열 금지). */
       categoryGroupCode?: string;
       name: string;
-      roadAddress: string;
-      lotAddress: string;
+      roadAddress: string | null;
+      lotAddress: string | null;
       latitude: number;
       longitude: number;
       imageKey: string | null;

@@ -79,6 +79,8 @@ export function mapCourseStopDtoToViewModel(dto: unknown): CourseStop {
     image: dto.image ?? '',
     liked: Boolean(dto.liked),
     location,
+    operatingDays: dto.operatingDays,
+    timesFromPrevious: dto.timesFromPrevious,
     transportToNext: dto.transportToNext,
   };
 }
