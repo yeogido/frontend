@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  ConfirmDialog,
   ContentCard,
   CourseFilterBar,
   SearchBar,
@@ -25,6 +26,11 @@ import {
 } from '../../hooks/usePlaceOpeningHours';
 import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
+import {
+  readStoredUserLocation,
+  requestUserLocation,
+  type UserLocation,
+} from '../../utils/geolocation';
 
 import {
   LIKED_CATEGORY_OPTIONS,
@@ -68,6 +74,32 @@ function LikesPage() {
   const { goToCourseDetail } = useNavigateToCourseDetail();
   const [keyword, setKeyword] = useState('');
   const [unlikedIds, setUnlikedIds] = useState<ReadonlySet<string>>(new Set());
+  const [initialUserLocation] = useState<UserLocation | null>(() =>
+    readStoredUserLocation()
+  );
+  const [userLocation, setUserLocation] =
+    useState<UserLocation | null>(initialUserLocation);
+  const [isLocationResolved, setIsLocationResolved] = useState(
+    initialUserLocation !== null
+  );
+  const [isLocationConsentOpen, setIsLocationConsentOpen] = useState(
+    initialUserLocation === null
+  );
+  const [isLocationRequesting, setIsLocationRequesting] = useState(false);
+
+  const handleLocationConsent = useCallback(async () => {
+    setIsLocationRequesting(true);
+    const location = await requestUserLocation();
+    setUserLocation(location);
+    setIsLocationRequesting(false);
+    setIsLocationConsentOpen(false);
+    setIsLocationResolved(true);
+  }, []);
+
+  const handleLocationConsentSkip = useCallback(() => {
+    setIsLocationConsentOpen(false);
+    setIsLocationResolved(true);
+  }, []);
 
   const {
     filterContainerRef,
@@ -90,6 +122,9 @@ function LikesPage() {
     category,
     keyword: keyword.trim() || undefined,
     sort,
+    latitude: userLocation?.latitude,
+    longitude: userLocation?.longitude,
+    enabled: isLocationResolved,
   });
 
   const activeLikedItems = useMemo(
@@ -312,6 +347,17 @@ function LikesPage() {
         ref={loadMoreRef}
         style={{ height: LOAD_MORE_HEIGHT * scale }}
         aria-hidden="true"
+      />
+
+      <ConfirmDialog
+        isOpen={isLocationConsentOpen}
+        title="현재 위치를 확인할까요?"
+        description="내 위치를 기준으로 장소까지의 거리를 보여드려요."
+        confirmLabel="위치 확인"
+        cancelLabel="건너뛰기"
+        isPending={isLocationRequesting}
+        onConfirm={() => void handleLocationConsent()}
+        onCancel={handleLocationConsentSkip}
       />
     </section>
   );
