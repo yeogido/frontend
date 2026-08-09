@@ -8,6 +8,7 @@ import {
   ReviewDeleteDialog,
   ReviewDetailModal,
   ReviewEditModal,
+  ReviewTextCard,
 } from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
@@ -193,24 +194,40 @@ function CourseReviewsPage() {
             renderMessage('아직 등록된 후기가 없습니다.')
           ) : (
             <>
-              {reviews.map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  images={review.images}
-                  courseTitle={courseTitle || undefined}
-                  profileImage={review.profileImage}
-                  nickname={review.nickname}
-                  meta={review.meta}
-                  content={review.content}
-                  rating={review.rating}
-                  isMine={review.isMine}
-                  onDeleteClick={() => requestDelete(review.id)}
-                  onEditClick={() => requestEdit(review)}
-                  onClick={() => openReview(review.id)}
-                  variant="course-review-list"
-                  className="[&>div>article]:!bg-[#F9F9F9]"
-                />
-              ))}
+              {/* 사진은 선택이라 없는 후기가 있다. 그때는 본문만 그린다. */}
+              {reviews.map((review) =>
+                review.images.length > 0 ? (
+                  <ReviewCard
+                    key={review.id}
+                    images={review.images}
+                    courseTitle={courseTitle || undefined}
+                    profileImage={review.profileImage}
+                    nickname={review.nickname}
+                    meta={review.meta}
+                    content={review.content}
+                    rating={review.rating}
+                    isMine={review.isMine}
+                    onDeleteClick={() => requestDelete(review.id)}
+                    onEditClick={() => requestEdit(review)}
+                    onClick={() => openReview(review.id)}
+                    variant="course-review-list"
+                    className="[&>div>article]:!bg-[#F9F9F9]"
+                  />
+                ) : (
+                  <ReviewTextCard
+                    key={review.id}
+                    profileImage={review.profileImage}
+                    nickname={review.nickname}
+                    meta={review.meta}
+                    content={review.content}
+                    rating={review.rating}
+                    isMine={review.isMine}
+                    onDeleteClick={() => requestDelete(review.id)}
+                    onEditClick={() => requestEdit(review)}
+                    onClick={() => openReview(review.id)}
+                  />
+                )
+              )}
 
               <div ref={loadMoreRef} aria-hidden="true" />
 

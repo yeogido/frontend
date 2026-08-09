@@ -26,6 +26,7 @@ export { default as ReviewCardSkeleton } from './ReviewCardSkeleton';
 export { default as ReviewDeleteDialog } from './ReviewDeleteDialog';
 export { default as ReviewDetailModal } from './ReviewDetailModal';
 export { default as ReviewEditModal } from './ReviewEditModal';
+export { default as ReviewTextCard } from './ReviewTextCard';
 export { default as SearchBar } from './SearchBar';
 export { default as SearchTriggerButton } from './SearchTriggerButton';
 export { default as SectionHeader } from './SectionHeader';

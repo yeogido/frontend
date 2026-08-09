@@ -5,6 +5,7 @@ import {
   ReviewCardSkeleton,
   ReviewDeleteDialog,
   ReviewEditModal,
+  ReviewTextCard,
   SectionHeader,
 } from '../../../components/common';
 import { useNavigate } from 'react-router-dom';
@@ -153,19 +154,35 @@ function ReviewSection() {
                 key={review.id}
                 className="w-full shrink-0 snap-start snap-always"
               >
-                <ReviewCard
-                  images={review.images}
-                  courseTitle={review.courseTitle}
-                  profileImage={review.profileImage}
-                  nickname={review.nickname}
-                  meta={review.meta}
-                  content={review.content}
-                  rating={review.rating}
-                  isMine={review.isMine}
-                  onDeleteClick={() => requestDelete(review.id)}
-                  onEditClick={() => requestEdit(review)}
-                  onClick={() => goToCourseDetail(review)}
-                />
+                {/* 사진은 선택이라 없는 후기가 있다. 그때는 이미지 자리가 빈
+                    채로 남지 않도록 본문만 그리는 카드를 쓴다. */}
+                {review.images.length > 0 ? (
+                  <ReviewCard
+                    images={review.images}
+                    courseTitle={review.courseTitle}
+                    profileImage={review.profileImage}
+                    nickname={review.nickname}
+                    meta={review.meta}
+                    content={review.content}
+                    rating={review.rating}
+                    isMine={review.isMine}
+                    onDeleteClick={() => requestDelete(review.id)}
+                    onEditClick={() => requestEdit(review)}
+                    onClick={() => goToCourseDetail(review)}
+                  />
+                ) : (
+                  <ReviewTextCard
+                    profileImage={review.profileImage}
+                    nickname={review.nickname}
+                    meta={review.meta}
+                    content={review.content}
+                    rating={review.rating}
+                    isMine={review.isMine}
+                    onDeleteClick={() => requestDelete(review.id)}
+                    onEditClick={() => requestEdit(review)}
+                    onClick={() => goToCourseDetail(review)}
+                  />
+                )}
               </div>
             ))}
       </div>
