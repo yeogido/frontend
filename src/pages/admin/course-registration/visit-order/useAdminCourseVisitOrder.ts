@@ -126,14 +126,14 @@ export function useAdminCourseVisitOrder() {
         place.photoFile ? [{ placeId: place.id, file: place.photoFile }] : []
       );
       const uploadedKeys = await uploadAdminCourseImages(
-        photo
+        photo?.file
           ? [photo.file, ...placeImageUploads.map((upload) => upload.file)]
           : placeImageUploads.map((upload) => upload.file)
       );
-      const thumbnailKey = photo
+      const thumbnailKey = photo?.file
         ? uploadedKeys[0]
         : (existingThumbnailKey as string);
-      const placeImageKeys = photo ? uploadedKeys.slice(1) : uploadedKeys;
+      const placeImageKeys = photo?.file ? uploadedKeys.slice(1) : uploadedKeys;
       const imageKeyByPlaceId = new Map(
         placeImageUploads.map((upload, index) => [
           upload.placeId,

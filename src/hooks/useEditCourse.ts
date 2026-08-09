@@ -10,6 +10,7 @@ import type { CourseBasicInfoValues } from '../pages/local-recommendation/course
 import type { VisitEvent } from '../pages/local-recommendation/visit-order-selection/constants';
 import { useAdminCourseRegistrationStore } from '../store/adminCourseRegistration.store';
 import { toContentTagIds } from '../utils/contentTags';
+import { deriveImageKeyFromUrl } from '../utils/deriveImageKeyFromUrl';
 
 const DURATION_TYPE_TO_FORM: Record<string, CourseBasicInfoValues['duration']> = {
   DAY_TRIP: 'day-trip',
@@ -31,23 +32,6 @@ const COMPANION_TYPE_TO_FORM: Record<string, CourseBasicInfoValues['companion']>
   FAMILY: 'family',
   PET: 'pet',
 };
-
-/**
- * 상세 조회는 대표 사진의 원본 key를 따로 주지 않고 완성된 URL만 준다.
- * PLACE 항목의 imageKey/imageUrl을 비교해보면 URL의 경로 부분이 곧 key와
- * 정확히 일치해(예: `.../courses/xxxx.svg` → `courses/xxxx.svg`) 같은
- * 방식으로 대표 사진 key도 유추할 수 있다. 형식이 예상과 다르면(파싱 실패)
- * null을 반환해 새로 올리도록 만든다.
- */
-function deriveImageKeyFromUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-
-  try {
-    return new URL(url).pathname.replace(/^\//, '');
-  } catch {
-    return null;
-  }
-}
 
 /**
  * 관리자 코스 목록(홈/인기/최근)에서 "수정" 클릭 시 공통으로 쓰는 진입 로직.
@@ -90,7 +74,13 @@ export function useEditCourse() {
       const detail = await getCourseDetail(courseId);
 
       setRegion({ id: -1, name: detail.title, parentName: '' });
-      setPhoto(null);
+      // file 없이 previewUrl만 채워서, 새로 안 골라도 화면에 기존 사진이
+      // 보이게 한다(교체/삭제 버튼도 그대로 동작).
+      setPhoto(
+        detail.thumbnailUrl
+          ? { file: null, previewUrl: detail.thumbnailUrl }
+          : null
+      );
       setExistingThumbnailKey(deriveImageKeyFromUrl(detail.thumbnailUrl));
       setBasicInfo({
         courseName: detail.title,

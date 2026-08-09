@@ -41,6 +41,9 @@ function AdminCoursePhotoTagPage() {
   const existingThumbnailKey = useAdminCourseRegistrationStore(
     (state) => state.existingThumbnailKey
   );
+  const setExistingThumbnailKey = useAdminCourseRegistrationStore(
+    (state) => state.setExistingThumbnailKey
+  );
   const selectedTagIds = new Set(keywordTagIds);
   const [limitMessage, setLimitMessage] = useState('');
 
@@ -55,6 +58,11 @@ function AdminCoursePhotoTagPage() {
   if (!region) return null;
 
   const handlePhotoChange = (file: File | null) => {
+    // 사진을 지우면(교체 아님) 기존 key 재사용 폴백도 같이 지워서, "사진
+    // 없음"이 진짜로 다시 골라야 하는 상태가 되게 한다.
+    if (!file) {
+      setExistingThumbnailKey(null);
+    }
     setPhotoInStore(
       file ? { file, previewUrl: URL.createObjectURL(file) } : null
     );
@@ -69,7 +77,7 @@ function AdminCoursePhotoTagPage() {
   };
 
   const isReady =
-    (Boolean(photo) || Boolean(existingThumbnailKey)) &&
+    (Boolean(photo?.file) || Boolean(existingThumbnailKey)) &&
     selectedTagIds.size > 0;
 
   const handleSubmit = () => {
