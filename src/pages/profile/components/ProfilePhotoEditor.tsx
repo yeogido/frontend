@@ -64,18 +64,32 @@ export function ProfilePhotoEditor({
     positionY: number;
   } | null>(null);
   const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
-  const hasSeededInitialPhotoRef = useRef(false);
+  // "마지막으로 반영한 URL"을 들고 있어서, initialPhotoUrl이 다른 값으로
+  // 바뀔 때마다(예: 업로드 후 쿼리가 refetch되어 서버 URL이 갱신될 때)
+  // 다시 반영할 수 있다. StrictMode의 effect 이중 실행(mount→cleanup→
+  // mount)에서 취소된 시도가 "이미 반영함"으로 잘못 기록되지 않도록,
+  // setSavedPhoto를 실제로 호출한 뒤에만(= .then 콜백 안에서) 갱신한다.
+  const lastSeededPhotoUrlRef = useRef<string | null>(null);
+  // 사용자가 사진을 한 번이라도 직접 고르면(handleFileChange) true로
+  // 고정한다. 그 이후로는 initialPhotoUrl이 나중에 바뀌어도(예: 서버
+  // 값이 아직 예전 사진일 때) 이 effect가 로컬 편집 결과를 되돌리지
+  // 않는다 — commitPhoto가 끝나며 isTransforming/isUploading이 바뀌는
+  // 순간 이 effect가 재실행되어 방금 확정한 사진을 예전 값으로 덮어쓰던
+  // 문제를 막는다.
+  const hasUserInteractedRef = useRef(false);
   const photo = draftPhoto ?? savedPhoto;
 
   useEffect(() => {
-    if (!initialPhotoUrl || hasSeededInitialPhotoRef.current) return;
+    if (!initialPhotoUrl) return;
+    if (hasUserInteractedRef.current) return;
+    if (initialPhotoUrl === lastSeededPhotoUrlRef.current) return;
 
-    hasSeededInitialPhotoRef.current = true;
     let isCancelled = false;
 
     void getImageAspectRatio(initialPhotoUrl).then((aspectRatio) => {
       if (isCancelled) return;
 
+      lastSeededPhotoUrlRef.current = initialPhotoUrl;
       setSavedPhoto({
         src: initialPhotoUrl,
         zoom: MIN_ZOOM,
@@ -109,6 +123,7 @@ export function ProfilePhotoEditor({
   const handleFileChange = async (file: File | undefined) => {
     if (!file || !file.type.startsWith('image/')) return;
 
+    hasUserInteractedRef.current = true;
     const attemptId = ++attemptIdRef.current;
 
     try {
