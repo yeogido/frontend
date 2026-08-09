@@ -110,6 +110,8 @@ function MyPostsPage() {
   );
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviewsForModal);
+  // 코스 정보가 아직 안 내려오는 리뷰가 있어(myPostReviewCard 참고) 없을 수 있다.
+  const openedCourseId = openedReview?.courseId;
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -261,13 +263,7 @@ function MyPostsPage() {
                   content={reviewCard.content}
                   rating={reviewCard.rating}
                   isMine
-                  onClick={
-                    reviewCard.courseId !== undefined
-                      ? () =>
-                          void goToCourseDetail(reviewCard.courseId as number)
-                      : undefined
-                  }
-                  onLongPress={() => openReview(reviewCard.id)}
+                  onClick={() => openReview(reviewCard.id)}
                   onEditClick={() =>
                     requestEdit({
                       id: reviewCard.id,
@@ -338,7 +334,16 @@ function MyPostsPage() {
         title="코스를 삭제할까요?"
         description="삭제한 코스는 되돌릴 수 없어요."
       />
-      <ReviewDetailModal review={openedReview} onClose={closeReview} />
+      {/* 카드 탭이 후기 상세를 열게 되면서, 코스로는 이 모달을 거쳐 간다. */}
+      <ReviewDetailModal
+        review={openedReview}
+        onClose={closeReview}
+        onGoToCourse={
+          openedCourseId !== undefined
+            ? () => void goToCourseDetail(openedCourseId)
+            : undefined
+        }
+      />
     </section>
   );
 }

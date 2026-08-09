@@ -22,6 +22,8 @@ export interface MyCourse extends MyCourseSummary {
   createdAt: string;
 }
 
+export type UserRole = 'USER' | 'BUSINESS' | 'ADMIN';
+
 // 스웨거 기준: GET /users/me
 // role은 USER | ADMIN | BUSINESS지만 유니온으로 좁히지 않는다.
 export interface UserProfileResponse {
@@ -29,6 +31,7 @@ export interface UserProfileResponse {
   email: string;
   name: string;
   region: string;
+  regionId: number;
   birthYear: string;
   role: string;
   profileImageUrl: string | null;
@@ -82,4 +85,16 @@ export interface GetMyPostsResponse {
   cursorValue: string | number | null;
   cursorId: number | null;
   hasNext: boolean;
+}
+
+// "변경할 필드만" 보낸다는 스펙이라 전부 optional로 둔다.
+export interface UpdateMyProfileRequest {
+  nickname?: string;
+  birthYear?: string;
+  regionId?: number;
+  profileImageUrl?: string;
+}
+
+export interface UpdateMyProfileResponse {
+  userId: number;
 }

@@ -1,4 +1,5 @@
 export const BUSINESS_ROLE = 'BUSINESS';
+export const ADMIN_ROLE = 'ADMIN';
 
 /**
  * 소상공인 권한인지 본다.
@@ -12,4 +13,9 @@ export const BUSINESS_ROLE = 'BUSINESS';
  */
 export function isBusinessRole(role: string | undefined) {
   return role?.toUpperCase() === BUSINESS_ROLE;
+}
+
+/** 관리자 권한인지 본다 — 판단 근거는 isBusinessRole과 동일. */
+export function isAdminRole(role: string | undefined) {
+  return role?.toUpperCase() === ADMIN_ROLE;
 }

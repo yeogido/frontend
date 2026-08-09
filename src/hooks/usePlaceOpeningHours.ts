@@ -5,6 +5,7 @@ import {
   type PlaceHours,
   type PlaceHoursLookup,
 } from '../apis/googlePlacesHours';
+import { createRequestQueue } from './utils/createRequestQueue';
 
 export interface PlaceHoursLookupItem extends PlaceHoursLookup {
   readonly id: string | number;
@@ -13,29 +14,7 @@ export interface PlaceHoursLookupItem extends PlaceHoursLookup {
 const PLACE_HOURS_STALE_TIME = 1000 * 60 * 5;
 const PLACE_HOURS_GC_TIME = 1000 * 60 * 30;
 const PLACE_HOURS_CONCURRENCY = 4;
-let activePlaceHoursRequests = 0;
-const pendingPlaceHoursRequests: Array<() => void> = [];
-
-function runNextPlaceHoursRequest() {
-  if (activePlaceHoursRequests >= PLACE_HOURS_CONCURRENCY) {
-    return;
-  }
-
-  pendingPlaceHoursRequests.shift()?.();
-}
-
-function queuePlaceHoursRequest<T>(request: () => Promise<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    pendingPlaceHoursRequests.push(() => {
-      activePlaceHoursRequests += 1;
-      void request().then(resolve, reject).finally(() => {
-        activePlaceHoursRequests -= 1;
-        runNextPlaceHoursRequest();
-      });
-    });
-    runNextPlaceHoursRequest();
-  });
-}
+const queuePlaceHoursRequest = createRequestQueue(PLACE_HOURS_CONCURRENCY);
 
 export function usePlaceOpeningHours(
   places: readonly PlaceHoursLookupItem[]
@@ -107,7 +86,5 @@ export function formatTodayOpeningHours(hours: PlaceHours): string | undefined {
     return '휴무';
   }
 
-  return description
-    .replace(/^[^:]+:\s*/, '')
-    .replace(/[~–—]/g, ' - ');
+  return description.replace(/^[^:]+:\s*/, '').replace(/[~–—]/g, ' - ');
 }

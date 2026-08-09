@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import AdminRoute from '../components/auth/AdminRoute';
 
 import HomePage from '../pages/home';
 import LoginPage from '../pages/auth/login';
@@ -31,6 +32,8 @@ import LocalBusinessPage from '../pages/local-business';
 import LocalBusinessDetailPage from '../pages/detail/local-business';
 import LocalRecommendationPage from '../pages/local-recommendation';
 import AdminPage from '../pages/admin';
+import AdminFestivalsOngoingPage from '../pages/admin/festivals/ongoing';
+import AdminFestivalsRecentPage from '../pages/admin/festivals/recent';
 import AdminPlaceSelectionPage from '../pages/admin/event-registration/place-selection';
 import AdminEventBasicInfoPage from '../pages/admin/event-registration/basic-info';
 import AdminEventPhotoTagPage from '../pages/admin/event-registration/photo-tag';
@@ -141,21 +144,31 @@ function AppRouter() {
           element={<CourseReviewsPage />}
         />
 
-        <Route path="/admin" element={<AdminPage />} />
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminPage />} />
+          <Route
+            path="/admin/festivals/ongoing"
+            element={<AdminFestivalsOngoingPage />}
+          />
+          <Route
+            path="/admin/festivals/recent"
+            element={<AdminFestivalsRecentPage />}
+          />
 
-        <Route path="/admin/courses" element={<AdminCoursesPage />} />
-        <Route
-          path="/admin/courses/popular"
-          element={<AdminCoursesPopularPage />}
-        />
-        <Route
-          path="/admin/courses/recent"
-          element={<AdminCoursesRecentPage />}
-        />
-        <Route
-          path="/admin/courses/detail/:courseId"
-          element={<AdminCourseMockDetailPage />}
-        />
+          <Route path="/admin/courses" element={<AdminCoursesPage />} />
+          <Route
+            path="/admin/courses/popular"
+            element={<AdminCoursesPopularPage />}
+          />
+          <Route
+            path="/admin/courses/recent"
+            element={<AdminCoursesRecentPage />}
+          />
+          <Route
+            path="/admin/courses/detail/:courseId"
+            element={<AdminCourseMockDetailPage />}
+          />
+        </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path="/travel-record" element={<TravelRecordPage />} />
@@ -258,7 +271,7 @@ function AppRouter() {
       />
       <Route path="/review" element={<ReviewPage />} />
 
-      <Route element={<ProtectedRoute />}>
+      <Route element={<AdminRoute />}>
         <Route
           path="/admin/event-registration/place-selection"
           element={<AdminPlaceSelectionPage />}

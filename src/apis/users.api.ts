@@ -8,6 +8,8 @@ import type {
 import type {
   GetMyPostsParams,
   GetMyPostsResponse,
+  UpdateMyProfileRequest,
+  UpdateMyProfileResponse,
   UserProfileResponse,
 } from '../types/user.type';
 
@@ -36,6 +38,21 @@ export async function getMyPosts(
   }
 }
 
+export async function updateMyProfile(
+  payload: UpdateMyProfileRequest,
+): Promise<UpdateMyProfileResponse> {
+  try {
+    const { data } = await apiClient.patch<UpdateMyProfileResponse>(
+      '/users/me',
+      payload,
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
 // 백엔드가 국세청 오픈 API로 사업자 상태를 검증하고, 성공하면 유저 권한을
 // BUSINESS로 승급한다. 국세청 연동 결과는 BUSINESS_VERIFY4002(정보 불일치),
 // BUSINESS_VERIFY4041(폐업/미존재), BUSINESS_VERIFY5001(연동 오류)로 돌아온다.
@@ -47,6 +64,16 @@ export async function verifyBusiness(
       '/users/business-verify',
       request,
     );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function deleteMyAccount(): Promise<null> {
+  try {
+    const { data } = await apiClient.delete<null>('/users/me');
 
     return data;
   } catch (error) {

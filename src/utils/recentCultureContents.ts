@@ -2,6 +2,17 @@ import type { RecentCultureContent } from '../types/content.type';
 
 export const RECENT_CULTURE_CONTENTS_STORAGE_KEY = 'recent-culture-contents';
 export const MAX_RECENT_CULTURE_CONTENTS = 10;
+// useRecentCultureContents는 마운트 시 한 번만 localStorage를 읽어(리액트
+// state), 다른 곳에서 목록을 바꿔도 이미 그려진 화면에는 반영되지 않는다.
+// 같은 탭 안에서 즉시 갱신되도록 변경할 때마다 이 이벤트를 쏘고, 훅이
+// 구독해서 다시 읽는다.
+export const RECENT_CULTURE_CONTENTS_UPDATED_EVENT =
+  'recent-culture-contents-updated';
+
+function notifyRecentCultureContentsUpdated(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(RECENT_CULTURE_CONTENTS_UPDATED_EVENT));
+}
 
 export function upsertRecentCultureContent(
   contents: readonly RecentCultureContent[],
@@ -46,6 +57,29 @@ export function saveRecentCultureContent(content: RecentCultureContent): void {
       RECENT_CULTURE_CONTENTS_STORAGE_KEY,
       JSON.stringify(contents),
     );
+    notifyRecentCultureContentsUpdated();
+  } catch {
+    return;
+  }
+}
+
+export function removeRecentCultureContent(contentId: number): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const contents = getStoredRecentCultureContents();
+
+    if (!contents.some((content) => content.contentId === contentId)) return;
+
+    const updatedContents = contents.filter(
+      (content) => content.contentId !== contentId,
+    );
+
+    window.localStorage.setItem(
+      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      JSON.stringify(updatedContents),
+    );
+    notifyRecentCultureContentsUpdated();
   } catch {
     return;
   }
@@ -70,6 +104,7 @@ export function updateRecentCultureContentLikeState(
       RECENT_CULTURE_CONTENTS_STORAGE_KEY,
       JSON.stringify(updatedContents),
     );
+    notifyRecentCultureContentsUpdated();
   } catch {
     return;
   }

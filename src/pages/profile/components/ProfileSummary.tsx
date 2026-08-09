@@ -1,16 +1,25 @@
+import type { UserRole } from '../../../types/user.type';
+
+const ROLE_LABEL: Partial<Record<UserRole, string>> = {
+  BUSINESS: '소상공인',
+  ADMIN: '관리자',
+};
+
 interface ProfileSummaryProps {
   readonly name: string;
-  readonly isBusinessProfile: boolean;
+  readonly role?: string;
   readonly scale: number;
   readonly onEdit: () => void;
 }
 
 export function ProfileSummary({
   name,
-  isBusinessProfile,
+  role,
   scale,
   onEdit,
 }: ProfileSummaryProps) {
+  const roleLabel = role ? ROLE_LABEL[role as UserRole] : undefined;
+
   return (
     <>
       <h1
@@ -23,12 +32,12 @@ export function ProfileSummary({
       >
         {name}
       </h1>
-      {isBusinessProfile ? (
+      {roleLabel ? (
         <p
           className="font-medium text-[#7f7f7f]"
           style={{ fontSize: 16 * scale, lineHeight: `${19 * scale}px` }}
         >
-          소상공인
+          {roleLabel}
         </p>
       ) : null}
       <button

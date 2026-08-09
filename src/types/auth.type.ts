@@ -77,3 +77,14 @@ export interface SignupRequest {
 export interface SignupResult {
   userId: number;
 }
+
+// 서버 응답의 result 필드 구조 (스웨거 기준: POST /api/v1/auth/password/verify-code)
+// resetToken은 UUID이며, 다음 단계(비밀번호 재설정) 요청에 그대로 실어 보낸다.
+export interface VerifyPasswordResetCodeResult {
+  resetToken: string;
+}
+
+export interface ResetPasswordRequest {
+  resetToken: string;
+  newPassword: string;
+}

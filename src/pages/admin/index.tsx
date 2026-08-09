@@ -1,16 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 
 import {
-  ContentCard,
+  ConfirmDialog,
   ContentCardSkeleton,
+  EditableContentCard,
   FloatingActionButton,
   SearchTriggerButton,
   SectionHeader,
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useContentDelete } from '../../hooks/useContentDelete';
 import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
+import { useEditFestival } from '../../hooks/useEditFestival';
 import { useCultureContents } from '../../hooks/useCultureContents';
-import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
 import { useAdminEventRegistrationStore } from '../../store/adminEventRegistration.store';
 import { toContentTagIds } from '../../utils/contentTags';
@@ -18,6 +20,13 @@ import { buildFestivalDetailPath } from '../../utils/routes';
 
 import { FeaturedFestivalBanner } from '../festival/components';
 import useFestivalPreviews from '../festival/hooks/useFestivalPreviews';
+
+const ONGOING_PREVIEW_COUNT = 2;
+const RETRY_PADDING_X = 16;
+const RETRY_PADDING_Y = 8;
+const RETRY_TEXT_SIZE = 14;
+const ERROR_MARGIN_TOP = 16;
+const ERROR_TEXT_SIZE = 13;
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -36,22 +45,25 @@ const LIST_GAP = 16;
 function AdminPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const { getLiked, toggleLike } = useContentLikeToggle();
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
   const { data: cultureContentBanners } = useCultureContentBanners();
   const {
-    data: cultureContents,
-    isPending: isCultureContentsPending,
+    data: ongoingContentsData,
+    isPending: isOngoingContentsPending,
+    isError: isOngoingContentsError,
+    refetch: refetchOngoingContents,
   } = useCultureContents({
-    category: 'FESTIVAL',
+    statuses: ['ONGOING'],
     sort: 'RECOMMEND',
-    size: 2,
+    size: ONGOING_PREVIEW_COUNT,
   });
   const resetRegistration = useAdminEventRegistrationStore(
     (state) => state.reset
   );
-  const ongoingFestivals = cultureContents?.pages[0]?.items ?? [];
+  const { editFestival } = useEditFestival();
+  const { requestDelete, dialogProps: deleteDialogProps } = useContentDelete();
+  const ongoingFestivals = ongoingContentsData?.pages[0]?.items ?? [];
   const banner = cultureContentBanners?.[0];
   const displayedBanner = banner
     ? {
@@ -68,11 +80,11 @@ function AdminPage() {
   };
 
   const goToOngoingFestivals = () => {
-    navigate('/festival/ongoing');
+    navigate('/admin/festivals/ongoing');
   };
 
   const goToRecentFestivals = () => {
-    navigate('/festival/recent');
+    navigate('/admin/festivals/recent');
   };
 
   const handleStartRegistration = () => {
@@ -81,107 +93,62 @@ function AdminPage() {
   };
 
   return (
-    <section
-      className="mx-auto flex min-h-screen w-full flex-col"
-      style={{
-        paddingLeft: PAGE_PADDING_X * scale,
-        paddingRight: PAGE_PADDING_X * scale,
-        paddingTop: PAGE_PADDING_TOP * scale,
-        paddingBottom: PAGE_PADDING_BOTTOM * scale,
-      }}
-    >
-      <div>
-        <h1
-          className="font-semibold text-black"
-          style={{
-            fontSize: TITLE_SIZE * scale,
-            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          어디로 떠나볼까요?
-        </h1>
-        <p
-          className="font-normal text-gray-5"
-          style={{
-            marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: DESCRIPTION_SIZE * scale,
-            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          다양한 지역의 행사를 만나보세요
-        </p>
-      </div>
-
-      <div style={{ marginTop: SEARCH_MARGIN_TOP * scale }}>
-        <SearchTriggerButton
-          label="행사명 또는 지역명 검색 화면으로 이동"
-          placeholder="행사명 또는 지역명을 검색해 주세요"
-          onClick={goToFestivalSearch}
-        />
-      </div>
-
-      <div style={{ marginTop: BANNER_MARGIN_TOP * scale }}>
-        <FeaturedFestivalBanner
-          festival={displayedBanner}
-          onClick={() =>
-            banner
-              ? navigate(buildFestivalDetailPath(banner.contentId))
-              : goToFestivalSearch()
-          }
-        />
-      </div>
-
-      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
-        <SectionHeader
-          title="진행 중인 행사"
-          actionText="전체 보기"
-          onActionClick={goToOngoingFestivals}
-        />
-
-        <div
-          className="grid grid-cols-2"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            gap: LIST_GAP * scale,
-          }}
-        >
-          {isCultureContentsPending ? (
-            <>
-              <ContentCardSkeleton />
-              <ContentCardSkeleton />
-            </>
-          ) : (
-            ongoingFestivals.map((festival) => (
-              <ContentCard
-                key={festival.contentId}
-                image={festival.thumbnailImageUrl}
-                title={festival.title}
-                firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-                secondInfo={festival.regionName}
-                tags={toContentTagIds(festival.hashtags)}
-                liked={getLiked(festival.contentId, false)}
-                className="w-full"
-                onClick={() =>
-                  navigate(buildFestivalDetailPath(festival.contentId))
-                }
-                onLikeClick={() =>
-                  toggleLike(
-                    festival.contentId,
-                    getLiked(festival.contentId, false)
-                  )
-                }
-              />
-            ))
-          )}
+    <>
+      <section
+        className="mx-auto flex min-h-screen w-full flex-col"
+        style={{
+          paddingLeft: PAGE_PADDING_X * scale,
+          paddingRight: PAGE_PADDING_X * scale,
+          paddingTop: PAGE_PADDING_TOP * scale,
+          paddingBottom: PAGE_PADDING_BOTTOM * scale,
+        }}
+      >
+        <div>
+          <h1
+            className="font-semibold text-black"
+            style={{
+              fontSize: TITLE_SIZE * scale,
+              lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+            }}
+          >
+            어디로 떠나볼까요?
+          </h1>
+          <p
+            className="text-gray-5 font-normal"
+            style={{
+              marginTop: DESCRIPTION_MARGIN_TOP * scale,
+              fontSize: DESCRIPTION_SIZE * scale,
+              lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+            }}
+          >
+            다양한 지역의 행사를 만나보세요
+          </p>
         </div>
-      </section>
 
-      {recentFestivals.length > 0 ? (
+        <div style={{ marginTop: SEARCH_MARGIN_TOP * scale }}>
+          <SearchTriggerButton
+            label="행사명 또는 지역명 검색 화면으로 이동"
+            placeholder="행사명 또는 지역명을 검색해 주세요"
+            onClick={goToFestivalSearch}
+          />
+        </div>
+
+        <div style={{ marginTop: BANNER_MARGIN_TOP * scale }}>
+          <FeaturedFestivalBanner
+            festival={displayedBanner}
+            onClick={() =>
+              banner
+                ? navigate(buildFestivalDetailPath(banner.contentId))
+                : goToFestivalSearch()
+            }
+          />
+        </div>
+
         <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
           <SectionHeader
-            title="최근 본 행사"
+            title="진행 중인 행사"
             actionText="전체 보기"
-            onActionClick={goToRecentFestivals}
+            onActionClick={goToOngoingFestivals}
           />
 
           <div
@@ -191,36 +158,109 @@ function AdminPage() {
               gap: LIST_GAP * scale,
             }}
           >
-            {recentFestivals.map((festival) => (
-              <ContentCard
-                key={festival.contentId}
-                image={festival.thumbnailImageUrl}
-                title={festival.title}
-                firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-                secondInfo={festival.regionName}
-                liked={getLiked(festival.contentId, festival.liked)}
-                tags={toContentTagIds(festival.hashtags)}
-                className="w-full"
-                onClick={() =>
-                  navigate(buildFestivalDetailPath(festival.contentId))
-                }
-                onLikeClick={() =>
-                  toggleLike(
-                    festival.contentId,
-                    getLiked(festival.contentId, festival.liked)
-                  )
-                }
-              />
-            ))}
+            {isOngoingContentsPending ? (
+              <>
+                <ContentCardSkeleton />
+                <ContentCardSkeleton />
+              </>
+            ) : (
+              ongoingFestivals.map((festival) => (
+                <EditableContentCard
+                  key={festival.contentId}
+                  image={festival.thumbnailImageUrl}
+                  title={festival.title}
+                  firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                  secondInfo={festival.regionName}
+                  tags={toContentTagIds(festival.hashtags)}
+                  className="w-full"
+                  onClick={() =>
+                    navigate(buildFestivalDetailPath(festival.contentId))
+                  }
+                  onEdit={() => void editFestival(festival.contentId)}
+                  onDelete={() => requestDelete(festival.contentId)}
+                />
+              ))
+            )}
           </div>
-        </section>
-      ) : null}
 
-      <FloatingActionButton
-        ariaLabel="여기도 추천 행사 등록"
-        onClick={handleStartRegistration}
+          {!isOngoingContentsPending && isOngoingContentsError ? (
+            <div
+              className="flex flex-col items-center"
+              style={{
+                marginTop: ERROR_MARGIN_TOP * scale,
+                gap: ERROR_MARGIN_TOP * scale,
+              }}
+            >
+              <p
+                className="text-main-5 text-center font-medium"
+                style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+              >
+                행사 목록을 불러오지 못했어요.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refetchOngoingContents()}
+                className="rounded-full border border-[#e4e4e4] font-medium text-[#505050]"
+                style={{
+                  paddingLeft: RETRY_PADDING_X * scale,
+                  paddingRight: RETRY_PADDING_X * scale,
+                  paddingTop: RETRY_PADDING_Y * scale,
+                  paddingBottom: RETRY_PADDING_Y * scale,
+                  fontSize: RETRY_TEXT_SIZE * scale,
+                }}
+              >
+                다시 시도
+              </button>
+            </div>
+          ) : null}
+        </section>
+
+        {recentFestivals.length > 0 ? (
+          <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
+            <SectionHeader
+              title="최근 본 행사"
+              actionText="전체 보기"
+              onActionClick={goToRecentFestivals}
+            />
+
+            <div
+              className="grid grid-cols-2"
+              style={{
+                marginTop: LIST_MARGIN_TOP * scale,
+                gap: LIST_GAP * scale,
+              }}
+            >
+              {recentFestivals.map((festival) => (
+                <EditableContentCard
+                  key={festival.contentId}
+                  image={festival.thumbnailImageUrl}
+                  title={festival.title}
+                  firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                  secondInfo={festival.regionName}
+                  tags={toContentTagIds(festival.hashtags)}
+                  className="w-full"
+                  onClick={() =>
+                    navigate(buildFestivalDetailPath(festival.contentId))
+                  }
+                  onEdit={() => void editFestival(festival.contentId)}
+                  onDelete={() => requestDelete(festival.contentId)}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <FloatingActionButton
+          ariaLabel="여기도 추천 행사 등록"
+          onClick={handleStartRegistration}
+        />
+      </section>
+      <ConfirmDialog
+        {...deleteDialogProps}
+        title="행사를 삭제할까요?"
+        description="삭제한 행사는 되돌릴 수 없어요."
       />
-    </section>
+    </>
   );
 }
 

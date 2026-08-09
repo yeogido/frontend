@@ -29,6 +29,7 @@ const LOGIN_ERROR_MESSAGES: Record<string, string> = {
   COMMON4001: '잘못된 요청입니다.',
   AUTH4012: '비밀번호 또는 인증 정보가 일치하지 않습니다.',
   USER4041: '존재하지 않는 회원입니다.',
+  USER4101: '이미 탈퇴한 회원입니다.',
 };
 
 function isNormalizedApiError(error: unknown): error is NormalizedApiError {

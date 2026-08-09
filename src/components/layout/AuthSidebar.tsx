@@ -9,7 +9,18 @@ import { Divider } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useLogout } from '../../hooks/useLogout';
+import { useIsAdmin, useMyProfile } from '../../hooks/useMyProfile';
 import { APP_MAX_WIDTH } from '../../constants/layout';
+
+/**
+ * 관리자로 로그인했을 때, 사이드바 메뉴 이름은 그대로 두고 실제 이동
+ * 경로만 관리자 페이지로 바꾼다. 나머지 메뉴는 guestSidebarMenu의 path를
+ * 그대로 쓴다.
+ */
+const ADMIN_MENU_PATH_OVERRIDE: Record<string, string> = {
+  '/yeogido-course': '/admin/courses',
+  '/festival': '/admin',
+};
 
 const DRAWER_MAX_WIDTH = 280;
 const DRAWER_HEADER_HEIGHT = 111;
@@ -20,6 +31,8 @@ const PROFILE_LEFT = 24;
 const AVATAR_SIZE = 40;
 const PROFILE_GAP = 12;
 const NAME_TEXT_SIZE = 16;
+const EMAIL_TEXT_SIZE = 12;
+const EMAIL_MARGIN_TOP = 2;
 const MENU_ITEM_HEIGHT = 51;
 const MENU_PADDING_X = 24;
 const TEXT_BASE = 16;
@@ -50,9 +63,11 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
   const scale = useGlobalScale();
   const handleLogout = useLogout();
   const { userId } = useAuth();
-  // 닉네임/이메일을 내려주는 사용자 프로필 API가 아직 없어, 지어낸 값 대신
-  // 실제로 존재하는 userId 기반의 안전한 표시값만 사용한다.
-  const displayName = userId ? `회원 #${userId}` : '회원';
+  const { data: profile, isPending: isProfilePending } = useMyProfile();
+  const isAdmin = useIsAdmin();
+  // 프로필 조회가 끝나기 전에는 실제로 존재하는 userId 기반의 안전한
+  // 표시값으로 대체한다.
+  const displayName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
 
   return (
     // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
@@ -109,21 +124,45 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 gap: PROFILE_GAP * scale,
               }}
             >
-              <div
-                className="shrink-0 rounded-full bg-[#E4E4E4]"
-                style={{
-                  width: AVATAR_SIZE * scale,
-                  height: AVATAR_SIZE * scale,
-                }}
-              />
+              {profile?.profileImageUrl ? (
+                <img
+                  src={profile.profileImageUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="shrink-0 rounded-full object-cover"
+                  style={{
+                    width: AVATAR_SIZE * scale,
+                    height: AVATAR_SIZE * scale,
+                  }}
+                />
+              ) : (
+                <div
+                  className="shrink-0 rounded-full bg-[#E4E4E4]"
+                  style={{
+                    width: AVATAR_SIZE * scale,
+                    height: AVATAR_SIZE * scale,
+                  }}
+                />
+              )}
 
-              <div className="flex min-w-0 flex-col">
+              <div className="flex min-w-0 flex-col items-start text-left">
                 <span
                   className="truncate leading-none font-semibold text-[#1C1C1C]"
                   style={{ fontSize: NAME_TEXT_SIZE * scale }}
                 >
                   {displayName}
                 </span>
+                {profile?.email && (
+                  <span
+                    className="truncate leading-none font-medium text-[#7f7f7f]"
+                    style={{
+                      fontSize: EMAIL_TEXT_SIZE * scale,
+                      marginTop: EMAIL_MARGIN_TOP * scale,
+                    }}
+                  >
+                    {profile.email}
+                  </span>
+                )}
               </div>
             </button>
 
@@ -147,7 +186,18 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 key={menu.path}
                 type="button"
                 onClick={() => {
-                  navigate(menu.path);
+                  // 관리자 여부에 따라 목적지가 갈리는 메뉴는, 아직 role
+                  // 조회가 끝나기 전이면 이동을 미룬다 — 여기서 그냥
+                  // isAdmin(로딩 중엔 false)을 쓰면 실제 관리자가 일반
+                  // 경로로 잘못 이동해버린다.
+                  const hasAdminOverride = menu.path in ADMIN_MENU_PATH_OVERRIDE;
+                  if (hasAdminOverride && isProfilePending) {
+                    return;
+                  }
+                  const targetPath = isAdmin
+                    ? (ADMIN_MENU_PATH_OVERRIDE[menu.path] ?? menu.path)
+                    : menu.path;
+                  navigate(targetPath);
                   onClose();
                 }}
                 className="flex items-center justify-between text-left"
