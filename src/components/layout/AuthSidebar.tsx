@@ -63,7 +63,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
   const scale = useGlobalScale();
   const handleLogout = useLogout();
   const { userId } = useAuth();
-  const { data: profile } = useMyProfile();
+  const { data: profile, isPending: isProfilePending } = useMyProfile();
   const isAdmin = useIsAdmin();
   // 프로필 조회가 끝나기 전에는 실제로 존재하는 userId 기반의 안전한
   // 표시값으로 대체한다.
@@ -186,6 +186,14 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 key={menu.path}
                 type="button"
                 onClick={() => {
+                  // 관리자 여부에 따라 목적지가 갈리는 메뉴는, 아직 role
+                  // 조회가 끝나기 전이면 이동을 미룬다 — 여기서 그냥
+                  // isAdmin(로딩 중엔 false)을 쓰면 실제 관리자가 일반
+                  // 경로로 잘못 이동해버린다.
+                  const hasAdminOverride = menu.path in ADMIN_MENU_PATH_OVERRIDE;
+                  if (hasAdminOverride && isProfilePending) {
+                    return;
+                  }
                   const targetPath = isAdmin
                     ? (ADMIN_MENU_PATH_OVERRIDE[menu.path] ?? menu.path)
                     : menu.path;

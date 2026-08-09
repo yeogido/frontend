@@ -13,7 +13,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
  */
 function AdminRoute() {
   const { isAuthenticated } = useAuth();
-  const { data, isPending } = useMyProfile();
+  const { data, isPending, isError, refetch } = useMyProfile();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -21,6 +21,27 @@ function AdminRoute() {
 
   if (isPending) {
     return <LoadingSpinner className="min-h-screen" />;
+  }
+
+  // 조회 실패를 "관리자 아님"으로 취급해 곧장 홈으로 보내면, 네트워크
+  // 오류로 role을 못 받아온 실제 관리자도 아무 설명 없이 튕겨나간다.
+  // 다른 화면들처럼 재시도 UI를 보여주고, / 리다이렉트는 조회가
+  // 성공적으로 끝나 관리자가 아님이 확인됐을 때만 한다.
+  if (isError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+        <p className="text-main-5 text-center font-medium">
+          권한 정보를 불러오지 못했어요.
+        </p>
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          className="rounded-full border border-[#e4e4e4] px-4 py-2 font-medium text-[#505050]"
+        >
+          다시 시도
+        </button>
+      </div>
+    );
   }
 
   if (!isAdminRole(data?.role)) {
