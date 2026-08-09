@@ -11,7 +11,10 @@ import {
 
 import { getApiErrorMessage } from '../apis/common';
 import { useToast } from '../components/toast';
+import { collectMyCourseIds } from '../utils/collectMyCourseIds';
+import { removeRecentCourse } from '../utils/recentCourses';
 import { buildCourseDetailPath } from '../utils/routes';
+import { useAuth } from './useAuth';
 
 import {
   getCourses,
@@ -21,6 +24,7 @@ import {
 import { deleteCourse, getCourseDetail } from '../apis/courses';
 import type { CourseDetailResult } from '../apis/courses';
 import type { NormalizedApiError } from '../apis/common';
+import { getMyPosts } from '../apis/users.api';
 import type {
   Course,
   GetCoursesParams,
@@ -86,6 +90,34 @@ export function useRecommendedCourses() {
   });
 }
 
+const MY_POSTS_PAGE_SIZE = 50;
+
+const EMPTY_COURSE_IDS: ReadonlySet<number> = new Set();
+
+/**
+ * 내가 쓴 코스의 ID 집합 — useMyReviewIds와 같은 이유(작성자 식별자가
+ * 응답에 없다)로 내 게시물 목록에서 코스만 받아 ID로 대조한다.
+ */
+export function useMyCourseIds() {
+  const { isAuthenticated } = useAuth();
+
+  const { data } = useQuery({
+    queryKey: ['myCourseIds'],
+    queryFn: () =>
+      collectMyCourseIds((cursorId) =>
+        getMyPosts({
+          category: 'COURSE',
+          size: MY_POSTS_PAGE_SIZE,
+          cursorId,
+        })
+      ),
+    enabled: isAuthenticated,
+    staleTime: 1000 * 60,
+  });
+
+  return data ?? EMPTY_COURSE_IDS;
+}
+
 export function useCourseDelete() {
   const [targetCourseId, setTargetCourseId] = useState<number | null>(null);
   const queryClient = useQueryClient();
@@ -109,11 +141,11 @@ export function useCourseDelete() {
                 pages: data.pages.map((page) => ({
                   ...page,
                   items: page.items.filter(
-                    (item) => item.course?.id !== courseId,
+                    (item) => item.course?.id !== courseId
                   ),
                 })),
               }
-            : data,
+            : data
       );
 
       return { previousMyPosts };
@@ -128,6 +160,7 @@ export function useCourseDelete() {
       void queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
       void queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
       queryClient.removeQueries({ queryKey: ['courseDetail', courseId] });
+      removeRecentCourse(courseId);
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
