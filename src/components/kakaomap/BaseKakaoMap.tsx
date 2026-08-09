@@ -108,32 +108,43 @@ export function BaseKakaoMap({
         ({ location }) => `${location.latitude},${location.longitude}`
       )
     );
-
     const newMarkers = markers.flatMap((m) => {
       if (imageMarkerLocations.has(`${m.latitude},${m.longitude}`)) {
         return [];
       }
-      const pos = new window.kakao.maps.LatLng(m.latitude, m.longitude);
-      return [
-        new window.kakao.maps.Marker({
-          map,
-          position: pos,
-        }),
-      ];
-    });
 
+      const pos = new window.kakao.maps.LatLng(m.latitude, m.longitude);
+      return [new window.kakao.maps.Marker({ map, position: pos })];
+    });
+    const markerSize = IMAGE_MARKER_SIZE * scale;
     const newImageMarkers = imageMarkers.map(({ location, imageUrl }) => {
+      const marker = document.createElement('div');
+      marker.style.width = `${markerSize}px`;
+      marker.style.minWidth = `${markerSize}px`;
+      marker.style.maxWidth = `${markerSize}px`;
+      marker.style.height = `${markerSize}px`;
+      marker.style.minHeight = `${markerSize}px`;
+      marker.style.maxHeight = `${markerSize}px`;
+      marker.style.boxSizing = 'border-box';
+      marker.style.overflow = 'hidden';
+      marker.style.border = `${IMAGE_MARKER_BORDER_WIDTH * scale}px solid var(--color-main-5)`;
+      marker.style.borderRadius = '50%';
+      marker.style.backgroundColor = 'var(--color-main-5)';
+      marker.style.lineHeight = '0';
+
       const image = document.createElement('img');
       image.src = imageUrl;
       image.alt = '';
       image.setAttribute('aria-hidden', 'true');
-      image.style.width = `${IMAGE_MARKER_SIZE * scale}px`;
-      image.style.height = `${IMAGE_MARKER_SIZE * scale}px`;
+      image.style.display = 'block';
+      image.style.width = '100%';
+      image.style.minWidth = '100%';
+      image.style.maxWidth = '100%';
+      image.style.height = '100%';
+      image.style.minHeight = '100%';
+      image.style.maxHeight = '100%';
       image.style.objectFit = 'cover';
-      image.style.border = `${IMAGE_MARKER_BORDER_WIDTH * scale}px solid var(--color-main-5)`;
-      image.style.borderRadius = '50%';
-      image.style.boxShadow = '0 2px 6px rgb(0 0 0 / 24%)';
-      image.style.backgroundColor = 'white';
+      marker.append(image);
 
       return new window.kakao.maps.CustomOverlay({
         map,
@@ -141,7 +152,7 @@ export function BaseKakaoMap({
           location.latitude,
           location.longitude
         ),
-        content: image,
+        content: marker,
         yAnchor: 0.5,
       });
     });

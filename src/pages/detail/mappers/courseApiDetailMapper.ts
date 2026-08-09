@@ -72,7 +72,7 @@ function toCourseStops(course: CourseDetailResult): readonly CourseStopDto[] {
     name: item.name,
     address: item.roadAddress || item.lotAddress || '',
     hours: '',
-    image: item.imageUrl || course.thumbnailUrl,
+    image: item.imageUrl,
     liked: item.isLiked,
     latitude: item.latitude,
     longitude: item.longitude,
