@@ -31,9 +31,7 @@ export interface PersistedSelectedFestival {
   address: string;
 }
 
-type PersistedSelectedPlaceInput = PersistedSelectedPlace & {
-  imageSrc?: string | null;
-};
+type PersistedSelectedPlaceInput = PersistedSelectedPlace;
 
 export interface LocalRecommendationDraft {
   neighborhood: Neighborhood | null;
