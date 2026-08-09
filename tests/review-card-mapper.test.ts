@@ -69,8 +69,8 @@ test('maps a review into course review card props', () => {
     courseId: 15,
     courseType: 'LOCAL',
     isMine: false,
-    // 카드에 그리는 건 코스 썸네일, images는 상세 모달용 후기 사진이다.
-    image: 'https://example.com/course.png',
+    // 카드 썸네일은 후기 사진의 첫 장이다.
+    image: 'https://example.com/a.jpg',
     images: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
     editableImages: [
       { imageKey: 'reviews/a.jpg', imageUrl: 'https://example.com/a.jpg' },
@@ -120,4 +120,11 @@ test('survives a review whose author or images are missing', () => {
   assert.deepEqual(card.images, []);
   assert.equal(card.nickname, '');
   assert.equal(card.meta, '');
+});
+
+test('falls back to the course thumbnail when the review has no photos', () => {
+  const card = toReviewCourseCardProps({ ...review, images: [] });
+
+  assert.equal(card.image, 'https://example.com/course.png');
+  assert.deepEqual(card.images, []);
 });

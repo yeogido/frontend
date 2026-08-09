@@ -51,15 +51,17 @@ export function toReviewCardProps(review: ReviewDetail) {
 
 /** 후기 + 코스 정보를 CourseReviewCard props로 바꾼다. */
 export function toReviewCourseCardProps(review: ReviewDetail) {
+  const images = toImageUrls(review.images);
+
   return {
     id: review.reviewId,
     courseId: review.course.courseId,
     courseType: review.course.courseType,
     isMine: review.isMine,
-    // 카드에 그리는 건 코스 썸네일(image)이고, 후기 사진(images)은 카드를 눌러
-    // 여는 상세 모달에서 쓴다.
-    image: review.course.thumbnailUrl,
-    images: toImageUrls(review.images),
+    // 카드 썸네일은 후기 사진의 첫 장이다. 사진 없이 쓴 후기도 있어(서버가
+    // 0장을 허용한다) 그때는 코스 썸네일로 떨어뜨린다.
+    image: images[0] ?? review.course.thumbnailUrl,
+    images,
     editableImages: toEditableImages(review.images),
     title: review.course.title,
     duration: toDurationLabel(review.course.durationType),
