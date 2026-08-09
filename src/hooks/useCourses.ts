@@ -99,10 +99,12 @@ const EMPTY_COURSE_IDS: ReadonlySet<number> = new Set();
  * 응답에 없다)로 내 게시물 목록에서 코스만 받아 ID로 대조한다.
  */
 export function useMyCourseIds() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
 
   const { data } = useQuery({
-    queryKey: ['myCourseIds'],
+    // userId를 키에 넣어야, 로그아웃 후 다른 계정으로 로그인해도 이전
+    // 세션의 캐시를 그대로 재사용하지 않는다.
+    queryKey: ['myCourseIds', userId],
     queryFn: () =>
       collectMyCourseIds((cursorId) =>
         getMyPosts({
@@ -115,7 +117,9 @@ export function useMyCourseIds() {
     staleTime: 1000 * 60,
   });
 
-  return data ?? EMPTY_COURSE_IDS;
+  // 비로그인 상태면 쿼리가 비활성화될 뿐 이전에 캐시된 data는 그대로
+  // 남아있을 수 있어, 여기서 한 번 더 걸러 노출되지 않게 한다.
+  return isAuthenticated ? (data ?? EMPTY_COURSE_IDS) : EMPTY_COURSE_IDS;
 }
 
 export function useCourseDelete() {

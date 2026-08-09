@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 
 import {
-  ConfirmDialog,
   ContentCard,
   ContentCardSkeleton,
   CourseCard,
+  CourseDeleteDialog,
   EditableContentCard,
   FloatingActionButton,
   SearchTriggerButton,
@@ -273,11 +273,7 @@ function LocalCoursePage() {
           onClick={handleCreateCourse}
         />
       </section>
-      <ConfirmDialog
-        {...dialogProps}
-        title="코스를 삭제할까요?"
-        description="삭제한 코스는 되돌릴 수 없어요."
-      />
+      <CourseDeleteDialog {...dialogProps} />
     </>
   );
 }

@@ -107,53 +107,8 @@ export function getCourseRequestValidationError(
   return null;
 }
 
-export function buildCourseRequest(
-  draft: LocalRecommendationDraft,
-  visitEvents: readonly VisitEvent[]
-): CreateLocalRecommendationRequest | null {
-  const { neighborhood, basicInfo, coverImageKey } = draft;
-
-  if (getCourseRequestValidationError(draft, visitEvents)) {
-    return null;
-  }
-
-  if (
-    !neighborhood ||
-    !basicInfo ||
-    !coverImageKey ||
-    visitEvents.length === 0
-  ) {
-    return null;
-  }
-
-  const durationType = DURATION_TYPE_MAP[basicInfo.duration];
-  const transportType = TRANSPORT_TYPE_MAP[basicInfo.transport];
-  const companionType = COMPANION_TYPE_MAP[basicInfo.companion];
-
-  if (!durationType || !transportType || !companionType) {
-    return null;
-  }
-
-  return {
-    title: basicInfo.courseName,
-    regionId: neighborhood.id,
-    description: basicInfo.summary,
-    durationType,
-    transportType,
-    companionType,
-    monthStart: Number(basicInfo.visitStartMonth),
-    monthEnd: Number(basicInfo.visitEndMonth),
-    thumbnailKey: coverImageKey,
-    hashtagIds: draft.hashtagIds,
-    courseItems: buildCourseItemsFromVisitEvents(visitEvents),
-  };
-}
-
-/**
- * 수정 요청은 지역을 바꿀 수 없어(라이브 CourseUpdateRequest에 regionId
- * 필드 자체가 없다) neighborhood 없이 페이로드를 만든다.
- */
-export function buildLocalCourseUpdateRequest(
+/** 생성/수정 요청이 공유하는 필드 — 차이는 regionId(생성만 있음) 하나뿐이다. */
+function buildCommonCourseFields(
   draft: LocalRecommendationDraft,
   visitEvents: readonly VisitEvent[]
 ): UpdateCourseRequest | null {
@@ -187,4 +142,34 @@ export function buildLocalCourseUpdateRequest(
     hashtagIds: draft.hashtagIds,
     courseItems: buildCourseItemsFromVisitEvents(visitEvents),
   };
+}
+
+export function buildCourseRequest(
+  draft: LocalRecommendationDraft,
+  visitEvents: readonly VisitEvent[]
+): CreateLocalRecommendationRequest | null {
+  const { neighborhood } = draft;
+
+  if (!neighborhood) {
+    return null;
+  }
+
+  const common = buildCommonCourseFields(draft, visitEvents);
+
+  if (!common) {
+    return null;
+  }
+
+  return { ...common, regionId: neighborhood.id };
+}
+
+/**
+ * 수정 요청은 지역을 바꿀 수 없어(라이브 CourseUpdateRequest에 regionId
+ * 필드 자체가 없다) neighborhood 없이 페이로드를 만든다.
+ */
+export function buildLocalCourseUpdateRequest(
+  draft: LocalRecommendationDraft,
+  visitEvents: readonly VisitEvent[]
+): UpdateCourseRequest | null {
+  return buildCommonCourseFields(draft, visitEvents);
 }

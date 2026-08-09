@@ -28,6 +28,7 @@ function CourseBasicInfoPage() {
   const editingCourseId = useLocalRecommendationStore(
     (state) => state.draft.editingCourseId
   );
+  const resetDraft = useLocalRecommendationStore((state) => state.resetDraft);
 
   const handleNext = (values: CourseBasicInfoValues) => {
     updateBasicInfo(values);
@@ -35,13 +36,15 @@ function CourseBasicInfoPage() {
   };
 
   const handleBack = () => {
-    // 지역 선택을 건너뛰고 바로 여기로 들어온 수정 흐름이라, 뒤로가기는
-    // 등록 시작화면이 아니라 원래 보던 코스 상세로 보낸다.
-    navigate(
-      editingCourseId
-        ? buildCourseDetailPath('LOCAL', editingCourseId)
-        : '/local-recommendation'
-    );
+    // 여기서 나가면(수정을 중단하든, 새 등록을 취소하든) draft를 비워야
+    // editingCourseId 같은 값이 남아 다음 신규 등록이 이전 코스를 PATCH해
+    // 버리는 사고를 막을 수 있다.
+    const destination = editingCourseId
+      ? buildCourseDetailPath('LOCAL', editingCourseId)
+      : '/local-recommendation';
+
+    resetDraft();
+    navigate(destination);
   };
 
   return (

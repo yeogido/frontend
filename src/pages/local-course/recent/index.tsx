@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-import { ConfirmDialog, CourseCard } from '../../../components/common';
+import { CourseCard, CourseDeleteDialog } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourseDelete, useMyCourseIds } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
@@ -100,11 +100,7 @@ function LocalCourseRecentPage() {
           </p>
         )}
       </section>
-      <ConfirmDialog
-        {...dialogProps}
-        title="코스를 삭제할까요?"
-        description="삭제한 코스는 되돌릴 수 없어요."
-      />
+      <CourseDeleteDialog {...dialogProps} />
     </>
   );
 }

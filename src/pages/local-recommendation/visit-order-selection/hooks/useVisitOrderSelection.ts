@@ -156,34 +156,30 @@ export function useVisitOrderSelection() {
       );
       if (validationError) throw new Error(validationError);
 
-      const result = currentDraft.editingCourseId
-        ? await updateCourse(
-            currentDraft.editingCourseId,
-            (() => {
-              const updatePayload = buildLocalCourseUpdateRequest(
-                draftWithCoverKey,
-                eventsWithImageKeys
-              );
-              if (!updatePayload) {
-                throw new Error(
-                  '코스 정보가 모두 입력되어야 수정할 수 있습니다.'
-                );
-              }
-              return updatePayload;
-            })()
-          )
-        : await (() => {
-            const payload = buildCourseRequest(
-              draftWithCoverKey,
-              eventsWithImageKeys
-            );
-            if (!payload) {
-              throw new Error(
-                '코스 정보가 모두 입력되어야 등록할 수 있습니다.'
-              );
-            }
-            return createLocalRecommendation(payload);
-          })();
+      let result: { courseId: number };
+
+      if (currentDraft.editingCourseId) {
+        const updatePayload = buildLocalCourseUpdateRequest(
+          draftWithCoverKey,
+          eventsWithImageKeys
+        );
+        if (!updatePayload) {
+          throw new Error('코스 정보가 모두 입력되어야 수정할 수 있습니다.');
+        }
+        result = await updateCourse(
+          currentDraft.editingCourseId,
+          updatePayload
+        );
+      } else {
+        const payload = buildCourseRequest(
+          draftWithCoverKey,
+          eventsWithImageKeys
+        );
+        if (!payload) {
+          throw new Error('코스 정보가 모두 입력되어야 등록할 수 있습니다.');
+        }
+        result = await createLocalRecommendation(payload);
+      }
 
       resetDraft();
       return result;

@@ -94,18 +94,30 @@ export function useEditLocalCourse() {
         }
       });
 
+      // 알 수 없는 enum 값을 기본값(day-trip 등)으로 조용히 채우면, 사용자가
+      // 이 필드를 안 건드리고 제출했을 때 PATCH가 실제 값을 잘못된 값으로
+      // 덮어써 버린다 — 매핑이 안 되면 아예 수정 진입을 막는다.
+      const duration = DURATION_TYPE_TO_FORM[detail.durationType];
+      const transport = TRANSPORT_TYPE_TO_FORM[detail.transportType];
+      const companion = COMPANION_TYPE_TO_FORM[detail.companionType];
+
+      if (!duration || !transport || !companion) {
+        showToast('알 수 없는 코스 정보가 있어 수정할 수 없어요.');
+        return;
+      }
+
       const basicInfo: CourseBasicInfoValues = {
         courseName: detail.title,
         summary: detail.description,
-        duration: DURATION_TYPE_TO_FORM[detail.durationType] ?? 'day-trip',
+        duration,
         visitStartMonth: String(
           detail.startMonth
         ) as CourseBasicInfoValues['visitStartMonth'],
         visitEndMonth: String(
           detail.endMonth
         ) as CourseBasicInfoValues['visitEndMonth'],
-        transport: TRANSPORT_TYPE_TO_FORM[detail.transportType] ?? 'walking',
-        companion: COMPANION_TYPE_TO_FORM[detail.companionType] ?? 'solo',
+        transport,
+        companion,
       };
 
       const draft: LocalRecommendationDraft = {

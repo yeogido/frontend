@@ -120,7 +120,13 @@ function CourseDetailLayoutContent({
   const { openLoginModal } = useLoginModal();
   const numericCourseId = Number(course.id);
   const myCourseIds = useMyCourseIds();
-  const isMine = isAuthenticated && myCourseIds.has(numericCourseId);
+  // 관리자가 만든 여기도(OFFICIAL) 코스라도 이 화면(yeogido-course)에서는
+  // 우리동네 수정 마법사로 잘못 진입하면 안 되므로, local-course 상세일
+  // 때만 본인 코스 판단을 적용한다.
+  const isMine =
+    isAuthenticated &&
+    reviewType === 'local-course' &&
+    myCourseIds.has(numericCourseId);
   const { editLocalCourse } = useEditLocalCourse();
   const { data: courseReviews } = useCourseReviewPreviews(
     Number.isInteger(numericCourseId) ? numericCourseId : undefined
