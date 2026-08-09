@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SelectionPageLayout from '../../../local-recommendation/components/SelectionPageLayout';
 import SelectedItemsSheet from '../../../local-recommendation/components/SelectedItemsSheet';
 import SelectionResultCard from '../../../local-recommendation/components/SelectionResultCard';
+import type { PlaceItem } from '../../../local-recommendation/place-selection/types';
 import { usePlaceSearch } from '../../../local-recommendation/place-selection/hooks/usePlaceSearch';
 import { useAdminEventRegistrationStore } from '../../../../store/adminEventRegistration.store';
 
@@ -10,7 +11,18 @@ function AdminPlaceSelectionPage() {
   const navigate = useNavigate();
   const place = useAdminEventRegistrationStore((state) => state.place);
   const setPlace = useAdminEventRegistrationStore((state) => state.setPlace);
+  const setPlaceSource = useAdminEventRegistrationStore(
+    (state) => state.setPlaceSource
+  );
   const { setQuery, searchResults } = usePlaceSearch();
+
+  // 여기 검색 결과는 항상 실제 카카오 검색이라, 수정 진입 때 상세 조회로
+  // 채워졌을 수 있는 placeSource(TOUR_API 등)를 새로 고른 장소 기준으로
+  // 덮어써야 한다 — 안 그러면 카카오로 새로 고른 장소가 예전 출처로 전송된다.
+  const handlePlaceAdd = (item: PlaceItem) => {
+    setPlace(item);
+    setPlaceSource('KAKAO');
+  };
 
   const selectedPlaces = place ? [place] : [];
   const selectedPlaceIds = new Set(selectedPlaces.map((item) => item.id));
@@ -35,7 +47,7 @@ function AdminPlaceSelectionPage() {
         getItemId={(item) => item.id}
         onSearchChange={setQuery}
         onQueryChange={setQuery}
-        onItemAdd={setPlace}
+        onItemAdd={handlePlaceAdd}
         onBack={() => navigate('/admin', { replace: true })}
         renderItem={(item, isSelected, onItemAdd) => (
           <SelectionResultCard

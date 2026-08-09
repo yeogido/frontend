@@ -9,12 +9,15 @@ interface SubmitCourseButtonProps {
   onSubmit: () => void;
   disabled?: boolean;
   isSubmitting?: boolean;
+  /** 관리자 코스 수정 흐름에서 등록 대신 수정 문구를 쓰기 위한 옵션. */
+  isEditing?: boolean;
 }
 
 function SubmitCourseButton({
   onSubmit,
   disabled = false,
   isSubmitting = false,
+  isEditing = false,
 }: SubmitCourseButtonProps) {
   const scale = useGlobalScale();
 
@@ -31,7 +34,13 @@ function SubmitCourseButton({
         borderRadius: BUTTON_RADIUS * scale,
       }}
     >
-      {isSubmitting ? '등록 중...' : '코스 등록하기'}
+      {isSubmitting
+        ? isEditing
+          ? '수정 중...'
+          : '등록 중...'
+        : isEditing
+          ? '코스 수정하기'
+          : '코스 등록하기'}
     </button>
   );
 }

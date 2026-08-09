@@ -58,8 +58,11 @@ export interface CultureContentBanner {
 
 export interface CultureContentPlace {
   placeId: number;
+  externalPlaceId?: string;
+  source?: ContentPlaceSource;
   name: string;
   roadAddress: string;
+  lotAddress?: string;
   latitude: number;
   longitude: number;
 }
@@ -81,9 +84,12 @@ export interface CultureContentDetail {
   contentId: number;
   title: string;
   description: string;
+  /** 최근 상세 조회 응답에 추가됨 — 예전엔 없었다(수정 시 재선택 필요했던 이유). */
+  category?: ContentCategory;
   thumbnailImage?: string;
   thumbnailImageUrl?: string;
   hashtags: string[];
+  hashtagIds?: number[];
   startDate: string;
   endDate: string;
   liked: boolean;
