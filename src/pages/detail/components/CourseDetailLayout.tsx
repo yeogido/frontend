@@ -121,7 +121,7 @@ function CourseDetailLayoutContent({
   const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
   const numericCourseId = Number(course.id);
-  const myCourseIds = useMyCourseIds();
+  const { courseIds: myCourseIds } = useMyCourseIds();
   const isAdmin = useIsAdmin();
   // local-course(우리동네)는 본인이 쓴 코스인지로, yeogido-course(여기도)는
   // 관리자 권한인지로 판단한다 — 서로 다른 마법사(useEditLocalCourse vs

@@ -85,7 +85,8 @@ function LocalCoursePopularPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const myCourseIds = useMyCourseIds();
+  const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
+    useMyCourseIds();
   const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -181,7 +182,7 @@ function LocalCoursePopularPage() {
             rowGap: LIST_GAP * scale,
           }}
         >
-          {isPending
+          {isPending || isMyCourseIdsPending
             ? LOCAL_COURSE_SKELETON_ITEMS.map((item) => (
                 <ContentCardSkeleton
                   key={item}

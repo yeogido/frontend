@@ -23,7 +23,7 @@ function LocalCourseRecentPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const myCourseIds = useMyCourseIds();
+  const { courseIds: myCourseIds } = useMyCourseIds();
   const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 

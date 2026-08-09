@@ -58,7 +58,8 @@ function LocalCoursePage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const myCourseIds = useMyCourseIds();
+  const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
+    useMyCourseIds();
   const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -169,7 +170,7 @@ function LocalCoursePage() {
               gap: LIST_GAP * scale,
             }}
           >
-            {isPopularCoursesPending
+            {isPopularCoursesPending || isMyCourseIdsPending
               ? Array.from(
                   { length: POPULAR_COURSE_PREVIEW_COUNT },
                   (_, index) => <ContentCardSkeleton key={index} />

@@ -98,10 +98,17 @@ const EMPTY_COURSE_IDS: ReadonlySet<number> = new Set();
  * 내가 쓴 코스의 ID 집합 — useMyReviewIds와 같은 이유(작성자 식별자가
  * 응답에 없다)로 내 게시물 목록에서 코스만 받아 ID로 대조한다.
  */
-export function useMyCourseIds() {
+export interface MyCourseIdsResult {
+  courseIds: ReadonlySet<number>;
+  /** true인 동안은 아직 소유권을 모르는 상태다 — 이 값으로 판단해야 하는
+   * 액션(수정 메뉴/좋아요)을 확정 전에 성급하게 그리면 안 된다. */
+  isPending: boolean;
+}
+
+export function useMyCourseIds(): MyCourseIdsResult {
   const { isAuthenticated, userId } = useAuth();
 
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     // userId를 키에 넣어야, 로그아웃 후 다른 계정으로 로그인해도 이전
     // 세션의 캐시를 그대로 재사용하지 않는다.
     queryKey: ['myCourseIds', userId],
@@ -117,9 +124,13 @@ export function useMyCourseIds() {
     staleTime: 1000 * 60,
   });
 
-  // 비로그인 상태면 쿼리가 비활성화될 뿐 이전에 캐시된 data는 그대로
-  // 남아있을 수 있어, 여기서 한 번 더 걸러 노출되지 않게 한다.
-  return isAuthenticated ? (data ?? EMPTY_COURSE_IDS) : EMPTY_COURSE_IDS;
+  if (!isAuthenticated) {
+    // 쿼리가 비활성화된 채라 isPending이 계속 true로 남아있을 수 있다 —
+    // 비로그인은 "모름"이 아니라 "확정적으로 없음"이라 기다릴 게 없다.
+    return { courseIds: EMPTY_COURSE_IDS, isPending: false };
+  }
+
+  return { courseIds: data ?? EMPTY_COURSE_IDS, isPending };
 }
 
 export function useCourseDelete() {
