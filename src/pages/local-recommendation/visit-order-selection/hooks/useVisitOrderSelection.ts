@@ -11,7 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { updateCourse } from '../../../../apis/courses';
+import { getCourseDetail, updateCourse } from '../../../../apis/courses';
 import { uploadCourseImages } from '../../../../apis/files';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
 import {
@@ -173,10 +173,14 @@ export function useVisitOrderSelection() {
           updatePayload
         );
         // 상세 페이지(local-course/detail)는 이 훅과 별도로 자기 캐시 키를
-        // 쓰기 때문에, 여기서 명시적으로 무효화 안 하면 수정 직후 이동해도
-        // 새로고침 전까지 수정 전 데이터를 그대로 보여준다.
-        void queryClient.invalidateQueries({
+        // 쓴다. invalidateQueries만 하면 지금은 비활성 상태라(아직 상세로
+        // 이동 전) 무효화만 되고 실제 재요청은 다음 마운트로 미뤄지는데,
+        // 그 요청이 이동 직후 렌더링과 겹치면 잠깐 예전 데이터가 보이거나
+        // 안 바뀐 것처럼 남을 수 있어 이동 전에 직접 새로 받아 채워 둔다.
+        await queryClient.fetchQuery({
           queryKey: ['localCourseDetail', currentDraft.editingCourseId],
+          queryFn: () =>
+            getCourseDetail(currentDraft.editingCourseId as number),
         });
         void queryClient.invalidateQueries({ queryKey: ['courses'] });
         void queryClient.invalidateQueries({ queryKey: ['popularCourses'] });

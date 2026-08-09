@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../../../apis/common';
-import { updateCourse } from '../../../../apis/courses';
+import { getCourseDetail, updateCourse } from '../../../../apis/courses';
 import { fetchHashtags } from '../../../../apis/hashtags';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
 import { useToast } from '../../../../components/toast';
@@ -223,7 +223,7 @@ export function useAdminCourseVisitOrder() {
 
       return createLocalRecommendation(payload);
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
       queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
@@ -231,11 +231,16 @@ export function useAdminCourseVisitOrder() {
         queryClient.invalidateQueries({
           queryKey: ['courseDetail', editingCourseId],
         });
-        // 실제로 이동하는 여기도 코스 상세 화면(/yeogido-course/detail)은
-        // 이거랑 별도 캐시 키를 써서, 이것만 무효화하면 수정 직후에도
-        // 새로고침 전까지 예전 데이터가 그대로 보인다.
-        queryClient.invalidateQueries({
+        // invalidateQueries는 그 시점에 마운트돼서 보고 있는(active) 쿼리만
+        // 즉시 다시 불러온다 — 지금은 아직 상세 화면으로 이동하기 전이라
+        // 비활성 상태라 무효화만 되고 실제 재요청은 다음 마운트로 미뤄진다.
+        // 그 요청이 이동 직후 화면이 그려지는 타이밍과 겹치면 잠깐 예전
+        // 데이터가 보였다가 바뀌거나(연결이 느리면) 아예 안 바뀐 채로
+        // 남는 것처럼 보일 수 있어, 이동하기 전에 새 데이터를 직접
+        // 받아서 캐시에 채워 넣는다.
+        await queryClient.fetchQuery({
           queryKey: ['yeogidoCourseDetail', editingCourseId],
+          queryFn: () => getCourseDetail(editingCourseId),
         });
       }
       showToast(
