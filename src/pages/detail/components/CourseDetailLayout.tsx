@@ -337,7 +337,7 @@ function CourseDetailLayoutContent({
           onActionClick={handleNavigateCourseReviews}
           onReviewDelete={requestDelete}
           onReviewEdit={requestEdit}
-          onReviewLongPress={openReview}
+          onReviewClick={openReview}
         />
       </div>
 
