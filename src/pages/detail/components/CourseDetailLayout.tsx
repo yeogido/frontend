@@ -122,11 +122,11 @@ function CourseDetailLayoutContent({
   const { data: courseReviews } = useCourseReviewPreviews(
     Number.isInteger(numericCourseId) ? numericCourseId : undefined
   );
-  // 미리보기는 사진 있는 후기만 보여준다. 사진 없는 후기는 후기 전체보기에서
-  // 본문만 그리는 카드로 나온다.
-  const reviews = mapCourseReviewPreviews(courseReviews?.items)
-    .filter((review) => review.images.length > 0)
-    .slice(0, COURSE_REVIEW_PREVIEW_COUNT);
+  // 사진 유무와 관계없이 최신 후기를 미리보기로 노출한다.
+  const reviews = mapCourseReviewPreviews(courseReviews?.items).slice(
+    0,
+    COURSE_REVIEW_PREVIEW_COUNT
+  );
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
   const { openedReview, openReview, closeReview } =
