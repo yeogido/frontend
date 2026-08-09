@@ -1,8 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { deleteMyAccount, getMyProfile, updateMyProfile } from '../apis/users.api';
+import {
+  deleteMyAccount,
+  getMyProfile,
+  updateMyProfile,
+} from '../apis/users.api';
 import { useAuthStore } from '../store/auth.store';
-import { isBusinessRole } from '../utils/role';
+import { isAdminRole, isBusinessRole } from '../utils/role';
 import type {
   UpdateMyProfileRequest,
   UpdateMyProfileResponse,
@@ -37,6 +41,16 @@ export function useIsBusinessUser() {
   const { data } = useMyProfile();
 
   return isBusinessRole(data?.role);
+}
+
+/**
+ * 관리자 전용 화면·버튼을 열지 판단한다. useIsBusinessUser와 같은 이유로
+ * 서버가 준 값만 보고, 조회 전이거나 실패하면 false로 기운다.
+ */
+export function useIsAdmin() {
+  const { data } = useMyProfile();
+
+  return isAdminRole(data?.role);
 }
 
 export function useUpdateMyProfile() {

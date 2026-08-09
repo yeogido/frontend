@@ -4,7 +4,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ContentCard,
   ContentCardSkeleton,
+  CourseDeleteDialog,
   CourseFilterBar,
+  EditableContentCard,
   SearchBar,
 } from '../../../components/common';
 import {
@@ -14,8 +16,13 @@ import {
 import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
 import { localCourseSearchSuggestions } from '../../../constants/localCourseSearch';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useCourses } from '../../../hooks/useCourses';
+import {
+  useCourseDelete,
+  useCourses,
+  useMyCourseIds,
+} from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -81,6 +88,10 @@ function LocalCourseSearchPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
+  const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
+    useMyCourseIds();
+  const { editLocalCourse } = useEditLocalCourse();
+  const { requestDelete, dialogProps } = useCourseDelete();
 
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/local-course/detail/${courseId}`);
@@ -154,111 +165,131 @@ function LocalCourseSearchPage() {
   };
 
   return (
-    <section
-      className="mx-auto flex min-h-screen w-full flex-col"
-      style={{
-        paddingLeft: PAGE_PADDING_X * scale,
-        paddingRight: PAGE_PADDING_X * scale,
-        paddingTop: PAGE_PADDING_TOP * scale,
-        paddingBottom: PAGE_PADDING_BOTTOM * scale,
-      }}
-    >
-      <div className="w-full">
-        <SearchBar
-              initialQuery={displaySearchQuery}
-              placeholder="지역명 또는 도시명을 검색해 주세요"
-              label="지역명 또는 도시명 검색"
-              suggestions={localCourseSearchSuggestions}
-              onSearch={handleSearch}
-            />
-      <CourseFilterBar
-        filterGroups={localCourseFilterGroups}
-        selectedFilters={selectedFilters}
-        openFilterKey={openFilterKey}
-        filterContainerRef={filterContainerRef}
-        isExtendedTransport={isExtendedTransportFilterLabel(selectedFilters.transport)}
-        marginTop={FILTER_MARGIN_TOP}
-        onToggle={handleFilterToggle}
-        onSelect={handleFilterSelect}
-      />
-        <div
-          className="grid grid-cols-2"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            columnGap: LIST_GAP * scale,
-            rowGap: LIST_GAP * scale,
-          }}
-        >
-          {isPending
-            ? LOCAL_COURSE_SKELETON_ITEMS.map((item) => (
-                <ContentCardSkeleton
-                  key={item}
-                  className="w-full"
-                  imageClassName="aspect-[163/115] h-auto"
-                />
-              ))
-            : courses.map((course) => (
-                <ContentCard
-                  key={course.courseId}
-                  image={course.thumbnailUrl}
-                  title={course.title}
-                  firstInfo={durationLabelByType[course.durationType]}
-                  secondInfo={course.region}
-                  tags={toContentTagIds(course.tags)}
-                  liked={getLiked(course.courseId, course.isLiked)}
-                  className="w-full"
-                  onClick={() => handleCourseClick(course.courseId)}
-                  onLikeClick={() =>
-                    toggleLike(
-                      course.courseId,
-                      getLiked(course.courseId, course.isLiked)
-                    )
-                  }
-                />
-              ))}
+    <>
+      <section
+        className="mx-auto flex min-h-screen w-full flex-col"
+        style={{
+          paddingLeft: PAGE_PADDING_X * scale,
+          paddingRight: PAGE_PADDING_X * scale,
+          paddingTop: PAGE_PADDING_TOP * scale,
+          paddingBottom: PAGE_PADDING_BOTTOM * scale,
+        }}
+      >
+        <div className="w-full">
+          <SearchBar
+            initialQuery={displaySearchQuery}
+            placeholder="지역명 또는 도시명을 검색해 주세요"
+            label="지역명 또는 도시명 검색"
+            suggestions={localCourseSearchSuggestions}
+            onSearch={handleSearch}
+          />
+          <CourseFilterBar
+            filterGroups={localCourseFilterGroups}
+            selectedFilters={selectedFilters}
+            openFilterKey={openFilterKey}
+            filterContainerRef={filterContainerRef}
+            isExtendedTransport={isExtendedTransportFilterLabel(
+              selectedFilters.transport
+            )}
+            marginTop={FILTER_MARGIN_TOP}
+            onToggle={handleFilterToggle}
+            onSelect={handleFilterSelect}
+          />
+          <div
+            className="grid grid-cols-2"
+            style={{
+              marginTop: LIST_MARGIN_TOP * scale,
+              columnGap: LIST_GAP * scale,
+              rowGap: LIST_GAP * scale,
+            }}
+          >
+            {isPending || isMyCourseIdsPending
+              ? LOCAL_COURSE_SKELETON_ITEMS.map((item) => (
+                  <ContentCardSkeleton
+                    key={item}
+                    className="w-full"
+                    imageClassName="aspect-[163/115] h-auto"
+                  />
+                ))
+              : courses.map((course) =>
+                  myCourseIds.has(course.courseId) ? (
+                    <EditableContentCard
+                      key={course.courseId}
+                      image={course.thumbnailUrl}
+                      title={course.title}
+                      firstInfo={durationLabelByType[course.durationType]}
+                      secondInfo={course.region}
+                      tags={toContentTagIds(course.tags)}
+                      className="w-full"
+                      onClick={() => handleCourseClick(course.courseId)}
+                      onEdit={() => void editLocalCourse(course.courseId)}
+                      onDelete={() => requestDelete(course.courseId)}
+                    />
+                  ) : (
+                    <ContentCard
+                      key={course.courseId}
+                      image={course.thumbnailUrl}
+                      title={course.title}
+                      firstInfo={durationLabelByType[course.durationType]}
+                      secondInfo={course.region}
+                      tags={toContentTagIds(course.tags)}
+                      liked={getLiked(course.courseId, course.isLiked)}
+                      className="w-full"
+                      onClick={() => handleCourseClick(course.courseId)}
+                      onLikeClick={() =>
+                        toggleLike(
+                          course.courseId,
+                          getLiked(course.courseId, course.isLiked)
+                        )
+                      }
+                    />
+                  )
+                )}
 
-          {isFetchingNextPage
-            ? LOCAL_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
-                <ContentCardSkeleton
-                  key={`next-page-${item}`}
-                  className="w-full"
-                  imageClassName="aspect-[163/115] h-auto"
-                />
-              ))
-            : null}
+            {isFetchingNextPage
+              ? LOCAL_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
+                  <ContentCardSkeleton
+                    key={`next-page-${item}`}
+                    className="w-full"
+                    imageClassName="aspect-[163/115] h-auto"
+                  />
+                ))
+              : null}
+          </div>
+
+          {hasEmptyResult ? (
+            <p
+              className="text-gray-4 text-center font-medium"
+              style={{
+                marginTop: EMPTY_MARGIN_TOP * scale,
+                fontSize: MESSAGE_TEXT_SIZE * scale,
+              }}
+            >
+              검색 결과가 없습니다.
+            </p>
+          ) : null}
+
+          {isError ? (
+            <p
+              className="text-main-5 text-center font-medium"
+              style={{
+                marginTop: ERROR_MARGIN_TOP * scale,
+                fontSize: MESSAGE_TEXT_SIZE * scale,
+              }}
+            >
+              코스 목록을 불러오지 못했어요.
+            </p>
+          ) : null}
+
+          <div
+            ref={loadMoreRef}
+            style={{ height: LOAD_MORE_HEIGHT * scale }}
+            aria-hidden="true"
+          />
         </div>
-
-        {hasEmptyResult ? (
-          <p
-            className="text-center font-medium text-gray-4"
-            style={{
-              marginTop: EMPTY_MARGIN_TOP * scale,
-              fontSize: MESSAGE_TEXT_SIZE * scale,
-            }}
-          >
-            검색 결과가 없습니다.
-          </p>
-        ) : null}
-
-        {isError ? (
-          <p
-            className="text-main-5 text-center font-medium"
-            style={{
-              marginTop: ERROR_MARGIN_TOP * scale,
-              fontSize: MESSAGE_TEXT_SIZE * scale,
-            }}
-          >
-            코스 목록을 불러오지 못했어요.
-          </p>
-        ) : null}
-
-        <div
-          ref={loadMoreRef}
-          style={{ height: LOAD_MORE_HEIGHT * scale }}
-          aria-hidden="true"
-        />
-      </div>
-    </section>
+      </section>
+      <CourseDeleteDialog {...dialogProps} />
+    </>
   );
 }
 

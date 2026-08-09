@@ -4,6 +4,7 @@ export { default as CardActionMenu } from './CardActionMenu';
 export { default as ConfirmDialog } from './ConfirmDialog';
 export { default as ContentCard } from './ContentCard';
 export { default as ContentCardSkeleton } from './ContentCardSkeleton';
+export { default as CourseDeleteDialog } from './CourseDeleteDialog';
 export { default as DatePicker } from './DatePicker';
 export { default as EditableContentCard } from './EditableContentCard';
 export { default as EditableCourseCard } from './EditableCourseCard';
