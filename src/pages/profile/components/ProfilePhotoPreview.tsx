@@ -1,5 +1,6 @@
 import profile from '../../../assets/icons/profile.svg';
 import type { PointerEventHandler, WheelEventHandler } from 'react';
+import { PROFILE_PHOTO_BACKGROUND_COLOR } from './profilePhotoSave';
 
 export interface ProfilePhoto {
   src: string;
@@ -35,10 +36,11 @@ export function ProfilePhotoPreview({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-full bg-[#e4e4e4] ${photo && isAdjustable ? 'cursor-move touch-none' : ''}`}
+      className={`relative overflow-hidden rounded-full ${photo && isAdjustable ? 'cursor-move touch-none' : ''}`}
       style={{
         width: scaledSize,
         height: scaledSize,
+        backgroundColor: PROFILE_PHOTO_BACKGROUND_COLOR,
         touchAction: photo && isAdjustable ? 'none' : 'auto',
       }}
       onPointerDown={onPointerDown}

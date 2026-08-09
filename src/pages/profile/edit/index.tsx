@@ -19,8 +19,14 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useMyProfile, useUpdateMyProfile } from '../../../hooks/useMyProfile';
 import { useRegion, useRegions } from '../../../hooks/useRegions';
 import type { UpdateMyProfileRequest } from '../../../types/user.type';
-import { ProfilePhotoEditor } from '../components/ProfilePhotoEditor';
-import { ProfileFormField, UnsavedChangesDialog } from './components';
+import {
+  ProfilePhotoEditor,
+  type ProfilePhotoEditorHandle,
+  UnsavedChangesDialog,
+} from '../components';
+import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
+import { ProfileFormField } from './components';
+import { getDropdownPanelPosition } from './dropdownPosition';
 
 const NICKNAME_MIN_LENGTH = 2;
 const NICKNAME_MAX_LENGTH = 10;
@@ -63,13 +69,13 @@ function ProfileEditPage() {
     undefined
   );
   const [isPhotoPending, setIsPhotoPending] = useState(false);
-  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const previousInitialRef = useRef({
     name: initialName,
     regionId: initialRegionId,
     birthYear: initialBirthYear,
   });
+  const profilePhotoEditorRef = useRef<ProfilePhotoEditorHandle>(null);
 
   useEffect(() => {
     const previous = previousInitialRef.current;
@@ -117,14 +123,10 @@ function ProfileEditPage() {
     !nicknameError &&
     !updateMyProfile.isPending &&
     !isPhotoPending;
+  const unsavedChangesGuard = useUnsavedChangesGuard(isEdited);
 
   const handleBack = () => {
-    if (isEdited) {
-      setIsLeaveDialogOpen(true);
-      return;
-    }
-
-    navigate('/profile');
+    unsavedChangesGuard.requestNavigation(() => navigate('/profile'));
   };
 
   const handleSave = async () => {
@@ -134,13 +136,23 @@ function ProfileEditPage() {
 
     setSubmitError(null);
 
+    const uploadedPhotoKey =
+      profileImageKey ??
+      (isPhotoChanged
+        ? await profilePhotoEditorRef.current?.commitPendingPhoto()
+        : undefined);
+
+    if (isPhotoChanged && !uploadedPhotoKey) {
+      return;
+    }
+
     const payload: UpdateMyProfileRequest = {};
     if (name !== initialName) payload.nickname = name;
     if (birthYear !== initialBirthYear && birthYear)
       payload.birthYear = birthYear;
     if (regionId !== initialRegionId && regionId)
       payload.regionId = Number(regionId);
-    if (profileImageKey) payload.profileImageUrl = profileImageKey;
+    if (uploadedPhotoKey) payload.profileImageUrl = uploadedPhotoKey;
 
     // 지역/출생연도를 빈 값으로 되돌리거나, 사진을 골랐지만 업로드가 아직
     // 끝나지 않았거나 실패한 경우 isEdited는 true지만 실제로 보낼 필드가
@@ -191,6 +203,7 @@ function ProfileEditPage() {
         style={{ paddingTop: 56 * scale }}
       >
         <ProfilePhotoEditor
+          ref={profilePhotoEditorRef}
           scale={scale}
           initialPhotoUrl={profile?.profileImageUrl}
           onPhotoChange={() => {
@@ -282,9 +295,9 @@ function ProfileEditPage() {
       </main>
 
       <UnsavedChangesDialog
-        isOpen={isLeaveDialogOpen}
-        onConfirm={() => navigate('/profile')}
-        onCancel={() => setIsLeaveDialogOpen(false)}
+        isOpen={unsavedChangesGuard.isDialogOpen}
+        onConfirm={unsavedChangesGuard.onConfirm}
+        onCancel={unsavedChangesGuard.onCancel}
       />
     </ResponsivePageShell>
   );
@@ -317,6 +330,7 @@ function SelectField({
     top: number;
     left: number;
     width: number;
+    height: number;
   }>();
   const [scrollThumb, setScrollThumb] = useState<{
     top: number;
@@ -352,10 +366,20 @@ function SelectField({
       if (!button) return;
 
       const rect = button.getBoundingClientRect();
+      const panelPosition = getDropdownPanelPosition({
+        triggerTop: rect.top,
+        triggerBottom: rect.bottom,
+        viewportHeight: window.innerHeight,
+        preferredHeight: panelHeight,
+        gap: 4 * scale,
+        viewportInset: 8 * scale,
+      });
+
       setPanelStyle({
-        top: rect.bottom + 4 * scale,
+        top: panelPosition.top,
         left: rect.left,
         width: rect.width,
+        height: panelPosition.height,
       });
     };
 
@@ -367,7 +391,7 @@ function SelectField({
       window.removeEventListener('resize', updatePanelStyle);
       window.removeEventListener('scroll', updatePanelStyle, true);
     };
-  }, [isOpen, scale]);
+  }, [isOpen, panelHeight, scale]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -467,7 +491,7 @@ function SelectField({
               id={listboxId}
               ref={panelRef}
               className="fixed z-[60] overflow-hidden rounded-xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-              style={{ ...panelStyle, height: panelHeight }}
+              style={panelStyle}
             >
               <div
                 ref={listboxRef}

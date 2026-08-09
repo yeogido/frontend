@@ -1,5 +1,8 @@
 import {
+  forwardRef,
+  useCallback,
   useEffect,
+  useImperativeHandle,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -12,6 +15,10 @@ import { getApiErrorMessage } from '../../../apis/common';
 import { createPresignedUrl, uploadFileToPresignedUrl } from '../../../apis/files.api';
 import { useToast } from '../../../components/toast';
 import { ProfilePhotoPreview, type ProfilePhoto } from './ProfilePhotoPreview';
+import {
+  canSavePendingProfilePhoto,
+  PROFILE_PHOTO_BACKGROUND_COLOR,
+} from './profilePhotoSave';
 
 const PHOTO_FRAME_SIZE = 120;
 const MIN_ZOOM = 1;
@@ -41,13 +48,20 @@ interface ProfilePhotoEditorProps {
   readonly initialPhotoUrl?: string | null;
 }
 
-export function ProfilePhotoEditor({
+export interface ProfilePhotoEditorHandle {
+  commitPendingPhoto: () => Promise<string | null>;
+}
+
+export const ProfilePhotoEditor = forwardRef<
+  ProfilePhotoEditorHandle,
+  ProfilePhotoEditorProps
+>(function ProfilePhotoEditor({
   scale,
   onPhotoChange,
   onPhotoUploaded,
   onPendingChange,
   initialPhotoUrl,
-}: ProfilePhotoEditorProps) {
+}, ref) {
   const { showToast } = useToast();
   const [savedPhoto, setSavedPhoto] = useState<ProfilePhoto | null>(null);
   const [draftPhoto, setDraftPhoto] = useState<ProfilePhoto | null>(null);
@@ -116,7 +130,7 @@ export function ProfilePhotoEditor({
   // 아니다. 부모(프로필 수정 화면)가 이 동안 저장 버튼을 막을 수 있도록
   // 알려준다.
   useEffect(() => {
-    onPendingChange?.(isTransforming || isUploading || isProcessingFile);
+    onPendingChange?.(isUploading || isProcessingFile);
   }, [isTransforming, isUploading, isProcessingFile, onPendingChange]);
 
   const updateTransform = (update: (current: ProfilePhoto) => ProfilePhoto) => {
@@ -138,7 +152,7 @@ export function ProfilePhotoEditor({
       const src = await readImageFile(file);
       const aspectRatio = await getImageAspectRatio(src);
 
-      if (attemptId !== attemptIdRef.current) return;
+      if (attemptId !== attemptIdRef.current) return null;
 
       setDraftPhoto({
         src,
@@ -153,7 +167,7 @@ export function ProfilePhotoEditor({
       setIsAdjustmentEnabled(true);
       onPhotoChange?.();
     } catch (error) {
-      if (attemptId !== attemptIdRef.current) return;
+      if (attemptId !== attemptIdRef.current) return null;
 
       showToast(getApiErrorMessage(error, PHOTO_LOAD_ERROR_MESSAGE));
     } finally {
@@ -163,7 +177,7 @@ export function ProfilePhotoEditor({
     }
   };
 
-  const commitPhoto = async (committedPhoto: ProfilePhoto) => {
+  const commitPhoto = useCallback(async (committedPhoto: ProfilePhoto) => {
     const attemptId = ++attemptIdRef.current;
 
     setIsTransforming(false);
@@ -173,7 +187,7 @@ export function ProfilePhotoEditor({
       // 업로드 연동이 없는 화면(조회 화면)에서는 로컬 미리보기만 확정한다.
       setSavedPhoto(committedPhoto);
       setDraftPhoto(null);
-      return;
+      return null;
     }
 
     // 구도 조정 자체를 잃지 않도록 조정 화면으로 되돌린다 — 재선택부터
@@ -198,7 +212,7 @@ export function ProfilePhotoEditor({
         AVATAR_EXPORT_MIME
       );
 
-      if (attemptId !== attemptIdRef.current) return;
+      if (attemptId !== attemptIdRef.current) return null;
 
       try {
         // 호출부가 Promise를 돌려주면(예: PATCH까지 이어서 저장) 그게
@@ -208,26 +222,49 @@ export function ProfilePhotoEditor({
         await onPhotoUploaded(presignedUrl.objectKey);
       } catch {
         if (attemptId === attemptIdRef.current) rollbackToRetry();
-        return;
+        return null;
       }
 
-      if (attemptId !== attemptIdRef.current) return;
+      if (attemptId !== attemptIdRef.current) return null;
 
       // 업로드와 호출부의 저장까지 실제로 성공한 뒤에야 "확정된" 사진으로
       // 반영한다.
       setSavedPhoto(committedPhoto);
       setDraftPhoto(null);
+      return presignedUrl.objectKey;
     } catch (error) {
-      if (attemptId !== attemptIdRef.current) return;
+      if (attemptId !== attemptIdRef.current) return null;
 
       showToast(getApiErrorMessage(error, UPLOAD_ERROR_MESSAGE));
       rollbackToRetry();
+      return null;
     } finally {
       if (attemptId === attemptIdRef.current) {
         setIsUploading(false);
       }
     }
-  };
+  }, [onPhotoUploaded, showToast]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      commitPendingPhoto: async () => {
+        if (
+          !canSavePendingProfilePhoto({
+            hasPendingPhoto: Boolean(draftPhoto),
+            isProcessingFile,
+            isUploading,
+          }) ||
+          !draftPhoto
+        ) {
+          return null;
+        }
+
+        return commitPhoto(draftPhoto);
+      },
+    }),
+    [commitPhoto, draftPhoto, isProcessingFile, isUploading]
+  );
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!photo || !isAdjustmentEnabled) return;
@@ -373,7 +410,7 @@ export function ProfilePhotoEditor({
       </button>
     </div>
   );
-}
+});
 
 function clampPhotoPosition(photo: ProfilePhoto) {
   const aspectRatio = photo.aspectRatio || 1;
@@ -445,6 +482,8 @@ function createCroppedPhotoFile(photo: ProfilePhoto): Promise<File> {
       }
 
       const renderScale = AVATAR_EXPORT_SIZE / PHOTO_FRAME_SIZE;
+      context.fillStyle = PROFILE_PHOTO_BACKGROUND_COLOR;
+      context.fillRect(0, 0, AVATAR_EXPORT_SIZE, AVATAR_EXPORT_SIZE);
       const aspectRatio = photo.aspectRatio || 1;
       const baseWidth =
         aspectRatio >= 1
