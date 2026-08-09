@@ -112,8 +112,6 @@ function CourseReviewsPage() {
     enabled: Boolean(hasNextPage) && !isFetchingNextPage,
     onIntersect: handleIntersect,
   });
-  // 이 화면은 이미 코스가 정해져 있어 타입 조회 없이 경로를 만들 수 있다.
-  const courseDetailPath = `/${courseType}/detail/${courseId}`;
 
   const renderMessage = (message: string) => (
     <p
@@ -224,11 +222,11 @@ function CourseReviewsPage() {
         </div>
       </section>
 
+      {/* 이 코스의 후기 목록이라 '코스 바로가기'는 넣지 않는다. */}
       <ReviewDetailModal
         review={openedReview}
         courseTitle={courseTitle || undefined}
         onClose={closeReview}
-        onGoToCourse={() => navigate(courseDetailPath)}
       />
 
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
