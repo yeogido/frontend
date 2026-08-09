@@ -374,6 +374,12 @@ export interface EditableReview {
   rating?: number;
   /** 유지 여부를 고를 기존 사진. imageKey가 있어야 PATCH에 다시 실을 수 있다. */
   editableImages: { imageKey: string; imageUrl: string }[];
+  /**
+   * 기존 사진 목록을 못 구한 경우 false. 그때는 사진 편집을 막고 별점·내용만
+   * 고치게 한다. 빈 목록을 "사진 없음"으로 오해해 그대로 저장하면, images가
+   * 전체 교체라 서버의 사진이 모두 지워진다.
+   */
+  canEditPhotos?: boolean;
 }
 
 export interface ReviewEditSubmission {

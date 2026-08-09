@@ -104,9 +104,16 @@ function ReviewEditModal({
     setPhotos((current) => [...current, ...additions]);
   };
 
+  // 사진 목록을 못 구한 후기는 사진을 건드리지 않는 수정만 허용한다. 그때는
+  // 최소 1장 조건도 볼 수 없으므로(0장인지 아닌지를 모른다) 검증에서 뺀다.
+  const canEditPhotos = review.canEditPhotos ?? true;
   const canSubmit =
     !isPending &&
-    isReviewFormValid({ rating, review: content, photoCount: photos.length });
+    isReviewFormValid({
+      rating,
+      review: content,
+      photoCount: canEditPhotos ? photos.length : 1,
+    });
 
   // 사진을 손대지 않았으면 목록을 보내지 않는다. 명세대로 서버가 기존
   // 이미지를 그대로 두므로 헛된 삭제/삽입이 없다.
@@ -126,7 +133,7 @@ function ReviewEditModal({
     onSubmit({
       rating,
       content: content.trim(),
-      photos: isPhotosUnchanged
+      photos: !canEditPhotos || isPhotosUnchanged
         ? undefined
         : photos.map((photo) =>
             photo.kind === 'existing'
@@ -157,9 +164,12 @@ function ReviewEditModal({
           후기를 수정해요
         </h2>
         <p className="mt-1 text-[14px] leading-[17px] text-[#7f7f7f]">
-          사진과 후기를 수정할 수 있어요
+          {canEditPhotos
+            ? '사진과 후기를 수정할 수 있어요'
+            : '별점과 후기를 수정할 수 있어요. 사진은 그대로 유지돼요.'}
         </p>
 
+        {canEditPhotos && (
         <section className="mt-3">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-[#1c1c1c]">
@@ -216,6 +226,7 @@ function ReviewEditModal({
             }}
           />
         </section>
+        )}
 
         <section className="mt-4">
           <h3 className="text-[14px] leading-5 font-semibold text-[#1c1c1c]">
