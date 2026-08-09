@@ -51,6 +51,9 @@ function AdminEventPhotoTagPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const place = useAdminEventRegistrationStore((state) => state.place);
+  const placeSource = useAdminEventRegistrationStore(
+    (state) => state.placeSource
+  );
   const basicInfo = useAdminEventRegistrationStore((state) => state.basicInfo);
   const editingContentId = useAdminEventRegistrationStore(
     (state) => state.editingContentId
@@ -61,6 +64,12 @@ function AdminEventPhotoTagPage() {
   const photo = useAdminEventRegistrationStore((state) => state.photo);
   const setPhotoInStore = useAdminEventRegistrationStore(
     (state) => state.setPhoto
+  );
+  const existingThumbnailKey = useAdminEventRegistrationStore(
+    (state) => state.existingThumbnailKey
+  );
+  const setExistingThumbnailKey = useAdminEventRegistrationStore(
+    (state) => state.setExistingThumbnailKey
   );
   const savedKeywordTagIds = useAdminEventRegistrationStore(
     (state) => state.keywordTagIds
@@ -106,6 +115,11 @@ function AdminEventPhotoTagPage() {
   if (!place) return null;
 
   const handlePhotoChange = (file: File | null) => {
+    // 사진을 지우면(교체 아님) 기존 key 재사용 폴백도 같이 지워서, "사진
+    // 없음"이 진짜로 다시 골라야 하는 상태가 되게 한다.
+    if (!file) {
+      setExistingThumbnailKey(null);
+    }
     setPhotoInStore(file ? { file, previewUrl: URL.createObjectURL(file) } : null);
   };
 
@@ -123,20 +137,31 @@ function AdminEventPhotoTagPage() {
     setCategoryInStore(nextCategory);
   };
 
-  const isReady = Boolean(photo) && selectedTagIds.size > 0 && category !== null;
+  const isReady =
+    (Boolean(photo?.file) || Boolean(existingThumbnailKey)) &&
+    selectedTagIds.size > 0 &&
+    category !== null;
 
   const handleSubmit = async () => {
-    if (!photo || !isReady || !category || isSubmitting) return;
+    if (!isReady || !category || isSubmitting) return;
 
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      const { uploadUrl, objectKey } = await createPresignedUrl({
-        fileName: photo.file.name,
-        contentType: photo.file.type,
-      });
-      await uploadFileToPresignedUrl(uploadUrl, photo.file, photo.file.type);
+      // 새로 고른 경우에만 업로드하고, 수정 중 그대로 둔 경우 상세 조회로
+      // 알아낸 기존 key를 재사용한다(대표 사진 재업로드 강제 없음).
+      const thumbnailImageKey = photo?.file
+        ? await (async () => {
+            const file = photo.file as File;
+            const { uploadUrl, objectKey } = await createPresignedUrl({
+              fileName: file.name,
+              contentType: file.type,
+            });
+            await uploadFileToPresignedUrl(uploadUrl, file, file.type);
+            return objectKey;
+          })()
+        : (existingThumbnailKey as string);
 
       const hashtags = await fetchHashtags();
       const hashtagIds = mapTagIdsToHashtagIds(
@@ -148,7 +173,7 @@ function AdminEventPhotoTagPage() {
       const payload: ContentCreateRequest = {
         place: {
           externalPlaceId: place.externalPlaceId,
-          source: 'KAKAO',
+          source: placeSource,
           name: place.title,
           roadAddress: place.roadAddress,
           lotAddress: place.lotAddress,
@@ -162,7 +187,7 @@ function AdminEventPhotoTagPage() {
         endDate: basicInfo.endDate,
         contactPhone: basicInfo.phone,
         officialUrl: basicInfo.homepage,
-        thumbnailImageKey: objectKey,
+        thumbnailImageKey,
         hashtagIds,
       };
 
