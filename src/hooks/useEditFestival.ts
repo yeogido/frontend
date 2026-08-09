@@ -45,19 +45,29 @@ export function useEditFestival() {
     try {
       const detail = await getCultureContentDetail(contentId);
 
-      setPlace({
-        id: detail.place.externalPlaceId ?? String(detail.place.placeId),
-        title: detail.place.name,
-        address: detail.place.roadAddress || detail.place.lotAddress || '',
-        imageSrc: null,
-        externalPlaceId: detail.place.externalPlaceId ?? '',
-        categoryGroupCode: '',
-        roadAddress: detail.place.roadAddress,
-        lotAddress: detail.place.lotAddress ?? '',
-        latitude: detail.place.latitude,
-        longitude: detail.place.longitude,
-      });
-      setPlaceSource(detail.place.source ?? 'KAKAO');
+      // externalPlaceId는 PlaceInfo 스키마에 required 표시가 없어(실제로도
+      // 지금까지 본 데이터엔 항상 있었지만) 없는 경우를 대비해야 한다. 빈
+      // 문자열로 채워 넣으면 화면엔 장소가 선택된 것처럼 보이지만 실제로는
+      // 식별 불가능한 장소라 그대로 제출 시 PATCH가 깨질 수 있다 — 그런
+      // 경우엔 장소를 비워서 반드시 다시 선택하게 한다.
+      if (detail.place.externalPlaceId) {
+        setPlace({
+          id: detail.place.externalPlaceId,
+          title: detail.place.name,
+          address: detail.place.roadAddress || detail.place.lotAddress || '',
+          imageSrc: null,
+          externalPlaceId: detail.place.externalPlaceId,
+          categoryGroupCode: '',
+          roadAddress: detail.place.roadAddress,
+          lotAddress: detail.place.lotAddress ?? '',
+          latitude: detail.place.latitude,
+          longitude: detail.place.longitude,
+        });
+        setPlaceSource(detail.place.source ?? 'KAKAO');
+      } else {
+        setPlace(null);
+        setPlaceSource('KAKAO');
+      }
 
       const thumbnailUrl = detail.thumbnailImage ?? detail.thumbnailImageUrl;
       // file 없이 previewUrl만 채워서, 새로 안 골라도 화면에 기존 사진이

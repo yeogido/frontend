@@ -10,7 +10,9 @@ export function deriveImageKeyFromUrl(
   if (!url) return null;
 
   try {
-    return new URL(url).pathname.replace(/^\//, '');
+    // pathname은 URL-인코딩된 상태라, key에 공백/한글 등이 있었다면 그대로
+    // 쓰면 실제 key와 달라진다. decodeURIComponent로 원래 문자열로 되돌린다.
+    return decodeURIComponent(new URL(url).pathname.replace(/^\//, ''));
   } catch {
     return null;
   }
