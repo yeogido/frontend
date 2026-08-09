@@ -12,7 +12,7 @@ import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useContentDelete } from '../../hooks/useContentDelete';
 import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
 import { useEditFestival } from '../../hooks/useEditFestival';
-import { useOngoingContents } from '../../hooks/useOngoingContents';
+import { useCultureContents } from '../../hooks/useCultureContents';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
 import { useAdminEventRegistrationStore } from '../../store/adminEventRegistration.store';
 import { toContentTagIds } from '../../utils/contentTags';
@@ -49,20 +49,21 @@ function AdminPage() {
   const recentFestivals = useRecentCultureContents().slice(0, 2);
   const { data: cultureContentBanners } = useCultureContentBanners();
   const {
-    data: ongoingContents,
+    data: ongoingContentsData,
     isPending: isOngoingContentsPending,
     isError: isOngoingContentsError,
     refetch: refetchOngoingContents,
-  } = useOngoingContents();
+  } = useCultureContents({
+    statuses: ['ONGOING'],
+    sort: 'RECOMMEND',
+    size: ONGOING_PREVIEW_COUNT,
+  });
   const resetRegistration = useAdminEventRegistrationStore(
     (state) => state.reset
   );
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps: deleteDialogProps } = useContentDelete();
-  const ongoingFestivals = (ongoingContents ?? []).slice(
-    0,
-    ONGOING_PREVIEW_COUNT
-  );
+  const ongoingFestivals = ongoingContentsData?.pages[0]?.items ?? [];
   const banner = cultureContentBanners?.[0];
   const displayedBanner = banner
     ? {
