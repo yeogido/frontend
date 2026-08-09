@@ -16,6 +16,7 @@ import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourse
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -64,8 +65,11 @@ const companionTypeByLabel: Record<string, CourseCompanionType | undefined> = {
 
 const sortByLabel: Record<string, CourseSort> = {
   추천순: 'RECOMMEND',
+  인기순: 'POPULAR',
+  최신순: 'LATEST',
   저장순: 'SAVED',
   후기순: 'REVIEW',
+  거리순: 'DISTANCE',
 };
 
 const durationLabelByType: Record<CourseDurationType, string> = {
@@ -99,6 +103,9 @@ function YeogidoCourseSearchPage() {
     handleFilterSelect,
   } = useYeogidoCourseFilters();
 
+  const isDistanceSort = selectedFilters.sort === '거리순';
+  const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
+
   const {
     data,
     fetchNextPage,
@@ -106,15 +113,22 @@ function YeogidoCourseSearchPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useCourses({
-    courseType: 'OFFICIAL',
-    keyword: displaySearchQuery.trim() || undefined,
-    transportType: transportTypeByLabel[selectedFilters.transport],
-    durationType: durationTypeByLabel[selectedFilters.duration],
-    companionType: companionTypeByLabel[selectedFilters.companion],
-    sort: sortByLabel[selectedFilters.sort],
-    size: 20,
-  });
+  } = useCourses(
+    {
+      courseType: 'OFFICIAL',
+      keyword: displaySearchQuery.trim() || undefined,
+      transportType: transportTypeByLabel[selectedFilters.transport],
+      durationType: durationTypeByLabel[selectedFilters.duration],
+      companionType: companionTypeByLabel[selectedFilters.companion],
+      sort: sortByLabel[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: 20,
+    },
+    { enabled: !isDistanceSort || distanceSortCoordinates !== null }
+  );
 
   const yeogidoCourses = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult =

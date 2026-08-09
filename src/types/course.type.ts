@@ -17,6 +17,7 @@ export type CourseCompanionType =
 
 export type CourseSort =
   | 'RECOMMEND'
+  | 'POPULAR'
   | 'DISTANCE'
   | 'LATEST'
   | 'SAVED'
