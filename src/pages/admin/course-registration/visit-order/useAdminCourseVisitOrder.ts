@@ -28,7 +28,10 @@ import {
   getAdminCourseRequestValidationError,
 } from './buildAdminCourseRequest';
 import { buildAdminVisitEvents } from './buildAdminVisitEvents';
-import { uploadAdminCourseImages } from './uploadAdminCourseImages';
+import {
+  fetchImageAsFile,
+  uploadAdminCourseImages,
+} from './uploadAdminCourseImages';
 
 const REGISTER_ERROR_MESSAGE = '코스 등록에 실패했습니다. 다시 시도해 주세요.';
 
@@ -118,12 +121,38 @@ export function useAdminCourseVisitOrder() {
         throw new Error(validationError);
       }
 
-      // 장소별 사진은 선택 사항이라, 실제로 파일을 등록한 장소만 업로드 대상에
-      // 넣는다. 대표 사진은 새로 고른 경우에만 업로드하고(맨 앞에 넣어 결과
-      // 배열의 첫 번째가 되게 한다), 수정 중 그대로 둔 경우 상세 조회로
+      // 장소별 사진은 선택 사항이다. 직접 올린 파일이 있으면 그걸 쓰고,
+      // 없지만 검색 시점에 가져온 구글 이미지(imageSrc)가 있으면 그 원격
+      // 이미지를 내려받아 업로드 대상에 넣는다 — 그래야 구글 이미지로
+      // 넘어간 장소도 imageKey를 받아 최종 등록에 반영된다. 구글 이미지
+      // 다운로드가 실패하면(예: 만료된 URL) 해당 장소만 이미지 없이
+      // 진행한다. 대표 사진은 새로 고른 경우에만 업로드하고(맨 앞에 넣어 결과
+      // 배열의 첫 번째가
+      // 되게 한다), 수정 중 그대로 둔 경우 상세 조회로
       // 알아낸 기존 key를 재사용한다.
-      const placeImageUploads = selectedPlaces.flatMap((place) =>
-        place.photoFile ? [{ placeId: place.id, file: place.photoFile }] : []
+      const placeImageEntries = await Promise.all(
+        selectedPlaces.map(async (place) => {
+          if (place.photoFile) {
+            return { placeId: place.id, file: place.photoFile };
+          }
+
+          if (place.imageSrc) {
+            try {
+              const file = await fetchImageAsFile(
+                place.imageSrc,
+                `${place.id}.jpg`
+              );
+              return { placeId: place.id, file };
+            } catch {
+              return null;
+            }
+          }
+
+          return null;
+        })
+      );
+      const placeImageUploads = placeImageEntries.filter(
+        (entry): entry is { placeId: string; file: File } => entry !== null
       );
       const uploadedKeys = await uploadAdminCourseImages(
         photo?.file

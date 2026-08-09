@@ -1,3 +1,5 @@
+import { apiClient } from './common';
+
 export type CourseItem =
   | {
       order: number;
@@ -58,8 +60,6 @@ export async function createLocalRecommendationWithClient<Result>(
 export async function createLocalRecommendation(
   payload: CreateLocalRecommendationRequest
 ): Promise<CreateLocalRecommendationResult> {
-  const { apiClient } = await import('./common');
-
   return createLocalRecommendationWithClient<CreateLocalRecommendationResult>(
     apiClient,
     payload

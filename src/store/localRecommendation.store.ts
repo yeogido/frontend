@@ -29,9 +29,7 @@ export interface PersistedSelectedFestival {
   address: string;
 }
 
-type PersistedSelectedPlaceInput = PersistedSelectedPlace & {
-  imageSrc?: string | null;
-};
+type PersistedSelectedPlaceInput = PersistedSelectedPlace;
 
 export interface LocalRecommendationDraft {
   neighborhood: Neighborhood | null;
@@ -179,9 +177,8 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
           draft: { ...state.draft, visitOrder: [...visitOrder] },
         })),
       setPendingImage: (placeId, { file, previewUrl }) => {
-        const previousImage = useLocalRecommendationStore.getState().pendingImages[
-          placeId
-        ];
+        const previousImage =
+          useLocalRecommendationStore.getState().pendingImages[placeId];
         if (previousImage) URL.revokeObjectURL(previousImage.previewUrl);
         const compressionPromise = compressImage(file).catch(() => file);
         const pendingImage: PendingImage = {

@@ -35,7 +35,9 @@ function toSelectedPlace(
 }
 
 export function useSelectedPlaces() {
-  const draftPlaces = useLocalRecommendationStore((state) => state.draft.places);
+  const draftPlaces = useLocalRecommendationStore(
+    (state) => state.draft.places
+  );
   const pendingImages = useLocalRecommendationStore(
     (state) => state.pendingImages
   );
@@ -71,20 +73,18 @@ export function useSelectedPlaces() {
       return;
     }
 
-    const next = [
-      ...selectedPlaces,
-      { ...place, imageFile, imagePreviewUrl },
-    ];
+    const next = [...selectedPlaces, { ...place, imageFile, imagePreviewUrl }];
     if (imageFile && imagePreviewUrl) {
-      setPendingImage(place.id, { file: imageFile, previewUrl: imagePreviewUrl });
+      setPendingImage(place.id, {
+        file: imageFile,
+        previewUrl: imagePreviewUrl,
+      });
     }
     setPlacesInStore(next.map(toPersistedPlace));
   };
 
   const removeSelectedPlace = (place: SelectedPlace) => {
-    const next = selectedPlaces.filter(
-      (item) => item.id !== place.id
-    );
+    const next = selectedPlaces.filter((item) => item.id !== place.id);
     removePendingImage(place.id);
     setPlacesInStore(next.map(toPersistedPlace));
   };
