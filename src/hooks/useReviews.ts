@@ -138,8 +138,13 @@ export function useReviews(sort: ReviewSort = 'LATEST') {
   });
 }
 
-/** 코스 상세에 끼워 넣는 미리보기. 첫 페이지만 본다. */
-const COURSE_REVIEW_PREVIEW_SIZE = 4;
+/**
+ * 코스 상세에 끼워 넣는 미리보기. 첫 페이지만 본다.
+ *
+ * 화면에는 사진 있는 후기 4개만 그리는데, 사진은 선택이라 걸러내면 4개가 안
+ * 될 수 있어 넉넉히 받아 둔다.
+ */
+const COURSE_REVIEW_PREVIEW_SIZE = 20;
 
 const COURSE_REVIEWS_PAGE_SIZE = 10;
 

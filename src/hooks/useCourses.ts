@@ -11,6 +11,7 @@ import {
 import { getApiErrorMessage } from '../apis/common';
 import { useToast } from '../components/toast';
 import { buildCourseDetailPath } from '../utils/routes';
+import type { CourseDetailNavigationState } from '../utils/reviewNavigation';
 
 import {
   getCourses,
@@ -193,7 +194,23 @@ export function useNavigateToCourseDetail() {
   const { showToast } = useToast();
   const [isResolvingCourse, setIsResolvingCourse] = useState(false);
 
-  const goToCourseDetail = async (courseId: number, state?: unknown) => {
+  const courseDetailQuery = (courseId: number) => ({
+    queryKey: ['courseDetail', courseId],
+    queryFn: () => getCourseDetail(courseId),
+    staleTime: DETAIL_STALE_TIME,
+  });
+
+  /**
+   * 이동 전에 다른 조회를 함께 보내야 할 때 쓴다. 같은 캐시를 채우므로
+   * 뒤이어 goToCourseDetail을 부르면 기다리지 않고 바로 이동한다.
+   */
+  const prefetchCourseDetail = (courseId: number) =>
+    queryClient.prefetchQuery(courseDetailQuery(courseId));
+
+  const goToCourseDetail = async (
+    courseId: number,
+    state?: CourseDetailNavigationState
+  ) => {
     if (isResolvingCourse) {
       return;
     }
@@ -201,11 +218,7 @@ export function useNavigateToCourseDetail() {
     setIsResolvingCourse(true);
 
     try {
-      const course = await queryClient.fetchQuery({
-        queryKey: ['courseDetail', courseId],
-        queryFn: () => getCourseDetail(courseId),
-        staleTime: DETAIL_STALE_TIME,
-      });
+      const course = await queryClient.fetchQuery(courseDetailQuery(courseId));
 
       navigate(buildCourseDetailPath(course.courseType, courseId), { state });
     } catch (error) {
@@ -215,5 +228,5 @@ export function useNavigateToCourseDetail() {
     }
   };
 
-  return { goToCourseDetail, isResolvingCourse };
+  return { goToCourseDetail, prefetchCourseDetail, isResolvingCourse };
 }

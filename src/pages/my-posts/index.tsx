@@ -78,7 +78,8 @@ function MyPostsPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { userId } = useAuth();
-  const { goToCourseDetail } = useNavigateToCourseDetail();
+  const { goToCourseDetail, prefetchCourseDetail } =
+    useNavigateToCourseDetail();
   const queryClient = useQueryClient();
   const [keyword, setKeyword] = useState('');
 
@@ -173,7 +174,12 @@ function MyPostsPage() {
       return;
     }
 
-    const images = await lookupReviewImages(review.id, review.courseId);
+    // 사진 조회와 코스 타입 조회는 서로 무관해서 함께 보낸다. 순서대로
+    // 기다리면 탭하고 화면이 바뀌기까지 왕복이 두 번 걸린다.
+    const [images] = await Promise.all([
+      lookupReviewImages(review.id, review.courseId),
+      prefetchCourseDetail(review.courseId),
+    ]);
 
     await goToCourseDetail(
       review.courseId,

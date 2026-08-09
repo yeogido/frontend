@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import {
-  ReviewCard,
-  ReviewTextCard,
-  SectionHeader,
-} from '../../../components/common';
+import { ReviewCard, SectionHeader } from '../../../components/common';
 import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import type { CourseReview } from '../types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
@@ -130,48 +126,26 @@ export function DetailReviewSection({
               key={review.id}
               className="w-full shrink-0 snap-start snap-always"
             >
-              {/* 사진은 선택이라 없는 후기가 있다. 그때는 본문만 그린다. */}
-              {review.images.length > 0 ? (
-                <ReviewCard
-                  images={review.images}
-                  courseTitle={courseTitle}
-                  profileImage={review.profileImage}
-                  nickname={review.nickname}
-                  meta={review.meta}
-                  content={review.content}
-                  rating={review.rating}
-                  isMine={review.isMine}
-                  onDeleteClick={
-                    onReviewDelete ? () => onReviewDelete(review.id) : undefined
-                  }
-                  onEditClick={
-                    onReviewEdit ? () => onReviewEdit(review) : undefined
-                  }
-                  onClick={
-                    onReviewClick ? () => onReviewClick(review.id) : undefined
-                  }
-                  className="[&>div>article]:!bg-background"
-                />
-              ) : (
-                <ReviewTextCard
-                  profileImage={review.profileImage}
-                  nickname={review.nickname}
-                  meta={review.meta}
-                  content={review.content}
-                  rating={review.rating}
-                  isMine={review.isMine}
-                  onDeleteClick={
-                    onReviewDelete ? () => onReviewDelete(review.id) : undefined
-                  }
-                  onEditClick={
-                    onReviewEdit ? () => onReviewEdit(review) : undefined
-                  }
-                  onClick={
-                    onReviewClick ? () => onReviewClick(review.id) : undefined
-                  }
-                  className="[&>article]:!bg-background"
-                />
-              )}
+              <ReviewCard
+                images={review.images}
+                courseTitle={courseTitle}
+                profileImage={review.profileImage}
+                nickname={review.nickname}
+                meta={review.meta}
+                content={review.content}
+                rating={review.rating}
+                isMine={review.isMine}
+                onDeleteClick={
+                  onReviewDelete ? () => onReviewDelete(review.id) : undefined
+                }
+                onEditClick={
+                  onReviewEdit ? () => onReviewEdit(review) : undefined
+                }
+                onClick={
+                  onReviewClick ? () => onReviewClick(review.id) : undefined
+                }
+                className="[&>div>article]:!bg-background"
+              />
             </div>
           ))}
         </div>

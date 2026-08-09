@@ -11,6 +11,12 @@ export interface CourseDetailNavigationState {
   openedReview: ReviewDetailModalReview;
 }
 
+/** 코스 상세로 갈 수 있는 후기 카드. */
+export type ReviewWithCourse = ReviewDetailModalReview & {
+  courseType: string;
+  courseId: number;
+};
+
 export function toCourseDetailState(
   review: ReviewDetailModalReview
 ): CourseDetailNavigationState {
@@ -48,6 +54,12 @@ export function readOpenedReview(
     typeof openedReview.nickname !== 'string'
   ) {
     return undefined;
+  }
+
+  // 모달이 images를 배열로 다뤄서(길이 확인 후 map) 배열이 아니면 렌더가
+  // 터진다. 나머지 항목은 없거나 이상해도 화면만 비는 정도라 통과시킨다.
+  if (openedReview.images !== undefined && !Array.isArray(openedReview.images)) {
+    return { ...openedReview, images: undefined };
   }
 
   return openedReview;

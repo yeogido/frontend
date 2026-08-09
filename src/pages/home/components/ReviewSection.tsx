@@ -15,9 +15,7 @@ import {
   useReviewDelete,
   useReviewEdit,
 } from '../../../hooks/useReviews';
-import type { ReviewDetailModalReview } from '../../../components/common/ReviewDetailModal';
-import { toCourseDetailState } from '../../../utils/reviewNavigation';
-import { buildCourseDetailPath } from '../../../utils/routes';
+import { useOpenReviewInCourseDetail } from '../../../hooks/useOpenReviewInCourseDetail';
 import { toReviewCardProps } from '../../../utils/reviewCard';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -32,7 +30,7 @@ const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
 const ERROR_TEXT_SIZE = 13;
 /** 캐러셀에 그리는 후기 수. */
-const HOME_REVIEW_COUNT = 3;
+const HOME_REVIEW_COUNT = 4;
 
 function ReviewSection() {
   const { data, isPending, isError } = useRecentReviews();
@@ -47,14 +45,7 @@ function ReviewSection() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
 
-  // 카드를 누르면 코스 상세로 가서 그 후기 상세가 열린다. 코스 상세는 후기를
-  // 최신 4개만 읽으므로 id 대신 후기를 통째로 넘긴다.
-  const goToCourseDetail = (
-    review: { courseType: string; courseId: number } & ReviewDetailModalReview
-  ) =>
-    navigate(buildCourseDetailPath(review.courseType, review.courseId), {
-      state: toCourseDetailState(review),
-    });
+  const goToCourseDetail = useOpenReviewInCourseDetail();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);

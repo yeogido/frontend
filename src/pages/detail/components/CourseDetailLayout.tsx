@@ -54,6 +54,8 @@ const MAP_MARGIN_TOP = 24;
 const STOP_LIST_MARGIN_TOP = 0;
 const REVIEW_MARGIN_TOP = 24;
 const REVIEW_BUTTON_MARGIN_TOP = 12;
+/** 미리보기에 그리는 후기 수. */
+const COURSE_REVIEW_PREVIEW_COUNT = 4;
 
 export interface CourseDetailLayoutProps {
   readonly course: CourseDetail;
@@ -120,24 +122,32 @@ function CourseDetailLayoutContent({
   const { data: courseReviews } = useCourseReviewPreviews(
     Number.isInteger(numericCourseId) ? numericCourseId : undefined
   );
-  const reviews = mapCourseReviewPreviews(courseReviews?.items);
+  // 미리보기는 사진 있는 후기만 보여준다. 사진 없는 후기는 후기 전체보기에서
+  // 본문만 그리는 카드로 나온다.
+  const reviews = mapCourseReviewPreviews(courseReviews?.items)
+    .filter((review) => review.images.length > 0)
+    .slice(0, COURSE_REVIEW_PREVIEW_COUNT);
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
-  // 후기 목록 화면에서 카드를 눌러 넘어온 경우, 그 후기를 그대로 띄운다.
+  /*
+   * 후기 목록 화면에서 카드를 눌러 넘어온 경우, 그 후기를 그대로 띄운다.
+   *
+   * state로 따로 들지 않고 매 렌더 읽는다. 같은 코스의 다른 후기를 연달아
+   * 누르면 이 컴포넌트가 다시 마운트되지 않아(경로가 같고 코스 데이터도
+   * 캐시에 있다) 초기값으로 한 번만 읽으면 두 번째부터는 안 열린다.
+   */
   const location = useLocation();
-  const [incomingReview, setIncomingReview] = useState(() =>
-    readOpenedReview(location.state)
-  );
+  const incomingReview = readOpenedReview(location.state);
 
   const closeReviewDetail = () => {
     closeReview();
 
     if (!incomingReview) return;
 
-    setIncomingReview(undefined);
-    // 남겨 두면 다른 화면에 갔다가 뒤로가기로 돌아왔을 때 다시 열린다.
+    // state를 비우면 다음 렌더에서 모달이 닫힌다. 남겨 두면 다른 화면에
+    // 갔다가 뒤로가기로 돌아왔을 때 다시 열린다.
     navigate(`${location.pathname}${location.search}`, {
       replace: true,
       state: null,
