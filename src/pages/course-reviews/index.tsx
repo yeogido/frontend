@@ -17,7 +17,6 @@ import {
   getCourseReviewsFromPages,
   isCourseNotFoundError,
   useCourseReviews,
-  useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
   useReviewEdit,
@@ -96,14 +95,10 @@ function CourseReviewsPage() {
   // courseId가 잘못되면 쿼리가 비활성이라 isPending이 계속 true다. 그대로
   // 두면 스피너가 멈추지 않으므로 로딩으로 보지 않는다.
   const isLoading = validCourseId !== undefined && isPending;
-  const myReviewIds = useMyReviewIds();
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
 
-  const reviews = mapCourseReviewPreviews(
-    getCourseReviewsFromPages(data?.pages),
-    myReviewIds
-  );
+  const reviews = mapCourseReviewPreviews(getCourseReviewsFromPages(data?.pages));
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
 

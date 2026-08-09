@@ -8,19 +8,15 @@ import {
   ReviewDetailModal,
   ReviewEditModal,
 } from '../../components/common';
-import { useCourseDetails } from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import {
   getReviewsFromPages,
-  useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
   useReviewEdit,
   useReviews,
 } from '../../hooks/useReviews';
-import { toCompanionLabel } from '../../utils/courseEnumLabels';
-import { toContentTagIds } from '../../utils/contentTags';
 import { toReviewCourseCardProps } from '../../utils/reviewCard';
 import { buildCourseDetailPath } from '../../utils/routes';
 
@@ -47,26 +43,15 @@ function RecentReviewCoursesPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useReviews('LATEST');
-  const myReviewIds = useMyReviewIds();
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
   const navigate = useNavigate();
   const goToCourseDetail = (review: { courseType: string; courseId: number }) =>
     navigate(buildCourseDetailPath(review.courseType, review.courseId));
 
-  const reviews = getReviewsFromPages(data?.pages).map((review) =>
-    toReviewCourseCardProps(review, myReviewIds)
-  );
+  const reviews = getReviewsFromPages(data?.pages).map(toReviewCourseCardProps);
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
-
-  // 후기 목록 응답의 course에는 해시태그와 동행이 없어 코스별 상세를 더 읽는다.
-  // 같은 코스의 후기가 여럿이면 캐시를 공유하므로 코스 수만큼만 나간다.
-  const courseIds = [...new Set(reviews.map((review) => review.courseId))];
-  const courseDetails = useCourseDetails(courseIds);
-  const courseById = new Map(
-    courseDetails.flatMap(({ data }) => (data ? [[data.courseId, data]] : []))
-  );
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -141,32 +126,26 @@ function RecentReviewCoursesPage() {
             gap: LIST_GAP * scale,
           }}
         >
-          {reviews.map((review) => {
-            const course = courseById.get(review.courseId);
-
-            return (
-              <CourseReviewCard
-                key={review.id}
-                image={review.image}
-                title={review.title}
-                duration={review.duration}
-                transport={review.transport}
-                companion={
-                  course ? toCompanionLabel(course.companionType) : undefined
-                }
-                tags={course ? toContentTagIds(course.tags) : undefined}
-                profileImage={review.profileImage}
-                nickname={review.nickname}
-                meta={review.meta}
-                content={review.content}
-                rating={review.rating}
-                isMine={review.isMine}
-                onDeleteClick={() => requestDelete(review.id)}
-                onEditClick={() => requestEdit(review)}
-                onClick={() => openReview(review.id)}
-              />
-            );
-          })}
+          {reviews.map((review) => (
+            <CourseReviewCard
+              key={review.id}
+              image={review.image}
+              title={review.title}
+              duration={review.duration}
+              transport={review.transport}
+              companion={review.companion}
+              tags={review.tags}
+              profileImage={review.profileImage}
+              nickname={review.nickname}
+              meta={review.meta}
+              content={review.content}
+              rating={review.rating}
+              isMine={review.isMine}
+              onDeleteClick={() => requestDelete(review.id)}
+              onEditClick={() => requestEdit(review)}
+              onClick={() => openReview(review.id)}
+            />
+          ))}
 
           <div ref={loadMoreRef} aria-hidden="true" />
 

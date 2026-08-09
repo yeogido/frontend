@@ -32,7 +32,6 @@ import {
 } from '../../../hooks/usePlaceOpeningHours';
 import {
   useCourseReviewPreviews,
-  useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
   useReviewEdit,
@@ -119,8 +118,7 @@ function CourseDetailLayoutContent({
   const { data: courseReviews } = useCourseReviewPreviews(
     Number.isInteger(numericCourseId) ? numericCourseId : undefined
   );
-  const myReviewIds = useMyReviewIds();
-  const reviews = mapCourseReviewPreviews(courseReviews?.items, myReviewIds);
+  const reviews = mapCourseReviewPreviews(courseReviews?.items);
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
   const { openedReview, openReview, closeReview } =

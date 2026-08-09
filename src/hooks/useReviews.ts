@@ -18,9 +18,6 @@ import {
   getReviews,
   updateReview,
 } from '../apis/reviews.api';
-import { getMyPosts } from '../apis/users.api';
-import { collectMyReviewIds } from '../utils/collectMyReviewIds';
-import { useAuth } from './useAuth';
 import type {
   CourseReviewImageRequest,
   CreateCourseReviewResponse,
@@ -132,38 +129,6 @@ export function useReviews(sort: ReviewSort = 'LATEST') {
   });
 }
 
-const MY_POSTS_PAGE_SIZE = 50;
-
-const EMPTY_REVIEW_IDS: ReadonlySet<number> = new Set();
-
-/**
- * 내가 쓴 리뷰의 ID 집합.
- *
- * 리뷰 조회 응답에 작성자 식별자가 없어 본인 여부를 알 수 없다. 대신 내
- * 게시물 목록에서 리뷰만 받아 ID로 대조한다. 백엔드가 isMine(또는
- * author.userId)을 내려주기 시작하면 이 훅째로 걷어낼 수 있다.
- */
-export function useMyReviewIds() {
-  const { isAuthenticated } = useAuth();
-
-  const { data } = useQuery({
-    queryKey: ['myReviewIds'],
-    queryFn: () =>
-      collectMyReviewIds((cursorId) =>
-        getMyPosts({
-          category: 'REVIEW',
-          size: MY_POSTS_PAGE_SIZE,
-          cursorId,
-        }),
-      ),
-    enabled: isAuthenticated,
-    // 매 화면 진입마다 전 페이지를 다시 훑지 않도록 잠시 재사용한다.
-    staleTime: 1000 * 60,
-  });
-
-  return data ?? EMPTY_REVIEW_IDS;
-}
-
 /** 코스 상세에 끼워 넣는 미리보기. 첫 페이지만 본다. */
 const COURSE_REVIEW_PREVIEW_SIZE = 4;
 
@@ -248,7 +213,6 @@ export function useCreateCourseReview() {
       });
       void queryClient.invalidateQueries({ queryKey: ['reviews'] });
       void queryClient.invalidateQueries({ queryKey: ['recentReviews'] });
-      void queryClient.invalidateQueries({ queryKey: ['myReviewIds'] });
       void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
   });
@@ -357,7 +321,6 @@ function useDeleteReview() {
       void queryClient.invalidateQueries({ queryKey: ['courseReviews'] });
       void queryClient.invalidateQueries({ queryKey: ['reviews'] });
       void queryClient.invalidateQueries({ queryKey: ['recentReviews'] });
-      void queryClient.invalidateQueries({ queryKey: ['myReviewIds'] });
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['myPosts'] });

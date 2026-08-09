@@ -12,7 +12,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
-  useMyReviewIds,
   useRecentReviews,
   useReviewDelete,
   useReviewDetailModal,
@@ -35,9 +34,8 @@ const ERROR_TEXT_SIZE = 13;
 
 function ReviewSection() {
   const { data, isPending, isError } = useRecentReviews();
-  const myReviewIds = useMyReviewIds();
   const reviews = (data?.items ?? []).map((review) =>
-    toReviewCardProps(review, myReviewIds)
+    toReviewCardProps(review)
   );
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
