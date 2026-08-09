@@ -24,6 +24,7 @@ import { ProfileFormField, UnsavedChangesDialog } from './components';
 
 const NICKNAME_MIN_LENGTH = 2;
 const NICKNAME_MAX_LENGTH = 10;
+const SAVE_BUTTON_MARGIN_TOP = 136;
 const NICKNAME_LENGTH_ERROR_MESSAGE =
   '닉네임 길이는 2자 이상 10자 이하여야 합니다.';
 
@@ -262,22 +263,23 @@ function ProfileEditPage() {
             </p>
           )}
         </form>
-      </main>
 
-      <button
-        type="button"
-        disabled={!canSave}
-        onClick={() => void handleSave()}
-        className="enabled:bg-main-5 mt-auto flex w-full items-center justify-center rounded-xl font-semibold enabled:text-[#f9f9f9] disabled:bg-[#e4e4e4] disabled:text-[#7f7f7f]"
-        style={{
-          height: 52 * scale,
-          paddingInline: 10 * scale,
-          fontSize: 18 * scale,
-          lineHeight: `${21 * scale}px`,
-        }}
-      >
-        프로필 저장
-      </button>
+        <button
+          type="button"
+          disabled={!canSave}
+          onClick={() => void handleSave()}
+          className="enabled:bg-main-5 flex w-full items-center justify-center rounded-xl font-semibold enabled:text-[#f9f9f9] disabled:bg-[#e4e4e4] disabled:text-[#7f7f7f]"
+          style={{
+            marginTop: SAVE_BUTTON_MARGIN_TOP * scale,
+            height: 52 * scale,
+            paddingInline: 10 * scale,
+            fontSize: 18 * scale,
+            lineHeight: `${21 * scale}px`,
+          }}
+        >
+          프로필 저장
+        </button>
+      </main>
 
       <UnsavedChangesDialog
         isOpen={isLeaveDialogOpen}
