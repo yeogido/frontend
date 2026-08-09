@@ -8,6 +8,7 @@ import { DetailDescriptionCard } from './DetailDescriptionCard';
 import { DetailHeroSection } from './DetailHeroSection';
 import { DetailReviewSection } from './DetailReviewSection';
 import { DetailTitleSection } from './DetailTitleSection';
+import { EditCourseButton } from './EditCourseButton';
 import { FavoriteButton } from './FavoriteButton';
 import { ReviewButton } from './ReviewButton';
 import { ShareButton } from './ShareButton';
@@ -37,6 +38,8 @@ import {
   useReviewDetailModal,
   useReviewEdit,
 } from '../../../hooks/useReviews';
+import { useMyCourseIds } from '../../../hooks/useCourses';
+import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import { useAuthStore } from '../../../store/auth.store';
 import { mapCourseReviewPreviews } from '../mappers/courseReviewMapper';
 import BackButton from '../../local-recommendation/components/BackButton';
@@ -116,6 +119,9 @@ function CourseDetailLayoutContent({
   const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
   const numericCourseId = Number(course.id);
+  const myCourseIds = useMyCourseIds();
+  const isMine = isAuthenticated && myCourseIds.has(numericCourseId);
+  const { editLocalCourse } = useEditLocalCourse();
   const { data: courseReviews } = useCourseReviewPreviews(
     Number.isInteger(numericCourseId) ? numericCourseId : undefined
   );
@@ -257,12 +263,19 @@ function CourseDetailLayoutContent({
             imageUrl={course.heroImageUrl}
             title={course.title}
             rightAction={
-              <FavoriteButton
-                isActive={isLiked}
-                label={course.title}
-                onClick={handleFavoriteToggle}
-                disabled={isFavoritePending}
-              />
+              isMine ? (
+                <EditCourseButton
+                  label={course.title}
+                  onClick={() => void editLocalCourse(numericCourseId)}
+                />
+              ) : (
+                <FavoriteButton
+                  isActive={isLiked}
+                  label={course.title}
+                  onClick={handleFavoriteToggle}
+                  disabled={isFavoritePending}
+                />
+              )
             }
           />
           {onBack ? (

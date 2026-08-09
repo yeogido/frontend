@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ResponsivePageShell } from '../../../components/layout/ResponsivePageShell';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
+import { buildCourseDetailPath } from '../../../utils/routes';
 
 import BackButton from '../components/BackButton';
 import { CourseBasicInfoForm } from './components';
@@ -24,10 +25,23 @@ function CourseBasicInfoPage() {
   const updateBasicInfo = useLocalRecommendationStore(
     (state) => state.updateBasicInfo
   );
+  const editingCourseId = useLocalRecommendationStore(
+    (state) => state.draft.editingCourseId
+  );
 
   const handleNext = (values: CourseBasicInfoValues) => {
     updateBasicInfo(values);
     navigate('/local-recommendation/tag-selection');
+  };
+
+  const handleBack = () => {
+    // 지역 선택을 건너뛰고 바로 여기로 들어온 수정 흐름이라, 뒤로가기는
+    // 등록 시작화면이 아니라 원래 보던 코스 상세로 보낸다.
+    navigate(
+      editingCourseId
+        ? buildCourseDetailPath('LOCAL', editingCourseId)
+        : '/local-recommendation'
+    );
   };
 
   return (
@@ -37,7 +51,7 @@ function CourseBasicInfoPage() {
       bottomPadding={CONTAINER_PADDING_BOTTOM}
       className="bg-white"
     >
-      <BackButton onClick={() => navigate('/local-recommendation')} />
+      <BackButton onClick={handleBack} />
       <header>
         <h1
           className="leading-[1.15] font-bold"

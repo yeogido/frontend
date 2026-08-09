@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 
-import { CourseCard } from '../../../components/common';
+import { ConfirmDialog, CourseCard } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useCourseDelete, useMyCourseIds } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import { useRecentCourses } from '../../../hooks/useRecentCourses';
 import { toCourseCardProps } from '../../../utils/courseCard';
 
@@ -21,6 +23,9 @@ function LocalCourseRecentPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
+  const myCourseIds = useMyCourseIds();
+  const { editLocalCourse } = useEditLocalCourse();
+  const { requestDelete, dialogProps } = useCourseDelete();
 
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/local-course/detail/${courseId}`);
@@ -31,65 +36,76 @@ function LocalCourseRecentPage() {
     .map(toCourseCardProps);
 
   return (
-    <section
-      className="mx-auto flex min-h-screen w-full flex-col"
-      style={{
-        paddingLeft: PAGE_PADDING_X * scale,
-        paddingRight: PAGE_PADDING_X * scale,
-        paddingTop: PAGE_PADDING_TOP * scale,
-        paddingBottom: PAGE_PADDING_BOTTOM * scale,
-      }}
-    >
-      <div>
-        <h1
-          className="font-semibold leading-none text-black"
-          style={{ fontSize: TITLE_SIZE * scale }}
-        >
-          최근 본 코스
-        </h1>
-        <p
-          className="text-gray-5 font-normal leading-none"
-          style={{
-            marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: DESCRIPTION_SIZE * scale,
-          }}
-        >
-          최근 확인한 동네 코스를 다시 둘러보세요
-        </p>
-      </div>
-
-      {recentCourses.length > 0 ? (
-        <div
-          className="flex flex-col"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            gap: LIST_GAP * scale,
-          }}
-        >
-          {recentCourses.map((course) => (
-            <CourseCard
-              key={course.id}
-              {...course}
-              liked={getLiked(course.id, course.liked)}
-              onClick={() => handleCourseClick(course.id)}
-              onLikeClick={() =>
-                toggleLike(course.id, getLiked(course.id, course.liked))
-              }
-            />
-          ))}
+    <>
+      <section
+        className="mx-auto flex min-h-screen w-full flex-col"
+        style={{
+          paddingLeft: PAGE_PADDING_X * scale,
+          paddingRight: PAGE_PADDING_X * scale,
+          paddingTop: PAGE_PADDING_TOP * scale,
+          paddingBottom: PAGE_PADDING_BOTTOM * scale,
+        }}
+      >
+        <div>
+          <h1
+            className="leading-none font-semibold text-black"
+            style={{ fontSize: TITLE_SIZE * scale }}
+          >
+            최근 본 코스
+          </h1>
+          <p
+            className="text-gray-5 leading-none font-normal"
+            style={{
+              marginTop: DESCRIPTION_MARGIN_TOP * scale,
+              fontSize: DESCRIPTION_SIZE * scale,
+            }}
+          >
+            최근 확인한 동네 코스를 다시 둘러보세요
+          </p>
         </div>
-      ) : (
-        <p
-          className="text-center font-medium text-gray-4"
-          style={{
-            marginTop: EMPTY_MARGIN_TOP * scale,
-            fontSize: MESSAGE_TEXT_SIZE * scale,
-          }}
-        >
-          최근 본 코스가 없습니다.
-        </p>
-      )}
-    </section>
+
+        {recentCourses.length > 0 ? (
+          <div
+            className="flex flex-col"
+            style={{
+              marginTop: LIST_MARGIN_TOP * scale,
+              gap: LIST_GAP * scale,
+            }}
+          >
+            {recentCourses.map((course) => (
+              <CourseCard
+                key={course.id}
+                {...course}
+                liked={getLiked(course.id, course.liked)}
+                isMine={myCourseIds.has(course.id)}
+                showEdit
+                onClick={() => handleCourseClick(course.id)}
+                onLikeClick={() =>
+                  toggleLike(course.id, getLiked(course.id, course.liked))
+                }
+                onEditClick={() => void editLocalCourse(course.id)}
+                onDeleteClick={() => requestDelete(course.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <p
+            className="text-gray-4 text-center font-medium"
+            style={{
+              marginTop: EMPTY_MARGIN_TOP * scale,
+              fontSize: MESSAGE_TEXT_SIZE * scale,
+            }}
+          >
+            최근 본 코스가 없습니다.
+          </p>
+        )}
+      </section>
+      <ConfirmDialog
+        {...dialogProps}
+        title="코스를 삭제할까요?"
+        description="삭제한 코스는 되돌릴 수 없어요."
+      />
+    </>
   );
 }
 
