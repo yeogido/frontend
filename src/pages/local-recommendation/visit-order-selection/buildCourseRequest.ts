@@ -1,11 +1,14 @@
 import type {
   CourseItem,
   CreateLocalRecommendationRequest,
+  OperatingDay,
+  TimeFromPrevious,
 } from '../../../apis/localRecommendations';
 import type { UpdateCourseRequest } from '../../../apis/courses';
 import type { CourseBasicInfoValues } from '../course-basic-info/schema';
 import type { LocalRecommendationDraft } from '../../../store/localRecommendation.store';
 import type { VisitEvent } from './constants';
+import type { VisitEventTravelData } from './useVisitEventTravelData';
 
 const DURATION_TYPE_MAP: Record<
   CourseBasicInfoValues['duration'],
@@ -38,12 +41,21 @@ const COMPANION_TYPE_MAP: Record<
 };
 
 export function buildCourseItemsFromVisitEvents(
-  visitEvents: readonly VisitEvent[]
+  visitEvents: readonly VisitEvent[],
+  travelData?: VisitEventTravelData
 ): CourseItem[] {
   return visitEvents.map((event, index) => {
     const order = index + 1;
+    // 첫 번째 아이템은 비교할 이전 아이템이 없어 timesFromPrevious를 보내지 않는다.
+    const timesFromPrevious: TimeFromPrevious[] | undefined =
+      order >= 2
+        ? travelData?.timesFromPreviousByEventId.get(event.id)
+        : undefined;
 
     if (event.kind === 'PLACE') {
+      const operatingDays: OperatingDay[] | undefined =
+        travelData?.operatingDaysByEventId.get(event.id);
+
       return {
         order,
         type: 'PLACE',
@@ -60,10 +72,21 @@ export function buildCourseItemsFromVisitEvents(
         latitude: event.latitude,
         longitude: event.longitude,
         imageKey: event.imageKey,
+        ...(operatingDays && operatingDays.length > 0 ? { operatingDays } : {}),
+        ...(timesFromPrevious && timesFromPrevious.length > 0
+          ? { timesFromPrevious }
+          : {}),
       };
     }
 
-    return { order, type: 'CONTENT', contentId: event.contentId };
+    return {
+      order,
+      type: 'CONTENT',
+      contentId: event.contentId,
+      ...(timesFromPrevious && timesFromPrevious.length > 0
+        ? { timesFromPrevious }
+        : {}),
+    };
   });
 }
 
@@ -110,7 +133,8 @@ export function getCourseRequestValidationError(
 /** 생성/수정 요청이 공유하는 필드 — 차이는 regionId(생성만 있음) 하나뿐이다. */
 function buildCommonCourseFields(
   draft: LocalRecommendationDraft,
-  visitEvents: readonly VisitEvent[]
+  visitEvents: readonly VisitEvent[],
+  travelData?: VisitEventTravelData
 ): UpdateCourseRequest | null {
   const { basicInfo, coverImageKey } = draft;
 
@@ -140,13 +164,14 @@ function buildCommonCourseFields(
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey: coverImageKey,
     hashtagIds: draft.hashtagIds,
-    courseItems: buildCourseItemsFromVisitEvents(visitEvents),
+    courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
   };
 }
 
 export function buildCourseRequest(
   draft: LocalRecommendationDraft,
-  visitEvents: readonly VisitEvent[]
+  visitEvents: readonly VisitEvent[],
+  travelData?: VisitEventTravelData
 ): CreateLocalRecommendationRequest | null {
   const { neighborhood } = draft;
 
@@ -154,7 +179,7 @@ export function buildCourseRequest(
     return null;
   }
 
-  const common = buildCommonCourseFields(draft, visitEvents);
+  const common = buildCommonCourseFields(draft, visitEvents, travelData);
 
   if (!common) {
     return null;
@@ -169,7 +194,8 @@ export function buildCourseRequest(
  */
 export function buildLocalCourseUpdateRequest(
   draft: LocalRecommendationDraft,
-  visitEvents: readonly VisitEvent[]
+  visitEvents: readonly VisitEvent[],
+  travelData?: VisitEventTravelData
 ): UpdateCourseRequest | null {
-  return buildCommonCourseFields(draft, visitEvents);
+  return buildCommonCourseFields(draft, visitEvents, travelData);
 }

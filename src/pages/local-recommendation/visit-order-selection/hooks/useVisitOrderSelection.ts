@@ -26,6 +26,7 @@ import {
 } from '../buildCourseRequest';
 import { buildVisitEvents } from '../buildVisitEvents';
 import type { VisitEvent } from '../constants';
+import { useVisitEventTravelData } from '../useVisitEventTravelData';
 
 export function useVisitOrderSelection() {
   const draft = useLocalRecommendationStore((state) => state.draft);
@@ -59,6 +60,7 @@ export function useVisitOrderSelection() {
     )
   );
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const travelData = useVisitEventTravelData(visitEvents);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const sensors = useSensors(
@@ -163,7 +165,8 @@ export function useVisitOrderSelection() {
       if (currentDraft.editingCourseId) {
         const updatePayload = buildLocalCourseUpdateRequest(
           draftWithCoverKey,
-          eventsWithImageKeys
+          eventsWithImageKeys,
+          travelData
         );
         if (!updatePayload) {
           throw new Error('코스 정보가 모두 입력되어야 수정할 수 있습니다.');
@@ -191,7 +194,8 @@ export function useVisitOrderSelection() {
       } else {
         const payload = buildCourseRequest(
           draftWithCoverKey,
-          eventsWithImageKeys
+          eventsWithImageKeys,
+          travelData
         );
         if (!payload) {
           throw new Error('코스 정보가 모두 입력되어야 등록할 수 있습니다.');

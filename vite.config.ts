@@ -185,6 +185,14 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/odsay-api/, ''),
         },
+        '/kakao-local': {
+          target: 'https://dapi.kakao.com',
+          changeOrigin: true,
+          headers: {
+            Authorization: `KakaoAK ${env.KAKAO_REST_API_KEY}`,
+          },
+          rewrite: (path) => path.replace(/^\/kakao-local/, '/v2/local'),
+        },
       },
     },
   };

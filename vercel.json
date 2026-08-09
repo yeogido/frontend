@@ -9,6 +9,10 @@
       "destination": "/api/kakao-routing/car"
     },
     {
+      "source": "/kakao-local/search/address.json",
+      "destination": "/api/kakao-local/address"
+    },
+    {
       "source": "/google-places/hours",
       "destination": "/api/google-places/hours"
     },

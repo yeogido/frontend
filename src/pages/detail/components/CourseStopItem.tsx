@@ -7,6 +7,10 @@ import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import type { PlaceHours } from '../../../apis/googlePlacesHours';
+import {
+  isOperatingNow,
+  parseWeekdayDescriptionsToOperatingDays,
+} from '../../../utils/operatingHours';
 import type { CourseStop } from '../types/courseDetail';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -66,10 +70,16 @@ export function CourseStopItem({
   const [isHoursOpen, setIsHoursOpen] = useState(false);
   const weekdayHours = placeHours?.regularWeekdayDescriptions ?? [];
   const canExpandHours = weekdayHours.length > 0;
+  // 요일별 영업시간을 파싱할 수 있으면 현재 요일·시각 기준으로 직접 계산하고,
+  // 파싱할 수 없는 경우(휴무 표기만 있거나 형식이 다른 경우)에만 구글이
+  // 내려준 openNow 값으로 대체한다.
+  const isOpenNow =
+    isOperatingNow(parseWeekdayDescriptionsToOperatingDays(weekdayHours)) ??
+    placeHours?.openNow;
   const hoursStatusLabel =
-    placeHours?.openNow === undefined
+    isOpenNow === undefined
       ? undefined
-      : placeHours.openNow
+      : isOpenNow
         ? OPEN_STATUS_LABEL
         : CLOSED_STATUS_LABEL;
   const isActive = stop.liked;
@@ -234,30 +244,6 @@ export function CourseStopItem({
               gap: TRANSPORT_GAP * scale,
             }}
           >
-            {carDurationMinutes !== undefined && (
-              <span
-                className="flex items-center"
-                style={{ gap: TRANSPORT_ICON_GAP * scale }}
-              >
-                <img
-                  src={carIcon}
-                  alt="자동차"
-                  style={{
-                    width: TRANSPORT_ICON_SIZE * scale,
-                    height: TRANSPORT_ICON_SIZE * scale,
-                  }}
-                />
-                <span
-                  className="font-sans"
-                  style={{
-                    fontSize: META_FONT_SIZE * scale,
-                    lineHeight: `${META_LINE_HEIGHT * scale}px`,
-                  }}
-                >
-                  {carDurationMinutes}분
-                </span>
-              </span>
-            )}
             {transitDurationMinutes !== undefined && (
               <span
                 className="flex items-center"
@@ -279,6 +265,30 @@ export function CourseStopItem({
                   }}
                 >
                   {transitDurationMinutes}분
+                </span>
+              </span>
+            )}
+            {carDurationMinutes !== undefined && (
+              <span
+                className="flex items-center"
+                style={{ gap: TRANSPORT_ICON_GAP * scale }}
+              >
+                <img
+                  src={carIcon}
+                  alt="자동차"
+                  style={{
+                    width: TRANSPORT_ICON_SIZE * scale,
+                    height: TRANSPORT_ICON_SIZE * scale,
+                  }}
+                />
+                <span
+                  className="font-sans"
+                  style={{
+                    fontSize: META_FONT_SIZE * scale,
+                    lineHeight: `${META_LINE_HEIGHT * scale}px`,
+                  }}
+                >
+                  {carDurationMinutes}분
                 </span>
               </span>
             )}

@@ -20,6 +20,7 @@ import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
+import { useVisitEventTravelData } from '../../../local-recommendation/visit-order-selection/useVisitEventTravelData';
 import { mapTagIdsToHashtagIds } from '../../../local-recommendation/tag-selection/hashtagMapping';
 import { VISIT_EVENT_PLACE_ID_PREFIX } from '../types';
 import {
@@ -76,6 +77,7 @@ export function useAdminCourseVisitOrder() {
     )
   );
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const travelData = useVisitEventTravelData(visitEvents);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
@@ -198,6 +200,7 @@ export function useAdminCourseVisitOrder() {
           visitEvents: eventsWithImageKeys,
           thumbnailKey,
           hashtagIds,
+          travelData,
         });
 
         if (!updatePayload) {
@@ -215,6 +218,7 @@ export function useAdminCourseVisitOrder() {
         visitEvents: eventsWithImageKeys,
         thumbnailKey,
         hashtagIds,
+        travelData,
       });
 
       if (!payload) {
