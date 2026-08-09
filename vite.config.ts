@@ -154,6 +154,9 @@ function googlePlacesDevPlugin(apiKey: string | undefined): Plugin {
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
+  // 기존 로컬 개발 환경의 키 이름을 한 번만 호환한다. 이 값은 개발 프록시
+  // 프로세스에서만 사용되며, 클라이언트 번들로 전달되지 않는다.
+  const odsayApiKey = env.ODSAY_API_KEY ?? env.VITE_ODSAY_API_KEY;
 
   return {
     plugins: [
@@ -185,7 +188,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => {
             const url = new URL(path, 'http://localhost');
-            url.searchParams.set('apiKey', env.ODSAY_API_KEY ?? '');
+            url.searchParams.set('apiKey', odsayApiKey ?? '');
             return `${url.pathname.replace(/^\/odsay-api/, '')}${url.search}`;
           },
         },
