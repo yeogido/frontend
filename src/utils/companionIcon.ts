@@ -7,7 +7,12 @@ import {
   FaUser,
 } from 'react-icons/fa6';
 
-/** EditableCourseCard/EditableContentCard가 공유하는 동행 유형 → 아이콘 매핑. */
+/**
+ * 동행 유형 → 아이콘 매핑.
+ *
+ * 라벨(한글)과 enum 값(SOLO·FRIEND…)이 화면마다 섞여 들어와 둘 다 받는다.
+ * CourseCard·ContentCard와 관리자 화면의 Editable* 카드가 함께 쓴다.
+ */
 export function getCompanionIcon(label?: string | null): IconType | null {
   if (!label) return null;
 

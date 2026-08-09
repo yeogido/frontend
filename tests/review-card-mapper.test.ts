@@ -81,7 +81,6 @@ test('maps a review into course review card props', () => {
     meta: '20대 여',
     content: '지도 동선이 너무 편했어요.',
     rating: 4,
-    liked: true,
   });
 });
 

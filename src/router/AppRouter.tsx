@@ -31,6 +31,8 @@ import LocalBusinessPage from '../pages/local-business';
 import LocalBusinessDetailPage from '../pages/detail/local-business';
 import LocalRecommendationPage from '../pages/local-recommendation';
 import AdminPage from '../pages/admin';
+import AdminFestivalsOngoingPage from '../pages/admin/festivals/ongoing';
+import AdminFestivalsRecentPage from '../pages/admin/festivals/recent';
 import AdminPlaceSelectionPage from '../pages/admin/event-registration/place-selection';
 import AdminEventBasicInfoPage from '../pages/admin/event-registration/basic-info';
 import AdminEventPhotoTagPage from '../pages/admin/event-registration/photo-tag';
@@ -142,6 +144,14 @@ function AppRouter() {
         />
 
         <Route path="/admin" element={<AdminPage />} />
+        <Route
+          path="/admin/festivals/ongoing"
+          element={<AdminFestivalsOngoingPage />}
+        />
+        <Route
+          path="/admin/festivals/recent"
+          element={<AdminFestivalsRecentPage />}
+        />
 
         <Route path="/admin/courses" element={<AdminCoursesPage />} />
         <Route

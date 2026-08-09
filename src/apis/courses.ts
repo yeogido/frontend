@@ -14,6 +14,7 @@ export type CourseDetailItem =
       latitude: number;
       longitude: number;
       imageUrl: string;
+      imageKey?: string;
     }
   | {
       order: number;
@@ -71,6 +72,57 @@ export async function getCourseDetail(
 export async function deleteCourse(courseId: number): Promise<void> {
   try {
     await apiClient.delete(`/courses/${courseId}`);
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export type UpdateCourseItem =
+  | {
+      order: number;
+      type: 'PLACE';
+      externalPlaceId: string;
+      /** 라이브 스펙에서 PLACE의 선택 필드 — 모르면 아예 보내지 않는다(빈 문자열 금지). */
+      categoryGroupCode?: string;
+      name: string;
+      roadAddress: string;
+      lotAddress: string;
+      latitude: number;
+      longitude: number;
+      imageKey: string | null;
+    }
+  | { order: number; type: 'CONTENT'; contentId: number };
+
+// regionId는 여기 없다 — 라이브 스펙(CourseUpdateRequest)에 아예 필드가
+// 없어 지역은 수정 대상이 아니다.
+export interface UpdateCourseRequest {
+  title: string;
+  description: string;
+  durationType: 'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
+  transportType: 'WALK' | 'PUBLIC' | 'CAR';
+  companionType: 'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
+  monthStart: number;
+  monthEnd: number;
+  thumbnailKey: string;
+  hashtagIds: number[];
+  courseItems: UpdateCourseItem[];
+}
+
+export interface UpdateCourseResult {
+  courseId: number;
+}
+
+export async function updateCourse(
+  courseId: number,
+  payload: UpdateCourseRequest
+): Promise<UpdateCourseResult> {
+  try {
+    const { data } = await apiClient.patch<UpdateCourseResult>(
+      `/courses/${courseId}`,
+      payload
+    );
+
+    return data;
   } catch (error) {
     throw normalizeApiError(error);
   }

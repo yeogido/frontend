@@ -2,13 +2,12 @@ import type { KeyboardEvent } from 'react';
 
 import calendar from '../../assets/icons/calendar.svg';
 import darkStar from '../../assets/icons/dark star.svg';
-import heart from '../../assets/icons/heart.svg';
 import location from '../../assets/icons/location.svg';
-import oheart from '../../assets/icons/oheart.svg';
 import people from '../../assets/icons/people.svg';
 import star from '../../assets/icons/star.svg';
-import { useLongPress } from '../../hooks/useLongPress';
+import { useCardTap } from '../../hooks/useCardTap';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
+import { useVisibleItemCount } from '../../hooks/useVisibleItemCount';
 import type { TagId } from '../../types/tag.type';
 
 import ReviewActionMenu from './ReviewActionMenu';
@@ -32,11 +31,8 @@ export interface CourseReviewCardProps {
   meta: string;
   content: string;
   rating?: number;
-  liked?: boolean;
   isMine?: boolean;
   onClick?: () => void;
-  onLongPress?: () => void;
-  onLikeClick?: () => void;
   onEditClick?: () => void;
   onDeleteClick?: () => void;
 }
@@ -53,41 +49,47 @@ function CourseReviewCard({
   meta,
   content,
   rating = 5,
-  liked = false,
   isMine = false,
   onClick,
-  onLongPress,
-  onLikeClick,
   onEditClick,
   onDeleteClick,
 }: CourseReviewCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
-  const isClickable = Boolean(onClick || onLongPress);
+  const isClickable = Boolean(onClick);
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
-  const longPressHandlers = useLongPress({
-    onLongPress: () => onLongPress?.(),
-    onClick,
-  });
+  const tapHandlers = useCardTap({ onTap: () => onClick?.() });
 
-  // 길게 누르기는 포인터로만 구분되므로, 키보드에서는 카드를 눌렀을 때 할 수
-  // 있는 일을 실행한다. 짧게 누르기가 없는 화면(홈)에서는 후기 상세를 연다.
+  // 탭은 포인터로만 판정하므로 키보드 경로를 따로 둔다.
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    const activate = onClick ?? onLongPress;
-
-    if (!activate || event.currentTarget !== event.target) return;
+    if (!onClick || event.currentTarget !== event.target) return;
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      activate();
+      onClick();
     }
   };
 
   const metaItems = [
-    { icon: calendar, label: duration },
-    { icon: location, label: transport },
-    { icon: people, label: companion },
+    { key: 'duration', icon: calendar, label: duration },
+    { key: 'transport', icon: location, label: transport },
+    { key: 'companion', icon: people, label: companion },
   ].filter((item) => Boolean(item.label));
+
+  const {
+    containerRef: metaContainerRef,
+    hiddenRef: hiddenMetaRef,
+    visibleCount: visibleMetaCount,
+  } = useVisibleItemCount(
+    metaItems.map((item) => item.label).join('|'),
+    metaItems.length,
+  );
+
+  const {
+    containerRef: tagContainerRef,
+    hiddenRef: hiddenTagRef,
+    visibleCount: visibleTagCount,
+  } = useVisibleItemCount(tags.join('|'), tags.length);
 
   return (
     <div
@@ -97,7 +99,7 @@ function CourseReviewCard({
     >
       <article
         ref={innerRef}
-        {...(isClickable ? longPressHandlers : {})}
+        {...(isClickable ? tapHandlers : {})}
         onKeyDown={handleKeyDown}
         role={isClickable ? 'button' : undefined}
         tabIndex={isClickable ? 0 : undefined}
@@ -122,60 +124,92 @@ function CourseReviewCard({
             )}
           </div>
 
-          <div className="min-w-0 flex-1 pt-1 pr-5">
+          <div className="relative min-w-0 flex-1 pt-1 pr-5">
             <h2 className="truncate text-[16px] leading-none font-medium text-[#1C1C1C]">
               {title}
             </h2>
 
-            <div className="mt-2 flex items-center gap-1 overflow-hidden">
+            {/* 메타: 폭 측정 전용 */}
+            <div
+              ref={hiddenMetaRef}
+              className="invisible absolute flex gap-1"
+              aria-hidden="true"
+            >
               {metaItems.map((item) => (
                 <span
-                  key={item.label}
+                  key={`measure-${item.key}`}
                   className="flex shrink-0 items-center gap-[2px] text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]"
                 >
                   <img
                     src={item.icon}
                     alt=""
                     aria-hidden="true"
-                    className="h-[14px] w-[14px]"
+                    className="h-[14px] w-[14px] shrink-0"
                   />
                   {item.label}
                 </span>
               ))}
             </div>
 
-            <div className="mt-[15px] flex h-5 items-center gap-1 overflow-hidden">
-              {tags.map((tag) => (
-                <TagChip key={tag} type={tag} className="h-5 w-auto" />
+            {/* 메타: 한 줄에 들어가는 만큼만 */}
+            <div
+              ref={metaContainerRef}
+              className="mt-2 flex h-[14px] flex-nowrap items-center gap-1 overflow-hidden"
+            >
+              {metaItems.slice(0, visibleMetaCount).map((item) => (
+                <span
+                  key={item.key}
+                  className="flex shrink-0 items-center gap-[2px] text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]"
+                >
+                  <img
+                    src={item.icon}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-[14px] w-[14px] shrink-0"
+                  />
+                  {item.label}
+                </span>
+              ))}
+            </div>
+
+            {/* 태그: 폭 측정 전용 */}
+            <div
+              ref={hiddenTagRef}
+              className="invisible absolute flex gap-1"
+              aria-hidden="true"
+            >
+              {tags.map((tag, index) => (
+                <TagChip
+                  key={`measure-${tag}-${index}`}
+                  type={tag}
+                  className="h-5 w-auto"
+                />
+              ))}
+            </div>
+
+            {/* 태그: 한 줄에 들어가는 만큼만 */}
+            <div
+              ref={tagContainerRef}
+              className="mt-[15px] flex h-5 flex-nowrap items-center gap-1 overflow-hidden"
+            >
+              {tags.slice(0, visibleTagCount).map((tag, index) => (
+                <TagChip
+                  key={`${tag}-${index}`}
+                  type={tag}
+                  className="h-5 w-auto"
+                />
               ))}
             </div>
           </div>
         </div>
 
-        {/*
-          내가 쓴 후기에는 좋아요 대신 더보기를 같은 자리에 둔다. 두 아이콘을
-          같이 쌓으면 하트가 후기에 대한 것으로 오해된다.
-          카드가 overflow-hidden이라 메뉴 패널은 포털로 뜬다.
-        */}
-        {isMine ? (
+        {/* 카드가 overflow-hidden이라 메뉴 패널은 포털로 뜬다. */}
+        {isMine && (
           <ReviewActionMenu
             onEditClick={onEditClick}
             onDeleteClick={onDeleteClick}
             triggerClassName="absolute top-3 left-[310px]"
           />
-        ) : (
-          <button
-            type="button"
-            aria-label={liked ? '좋아요 취소' : '좋아요'}
-            aria-pressed={liked}
-            onClick={(event) => {
-              event.stopPropagation();
-              onLikeClick?.();
-            }}
-            className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center"
-          >
-            <img src={liked ? oheart : heart} alt="" aria-hidden="true" />
-          </button>
         )}
 
         <div className="mx-4 border-t border-[#E4E4E4]" />

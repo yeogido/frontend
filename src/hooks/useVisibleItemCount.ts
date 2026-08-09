@@ -1,10 +1,17 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
+import { countFittingItems } from '../utils/visibleItemCount';
+
 /**
- * EditableCourseCard/EditableContentCard가 공유하는, 컨테이너 폭에 맞춰
- * 몇 개까지 보여줄 수 있는지 측정하는 훅. 화면 밖 hidden 영역에 전체
- * 아이템을 렌더링해 실제 너비를 잰 뒤, 컨테이너에 들어가는 개수만
- * visibleCount로 반환한다.
+ * 한 줄에 다 못 들어가는 항목(메타 문구·태그 칩)을 잘린 채로 보여주지 않고
+ * 통째로 감추기 위한 훅. 실제 폭은 글자 수에 따라 달라져서 계산으로는
+ * 알 수 없으므로, 같은 항목을 invisible 영역에 한 번 그려 폭을 재고
+ * 컨테이너에 들어가는 개수만 돌려준다.
+ *
+ * CourseCard·CourseReviewCard·ContentCard와 관리자 화면의
+ * EditableCourseCard·EditableContentCard가 함께 쓴다.
+ *
+ * itemsKey는 항목 내용이 바뀌었을 때 다시 재도록 하는 키다.
  */
 export function useVisibleItemCount(itemsKey: string, itemCount: number) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -25,32 +32,12 @@ export function useVisibleItemCount(itemsKey: string, itemCount: number) {
       const elements = Array.from(hidden.children) as HTMLElement[];
       const widths = elements.map((el) => el.getBoundingClientRect().width);
 
-      if (widths.length === 0 || widths.some((w) => w === 0)) {
-        return;
-      }
-
       const style = getComputedStyle(container);
       const gap = Number.parseFloat(style.columnGap || style.gap || '0') || 0;
 
       const containerWidth = container.getBoundingClientRect().width;
-      const EPSILON = 0.5;
 
-      let total = 0;
-      let count = 0;
-
-      for (let i = 0; i < widths.length; i++) {
-        const width = widths[i];
-        const next = count === 0 ? width : total + gap + width;
-
-        if (next > containerWidth + EPSILON) {
-          break;
-        }
-
-        total = next;
-        count++;
-      }
-
-      setVisibleCount(count);
+      setVisibleCount(countFittingItems(widths, gap, containerWidth));
     };
 
     recalculate();

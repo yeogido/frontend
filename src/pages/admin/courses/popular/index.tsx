@@ -6,6 +6,7 @@ import {
 } from '../../../../components/common';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { usePopularCourses } from '../../../../hooks/useCourses';
+import { useEditCourse } from '../../../../hooks/useEditCourse';
 import { toContentTagIds } from '../../../../utils/contentTags';
 import { toDurationLabel } from '../../../../utils/courseEnumLabels';
 import { buildCourseDetailPath } from '../../../../utils/routes';
@@ -34,6 +35,7 @@ function AdminCoursesPopularPage() {
     isError,
     refetch,
   } = usePopularCourses({ courseType: 'OFFICIAL' });
+  const { editCourse } = useEditCourse();
 
   const goToCourseDetail = (courseId: number) => {
     navigate(buildCourseDetailPath('OFFICIAL', courseId));
@@ -101,6 +103,7 @@ function AdminCoursesPopularPage() {
                 tags={toContentTagIds(course.tags)}
                 className="w-full"
                 onClick={() => goToCourseDetail(course.courseId)}
+                onEdit={() => void editCourse(course.courseId)}
                 onDelete={() => handleDeleteCourse(course.courseId)}
               />
             ))}
