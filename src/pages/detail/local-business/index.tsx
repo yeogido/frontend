@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
 import {
   ResponsiveFullBleed,
@@ -9,6 +10,7 @@ import {
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
+import { useToast } from '../../../components/toast';
 import { useBusinessPromotionDetail } from '../../../hooks/useBusinessPromotionDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
@@ -52,7 +54,9 @@ function isNormalizedApiError(error: unknown): error is NormalizedApiError {
 function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
   const { openLoginModal } = useLoginModal();
+  const { showToast } = useToast();
   const isValidPromotionId = Number.isInteger(promotionId) && promotionId > 0;
   const { data: detailResponse, error: queryError } =
     useBusinessPromotionDetail(promotionId);
@@ -71,19 +75,34 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
         : NOT_FOUND_MESSAGE
       : null;
 
-  const runAuthAction = (action: () => void) => {
+  const handleFavoriteToggle = async () => {
     if (!isAuthenticated) {
       openLoginModal();
       return;
     }
 
-    action();
-  };
+    if (!business) return;
 
-  const handleFavoriteToggle = () => {
-    runAuthAction(() =>
-      setLikedOverride((previous) => !(previous ?? business?.liked ?? false))
-    );
+    const nextLiked = !(likedOverride ?? business.liked);
+    setLikedOverride(nextLiked);
+
+    try {
+      if (nextLiked) {
+        await addPlaceLike(business.placeId, 'PROMOTION', promotionId);
+      } else {
+        await removePlaceLike(business.placeId);
+      }
+    } catch (error) {
+      setLikedOverride(!nextLiked);
+
+      if (isNormalizedApiError(error) && error.code === 'AUTH4011') {
+        clearAuth();
+        openLoginModal();
+        return;
+      }
+
+      showToast('좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
   };
 
   return (
@@ -162,7 +181,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
               address={businessDetail.address}
               hours={businessDetail.hours}
               liked={likedOverride ?? businessDetail.liked}
-              onLikeClick={handleFavoriteToggle}
+              onLikeClick={() => void handleFavoriteToggle()}
               onClick={
                 isValidGeoPoint(businessDetail.location)
                   ? () =>

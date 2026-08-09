@@ -66,7 +66,8 @@ export interface CourseDetailLayoutProps {
   readonly isFavoritePending?: boolean;
   readonly onPlaceLikeToggle?: (
     placeId: number,
-    isLiked: boolean
+    isLiked: boolean,
+    courseItemId: number
   ) => Promise<boolean>;
   readonly onContentLikeToggle?: (
     contentId: number,
@@ -190,7 +191,7 @@ function CourseDetailLayoutContent({
     }
 
     if (stop.placeId !== undefined && onPlaceLikeToggle) {
-      void onPlaceLikeToggle(stop.placeId, stop.liked)
+      void onPlaceLikeToggle(stop.placeId, stop.liked, stop.id)
         .then((isLiked) => {
           setStops((prevStops) =>
             prevStops.map((item) =>

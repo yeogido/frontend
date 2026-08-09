@@ -66,7 +66,7 @@ function formatMonthRange(startMonth: number, endMonth: number): string {
 
 function toCourseStops(course: CourseDetailResult): readonly CourseStopDto[] {
   return course.courseItems.map((item) => ({
-    id: item.order,
+    id: item.courseItemId,
     placeId: item.type === 'PLACE' ? item.placeId : undefined,
     contentId: item.type === 'CONTENT' ? item.contentId : undefined,
     order: item.order,

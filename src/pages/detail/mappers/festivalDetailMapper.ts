@@ -75,6 +75,7 @@ export function mapFestivalPlaceDtoToViewModel(dto: unknown): FestivalPlace {
 
   return {
     id: dto.id,
+    courseItemId: dto.courseItemId ?? 0,
     name: dto.name,
     address: dto.address,
     hours: dto.hours ?? '',

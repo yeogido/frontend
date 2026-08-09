@@ -87,6 +87,7 @@ export function mapBusinessPromotionDetail(
 ): BusinessPromotionDetail {
   return {
     id: detail.promotionId,
+    placeId: detail.place.placeId,
     title: detail.place.name,
     heroImageUrl: getHeroImageUrl(detail.images),
     liked: detail.isLiked,
