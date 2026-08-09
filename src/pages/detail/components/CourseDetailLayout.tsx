@@ -8,6 +8,7 @@ import { DetailDescriptionCard } from './DetailDescriptionCard';
 import { DetailHeroSection } from './DetailHeroSection';
 import { DetailReviewSection } from './DetailReviewSection';
 import { DetailTitleSection } from './DetailTitleSection';
+import { EditButton } from './EditButton';
 import { FavoriteButton } from './FavoriteButton';
 import { ReviewButton } from './ReviewButton';
 import { ShareButton } from './ShareButton';
@@ -37,6 +38,10 @@ import {
   useReviewDetailModal,
   useReviewEdit,
 } from '../../../hooks/useReviews';
+import { useMyCourseIds } from '../../../hooks/useCourses';
+import { useEditCourse } from '../../../hooks/useEditCourse';
+import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useAuthStore } from '../../../store/auth.store';
 import { mapCourseReviewPreviews } from '../mappers/courseReviewMapper';
 import BackButton from '../../local-recommendation/components/BackButton';
@@ -116,6 +121,17 @@ function CourseDetailLayoutContent({
   const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
   const numericCourseId = Number(course.id);
+  const { courseIds: myCourseIds } = useMyCourseIds();
+  const isAdmin = useIsAdmin();
+  // local-course(우리동네)는 본인이 쓴 코스인지로, yeogido-course(여기도)는
+  // 관리자 권한인지로 판단한다 — 서로 다른 마법사(useEditLocalCourse vs
+  // useEditCourse)로 들어가야 해서 화면 종류별로 완전히 분리해서 본다.
+  const canEdit =
+    isAuthenticated &&
+    ((reviewType === 'local-course' && myCourseIds.has(numericCourseId)) ||
+      (reviewType === 'yeogido-course' && isAdmin));
+  const { editLocalCourse } = useEditLocalCourse();
+  const { editCourse } = useEditCourse();
   const { data: courseReviews } = useCourseReviewPreviews(
     Number.isInteger(numericCourseId) ? numericCourseId : undefined
   );
@@ -257,12 +273,23 @@ function CourseDetailLayoutContent({
             imageUrl={course.heroImageUrl}
             title={course.title}
             rightAction={
-              <FavoriteButton
-                isActive={isLiked}
-                label={course.title}
-                onClick={handleFavoriteToggle}
-                disabled={isFavoritePending}
-              />
+              canEdit ? (
+                <EditButton
+                  label={course.title}
+                  onClick={() =>
+                    void (reviewType === 'local-course'
+                      ? editLocalCourse(numericCourseId)
+                      : editCourse(numericCourseId))
+                  }
+                />
+              ) : (
+                <FavoriteButton
+                  isActive={isLiked}
+                  label={course.title}
+                  onClick={handleFavoriteToggle}
+                  disabled={isFavoritePending}
+                />
+              )
             }
           />
           {onBack ? (

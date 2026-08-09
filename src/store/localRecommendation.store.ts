@@ -13,6 +13,8 @@ export interface PersistedSelectedPlace {
   title: string;
   address: string;
   imageKey: string | null;
+  /** imageKey에 대응하는 URL — 수정 진입 시 새로 안 고른 장소의 미리보기로 쓴다. */
+  imageUrl: string | null;
   externalPlaceId: string;
   categoryGroupCode: string;
   roadAddress: string;
@@ -40,6 +42,10 @@ export interface LocalRecommendationDraft {
   festivals: PersistedSelectedFestival[];
   places: PersistedSelectedPlace[];
   visitOrder: string[];
+  /** 내가 쓴 우리동네 코스 상세에서 "수정"으로 들어온 경우의 코스 ID. null이면 신규 등록. */
+  editingCourseId: number | null;
+  /** coverImageKey에 대응하는 URL — 수정 진입 시 대표 사진 미리보기로 쓴다. */
+  existingThumbnailUrl: string | null;
 }
 
 export interface PendingImage {
@@ -65,6 +71,10 @@ export interface LocalRecommendationState {
   setFestivals: (festivals: readonly FestivalItem[]) => void;
   setPlaces: (places: readonly PersistedSelectedPlaceInput[]) => void;
   setVisitOrder: (visitOrder: readonly string[]) => void;
+  /** 수정 진입 시 상세 조회 결과로 draft 전체를 채운다. */
+  loadCourseForEditing: (draft: LocalRecommendationDraft) => void;
+  /** 수정 중 기존 대표 사진을 삭제했을 때 — 재사용 fallback까지 함께 지운다. */
+  clearThumbnail: () => void;
   setPendingImage: (
     placeId: string,
     data: { file: File; previewUrl: string }
@@ -84,6 +94,8 @@ export const createEmptyLocalRecommendationDraft =
     festivals: [],
     places: [],
     visitOrder: [],
+    editingCourseId: null,
+    existingThumbnailUrl: null,
   });
 
 function clearImageDependentDraft(
@@ -94,6 +106,7 @@ function clearImageDependentDraft(
     tagIds: [],
     hashtagIds: [],
     coverImageKey: null,
+    existingThumbnailUrl: null,
     places: [],
     visitOrder: [],
   };
@@ -151,6 +164,7 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
                 title,
                 address,
                 imageKey,
+                imageUrl,
                 externalPlaceId,
                 categoryGroupCode,
                 roadAddress,
@@ -162,6 +176,7 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
                 title,
                 address,
                 imageKey,
+                imageUrl: imageUrl ?? null,
                 externalPlaceId,
                 categoryGroupCode,
                 roadAddress,
@@ -175,6 +190,25 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
       setVisitOrder: (visitOrder) =>
         set((state) => ({
           draft: { ...state.draft, visitOrder: [...visitOrder] },
+        })),
+      loadCourseForEditing: (draft) => {
+        Object.values(
+          useLocalRecommendationStore.getState().pendingImages
+        ).forEach(({ previewUrl }) => URL.revokeObjectURL(previewUrl));
+        set({
+          draft,
+          pendingImages: {},
+          hasPendingImages: false,
+          imageRecoveryRequired: false,
+        });
+      },
+      clearThumbnail: () =>
+        set((state) => ({
+          draft: {
+            ...state.draft,
+            coverImageKey: null,
+            existingThumbnailUrl: null,
+          },
         })),
       setPendingImage: (placeId, { file, previewUrl }) => {
         const previousImage =

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../components/layout/ResponsivePageShell';
+import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 
 import {
   SortableVisitEventList,
@@ -27,6 +28,9 @@ function VisitOrderSelectionPage() {
     isSubmitting,
     submitError,
   } = useVisitOrderSelection();
+  const isEditing = useLocalRecommendationStore(
+    (state) => state.draft.editingCourseId !== null
+  );
 
   const handleSubmit = async () => {
     const result = await handleRegister();
@@ -64,6 +68,7 @@ function VisitOrderSelectionPage() {
           onSubmit={handleSubmit}
           disabled={isSubmitting || visitEvents.length === 0}
           isSubmitting={isSubmitting}
+          isEditing={isEditing}
         />
         {submitError ? (
           <p role="alert" className="text-main-5 mt-2 text-center text-sm">
