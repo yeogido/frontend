@@ -3,16 +3,16 @@ import { FaPen as EditIcon } from 'react-icons/fa6';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 // FavoriteButton과 같은 자리(히어로 우측 상단)에 들어가는 버튼이라 크기를
-// 맞춘다.
+// 맞춘다. 코스뿐 아니라 문화콘텐츠 상세에서도 같은 자리에 쓴다.
 const BUTTON_SIZE = 44;
 const ICON_SIZE = 22;
 
-export interface EditCourseButtonProps {
+export interface EditButtonProps {
   label: string;
   onClick: () => void;
 }
 
-export function EditCourseButton({ label, onClick }: EditCourseButtonProps) {
+export function EditButton({ label, onClick }: EditButtonProps) {
   const scale = useGlobalScale();
 
   return (
@@ -33,4 +33,4 @@ export function EditCourseButton({ label, onClick }: EditCourseButtonProps) {
   );
 }
 
-export default EditCourseButton;
+export default EditButton;

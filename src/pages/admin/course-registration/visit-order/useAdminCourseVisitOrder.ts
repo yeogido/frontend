@@ -231,8 +231,16 @@ export function useAdminCourseVisitOrder() {
         queryClient.invalidateQueries({
           queryKey: ['courseDetail', editingCourseId],
         });
+        // 실제로 이동하는 여기도 코스 상세 화면(/yeogido-course/detail)은
+        // 이거랑 별도 캐시 키를 써서, 이것만 무효화하면 수정 직후에도
+        // 새로고침 전까지 예전 데이터가 그대로 보인다.
+        queryClient.invalidateQueries({
+          queryKey: ['yeogidoCourseDetail', editingCourseId],
+        });
       }
-      showToast(editingCourseId ? '코스를 수정했어요.' : '코스가 등록되었어요.');
+      showToast(
+        editingCourseId ? '코스를 수정했어요.' : '코스가 등록되었어요.'
+      );
       // 여기서 reset()을 호출하면 region이 비워지면서 이 페이지의 가드
       // (useEffect: !region이면 region-selection으로 리다이렉트)가 먼저
       // 반응해 의도한 navigate보다 먼저 튕겨나가는 레이스가 생긴다

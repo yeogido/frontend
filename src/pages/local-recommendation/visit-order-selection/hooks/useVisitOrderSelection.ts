@@ -7,6 +7,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,6 +36,7 @@ export function useVisitOrderSelection() {
     (state) => state.imageRecoveryRequired
   );
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const setVisitOrder = useLocalRecommendationStore(
     (state) => state.setVisitOrder
   );
@@ -170,6 +172,18 @@ export function useVisitOrderSelection() {
           currentDraft.editingCourseId,
           updatePayload
         );
+        // 상세 페이지(local-course/detail)는 이 훅과 별도로 자기 캐시 키를
+        // 쓰기 때문에, 여기서 명시적으로 무효화 안 하면 수정 직후 이동해도
+        // 새로고침 전까지 수정 전 데이터를 그대로 보여준다.
+        void queryClient.invalidateQueries({
+          queryKey: ['localCourseDetail', currentDraft.editingCourseId],
+        });
+        void queryClient.invalidateQueries({ queryKey: ['courses'] });
+        void queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
+        void queryClient.invalidateQueries({
+          queryKey: ['recommendedCourses'],
+        });
+        void queryClient.invalidateQueries({ queryKey: ['myCourseIds'] });
       } else {
         const payload = buildCourseRequest(
           draftWithCoverKey,

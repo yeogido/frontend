@@ -8,7 +8,7 @@ import { DetailDescriptionCard } from './DetailDescriptionCard';
 import { DetailHeroSection } from './DetailHeroSection';
 import { DetailReviewSection } from './DetailReviewSection';
 import { DetailTitleSection } from './DetailTitleSection';
-import { EditCourseButton } from './EditCourseButton';
+import { EditButton } from './EditButton';
 import { FavoriteButton } from './FavoriteButton';
 import { ReviewButton } from './ReviewButton';
 import { ShareButton } from './ShareButton';
@@ -39,7 +39,9 @@ import {
   useReviewEdit,
 } from '../../../hooks/useReviews';
 import { useMyCourseIds } from '../../../hooks/useCourses';
+import { useEditCourse } from '../../../hooks/useEditCourse';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useAuthStore } from '../../../store/auth.store';
 import { mapCourseReviewPreviews } from '../mappers/courseReviewMapper';
 import BackButton from '../../local-recommendation/components/BackButton';
@@ -120,14 +122,16 @@ function CourseDetailLayoutContent({
   const { openLoginModal } = useLoginModal();
   const numericCourseId = Number(course.id);
   const myCourseIds = useMyCourseIds();
-  // 관리자가 만든 여기도(OFFICIAL) 코스라도 이 화면(yeogido-course)에서는
-  // 우리동네 수정 마법사로 잘못 진입하면 안 되므로, local-course 상세일
-  // 때만 본인 코스 판단을 적용한다.
-  const isMine =
+  const isAdmin = useIsAdmin();
+  // local-course(우리동네)는 본인이 쓴 코스인지로, yeogido-course(여기도)는
+  // 관리자 권한인지로 판단한다 — 서로 다른 마법사(useEditLocalCourse vs
+  // useEditCourse)로 들어가야 해서 화면 종류별로 완전히 분리해서 본다.
+  const canEdit =
     isAuthenticated &&
-    reviewType === 'local-course' &&
-    myCourseIds.has(numericCourseId);
+    ((reviewType === 'local-course' && myCourseIds.has(numericCourseId)) ||
+      (reviewType === 'yeogido-course' && isAdmin));
   const { editLocalCourse } = useEditLocalCourse();
+  const { editCourse } = useEditCourse();
   const { data: courseReviews } = useCourseReviewPreviews(
     Number.isInteger(numericCourseId) ? numericCourseId : undefined
   );
@@ -269,10 +273,14 @@ function CourseDetailLayoutContent({
             imageUrl={course.heroImageUrl}
             title={course.title}
             rightAction={
-              isMine ? (
-                <EditCourseButton
+              canEdit ? (
+                <EditButton
                   label={course.title}
-                  onClick={() => void editLocalCourse(numericCourseId)}
+                  onClick={() =>
+                    void (reviewType === 'local-course'
+                      ? editLocalCourse(numericCourseId)
+                      : editCourse(numericCourseId))
+                  }
                 />
               ) : (
                 <FavoriteButton
