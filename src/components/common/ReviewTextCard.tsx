@@ -6,6 +6,7 @@ import { useCardTap } from '../../hooks/useCardTap';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 
 import ReviewActionMenu from './ReviewActionMenu';
+import ReviewerAvatar from './ReviewerAvatar';
 
 // 모든 수치는 Figma 390 디자인 기준(카드 자체 폭 342) 리터럴 px.
 // 개별 vw 계산 대신 useScaleFrame이 전체를 한 번에 scale한다.
@@ -120,19 +121,7 @@ function ReviewTextCard({
           className="flex shrink-0 items-center"
           style={{ gap: PROFILE_GAP }}
         >
-          {profileImage ? (
-            <img
-              src={profileImage}
-              alt={`${nickname} 프로필`}
-              className="shrink-0 rounded-full object-cover"
-              style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
-            />
-          ) : (
-            <div
-              className="bg-gray-2 shrink-0 rounded-full"
-              style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
-            />
-          )}
+          <ReviewerAvatar src={profileImage} size={AVATAR_SIZE} />
 
           <div
             className="flex min-w-0 flex-col"
