@@ -172,6 +172,10 @@ function AppRouter() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/travel-record" element={<TravelRecordPage />} />
+          <Route
+            path="/travel-record/:folderId"
+            element={<TravelRecordDetailPage />}
+          />
           <Route path="/likes" element={<LikesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/my-posts" element={<MyPostsPage />} />
@@ -213,10 +217,6 @@ function AppRouter() {
         <Route
           path="/travel-record/:travelRecordId/edit/date"
           element={<TravelRecordDateSelectionPage />}
-        />
-        <Route
-          path="/travel-record/:folderId"
-          element={<TravelRecordDetailPage />}
         />
         <Route
           path="/travel-record/photo-selection"

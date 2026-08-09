@@ -364,7 +364,7 @@ function TravelRecordDetailPage() {
   };
 
   return (
-    <TravelRecordPageFrame className="bg-[#f1f1f1] px-6 pt-[60px]">
+    <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
       <header className="relative h-[146px]">
         <div className="absolute top-0 left-6 h-[152px] w-[132px] origin-top-left scale-[0.83]">
           <TravelFolderArtwork
