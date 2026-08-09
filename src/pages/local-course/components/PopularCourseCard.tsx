@@ -4,11 +4,8 @@ import oheart from '../../../assets/icons/oheart.svg';
 import people from '../../../assets/icons/people.svg';
 import profilePlaceholder from '../../../assets/icons/profile.svg';
 
-import {
-  CardActionMenu,
-  TagChip,
-  type TagType,
-} from '../../../components/common';
+import { CardActionMenu } from '../../../components/common';
+import TagChip, { type TagType } from '../../../components/common/TagChip';
 import { useScaleFrame } from '../../../hooks/useScaleFrame';
 import { useVisibleItemCount } from '../../../hooks/useVisibleItemCount';
 import { getCompanionIcon } from '../../../utils/companionIcon';
