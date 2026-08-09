@@ -19,6 +19,7 @@ import { useAuth } from './useAuth';
 import {
   getCourses,
   getPopularCourses,
+  getPopularLocalCourses,
   getRecommendedCourses,
 } from '../apis/courses.api';
 import { deleteCourse, getCourseDetail } from '../apis/courses';
@@ -30,6 +31,7 @@ import type {
   GetCoursesParams,
   GetCoursesResponse,
   GetPopularCoursesParams,
+  PopularLocalCourse,
   RecommendedCourse,
 } from '../types/course.type';
 import type { GetMyPostsResponse } from '../types/user.type';
@@ -80,6 +82,13 @@ export function usePopularCourses(
     queryKey: ['popularCourses', params],
     queryFn: () => getPopularCourses(params),
     enabled: options?.enabled,
+  });
+}
+
+export function usePopularLocalCourses() {
+  return useQuery<PopularLocalCourse[], NormalizedApiError>({
+    queryKey: ['popularLocalCourses'],
+    queryFn: getPopularLocalCourses,
   });
 }
 
@@ -173,6 +182,7 @@ export function useCourseDelete() {
     onSuccess: (_, courseId) => {
       void queryClient.invalidateQueries({ queryKey: ['courses'] });
       void queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
+      void queryClient.invalidateQueries({ queryKey: ['popularLocalCourses'] });
       void queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
       queryClient.removeQueries({ queryKey: ['courseDetail', courseId] });
       removeRecentCourse(courseId);

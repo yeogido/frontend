@@ -1,11 +1,9 @@
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
-  ContentCard,
-  ContentCardSkeleton,
   CourseCard,
   CourseDeleteDialog,
-  EditableContentCard,
   FloatingActionButton,
   SearchTriggerButton,
   SectionHeader,
@@ -15,42 +13,46 @@ import { useLoginModal } from '../../hooks/useLoginModal';
 import { useAuthStore } from '../../store/auth.store';
 import {
   useCourseDelete,
-  useCourses,
   useMyCourseIds,
+  usePopularLocalCourses,
 } from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useEditLocalCourse } from '../../hooks/useEditLocalCourse';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
-import type { CourseDurationType } from '../../types/course.type';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+} from '../../utils/courseEnumLabels';
 
-import { CreateCourseBanner } from './components';
+import {
+  LocalCourseHero,
+  PopularCourseCard,
+  PopularCourseCardSkeleton,
+} from './components';
 
 const PAGE_PADDING_X = 24;
-const PAGE_PADDING_TOP = 12;
+// 버튼(하단 162)~검색창 간격이 눈에 띄게 넓어 보인다는 피드백으로 더
+// 당김 — 히어로 높이(223) 기준으로 이 값만큼 검색창을 곡선 아래쪽에
+// 겹쳐 올린다.
+const PAGE_PADDING_TOP = -30;
 const PAGE_PADDING_BOTTOM = 40;
-const TITLE_SIZE = 18;
-const TITLE_LINE_HEIGHT = 22;
-const DESCRIPTION_MARGIN_TOP = 5;
-const DESCRIPTION_SIZE = 12;
-const DESCRIPTION_LINE_HEIGHT = 17;
-const SEARCH_MARGIN_TOP = 12;
-const BANNER_MARGIN_TOP = 12;
-const SECTION_MARGIN_TOP = 32;
+const SECTION_MARGIN_TOP = 24;
 const LIST_MARGIN_TOP = 12;
 const LIST_GAP = 16;
 const ERROR_MARGIN_TOP = 16;
 const ERROR_TEXT_SIZE = 13;
-const POPULAR_COURSE_PREVIEW_COUNT = 2;
 const RECENT_COURSE_PREVIEW_COUNT = 2;
+const POPULAR_DOT_GAP = 4;
+const POPULAR_DOT_SIZE = 4;
+const POPULAR_DOT_ACTIVE_WIDTH = 20;
+const POPULAR_DOT_RADIUS = 100;
 
-const durationLabelByType: Record<CourseDurationType, string> = {
-  DAY_TRIP: '당일치기',
-  ONE_NIGHT: '1박 2일',
-  TWO_NIGHT: '2박 3일',
-  THREE_PLUS: '3박 이상',
-};
+/** createdAt("2026-07-26T15:30:00" 등)을 "2026.07.26"로 바꾼다. */
+function formatCourseCreatedAt(createdAt: string): string {
+  return createdAt.slice(0, 10).replace(/-/g, '.');
+}
 
 function LocalCoursePage() {
   const navigate = useNavigate();
@@ -68,15 +70,59 @@ function LocalCoursePage() {
     isPending: isPopularCoursesPending,
     isError: isPopularCoursesError,
     refetch: refetchPopularCourses,
-  } = useCourses({
-    courseType: 'LOCAL',
-    sort: 'LATEST',
-    size: POPULAR_COURSE_PREVIEW_COUNT,
-  });
-  const popularCoursePreviews = (popularCourses?.pages[0]?.items ?? []).slice(
-    0,
-    POPULAR_COURSE_PREVIEW_COUNT
-  );
+  } = usePopularLocalCourses();
+  const popularCoursePreviews = popularCourses ?? [];
+
+  const popularScrollRef = useRef<HTMLDivElement>(null);
+  const [popularActiveIndex, setPopularActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const container = popularScrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    let rafId: number;
+
+    const handleScroll = () => {
+      cancelAnimationFrame(rafId);
+
+      rafId = requestAnimationFrame(() => {
+        const itemWidth = container.clientWidth;
+
+        if (itemWidth === 0) {
+          return;
+        }
+
+        const index = Math.round(
+          container.scrollLeft / (itemWidth + LIST_GAP * scale)
+        );
+        setPopularActiveIndex(index);
+      });
+    };
+
+    container.addEventListener('scroll', handleScroll);
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, [scale]);
+
+  const scrollPopularToIndex = (index: number) => {
+    const container = popularScrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    container.scrollTo({
+      left: (container.clientWidth + LIST_GAP * scale) * index,
+      behavior: 'smooth',
+    });
+  };
+
   const recentCoursePreviews = useRecentCourses()
     .filter((course) => course.courseType === 'LOCAL')
     .slice(0, RECENT_COURSE_PREVIEW_COUNT)
@@ -113,101 +159,116 @@ function LocalCoursePage() {
 
   return (
     <>
+      <LocalCourseHero onCreateClick={handleCreateCourse} />
+
       <section
-        className="mx-auto flex min-h-screen w-full flex-col"
+        className="relative mx-auto flex min-h-screen w-full flex-col"
         style={{
           paddingLeft: PAGE_PADDING_X * scale,
           paddingRight: PAGE_PADDING_X * scale,
-          paddingTop: PAGE_PADDING_TOP * scale,
+          // paddingTop은 음수를 못 받아 marginTop으로 곡선 아래쪽에 겹치게
+          // 끌어올린다(padding은 CSS 스펙상 음수가 무시되고 0으로 clamp됨).
+          marginTop: PAGE_PADDING_TOP * scale,
           paddingBottom: PAGE_PADDING_BOTTOM * scale,
         }}
       >
-        <div>
-          <h1
-            className="font-semibold text-black"
-            style={{
-              fontSize: TITLE_SIZE * scale,
-              lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
-            }}
-          >
-            우리동네 추천 코스
-          </h1>
-          <p
-            className="text-gray-4 font-normal"
-            style={{
-              marginTop: DESCRIPTION_MARGIN_TOP * scale,
-              fontSize: DESCRIPTION_SIZE * scale,
-              lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
-            }}
-          >
-            여행자들이 직접 만든 지역 경험 코스
-          </p>
-        </div>
-
-        <div style={{ marginTop: SEARCH_MARGIN_TOP * scale }}>
-          <SearchTriggerButton
-            label="지역명 또는 도시명 검색 화면으로 이동"
-            placeholder="지역명 또는 도시명을 검색해 주세요"
-            onClick={goToRegionSearch}
-          />
-        </div>
-
-        <div style={{ marginTop: BANNER_MARGIN_TOP * scale }}>
-          <CreateCourseBanner onClick={goToCreateCourse} />
-        </div>
+        <SearchTriggerButton
+          label="지역명 또는 도시명 검색 화면으로 이동"
+          placeholder="지역명 또는 도시명을 검색해 주세요"
+          onClick={goToRegionSearch}
+        />
 
         <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
           <SectionHeader
             title="인기 추천 코스"
-            actionText="자세히 보기"
+            actionText="전체 보기"
             onActionClick={goToPopularCourses}
           />
 
           <div
-            className="flex [scrollbar-width:none] overflow-x-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            ref={popularScrollRef}
+            className="flex snap-x snap-mandatory [scrollbar-width:none] overflow-x-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             style={{
               marginTop: LIST_MARGIN_TOP * scale,
               gap: LIST_GAP * scale,
             }}
           >
             {isPopularCoursesPending || isMyCourseIdsPending
-              ? Array.from(
-                  { length: POPULAR_COURSE_PREVIEW_COUNT },
-                  (_, index) => <ContentCardSkeleton key={index} />
-                )
-              : popularCoursePreviews.map((course) =>
-                  myCourseIds.has(course.courseId) ? (
-                    <EditableContentCard
+              ? Array.from({ length: 1 }, (_, index) => (
+                  <div
+                    key={index}
+                    className="w-full shrink-0 snap-start snap-always"
+                  >
+                    <PopularCourseCardSkeleton />
+                  </div>
+                ))
+              : popularCoursePreviews.map((course) => {
+                  const isMine = myCourseIds.has(course.courseId);
+
+                  return (
+                    <div
                       key={course.courseId}
-                      image={course.thumbnailUrl}
-                      title={course.title}
-                      firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={course.region}
-                      tags={toContentTagIds(course.tags)}
-                      onClick={() => goToCourseDetail(course.courseId)}
-                      onEdit={() => void editLocalCourse(course.courseId)}
-                      onDelete={() => requestDelete(course.courseId)}
-                    />
-                  ) : (
-                    <ContentCard
-                      key={course.courseId}
-                      image={course.thumbnailUrl}
-                      title={course.title}
-                      firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={course.region}
-                      tags={toContentTagIds(course.tags)}
-                      liked={getLiked(course.courseId, course.isLiked)}
-                      onClick={() => goToCourseDetail(course.courseId)}
-                      onLikeClick={() =>
-                        toggleLike(
-                          course.courseId,
-                          getLiked(course.courseId, course.isLiked)
-                        )
-                      }
-                    />
-                  )
-                )}
+                      className="w-full shrink-0 snap-start snap-always"
+                    >
+                      <PopularCourseCard
+                        authorAvatarUrl={course.author.profileImageUrl}
+                        authorName={course.author.nickname}
+                        date={formatCourseCreatedAt(course.createdAt)}
+                        image={course.thumbnailUrl}
+                        title={course.title}
+                        duration={toDurationLabel(course.durationType)}
+                        companion={toCompanionLabel(course.companionType)}
+                        tags={toContentTagIds(course.tags)}
+                        liked={getLiked(course.courseId, course.isLiked)}
+                        isMine={isMine}
+                        onClick={() => goToCourseDetail(course.courseId)}
+                        onLikeClick={() =>
+                          toggleLike(
+                            course.courseId,
+                            getLiked(course.courseId, course.isLiked)
+                          )
+                        }
+                        onEditClick={() =>
+                          void editLocalCourse(course.courseId)
+                        }
+                        onDeleteClick={() => requestDelete(course.courseId)}
+                      />
+                    </div>
+                  );
+                })}
           </div>
+
+          {!isPopularCoursesPending && popularCoursePreviews.length > 1 ? (
+            <div
+              className="flex items-center justify-center"
+              style={{
+                marginTop: LIST_MARGIN_TOP * scale,
+                gap: POPULAR_DOT_GAP * scale,
+              }}
+            >
+              {popularCoursePreviews.map((course, index) => (
+                <button
+                  key={course.courseId}
+                  type="button"
+                  aria-label={`${index + 1}번째 코스로 이동`}
+                  aria-current={index === popularActiveIndex}
+                  onClick={() => scrollPopularToIndex(index)}
+                  className="shrink-0"
+                  style={{
+                    width:
+                      (index === popularActiveIndex
+                        ? POPULAR_DOT_ACTIVE_WIDTH
+                        : POPULAR_DOT_SIZE) * scale,
+                    height: POPULAR_DOT_SIZE * scale,
+                    borderRadius: POPULAR_DOT_RADIUS,
+                    backgroundColor:
+                      index === popularActiveIndex ? '#FF6F41' : '#A1A1A1',
+                    transition: 'width 0.2s ease, background-color 0.2s ease',
+                  }}
+                />
+              ))}
+            </div>
+          ) : null}
 
           {!isPopularCoursesPending && isPopularCoursesError ? (
             <div
