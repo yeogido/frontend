@@ -18,7 +18,10 @@ import {
   MY_POST_FILTER_GRID_CLASS_NAME,
 } from '../../constants/courseFilterLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { useCourseDelete, useNavigateToCourseDetail } from '../../hooks/useCourses';
+import {
+  useCourseDelete,
+  useNavigateToCourseDetail,
+} from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import { getMyPostsFromPages, useMyPosts } from '../../hooks/useMyPosts';
@@ -103,9 +106,7 @@ function MyPostsPage() {
   const { requestEdit, editorProps } = useReviewEdit();
 
   const reviewsForModal = items.flatMap((item) =>
-    item.review
-      ? [toMyPostReviewCardProps(item.review, item.course)]
-      : []
+    item.review ? [toMyPostReviewCardProps(item.review, item.course)] : []
   );
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviewsForModal);
@@ -262,7 +263,8 @@ function MyPostsPage() {
                   isMine
                   onClick={
                     reviewCard.courseId !== undefined
-                      ? () => void goToCourseDetail(reviewCard.courseId as number)
+                      ? () =>
+                          void goToCourseDetail(reviewCard.courseId as number)
                       : undefined
                   }
                   onLongPress={() => openReview(reviewCard.id)}

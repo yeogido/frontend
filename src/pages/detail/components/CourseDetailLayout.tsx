@@ -326,6 +326,7 @@ function CourseDetailLayoutContent({
           onStopLikeToggle={handleStopLikeToggle}
           pendingPlaceIds={pendingPlaceIds}
           pendingContentIds={pendingContentIds}
+          placeHoursByStopId={openingHoursByStopId}
         />
       </div>
 

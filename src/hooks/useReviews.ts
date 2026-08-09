@@ -10,7 +10,10 @@ import {
 
 import { getApiErrorMessage, normalizeApiError } from '../apis/common';
 import { useToast } from '../components/toast';
-import { createPresignedUrl, uploadFileToPresignedUrl } from '../apis/files.api';
+import {
+  createPresignedUrl,
+  uploadFileToPresignedUrl,
+} from '../apis/files.api';
 import {
   createCourseReview,
   deleteReview,
@@ -154,7 +157,7 @@ export function useMyReviewIds() {
           category: 'REVIEW',
           size: MY_POSTS_PAGE_SIZE,
           cursorId,
-        }),
+        })
       ),
     enabled: isAuthenticated,
     // 매 화면 진입마다 전 페이지를 다시 훑지 않도록 잠시 재사용한다.
@@ -191,7 +194,7 @@ interface CourseReviewsPageParam {
 
 export function useCourseReviews(
   courseId: number | undefined,
-  sort: ReviewSort = 'LATEST',
+  sort: ReviewSort = 'LATEST'
 ) {
   return useInfiniteQuery<
     GetCourseReviewsResponse,
@@ -225,7 +228,7 @@ export function useCourseReviews(
 }
 
 export const getCourseReviewsFromPages = (
-  pages: GetCourseReviewsResponse[] | undefined,
+  pages: GetCourseReviewsResponse[] | undefined
 ) => pages?.flatMap((page) => page.items) ?? [];
 
 export function useCreateCourseReview() {
@@ -307,11 +310,11 @@ function useDeleteReview() {
                 pages: data.pages.map((page) => ({
                   ...page,
                   items: page.items.filter(
-                    (item) => item.review?.reviewId !== reviewId,
+                    (item) => item.review?.reviewId !== reviewId
                   ),
                 })),
               }
-            : data,
+            : data
       );
 
       return { previousMyPosts };
@@ -348,11 +351,9 @@ function useDeleteReview() {
           data
             ? {
                 ...data,
-                items: data.items.filter(
-                  (item) => item.reviewId !== reviewId,
-                ),
+                items: data.items.filter((item) => item.reviewId !== reviewId),
               }
-            : data,
+            : data
       );
       void queryClient.invalidateQueries({ queryKey: ['courseReviews'] });
       void queryClient.invalidateQueries({ queryKey: ['reviews'] });
@@ -435,7 +436,7 @@ export interface ReviewEditSubmission {
  */
 export function useReviewEdit() {
   const [editingReview, setEditingReview] = useState<EditableReview | null>(
-    null,
+    null
   );
   const { showToast } = useToast();
   const updateReviewMutation = useUpdateReview();
@@ -459,7 +460,9 @@ export function useReviewEdit() {
 
         for (const [index, photo] of photos.entries()) {
           const imageKey =
-            'imageKey' in photo ? photo.imageKey : await uploadPhoto(photo.file);
+            'imageKey' in photo
+              ? photo.imageKey
+              : await uploadPhoto(photo.file);
 
           images.push({ imageKey, imageOrder: index + 1 });
         }
@@ -482,7 +485,8 @@ export function useReviewEdit() {
       review: editingReview ?? undefined,
       isPending: updateReviewMutation.isPending,
       onClose: closeEditor,
-      onSubmit: (submission: ReviewEditSubmission) => void submitEdit(submission),
+      onSubmit: (submission: ReviewEditSubmission) =>
+        void submitEdit(submission),
     },
   };
 }
@@ -494,7 +498,7 @@ export function useReviewEdit() {
  * 같아서, id 보관과 조회를 여기로 모은다.
  */
 export function useReviewDetailModal<Review extends { id: number }>(
-  reviews: readonly Review[],
+  reviews: readonly Review[]
 ) {
   const [openedReviewId, setOpenedReviewId] = useState<number | null>(null);
 
@@ -505,6 +509,5 @@ export function useReviewDetailModal<Review extends { id: number }>(
   };
 }
 
-export const getReviewsFromPages = (
-  pages: GetReviewsResponse[] | undefined,
-) => pages?.flatMap((page) => page.items) ?? [];
+export const getReviewsFromPages = (pages: GetReviewsResponse[] | undefined) =>
+  pages?.flatMap((page) => page.items) ?? [];

@@ -35,11 +35,7 @@ function getCompanionIcon(label?: string | null) {
   if (key === 'FAMILY' || label.includes('가족')) {
     return FaPeopleRoof;
   }
-  if (
-    key === 'PET' ||
-    label.includes('반려동물') ||
-    label.includes('반려견')
-  ) {
+  if (key === 'PET' || label.includes('반려동물') || label.includes('반려견')) {
     return FaDog;
   }
 
