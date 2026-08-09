@@ -46,7 +46,7 @@ function RegionFestivalSection({
     {
       regionId,
       keyword: regionId === undefined ? regionName : undefined,
-      category: 'FESTIVAL',
+      statuses: ['ONGOING'],
       sort: 'RECOMMEND',
       size: REGION_FESTIVAL_PREVIEW_COUNT,
     },
@@ -68,7 +68,7 @@ function RegionFestivalSection({
           actionText="전체보기"
           onActionClick={() =>
             navigate(
-              `/festival/search?${new URLSearchParams({ region: regionName }).toString()}`
+              `/festival/ongoing?${new URLSearchParams({ region: regionName }).toString()}`
             )
           }
         />

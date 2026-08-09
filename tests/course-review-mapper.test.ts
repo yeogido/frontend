@@ -24,6 +24,7 @@ test('maps course review previews into review card data', () => {
       author,
       rating: 5,
       content: '동선이 편하고 장소 구성이 좋았어요.',
+      isMine: false,
       images: [
         {
           imageKey: 'courses/b.jpg',
@@ -64,13 +65,14 @@ test('treats a missing review list as empty', () => {
   assert.deepEqual(mapCourseReviewPreviews(undefined), []);
 });
 
-test('marks a review as mine only when its id is in my review ids', () => {
-  const previews = [
+test('takes isMine from the response', () => {
+  const reviews = mapCourseReviewPreviews([
     {
       reviewId: 1,
       author: otherAuthor,
       rating: 4,
       content: '내 후기',
+      isMine: true,
       images: [],
       createdAt: '2026-07-26',
     },
@@ -79,28 +81,12 @@ test('marks a review as mine only when its id is in my review ids', () => {
       author: { ...otherAuthor, nickname: '남' },
       rating: 4,
       content: '남의 후기',
-      images: [],
-      createdAt: '2026-07-26',
-    },
-  ];
-
-  const reviews = mapCourseReviewPreviews(previews, new Set([1]));
-
-  assert.equal(reviews[0].isMine, true);
-  assert.equal(reviews[1].isMine, false);
-});
-
-test('marks nothing as mine when the id set is not given', () => {
-  const [review] = mapCourseReviewPreviews([
-    {
-      reviewId: 1,
-      author: otherAuthor,
-      rating: 4,
-      content: '내용',
+      isMine: false,
       images: [],
       createdAt: '2026-07-26',
     },
   ]);
 
-  assert.equal(review.isMine, false);
+  assert.equal(reviews[0].isMine, true);
+  assert.equal(reviews[1].isMine, false);
 });

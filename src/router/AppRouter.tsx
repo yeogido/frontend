@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import AdminRoute from '../components/auth/AdminRoute';
 
 import HomePage from '../pages/home';
 import LoginPage from '../pages/auth/login';
@@ -143,29 +144,31 @@ function AppRouter() {
           element={<CourseReviewsPage />}
         />
 
-        <Route path="/admin" element={<AdminPage />} />
-        <Route
-          path="/admin/festivals/ongoing"
-          element={<AdminFestivalsOngoingPage />}
-        />
-        <Route
-          path="/admin/festivals/recent"
-          element={<AdminFestivalsRecentPage />}
-        />
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminPage />} />
+          <Route
+            path="/admin/festivals/ongoing"
+            element={<AdminFestivalsOngoingPage />}
+          />
+          <Route
+            path="/admin/festivals/recent"
+            element={<AdminFestivalsRecentPage />}
+          />
 
-        <Route path="/admin/courses" element={<AdminCoursesPage />} />
-        <Route
-          path="/admin/courses/popular"
-          element={<AdminCoursesPopularPage />}
-        />
-        <Route
-          path="/admin/courses/recent"
-          element={<AdminCoursesRecentPage />}
-        />
-        <Route
-          path="/admin/courses/detail/:courseId"
-          element={<AdminCourseMockDetailPage />}
-        />
+          <Route path="/admin/courses" element={<AdminCoursesPage />} />
+          <Route
+            path="/admin/courses/popular"
+            element={<AdminCoursesPopularPage />}
+          />
+          <Route
+            path="/admin/courses/recent"
+            element={<AdminCoursesRecentPage />}
+          />
+          <Route
+            path="/admin/courses/detail/:courseId"
+            element={<AdminCourseMockDetailPage />}
+          />
+        </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path="/travel-record" element={<TravelRecordPage />} />
@@ -268,7 +271,7 @@ function AppRouter() {
       />
       <Route path="/review" element={<ReviewPage />} />
 
-      <Route element={<ProtectedRoute />}>
+      <Route element={<AdminRoute />}>
         <Route
           path="/admin/event-registration/place-selection"
           element={<AdminPlaceSelectionPage />}

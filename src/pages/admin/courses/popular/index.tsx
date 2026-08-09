@@ -1,19 +1,29 @@
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
   ConfirmDialog,
   ContentCardSkeleton,
+  CourseFilterBar,
   EditableContentCard,
 } from '../../../../components/common';
+import { isExtendedTransportFilterLabel } from '../../../../constants/courseFilterLayout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import {
-  useCourseDelete,
-  usePopularCourses,
-} from '../../../../hooks/useCourses';
+import { useCourseDelete, useCourses } from '../../../../hooks/useCourses';
+import { useDistanceSortCoordinates } from '../../../../hooks/useDistanceSortCoordinates';
 import { useEditCourse } from '../../../../hooks/useEditCourse';
+import useInfiniteScroll from '../../../../hooks/useInfiniteScroll';
 import { toContentTagIds } from '../../../../utils/contentTags';
-import { toDurationLabel } from '../../../../utils/courseEnumLabels';
 import { buildCourseDetailPath } from '../../../../utils/routes';
+import type {
+  CourseCompanionType,
+  CourseDurationType,
+  CourseSort,
+  CourseTransportType,
+} from '../../../../types/course.type';
+
+import { yeogidoCourseFilterGroups } from '../../../yeogido-course/constants/filters';
+import useYeogidoCourseFilters from '../../../yeogido-course/hooks/useYeogidoCourseFilters';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -23,24 +33,103 @@ const TITLE_LINE_HEIGHT = 22;
 const DESCRIPTION_MARGIN_TOP = 5;
 const DESCRIPTION_SIZE = 12;
 const DESCRIPTION_LINE_HEIGHT = 17;
+const FILTER_MARGIN_TOP = 15;
 const LIST_MARGIN_TOP = 24;
 const LIST_GAP = 16;
 const ERROR_MARGIN_TOP = 24;
 const ERROR_TEXT_SIZE = 13;
+const LOAD_MORE_HEIGHT = 40;
 const SKELETON_ITEMS = [0, 1, 2, 3];
+
+const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
+  도보: 'WALK',
+  대중교통: 'PUBLIC',
+  자차: 'CAR',
+};
+
+const durationTypeByLabel: Record<string, CourseDurationType | undefined> = {
+  당일치기: 'DAY_TRIP',
+  '1박 2일': 'ONE_NIGHT',
+  '2박 3일': 'TWO_NIGHT',
+  '3박 이상': 'THREE_PLUS',
+};
+
+const companionTypeByLabel: Record<string, CourseCompanionType | undefined> = {
+  혼자: 'SOLO',
+  친구와: 'FRIEND',
+  연인과: 'COUPLE',
+  가족과: 'FAMILY',
+  반려동물과: 'PET',
+};
+
+const sortByLabel: Record<string, CourseSort> = {
+  추천순: 'RECOMMEND',
+  인기순: 'POPULAR',
+  최신순: 'LATEST',
+  저장순: 'SAVED',
+  후기순: 'REVIEW',
+  거리순: 'DISTANCE',
+};
+
+const durationLabelByType: Record<CourseDurationType, string> = {
+  DAY_TRIP: '당일치기',
+  ONE_NIGHT: '1박 2일',
+  TWO_NIGHT: '2박 3일',
+  THREE_PLUS: '3박 이상',
+};
 
 function AdminCoursesPopularPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-
-  const {
-    data: popularCourses,
-    isPending,
-    isError,
-    refetch,
-  } = usePopularCourses({ courseType: 'OFFICIAL' });
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
+
+  const {
+    filterContainerRef,
+    openFilterKey,
+    selectedFilters,
+    handleFilterToggle,
+    handleFilterSelect,
+  } = useYeogidoCourseFilters();
+
+  const isDistanceSort = selectedFilters.sort === '거리순';
+  const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isError,
+    isFetchingNextPage,
+    isPending,
+  } = useCourses(
+    {
+      courseType: 'OFFICIAL',
+      transportType: transportTypeByLabel[selectedFilters.transport],
+      durationType: durationTypeByLabel[selectedFilters.duration],
+      companionType: companionTypeByLabel[selectedFilters.companion],
+      sort: sortByLabel[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: 20,
+    },
+    { enabled: !isDistanceSort || distanceSortCoordinates !== null }
+  );
+
+  const popularCourses = data?.pages.flatMap((page) => page.items) ?? [];
+
+  const handleIntersect = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadMoreRef = useInfiniteScroll({
+    enabled: Boolean(hasNextPage) && !isPending,
+    onIntersect: handleIntersect,
+  });
 
   const goToCourseDetail = (courseId: number) => {
     navigate(buildCourseDetailPath('OFFICIAL', courseId));
@@ -79,6 +168,19 @@ function AdminCoursesPopularPage() {
           </p>
         </div>
 
+        <CourseFilterBar
+          filterGroups={yeogidoCourseFilterGroups}
+          selectedFilters={selectedFilters}
+          openFilterKey={openFilterKey}
+          filterContainerRef={filterContainerRef}
+          isExtendedTransport={isExtendedTransportFilterLabel(
+            selectedFilters.transport
+          )}
+          marginTop={FILTER_MARGIN_TOP}
+          onToggle={handleFilterToggle}
+          onSelect={handleFilterSelect}
+        />
+
         <div
           className="grid grid-cols-2"
           style={{
@@ -95,12 +197,12 @@ function AdminCoursesPopularPage() {
                   imageClassName="aspect-[163/115] h-auto"
                 />
               ))
-            : (popularCourses ?? []).map((course) => (
+            : popularCourses.map((course) => (
                 <EditableContentCard
                   key={course.courseId}
                   image={course.thumbnailUrl}
                   title={course.title}
-                  firstInfo={toDurationLabel(course.durationType)}
+                  firstInfo={durationLabelByType[course.durationType]}
                   secondInfo={course.region}
                   tags={toContentTagIds(course.tags)}
                   className="w-full"
@@ -109,6 +211,16 @@ function AdminCoursesPopularPage() {
                   onDelete={() => requestDelete(course.courseId)}
                 />
               ))}
+
+          {isFetchingNextPage
+            ? SKELETON_ITEMS.slice(0, 2).map((item) => (
+                <ContentCardSkeleton
+                  key={`next-page-${item}`}
+                  className="w-full"
+                  imageClassName="aspect-[163/115] h-auto"
+                />
+              ))
+            : null}
         </div>
 
         {!isPending && isError ? (
@@ -125,15 +237,14 @@ function AdminCoursesPopularPage() {
             >
               코스 목록을 불러오지 못했어요.
             </p>
-            <button
-              type="button"
-              onClick={() => void refetch()}
-              className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
-            >
-              다시 시도
-            </button>
           </div>
         ) : null}
+
+        <div
+          ref={loadMoreRef}
+          style={{ height: LOAD_MORE_HEIGHT * scale }}
+          aria-hidden="true"
+        />
       </section>
       <ConfirmDialog
         {...dialogProps}

@@ -17,7 +17,7 @@ export const yeogidoCourseFilterGroups = [
   {
     key: 'sort',
     defaultLabel: '추천순',
-    options: ['추천순', '저장순', '후기순'],
+    options: ['추천순', '인기순', '최신순', '저장순', '후기순', '거리순'],
   },
 ] as const;
 

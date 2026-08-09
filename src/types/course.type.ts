@@ -17,6 +17,7 @@ export type CourseCompanionType =
 
 export type CourseSort =
   | 'RECOMMEND'
+  | 'POPULAR'
   | 'DISTANCE'
   | 'LATEST'
   | 'SAVED'
@@ -59,6 +60,27 @@ export interface GetCoursesParams {
 export interface GetPopularCoursesParams {
   courseType: CourseType;
   regionId?: number;
+}
+
+export interface PopularLocalCourseAuthor {
+  userId: number;
+  nickname: string;
+  // 문서 예시는 string이지만 실제 응답은 프로필 사진이 없으면 null을 준다.
+  profileImageUrl: string | null;
+}
+
+/** /courses/popular/local 전용 응답 — 인기순(없으면 최신순) 로컬 코스
+ * 최대 4개, 일반 코스 목록과 달리 작성자 정보를 포함하고 region은 없다. */
+export interface PopularLocalCourse {
+  courseId: number;
+  thumbnailUrl: string;
+  title: string;
+  durationType: CourseDurationType;
+  companionType: CourseCompanionType;
+  author: PopularLocalCourseAuthor;
+  createdAt: string;
+  tags: string[];
+  isLiked: boolean;
 }
 
 export interface RecommendedCourse {

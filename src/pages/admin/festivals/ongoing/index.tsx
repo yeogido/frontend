@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -6,9 +7,10 @@ import {
   EditableContentCard,
 } from '../../../../components/common';
 import { useContentDelete } from '../../../../hooks/useContentDelete';
+import { useCultureContents } from '../../../../hooks/useCultureContents';
 import { useEditFestival } from '../../../../hooks/useEditFestival';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import { useOngoingContents } from '../../../../hooks/useOngoingContents';
+import useInfiniteScroll from '../../../../hooks/useInfiniteScroll';
 import { toContentTagIds } from '../../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../../utils/routes';
 
@@ -29,22 +31,38 @@ const SKELETON_ITEMS = [0, 1, 2, 3];
 const RETRY_PADDING_X = 16;
 const RETRY_PADDING_Y = 8;
 const RETRY_TEXT_SIZE = 14;
+const LOAD_MORE_HEIGHT = 40;
+const PAGE_SIZE = 20;
 
 /** 관리자 전용 "진행 중인 행사" 전체보기 — 좋아요 대신 수정/삭제 카드로 보여준다. */
 function AdminFestivalsOngoingPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const {
-    data: ongoingContents,
+    data,
+    fetchNextPage,
+    hasNextPage,
     isPending,
     isError,
+    isFetchingNextPage,
     refetch,
-  } = useOngoingContents();
+  } = useCultureContents({ statuses: ['ONGOING'], size: PAGE_SIZE });
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
 
-  const festivals = ongoingContents ?? [];
+  const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
+
+  const handleIntersect = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const loadMoreRef = useInfiniteScroll({
+    enabled: Boolean(hasNextPage) && !isPending,
+    onIntersect: handleIntersect,
+  });
 
   return (
     <>
@@ -111,6 +129,16 @@ function AdminFestivalsOngoingPage() {
                   onDelete={() => requestDelete(festival.contentId)}
                 />
               ))}
+
+          {isFetchingNextPage
+            ? SKELETON_ITEMS.slice(0, 2).map((item) => (
+                <ContentCardSkeleton
+                  key={`next-page-${item}`}
+                  className="w-full"
+                  imageClassName="aspect-[163/115] h-auto"
+                />
+              ))
+            : null}
         </div>
 
         {hasEmptyResult ? (
@@ -155,6 +183,12 @@ function AdminFestivalsOngoingPage() {
             </button>
           </div>
         ) : null}
+
+        <div
+          ref={loadMoreRef}
+          style={{ height: LOAD_MORE_HEIGHT * scale }}
+          aria-hidden="true"
+        />
       </section>
       <ConfirmDialog
         {...dialogProps}
