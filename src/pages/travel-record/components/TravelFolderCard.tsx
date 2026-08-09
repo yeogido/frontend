@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { motion } from 'motion/react';
 
 import folderShadowLayerImage from '../assets/travel-folder-shadow-layer.svg';
 import type { TravelRecordFolder } from '../types';
@@ -20,6 +21,8 @@ interface TravelFolderCardProps {
 
 interface TravelFolderArtworkProps {
   photos: [string, ...string[]];
+  photoKeys?: string[];
+  animatePhotoChanges?: boolean;
   title: string;
   decorations: TravelFolderDecoration[];
 }
@@ -147,14 +150,27 @@ function FolderPhoto({
   imageSrc,
   order,
   slot,
+  animate,
+  isEntering,
 }: {
   folderTitle: string;
   imageSrc: string;
   order: number;
   slot: FolderPhotoSlot;
+  animate: boolean;
+  isEntering: boolean;
 }) {
   return (
-    <div className={slot.wrapperClassName}>
+    <motion.div
+      layout={animate}
+      initial={
+        isEntering ? { opacity: 0, scale: 0.68, x: 16, y: 24, rotate: 5 } : false
+      }
+      animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+      style={{ transformOrigin: 'center bottom' }}
+      className={slot.wrapperClassName}
+    >
       <div className={slot.frameClassName}>
         <div className="relative size-20 overflow-hidden rounded-xl bg-[#f9f9f9]">
           <div className={slot.cropClassName}>
@@ -166,18 +182,24 @@ function FolderPhoto({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function TravelFolderArtwork({
   photos,
+  photoKeys,
+  animatePhotoChanges = false,
   title,
   decorations,
 }: TravelFolderArtworkProps) {
   const decorationClipId = `travel-folder-decoration-${useId().replaceAll(':', '')}`;
   const visiblePhotos = getVisibleFolderPhotos(photos);
   const photoSlotIndexes = getFolderPhotoSlotIndexes(visiblePhotos.length);
+  const visiblePhotoKeys = photoKeys?.slice(0, visiblePhotos.length);
+  const resolvedPhotoKeys = visiblePhotos.map(
+    (_, index) => visiblePhotoKeys?.[index] ?? `${title}-${index}`
+  );
 
   return (
     <div className="relative h-[183px] w-[159px]">
@@ -194,11 +216,13 @@ export function TravelFolderArtwork({
 
       {visiblePhotos.map((imageSrc, index) => (
         <FolderPhoto
-          key={`${title}-${index}`}
+          key={resolvedPhotoKeys[index]}
           folderTitle={title}
           imageSrc={imageSrc}
           order={index + 1}
           slot={folderPhotoSlots[photoSlotIndexes[index]]}
+          animate={animatePhotoChanges}
+          isEntering={animatePhotoChanges}
         />
       ))}
 
