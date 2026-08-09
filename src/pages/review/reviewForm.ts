@@ -43,7 +43,7 @@ export function isReviewFormValid({
     rating <= 5 &&
     review.trim().length > 0 &&
     review.length <= REVIEW_CONTENT_MAX_LENGTH &&
-    photoCount > 0 &&
+    // 사진은 선택이다. 서버도 images 최소 개수를 두지 않는다(minItems: 0).
     photoCount <= MAX_REVIEW_PHOTOS
   );
 }

@@ -93,7 +93,7 @@ function PhotoUploader({ inputRef, onChange, disabled }: PhotoUploaderProps) {
         >
           {disabled
             ? '최대 사진 개수(5장)에 도달했어요'
-            : '사진을 추가해 주세요.'}
+            : '사진을 추가해 주세요. (선택)'}
         </strong>
         <span
           style={{

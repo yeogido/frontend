@@ -104,16 +104,11 @@ function ReviewEditModal({
     setPhotos((current) => [...current, ...additions]);
   };
 
-  // 사진 목록을 못 구한 후기는 사진을 건드리지 않는 수정만 허용한다. 그때는
-  // 최소 1장 조건도 볼 수 없으므로(0장인지 아닌지를 모른다) 검증에서 뺀다.
+  // 사진 목록을 못 구한 후기는 사진을 건드리지 않는 수정만 허용한다.
   const canEditPhotos = review.canEditPhotos ?? true;
   const canSubmit =
     !isPending &&
-    isReviewFormValid({
-      rating,
-      review: content,
-      photoCount: canEditPhotos ? photos.length : 1,
-    });
+    isReviewFormValid({ rating, review: content, photoCount: photos.length });
 
   // 사진을 손대지 않았으면 목록을 보내지 않는다. 명세대로 서버가 기존
   // 이미지를 그대로 두므로 헛된 삭제/삽입이 없다.
