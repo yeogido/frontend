@@ -1,6 +1,9 @@
 import profile from '../../../assets/icons/profile.svg';
 import type { PointerEventHandler, WheelEventHandler } from 'react';
-import { PROFILE_PHOTO_BACKGROUND_COLOR } from './profilePhotoSave';
+import {
+  PROFILE_PHOTO_BACKGROUND_COLOR,
+  shouldShowDefaultProfilePhoto,
+} from './profilePhotoSave';
 
 export interface ProfilePhoto {
   src: string;
@@ -19,6 +22,7 @@ export function ProfilePhotoPreview({
   onPointerUp,
   onWheel,
   isAdjustable = false,
+  isProcessingFile = false,
 }: {
   photo: ProfilePhoto | null;
   scale: number;
@@ -28,6 +32,7 @@ export function ProfilePhotoPreview({
   onPointerUp?: PointerEventHandler<HTMLDivElement>;
   onWheel?: WheelEventHandler<HTMLDivElement>;
   isAdjustable?: boolean;
+  isProcessingFile?: boolean;
 }) {
   const scaledSize = size * scale;
   const aspectRatio = photo?.aspectRatio ?? 1;
@@ -60,7 +65,10 @@ export function ProfilePhotoPreview({
             transform: `translate(calc(-50% + ${photo.positionX * scale}px), calc(-50% + ${photo.positionY * scale}px)) scale(${photo.zoom})`,
           }}
         />
-      ) : (
+      ) : shouldShowDefaultProfilePhoto({
+          hasPhoto: Boolean(photo),
+          isProcessingFile,
+        }) ? (
         <img
           src={profile}
           alt=""
@@ -68,7 +76,7 @@ export function ProfilePhotoPreview({
           className="absolute left-1/2 -translate-x-1/2"
           style={{ top: 5 * scale, width: scaledSize, height: 115 * scale }}
         />
-      )}
+      ) : null}
     </div>
   );
 }

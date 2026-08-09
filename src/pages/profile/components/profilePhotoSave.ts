@@ -13,3 +13,13 @@ export function canSavePendingProfilePhoto({
 }: PendingProfilePhotoState) {
   return hasPendingPhoto && !isProcessingFile && !isUploading;
 }
+
+export function shouldShowDefaultProfilePhoto({
+  hasPhoto,
+  isProcessingFile,
+}: {
+  hasPhoto: boolean;
+  isProcessingFile: boolean;
+}) {
+  return !hasPhoto && !isProcessingFile;
+}

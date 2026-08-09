@@ -362,6 +362,7 @@ export const ProfilePhotoEditor = forwardRef<
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onWheel={handleWheel}
+        isProcessingFile={isProcessingFile}
       />
       <input
         ref={fileInputRef}
