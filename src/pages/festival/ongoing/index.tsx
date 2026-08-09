@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   ContentCard,
@@ -53,6 +53,12 @@ const sortByFilterValue: Record<string, ContentSort> = {
 function FestivalOngoingPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const [searchParams] = useSearchParams();
+  // region-info의 "OO에서 진행 중인 행사" 미리보기 → 전체보기로 들어올 때만
+  // 채워진다. RegionCourseSection의 전체보기 링크와 동일하게 지역명을
+  // keyword로 넘긴다(regionId 대신 — 이미 이 방식으로 결과가 일치함을
+  // 확인했다).
+  const region = searchParams.get('region') ?? '';
   const { getLiked, toggleLike } = useContentLikeToggle();
   const {
     selectedFilters,
@@ -68,6 +74,7 @@ function FestivalOngoingPage() {
     isPending,
   } = useCultureContents({
     statuses: ['ONGOING'],
+    keyword: region || undefined,
     category: categoryByFilterValue[selectedFilters.category],
     sort: sortByFilterValue[selectedFilters.sort],
     size: PAGE_SIZE,
@@ -105,7 +112,7 @@ function FestivalOngoingPage() {
             lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
-          진행 중인 행사
+          {region ? `${region}에서 진행 중인 행사` : '진행 중인 행사'}
         </h1>
         <p
           className="font-normal text-gray-5"

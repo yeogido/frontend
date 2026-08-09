@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   CourseCard,
@@ -30,6 +31,9 @@ import {
   useReviewDetailModal,
   useReviewEdit,
 } from '../../hooks/useReviews';
+import { getCourseReviews } from '../../apis/reviews.api';
+import { toEditableImages, toImageUrls } from '../../utils/reviewCard';
+import { toCourseDetailState } from '../../utils/reviewNavigation';
 import { formatBusinessPromotionDate } from '../local-business/mappers/businessPromotionMapper';
 import { toContentTagIds } from '../../utils/contentTags';
 import {
@@ -47,6 +51,7 @@ import {
   type MyPostFilterKey,
 } from './constants/filters';
 import useMyPostFilters from './hooks/useMyPostFilters';
+import { findReviewImages } from './utils/findReviewImages';
 import { toMyPostReviewCardProps } from './utils/myPostReviewCard';
 
 const PAGE_PADDING_X = 24;
@@ -68,11 +73,17 @@ const RETRY_BUTTON_PADDING_Y = 8;
 const RETRY_BUTTON_TEXT_SIZE = 14;
 const SKELETON_COUNT = 3;
 
+/** 수정할 후기의 사진을 코스 후기 목록에서 찾을 때 한 번에 받는 개수. */
+const REVIEW_IMAGE_LOOKUP_SIZE = 20;
+const REVIEW_IMAGE_LOOKUP_STALE_TIME = 1000 * 30;
+
 function MyPostsPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { userId } = useAuth();
-  const { goToCourseDetail } = useNavigateToCourseDetail();
+  const { goToCourseDetail, prefetchCourseDetail } =
+    useNavigateToCourseDetail();
+  const queryClient = useQueryClient();
   const [keyword, setKeyword] = useState('');
 
   const {
@@ -110,8 +121,95 @@ function MyPostsPage() {
   );
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviewsForModal);
-  // 코스 정보가 아직 안 내려오는 리뷰가 있어(myPostReviewCard 참고) 없을 수 있다.
-  const openedCourseId = openedReview?.courseId;
+
+  /**
+   * 후기의 사진을 코스 후기 목록에서 찾아온다.
+   *
+   * 내 게시물 응답(MyReviewResponse)에는 리뷰 이미지가 없다. 코스 후기 목록은
+   * imageKey까지 주므로 그쪽에서 같은 리뷰를 찾는다. 코스를 모르거나 못 찾으면
+   * undefined다.
+   */
+  const lookupReviewImages = async (reviewId: number, courseId?: number) => {
+    if (courseId === undefined) {
+      return undefined;
+    }
+
+    const found = await queryClient
+      .fetchQuery({
+        queryKey: ['myPostReviewImages', reviewId],
+        queryFn: () =>
+          findReviewImages(
+            (cursor) =>
+              getCourseReviews(courseId, {
+                ...cursor,
+                size: REVIEW_IMAGE_LOOKUP_SIZE,
+                sort: 'LATEST',
+              }),
+            reviewId
+          ).then((images) => images ?? null),
+        staleTime: REVIEW_IMAGE_LOOKUP_STALE_TIME,
+      })
+      .catch(() => null);
+
+    return found ?? undefined;
+  };
+
+  /**
+   * 후기 카드를 누르면 그 코스의 상세로 가서 후기 상세를 띄운다.
+   *
+   * 이 화면은 코스 타입(OFFICIAL·LOCAL)을 모르므로 goToCourseDetail이 코스를
+   * 먼저 조회해 경로를 정한다. 사진도 목록에 없어 함께 채워서 넘긴다.
+   * 코스를 모르는 후기는 갈 곳이 없어 이 화면에서 모달로 연다.
+   */
+  const openReviewDetail = async (review: {
+    id: number;
+    courseId?: number;
+    content: string;
+    profileImage: string;
+    nickname: string;
+    meta: string;
+    rating: number;
+  }) => {
+    if (review.courseId === undefined) {
+      openReview(review.id);
+      return;
+    }
+
+    // 사진 조회와 코스 타입 조회는 서로 무관해서 함께 보낸다. 순서대로
+    // 기다리면 탭하고 화면이 바뀌기까지 왕복이 두 번 걸린다.
+    const [images] = await Promise.all([
+      lookupReviewImages(review.id, review.courseId),
+      prefetchCourseDetail(review.courseId),
+    ]);
+
+    await goToCourseDetail(
+      review.courseId,
+      toCourseDetailState({ ...review, images: toImageUrls(images) })
+    );
+  };
+
+  /**
+   * 수정할 후기의 기존 사진을 채워서 편집기를 연다.
+   *
+   * 사진을 못 구하면 사진 편집을 막고 별점·내용만 고치게 한다 — 빈 목록으로
+   * 저장하면 images가 전체 교체라 서버의 사진이 전부 지워진다.
+   */
+  const openReviewEditor = async (review: {
+    id: number;
+    content: string;
+    rating: number;
+    courseId?: number;
+  }) => {
+    const images = await lookupReviewImages(review.id, review.courseId);
+
+    requestEdit({
+      id: review.id,
+      content: review.content,
+      rating: review.rating,
+      editableImages: toEditableImages(images),
+      canEditPhotos: images !== undefined,
+    });
+  };
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -263,15 +361,8 @@ function MyPostsPage() {
                   content={reviewCard.content}
                   rating={reviewCard.rating}
                   isMine
-                  onClick={() => openReview(reviewCard.id)}
-                  onEditClick={() =>
-                    requestEdit({
-                      id: reviewCard.id,
-                      content: reviewCard.content,
-                      rating: reviewCard.rating,
-                      editableImages: [],
-                    })
-                  }
+                  onClick={() => void openReviewDetail(reviewCard)}
+                  onEditClick={() => void openReviewEditor(reviewCard)}
                   onDeleteClick={() => requestDelete(reviewCard.id)}
                 />
               );
@@ -334,16 +425,11 @@ function MyPostsPage() {
         title="코스를 삭제할까요?"
         description="삭제한 코스는 되돌릴 수 없어요."
       />
-      {/* 카드 탭이 후기 상세를 열게 되면서, 코스로는 이 모달을 거쳐 간다. */}
-      <ReviewDetailModal
-        review={openedReview}
-        onClose={closeReview}
-        onGoToCourse={
-          openedCourseId !== undefined
-            ? () => void goToCourseDetail(openedCourseId)
-            : undefined
-        }
-      />
+      {/*
+        코스를 모르는 후기만 여기서 연다. 코스를 아는 후기는 코스 상세로
+        넘어가 그쪽 모달이 뜬다.
+      */}
+      <ReviewDetailModal review={openedReview} onClose={closeReview} />
     </section>
   );
 }

@@ -21,9 +21,6 @@ import {
   getReviews,
   updateReview,
 } from '../apis/reviews.api';
-import { getMyPosts } from '../apis/users.api';
-import { collectMyReviewIds } from '../utils/collectMyReviewIds';
-import { useAuth } from './useAuth';
 import type {
   CourseReviewImageRequest,
   CreateCourseReviewResponse,
@@ -109,10 +106,19 @@ const uploadReviewImages = async (photos: File[]) => {
   return images;
 };
 
+/**
+ * 홈 후기 섹션이 쓰는 최근 후기.
+ *
+ * 홈은 사진이 있는 후기만 3장 보여준다. 사진은 선택이라 걸러내면 3장이 안 될
+ * 수 있어, 화면에 그릴 수보다 넉넉히 받아 둔다.
+ */
+const RECENT_REVIEWS_FETCH_SIZE = 20;
+
 export function useRecentReviews() {
   return useQuery({
     queryKey: ['recentReviews'],
-    queryFn: () => getReviews({ sort: 'LATEST', size: 3 }),
+    queryFn: () =>
+      getReviews({ sort: 'LATEST', size: RECENT_REVIEWS_FETCH_SIZE }),
   });
 }
 
@@ -135,40 +141,13 @@ export function useReviews(sort: ReviewSort = 'LATEST') {
   });
 }
 
-const MY_POSTS_PAGE_SIZE = 50;
-
-const EMPTY_REVIEW_IDS: ReadonlySet<number> = new Set();
-
 /**
- * 내가 쓴 리뷰의 ID 집합.
+ * 코스 상세에 끼워 넣는 미리보기. 첫 페이지만 본다.
  *
- * 리뷰 조회 응답에 작성자 식별자가 없어 본인 여부를 알 수 없다. 대신 내
- * 게시물 목록에서 리뷰만 받아 ID로 대조한다. 백엔드가 isMine(또는
- * author.userId)을 내려주기 시작하면 이 훅째로 걷어낼 수 있다.
+ * 화면에는 사진 있는 후기 4개만 그리는데, 사진은 선택이라 걸러내면 4개가 안
+ * 될 수 있어 넉넉히 받아 둔다.
  */
-export function useMyReviewIds() {
-  const { isAuthenticated } = useAuth();
-
-  const { data } = useQuery({
-    queryKey: ['myReviewIds'],
-    queryFn: () =>
-      collectMyReviewIds((cursorId) =>
-        getMyPosts({
-          category: 'REVIEW',
-          size: MY_POSTS_PAGE_SIZE,
-          cursorId,
-        })
-      ),
-    enabled: isAuthenticated,
-    // 매 화면 진입마다 전 페이지를 다시 훑지 않도록 잠시 재사용한다.
-    staleTime: 1000 * 60,
-  });
-
-  return data ?? EMPTY_REVIEW_IDS;
-}
-
-/** 코스 상세에 끼워 넣는 미리보기. 첫 페이지만 본다. */
-const COURSE_REVIEW_PREVIEW_SIZE = 4;
+const COURSE_REVIEW_PREVIEW_SIZE = 20;
 
 const COURSE_REVIEWS_PAGE_SIZE = 10;
 
@@ -251,7 +230,6 @@ export function useCreateCourseReview() {
       });
       void queryClient.invalidateQueries({ queryKey: ['reviews'] });
       void queryClient.invalidateQueries({ queryKey: ['recentReviews'] });
-      void queryClient.invalidateQueries({ queryKey: ['myReviewIds'] });
       void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
   });
@@ -358,7 +336,6 @@ function useDeleteReview() {
       void queryClient.invalidateQueries({ queryKey: ['courseReviews'] });
       void queryClient.invalidateQueries({ queryKey: ['reviews'] });
       void queryClient.invalidateQueries({ queryKey: ['recentReviews'] });
-      void queryClient.invalidateQueries({ queryKey: ['myReviewIds'] });
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
@@ -412,6 +389,12 @@ export interface EditableReview {
   rating?: number;
   /** 유지 여부를 고를 기존 사진. imageKey가 있어야 PATCH에 다시 실을 수 있다. */
   editableImages: { imageKey: string; imageUrl: string }[];
+  /**
+   * 기존 사진 목록을 못 구한 경우 false. 그때는 사진 편집을 막고 별점·내용만
+   * 고치게 한다. 빈 목록을 "사진 없음"으로 오해해 그대로 저장하면, images가
+   * 전체 교체라 서버의 사진이 모두 지워진다.
+   */
+  canEditPhotos?: boolean;
 }
 
 export interface ReviewEditSubmission {
