@@ -9,8 +9,18 @@ import { Divider } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useLogout } from '../../hooks/useLogout';
-import { useMyProfile } from '../../hooks/useMyProfile';
+import { useIsAdmin, useMyProfile } from '../../hooks/useMyProfile';
 import { APP_MAX_WIDTH } from '../../constants/layout';
+
+/**
+ * 관리자로 로그인했을 때, 사이드바 메뉴 이름은 그대로 두고 실제 이동
+ * 경로만 관리자 페이지로 바꾼다. 나머지 메뉴는 guestSidebarMenu의 path를
+ * 그대로 쓴다.
+ */
+const ADMIN_MENU_PATH_OVERRIDE: Record<string, string> = {
+  '/yeogido-course': '/admin/courses',
+  '/festival': '/admin',
+};
 
 const DRAWER_MAX_WIDTH = 280;
 const DRAWER_HEADER_HEIGHT = 111;
@@ -54,6 +64,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
   const handleLogout = useLogout();
   const { userId } = useAuth();
   const { data: profile } = useMyProfile();
+  const isAdmin = useIsAdmin();
   // 프로필 조회가 끝나기 전에는 실제로 존재하는 userId 기반의 안전한
   // 표시값으로 대체한다.
   const displayName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
@@ -175,7 +186,10 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 key={menu.path}
                 type="button"
                 onClick={() => {
-                  navigate(menu.path);
+                  const targetPath = isAdmin
+                    ? (ADMIN_MENU_PATH_OVERRIDE[menu.path] ?? menu.path)
+                    : menu.path;
+                  navigate(targetPath);
                   onClose();
                 }}
                 className="flex items-center justify-between text-left"
