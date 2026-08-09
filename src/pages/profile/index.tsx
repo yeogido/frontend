@@ -18,8 +18,10 @@ import {
   ProfileDetailSection,
   ProfilePhotoEditor,
   ProfileSummary,
+  UnsavedChangesDialog,
   WithdrawalDialog,
 } from './components';
+import { useUnsavedChangesGuard } from './hooks/useUnsavedChangesGuard';
 
 function ProfilePage() {
   const scale = useGlobalScale();
@@ -31,6 +33,8 @@ function ProfilePage() {
   const deleteMyAccount = useDeleteMyAccount();
   const updateMyProfile = useUpdateMyProfile();
   const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false);
+  const [isPhotoEdited, setIsPhotoEdited] = useState(false);
+  const unsavedChangesGuard = useUnsavedChangesGuard(isPhotoEdited);
   const { data } = useMyBusinesses(isAuthenticated);
 
   // 인증 사업장이 없으면 빈 배열이 정상 응답이다(404가 아니다).
@@ -66,6 +70,7 @@ function ProfilePage() {
   const handlePhotoUploaded = async (objectKey: string) => {
     try {
       await updateMyProfile.mutateAsync({ profileImageUrl: objectKey });
+      setIsPhotoEdited(false);
       showToast('프로필 사진을 저장했어요.');
     } catch (error) {
       showToast(getApiErrorMessage(error, '프로필 사진 저장에 실패했어요.'));
@@ -86,6 +91,7 @@ function ProfilePage() {
         <ProfilePhotoEditor
           scale={scale}
           initialPhotoUrl={profile?.profileImageUrl}
+          onPhotoChange={() => setIsPhotoEdited(true)}
           onPhotoUploaded={handlePhotoUploaded}
         />
         <ProfileSummary
@@ -128,6 +134,11 @@ function ProfilePage() {
         isPending={deleteMyAccount.isPending}
         onConfirm={() => void handleWithdrawalConfirm()}
         onCancel={() => setIsWithdrawalDialogOpen(false)}
+      />
+      <UnsavedChangesDialog
+        isOpen={unsavedChangesGuard.isDialogOpen}
+        onConfirm={unsavedChangesGuard.onConfirm}
+        onCancel={unsavedChangesGuard.onCancel}
       />
     </ResponsivePageShell>
   );
