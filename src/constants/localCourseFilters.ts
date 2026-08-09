@@ -14,10 +14,11 @@ export const localCourseFilterGroups = [
     defaultLabel: '전체',
     options: ['전체', '혼자', '친구와', '연인과', '가족과', '반려동물과'],
   },
+  // 우리동네 코스는 추천순 정렬을 지원하지 않는다.
   {
     key: 'sort',
-    defaultLabel: '추천순',
-    options: ['추천순', '저장순', '후기순'],
+    defaultLabel: '인기순',
+    options: ['인기순', '최신순', '저장순', '후기순', '거리순'],
   },
 ] as const;
 
