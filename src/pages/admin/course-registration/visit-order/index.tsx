@@ -21,6 +21,9 @@ function AdminCourseVisitOrderPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const region = useAdminCourseRegistrationStore((state) => state.region);
+  const editingCourseId = useAdminCourseRegistrationStore(
+    (state) => state.editingCourseId
+  );
   const {
     visitEvents,
     activeEvent,
@@ -74,6 +77,7 @@ function AdminCourseVisitOrderPage() {
           onSubmit={handleSubmit}
           disabled={isSubmitting || visitEvents.length === 0}
           isSubmitting={isSubmitting}
+          isEditing={Boolean(editingCourseId)}
         />
         {submitError ? (
           <p

@@ -4,7 +4,7 @@ import darkStar from '../../assets/icons/dark star.svg';
 import star from '../../assets/icons/star.svg';
 
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { useLongPress } from '../../hooks/useLongPress';
+import { useCardTap } from '../../hooks/useCardTap';
 
 import ReviewActionMenu from './ReviewActionMenu';
 
@@ -42,7 +42,6 @@ export interface ReviewCardProps {
   rating?: number;
   isMine?: boolean;
   onClick?: () => void;
-  onLongPress?: () => void;
   onEditClick?: () => void;
   onDeleteClick?: () => void;
   variant?: 'default' | 'course-review-list';
@@ -59,7 +58,6 @@ function ReviewCard({
   rating = 5,
   isMine = false,
   onClick,
-  onLongPress,
   onEditClick,
   onDeleteClick,
   variant = 'default',
@@ -71,24 +69,18 @@ function ReviewCard({
     ? COURSE_REVIEW_LIST_CARD_HEIGHT
     : CARD_DESIGN_HEIGHT;
 
-  const isClickable = Boolean(onClick || onLongPress);
+  const isClickable = Boolean(onClick);
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
   const hasSingleImage = images.length === 1;
-  const longPressHandlers = useLongPress({
-    onLongPress: () => onLongPress?.(),
-    onClick,
-  });
+  const tapHandlers = useCardTap({ onTap: () => onClick?.() });
 
-  // 길게 누르기는 포인터로만 구분되므로, 키보드에서는 카드를 눌렀을 때 할 수
-  // 있는 일을 실행한다. 짧게 누르기가 없는 화면(홈)에서는 후기 상세를 연다.
+  // 탭은 포인터로만 판정하므로 키보드 경로를 따로 둔다.
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    const activate = onClick ?? onLongPress;
-
-    if (!activate || event.currentTarget !== event.target) return;
+    if (!onClick || event.currentTarget !== event.target) return;
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      activate();
+      onClick();
     }
   };
 
@@ -109,7 +101,7 @@ function ReviewCard({
         }}
       >
         <article
-          {...(isClickable ? longPressHandlers : {})}
+          {...(isClickable ? tapHandlers : {})}
           onKeyDown={handleKeyDown}
           role={isClickable ? 'button' : undefined}
           tabIndex={isClickable ? 0 : undefined}

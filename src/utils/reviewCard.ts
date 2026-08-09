@@ -83,6 +83,5 @@ export function toReviewCourseCardProps(
     meta: toReviewerMetaLabel(review.author?.ageGroup, review.author?.gender),
     content: review.content,
     rating: review.rating,
-    liked: review.course.isLiked,
   };
 }

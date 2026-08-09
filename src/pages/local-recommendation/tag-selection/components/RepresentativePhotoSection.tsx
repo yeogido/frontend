@@ -3,7 +3,6 @@ import { IoImage, IoTrashOutline } from 'react-icons/io5';
 
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import type { PhotoSelection } from '../types';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 35;
@@ -27,7 +26,12 @@ const ERROR_MARGIN_TOP = 8;
 const ERROR_TEXT_SIZE = 12;
 
 interface RepresentativePhotoSectionProps {
-  photo: PhotoSelection | null;
+  /**
+   * file은 새로 고른 실제 File일 때만 있다. 수정 화면에서 기존 사진을
+   * "미리보기만" 보여줄 때는 file 없이 previewUrl(원본 URL)만 온다 —
+   * 그래도 미리보기/교체/삭제는 그대로 동작한다.
+   */
+  photo: { file: File | null; previewUrl: string } | null;
   onPhotoChange: (file: File | null) => void;
 }
 

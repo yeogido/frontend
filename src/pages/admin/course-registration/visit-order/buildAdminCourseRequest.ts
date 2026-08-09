@@ -1,6 +1,7 @@
 import type {
   CreateLocalRecommendationRequest,
 } from '../../../../apis/localRecommendations';
+import type { UpdateCourseRequest } from '../../../../apis/courses';
 import type { CourseBasicInfoValues } from '../../../local-recommendation/course-basic-info/schema';
 import type { Neighborhood } from '../../../local-recommendation/region-selection/types';
 import { buildCourseItemsFromVisitEvents } from '../../../local-recommendation/visit-order-selection/buildCourseRequest';
@@ -44,17 +45,19 @@ interface AdminCourseRequestParams {
   region: Neighborhood | null;
   basicInfo: CourseBasicInfoValues | null;
   photo: AdminCoursePhoto | null;
+  /** 수정 중 대표 사진을 새로 고르지 않았을 때 재사용할 기존 key. */
+  existingThumbnailKey?: string | null;
   visitEvents: readonly VisitEvent[];
 }
 
 export function getAdminCourseRequestValidationError(
   params: AdminCourseRequestParams
 ): string | null {
-  const { region, basicInfo, photo, visitEvents } = params;
+  const { region, basicInfo, photo, existingThumbnailKey, visitEvents } = params;
 
   if (!region) return '지역 선택 단계에서 지역을 선택해 주세요.';
   if (!basicInfo) return '기본 정보 입력 단계에서 코스 정보를 입력해 주세요.';
-  if (!photo) return '대표 사진을 등록해 주세요.';
+  if (!photo?.file && !existingThumbnailKey) return '대표 사진을 등록해 주세요.';
   if (visitEvents.length === 0) {
     return '방문할 장소 또는 행사를 하나 이상 추가해 주세요.';
   }
@@ -111,6 +114,50 @@ export function buildAdminCourseRequest(
   return {
     title: basicInfo.courseName,
     regionId: region.id,
+    description: basicInfo.summary,
+    durationType,
+    transportType,
+    companionType,
+    monthStart: Number(basicInfo.visitStartMonth),
+    monthEnd: Number(basicInfo.visitEndMonth),
+    thumbnailKey,
+    hashtagIds,
+    courseItems: buildCourseItemsFromVisitEvents(visitEvents),
+  };
+}
+
+/**
+ * 수정 요청은 지역을 바꿀 수 없어(라이브 스펙에 regionId 필드 자체가 없다)
+ * region은 마법사 단계 가드만 통과하면 되고 실제 페이로드에는 들어가지
+ * 않는다 — 그래서 검증은 기존 함수를 그대로 쓰고, 페이로드만 regionId
+ * 없이 다시 만든다.
+ */
+export function buildAdminCourseUpdateRequest(
+  params: AdminCourseRequestParams & {
+    thumbnailKey: string;
+    hashtagIds: number[];
+  }
+): UpdateCourseRequest | null {
+  const { basicInfo, thumbnailKey, hashtagIds, visitEvents } = params;
+
+  if (getAdminCourseRequestValidationError(params)) {
+    return null;
+  }
+
+  if (!basicInfo) {
+    return null;
+  }
+
+  const durationType = DURATION_TYPE_MAP[basicInfo.duration];
+  const transportType = TRANSPORT_TYPE_MAP[basicInfo.transport];
+  const companionType = COMPANION_TYPE_MAP[basicInfo.companion];
+
+  if (!durationType || !transportType || !companionType) {
+    return null;
+  }
+
+  return {
+    title: basicInfo.courseName,
     description: basicInfo.summary,
     durationType,
     transportType,

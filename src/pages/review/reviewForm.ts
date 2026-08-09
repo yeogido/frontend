@@ -3,6 +3,13 @@ export const MAX_REVIEW_PHOTOS = 5;
 /** 별점을 고르지 않은 상태의 기본값. 작성 화면과 수정 모달이 함께 쓴다. */
 export const DEFAULT_REVIEW_RATING = 5;
 
+/** Swagger의 content maxLength와 같아야 한다(작성·수정 요청 모두 300). */
+export const REVIEW_CONTENT_MAX_LENGTH = 300;
+
+/** 작성 화면과 수정 모달이 같은 안내를 보여주도록 문구를 한곳에 둔다. */
+export const REVIEW_CONTENT_PLACEHOLDER =
+  '이 코스는 어땠나요?\n좋았던 점, 아쉬웠던 점을 자유롭게 작성해 주세요.';
+
 interface ReviewFormValues {
   rating: number | null;
   review: string;
@@ -35,7 +42,7 @@ export function isReviewFormValid({
     rating >= 1 &&
     rating <= 5 &&
     review.trim().length > 0 &&
-    review.length <= 300 &&
+    review.length <= REVIEW_CONTENT_MAX_LENGTH &&
     photoCount > 0 &&
     photoCount <= MAX_REVIEW_PHOTOS
   );

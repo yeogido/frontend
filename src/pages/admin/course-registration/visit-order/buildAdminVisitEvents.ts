@@ -27,7 +27,7 @@ export function buildAdminVisitEvents(
     lotAddress: place.lotAddress,
     latitude: place.latitude,
     longitude: place.longitude,
-    imageKey: null,
+    imageKey: place.existingImageKey ?? null,
   }));
 
   const contentEvents: VisitEvent[] = events.map((event) => ({

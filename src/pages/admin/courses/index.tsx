@@ -13,6 +13,7 @@ import calendar from '../../../assets/icons/calendar.svg';
 import location from '../../../assets/icons/location.svg';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourses, useRecommendedCourses } from '../../../hooks/useCourses';
+import { useEditCourse } from '../../../hooks/useEditCourse';
 import { useRecentCourses } from '../../../hooks/useRecentCourses';
 import { useAdminCourseRegistrationStore } from '../../../store/adminCourseRegistration.store';
 import { toContentTagIds } from '../../../utils/contentTags';
@@ -87,6 +88,7 @@ function AdminCoursesPage() {
   const resetRegistration = useAdminCourseRegistrationStore(
     (state) => state.reset
   );
+  const { editCourse } = useEditCourse();
 
   const {
     data: recommendedCourses,
@@ -335,6 +337,7 @@ function AdminCoursesPage() {
                   secondInfo={course.region}
                   tags={toContentTagIds(course.tags)}
                   onClick={() => goToCourseDetail(course.courseId)}
+                  onEdit={() => void editCourse(course.courseId)}
                   onDelete={() => handleDeleteCourse(course.courseId)}
                 />
               ))}
@@ -386,6 +389,7 @@ function AdminCoursesPage() {
                 companion={course.companion}
                 tags={course.tags}
                 onClick={() => goToCourseDetail(course.id)}
+                onEdit={() => void editCourse(course.id)}
                 onDelete={() => handleDeleteCourse(course.id)}
               />
             ))}
