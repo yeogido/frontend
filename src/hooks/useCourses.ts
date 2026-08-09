@@ -4,7 +4,6 @@ import {
   type InfiniteData,
   useInfiniteQuery,
   useMutation,
-  useQueries,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
@@ -14,6 +13,7 @@ import { useToast } from '../components/toast';
 import { collectMyCourseIds } from '../utils/collectMyCourseIds';
 import { removeRecentCourse } from '../utils/recentCourses';
 import { buildCourseDetailPath } from '../utils/routes';
+import type { CourseDetailNavigationState } from '../utils/reviewNavigation';
 import { useAuth } from './useAuth';
 
 import {
@@ -236,28 +236,6 @@ export function useCourseDetail(courseId: number | null) {
 }
 
 /**
- * 여러 코스의 상세를 한꺼번에 읽는다.
- *
- * 후기 목록 응답의 course에는 해시태그와 동행이 없어서, 후기 카드에 그리려면
- * 코스별로 상세를 더 받아야 한다. useCourseDetail과 캐시 키가 같아 이 캐시를
- * 함께 쓴다.
- *
- * 백엔드가 ReviewCourse에 tags·companionType을 넣어주면 이 조회 전체를
- * 걷어낼 수 있다.
- */
-export function useCourseDetails(courseIds: readonly number[]) {
-  return useQueries({
-    queries: courseIds.map((courseId) => ({
-      queryKey: ['courseDetail', courseId],
-      queryFn: () => getCourseDetail(courseId),
-      staleTime: DETAIL_STALE_TIME,
-      gcTime: DETAIL_GC_TIME,
-      refetchOnWindowFocus: false,
-    })),
-  });
-}
-
-/**
  * 코스 타입을 모르는 목록에서 코스 상세로 이동한다.
  *
  * 여기도(OFFICIAL)와 동네(LOCAL) 상세 라우트가 나뉘어 있고, 각 페이지는 자기
@@ -274,7 +252,23 @@ export function useNavigateToCourseDetail() {
   const { showToast } = useToast();
   const [isResolvingCourse, setIsResolvingCourse] = useState(false);
 
-  const goToCourseDetail = async (courseId: number) => {
+  const courseDetailQuery = (courseId: number) => ({
+    queryKey: ['courseDetail', courseId],
+    queryFn: () => getCourseDetail(courseId),
+    staleTime: DETAIL_STALE_TIME,
+  });
+
+  /**
+   * 이동 전에 다른 조회를 함께 보내야 할 때 쓴다. 같은 캐시를 채우므로
+   * 뒤이어 goToCourseDetail을 부르면 기다리지 않고 바로 이동한다.
+   */
+  const prefetchCourseDetail = (courseId: number) =>
+    queryClient.prefetchQuery(courseDetailQuery(courseId));
+
+  const goToCourseDetail = async (
+    courseId: number,
+    state?: CourseDetailNavigationState
+  ) => {
     if (isResolvingCourse) {
       return;
     }
@@ -282,13 +276,9 @@ export function useNavigateToCourseDetail() {
     setIsResolvingCourse(true);
 
     try {
-      const course = await queryClient.fetchQuery({
-        queryKey: ['courseDetail', courseId],
-        queryFn: () => getCourseDetail(courseId),
-        staleTime: DETAIL_STALE_TIME,
-      });
+      const course = await queryClient.fetchQuery(courseDetailQuery(courseId));
 
-      navigate(buildCourseDetailPath(course.courseType, courseId));
+      navigate(buildCourseDetailPath(course.courseType, courseId), { state });
     } catch (error) {
       showToast(getApiErrorMessage(error, '코스를 열지 못했어요.'));
     } finally {
@@ -296,5 +286,5 @@ export function useNavigateToCourseDetail() {
     }
   };
 
-  return { goToCourseDetail, isResolvingCourse };
+  return { goToCourseDetail, prefetchCourseDetail, isResolvingCourse };
 }
