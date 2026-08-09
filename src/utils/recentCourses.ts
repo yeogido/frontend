@@ -2,6 +2,16 @@ import type { Course, CourseType } from '../types/course.type';
 
 export const RECENT_COURSES_STORAGE_KEY = 'recent-courses';
 export const MAX_RECENT_COURSES = 10;
+// useRecentCourses는 마운트 시 한 번만 localStorage를 읽어(리액트 state),
+// 다른 곳에서 목록을 바꿔도 이미 그려진 화면에는 반영되지 않는다. 같은 탭
+// 안에서 즉시 갱신되도록 변경할 때마다 이 이벤트를 쏘고, 훅이 구독해서
+// 다시 읽는다.
+export const RECENT_COURSES_UPDATED_EVENT = 'recent-courses-updated';
+
+function notifyRecentCoursesUpdated(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(RECENT_COURSES_UPDATED_EVENT));
+}
 
 // 여기도(OFFICIAL)/우리동네(LOCAL) 코스를 같은 저장소에 함께 기록하되,
 // 화면별로 자신의 courseType만 걸러 보여줄 수 있도록 태그를 붙여 저장한다.
@@ -11,7 +21,7 @@ export interface RecentCourse extends Course {
 
 export function upsertRecentCourse(
   courses: readonly RecentCourse[],
-  course: RecentCourse,
+  course: RecentCourse
 ): RecentCourse[] {
   return [
     course,
@@ -24,7 +34,7 @@ export function getStoredRecentCourses(): RecentCourse[] {
 
   try {
     const storedCourses = window.localStorage.getItem(
-      RECENT_COURSES_STORAGE_KEY,
+      RECENT_COURSES_STORAGE_KEY
     );
 
     if (!storedCourses) return [];
@@ -47,8 +57,31 @@ export function saveRecentCourse(course: RecentCourse): void {
 
     window.localStorage.setItem(
       RECENT_COURSES_STORAGE_KEY,
-      JSON.stringify(courses),
+      JSON.stringify(courses)
     );
+    notifyRecentCoursesUpdated();
+  } catch {
+    return;
+  }
+}
+
+export function removeRecentCourse(courseId: number): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const courses = getStoredRecentCourses();
+
+    if (!courses.some((course) => course.courseId === courseId)) return;
+
+    const updatedCourses = courses.filter(
+      (course) => course.courseId !== courseId
+    );
+
+    window.localStorage.setItem(
+      RECENT_COURSES_STORAGE_KEY,
+      JSON.stringify(updatedCourses)
+    );
+    notifyRecentCoursesUpdated();
   } catch {
     return;
   }
@@ -56,7 +89,7 @@ export function saveRecentCourse(course: RecentCourse): void {
 
 export function updateRecentCourseLikeState(
   courseId: number,
-  isLiked: boolean,
+  isLiked: boolean
 ): void {
   if (typeof window === 'undefined') return;
 
@@ -66,13 +99,14 @@ export function updateRecentCourseLikeState(
     if (!courses.some((course) => course.courseId === courseId)) return;
 
     const updatedCourses = courses.map((course) =>
-      course.courseId === courseId ? { ...course, isLiked } : course,
+      course.courseId === courseId ? { ...course, isLiked } : course
     );
 
     window.localStorage.setItem(
       RECENT_COURSES_STORAGE_KEY,
-      JSON.stringify(updatedCourses),
+      JSON.stringify(updatedCourses)
     );
+    notifyRecentCoursesUpdated();
   } catch {
     return;
   }

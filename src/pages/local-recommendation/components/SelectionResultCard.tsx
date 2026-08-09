@@ -1,13 +1,20 @@
 import { IoAdd, IoClose } from 'react-icons/io5';
+import type { ReactNode } from 'react';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
+import PlaceMarkerIcon from './PlaceMarkerIcon';
+
 // Figma 390 디자인 기준 리터럴 px
 const ADD_GAP = 24;
+const ADD_MARKER_GAP = 12;
+const ADD_MARKER_LEFT_INSET = 4;
 const REMOVE_GAP = 12;
 const REMOVE_CARD_HEIGHT = 72;
 const REMOVE_CARD_PADDING = 8;
 const ADD_IMAGE_SIZE = 68;
+const ADD_MARKER_WIDTH = 16;
+const ADD_MARKER_HEIGHT = 20;
 const REMOVE_IMAGE_SIZE = 56;
 const TITLE_FONT_SIZE = 15;
 const TITLE_LINE_HEIGHT = 20;
@@ -25,6 +32,9 @@ interface SelectionResultCardProps<T> {
   description: string;
   imageSrc: string | null;
   imageAlt: string;
+  imageFallback?: ReactNode;
+  /** 'photo' (default): image thumbnail box. 'marker': plain location-pin icon, no photo box. Applies to both add and remove cards. */
+  visual?: 'photo' | 'marker';
   action: 'add' | 'remove';
   disabled?: boolean;
   onItemAdd?: (item: T) => void;
@@ -37,6 +47,8 @@ function SelectionResultCard<T>({
   description,
   imageSrc,
   imageAlt,
+  imageFallback,
+  visual = 'photo',
   action,
   disabled = false,
   onItemAdd,
@@ -44,13 +56,12 @@ function SelectionResultCard<T>({
 }: SelectionResultCardProps<T>) {
   const scale = useGlobalScale();
   const isAddAction = action === 'add';
+  const isMarker = visual === 'marker';
   const onAction = isAddAction ? onItemAdd : onItemRemove;
   const cardHeight = REMOVE_CARD_HEIGHT * scale;
   const cardPadding = REMOVE_CARD_PADDING * scale;
-  const imageSize = 
-    isAddAction ? ADD_IMAGE_SIZE : REMOVE_IMAGE_SIZE * scale;
-  const actionButtonSize = 
-    ACTION_BUTTON_SIZE * scale;
+  const imageSize = (isAddAction ? ADD_IMAGE_SIZE : REMOVE_IMAGE_SIZE) * scale;
+  const actionButtonSize = ACTION_BUTTON_SIZE * scale;
   const actionVisualSize = ACTION_BUTTON_SIZE * scale;
   const actionOverlap = (actionButtonSize - actionVisualSize) / -2;
   const titleSize = TITLE_FONT_SIZE * scale;
@@ -63,27 +74,43 @@ function SelectionResultCard<T>({
       }`}
       style={{
         height: isAddAction ? undefined : cardHeight,
-        gap: (isAddAction ? ADD_GAP : REMOVE_GAP) * scale,
+        gap:
+          (isAddAction ? (isMarker ? ADD_MARKER_GAP : ADD_GAP) : REMOVE_GAP) *
+          scale,
         padding: isAddAction ? undefined : cardPadding,
         borderRadius: CARD_RADIUS * scale,
       }}
     >
-      <div
-        className="bg-gray-2 shrink-0 overflow-hidden"
-        style={{
-          width: imageSize,
-          height: imageSize,
-          borderRadius: CARD_RADIUS * scale,
-        }}
-      >
-        {imageSrc ? (
-          <img
-            src={imageSrc}
-            alt={imageAlt}
-            className="h-full w-full object-cover"
-          />
-        ) : null}
-      </div>
+      {isMarker ? (
+        <PlaceMarkerIcon
+          aria-hidden="true"
+          className={`shrink-0 ${isAddAction ? 'self-start' : ''}`}
+          style={{
+            width: ADD_MARKER_WIDTH * scale,
+            height: ADD_MARKER_HEIGHT * scale,
+            marginLeft: isAddAction ? ADD_MARKER_LEFT_INSET * scale : undefined,
+          }}
+        />
+      ) : (
+        <div
+          className="bg-gray-2 flex shrink-0 items-center justify-center overflow-hidden"
+          style={{
+            width: imageSize,
+            height: imageSize,
+            borderRadius: CARD_RADIUS * scale,
+          }}
+        >
+          {imageSrc ? (
+            <img
+              src={imageSrc}
+              alt={imageAlt}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            imageFallback
+          )}
+        </div>
+      )}
 
       <div className="min-w-0 flex-1">
         <h3

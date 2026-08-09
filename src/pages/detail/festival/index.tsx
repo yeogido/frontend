@@ -13,7 +13,9 @@ import {
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
+import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import {
   formatTodayOpeningHours,
   usePlaceOpeningHours,
@@ -29,6 +31,7 @@ import {
   DetailPlaceCard,
   DetailStateGuard,
   DetailTitleSection,
+  EditButton,
   FavoriteButton,
   ShareButton,
   ShareToast,
@@ -62,6 +65,8 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     ? queryError
     : new Error('Invalid content ID');
   const { getLiked, toggleLike } = useContentLikeToggle();
+  const isAdmin = useIsAdmin();
+  const { editFestival } = useEditFestival();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null
   );
@@ -161,11 +166,18 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                 imageUrl={festivalDetail.heroImageUrl}
                 title={festivalDetail.title}
                 rightAction={
-                  <FavoriteButton
-                    isActive={getLiked(contentId, festivalDetail.liked)}
-                    label={festivalDetail.title}
-                    onClick={handleFavoriteToggle}
-                  />
+                  isAdmin ? (
+                    <EditButton
+                      label={festivalDetail.title}
+                      onClick={() => void editFestival(contentId)}
+                    />
+                  ) : (
+                    <FavoriteButton
+                      isActive={getLiked(contentId, festivalDetail.liked)}
+                      label={festivalDetail.title}
+                      onClick={handleFavoriteToggle}
+                    />
+                  )
                 }
               />
             </ResponsiveFullBleed>

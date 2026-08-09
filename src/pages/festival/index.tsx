@@ -8,7 +8,7 @@ import {
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
-import { useOngoingContents } from '../../hooks/useOngoingContents';
+import { useCultureContents } from '../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
 import { toContentTagIds } from '../../utils/contentTags';
@@ -40,12 +40,13 @@ function FestivalPage() {
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
   const { data: cultureContentBanners } = useCultureContentBanners();
-  const { data: ongoingContents, isPending: isOngoingContentsPending } =
-    useOngoingContents();
-  const ongoingFestivals = (ongoingContents ?? []).slice(
-    0,
-    ONGOING_PREVIEW_ITEM_COUNT
-  );
+  const { data: ongoingContentsData, isPending: isOngoingContentsPending } =
+    useCultureContents({
+      statuses: ['ONGOING'],
+      sort: 'RECOMMEND',
+      size: ONGOING_PREVIEW_ITEM_COUNT,
+    });
+  const ongoingFestivals = ongoingContentsData?.pages[0]?.items ?? [];
   const banner = cultureContentBanners?.[0];
   const displayedBanner = banner
     ? {
