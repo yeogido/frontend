@@ -5,7 +5,6 @@ import {
   CourseReviewCard,
   CourseReviewCardSkeleton,
   ReviewDeleteDialog,
-  ReviewDetailModal,
   ReviewEditModal,
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
@@ -13,10 +12,11 @@ import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import {
   getReviewsFromPages,
   useReviewDelete,
-  useReviewDetailModal,
   useReviewEdit,
   useReviews,
 } from '../../hooks/useReviews';
+import type { ReviewDetailModalReview } from '../../components/common/ReviewDetailModal';
+import { toCourseDetailState } from '../../utils/reviewNavigation';
 import { toReviewCourseCardProps } from '../../utils/reviewCard';
 import { buildCourseDetailPath } from '../../utils/routes';
 
@@ -46,12 +46,16 @@ function RecentReviewCoursesPage() {
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
   const navigate = useNavigate();
-  const goToCourseDetail = (review: { courseType: string; courseId: number }) =>
-    navigate(buildCourseDetailPath(review.courseType, review.courseId));
+  // 카드를 누르면 코스 상세로 가서 그 후기 상세가 열린다. 코스 상세는 후기를
+  // 최신 4개만 읽으므로 id 대신 후기를 통째로 넘긴다.
+  const goToCourseDetail = (
+    review: { courseType: string; courseId: number } & ReviewDetailModalReview
+  ) =>
+    navigate(buildCourseDetailPath(review.courseType, review.courseId), {
+      state: toCourseDetailState(review),
+    });
 
   const reviews = getReviewsFromPages(data?.pages).map(toReviewCourseCardProps);
-  const { openedReview, openReview, closeReview } =
-    useReviewDetailModal(reviews);
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -143,7 +147,7 @@ function RecentReviewCoursesPage() {
               isMine={review.isMine}
               onDeleteClick={() => requestDelete(review.id)}
               onEditClick={() => requestEdit(review)}
-              onClick={() => openReview(review.id)}
+              onClick={() => goToCourseDetail(review)}
             />
           ))}
 
@@ -154,13 +158,6 @@ function RecentReviewCoursesPage() {
           )}
         </div>
       )}
-
-      <ReviewDetailModal
-        review={openedReview}
-        courseTitle={openedReview?.title}
-        onClose={closeReview}
-        onGoToCourse={openedReview && (() => goToCourseDetail(openedReview))}
-      />
 
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
 

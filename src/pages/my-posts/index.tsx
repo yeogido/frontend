@@ -30,6 +30,7 @@ import {
 } from '../../hooks/useReviews';
 import { getCourseReviews } from '../../apis/reviews.api';
 import { toEditableImages, toImageUrls } from '../../utils/reviewCard';
+import { toCourseDetailState } from '../../utils/reviewNavigation';
 import { formatBusinessPromotionDate } from '../local-business/mappers/businessPromotionMapper';
 import { toContentTagIds } from '../../utils/contentTags';
 import {
@@ -118,11 +119,6 @@ function MyPostsPage() {
   );
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviewsForModal);
-  const [imagesByReviewId, setImagesByReviewId] = useState<
-    Record<number, string[]>
-  >({});
-  // 코스 정보가 아직 안 내려오는 리뷰가 있어(myPostReviewCard 참고) 없을 수 있다.
-  const openedCourseId = openedReview?.courseId;
 
   /**
    * 후기의 사진을 코스 후기 목록에서 찾아온다.
@@ -156,17 +152,33 @@ function MyPostsPage() {
     return found ?? undefined;
   };
 
-  const openReviewDetail = async (review: { id: number; courseId?: number }) => {
-    openReview(review.id);
+  /**
+   * 후기 카드를 누르면 그 코스의 상세로 가서 후기 상세를 띄운다.
+   *
+   * 이 화면은 코스 타입(OFFICIAL·LOCAL)을 모르므로 goToCourseDetail이 코스를
+   * 먼저 조회해 경로를 정한다. 사진도 목록에 없어 함께 채워서 넘긴다.
+   * 코스를 모르는 후기는 갈 곳이 없어 이 화면에서 모달로 연다.
+   */
+  const openReviewDetail = async (review: {
+    id: number;
+    courseId?: number;
+    content: string;
+    profileImage: string;
+    nickname: string;
+    meta: string;
+    rating: number;
+  }) => {
+    if (review.courseId === undefined) {
+      openReview(review.id);
+      return;
+    }
 
     const images = await lookupReviewImages(review.id, review.courseId);
 
-    // 리뷰 id로 담아 두면, 사진이 늦게 와도 그동안 다른 후기를 연 경우에
-    // 엉뚱한 사진이 붙지 않는다.
-    setImagesByReviewId((current) => ({
-      ...current,
-      [review.id]: toImageUrls(images),
-    }));
+    await goToCourseDetail(
+      review.courseId,
+      toCourseDetailState({ ...review, images: toImageUrls(images) })
+    );
   };
 
   /**
@@ -406,21 +418,11 @@ function MyPostsPage() {
         title="코스를 삭제할까요?"
         description="삭제한 코스는 되돌릴 수 없어요."
       />
-      {/* 카드 탭이 후기 상세를 열게 되면서, 코스로는 이 모달을 거쳐 간다. */}
-      <ReviewDetailModal
-        review={
-          openedReview && {
-            ...openedReview,
-            images: imagesByReviewId[openedReview.id],
-          }
-        }
-        onClose={closeReview}
-        onGoToCourse={
-          openedCourseId !== undefined
-            ? () => void goToCourseDetail(openedCourseId)
-            : undefined
-        }
-      />
+      {/*
+        코스를 모르는 후기만 여기서 연다. 코스를 아는 후기는 코스 상세로
+        넘어가 그쪽 모달이 뜬다.
+      */}
+      <ReviewDetailModal review={openedReview} onClose={closeReview} />
     </section>
   );
 }

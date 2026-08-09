@@ -193,7 +193,7 @@ export function useNavigateToCourseDetail() {
   const { showToast } = useToast();
   const [isResolvingCourse, setIsResolvingCourse] = useState(false);
 
-  const goToCourseDetail = async (courseId: number) => {
+  const goToCourseDetail = async (courseId: number, state?: unknown) => {
     if (isResolvingCourse) {
       return;
     }
@@ -207,7 +207,7 @@ export function useNavigateToCourseDetail() {
         staleTime: DETAIL_STALE_TIME,
       });
 
-      navigate(buildCourseDetailPath(course.courseType, courseId));
+      navigate(buildCourseDetailPath(course.courseType, courseId), { state });
     } catch (error) {
       showToast(getApiErrorMessage(error, '코스를 열지 못했어요.'));
     } finally {

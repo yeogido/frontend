@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+import { readOpenedReview } from '../../../utils/reviewNavigation';
 
 import { CourseInfoBadgesCard } from './CourseInfoBadgesCard';
 import { CourseRouteMap } from './CourseRouteMap';
@@ -123,6 +125,24 @@ function CourseDetailLayoutContent({
   const { requestEdit, editorProps } = useReviewEdit();
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
+  // 후기 목록 화면에서 카드를 눌러 넘어온 경우, 그 후기를 그대로 띄운다.
+  const location = useLocation();
+  const [incomingReview, setIncomingReview] = useState(() =>
+    readOpenedReview(location.state)
+  );
+
+  const closeReviewDetail = () => {
+    closeReview();
+
+    if (!incomingReview) return;
+
+    setIncomingReview(undefined);
+    // 남겨 두면 다른 화면에 갔다가 뒤로가기로 돌아왔을 때 다시 열린다.
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: null,
+    });
+  };
 
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
@@ -350,9 +370,9 @@ function CourseDetailLayoutContent({
 
       {/* 이미 이 코스의 상세라 '코스 바로가기'는 넣지 않는다. */}
       <ReviewDetailModal
-        review={openedReview}
+        review={incomingReview ?? openedReview}
         courseTitle={course.title}
-        onClose={closeReview}
+        onClose={closeReviewDetail}
       />
 
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />

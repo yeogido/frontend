@@ -4,7 +4,6 @@ import {
   ReviewCard,
   ReviewCardSkeleton,
   ReviewDeleteDialog,
-  ReviewDetailModal,
   ReviewEditModal,
   SectionHeader,
 } from '../../../components/common';
@@ -14,9 +13,10 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
   useRecentReviews,
   useReviewDelete,
-  useReviewDetailModal,
   useReviewEdit,
 } from '../../../hooks/useReviews';
+import type { ReviewDetailModalReview } from '../../../components/common/ReviewDetailModal';
+import { toCourseDetailState } from '../../../utils/reviewNavigation';
 import { buildCourseDetailPath } from '../../../utils/routes';
 import { toReviewCardProps } from '../../../utils/reviewCard';
 
@@ -39,12 +39,17 @@ function ReviewSection() {
   );
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
-  const { openedReview, openReview, closeReview } =
-    useReviewDetailModal(reviews);
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const goToCourseDetail = (review: { courseType: string; courseId: number }) =>
-    navigate(buildCourseDetailPath(review.courseType, review.courseId));
+
+  // 카드를 누르면 코스 상세로 가서 그 후기 상세가 열린다. 코스 상세는 후기를
+  // 최신 4개만 읽으므로 id 대신 후기를 통째로 넘긴다.
+  const goToCourseDetail = (
+    review: { courseType: string; courseId: number } & ReviewDetailModalReview
+  ) =>
+    navigate(buildCourseDetailPath(review.courseType, review.courseId), {
+      state: toCourseDetailState(review),
+    });
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -159,7 +164,7 @@ function ReviewSection() {
                   isMine={review.isMine}
                   onDeleteClick={() => requestDelete(review.id)}
                   onEditClick={() => requestEdit(review)}
-                  onClick={() => openReview(review.id)}
+                  onClick={() => goToCourseDetail(review)}
                 />
               </div>
             ))}
@@ -195,17 +200,9 @@ function ReviewSection() {
       )}
 
       {/*
-        카드를 누르면 후기 상세가 열리고, 코스로는 이 모달을 거쳐 간다.
         홈 후기는 좌우 스와이프 캐러셀이라 useCardTap이 10px 넘는 이동을
-        탭에서 제외한다(스와이프 중에는 모달이 열리지 않는다).
+        탭에서 제외한다(스와이프 중에는 코스 상세로 넘어가지 않는다).
       */}
-      <ReviewDetailModal
-        review={openedReview}
-        courseTitle={openedReview?.courseTitle}
-        onClose={closeReview}
-        onGoToCourse={openedReview && (() => goToCourseDetail(openedReview))}
-      />
-
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
 
       <ReviewDeleteDialog {...dialogProps} />
