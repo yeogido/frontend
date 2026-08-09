@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
@@ -61,6 +61,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
   const { data: detailResponse, error: queryError } =
     useBusinessPromotionDetail(promotionId);
   const [likedOverride, setLikedOverride] = useState<boolean | null>(null);
+  const placeLikeRequestInFlightRef = useRef(false);
   const { copied, isToastVisible, handleShare } = useShareToast();
 
   const business = detailResponse
@@ -76,6 +77,8 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
       : null;
 
   const handleFavoriteToggle = async () => {
+    if (placeLikeRequestInFlightRef.current) return;
+
     if (!isAuthenticated) {
       openLoginModal();
       return;
@@ -84,6 +87,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
     if (!business) return;
 
     const nextLiked = !(likedOverride ?? business.liked);
+    placeLikeRequestInFlightRef.current = true;
     setLikedOverride(nextLiked);
 
     try {
@@ -102,6 +106,8 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
       }
 
       showToast('좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      placeLikeRequestInFlightRef.current = false;
     }
   };
 

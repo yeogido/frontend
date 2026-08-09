@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
@@ -84,6 +84,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null
   );
+  const placeLikeRequestInFlightRef = useRef(false);
   const [likedCourseIds, setLikedCourseIds] = useState<readonly number[]>([]);
   const { copied, isToastVisible, handleShare } = useShareToast();
 
@@ -144,6 +145,8 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   };
 
   const handlePlaceLikeToggle = async () => {
+    if (placeLikeRequestInFlightRef.current) return;
+
     if (!isAuthenticated) {
       openLoginModal();
       return;
@@ -152,6 +155,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     if (!festival) return;
 
     const nextLiked = !(placeLikedOverride ?? festival.place.liked);
+    placeLikeRequestInFlightRef.current = true;
     setPlaceLikedOverride(nextLiked);
 
     try {
@@ -174,6 +178,8 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
       }
 
       showToast('좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      placeLikeRequestInFlightRef.current = false;
     }
   };
 
