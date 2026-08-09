@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../apis/common';
 import { FloatingActionButton } from '../../components/common';
@@ -22,6 +22,7 @@ import {
 } from './components';
 import type { TravelRecordFolder, TravelRecordView } from './types';
 import { getValidTravelRecordYear } from './utils/sessionFolders';
+import { getSavedTravelRecordId } from './utils/savedTravelRecord';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
@@ -30,9 +31,19 @@ const TRAVEL_RECORD_PAGE_SIZE = 20;
 
 function TravelRecordPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+  const [recentlySavedFolderId] = useState(() =>
+    getSavedTravelRecordId(location.state)
+  );
+
+  useEffect(() => {
+    if (!getSavedTravelRecordId(location.state)) return;
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const travelRecordYearsQuery = useTravelRecordYears();
   const years = useMemo(
@@ -163,6 +174,7 @@ function TravelRecordPage() {
         <TravelFolderGrid
           folders={visibleFolders}
           onFolderClick={handleFolderClick}
+          recentlySavedFolderId={recentlySavedFolderId}
         />
       ) : (
         <TravelMapPanel folders={visibleFolders} />
