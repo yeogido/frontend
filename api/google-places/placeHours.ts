@@ -1,3 +1,6 @@
+import { fetchWithTimeout } from './fetchWithTimeout.js';
+import { toOptionalCoordinate, toOptionalString } from './parseRequest.js';
+
 export interface PlaceHoursRequest {
   readonly name?: unknown;
   readonly address?: unknown;
@@ -30,14 +33,6 @@ interface GoogleTextSearchResponse {
 
 export class InvalidPlaceHoursRequestError extends Error {}
 
-function toOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
-}
-
-function toOptionalCoordinate(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
 export async function lookupPlaceHours(
   requestBody: PlaceHoursRequest,
   apiKey: string
@@ -65,7 +60,7 @@ export async function lookupPlaceHours(
     };
   }
 
-  const searchResponse = await fetch(
+  const searchResponse = await fetchWithTimeout(
     'https://places.googleapis.com/v1/places:searchText',
     {
       method: 'POST',
@@ -90,7 +85,7 @@ export async function lookupPlaceHours(
     return null;
   }
 
-  const detailsResponse = await fetch(
+  const detailsResponse = await fetchWithTimeout(
     `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=ko`,
     {
       headers: {

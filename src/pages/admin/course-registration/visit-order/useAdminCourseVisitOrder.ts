@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../../../apis/common';
+import { updateCourse } from '../../../../apis/courses';
 import { fetchHashtags } from '../../../../apis/hashtags';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
 import { useToast } from '../../../../components/toast';
@@ -23,10 +24,14 @@ import { mapTagIdsToHashtagIds } from '../../../local-recommendation/tag-selecti
 import { VISIT_EVENT_PLACE_ID_PREFIX } from '../types';
 import {
   buildAdminCourseRequest,
+  buildAdminCourseUpdateRequest,
   getAdminCourseRequestValidationError,
 } from './buildAdminCourseRequest';
 import { buildAdminVisitEvents } from './buildAdminVisitEvents';
-import { uploadAdminCourseImages } from './uploadAdminCourseImages';
+import {
+  fetchImageAsFile,
+  uploadAdminCourseImages,
+} from './uploadAdminCourseImages';
 
 const REGISTER_ERROR_MESSAGE = '코스 등록에 실패했습니다. 다시 시도해 주세요.';
 
@@ -51,6 +56,12 @@ export function useAdminCourseVisitOrder() {
   );
   const setVisitOrderInStore = useAdminCourseRegistrationStore(
     (state) => state.setVisitOrder
+  );
+  const editingCourseId = useAdminCourseRegistrationStore(
+    (state) => state.editingCourseId
+  );
+  const existingThumbnailKey = useAdminCourseRegistrationStore(
+    (state) => state.existingThumbnailKey
   );
 
   // storedVisitOrder는 순서를 매기는 힌트로만 쓰고, 실제 항목은 항상 현재
@@ -102,23 +113,56 @@ export function useAdminCourseVisitOrder() {
         region,
         basicInfo,
         photo,
+        existingThumbnailKey,
         visitEvents,
       });
 
-      if (validationError || !photo) {
-        throw new Error(validationError ?? '대표 사진을 등록해 주세요.');
+      if (validationError) {
+        throw new Error(validationError);
       }
 
-      // 장소별 사진은 선택 사항이라, 실제로 파일을 등록한 장소만 업로드 대상에
-      // 넣는다. 대표 사진은 항상 맨 앞에 넣어 결과 배열의 첫 번째가 되게 한다.
-      const placeImageUploads = selectedPlaces.flatMap((place) =>
-        place.photoFile ? [{ placeId: place.id, file: place.photoFile }] : []
+      // 장소별 사진은 선택 사항이다. 직접 올린 파일이 있으면 그걸 쓰고,
+      // 없지만 검색 시점에 가져온 구글 이미지(imageSrc)가 있으면 그 원격
+      // 이미지를 내려받아 업로드 대상에 넣는다 — 그래야 구글 이미지로
+      // 넘어간 장소도 imageKey를 받아 최종 등록에 반영된다. 구글 이미지
+      // 다운로드가 실패하면(예: 만료된 URL) 해당 장소만 이미지 없이
+      // 진행한다. 대표 사진은 새로 고른 경우에만 업로드하고(맨 앞에 넣어 결과
+      // 배열의 첫 번째가
+      // 되게 한다), 수정 중 그대로 둔 경우 상세 조회로
+      // 알아낸 기존 key를 재사용한다.
+      const placeImageEntries = await Promise.all(
+        selectedPlaces.map(async (place) => {
+          if (place.photoFile) {
+            return { placeId: place.id, file: place.photoFile };
+          }
+
+          if (place.imageSrc) {
+            try {
+              const file = await fetchImageAsFile(
+                place.imageSrc,
+                `${place.id}.jpg`
+              );
+              return { placeId: place.id, file };
+            } catch {
+              return null;
+            }
+          }
+
+          return null;
+        })
       );
-      const uploadedKeys = await uploadAdminCourseImages([
-        photo.file,
-        ...placeImageUploads.map((upload) => upload.file),
-      ]);
-      const [thumbnailKey, ...placeImageKeys] = uploadedKeys;
+      const placeImageUploads = placeImageEntries.filter(
+        (entry): entry is { placeId: string; file: File } => entry !== null
+      );
+      const uploadedKeys = await uploadAdminCourseImages(
+        photo?.file
+          ? [photo.file, ...placeImageUploads.map((upload) => upload.file)]
+          : placeImageUploads.map((upload) => upload.file)
+      );
+      const thumbnailKey = photo?.file
+        ? uploadedKeys[0]
+        : (existingThumbnailKey as string);
+      const placeImageKeys = photo?.file ? uploadedKeys.slice(1) : uploadedKeys;
       const imageKeyByPlaceId = new Map(
         placeImageUploads.map((upload, index) => [
           upload.placeId,
@@ -145,10 +189,29 @@ export function useAdminCourseVisitOrder() {
         (tagId) => tagDefinitionMap[tagId]?.label
       );
 
+      if (editingCourseId) {
+        const updatePayload = buildAdminCourseUpdateRequest({
+          region,
+          basicInfo,
+          photo,
+          existingThumbnailKey,
+          visitEvents: eventsWithImageKeys,
+          thumbnailKey,
+          hashtagIds,
+        });
+
+        if (!updatePayload) {
+          throw new Error('코스 정보가 모두 입력되어야 수정할 수 있습니다.');
+        }
+
+        return updateCourse(editingCourseId, updatePayload);
+      }
+
       const payload = buildAdminCourseRequest({
         region,
         basicInfo,
         photo,
+        existingThumbnailKey,
         visitEvents: eventsWithImageKeys,
         thumbnailKey,
         hashtagIds,
@@ -162,16 +225,24 @@ export function useAdminCourseVisitOrder() {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      showToast('코스가 등록되었어요.');
+      queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
+      queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
+      if (editingCourseId) {
+        queryClient.invalidateQueries({
+          queryKey: ['courseDetail', editingCourseId],
+        });
+      }
+      showToast(editingCourseId ? '코스를 수정했어요.' : '코스가 등록되었어요.');
       // 여기서 reset()을 호출하면 region이 비워지면서 이 페이지의 가드
       // (useEffect: !region이면 region-selection으로 리다이렉트)가 먼저
       // 반응해 의도한 navigate보다 먼저 튕겨나가는 레이스가 생긴다
       // (관리자 행사 등록 때도 같은 문제가 있었다). 다음 등록을 시작할 때
       // /admin/courses의 FAB가 이미 reset을 호출하므로 여기서는 이동만 한다.
       // local-recommendation의 실제 등록 흐름(visit-order-selection/index.tsx)과
-      // 동일하게, 방금 만든 코스를 바로 미리 볼 수 있도록 실제 상세페이지로
-      // 이동한다. 관리자 계정으로 호출하면 서버가 courseType을 OFFICIAL로
-      // 만들어 여기도 추천 코스 상세(/yeogido-course/detail)에서 조회된다.
+      // 동일하게, 방금 만든/수정한 코스를 바로 미리 볼 수 있도록 실제
+      // 상세페이지로 이동한다. 관리자 계정으로 호출하면 서버가 courseType을
+      // OFFICIAL로 만들어 여기도 추천 코스 상세(/yeogido-course/detail)에서
+      // 조회된다.
       navigate(`/yeogido-course/detail/${result.courseId}`);
     },
   });

@@ -43,8 +43,9 @@ function PlaceSearchSection({
           item={place}
           title={place.title}
           description={place.address}
-          imageSrc={place.imageSrc}
+          imageSrc={null}
           imageAlt={`${place.title} 장소 이미지`}
+          visual="marker"
           action="add"
           disabled={isSelected}
           onItemAdd={onItemAdd}

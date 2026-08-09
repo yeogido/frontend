@@ -1,9 +1,12 @@
+import { apiClient } from './common';
+
 export type CourseItem =
   | {
       order: number;
       type: 'PLACE';
       externalPlaceId: string;
-      categoryGroupCode: string;
+      /** 라이브 스펙에서 PLACE의 선택 필드 — 모르면 아예 보내지 않는다(빈 문자열 금지). */
+      categoryGroupCode?: string;
       name: string;
       roadAddress: string;
       lotAddress: string;
@@ -57,8 +60,6 @@ export async function createLocalRecommendationWithClient<Result>(
 export async function createLocalRecommendation(
   payload: CreateLocalRecommendationRequest
 ): Promise<CreateLocalRecommendationResult> {
-  const { apiClient } = await import('./common');
-
   return createLocalRecommendationWithClient<CreateLocalRecommendationResult>(
     apiClient,
     payload

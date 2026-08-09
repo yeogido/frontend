@@ -14,6 +14,7 @@ export type CourseDetailItem =
       latitude: number;
       longitude: number;
       imageUrl: string;
+      imageKey?: string;
     }
   | {
       order: number;
@@ -76,7 +77,58 @@ export async function deleteCourse(courseId: number): Promise<void> {
   }
 }
 
-// 코스·문화콘텐츠 좋아요 등록은 PUT이다(장소만 POST). 여러 번 눌러도 같은
+export type UpdateCourseItem =
+  | {
+      order: number;
+      type: 'PLACE';
+      externalPlaceId: string;
+      /** 라이브 스펙에서 PLACE의 선택 필드 — 모르면 아예 보내지 않는다(빈 문자열 금지). */
+      categoryGroupCode?: string;
+      name: string;
+      roadAddress: string;
+      lotAddress: string;
+      latitude: number;
+      longitude: number;
+      imageKey: string | null;
+    }
+  | { order: number; type: 'CONTENT'; contentId: number };
+
+// regionId는 여기 없다 — 라이브 스펙(CourseUpdateRequest)에 아예 필드가
+// 없어 지역은 수정 대상이 아니다.
+export interface UpdateCourseRequest {
+  title: string;
+  description: string;
+  durationType: 'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
+  transportType: 'WALK' | 'PUBLIC' | 'CAR';
+  companionType: 'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
+  monthStart: number;
+  monthEnd: number;
+  thumbnailKey: string;
+  hashtagIds: number[];
+  courseItems: UpdateCourseItem[];
+}
+
+export interface UpdateCourseResult {
+  courseId: number;
+}
+
+export async function updateCourse(
+  courseId: number,
+  payload: UpdateCourseRequest
+): Promise<UpdateCourseResult> {
+  try {
+    const { data } = await apiClient.patch<UpdateCourseResult>(
+      `/courses/${courseId}`,
+      payload
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+// 코스·문화콘텐츠·장소 좋아요 등록은 모두 PUT이다. 여러 번 눌러도 같은
 // 결과가 되도록 백엔드가 바꿨다.
 export async function addCourseLike(
   courseId: number
@@ -99,7 +151,7 @@ export async function removeCourseLike(
 }
 
 export async function addPlaceLike(placeId: number): Promise<CourseLikeResult> {
-  const { data } = await apiClient.post<CourseLikeResult>(
+  const { data } = await apiClient.put<CourseLikeResult>(
     `/places/${placeId}/likes`
   );
 

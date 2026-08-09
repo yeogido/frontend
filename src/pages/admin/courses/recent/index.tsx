@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { EditableCourseCard } from '../../../../components/common';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
+import { useEditCourse } from '../../../../hooks/useEditCourse';
 import { useRecentCourses } from '../../../../hooks/useRecentCourses';
 import { toCourseCardProps } from '../../../../utils/courseCard';
 import { buildCourseDetailPath } from '../../../../utils/routes';
@@ -24,6 +25,7 @@ function AdminCoursesRecentPage() {
   const recentCourses = useRecentCourses()
     .filter((course) => course.courseType === 'OFFICIAL')
     .map(toCourseCardProps);
+  const { editCourse } = useEditCourse();
 
   const goToCourseDetail = (courseId: number) => {
     navigate(buildCourseDetailPath('OFFICIAL', courseId));
@@ -76,6 +78,7 @@ function AdminCoursesRecentPage() {
               companion={course.companion}
               tags={course.tags}
               onClick={() => goToCourseDetail(course.id)}
+              onEdit={() => void editCourse(course.id)}
               onDelete={() => handleDeleteCourse(course.id)}
             />
           ))}
