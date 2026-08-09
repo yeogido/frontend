@@ -38,7 +38,15 @@ test('requires a comment but not a photo', () => {
   );
 });
 
-test('rejects more than the maximum number of review photos', () => {
+test('accepts only an integer photo count between zero and the maximum', () => {
+  assert.equal(
+    isReviewFormValid({ rating: 5, review: 'valid review', photoCount: -1 }),
+    false
+  );
+  assert.equal(
+    isReviewFormValid({ rating: 5, review: 'valid review', photoCount: 0.5 }),
+    false
+  );
   assert.equal(
     isReviewFormValid({ rating: 5, review: 'valid review', photoCount: 6 }),
     false

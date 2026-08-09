@@ -46,11 +46,12 @@ test('finds the images of the requested review on the first page', async () => {
   assert.deepEqual(images, [image]);
 });
 
-test('follows the cursor until the review shows up', async () => {
-  const requested: (string | undefined)[] = [];
+test('follows the complete cursor until the review shows up', async () => {
+  const requested: Array<{ cursorValue: string; cursorId: number } | undefined> =
+    [];
 
   const images = await findReviewImages(async (cursor) => {
-    requested.push(cursor?.cursorValue);
+    requested.push(cursor);
 
     return cursor
       ? page([preview(9)])
@@ -58,7 +59,10 @@ test('follows the cursor until the review shows up', async () => {
   }, 9);
 
   assert.deepEqual(images, [image]);
-  assert.deepEqual(requested, [undefined, '2026-08-01']);
+  assert.deepEqual(requested, [
+    undefined,
+    { cursorValue: '2026-08-01', cursorId: 1 },
+  ]);
 });
 
 test('gives up when the list ends without the review', async () => {
@@ -68,13 +72,36 @@ test('gives up when the list ends without the review', async () => {
 });
 
 // 커서 둘 중 하나만 오면 다음 요청이 400이 된다. 그때는 더 따라가지 않는다.
-test('stops when the response carries an incomplete cursor', async () => {
+test('stops when the response is missing a cursor id', async () => {
   let calls = 0;
 
   const images = await findReviewImages(async () => {
     calls++;
 
-    return { ...page([preview(1)]), hasNext: true, cursorId: null };
+    return {
+      ...page([preview(1)]),
+      hasNext: true,
+      cursorValue: '2026-08-01',
+      cursorId: null,
+    };
+  }, 99);
+
+  assert.equal(images, undefined);
+  assert.equal(calls, 1);
+});
+
+test('stops when the response is missing a cursor value', async () => {
+  let calls = 0;
+
+  const images = await findReviewImages(async () => {
+    calls++;
+
+    return {
+      ...page([preview(1)]),
+      hasNext: true,
+      cursorValue: null,
+      cursorId: 1,
+    };
   }, 99);
 
   assert.equal(images, undefined);

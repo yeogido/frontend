@@ -108,7 +108,7 @@ function ReviewTextCard({
       >
         {/* 본문은 남는 높이를 다 쓰고, 넘치면 세 줄에서 자른다. */}
         <p
-          className="text-black line-clamp-3 min-h-0 flex-1"
+          className="text-black line-clamp-2 min-h-0 flex-1"
           style={{
             fontSize: TEXT_SIZE,
             lineHeight: `${TEXT_LINE_HEIGHT}px`,
