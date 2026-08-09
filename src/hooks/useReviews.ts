@@ -103,10 +103,19 @@ const uploadReviewImages = async (photos: File[]) => {
   return images;
 };
 
+/**
+ * 홈 후기 섹션이 쓰는 최근 후기.
+ *
+ * 홈은 사진이 있는 후기만 3장 보여준다. 사진은 선택이라 걸러내면 3장이 안 될
+ * 수 있어, 화면에 그릴 수보다 넉넉히 받아 둔다.
+ */
+const RECENT_REVIEWS_FETCH_SIZE = 20;
+
 export function useRecentReviews() {
   return useQuery({
     queryKey: ['recentReviews'],
-    queryFn: () => getReviews({ sort: 'LATEST', size: 3 }),
+    queryFn: () =>
+      getReviews({ sort: 'LATEST', size: RECENT_REVIEWS_FETCH_SIZE }),
   });
 }
 

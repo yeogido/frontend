@@ -5,7 +5,6 @@ import {
   ReviewCardSkeleton,
   ReviewDeleteDialog,
   ReviewEditModal,
-  ReviewTextCard,
   SectionHeader,
 } from '../../../components/common';
 import { useNavigate } from 'react-router-dom';
@@ -32,12 +31,17 @@ const DOT_SIZE = 4;
 const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
 const ERROR_TEXT_SIZE = 13;
+/** 캐러셀에 그리는 후기 수. */
+const HOME_REVIEW_COUNT = 3;
 
 function ReviewSection() {
   const { data, isPending, isError } = useRecentReviews();
-  const reviews = (data?.items ?? []).map((review) =>
-    toReviewCardProps(review)
-  );
+  // 홈은 사진이 있는 후기만 보여준다. 사진 없는 후기는 코스 상세·후기
+  // 전체보기에서 본문만 그리는 카드로 나온다.
+  const reviews = (data?.items ?? [])
+    .map(toReviewCardProps)
+    .filter((review) => review.images.length > 0)
+    .slice(0, HOME_REVIEW_COUNT);
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
   const navigate = useNavigate();
@@ -154,35 +158,19 @@ function ReviewSection() {
                 key={review.id}
                 className="w-full shrink-0 snap-start snap-always"
               >
-                {/* 사진은 선택이라 없는 후기가 있다. 그때는 이미지 자리가 빈
-                    채로 남지 않도록 본문만 그리는 카드를 쓴다. */}
-                {review.images.length > 0 ? (
-                  <ReviewCard
-                    images={review.images}
-                    courseTitle={review.courseTitle}
-                    profileImage={review.profileImage}
-                    nickname={review.nickname}
-                    meta={review.meta}
-                    content={review.content}
-                    rating={review.rating}
-                    isMine={review.isMine}
-                    onDeleteClick={() => requestDelete(review.id)}
-                    onEditClick={() => requestEdit(review)}
-                    onClick={() => goToCourseDetail(review)}
-                  />
-                ) : (
-                  <ReviewTextCard
-                    profileImage={review.profileImage}
-                    nickname={review.nickname}
-                    meta={review.meta}
-                    content={review.content}
-                    rating={review.rating}
-                    isMine={review.isMine}
-                    onDeleteClick={() => requestDelete(review.id)}
-                    onEditClick={() => requestEdit(review)}
-                    onClick={() => goToCourseDetail(review)}
-                  />
-                )}
+                <ReviewCard
+                  images={review.images}
+                  courseTitle={review.courseTitle}
+                  profileImage={review.profileImage}
+                  nickname={review.nickname}
+                  meta={review.meta}
+                  content={review.content}
+                  rating={review.rating}
+                  isMine={review.isMine}
+                  onDeleteClick={() => requestDelete(review.id)}
+                  onEditClick={() => requestEdit(review)}
+                  onClick={() => goToCourseDetail(review)}
+                />
               </div>
             ))}
       </div>
