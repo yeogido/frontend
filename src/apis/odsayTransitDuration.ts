@@ -1,6 +1,6 @@
 import type { GeoPoint } from '../components/kakaomap/types';
 
-const ODSAY_SEARCH_URL = 'https://api.odsay.com/v1/api/searchPubTransPathT';
+const ODSAY_SEARCH_URL = '/odsay-api/searchPubTransPathT';
 
 interface OdsayPath {
   readonly info?: {
@@ -26,14 +26,7 @@ export async function fetchOdsayTransitDurationMinutes(
   end: GeoPoint,
   signal?: AbortSignal
 ): Promise<number | null> {
-  const apiKey = import.meta.env.VITE_ODSAY_API_KEY;
-
-  if (!apiKey) {
-    return null;
-  }
-
   const params = new URLSearchParams({
-    apiKey,
     SX: String(start.longitude),
     SY: String(start.latitude),
     EX: String(end.longitude),
@@ -47,6 +40,10 @@ export async function fetchOdsayTransitDurationMinutes(
   }
 
   const data = (await response.json()) as OdsaySearchResponse;
+
+  if (data.error?.code === '-98') {
+    return 0;
+  }
 
   if (data.error) {
     return null;

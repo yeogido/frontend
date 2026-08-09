@@ -13,6 +13,10 @@
       "destination": "/api/kakao-local/address"
     },
     {
+      "source": "/odsay-api/searchPubTransPathT",
+      "destination": "/api/odsay/transit"
+    },
+    {
       "source": "/google-places/hours",
       "destination": "/api/google-places/hours"
     },

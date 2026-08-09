@@ -183,7 +183,11 @@ export default defineConfig(({ mode }) => {
         '/odsay-api': {
           target: 'https://api.odsay.com/v1/api',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/odsay-api/, ''),
+          rewrite: (path) => {
+            const url = new URL(path, 'http://localhost');
+            url.searchParams.set('apiKey', env.ODSAY_API_KEY ?? '');
+            return `${url.pathname.replace(/^\/odsay-api/, '')}${url.search}`;
+          },
         },
         '/kakao-local': {
           target: 'https://dapi.kakao.com',

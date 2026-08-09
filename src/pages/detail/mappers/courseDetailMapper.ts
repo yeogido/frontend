@@ -80,7 +80,7 @@ export function mapCourseStopDtoToViewModel(dto: unknown): CourseStop {
     liked: Boolean(dto.liked),
     location,
     operatingDays: dto.operatingDays,
-    timesFromPrevious: dto.timesFromPrevious,
+    timesFromPrevious: dto.timesFromPrevious ?? [],
     transportToNext: dto.transportToNext,
   };
 }

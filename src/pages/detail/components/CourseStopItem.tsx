@@ -268,8 +268,8 @@ export function CourseStopItem({
                 style={{ gap: TRANSPORT_ICON_GAP * scale }}
               >
                 <img
-                  src={transitIcon}
-                  alt="대중교통"
+                  src={carIcon}
+                  alt="자동차"
                   style={{
                     width: TRANSPORT_ICON_SIZE * scale,
                     height: TRANSPORT_ICON_SIZE * scale,
@@ -292,8 +292,8 @@ export function CourseStopItem({
                 style={{ gap: TRANSPORT_ICON_GAP * scale }}
               >
                 <img
-                  src={carIcon}
-                  alt="자동차"
+                  src={transitIcon}
+                  alt="대중교통"
                   style={{
                     width: TRANSPORT_ICON_SIZE * scale,
                     height: TRANSPORT_ICON_SIZE * scale,

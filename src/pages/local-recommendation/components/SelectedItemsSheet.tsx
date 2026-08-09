@@ -219,6 +219,7 @@ function SelectedItemsSheet<T>({
               className="text-main-5 w-full font-semibold"
               style={{
                 height: SKIP_BUTTON_HEIGHT * scale,
+                minHeight: MIN_TOUCH_TARGET,
                 marginTop: SKIP_BUTTON_MARGIN_TOP * scale,
                 fontSize: SKIP_BUTTON_FONT_SIZE * scale,
               }}

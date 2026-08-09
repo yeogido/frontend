@@ -26,7 +26,10 @@ import {
 } from '../buildCourseRequest';
 import { buildVisitEvents } from '../buildVisitEvents';
 import type { VisitEvent } from '../constants';
-import { fetchVisitEventTravelData } from '../useVisitEventTravelData';
+import {
+  fetchVisitEventTravelData,
+  type VisitEventTravelData,
+} from '../useVisitEventTravelData';
 
 export function useVisitOrderSelection() {
   const draft = useLocalRecommendationStore((state) => state.draft);
@@ -158,7 +161,12 @@ export function useVisitOrderSelection() {
         eventsWithImageKeys
       );
       if (validationError) throw new Error(validationError);
-      const travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
+      let travelData: VisitEventTravelData | undefined;
+      try {
+        travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
+      } catch {
+        travelData = undefined;
+      }
 
       let result: { courseId: number };
 

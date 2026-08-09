@@ -115,6 +115,19 @@ function getSeoulNow(now: Date): { dayOfWeek: DayOfWeek; minutes: number } {
   };
 }
 
+function getPreviousDayOfWeek(dayOfWeek: DayOfWeek): DayOfWeek {
+  const days: DayOfWeek[] = [
+    'MONDAY',
+    'TUESDAY',
+    'WEDNESDAY',
+    'THURSDAY',
+    'FRIDAY',
+    'SATURDAY',
+    'SUNDAY',
+  ];
+  return days[(days.indexOf(dayOfWeek) + days.length - 1) % days.length];
+}
+
 const KOREAN_WEEKDAY_LABELS: Record<DayOfWeek, string> = {
   MONDAY: '월요일',
   TUESDAY: '화요일',
@@ -165,7 +178,21 @@ export function isOperatingNow(
   const closeMinutes = toMinutesSinceMidnight(today.closeTime);
 
   // 자정을 넘겨 닫는 경우(예: 20:00~02:00)를 포함해 정상적인 경우까지 한 식으로 처리한다.
-  return closeMinutes > openMinutes
-    ? minutes >= openMinutes && minutes < closeMinutes
-    : minutes >= openMinutes || minutes < closeMinutes;
+  if (closeMinutes > openMinutes) {
+    return minutes >= openMinutes && minutes < closeMinutes;
+  }
+
+  if (minutes >= openMinutes) return true;
+
+  const previousDay = operatingDays.find(
+    (day) => day.dayOfWeek === getPreviousDayOfWeek(dayOfWeek)
+  );
+  if (!previousDay) return false;
+
+  const previousOpenMinutes = toMinutesSinceMidnight(previousDay.openTime);
+  const previousCloseMinutes = toMinutesSinceMidnight(previousDay.closeTime);
+  return (
+    previousCloseMinutes <= previousOpenMinutes &&
+    minutes < previousCloseMinutes
+  );
 }

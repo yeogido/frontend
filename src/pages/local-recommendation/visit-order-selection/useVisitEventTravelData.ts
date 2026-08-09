@@ -14,6 +14,7 @@ import { parseWeekdayDescriptionsToOperatingDays } from '../../../utils/operatin
 import type { VisitEvent } from './constants';
 
 const SECONDS_PER_MINUTE = 60;
+const TRAVEL_DATA_TIMEOUT_MS = 10_000;
 
 export interface VisitEventTravelData {
   readonly operatingDaysByEventId: ReadonlyMap<string, OperatingDay[]>;
@@ -33,7 +34,8 @@ function toMinutes(seconds: number | null): number | undefined {
 }
 
 async function getGeoPointByEventId(
-  visitEvents: readonly VisitEvent[]
+  visitEvents: readonly VisitEvent[],
+  signal?: AbortSignal
 ): Promise<ReadonlyMap<string, GeoPoint>> {
   const geoPointByEventId = new Map<string, GeoPoint>();
 
@@ -49,7 +51,7 @@ async function getGeoPointByEventId(
       .filter((event) => event.kind === 'CONTENT')
       .map(async (event) => {
         try {
-          const point = await fetchKakaoAddressGeocode(event.address);
+          const point = await fetchKakaoAddressGeocode(event.address, signal);
           return point && isValidGeoPoint(point)
             ? ([event.id, point] as const)
             : null;
@@ -83,7 +85,8 @@ function getEventPairs(
 }
 
 async function getOperatingDaysByEventId(
-  visitEvents: readonly VisitEvent[]
+  visitEvents: readonly VisitEvent[],
+  signal?: AbortSignal
 ): Promise<ReadonlyMap<string, OperatingDay[]>> {
   const entries = await Promise.all(
     visitEvents.flatMap((event) =>
@@ -91,12 +94,15 @@ async function getOperatingDaysByEventId(
         ? [
             (async () => {
               try {
-                const hours = await getPlaceHours({
-                  name: event.name,
-                  address: event.roadAddress || event.lotAddress,
-                  latitude: event.latitude,
-                  longitude: event.longitude,
-                });
+                const hours = await getPlaceHours(
+                  {
+                    name: event.name,
+                    address: event.roadAddress || event.lotAddress,
+                    latitude: event.latitude,
+                    longitude: event.longitude,
+                  },
+                  signal
+                );
                 const operatingDays = hours
                   ? parseWeekdayDescriptionsToOperatingDays(
                       hours.regularWeekdayDescriptions
@@ -117,13 +123,14 @@ async function getOperatingDaysByEventId(
 }
 
 async function getTimesFromPreviousByEventId(
-  pairs: readonly EventPair[]
+  pairs: readonly EventPair[],
+  signal?: AbortSignal
 ): Promise<ReadonlyMap<string, TimeFromPrevious[]>> {
   const entries = await Promise.all(
     pairs.map(async (pair) => {
       const [transitResult, carResult] = await Promise.allSettled([
-        fetchOdsayTransitDurationMinutes(pair.start, pair.end),
-        fetchKakaoCarRouteDuration(pair.start, pair.end),
+        fetchOdsayTransitDurationMinutes(pair.start, pair.end, signal),
+        fetchKakaoCarRouteDuration(pair.start, pair.end, signal),
       ]);
       const transitMinutes =
         transitResult.status === 'fulfilled' ? transitResult.value : undefined;
@@ -156,13 +163,26 @@ async function getTimesFromPreviousByEventId(
 export async function fetchVisitEventTravelData(
   visitEvents: readonly VisitEvent[]
 ): Promise<VisitEventTravelData> {
-  const geoPointByEventId = await getGeoPointByEventId(visitEvents);
-  const pairs = getEventPairs(visitEvents, geoPointByEventId);
-  const [operatingDaysByEventId, timesFromPreviousByEventId] =
-    await Promise.all([
-      getOperatingDaysByEventId(visitEvents),
-      getTimesFromPreviousByEventId(pairs),
-    ]);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    TRAVEL_DATA_TIMEOUT_MS
+  );
 
-  return { operatingDaysByEventId, timesFromPreviousByEventId };
+  try {
+    const geoPointByEventId = await getGeoPointByEventId(
+      visitEvents,
+      controller.signal
+    );
+    const pairs = getEventPairs(visitEvents, geoPointByEventId);
+    const [operatingDaysByEventId, timesFromPreviousByEventId] =
+      await Promise.all([
+        getOperatingDaysByEventId(visitEvents, controller.signal),
+        getTimesFromPreviousByEventId(pairs, controller.signal),
+      ]);
+
+    return { operatingDaysByEventId, timesFromPreviousByEventId };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
