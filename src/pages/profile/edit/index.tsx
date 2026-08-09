@@ -10,36 +10,82 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
 import vector from '../../../assets/icons/vector.svg';
+import { getApiErrorMessage } from '../../../apis/common';
 import { ResponsivePageShell } from '../../../components/layout';
+import { useToast } from '../../../components/toast';
 import { BIRTH_YEARS } from '../../../constants/birthYears';
 import { useAuth } from '../../../hooks/useAuth';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useRegions } from '../../../hooks/useRegions';
+import { useMyProfile, useUpdateMyProfile } from '../../../hooks/useMyProfile';
+import { useRegion, useRegions } from '../../../hooks/useRegions';
+import type { UpdateMyProfileRequest } from '../../../types/user.type';
 import { ProfilePhotoEditor } from '../components/ProfilePhotoEditor';
 import { ProfileFormField, UnsavedChangesDialog } from './components';
+
+const NICKNAME_MIN_LENGTH = 2;
+const NICKNAME_MAX_LENGTH = 10;
+const NICKNAME_LENGTH_ERROR_MESSAGE =
+  '닉네임 길이는 2자 이상 10자 이하여야 합니다.';
+
+function getNicknameError(nickname: string): string | null {
+  const length = nickname.trim().length;
+
+  return length < NICKNAME_MIN_LENGTH || length > NICKNAME_MAX_LENGTH
+    ? NICKNAME_LENGTH_ERROR_MESSAGE
+    : null;
+}
 
 function ProfileEditPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { userId } = useAuth();
+  const { showToast } = useToast();
+  const { data: profile } = useMyProfile();
   const { data: regionsData } = useRegions();
-  const initialName = useMemo(
-    () => (userId ? `회원 #${userId}` : '회원'),
-    [userId]
-  );
+  const updateMyProfile = useUpdateMyProfile();
+
+  const initialName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
+  const initialRegionId = profile?.regionId ? String(profile.regionId) : '';
+  const initialBirthYear = profile?.birthYear ? String(profile.birthYear) : '';
+
   const [name, setName] = useState(initialName);
-  const [regionId, setRegionId] = useState('');
-  const [birthYear, setBirthYear] = useState('');
+  const [regionId, setRegionId] = useState(initialRegionId);
+  const [birthYear, setBirthYear] = useState(initialBirthYear);
+  // GET /regions 목록의 name은 축약형("서울")이고, 풀네임("서울특별시")은
+  // 단건 상세(GET /regions/{id})의 fullName에만 있다. 목록 26개를 전부
+  // 상세 조회로 바꾸는 대신, 현재 선택된 값의 트리거 표시만 우선 맞춘다.
+  const { data: selectedRegionDetail } = useRegion(
+    regionId ? Number(regionId) : undefined
+  );
   const [isPhotoChanged, setIsPhotoChanged] = useState(false);
+  const [profileImageKey, setProfileImageKey] = useState<string | undefined>(
+    undefined
+  );
+  const [isPhotoPending, setIsPhotoPending] = useState(false);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
-  const previousInitialNameRef = useRef(initialName);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const previousInitialRef = useRef({
+    name: initialName,
+    regionId: initialRegionId,
+    birthYear: initialBirthYear,
+  });
 
   useEffect(() => {
-    setName((current) =>
-      current === previousInitialNameRef.current ? initialName : current
+    const previous = previousInitialRef.current;
+
+    setName((current) => (current === previous.name ? initialName : current));
+    setRegionId((current) =>
+      current === previous.regionId ? initialRegionId : current
     );
-    previousInitialNameRef.current = initialName;
-  }, [initialName]);
+    setBirthYear((current) =>
+      current === previous.birthYear ? initialBirthYear : current
+    );
+    previousInitialRef.current = {
+      name: initialName,
+      regionId: initialRegionId,
+      birthYear: initialBirthYear,
+    };
+  }, [initialName, initialRegionId, initialBirthYear]);
 
   const regionOptions = useMemo(
     () => [
@@ -59,11 +105,17 @@ function ProfileEditPage() {
     []
   );
 
+  const nicknameError = name !== initialName ? getNicknameError(name) : null;
   const isEdited =
     name !== initialName ||
-    regionId !== '' ||
-    birthYear !== '' ||
+    regionId !== initialRegionId ||
+    birthYear !== initialBirthYear ||
     isPhotoChanged;
+  const canSave =
+    isEdited &&
+    !nicknameError &&
+    !updateMyProfile.isPending &&
+    !isPhotoPending;
 
   const handleBack = () => {
     if (isEdited) {
@@ -74,13 +126,37 @@ function ProfileEditPage() {
     navigate('/profile');
   };
 
-  const handleSave = () => {
-    if (!isEdited) {
+  const handleSave = async () => {
+    if (!canSave) {
       return;
     }
 
-    // 프로필 수정 API가 준비되면 이 값들을 저장한 뒤 프로필 화면을 갱신한다.
-    navigate('/profile');
+    setSubmitError(null);
+
+    const payload: UpdateMyProfileRequest = {};
+    if (name !== initialName) payload.nickname = name;
+    if (birthYear !== initialBirthYear && birthYear)
+      payload.birthYear = birthYear;
+    if (regionId !== initialRegionId && regionId)
+      payload.regionId = Number(regionId);
+    if (profileImageKey) payload.profileImageUrl = profileImageKey;
+
+    // 지역/출생연도를 빈 값으로 되돌리거나, 사진을 골랐지만 업로드가 아직
+    // 끝나지 않았거나 실패한 경우 isEdited는 true지만 실제로 보낼 필드가
+    // 없다. 빈 PATCH를 보내고 성공 토스트를 띄우면 사용자에게는 거짓
+    // 성공이 된다.
+    if (Object.keys(payload).length === 0) {
+      navigate('/profile');
+      return;
+    }
+
+    try {
+      await updateMyProfile.mutateAsync(payload);
+      showToast('프로필을 저장했어요.');
+      navigate('/profile');
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, '프로필 저장에 실패했어요.'));
+    }
   };
 
   return (
@@ -115,7 +191,13 @@ function ProfileEditPage() {
       >
         <ProfilePhotoEditor
           scale={scale}
-          onPhotoChange={() => setIsPhotoChanged(true)}
+          initialPhotoUrl={profile?.profileImageUrl}
+          onPhotoChange={() => {
+            setIsPhotoChanged(true);
+            setProfileImageKey(undefined);
+          }}
+          onPhotoUploaded={setProfileImageKey}
+          onPendingChange={setIsPhotoPending}
         />
 
         <form
@@ -123,10 +205,14 @@ function ProfileEditPage() {
           style={{ marginTop: 24 * scale, gap: 24 * scale }}
           onSubmit={(event) => {
             event.preventDefault();
-            handleSave();
+            void handleSave();
           }}
         >
-          <ProfileFormField label="이름" scale={scale}>
+          <ProfileFormField
+            label="이름"
+            scale={scale}
+            error={nicknameError ?? undefined}
+          >
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -141,7 +227,7 @@ function ProfileEditPage() {
               className="font-medium text-[#7f7f7f]"
               style={{ fontSize: 12 * scale, lineHeight: `${14 * scale}px` }}
             >
-              등록된 이메일 정보가 없어요
+              {profile?.email ?? '등록된 이메일 정보가 없어요'}
             </span>
           </ProfileFormField>
 
@@ -152,6 +238,7 @@ function ProfileEditPage() {
               options={regionOptions}
               scale={scale}
               ariaLabel="사는 지역"
+              triggerLabel={selectedRegionDetail?.fullName}
             />
           </ProfileFormField>
 
@@ -164,13 +251,23 @@ function ProfileEditPage() {
               ariaLabel="태어난 연도"
             />
           </ProfileFormField>
+
+          {submitError && (
+            <p
+              role="alert"
+              className="text-main-5 font-medium"
+              style={{ fontSize: 12 * scale, lineHeight: `${14 * scale}px` }}
+            >
+              {submitError}
+            </p>
+          )}
         </form>
       </main>
 
       <button
         type="button"
-        disabled={!isEdited}
-        onClick={handleSave}
+        disabled={!canSave}
+        onClick={() => void handleSave()}
         className="enabled:bg-main-5 mt-auto flex w-full items-center justify-center rounded-xl font-semibold enabled:text-[#f9f9f9] disabled:bg-[#e4e4e4] disabled:text-[#7f7f7f]"
         style={{
           height: 52 * scale,
@@ -197,12 +294,16 @@ function SelectField({
   options,
   scale,
   ariaLabel,
+  triggerLabel,
 }: {
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
   scale: number;
   ariaLabel: string;
+  // 옵션 목록은 그대로 두고, 닫힌 상태에서 보이는 트리거 텍스트만 다른
+  // 값(예: 축약형 대신 풀네임)으로 보여주고 싶을 때 쓴다.
+  triggerLabel?: string;
 }) {
   const buttonId = useId();
   const listboxId = useId();
@@ -221,6 +322,7 @@ function SelectField({
   }>();
   const selectedOption =
     options.find((option) => option.value === value) ?? options[0];
+  const displayLabel = triggerLabel ?? selectedOption?.label;
   const panelHeight = Math.min(options.length * 46, 184) * scale;
 
   useEffect(() => {
@@ -343,7 +445,7 @@ function SelectField({
         className="flex h-full w-full items-center justify-between bg-transparent text-left font-medium text-[#7f7f7f] outline-none"
         style={{ fontSize: 12 * scale, lineHeight: `${14 * scale}px` }}
       >
-        <span className="truncate">{selectedOption?.label}</span>
+        <span className="truncate">{displayLabel}</span>
         <img
           src={vector}
           alt=""

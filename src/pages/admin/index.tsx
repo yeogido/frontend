@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 
 import {
-  ContentCard,
   ContentCardSkeleton,
+  EditableContentCard,
   FloatingActionButton,
   SearchTriggerButton,
   SectionHeader,
@@ -10,7 +10,6 @@ import {
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
 import { useCultureContents } from '../../hooks/useCultureContents';
-import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
 import { useAdminEventRegistrationStore } from '../../store/adminEventRegistration.store';
 import { toContentTagIds } from '../../utils/contentTags';
@@ -36,7 +35,6 @@ const LIST_GAP = 16;
 function AdminPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const { getLiked, toggleLike } = useContentLikeToggle();
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
   const { data: cultureContentBanners } = useCultureContentBanners();
@@ -78,6 +76,10 @@ function AdminPage() {
   const handleStartRegistration = () => {
     resetRegistration();
     navigate('/admin/event-registration/place-selection');
+  };
+
+  const handleDeleteFestival = (contentId: number) => {
+    console.log('행사 삭제:', contentId);
   };
 
   return (
@@ -152,24 +154,18 @@ function AdminPage() {
             </>
           ) : (
             ongoingFestivals.map((festival) => (
-              <ContentCard
+              <EditableContentCard
                 key={festival.contentId}
                 image={festival.thumbnailImageUrl}
                 title={festival.title}
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                 secondInfo={festival.regionName}
                 tags={toContentTagIds(festival.hashtags)}
-                liked={getLiked(festival.contentId, false)}
                 className="w-full"
                 onClick={() =>
                   navigate(buildFestivalDetailPath(festival.contentId))
                 }
-                onLikeClick={() =>
-                  toggleLike(
-                    festival.contentId,
-                    getLiked(festival.contentId, false)
-                  )
-                }
+                onDelete={() => handleDeleteFestival(festival.contentId)}
               />
             ))
           )}
@@ -192,24 +188,18 @@ function AdminPage() {
             }}
           >
             {recentFestivals.map((festival) => (
-              <ContentCard
+              <EditableContentCard
                 key={festival.contentId}
                 image={festival.thumbnailImageUrl}
                 title={festival.title}
                 firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                 secondInfo={festival.regionName}
-                liked={getLiked(festival.contentId, festival.liked)}
                 tags={toContentTagIds(festival.hashtags)}
                 className="w-full"
                 onClick={() =>
                   navigate(buildFestivalDetailPath(festival.contentId))
                 }
-                onLikeClick={() =>
-                  toggleLike(
-                    festival.contentId,
-                    getLiked(festival.contentId, festival.liked)
-                  )
-                }
+                onDelete={() => handleDeleteFestival(festival.contentId)}
               />
             ))}
           </div>
