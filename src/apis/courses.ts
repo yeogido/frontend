@@ -153,8 +153,8 @@ export async function removeCourseLike(
 }
 
 /**
- * COURSE_ITEM: sourceId는 courseItemId. 코스 응답의 courseItems엔 별도
- * courseItemId가 내려오지 않고 placeId만 있어, sourceId로 placeId를 그대로 쓴다.
+ * COURSE_ITEM: sourceId는 courseItemId다.
+ * 코스 응답의 courseItems에서 courseItemId를 사용한다.
  * 행사 상세(festival)의 연계 장소 좋아요는 CONTENT로 보낸다(sourceId는 contentId).
  * PROMOTION: sourceId는 promotionId.
  */
