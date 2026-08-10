@@ -79,6 +79,8 @@ export function CourseStopItem({
         ? OPEN_STATUS_LABEL
         : CLOSED_STATUS_LABEL;
   const todayHours = formatTodayOperatingHours(operatingDays);
+  const defaultHoursText =
+    todayHours ?? (canExpandHours ? '정기휴무' : '영업시간 정보 없음');
   const carDurationMinutes = stop.timesFromPrevious.find(
     (time) => time.transportMode === 'CAR'
   )?.durationMinutes;
@@ -170,7 +172,7 @@ export function CourseStopItem({
         >
           {stop.address}
         </p>
-        {(todayHours || stop.placeId !== undefined) &&
+        {(todayHours || canExpandHours || stop.placeId !== undefined) &&
           (canExpandHours ? (
             <div className="relative">
               <button
@@ -208,7 +210,7 @@ export function CourseStopItem({
                   >
                     {isHoursOpen && hoursStatusLabel
                       ? hoursStatusLabel
-                      : (todayHours ?? '영업시간 정보 없음')}
+                      : defaultHoursText}
                   </span>
                 </span>
                 <IoChevronDown
@@ -243,7 +245,7 @@ export function CourseStopItem({
                 lineHeight: `${META_LINE_HEIGHT * scale}px`,
               }}
             >
-              {todayHours ?? '영업시간 정보 없음'}
+              {defaultHoursText}
             </p>
           ))}
 
