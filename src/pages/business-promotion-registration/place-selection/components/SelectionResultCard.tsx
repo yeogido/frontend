@@ -1,6 +1,7 @@
 import { IoAdd, IoClose } from 'react-icons/io5';
 import type { ReactNode } from 'react';
 
+import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
 import PlaceMarkerIcon from './PlaceMarkerIcon';
@@ -61,7 +62,11 @@ function SelectionResultCard<T>({
   const cardHeight = REMOVE_CARD_HEIGHT * scale;
   const cardPadding = REMOVE_CARD_PADDING * scale;
   const imageSize = (isAddAction ? ADD_IMAGE_SIZE : REMOVE_IMAGE_SIZE) * scale;
-  const actionButtonSize = ACTION_BUTTON_SIZE * scale;
+  // 시각적 크기(24px)는 실제 24px 아이콘 배지(actionVisualSize)로 유지하고,
+  // 터치 히트 영역만 BackButton/SelectedItemsSheet와 같은 44px 최소 타깃으로
+  // 넓힌다. actionOverlap이 그 차이만큼 음수 마진을 줘서 배지를 가운데
+  // 맞춘다.
+  const actionButtonSize = Math.max(MIN_TOUCH_TARGET, ACTION_BUTTON_SIZE * scale);
   const actionVisualSize = ACTION_BUTTON_SIZE * scale;
   const actionOverlap = (actionButtonSize - actionVisualSize) / -2;
   const titleSize = TITLE_FONT_SIZE * scale;

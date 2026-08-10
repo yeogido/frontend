@@ -276,7 +276,6 @@ function CustomSelect<T extends string>({
                 role="option"
                 aria-selected={isSelected}
                 tabIndex={isActive ? 0 : -1}
-                onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => selectOption(index)}
                 onKeyDown={(event) => handleOptionKeyDown(event, index)}
                 className={`flex w-full items-center justify-between text-left transition-colors outline-none ${

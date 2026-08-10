@@ -4,6 +4,7 @@ import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import AdminRoute from '../components/auth/AdminRoute';
+import BusinessRoute from '../components/auth/BusinessRoute';
 
 import HomePage from '../pages/home';
 import LoginPage from '../pages/auth/login';
@@ -179,14 +180,17 @@ function AppRouter() {
         </Route>
       </Route>
 
+      <Route element={<BusinessRoute />}>
+        <Route
+          path="/business-promotion-registration"
+          element={<BusinessPromotionRegistrationPage />}
+        />
+      </Route>
+
       <Route element={<ProtectedRoute />}>
         <Route
           path="/business-verification"
           element={<BusinessVerificationPage />}
-        />
-        <Route
-          path="/business-promotion-registration"
-          element={<BusinessPromotionRegistrationPage />}
         />
         <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route

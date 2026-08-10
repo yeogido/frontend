@@ -39,6 +39,8 @@ const SUBMIT_ERROR_MARGIN_TOP = 8;
 const SUBMIT_ERROR_FONT_SIZE = 12;
 
 const SUBMIT_ERROR_MESSAGE = '사진/키워드 등록에 실패했어요. 다시 시도해 주세요.';
+const HASHTAG_MAPPING_ERROR_MESSAGE =
+  '선택한 키워드 중 일부를 등록하지 못했어요. 다시 선택해 주세요.';
 
 interface PhotoTagSelectionScreenProps {
   /**
@@ -118,11 +120,19 @@ function PhotoTagSelectionScreen({
       );
 
       const hashtags = await fetchHashtags();
-      const hashtagIds = mapTagIdsToHashtagIds(
+      const { hashtagIds, unmappedTagIds } = mapTagIdsToHashtagIds(
         Array.from(selectedTagIds),
         hashtags,
         (tagId) => tagDefinitionMap[tagId]?.label
       );
+
+      // 선택한 키워드 중 하나라도 서버 해시태그로 못 옮기면, 그걸 조용히
+      // 빼고 등록하는 대신 여기서 막는다 — 사용자가 고른 키워드가 말없이
+      // 누락된 채로 등록되는 걸 막기 위해서다.
+      if (unmappedTagIds.length > 0) {
+        setSubmitError(HASHTAG_MAPPING_ERROR_MESSAGE);
+        return;
+      }
 
       await onNext({
         images,

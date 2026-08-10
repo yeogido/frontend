@@ -226,8 +226,14 @@ function MyPostsPage() {
     onIntersect: handleIntersect,
   });
 
+  // 일반 사용자에게는 홍보글 필터 옵션 자체를 안 보여준다 — 골라봐야
+  // 항상 빈 결과라 혼란만 준다.
+  const categoryOptions = isBusinessUser
+    ? MY_POST_CATEGORY_OPTIONS
+    : MY_POST_CATEGORY_OPTIONS.filter((option) => option !== '홍보글');
+
   const filterGroups = [
-    { key: 'category', options: MY_POST_CATEGORY_OPTIONS },
+    { key: 'category', options: categoryOptions },
     { key: 'sort', options: MY_POST_SORT_OPTIONS },
   ] as const satisfies readonly {
     key: MyPostFilterKey;

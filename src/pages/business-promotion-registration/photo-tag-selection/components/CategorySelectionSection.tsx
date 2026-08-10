@@ -55,7 +55,7 @@ function CategorySelectionSection({
               aria-pressed={isSelected}
               onClick={() => onSelect(category)}
               className="inline-flex items-center justify-center"
-              style={{ minHeight: MIN_TOUCH_TARGET }}
+              style={{ minHeight: MIN_TOUCH_TARGET, minWidth: MIN_TOUCH_TARGET }}
             >
               <span
                 className={`inline-flex items-center justify-center rounded-full border font-normal transition-colors ${

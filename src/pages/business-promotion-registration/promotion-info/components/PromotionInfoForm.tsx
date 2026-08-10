@@ -51,7 +51,6 @@ function PromotionInfoForm({
     register,
     control,
     handleSubmit,
-    watch,
     formState: { isSubmitting, errors },
   } = useForm<PromotionInfoFormValues>({
     resolver: zodResolver(promotionInfoSchema),
@@ -67,21 +66,37 @@ function PromotionInfoForm({
     },
   });
 
-  useEffect(() => {
-    if (!onValuesChange) return;
-
-    const subscription = watch((values) =>
-      onValuesChange(values as PromotionInfoFormValues)
-    );
-
-    return () => subscription.unsubscribe();
-  }, [watch, onValuesChange]);
-
   const openDays = useWatch({ control, name: 'openDays' });
   const dayTimes = useWatch({ control, name: 'dayTimes' });
   const shortDescription = useWatch({ control, name: 'shortDescription' });
   const ownerComment = useWatch({ control, name: 'ownerComment' });
   const phoneNumber = useWatch({ control, name: 'phoneNumber' });
+  const snsAccount = useWatch({ control, name: 'snsAccount' });
+
+  // watch()가 콜백으로 주는 값은 DeepPartial이라, 그걸 그대로
+  // PromotionInfoFormValues로 단언해 버리면 상위(오케스트레이터)의
+  // defaultValues에 부분 값이 그대로 저장됐다가 재마운트 시 openDays 등
+  // 필수 필드가 undefined인 채로 주입될 위험이 있다(openDays.every() 등에서
+  // 런타임 에러). 이미 위에서 각 필드를 개별적으로 useWatch해 정확한
+  // 타입으로 갖고 있으니, 그 값들로 직접 완전한 객체를 만들어 넘긴다.
+  useEffect(() => {
+    onValuesChange?.({
+      shortDescription,
+      ownerComment,
+      openDays,
+      dayTimes,
+      phoneNumber,
+      snsAccount,
+    });
+  }, [
+    onValuesChange,
+    shortDescription,
+    ownerComment,
+    openDays,
+    dayTimes,
+    phoneNumber,
+    snsAccount,
+  ]);
 
   const dayTimeErrorMessageByDay: Partial<Record<DayOfWeek, string>> = {};
   DAY_OF_WEEK_VALUES.forEach((day) => {

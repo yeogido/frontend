@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { createBusinessPromotion } from '../../apis/business-promotions.api';
@@ -52,6 +52,22 @@ function BusinessPromotionRegistrationPage() {
   const [category, setCategory] = useState<PromotionCategoryLabel | null>(
     null
   );
+
+  // 뒤로가기로 이 화면들을 오갈 때는 photos를 그대로 들고 있어야 하니(위
+  // state가 그 역할), blob URL은 여기서 매번 정리하면 안 된다. 이 플로우
+  // 자체를 완전히 벗어날 때(등록 성공 이동, 첫 단계에서 뒤로가기 등으로
+  // 이 오케스트레이터가 언마운트될 때) 딱 한 번만 남은 걸 전부 해제한다.
+  const photosRef = useRef(photos);
+
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
+
+  useEffect(() => {
+    return () => {
+      photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+    };
+  }, []);
 
   const handlePlaceNext = () => {
     if (!selectedBusiness) return;
