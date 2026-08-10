@@ -5,18 +5,16 @@ import {
   ReviewTextCard,
   SectionHeader,
 } from '../../../components/common';
-import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import type { CourseReview } from '../types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { getCourseReviewIndex } from '../utils/courseReviewCarousel';
+import { getCourseReviewIndicatorSize } from '../utils/courseReviewIndicator';
 import { REVIEW_CAROUSEL_CLASS_NAME } from '../utils/reviewCarouselStyle';
 
 const SECTION_GAP = 14;
 const REVIEW_CARD_GAP = 16;
 
 const DOT_GAP = 4;
-const DOT_SIZE = 4;
-const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
 const PHOTO_REVIEW_CARD_HEIGHT = 286;
 const TEXT_REVIEW_CARD_HEIGHT = 100;
@@ -206,18 +204,14 @@ export function DetailReviewSection({
               onClick={() => scrollToIndex(index)}
               className="flex shrink-0 items-center justify-center"
               style={{
-                width: MIN_TOUCH_TARGET,
-                height: MIN_TOUCH_TARGET,
+                ...getCourseReviewIndicatorSize(index === activeIndex, scale),
               }}
             >
               <span
                 aria-hidden="true"
                 className="block shrink-0"
                 style={{
-                  width:
-                    (index === activeIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE) *
-                    scale,
-                  height: DOT_SIZE * scale,
+                  ...getCourseReviewIndicatorSize(index === activeIndex, scale),
                   borderRadius: DOT_RADIUS,
                   backgroundColor:
                     index === activeIndex ? '#FF6F41' : '#A1A1A1',
