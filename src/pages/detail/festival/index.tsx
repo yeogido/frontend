@@ -298,6 +298,9 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
             {festivalDetail.relatedCourses.length > 0 ? (
               <>
                 <div style={{ marginTop: COURSE_SECTION_MARGIN_TOP * scale }}>
+                  {/* 이 행사를 포함한 코스만 걸러 보는 검색 API가 없어
+                      장소명 키워드 검색으로 대신 보낸다 — 코스 제목/지역
+                      텍스트만 매칭이라 결과가 없을 수 있다. */}
                   <SectionHeader
                     title="이 행사가 포함된 코스"
                     actionText="전체보기"
