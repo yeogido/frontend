@@ -17,6 +17,10 @@ const OVERLAY_PADDING_X = 20;
 const OVERLAY_FONT_SIZE = 14;
 const IMAGE_MARKER_SIZE = 36;
 const IMAGE_MARKER_BORDER_WIDTH = 2;
+const IMAGE_MARKER_FOCUS_SCALE = 1.15;
+// theme.css의 --color-main-5. Kakao Polyline strokeColor는 SVG 속성으로
+// 직접 적용되어 CSS 변수(var())를 해석하지 못하므로 값을 그대로 옮겨온다.
+const ROUTE_LINE_COLOR = '#ff6f41';
 
 export type MapSdkStatus = 'loading' | 'ready' | 'sdk-error';
 
@@ -25,6 +29,8 @@ export interface BaseKakaoMapProps {
   readonly markers?: readonly GeoPoint[];
   readonly imageMarkers?: readonly ImageMapMarker[];
   readonly routePath?: readonly GeoPoint[];
+  readonly focusedLocation?: GeoPoint | null;
+  readonly onMarkerClick?: (point: GeoPoint) => void;
   readonly className?: string;
 }
 
@@ -44,6 +50,8 @@ export function BaseKakaoMap({
   markers = EMPTY_MARKERS,
   imageMarkers = EMPTY_IMAGE_MARKERS,
   routePath = EMPTY_ROUTE_PATH,
+  focusedLocation = null,
+  onMarkerClick,
   className = '',
 }: BaseKakaoMapProps) {
   const scale = useGlobalScale();
@@ -51,6 +59,9 @@ export function BaseKakaoMap({
   const mapRef = useRef<kakao.maps.Map | null>(null);
   const markersRef = useRef<kakao.maps.Marker[]>([]);
   const imageMarkersRef = useRef<kakao.maps.CustomOverlay[]>([]);
+  const imageMarkerElementsRef = useRef<
+    { location: GeoPoint; element: HTMLDivElement }[]
+  >([]);
   const routeRef = useRef<kakao.maps.Polyline | null>(null);
 
   const apiKey = import.meta.env.VITE_KAKAO_MAP_API_KEY;
@@ -102,6 +113,7 @@ export function BaseKakaoMap({
     markersRef.current = [];
     imageMarkersRef.current.forEach((marker) => marker.setMap(null));
     imageMarkersRef.current = [];
+    imageMarkerElementsRef.current = [];
 
     const imageMarkerLocations = new Set(
       imageMarkers.map(
@@ -114,9 +126,21 @@ export function BaseKakaoMap({
       }
 
       const pos = new window.kakao.maps.LatLng(m.latitude, m.longitude);
-      return [new window.kakao.maps.Marker({ map, position: pos })];
+      const marker = new window.kakao.maps.Marker({ map, position: pos });
+
+      if (onMarkerClick) {
+        window.kakao.maps.event.addListener(marker, 'click', () =>
+          onMarkerClick(m)
+        );
+      }
+
+      return [marker];
     });
     const markerSize = IMAGE_MARKER_SIZE * scale;
+    const newImageMarkerElements: {
+      location: GeoPoint;
+      element: HTMLDivElement;
+    }[] = [];
     const newImageMarkers = imageMarkers.map(({ location, imageUrl }) => {
       const marker = document.createElement('div');
       marker.style.width = `${markerSize}px`;
@@ -128,9 +152,15 @@ export function BaseKakaoMap({
       marker.style.boxSizing = 'border-box';
       marker.style.overflow = 'hidden';
       marker.style.border = `${IMAGE_MARKER_BORDER_WIDTH * scale}px solid var(--color-main-5)`;
-      marker.style.borderRadius = '50%';
+      marker.style.borderRadius = '8px';
       marker.style.backgroundColor = 'var(--color-main-5)';
       marker.style.lineHeight = '0';
+      marker.style.transition = 'transform 0.2s ease-out';
+
+      if (onMarkerClick) {
+        marker.style.cursor = 'pointer';
+        marker.addEventListener('click', () => onMarkerClick(location));
+      }
 
       const image = document.createElement('img');
       image.src = imageUrl;
@@ -146,6 +176,8 @@ export function BaseKakaoMap({
       image.style.objectFit = 'cover';
       marker.append(image);
 
+      newImageMarkerElements.push({ location, element: marker });
+
       return new window.kakao.maps.CustomOverlay({
         map,
         position: new window.kakao.maps.LatLng(
@@ -159,7 +191,35 @@ export function BaseKakaoMap({
 
     markersRef.current = newMarkers;
     imageMarkersRef.current = newImageMarkers;
-  }, [imageMarkers, markers, scale, status]);
+    imageMarkerElementsRef.current = newImageMarkerElements;
+  }, [imageMarkers, markers, onMarkerClick, scale, status]);
+
+  // 2b. focusedLocation과 일치하는 이미지 마커를 확대해 강조 표시.
+  useEffect(() => {
+    imageMarkerElementsRef.current.forEach(({ location, element }) => {
+      const isFocused =
+        !!focusedLocation &&
+        location.latitude === focusedLocation.latitude &&
+        location.longitude === focusedLocation.longitude;
+
+      element.style.transform = isFocused
+        ? `scale(${IMAGE_MARKER_FOCUS_SCALE})`
+        : 'scale(1)';
+    });
+  }, [focusedLocation, imageMarkers]);
+
+  // 2c. focusedLocation이 바뀌면 지도를 해당 좌표로 이동.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !focusedLocation) return;
+
+    map.panTo(
+      new window.kakao.maps.LatLng(
+        focusedLocation.latitude,
+        focusedLocation.longitude
+      )
+    );
+  }, [focusedLocation, status]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -176,7 +236,7 @@ export function BaseKakaoMap({
         (point) => new window.kakao.maps.LatLng(point.latitude, point.longitude)
       ),
       strokeWeight: 5,
-      strokeColor: '#3182F6',
+      strokeColor: ROUTE_LINE_COLOR,
       strokeOpacity: 0.85,
       strokeStyle: 'dash',
     });
@@ -251,6 +311,7 @@ export function BaseKakaoMap({
       markersRef.current = [];
       imageMarkersRef.current.forEach((m) => m.setMap(null));
       imageMarkersRef.current = [];
+      imageMarkerElementsRef.current = [];
       routeRef.current?.setMap(null);
       routeRef.current = null;
       if (container) {

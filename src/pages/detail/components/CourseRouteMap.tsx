@@ -1,11 +1,11 @@
-import { memo, useEffect, useMemo, useState } from 'react';
-import { fetchKakaoWalkingRoute } from '../../../apis/kakaoWalkingRoute';
+import { memo, useCallback, useMemo } from 'react';
 import { SectionHeader } from '../../../components/common';
 import { BaseKakaoMap } from '../../../components/kakaomap/BaseKakaoMap';
 import {
   isValidGeoPoint,
   type GeoPoint,
 } from '../../../components/kakaomap/types';
+import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import type { CourseStop } from '../types/courseDetail';
 
@@ -19,23 +19,16 @@ const EMPTY_STATE_FONT_SIZE = 14;
 
 export interface CourseRouteMapProps {
   readonly stops: readonly CourseStop[];
+  readonly focusedStopId?: number | null;
   readonly className?: string;
 }
 
-interface WalkingRouteResult {
-  readonly locations: readonly GeoPoint[];
-  readonly route: readonly GeoPoint[];
-}
-
-const EMPTY_ROUTE_RESULT: WalkingRouteResult = { locations: [], route: [] };
-
 function CourseRouteMapComponent({
   stops,
+  focusedStopId = null,
   className = '',
 }: CourseRouteMapProps) {
   const scale = useGlobalScale();
-  const [routeResult, setRouteResult] =
-    useState<WalkingRouteResult>(EMPTY_ROUTE_RESULT);
 
   // 1. 유효한 stop.location만 추출
   const validLocations: readonly GeoPoint[] = useMemo(() => {
@@ -54,33 +47,26 @@ function CourseRouteMapComponent({
       ),
     [stops]
   );
+  const focusedLocation =
+    stops.find((stop) => stop.id === focusedStopId)?.location ?? null;
 
-  useEffect(() => {
-    if (validLocations.length < 2) {
-      return;
-    }
+  // 실제 도보 경로 대신, 방문 순서대로 정류장을 이은 점선을 표시한다.
+  const routePath = validLocations;
 
-    const controller = new AbortController();
+  const handleMarkerClick = useCallback(
+    (point: GeoPoint) => {
+      const matchedStop = stops.find(
+        (stop) =>
+          stop.location?.latitude === point.latitude &&
+          stop.location?.longitude === point.longitude
+      );
 
-    void fetchKakaoWalkingRoute(validLocations, controller.signal)
-      .then((route) => {
-        if (!controller.signal.aborted) {
-          setRouteResult({ locations: validLocations, route });
-        }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setRouteResult({ locations: validLocations, route: [] });
-        }
-      });
-
-    return () => controller.abort();
-  }, [validLocations]);
-
-  // 정류장이 바뀌어 새 요청이 시작되면, 이전 좌표에 대한 결과는 즉시 무효화되어
-  // 새 마커에 옛 경로가 겹쳐 보이지 않도록 함(파생값이라 별도 setState 불필요).
-  const routePath =
-    routeResult.locations === validLocations ? routeResult.route : [];
+      if (matchedStop) {
+        openKakaoMapRoute(matchedStop.name, point);
+      }
+    },
+    [stops]
+  );
 
   // 2. 좌표가 없으면 안내 문구 표시
   if (!center) {
@@ -121,21 +107,23 @@ function CourseRouteMapComponent({
         markers={validLocations}
         imageMarkers={imageMarkers}
         routePath={routePath}
+        focusedLocation={focusedLocation}
+        onMarkerClick={handleMarkerClick}
       />
     </section>
   );
 }
 
 // liked/hours 같은 지도와 무관한 필드 변경(좋아요 토글 등)으로 stops 배열
-// 레퍼런스만 바뀌는 경우엔 리렌더를 건너뛴다 — 그대로 두면 도보 경로 재조회
-// useEffect까지 다시 돌아 좋아요를 누를 때마다 지도가 깜빡이고 카카오
-// 길찾기 API가 불필요하게 재호출된다.
+// 레퍼런스만 바뀌는 경우엔 리렌더를 건너뛴다 — 그대로 두면 좋아요를 누를
+// 때마다 마커가 재생성되어 지도가 깜빡인다.
 function areRouteMapPropsEqual(
   prevProps: CourseRouteMapProps,
   nextProps: CourseRouteMapProps
 ): boolean {
   return (
     prevProps.className === nextProps.className &&
+    prevProps.focusedStopId === nextProps.focusedStopId &&
     prevProps.stops.length === nextProps.stops.length &&
     prevProps.stops.every((stop, index) => {
       const nextStop = nextProps.stops[index];

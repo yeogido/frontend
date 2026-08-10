@@ -73,6 +73,13 @@ declare namespace kakao.maps {
     });
     setMap(map: Map | null): void;
   }
+  export namespace event {
+    function addListener(
+      target: Marker,
+      type: 'click',
+      handler: () => void
+    ): void;
+  }
   export function load(callback: () => void): void;
 }
 

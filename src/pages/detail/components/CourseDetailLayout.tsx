@@ -169,6 +169,7 @@ function CourseDetailLayoutContent({
 
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
+  const [focusedStopId, setFocusedStopId] = useState<number | null>(null);
   const { copied, isToastVisible, handleShare } = useShareToast();
 
   const handleStopLikeToggle = (stopId: number) => {
@@ -337,7 +338,7 @@ function CourseDetailLayoutContent({
           marginTop: MAP_MARGIN_TOP * scale,
         }}
       >
-        <CourseRouteMap stops={stops} />
+        <CourseRouteMap stops={stops} focusedStopId={focusedStopId} />
       </div>
 
       {/* 6. 코스 장소 리스트 */}
@@ -349,6 +350,7 @@ function CourseDetailLayoutContent({
         <CourseStopList
           stops={stops}
           onStopLikeToggle={handleStopLikeToggle}
+          onStopFocus={setFocusedStopId}
           pendingPlaceIds={pendingPlaceIds}
           pendingContentIds={pendingContentIds}
         />

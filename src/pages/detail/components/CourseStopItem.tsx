@@ -5,7 +5,6 @@ import carIcon from '../../../assets/icons/transport-car.svg';
 import operatingStatusClockIcon from '../../../assets/icons/operating-status-clock.svg';
 import transitIcon from '../../../assets/icons/transport-transit.svg';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
-import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
   formatOperatingDay,
@@ -50,6 +49,7 @@ export interface CourseStopItemProps {
   readonly stop: CourseStop;
   readonly isLast: boolean;
   readonly onLikeToggle: () => void;
+  readonly onFocus?: () => void;
   readonly isLikeAvailable?: boolean;
   readonly isLikePending?: boolean;
   /** 있으면 영업시간이 드롭다운(영업중/영업종료 + 요일별 시간)으로 표시된다. */
@@ -60,6 +60,7 @@ export function CourseStopItem({
   stop,
   isLast,
   onLikeToggle,
+  onFocus,
   isLikeAvailable = true,
   isLikePending = false,
 }: CourseStopItemProps) {
@@ -86,9 +87,7 @@ export function CourseStopItem({
   )?.durationMinutes;
   const isActive = stop.liked;
   const location = stop.location;
-  const canRoute = isValidGeoPoint(location);
-
-  const handleRoute = () => openKakaoMapRoute(stop.name, location);
+  const canFocus = isValidGeoPoint(location) && !!onFocus;
 
   const handleLikeClick = (event: ReactMouseEvent) => {
     event.stopPropagation();
@@ -97,23 +96,23 @@ export function CourseStopItem({
 
   return (
     <article
-      className={`relative grid items-start ${canRoute ? 'cursor-pointer' : ''}`}
+      className={`relative grid items-start ${canFocus ? 'cursor-pointer' : ''}`}
       style={{
         gridTemplateColumns: `${GRID_COL_ORDER * scale}px ${GRID_COL_IMAGE * scale}px minmax(0,1fr) ${GRID_COL_ACTION * scale}px`,
         gap: ROW_GAP * scale,
         paddingTop: ROW_PADDING_Y * scale,
         paddingBottom: ROW_PADDING_Y * scale,
       }}
-      onClick={canRoute ? handleRoute : undefined}
-      role={canRoute ? 'button' : undefined}
-      tabIndex={canRoute ? 0 : undefined}
-      aria-label={canRoute ? `${stop.name} 카카오맵 길찾기` : undefined}
+      onClick={canFocus ? onFocus : undefined}
+      role={canFocus ? 'button' : undefined}
+      tabIndex={canFocus ? 0 : undefined}
+      aria-label={canFocus ? `${stop.name} 지도에서 보기` : undefined}
       onKeyDown={
-        canRoute
+        canFocus
           ? (event) => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
-                handleRoute();
+                onFocus?.();
               }
             }
           : undefined

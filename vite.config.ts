@@ -175,14 +175,6 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) =>
             path.replace(/^\/kakao-routing\/car/, '/v1/directions'),
         },
-        '/kakao-routing': {
-          target: 'https://dapi.kakao.com',
-          changeOrigin: true,
-          headers: {
-            Authorization: `KakaoAK ${env.KAKAO_REST_API_KEY}`,
-          },
-          rewrite: (path) => path.replace(/^\/kakao-routing/, '/v2/routing'),
-        },
         '/odsay-api': {
           target: 'https://api.odsay.com/v1/api',
           changeOrigin: true,
