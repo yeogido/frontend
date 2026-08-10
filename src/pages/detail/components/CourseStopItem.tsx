@@ -2,8 +2,8 @@ import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { FaHeart as FilledHeartIcon } from 'react-icons/fa6';
 import { IoChevronDown } from 'react-icons/io5';
 import carIcon from '../../../assets/icons/transport-car.svg';
-import operatingStatusClockIcon from '../../../assets/icons/operating-status-clock.svg';
 import transitIcon from '../../../assets/icons/transport-transit.svg';
+import operatingStatusClockIcon from '../../../assets/icons/operating-status-clock.svg';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
