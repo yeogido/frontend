@@ -22,6 +22,7 @@ import { useCourseDelete, useNavigateToCourseDetail } from '../../hooks/useCours
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import { getMyPostsFromPages, useMyPosts } from '../../hooks/useMyPosts';
+import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import {
   useReviewDelete,
   useReviewDetailModal,
@@ -70,6 +71,7 @@ function MyPostsPage() {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const { goToCourseDetail } = useNavigateToCourseDetail();
+  const isBusinessUser = useIsBusinessUser();
   const [keyword, setKeyword] = useState('');
 
   const {
@@ -163,7 +165,7 @@ function MyPostsPage() {
             lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
-          등록한 코스와 후기
+          {isBusinessUser ? '등록한 코스, 후기와 홍보글' : '등록한 코스와 후기'}
         </h1>
         <p
           className="text-gray-4 font-normal"
@@ -173,7 +175,9 @@ function MyPostsPage() {
             lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
           }}
         >
-          직접 등록한 코스와 후기를 확인해 보세요
+          {isBusinessUser
+            ? '직접 등록한 코스, 후기와 홍보글을 확인해보세요'
+            : '직접 등록한 코스와 후기를 확인해 보세요'}
         </p>
       </div>
 

@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { PromotionCardSkeleton, RegionImageCarousel } from '../../components/common';
+import {
+  FloatingActionButton,
+  PromotionCardSkeleton,
+  RegionImageCarousel,
+} from '../../components/common';
 import { DEFAULT_REGION_CITY_ID, REGION_CITY_IDS } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useLoginModal } from '../../hooks/useLoginModal';
+import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import { useAuthStore } from '../../store/auth.store';
 import { buildLocalBusinessDetailPath } from '../../utils/routes';
 
@@ -36,6 +41,7 @@ function LocalBusinessPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isBusinessUser = useIsBusinessUser();
   const { openLoginModal } = useLoginModal();
   const [searchParams] = useSearchParams();
   const regionParam = searchParams.get('region');
@@ -96,6 +102,10 @@ function LocalBusinessPage() {
 
   const handleSelectRegion = (region: { id: string }) => {
     setSelectedRegionId(region.id as RegionCityId);
+  };
+
+  const handleStartPromotionRegistration = () => {
+    navigate('/business-promotion-registration');
   };
 
   return (
@@ -223,6 +233,13 @@ function LocalBusinessPage() {
         style={{ height: LOAD_MORE_HEIGHT * scale }}
         aria-hidden="true"
       />
+
+      {isBusinessUser ? (
+        <FloatingActionButton
+          ariaLabel="홍보 게시물 등록"
+          onClick={handleStartPromotionRegistration}
+        />
+      ) : null}
     </section>
   );
 }

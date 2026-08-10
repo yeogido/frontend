@@ -70,6 +70,7 @@ import CourseReviewsPage from '../pages/course-reviews';
 import ProfilePage from '../pages/profile';
 import ProfileEditPage from '../pages/profile/edit';
 import BusinessVerificationPage from '../pages/business-verification';
+import BusinessPromotionRegistrationPage from '../pages/business-promotion-registration';
 
 function AppRouter() {
   return (
@@ -179,6 +180,10 @@ function AppRouter() {
         <Route
           path="/business-verification"
           element={<BusinessVerificationPage />}
+        />
+        <Route
+          path="/business-promotion-registration"
+          element={<BusinessPromotionRegistrationPage />}
         />
         <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route
