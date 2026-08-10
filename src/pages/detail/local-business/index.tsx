@@ -18,7 +18,6 @@ import { useAuthStore } from '../../../store/auth.store';
 
 import {
   DetailDescriptionCard,
-  DetailHeroSection,
   DetailInfoCard,
   DetailPlaceCard,
   DetailStateGuard,
@@ -29,6 +28,8 @@ import {
 import { useShareToast } from '../hooks/useShareToast';
 import { mapBusinessPromotionDetail } from '../mappers/businessPromotionDetailMapper';
 import { toSafeExternalUrl, toTelHref } from '../mappers/festivalDetailMapper';
+
+import DetailHeroCarousel from './components/DetailHeroCarousel';
 
 const PAGE_PADDING_BOTTOM = 32;
 const TITLE_SECTION_PADDING_TOP = 24;
@@ -120,8 +121,8 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
           className="bg-white"
         >
           <ResponsiveFullBleed>
-            <DetailHeroSection
-              imageUrl={businessDetail.heroImageUrl}
+            <DetailHeroCarousel
+              imageUrls={businessDetail.heroImageUrls}
               title={businessDetail.title}
             />
           </ResponsiveFullBleed>
