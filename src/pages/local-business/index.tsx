@@ -15,9 +15,17 @@ import { useAuthStore } from '../../store/auth.store';
 import { buildLocalBusinessDetailPath } from '../../utils/routes';
 
 import { BusinessGrid, BusinessList, BusinessToolbar } from './components';
-import { regionImageOptions } from './constants';
+import {
+  businessCategories,
+  businessSortOptions,
+  regionImageOptions,
+} from './constants';
 import type { BusinessCategory, BusinessSort, BusinessViewMode } from './types';
 import useLocalBusinesses from './hooks/useLocalBusinesses';
+
+const DEFAULT_CATEGORY: BusinessCategory = '전체';
+const DEFAULT_SORT: BusinessSort = '추천순';
+const DEFAULT_VIEW_MODE: BusinessViewMode = 'grid';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -43,19 +51,43 @@ function LocalBusinessPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isBusinessUser = useIsBusinessUser();
   const { openLoginModal } = useLoginModal();
-  const [searchParams] = useSearchParams();
+  // 지역/카테고리/정렬/보기모드를 전부 별도 state로 복제해두면(예전 방식),
+  // 값을 바꿔도 URL은 그대로라 상세 페이지로 갔다가 뒤로가기로
+  // 돌아왔을 때(컴포넌트가 통째로 리마운트됨) 다시 기본값으로 되돌아가는
+  // 버그가 있었다. URL을 단일 진실 공급원으로 두고 매 렌더 파생시키면,
+  // 변경도 브라우저 히스토리에 남아 뒤로가기로 돌아와도 그대로 유지된다.
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const regionParam = searchParams.get('region');
-  const initialRegionId = REGION_CITY_IDS.includes(
-    regionParam as RegionCityId
-  )
+  const selectedRegionId = REGION_CITY_IDS.includes(regionParam as RegionCityId)
     ? (regionParam as RegionCityId)
     : DEFAULT_REGION_CITY_ID;
-  const [selectedCategory, setSelectedCategory] =
-    useState<BusinessCategory>('전체');
-  const [sortBy, setSortBy] = useState<BusinessSort>('추천순');
-  const [viewMode, setViewMode] = useState<BusinessViewMode>('grid');
-  const [selectedRegionId, setSelectedRegionId] =
-    useState<RegionCityId>(initialRegionId);
+
+  const categoryParam = searchParams.get('category');
+  const selectedCategory = businessCategories.includes(
+    categoryParam as BusinessCategory
+  )
+    ? (categoryParam as BusinessCategory)
+    : DEFAULT_CATEGORY;
+
+  const sortParam = searchParams.get('sort');
+  const sortBy = businessSortOptions.includes(sortParam as BusinessSort)
+    ? (sortParam as BusinessSort)
+    : DEFAULT_SORT;
+
+  const viewParam = searchParams.get('view');
+  const viewMode: BusinessViewMode =
+    viewParam === 'grid' || viewParam === 'card'
+      ? viewParam
+      : DEFAULT_VIEW_MODE;
+
+  const updateSearchParam = (key: string, value: string) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.set(key, value);
+      return next;
+    });
+  };
 
   const {
     businesses,
@@ -101,7 +133,19 @@ function LocalBusinessPage() {
   };
 
   const handleSelectRegion = (region: { id: string }) => {
-    setSelectedRegionId(region.id as RegionCityId);
+    updateSearchParam('region', region.id);
+  };
+
+  const handleSelectCategory = (category: BusinessCategory) => {
+    updateSearchParam('category', category);
+  };
+
+  const handleSortChange = (sort: BusinessSort) => {
+    updateSearchParam('sort', sort);
+  };
+
+  const handleToggleView = () => {
+    updateSearchParam('view', viewMode === 'grid' ? 'card' : 'grid');
   };
 
   const handleStartPromotionRegistration = () => {
@@ -154,11 +198,9 @@ function LocalBusinessPage() {
         selectedCategory={selectedCategory}
         sortBy={sortBy}
         viewMode={viewMode}
-        onSelectCategory={setSelectedCategory}
-        onSortChange={setSortBy}
-        onToggleView={() =>
-          setViewMode((current) => (current === 'grid' ? 'card' : 'grid'))
-        }
+        onSelectCategory={handleSelectCategory}
+        onSortChange={handleSortChange}
+        onToggleView={handleToggleView}
       />
 
       <div style={{ marginTop: LIST_MARGIN_TOP * scale }}>
