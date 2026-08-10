@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -8,7 +9,6 @@ import {
   SectionHeader,
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
 import { useContentDelete } from '../../hooks/useContentDelete';
 import { useCultureContents } from '../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
@@ -18,10 +18,14 @@ import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
 import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
 
+import lotusFestivalImage from './assets/lotus-festival.webp';
 import { FeaturedFestivalBanner } from './components';
 import useFestivalPreviews from './hooks/useFestivalPreviews';
+import type { FeaturedFestival } from './types';
 
 const ONGOING_PREVIEW_ITEM_COUNT = 2;
+const BANNER_ITEM_COUNT = 5;
+const BANNER_ROTATE_INTERVAL_MS = 2000;
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -46,7 +50,6 @@ function FestivalPage() {
   const { requestDelete, dialogProps } = useContentDelete();
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
-  const { data: cultureContentBanners } = useCultureContentBanners();
   const { data: ongoingContentsData, isPending: isOngoingContentsPending } =
     useCultureContents({
       statuses: ['ONGOING'],
@@ -54,16 +57,37 @@ function FestivalPage() {
       size: ONGOING_PREVIEW_ITEM_COUNT,
     });
   const ongoingFestivals = ongoingContentsData?.pages[0]?.items ?? [];
-  const banner = cultureContentBanners?.[0];
-  const displayedBanner = banner
-    ? {
-        id: banner.contentId,
-        image: banner.thumbnailImage,
-        title: banner.title,
-        description: banner.description,
-        period: `${banner.startDate} ~ ${banner.endDate}`,
-      }
-    : featuredFestival;
+
+  // 메인 배너: 추천순 상위 5개를 2초마다 자동 전환한다.
+  const { data: bannerContentsData } = useCultureContents({
+    sort: 'RECOMMEND',
+    size: BANNER_ITEM_COUNT,
+  });
+  const bannerFestivals: FeaturedFestival[] = (
+    bannerContentsData?.pages[0]?.items ?? []
+  ).map((content) => ({
+    id: content.contentId,
+    image: content.thumbnailImageUrl ?? lotusFestivalImage,
+    title: content.title,
+    description: content.regionName,
+    period: `${content.startDate} ~ ${content.endDate}`,
+  }));
+  const [bannerIndex, setBannerIndex] = useState(0);
+
+  useEffect(() => {
+    if (bannerFestivals.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setBannerIndex(
+        (previousIndex) => (previousIndex + 1) % bannerFestivals.length
+      );
+    }, BANNER_ROTATE_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [bannerFestivals.length]);
+
+  const activeBanner = bannerFestivals[bannerIndex % bannerFestivals.length];
+  const displayedBanner = activeBanner ?? featuredFestival;
 
   const goToFestivalSearch = () => {
     navigate('/course-region-search?from=festival');
@@ -122,8 +146,8 @@ function FestivalPage() {
           <FeaturedFestivalBanner
             festival={displayedBanner}
             onClick={() =>
-              banner
-                ? navigate(buildFestivalDetailPath(banner.contentId))
+              activeBanner
+                ? navigate(buildFestivalDetailPath(activeBanner.id))
                 : goToFestivalSearch()
             }
           />
@@ -160,14 +184,14 @@ function FestivalPage() {
                   tags={toContentTagIds(festival.hashtags)}
                   className="w-full"
                   isAdmin={isAdmin}
-                  liked={getLiked(festival.contentId, false)}
+                  liked={getLiked(festival.contentId, festival.isLiked)}
                   onClick={() =>
                     navigate(buildFestivalDetailPath(festival.contentId))
                   }
                   onLikeClick={() =>
                     toggleLike(
                       festival.contentId,
-                      getLiked(festival.contentId, false)
+                      getLiked(festival.contentId, festival.isLiked)
                     )
                   }
                   onEdit={() => void editFestival(festival.contentId)}

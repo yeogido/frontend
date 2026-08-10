@@ -5,6 +5,7 @@ import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
 import CourseCard from '../../../components/common/CourseCard';
 import SectionHeader from '../../../components/common/SectionHeader';
+import BackButton from '../../local-recommendation/components/BackButton';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
@@ -15,6 +16,7 @@ import {
 import { useToast } from '../../../components/toast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
+import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useLoginModal } from '../../../hooks/useLoginModal';
@@ -79,13 +81,14 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     ? queryError
     : new Error('Invalid content ID');
   const { getLiked, toggleLike } = useContentLikeToggle();
+  const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
+    useCourseLikeToggle();
   const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null
   );
   const placeLikeRequestInFlightRef = useRef(false);
-  const [likedCourseIds, setLikedCourseIds] = useState<readonly number[]>([]);
   const { copied, isToastVisible, handleShare } = useShareToast();
 
   const festival = content
@@ -129,13 +132,15 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     });
   }, [content]);
 
-  const runAuthAction = (action: () => void) => {
-    if (!isAuthenticated) {
-      openLoginModal();
-      return;
+  const handleBack = () => {
+    // history.state.idx는 react-router의 브라우저 히스토리 항목 인덱스라,
+    // 0이면 이 탭에서 처음 들어온 화면(직접 링크로 진입 등)이라 뒤로 갈
+    // 곳이 없다 — 그때만 행사 목록으로 대체 이동한다.
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/festival');
     }
-
-    action();
   };
 
   const handleFavoriteToggle = () => {
@@ -160,11 +165,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
 
     try {
       if (nextLiked) {
-        await addPlaceLike(
-          festival.place.id,
-          'CONTENT',
-          contentId
-        );
+        await addPlaceLike(festival.place.id, 'CONTENT', contentId);
       } else {
         await removePlaceLike(festival.place.id);
       }
@@ -183,16 +184,6 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     }
   };
 
-  const handleCourseLikeToggle = (courseId: number) => {
-    runAuthAction(() => {
-      setLikedCourseIds((previousIds) =>
-        previousIds.includes(courseId)
-          ? previousIds.filter((id) => id !== courseId)
-          : [...previousIds, courseId]
-      );
-    });
-  };
-
   return (
     <DetailStateGuard
       error={contentError ? '행사 정보를 불러오지 못했습니다.' : null}
@@ -208,24 +199,29 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
             className="bg-white"
           >
             <ResponsiveFullBleed>
-              <DetailHeroSection
-                imageUrl={festivalDetail.heroImageUrl}
-                title={festivalDetail.title}
-                rightAction={
-                  isAdmin ? (
-                    <EditButton
-                      label={festivalDetail.title}
-                      onClick={() => void editFestival(contentId)}
-                    />
-                  ) : (
-                    <FavoriteButton
-                      isActive={getLiked(contentId, festivalDetail.liked)}
-                      label={festivalDetail.title}
-                      onClick={handleFavoriteToggle}
-                    />
-                  )
-                }
-              />
+              <div className="relative">
+                <DetailHeroSection
+                  imageUrl={festivalDetail.heroImageUrl}
+                  title={festivalDetail.title}
+                  rightAction={
+                    isAdmin ? (
+                      <EditButton
+                        label={festivalDetail.title}
+                        onClick={() => void editFestival(contentId)}
+                      />
+                    ) : (
+                      <FavoriteButton
+                        isActive={getLiked(contentId, festivalDetail.liked)}
+                        label={festivalDetail.title}
+                        onClick={handleFavoriteToggle}
+                      />
+                    )
+                  }
+                />
+                <div className="absolute top-3 left-6 z-10">
+                  <BackButton onClick={handleBack} />
+                </div>
+              </div>
             </ResponsiveFullBleed>
 
             <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
@@ -327,11 +323,16 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                       courseType={course.courseType}
                       companion={course.companion}
                       tags={[...course.tags]}
-                      liked={likedCourseIds.includes(course.id)}
+                      liked={getCourseLiked(course.id, course.liked)}
                       onClick={() =>
                         navigate(`/yeogido-course/detail/${course.id}`)
                       }
-                      onLikeClick={() => handleCourseLikeToggle(course.id)}
+                      onLikeClick={() =>
+                        toggleCourseLike(
+                          course.id,
+                          getCourseLiked(course.id, course.liked)
+                        )
+                      }
                     />
                   ))}
                 </div>
