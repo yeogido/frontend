@@ -1,8 +1,5 @@
 export type ContentCategory =
-  | 'EXPERIENCE'
-  | 'EXHIBITION'
-  | 'PERFORMANCE'
-  | 'FESTIVAL';
+  'EXPERIENCE' | 'EXHIBITION' | 'PERFORMANCE' | 'FESTIVAL';
 
 export type ContentSort = 'RECOMMEND' | 'LIKE' | 'DISTANCE' | 'DEADLINE';
 
@@ -59,6 +56,7 @@ export interface CultureContentBanner {
 }
 
 export interface CultureContentPlace {
+  courseItemId: number;
   placeId: number;
   externalPlaceId?: string;
   source?: ContentPlaceSource;

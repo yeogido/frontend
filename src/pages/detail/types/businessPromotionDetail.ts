@@ -3,6 +3,7 @@ import type { DetailTag } from '../../../types/detail';
 
 export interface BusinessPromotionDetail {
   readonly id: number;
+  readonly placeId: number;
   readonly title: string;
   readonly heroImageUrl: string;
   readonly liked: boolean;

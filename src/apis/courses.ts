@@ -4,6 +4,7 @@ export type CourseDetailItem =
   | {
       order: number;
       type: 'PLACE';
+      courseItemId: number;
       placeId: number;
       isLiked: boolean;
       source: string;
@@ -19,6 +20,7 @@ export type CourseDetailItem =
   | {
       order: number;
       type: 'CONTENT';
+      courseItemId: number;
       contentId: number;
       isLiked: boolean;
       contentStatus: string;
@@ -150,9 +152,22 @@ export async function removeCourseLike(
   return data;
 }
 
-export async function addPlaceLike(placeId: number): Promise<CourseLikeResult> {
+/**
+ * COURSE_ITEM: sourceId는 courseItemId다.
+ * 코스 응답의 courseItems에서 courseItemId를 사용한다.
+ * 행사 상세(festival)의 연계 장소 좋아요는 CONTENT로 보낸다(sourceId는 contentId).
+ * PROMOTION: sourceId는 promotionId.
+ */
+export type PlaceLikeSourceType = 'COURSE_ITEM' | 'PROMOTION' | 'CONTENT';
+
+export async function addPlaceLike(
+  placeId: number,
+  sourceType: PlaceLikeSourceType,
+  sourceId: number
+): Promise<CourseLikeResult> {
   const { data } = await apiClient.put<CourseLikeResult>(
-    `/places/${placeId}/likes`
+    `/places/${placeId}/likes`,
+    { sourceType, sourceId }
   );
 
   return data;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { fetchKakaoWalkingRoute } from '../../../apis/kakaoWalkingRoute';
 import { SectionHeader } from '../../../components/common';
 import { BaseKakaoMap } from '../../../components/kakaomap/BaseKakaoMap';
@@ -29,7 +29,10 @@ interface WalkingRouteResult {
 
 const EMPTY_ROUTE_RESULT: WalkingRouteResult = { locations: [], route: [] };
 
-export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
+function CourseRouteMapComponent({
+  stops,
+  className = '',
+}: CourseRouteMapProps) {
   const scale = useGlobalScale();
   const [routeResult, setRouteResult] =
     useState<WalkingRouteResult>(EMPTY_ROUTE_RESULT);
@@ -112,5 +115,33 @@ export function CourseRouteMap({ stops, className = '' }: CourseRouteMapProps) {
     </section>
   );
 }
+
+// liked/hours 같은 지도와 무관한 필드 변경(좋아요 토글 등)으로 stops 배열
+// 레퍼런스만 바뀌는 경우엔 리렌더를 건너뛴다 — 그대로 두면 도보 경로 재조회
+// useEffect까지 다시 돌아 좋아요를 누를 때마다 지도가 깜빡이고 카카오
+// 길찾기 API가 불필요하게 재호출된다.
+function areRouteMapPropsEqual(
+  prevProps: CourseRouteMapProps,
+  nextProps: CourseRouteMapProps
+): boolean {
+  return (
+    prevProps.className === nextProps.className &&
+    prevProps.stops.length === nextProps.stops.length &&
+    prevProps.stops.every((stop, index) => {
+      const nextStop = nextProps.stops[index];
+
+      return (
+        stop.id === nextStop.id &&
+        stop.location?.latitude === nextStop.location?.latitude &&
+        stop.location?.longitude === nextStop.location?.longitude
+      );
+    })
+  );
+}
+
+export const CourseRouteMap = memo(
+  CourseRouteMapComponent,
+  areRouteMapPropsEqual
+);
 
 export default CourseRouteMap;
