@@ -9,6 +9,7 @@ import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import type { CourseReview } from '../types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { getCourseReviewIndex } from '../utils/courseReviewCarousel';
+import { REVIEW_CAROUSEL_CLASS_NAME } from '../utils/reviewCarouselStyle';
 
 const SECTION_GAP = 14;
 const REVIEW_CARD_GAP = 16;
@@ -130,7 +131,7 @@ export function DetailReviewSection({
       ) : (
         <div
           ref={scrollRef}
-          className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto"
+          className={REVIEW_CAROUSEL_CLASS_NAME}
           style={{
             height: reviewCarouselHeight,
             gap: REVIEW_CARD_GAP * scale,
