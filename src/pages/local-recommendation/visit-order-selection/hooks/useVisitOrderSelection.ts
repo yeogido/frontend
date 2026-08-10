@@ -26,6 +26,10 @@ import {
 } from '../buildCourseRequest';
 import { buildVisitEvents } from '../buildVisitEvents';
 import type { VisitEvent } from '../constants';
+import {
+  fetchVisitEventTravelData,
+  type VisitEventTravelData,
+} from '../useVisitEventTravelData';
 
 function invalidateCourseListCaches(
   queryClient: ReturnType<typeof useQueryClient>
@@ -167,13 +171,20 @@ export function useVisitOrderSelection() {
         eventsWithImageKeys
       );
       if (validationError) throw new Error(validationError);
+      let travelData: VisitEventTravelData | undefined;
+      try {
+        travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
+      } catch {
+        travelData = undefined;
+      }
 
       let result: { courseId: number };
 
       if (currentDraft.editingCourseId) {
         const updatePayload = buildLocalCourseUpdateRequest(
           draftWithCoverKey,
-          eventsWithImageKeys
+          eventsWithImageKeys,
+          travelData
         );
         if (!updatePayload) {
           throw new Error('코스 정보가 모두 입력되어야 수정할 수 있습니다.');
@@ -198,7 +209,8 @@ export function useVisitOrderSelection() {
       } else {
         const payload = buildCourseRequest(
           draftWithCoverKey,
-          eventsWithImageKeys
+          eventsWithImageKeys,
+          travelData
         );
         if (!payload) {
           throw new Error('코스 정보가 모두 입력되어야 등록할 수 있습니다.');

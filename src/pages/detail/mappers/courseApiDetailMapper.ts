@@ -31,8 +31,8 @@ const transportLabels: Record<string, { label: string; icon: BadgeId }> = {
 };
 
 const companionLabels: Record<string, { label: string; icon: BadgeId }> = {
-  SOLO: { label: '혼자', icon: 'solo' },
   ALONE: { label: '혼자', icon: 'solo' },
+  SOLO: { label: '혼자', icon: 'solo' },
   FRIEND: { label: '친구와', icon: 'group' },
   COUPLE: { label: '연인과', icon: 'group' },
   FAMILY: { label: '가족과', icon: 'group' },
@@ -73,10 +73,12 @@ function toCourseStops(course: CourseDetailResult): readonly CourseStopDto[] {
     name: item.name,
     address: item.roadAddress || item.lotAddress || '',
     hours: '',
-    image: item.imageUrl || course.thumbnailUrl,
+    image: item.imageUrl,
     liked: item.isLiked,
     latitude: item.latitude,
     longitude: item.longitude,
+    operatingDays: item.type === 'PLACE' ? item.operatingDays : undefined,
+    timesFromPrevious: item.timesFromPrevious ?? [],
   }));
 }
 
@@ -175,7 +177,6 @@ function toCanonicalCompanionType(companionType: string): CourseCompanionType {
     case 'PET':
       return 'PET';
     case 'SOLO':
-    case 'ALONE':
     default:
       return 'SOLO';
   }

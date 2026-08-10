@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { readOpenedReview } from '../../../utils/reviewNavigation';
@@ -29,10 +29,6 @@ import {
 } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
-import {
-  formatTodayOpeningHours,
-  usePlaceOpeningHours,
-} from '../../../hooks/usePlaceOpeningHours';
 import {
   useCourseReviewPreviews,
   useReviewDelete,
@@ -174,33 +170,6 @@ function CourseDetailLayoutContent({
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
   const { copied, isToastVisible, handleShare } = useShareToast();
-  const openingHoursByStopId = usePlaceOpeningHours(
-    stops.flatMap((stop) =>
-      stop.placeId !== undefined
-        ? [
-            {
-              id: stop.id,
-              name: stop.name,
-              address: stop.address,
-              latitude: stop.location?.latitude,
-              longitude: stop.location?.longitude,
-            },
-          ]
-        : []
-    )
-  );
-  const stopsWithOpeningHours = useMemo(
-    () =>
-      stops.map((stop) => {
-        const hours = openingHoursByStopId.get(stop.id);
-        const formattedHours = hours && formatTodayOpeningHours(hours);
-
-        return stop.placeId !== undefined
-          ? { ...stop, hours: formattedHours ?? '영업시간 정보 없음' }
-          : stop;
-      }),
-    [openingHoursByStopId, stops]
-  );
 
   const handleStopLikeToggle = (stopId: number) => {
     if (!isAuthenticated || !accessToken) {
@@ -368,7 +337,7 @@ function CourseDetailLayoutContent({
           marginTop: MAP_MARGIN_TOP * scale,
         }}
       >
-        <CourseRouteMap stops={stopsWithOpeningHours} />
+        <CourseRouteMap stops={stops} />
       </div>
 
       {/* 6. 코스 장소 리스트 */}
@@ -378,7 +347,7 @@ function CourseDetailLayoutContent({
         }}
       >
         <CourseStopList
-          stops={stopsWithOpeningHours}
+          stops={stops}
           onStopLikeToggle={handleStopLikeToggle}
           pendingPlaceIds={pendingPlaceIds}
           pendingContentIds={pendingContentIds}

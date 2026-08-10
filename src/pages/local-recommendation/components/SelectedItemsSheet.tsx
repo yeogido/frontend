@@ -26,6 +26,9 @@ const FOOTER_PADDING_TOP = 12;
 const FOOTER_PADDING_BOTTOM = 32;
 const SUBMIT_BUTTON_HEIGHT = 53;
 const SUBMIT_BUTTON_FONT_SIZE = 18;
+const SKIP_BUTTON_HEIGHT = 24;
+const SKIP_BUTTON_MARGIN_TOP = 14;
+const SKIP_BUTTON_FONT_SIZE = 18;
 const SHEET_RADIUS = 24;
 
 interface SelectedItemsSheetProps<T> {
@@ -37,6 +40,8 @@ interface SelectedItemsSheetProps<T> {
   onItemRemove: (item: T) => void;
   onRemoveAll: () => void;
   onSubmit: () => void;
+  skipButtonLabel?: string;
+  onSkip?: () => void;
   renderItem: (item: T, onItemRemove: (item: T) => void) => ReactNode;
 }
 
@@ -49,6 +54,8 @@ function SelectedItemsSheet<T>({
   onItemRemove,
   onRemoveAll,
   onSubmit,
+  skipButtonLabel,
+  onSkip,
   renderItem,
 }: SelectedItemsSheetProps<T>) {
   const scale = useGlobalScale();
@@ -205,6 +212,21 @@ function SelectedItemsSheet<T>({
           >
             {submitButtonLabel}
           </button>
+          {skipButtonLabel && onSkip ? (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="text-main-5 w-full font-semibold"
+              style={{
+                height: SKIP_BUTTON_HEIGHT * scale,
+                minHeight: MIN_TOUCH_TARGET,
+                marginTop: SKIP_BUTTON_MARGIN_TOP * scale,
+                fontSize: SKIP_BUTTON_FONT_SIZE * scale,
+              }}
+            >
+              {skipButtonLabel}
+            </button>
+          ) : null}
         </motion.div>
       </Sheet.Container>
     </Sheet>

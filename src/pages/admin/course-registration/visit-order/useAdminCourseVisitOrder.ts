@@ -20,6 +20,10 @@ import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
+import {
+  fetchVisitEventTravelData,
+  type VisitEventTravelData,
+} from '../../../local-recommendation/visit-order-selection/useVisitEventTravelData';
 import { mapTagIdsToHashtagIds } from '../../../local-recommendation/tag-selection/hashtagMapping';
 import { VISIT_EVENT_PLACE_ID_PREFIX } from '../types';
 import {
@@ -181,6 +185,12 @@ export function useAdminCourseVisitOrder() {
             }
           : event
       );
+      let travelData: VisitEventTravelData | undefined;
+      try {
+        travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
+      } catch {
+        travelData = undefined;
+      }
 
       const hashtags = await fetchHashtags();
       const hashtagIds = mapTagIdsToHashtagIds(
@@ -198,6 +208,7 @@ export function useAdminCourseVisitOrder() {
           visitEvents: eventsWithImageKeys,
           thumbnailKey,
           hashtagIds,
+          travelData,
         });
 
         if (!updatePayload) {
@@ -215,6 +226,7 @@ export function useAdminCourseVisitOrder() {
         visitEvents: eventsWithImageKeys,
         thumbnailKey,
         hashtagIds,
+        travelData,
       });
 
       if (!payload) {

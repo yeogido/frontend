@@ -121,13 +121,13 @@ function PromotionCard({
 
               <div className="min-w-0">
                 <p
-                  className="truncate font-semibold leading-none text-[#1C1C1C]"
+                  className="truncate leading-none font-semibold text-[#1C1C1C]"
                   style={{ fontSize: NAME_SIZE }}
                 >
                   {profileName}
                 </p>
                 <p
-                  className="font-normal leading-none text-[#7F7F7F]"
+                  className="leading-none font-normal text-[#7F7F7F]"
                   style={{ fontSize: DATE_SIZE, marginTop: DATE_GAP }}
                 >
                   {date}
@@ -160,13 +160,13 @@ function PromotionCard({
             }}
           >
             <h2
-              className="font-semibold leading-tight text-[#1C1C1C]"
+              className="leading-tight font-semibold text-[#1C1C1C]"
               style={{ fontSize: TITLE_SIZE }}
             >
               {title}
             </h2>
             <p
-              className="line-clamp-2 font-normal leading-[1.45] text-[#7F7F7F]"
+              className="line-clamp-2 leading-[1.45] font-normal text-[#7F7F7F]"
               style={{ fontSize: DESCRIPTION_SIZE, marginTop: DESCRIPTION_GAP }}
             >
               {description}
@@ -187,7 +187,7 @@ function PromotionCard({
                   }}
                 />
                 <span
-                  className="font-medium leading-none text-[#7F7F7F]"
+                  className="leading-none font-medium text-[#7F7F7F]"
                   style={{ fontSize: LOCATION_TEXT_SIZE }}
                 >
                   {locationText}
