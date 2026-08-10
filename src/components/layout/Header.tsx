@@ -70,7 +70,7 @@ function Header({ onMenuClick }: HeaderProps) {
   );
 
   const handleSearchClick = () => {
-    navigate('/course-region-search?from=course');
+    navigate('/course-region-search?from=home');
   };
 
   return (

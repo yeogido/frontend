@@ -392,7 +392,7 @@ function MyPostsPage() {
                   courseType={toTransportLabel(course.transportType)}
                   companion={toCompanionLabel(course.companionType)}
                   tags={toContentTagIds(course.hashtags)}
-                  isMine
+                  canManage
                   onClick={() => void goToCourseDetail(course.id)}
                   showEdit
                   onDeleteClick={() => requestCourseDelete(course.id)}

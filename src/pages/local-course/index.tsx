@@ -18,6 +18,7 @@ import {
 } from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useEditLocalCourse } from '../../hooks/useEditLocalCourse';
+import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
@@ -62,6 +63,7 @@ function LocalCoursePage() {
   const { getLiked, toggleLike } = useCourseLikeToggle();
   const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
     useMyCourseIds();
+  const isAdmin = useIsAdmin();
   const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -203,7 +205,7 @@ function LocalCoursePage() {
                   </div>
                 ))
               : popularCoursePreviews.map((course) => {
-                  const isMine = myCourseIds.has(course.courseId);
+                  const isMine = isAdmin || myCourseIds.has(course.courseId);
 
                   return (
                     <div
@@ -315,7 +317,7 @@ function LocalCoursePage() {
                   <CourseCard
                     {...course}
                     liked={getLiked(course.id, course.liked)}
-                    isMine={myCourseIds.has(course.id)}
+                    canManage={isAdmin || myCourseIds.has(course.id)}
                     showEdit
                     onClick={() => goToCourseDetail(course.id)}
                     onLikeClick={() =>

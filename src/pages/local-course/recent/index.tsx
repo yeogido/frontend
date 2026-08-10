@@ -5,6 +5,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourseDelete, useMyCourseIds } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useRecentCourses } from '../../../hooks/useRecentCourses';
 import { toCourseCardProps } from '../../../utils/courseCard';
 
@@ -24,6 +25,7 @@ function LocalCourseRecentPage() {
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
   const { courseIds: myCourseIds } = useMyCourseIds();
+  const isAdmin = useIsAdmin();
   const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -77,7 +79,7 @@ function LocalCourseRecentPage() {
                 key={course.id}
                 {...course}
                 liked={getLiked(course.id, course.liked)}
-                isMine={myCourseIds.has(course.id)}
+                canManage={isAdmin || myCourseIds.has(course.id)}
                 showEdit
                 onClick={() => handleCourseClick(course.id)}
                 onLikeClick={() =>

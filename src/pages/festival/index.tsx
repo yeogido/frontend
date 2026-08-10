@@ -1,15 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 
 import {
-  ContentCard,
   ContentCardSkeleton,
+  FestivalContentCard,
+  FestivalDeleteDialog,
   SearchTriggerButton,
   SectionHeader,
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
+import { useContentDelete } from '../../hooks/useContentDelete';
 import { useCultureContents } from '../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
+import { useEditFestival } from '../../hooks/useEditFestival';
+import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
 import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
@@ -37,6 +41,9 @@ function FestivalPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useContentLikeToggle();
+  const isAdmin = useIsAdmin();
+  const { editFestival } = useEditFestival();
+  const { requestDelete, dialogProps } = useContentDelete();
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
   const { data: cultureContentBanners } = useCultureContentBanners();
@@ -71,141 +78,152 @@ function FestivalPage() {
   };
 
   return (
-    <section
-      className="mx-auto flex min-h-screen w-full flex-col"
-      style={{
-        paddingLeft: PAGE_PADDING_X * scale,
-        paddingRight: PAGE_PADDING_X * scale,
-        paddingTop: PAGE_PADDING_TOP * scale,
-        paddingBottom: PAGE_PADDING_BOTTOM * scale,
-      }}
-    >
-      <div>
-        <h1
-          className="font-semibold text-black"
-          style={{
-            fontSize: TITLE_SIZE * scale,
-            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          어디로 떠나볼까요?
-        </h1>
-        <p
-          className="font-normal text-gray-5"
-          style={{
-            marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: DESCRIPTION_SIZE * scale,
-            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          다양한 지역의 행사를 만나보세요
-        </p>
-      </div>
-
-      <div style={{ marginTop: SEARCH_MARGIN_TOP * scale }}>
-        <SearchTriggerButton
-          label="행사명 또는 지역명 검색 화면으로 이동"
-          placeholder="행사명 또는 지역명을 검색해 주세요"
-          onClick={goToFestivalSearch}
-        />
-      </div>
-
-      <div style={{ marginTop: BANNER_MARGIN_TOP * scale }}>
-        <FeaturedFestivalBanner
-          festival={displayedBanner}
-          onClick={() =>
-            banner
-              ? navigate(buildFestivalDetailPath(banner.contentId))
-              : goToFestivalSearch()
-          }
-        />
-      </div>
-
-      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
-        <SectionHeader
-          title="진행 중인 행사"
-          actionText="전체 보기"
-          onActionClick={goToOngoingFestivals}
-        />
-
-        <div
-          className="grid grid-cols-2"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            gap: LIST_GAP * scale,
-          }}
-        >
-          {isOngoingContentsPending ? (
-            <>
-              <ContentCardSkeleton />
-              <ContentCardSkeleton />
-            </>
-          ) : (
-            ongoingFestivals.map((festival) => (
-              <ContentCard
-                key={festival.contentId}
-                image={festival.thumbnailImageUrl}
-                title={festival.title}
-                firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-                secondInfo={festival.regionName}
-                tags={toContentTagIds(festival.hashtags)}
-                liked={getLiked(festival.contentId, false)}
-                className="w-full"
-                onClick={() =>
-                  navigate(buildFestivalDetailPath(festival.contentId))
-                }
-                onLikeClick={() =>
-                  toggleLike(
-                    festival.contentId,
-                    getLiked(festival.contentId, false)
-                  )
-                }
-              />
-            ))
-          )}
+    <>
+      <section
+        className="mx-auto flex min-h-screen w-full flex-col"
+        style={{
+          paddingLeft: PAGE_PADDING_X * scale,
+          paddingRight: PAGE_PADDING_X * scale,
+          paddingTop: PAGE_PADDING_TOP * scale,
+          paddingBottom: PAGE_PADDING_BOTTOM * scale,
+        }}
+      >
+        <div>
+          <h1
+            className="font-semibold text-black"
+            style={{
+              fontSize: TITLE_SIZE * scale,
+              lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+            }}
+          >
+            어디로 떠나볼까요?
+          </h1>
+          <p
+            className="text-gray-5 font-normal"
+            style={{
+              marginTop: DESCRIPTION_MARGIN_TOP * scale,
+              fontSize: DESCRIPTION_SIZE * scale,
+              lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+            }}
+          >
+            다양한 지역의 행사를 만나보세요
+          </p>
         </div>
-      </section>
 
-      {recentFestivals.length > 0 ? (
+        <div style={{ marginTop: SEARCH_MARGIN_TOP * scale }}>
+          <SearchTriggerButton
+            label="행사명 또는 지역명 검색 화면으로 이동"
+            placeholder="행사명 또는 지역명을 검색해 주세요"
+            onClick={goToFestivalSearch}
+          />
+        </div>
+
+        <div style={{ marginTop: BANNER_MARGIN_TOP * scale }}>
+          <FeaturedFestivalBanner
+            festival={displayedBanner}
+            onClick={() =>
+              banner
+                ? navigate(buildFestivalDetailPath(banner.contentId))
+                : goToFestivalSearch()
+            }
+          />
+        </div>
+
         <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
-        <SectionHeader
-          title="최근 본 행사"
-          actionText="전체 보기"
-          onActionClick={goToRecentFestivals}
-        />
+          <SectionHeader
+            title="진행 중인 행사"
+            actionText="전체 보기"
+            onActionClick={goToOngoingFestivals}
+          />
 
-        <div
-          className="grid grid-cols-2"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            gap: LIST_GAP * scale,
-          }}
-        >
-          {recentFestivals.map((festival) => (
-            <ContentCard
-              key={festival.contentId}
-              image={festival.thumbnailImageUrl}
-              title={festival.title}
-              firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-              secondInfo={festival.regionName}
-              liked={getLiked(festival.contentId, festival.liked)}
-              tags={toContentTagIds(festival.hashtags)}
-              className="w-full"
-              onClick={() =>
-                navigate(buildFestivalDetailPath(festival.contentId))
-              }
-              onLikeClick={() =>
-                toggleLike(
-                  festival.contentId,
-                  getLiked(festival.contentId, festival.liked)
-                )
-              }
+          <div
+            className="grid grid-cols-2"
+            style={{
+              marginTop: LIST_MARGIN_TOP * scale,
+              gap: LIST_GAP * scale,
+            }}
+          >
+            {isOngoingContentsPending ? (
+              <>
+                <ContentCardSkeleton />
+                <ContentCardSkeleton />
+              </>
+            ) : (
+              ongoingFestivals.map((festival) => (
+                <FestivalContentCard
+                  key={festival.contentId}
+                  image={festival.thumbnailImageUrl}
+                  title={festival.title}
+                  startDate={festival.startDate}
+                  endDate={festival.endDate}
+                  regionName={festival.regionName}
+                  tags={toContentTagIds(festival.hashtags)}
+                  className="w-full"
+                  isAdmin={isAdmin}
+                  liked={getLiked(festival.contentId, false)}
+                  onClick={() =>
+                    navigate(buildFestivalDetailPath(festival.contentId))
+                  }
+                  onLikeClick={() =>
+                    toggleLike(
+                      festival.contentId,
+                      getLiked(festival.contentId, false)
+                    )
+                  }
+                  onEdit={() => void editFestival(festival.contentId)}
+                  onDelete={() => requestDelete(festival.contentId)}
+                />
+              ))
+            )}
+          </div>
+        </section>
+
+        {recentFestivals.length > 0 ? (
+          <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
+            <SectionHeader
+              title="최근 본 행사"
+              actionText="전체 보기"
+              onActionClick={goToRecentFestivals}
             />
-          ))}
-        </div>
+
+            <div
+              className="grid grid-cols-2"
+              style={{
+                marginTop: LIST_MARGIN_TOP * scale,
+                gap: LIST_GAP * scale,
+              }}
+            >
+              {recentFestivals.map((festival) => (
+                <FestivalContentCard
+                  key={festival.contentId}
+                  image={festival.thumbnailImageUrl}
+                  title={festival.title}
+                  startDate={festival.startDate}
+                  endDate={festival.endDate}
+                  regionName={festival.regionName}
+                  tags={toContentTagIds(festival.hashtags)}
+                  className="w-full"
+                  isAdmin={isAdmin}
+                  liked={getLiked(festival.contentId, festival.liked)}
+                  onClick={() =>
+                    navigate(buildFestivalDetailPath(festival.contentId))
+                  }
+                  onLikeClick={() =>
+                    toggleLike(
+                      festival.contentId,
+                      getLiked(festival.contentId, festival.liked)
+                    )
+                  }
+                  onEdit={() => void editFestival(festival.contentId)}
+                  onDelete={() => requestDelete(festival.contentId)}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </section>
-      ) : null}
-    </section>
+      <FestivalDeleteDialog {...dialogProps} />
+    </>
   );
 }
 
