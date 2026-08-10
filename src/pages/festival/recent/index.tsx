@@ -1,8 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 
-import { ContentCard } from '../../../components/common';
+import {
+  ConfirmDialog,
+  ContentCard,
+  EditableContentCard,
+} from '../../../components/common';
+import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
+import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useRecentCultureContents } from '../../../hooks/useRecentCultureContents';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
@@ -24,83 +31,110 @@ function FestivalRecentPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useContentLikeToggle();
+  const isAdmin = useIsAdmin();
+  const { editFestival } = useEditFestival();
+  const { requestDelete, dialogProps } = useContentDelete();
   const recentFestivals = useRecentCultureContents();
 
   return (
-    <section
-      className="mx-auto flex min-h-screen w-full flex-col"
-      style={{
-        paddingLeft: PAGE_PADDING_X * scale,
-        paddingRight: PAGE_PADDING_X * scale,
-        paddingTop: PAGE_PADDING_TOP * scale,
-        paddingBottom: PAGE_PADDING_BOTTOM * scale,
-      }}
-    >
-      <div>
-        <h1
-          className="font-semibold text-black"
-          style={{
-            fontSize: TITLE_SIZE * scale,
-            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          최근 본 행사
-        </h1>
-        <p
-          className="font-normal text-gray-5"
-          style={{
-            marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: DESCRIPTION_SIZE * scale,
-            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          최근 확인한 행사를 다시 살펴보세요.
-        </p>
-      </div>
-
-      {recentFestivals.length > 0 ? (
-        <div
-          className="grid grid-cols-2"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            columnGap: LIST_GAP * scale,
-            rowGap: LIST_GAP * scale,
-          }}
-        >
-          {recentFestivals.map((festival) => (
-            <ContentCard
-              key={festival.contentId}
-              image={festival.thumbnailImageUrl}
-              title={festival.title}
-              firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-              secondInfo={festival.regionName}
-              tags={toContentTagIds(festival.hashtags)}
-              liked={getLiked(festival.contentId, festival.liked)}
-              className="w-full"
-              onClick={() =>
-                navigate(buildFestivalDetailPath(festival.contentId))
-              }
-              onLikeClick={() =>
-                toggleLike(
-                  festival.contentId,
-                  getLiked(festival.contentId, festival.liked)
-                )
-              }
-            />
-          ))}
+    <>
+      <section
+        className="mx-auto flex min-h-screen w-full flex-col"
+        style={{
+          paddingLeft: PAGE_PADDING_X * scale,
+          paddingRight: PAGE_PADDING_X * scale,
+          paddingTop: PAGE_PADDING_TOP * scale,
+          paddingBottom: PAGE_PADDING_BOTTOM * scale,
+        }}
+      >
+        <div>
+          <h1
+            className="font-semibold text-black"
+            style={{
+              fontSize: TITLE_SIZE * scale,
+              lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+            }}
+          >
+            최근 본 행사
+          </h1>
+          <p
+            className="text-gray-5 font-normal"
+            style={{
+              marginTop: DESCRIPTION_MARGIN_TOP * scale,
+              fontSize: DESCRIPTION_SIZE * scale,
+              lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+            }}
+          >
+            최근 확인한 행사를 다시 살펴보세요.
+          </p>
         </div>
-      ) : (
-        <p
-          className="text-center font-medium text-gray-4"
-          style={{
-            marginTop: EMPTY_MARGIN_TOP * scale,
-            fontSize: MESSAGE_TEXT_SIZE * scale,
-          }}
-        >
-          최근 본 행사가 없습니다.
-        </p>
-      )}
-    </section>
+
+        {recentFestivals.length > 0 ? (
+          <div
+            className="grid grid-cols-2"
+            style={{
+              marginTop: LIST_MARGIN_TOP * scale,
+              columnGap: LIST_GAP * scale,
+              rowGap: LIST_GAP * scale,
+            }}
+          >
+            {recentFestivals.map((festival) =>
+              isAdmin ? (
+                <EditableContentCard
+                  key={festival.contentId}
+                  image={festival.thumbnailImageUrl}
+                  title={festival.title}
+                  firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                  secondInfo={festival.regionName}
+                  tags={toContentTagIds(festival.hashtags)}
+                  className="w-full"
+                  onClick={() =>
+                    navigate(buildFestivalDetailPath(festival.contentId))
+                  }
+                  onEdit={() => void editFestival(festival.contentId)}
+                  onDelete={() => requestDelete(festival.contentId)}
+                />
+              ) : (
+                <ContentCard
+                  key={festival.contentId}
+                  image={festival.thumbnailImageUrl}
+                  title={festival.title}
+                  firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                  secondInfo={festival.regionName}
+                  tags={toContentTagIds(festival.hashtags)}
+                  liked={getLiked(festival.contentId, festival.liked)}
+                  className="w-full"
+                  onClick={() =>
+                    navigate(buildFestivalDetailPath(festival.contentId))
+                  }
+                  onLikeClick={() =>
+                    toggleLike(
+                      festival.contentId,
+                      getLiked(festival.contentId, festival.liked)
+                    )
+                  }
+                />
+              )
+            )}
+          </div>
+        ) : (
+          <p
+            className="text-gray-4 text-center font-medium"
+            style={{
+              marginTop: EMPTY_MARGIN_TOP * scale,
+              fontSize: MESSAGE_TEXT_SIZE * scale,
+            }}
+          >
+            최근 본 행사가 없습니다.
+          </p>
+        )}
+      </section>
+      <ConfirmDialog
+        {...dialogProps}
+        title="행사를 삭제할까요?"
+        description="삭제한 행사는 되돌릴 수 없어요."
+      />
+    </>
   );
 }
 

@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import {
   CourseCard,
   CourseCardSkeleton,
+  CourseDeleteDialog,
   SectionHeader,
 } from '../../../components/common';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useCourses } from '../../../hooks/useCourses';
+import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { useEditCourse } from '../../../hooks/useEditCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toCourseCardProps } from '../../../utils/courseCard';
 
 const SECTION_MARGIN_TOP = 32;
@@ -23,6 +26,9 @@ function CourseSection() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
+  const isAdmin = useIsAdmin();
+  const { editCourse } = useEditCourse();
+  const { requestDelete, dialogProps } = useCourseDelete();
 
   const { data, isPending, isError } = useCourses({
     courseType: 'OFFICIAL',
@@ -35,7 +41,8 @@ function CourseSection() {
     .map(toCourseCardProps);
 
   return (
-    <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
+    <>
+      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
         <div
           style={{
             paddingLeft: SECTION_PADDING_X * scale,
@@ -70,12 +77,16 @@ function CourseSection() {
                   key={course.id}
                   {...course}
                   liked={getLiked(course.id, course.liked)}
+                  isMine={isAdmin}
+                  showEdit
                   onClick={() =>
                     navigate(`/yeogido-course/detail/${course.id}`)
                   }
                   onLikeClick={() =>
                     toggleLike(course.id, getLiked(course.id, course.liked))
                   }
+                  onEditClick={() => void editCourse(course.id)}
+                  onDeleteClick={() => requestDelete(course.id)}
                 />
               ))}
             </>
@@ -93,7 +104,9 @@ function CourseSection() {
             코스 목록을 불러오지 못했어요.
           </p>
         ) : null}
-    </section>
+      </section>
+      <CourseDeleteDialog {...dialogProps} />
+    </>
   );
 }
 
