@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { motion } from 'motion/react';
 
 import folderShadowLayerImage from '../assets/travel-folder-shadow-layer.svg';
 import type { TravelRecordFolder } from '../types';
@@ -16,10 +17,14 @@ import {
 interface TravelFolderCardProps {
   folder: TravelRecordFolder;
   onClick: (folder: TravelRecordFolder) => void;
+  isRecentlySaved?: boolean;
 }
 
 interface TravelFolderArtworkProps {
   photos: [string, ...string[]];
+  photoKeys?: string[];
+  animatePhotoChanges?: boolean;
+  isRecentlySaved?: boolean;
   title: string;
   decorations: TravelFolderDecoration[];
 }
@@ -147,14 +152,27 @@ function FolderPhoto({
   imageSrc,
   order,
   slot,
+  animate,
+  isEntering,
 }: {
   folderTitle: string;
   imageSrc: string;
   order: number;
   slot: FolderPhotoSlot;
+  animate: boolean;
+  isEntering: boolean;
 }) {
   return (
-    <div className={slot.wrapperClassName}>
+    <motion.div
+      layout={animate}
+      initial={
+        isEntering ? { opacity: 0, scale: 0.68, x: 16, y: 24, rotate: 5 } : false
+      }
+      animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+      style={{ transformOrigin: 'center bottom' }}
+      className={slot.wrapperClassName}
+    >
       <div className={slot.frameClassName}>
         <div className="relative size-20 overflow-hidden rounded-xl bg-[#f9f9f9]">
           <div className={slot.cropClassName}>
@@ -166,18 +184,25 @@ function FolderPhoto({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function TravelFolderArtwork({
   photos,
+  photoKeys,
+  animatePhotoChanges = false,
+  isRecentlySaved = false,
   title,
   decorations,
 }: TravelFolderArtworkProps) {
   const decorationClipId = `travel-folder-decoration-${useId().replaceAll(':', '')}`;
   const visiblePhotos = getVisibleFolderPhotos(photos);
   const photoSlotIndexes = getFolderPhotoSlotIndexes(visiblePhotos.length);
+  const visiblePhotoKeys = photoKeys?.slice(0, visiblePhotos.length);
+  const resolvedPhotoKeys = visiblePhotos.map(
+    (_, index) => visiblePhotoKeys?.[index] ?? `${title}-${index}`
+  );
 
   return (
     <div className="relative h-[183px] w-[159px]">
@@ -194,11 +219,13 @@ export function TravelFolderArtwork({
 
       {visiblePhotos.map((imageSrc, index) => (
         <FolderPhoto
-          key={`${title}-${index}`}
+          key={resolvedPhotoKeys[index]}
           folderTitle={title}
           imageSrc={imageSrc}
           order={index + 1}
           slot={folderPhotoSlots[photoSlotIndexes[index]]}
+          animate={animatePhotoChanges}
+          isEntering={animatePhotoChanges}
         />
       ))}
 
@@ -218,6 +245,16 @@ export function TravelFolderArtwork({
         <span className="absolute top-0 left-0 h-px w-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent)]" />
       </div>
       <FolderFrontBorder />
+      {isRecentlySaved ? (
+        <span className="pointer-events-none absolute top-[53px] left-0 z-40 h-[130px] w-[159px] overflow-hidden rounded-b-[28px]" aria-hidden="true">
+          <motion.span
+            initial={{ x: -120, opacity: 0 }}
+            animate={{ x: 180, opacity: [0, 0.75, 0] }}
+            transition={{ duration: 0.42, ease: 'easeInOut' }}
+            className="absolute -top-8 h-[190px] w-12 -rotate-12 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent)]"
+          />
+        </span>
+      ) : null}
       <div
         className="pointer-events-none absolute inset-0 z-60 overflow-visible"
         style={{
@@ -231,9 +268,22 @@ export function TravelFolderArtwork({
   );
 }
 
-function TravelFolderCard({ folder, onClick }: TravelFolderCardProps) {
+function TravelFolderCard({
+  folder,
+  onClick,
+  isRecentlySaved = false,
+}: TravelFolderCardProps) {
   return (
-    <article className="w-[159px]">
+    <motion.article
+      initial={isRecentlySaved ? { opacity: 0.78, scale: 0.92 } : false}
+      animate={
+        isRecentlySaved
+          ? { opacity: 1, scale: [1, 1.05, 1] }
+          : { opacity: 1, scale: 1 }
+      }
+      transition={{ duration: 0.48, ease: 'easeOut' }}
+      className="w-[159px]"
+    >
       <button
         type="button"
         onClick={() => onClick(folder)}
@@ -244,6 +294,7 @@ function TravelFolderCard({ folder, onClick }: TravelFolderCardProps) {
           photos={folder.photos}
           title={folder.title}
           decorations={folder.decorations}
+          isRecentlySaved={isRecentlySaved}
         />
       </button>
       <div className="flex flex-col items-center">
@@ -254,7 +305,7 @@ function TravelFolderCard({ folder, onClick }: TravelFolderCardProps) {
           {folder.period}
         </time>
       </div>
-    </article>
+    </motion.article>
   );
 }
 

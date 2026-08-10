@@ -7,6 +7,7 @@ import {
   ReviewEditModal,
   SectionHeader,
 } from '../../../components/common';
+import { getReviewCarouselIndicatorSize } from '../../../components/common/reviewCarouselIndicator';
 import { useNavigate } from 'react-router-dom';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
@@ -17,16 +18,17 @@ import {
 } from '../../../hooks/useReviews';
 import { useOpenReviewInCourseDetail } from '../../../hooks/useOpenReviewInCourseDetail';
 import { toReviewCardProps } from '../../../utils/reviewCard';
+import {
+  getHomeCarouselIndex,
+  HOME_CAROUSEL_CARD_GAP,
+} from '../utils/homeCarouselLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 32;
 const SECTION_GAP = 12;
 const SECTION_PADDING_X = 24;
-const REVIEW_CARD_GAP = 12;
 
 const DOT_GAP = 4;
-const DOT_SIZE = 4;
-const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
 const ERROR_TEXT_SIZE = 13;
 /** 캐러셀에 그리는 후기 수. */
@@ -59,7 +61,7 @@ function ReviewSection() {
 
     let rafId: number;
 
-    const handleScroll = () => {
+    const updateActiveIndex = () => {
       cancelAnimationFrame(rafId);
 
       rafId = requestAnimationFrame(() => {
@@ -69,20 +71,25 @@ function ReviewSection() {
           return;
         }
 
-        const index = Math.round(
-          container.scrollLeft / (itemWidth + REVIEW_CARD_GAP * scale)
+        setActiveIndex(
+          getHomeCarouselIndex(
+            container.scrollLeft,
+            itemWidth,
+            scale,
+            reviews.length,
+          ),
         );
-        setActiveIndex(index);
       });
     };
 
-    container.addEventListener('scroll', handleScroll);
+    updateActiveIndex();
+    container.addEventListener('scroll', updateActiveIndex);
 
     return () => {
-      container.removeEventListener('scroll', handleScroll);
+      container.removeEventListener('scroll', updateActiveIndex);
       cancelAnimationFrame(rafId);
     };
-  }, [scale]);
+  }, [reviews.length, scale]);
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current;
@@ -92,7 +99,7 @@ function ReviewSection() {
     }
 
     container.scrollTo({
-      left: (container.clientWidth + REVIEW_CARD_GAP * scale) * index,
+      left: (container.clientWidth + HOME_CAROUSEL_CARD_GAP * scale) * index,
       behavior: 'smooth',
     });
   };
@@ -133,7 +140,7 @@ function ReviewSection() {
       <div
         ref={scrollRef}
         className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
-        style={{ gap: REVIEW_CARD_GAP * scale }}
+        style={{ gap: HOME_CAROUSEL_CARD_GAP * scale }}
       >
         {isPending
           ? Array.from({ length: 1 }).map((_, index) => (
@@ -181,10 +188,7 @@ function ReviewSection() {
               onClick={() => scrollToIndex(index)}
               className="shrink-0"
               style={{
-                width:
-                  (index === activeIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE) *
-                  scale,
-                height: DOT_SIZE * scale,
+                ...getReviewCarouselIndicatorSize(index === activeIndex, scale),
                 borderRadius: DOT_RADIUS,
                 backgroundColor:
                   index === activeIndex ? '#FF6F41' : '#A1A1A1',
