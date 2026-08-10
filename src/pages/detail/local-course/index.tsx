@@ -31,7 +31,10 @@ function isNormalizedApiError(error: unknown): error is NormalizedApiError {
   );
 }
 
-function addPendingId(ids: ReadonlySet<number>, id: number): ReadonlySet<number> {
+function addPendingId(
+  ids: ReadonlySet<number>,
+  id: number
+): ReadonlySet<number> {
   return new Set(ids).add(id);
 }
 
@@ -127,11 +130,19 @@ function LocalCourseDetailPage() {
     }
   };
 
-  const handlePlaceLikeToggle = async (placeId: number, isLiked: boolean) => {
+  const handlePlaceLikeToggle = async (
+    placeId: number,
+    isLiked: boolean,
+    courseItemId: number
+  ) => {
     setPendingPlaceIds((ids) => addPendingId(ids, placeId));
 
     try {
-      const result = await placeLikeMutation.mutateAsync({ placeId, isLiked });
+      const result = await placeLikeMutation.mutateAsync({
+        placeId,
+        isLiked,
+        courseItemId,
+      });
       updateCachedCourseDetail((current) => ({
         ...current,
         courseItems: current.courseItems.map((item) =>

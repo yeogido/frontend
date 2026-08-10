@@ -94,7 +94,10 @@ function ReviewActionMenu({
         top: rect.bottom + MENU_GAP * scale,
         // 카드 오른쪽 끝에 붙은 버튼이라 오른쪽 정렬로 띄우되, 화면 밖으로
         // 나가지 않게 가둔다.
-        left: Math.max(MENU_GAP, Math.min(rect.right - width, window.innerWidth - width - MENU_GAP)),
+        left: Math.max(
+          MENU_GAP,
+          Math.min(rect.right - width, window.innerWidth - width - MENU_GAP)
+        ),
       });
     };
 
@@ -121,7 +124,12 @@ function ReviewActionMenu({
       action: onEditClick,
       show: showEdit || Boolean(onEditClick),
     },
-    { key: 'delete', label: '삭제', action: onDeleteClick, show: Boolean(onDeleteClick) },
+    {
+      key: 'delete',
+      label: '삭제',
+      action: onDeleteClick,
+      show: Boolean(onDeleteClick),
+    },
   ].filter((item) => item.show);
 
   if (menuItems.length === 0) {

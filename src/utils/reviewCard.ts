@@ -1,4 +1,6 @@
+import { toContentTagIds } from './contentTags.ts';
 import {
+  toCompanionLabel,
   toDurationLabel,
   toReviewerMetaLabel,
   toTransportLabel,
@@ -29,16 +31,8 @@ export function toEditableImages(images: ReviewImage[] | undefined) {
     .map(({ imageKey, imageUrl }) => ({ imageKey, imageUrl }));
 }
 
-/**
- * 최근 후기를 ReviewCard props로 바꾼다.
- *
- * 응답에 작성자 식별자가 없어 본인 여부는 내 리뷰 ID 집합과 대조해서 정한다
- * (useMyReviewIds 참고). 백엔드가 isMine을 내려주면 인자를 걷어내면 된다.
- */
-export function toReviewCardProps(
-  review: ReviewDetail,
-  myReviewIds: ReadonlySet<number> = new Set()
-) {
+/** 최근 후기를 ReviewCard props로 바꾼다. */
+export function toReviewCardProps(review: ReviewDetail) {
   return {
     id: review.reviewId,
     images: toImageUrls(review.images),
@@ -48,36 +42,32 @@ export function toReviewCardProps(
     meta: toReviewerMetaLabel(review.author?.ageGroup, review.author?.gender),
     content: review.content,
     rating: review.rating,
-    isMine: myReviewIds.has(review.reviewId),
+    isMine: review.isMine,
     courseTitle: review.course.title,
     courseId: review.course.courseId,
     courseType: review.course.courseType,
   };
 }
 
-/**
- * 후기 + 코스 정보를 CourseReviewCard props로 바꾼다.
- *
- * 코스의 동행(companion)과 해시태그(tags)는 리뷰 목록 API가 내려주지 않아
- * 비워 둔다. 카드가 값이 없는 항목을 건너뛰므로 화면은 깨지지 않는다.
- */
-export function toReviewCourseCardProps(
-  review: ReviewDetail,
-  myReviewIds: ReadonlySet<number> = new Set()
-) {
+/** 후기 + 코스 정보를 CourseReviewCard props로 바꾼다. */
+export function toReviewCourseCardProps(review: ReviewDetail) {
+  const images = toImageUrls(review.images);
+
   return {
     id: review.reviewId,
     courseId: review.course.courseId,
     courseType: review.course.courseType,
-    isMine: myReviewIds.has(review.reviewId),
-    // 카드에 그리는 건 코스 썸네일(image)이고, 후기 사진(images)은 길게 눌러
-    // 여는 상세 모달에서 쓴다.
-    image: review.course.thumbnailUrl,
-    images: toImageUrls(review.images),
+    isMine: review.isMine,
+    // 카드 썸네일은 후기 사진의 첫 장이다. 사진 없이 쓴 후기도 있어(서버가
+    // 0장을 허용한다) 그때는 코스 썸네일로 떨어뜨린다.
+    image: images[0] ?? review.course.thumbnailUrl,
+    images,
     editableImages: toEditableImages(review.images),
     title: review.course.title,
     duration: toDurationLabel(review.course.durationType),
     transport: toTransportLabel(review.course.transportType),
+    companion: toCompanionLabel(review.course.companionType),
+    tags: toContentTagIds(review.course.tags),
     profileImage: review.author?.profileImageUrl ?? '',
     nickname: review.author?.nickname ?? '',
     meta: toReviewerMetaLabel(review.author?.ageGroup, review.author?.gender),

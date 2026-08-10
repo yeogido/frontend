@@ -39,7 +39,8 @@ export function CourseStopList({
           }
           isLikePending={
             (stop.placeId !== undefined && pendingPlaceIds.has(stop.placeId)) ||
-            (stop.contentId !== undefined && pendingContentIds.has(stop.contentId))
+            (stop.contentId !== undefined &&
+              pendingContentIds.has(stop.contentId))
           }
         />
       ))}

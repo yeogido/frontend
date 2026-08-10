@@ -26,6 +26,20 @@ import {
 } from '../buildCourseRequest';
 import { buildVisitEvents } from '../buildVisitEvents';
 import type { VisitEvent } from '../constants';
+import {
+  fetchVisitEventTravelData,
+  type VisitEventTravelData,
+} from '../useVisitEventTravelData';
+
+function invalidateCourseListCaches(
+  queryClient: ReturnType<typeof useQueryClient>
+) {
+  void queryClient.invalidateQueries({ queryKey: ['courses'] });
+  void queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
+  void queryClient.invalidateQueries({ queryKey: ['popularLocalCourses'] });
+  void queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
+  void queryClient.invalidateQueries({ queryKey: ['myCourseIds'] });
+}
 
 export function useVisitOrderSelection() {
   const draft = useLocalRecommendationStore((state) => state.draft);
@@ -157,13 +171,20 @@ export function useVisitOrderSelection() {
         eventsWithImageKeys
       );
       if (validationError) throw new Error(validationError);
+      let travelData: VisitEventTravelData | undefined;
+      try {
+        travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
+      } catch {
+        travelData = undefined;
+      }
 
       let result: { courseId: number };
 
       if (currentDraft.editingCourseId) {
         const updatePayload = buildLocalCourseUpdateRequest(
           draftWithCoverKey,
-          eventsWithImageKeys
+          eventsWithImageKeys,
+          travelData
         );
         if (!updatePayload) {
           throw new Error('코스 정보가 모두 입력되어야 수정할 수 있습니다.');
@@ -172,6 +193,9 @@ export function useVisitOrderSelection() {
           currentDraft.editingCourseId,
           updatePayload
         );
+        // 수정 자체는 이미 성공했으니, 아래 상세 재조회가 실패해도(네트워크
+        // 오류 등) 캐시 무효화는 건너뛰지 않도록 먼저 처리한다.
+        invalidateCourseListCaches(queryClient);
         // 상세 페이지(local-course/detail)는 이 훅과 별도로 자기 캐시 키를
         // 쓴다. invalidateQueries만 하면 지금은 비활성 상태라(아직 상세로
         // 이동 전) 무효화만 되고 실제 재요청은 다음 마운트로 미뤄지는데,
@@ -182,21 +206,17 @@ export function useVisitOrderSelection() {
           queryFn: () =>
             getCourseDetail(currentDraft.editingCourseId as number),
         });
-        void queryClient.invalidateQueries({ queryKey: ['courses'] });
-        void queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
-        void queryClient.invalidateQueries({
-          queryKey: ['recommendedCourses'],
-        });
-        void queryClient.invalidateQueries({ queryKey: ['myCourseIds'] });
       } else {
         const payload = buildCourseRequest(
           draftWithCoverKey,
-          eventsWithImageKeys
+          eventsWithImageKeys,
+          travelData
         );
         if (!payload) {
           throw new Error('코스 정보가 모두 입력되어야 등록할 수 있습니다.');
         }
         result = await createLocalRecommendation(payload);
+        invalidateCourseListCaches(queryClient);
       }
 
       resetDraft();

@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+import { readOpenedReview } from '../../../utils/reviewNavigation';
 
 import { CourseInfoBadgesCard } from './CourseInfoBadgesCard';
 import { CourseRouteMap } from './CourseRouteMap';
@@ -28,12 +30,7 @@ import {
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import {
-  formatTodayOpeningHours,
-  usePlaceOpeningHours,
-} from '../../../hooks/usePlaceOpeningHours';
-import {
   useCourseReviewPreviews,
-  useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
   useReviewEdit,
@@ -58,6 +55,8 @@ const MAP_MARGIN_TOP = 24;
 const STOP_LIST_MARGIN_TOP = 0;
 const REVIEW_MARGIN_TOP = 24;
 const REVIEW_BUTTON_MARGIN_TOP = 12;
+/** 미리보기에 그리는 후기 수. */
+const COURSE_REVIEW_PREVIEW_COUNT = 4;
 
 export interface CourseDetailLayoutProps {
   readonly course: CourseDetail;
@@ -66,7 +65,8 @@ export interface CourseDetailLayoutProps {
   readonly isFavoritePending?: boolean;
   readonly onPlaceLikeToggle?: (
     placeId: number,
-    isLiked: boolean
+    isLiked: boolean,
+    courseItemId: number
   ) => Promise<boolean>;
   readonly onContentLikeToggle?: (
     contentId: number,
@@ -135,43 +135,41 @@ function CourseDetailLayoutContent({
   const { data: courseReviews } = useCourseReviewPreviews(
     Number.isInteger(numericCourseId) ? numericCourseId : undefined
   );
-  const myReviewIds = useMyReviewIds();
-  const reviews = mapCourseReviewPreviews(courseReviews?.items, myReviewIds);
+  // 사진 유무와 관계없이 최신 후기를 미리보기로 노출한다.
+  const reviews = mapCourseReviewPreviews(courseReviews?.items).slice(
+    0,
+    COURSE_REVIEW_PREVIEW_COUNT
+  );
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
+  /*
+   * 후기 목록 화면에서 카드를 눌러 넘어온 경우, 그 후기를 그대로 띄운다.
+   *
+   * state로 따로 들지 않고 매 렌더 읽는다. 같은 코스의 다른 후기를 연달아
+   * 누르면 이 컴포넌트가 다시 마운트되지 않아(경로가 같고 코스 데이터도
+   * 캐시에 있다) 초기값으로 한 번만 읽으면 두 번째부터는 안 열린다.
+   */
+  const location = useLocation();
+  const incomingReview = readOpenedReview(location.state);
+
+  const closeReviewDetail = () => {
+    closeReview();
+
+    if (!incomingReview) return;
+
+    // state를 비우면 다음 렌더에서 모달이 닫힌다. 남겨 두면 다른 화면에
+    // 갔다가 뒤로가기로 돌아왔을 때 다시 열린다.
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: null,
+    });
+  };
 
   const [isLiked, setIsLiked] = useState(course.liked);
   const [stops, setStops] = useState<readonly CourseStop[]>(course.stops);
   const { copied, isToastVisible, handleShare } = useShareToast();
-  const openingHoursByStopId = usePlaceOpeningHours(
-    stops.flatMap((stop) =>
-      stop.placeId !== undefined
-        ? [
-            {
-              id: stop.id,
-              name: stop.name,
-              address: stop.address,
-              latitude: stop.location?.latitude,
-              longitude: stop.location?.longitude,
-            },
-          ]
-        : []
-    )
-  );
-  const stopsWithOpeningHours = useMemo(
-    () =>
-      stops.map((stop) => {
-        const hours = openingHoursByStopId.get(stop.id);
-        const formattedHours = hours && formatTodayOpeningHours(hours);
-
-        return stop.placeId !== undefined
-          ? { ...stop, hours: formattedHours ?? '영업시간 정보 없음' }
-          : stop;
-      }),
-    [openingHoursByStopId, stops]
-  );
 
   const handleStopLikeToggle = (stopId: number) => {
     if (!isAuthenticated || !accessToken) {
@@ -190,7 +188,7 @@ function CourseDetailLayoutContent({
     }
 
     if (stop.placeId !== undefined && onPlaceLikeToggle) {
-      void onPlaceLikeToggle(stop.placeId, stop.liked)
+      void onPlaceLikeToggle(stop.placeId, stop.liked, stop.id)
         .then((isLiked) => {
           setStops((prevStops) =>
             prevStops.map((item) =>
@@ -339,7 +337,7 @@ function CourseDetailLayoutContent({
           marginTop: MAP_MARGIN_TOP * scale,
         }}
       >
-        <CourseRouteMap stops={stopsWithOpeningHours} />
+        <CourseRouteMap stops={stops} />
       </div>
 
       {/* 6. 코스 장소 리스트 */}
@@ -349,7 +347,7 @@ function CourseDetailLayoutContent({
         }}
       >
         <CourseStopList
-          stops={stopsWithOpeningHours}
+          stops={stops}
           onStopLikeToggle={handleStopLikeToggle}
           pendingPlaceIds={pendingPlaceIds}
           pendingContentIds={pendingContentIds}
@@ -379,9 +377,9 @@ function CourseDetailLayoutContent({
 
       {/* 이미 이 코스의 상세라 '코스 바로가기'는 넣지 않는다. */}
       <ReviewDetailModal
-        review={openedReview}
+        review={incomingReview ?? openedReview}
         courseTitle={course.title}
-        onClose={closeReview}
+        onClose={closeReviewDetail}
       />
 
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />

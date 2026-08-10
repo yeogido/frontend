@@ -4,6 +4,7 @@ import { useGlobalScale } from '../../hooks/useGlobalScale';
 import type { GeoPoint } from './types';
 
 const EMPTY_MARKERS: readonly GeoPoint[] = [];
+const EMPTY_IMAGE_MARKERS: readonly ImageMapMarker[] = [];
 const EMPTY_ROUTE_PATH: readonly GeoPoint[] = [];
 
 // Figma 390 디자인 기준 리터럴 px
@@ -14,14 +15,22 @@ const MAP_HEIGHT = 342;
 const MAP_RADIUS = 18;
 const OVERLAY_PADDING_X = 20;
 const OVERLAY_FONT_SIZE = 14;
+const IMAGE_MARKER_SIZE = 36;
+const IMAGE_MARKER_BORDER_WIDTH = 2;
 
 export type MapSdkStatus = 'loading' | 'ready' | 'sdk-error';
 
 export interface BaseKakaoMapProps {
   readonly center: GeoPoint;
   readonly markers?: readonly GeoPoint[];
+  readonly imageMarkers?: readonly ImageMapMarker[];
   readonly routePath?: readonly GeoPoint[];
   readonly className?: string;
+}
+
+export interface ImageMapMarker {
+  readonly location: GeoPoint;
+  readonly imageUrl: string;
 }
 
 type ResizableKakaoMap = kakao.maps.Map & {
@@ -33,6 +42,7 @@ type ResizableKakaoMap = kakao.maps.Map & {
 export function BaseKakaoMap({
   center,
   markers = EMPTY_MARKERS,
+  imageMarkers = EMPTY_IMAGE_MARKERS,
   routePath = EMPTY_ROUTE_PATH,
   className = '',
 }: BaseKakaoMapProps) {
@@ -40,6 +50,7 @@ export function BaseKakaoMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<kakao.maps.Map | null>(null);
   const markersRef = useRef<kakao.maps.Marker[]>([]);
+  const imageMarkersRef = useRef<kakao.maps.CustomOverlay[]>([]);
   const routeRef = useRef<kakao.maps.Polyline | null>(null);
 
   const apiKey = import.meta.env.VITE_KAKAO_MAP_API_KEY;
@@ -82,24 +93,73 @@ export function BaseKakaoMap({
     };
   }, [apiKey, latitude, longitude]);
 
-  // 2. markers 좌표에 기본 kakao.maps.Marker 표시
+  // 2. markers 좌표에 기본 또는 이미지 마커 표시
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
     markersRef.current.forEach((marker) => marker.setMap(null));
     markersRef.current = [];
+    imageMarkersRef.current.forEach((marker) => marker.setMap(null));
+    imageMarkersRef.current = [];
 
-    const newMarkers = markers.map((m) => {
+    const imageMarkerLocations = new Set(
+      imageMarkers.map(
+        ({ location }) => `${location.latitude},${location.longitude}`
+      )
+    );
+    const newMarkers = markers.flatMap((m) => {
+      if (imageMarkerLocations.has(`${m.latitude},${m.longitude}`)) {
+        return [];
+      }
+
       const pos = new window.kakao.maps.LatLng(m.latitude, m.longitude);
-      return new window.kakao.maps.Marker({
+      return [new window.kakao.maps.Marker({ map, position: pos })];
+    });
+    const markerSize = IMAGE_MARKER_SIZE * scale;
+    const newImageMarkers = imageMarkers.map(({ location, imageUrl }) => {
+      const marker = document.createElement('div');
+      marker.style.width = `${markerSize}px`;
+      marker.style.minWidth = `${markerSize}px`;
+      marker.style.maxWidth = `${markerSize}px`;
+      marker.style.height = `${markerSize}px`;
+      marker.style.minHeight = `${markerSize}px`;
+      marker.style.maxHeight = `${markerSize}px`;
+      marker.style.boxSizing = 'border-box';
+      marker.style.overflow = 'hidden';
+      marker.style.border = `${IMAGE_MARKER_BORDER_WIDTH * scale}px solid var(--color-main-5)`;
+      marker.style.borderRadius = '50%';
+      marker.style.backgroundColor = 'var(--color-main-5)';
+      marker.style.lineHeight = '0';
+
+      const image = document.createElement('img');
+      image.src = imageUrl;
+      image.alt = '';
+      image.setAttribute('aria-hidden', 'true');
+      image.style.display = 'block';
+      image.style.width = '100%';
+      image.style.minWidth = '100%';
+      image.style.maxWidth = '100%';
+      image.style.height = '100%';
+      image.style.minHeight = '100%';
+      image.style.maxHeight = '100%';
+      image.style.objectFit = 'cover';
+      marker.append(image);
+
+      return new window.kakao.maps.CustomOverlay({
         map,
-        position: pos,
+        position: new window.kakao.maps.LatLng(
+          location.latitude,
+          location.longitude
+        ),
+        content: marker,
+        yAnchor: 0.5,
       });
     });
 
     markersRef.current = newMarkers;
-  }, [markers, status]);
+    imageMarkersRef.current = newImageMarkers;
+  }, [imageMarkers, markers, scale, status]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -189,6 +249,8 @@ export function BaseKakaoMap({
     return () => {
       markersRef.current.forEach((m) => m.setMap(null));
       markersRef.current = [];
+      imageMarkersRef.current.forEach((m) => m.setMap(null));
+      imageMarkersRef.current = [];
       routeRef.current?.setMap(null);
       routeRef.current = null;
       if (container) {

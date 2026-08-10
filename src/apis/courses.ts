@@ -1,13 +1,20 @@
 import { apiClient, normalizeApiError } from './common';
+import type {
+  CourseItem as UpdateCourseItem,
+  OperatingDay,
+  TimeFromPrevious,
+} from './localRecommendations';
 
 export type CourseDetailItem =
   | {
       order: number;
       type: 'PLACE';
+      courseItemId: number;
       placeId: number;
       isLiked: boolean;
       source: string;
       externalPlaceId: string;
+      categoryGroupCode: string;
       name: string;
       roadAddress: string;
       lotAddress: string;
@@ -15,21 +22,26 @@ export type CourseDetailItem =
       longitude: number;
       imageUrl: string;
       imageKey?: string;
+      operatingDays: OperatingDay[];
+      timesFromPrevious: TimeFromPrevious[];
     }
   | {
       order: number;
       type: 'CONTENT';
+      courseItemId: number;
       contentId: number;
       isLiked: boolean;
       contentStatus: string;
       source: string;
       externalPlaceId: string;
+      categoryGroupCode: string;
       name: string;
       roadAddress: string;
       lotAddress: string;
       latitude: number;
       longitude: number;
       imageUrl: string;
+      timesFromPrevious: TimeFromPrevious[];
     };
 
 export interface CourseDetailAuthor {
@@ -77,21 +89,9 @@ export async function deleteCourse(courseId: number): Promise<void> {
   }
 }
 
-export type UpdateCourseItem =
-  | {
-      order: number;
-      type: 'PLACE';
-      externalPlaceId: string;
-      /** 라이브 스펙에서 PLACE의 선택 필드 — 모르면 아예 보내지 않는다(빈 문자열 금지). */
-      categoryGroupCode?: string;
-      name: string;
-      roadAddress: string;
-      lotAddress: string;
-      latitude: number;
-      longitude: number;
-      imageKey: string | null;
-    }
-  | { order: number; type: 'CONTENT'; contentId: number };
+// CourseItem(생성 요청)과 필드가 완전히 같아, 여기서 다시 정의하지 않고
+// 그대로 재사용한다(operatingDays/timesFromPrevious 포함).
+export type { UpdateCourseItem };
 
 // regionId는 여기 없다 — 라이브 스펙(CourseUpdateRequest)에 아예 필드가
 // 없어 지역은 수정 대상이 아니다.
@@ -150,9 +150,22 @@ export async function removeCourseLike(
   return data;
 }
 
-export async function addPlaceLike(placeId: number): Promise<CourseLikeResult> {
+/**
+ * COURSE_ITEM: sourceId는 courseItemId다.
+ * 코스 응답의 courseItems에서 courseItemId를 사용한다.
+ * 행사 상세(festival)의 연계 장소 좋아요는 CONTENT로 보낸다(sourceId는 contentId).
+ * PROMOTION: sourceId는 promotionId.
+ */
+export type PlaceLikeSourceType = 'COURSE_ITEM' | 'PROMOTION' | 'CONTENT';
+
+export async function addPlaceLike(
+  placeId: number,
+  sourceType: PlaceLikeSourceType,
+  sourceId: number
+): Promise<CourseLikeResult> {
   const { data } = await apiClient.put<CourseLikeResult>(
-    `/places/${placeId}/likes`
+    `/places/${placeId}/likes`,
+    { sourceType, sourceId }
   );
 
   return data;

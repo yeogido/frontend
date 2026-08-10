@@ -18,14 +18,15 @@ test('requires a rating between one and five', () => {
   );
 });
 
-test('requires both a photo and comment to enable review submission', () => {
+test('requires a comment but not a photo', () => {
   assert.equal(
     isReviewFormValid({ rating: 5, review: '', photoCount: 1 }),
     false
   );
+  // 사진은 선택이다. 서버도 최소 개수를 두지 않는다.
   assert.equal(
     isReviewFormValid({ rating: 5, review: '후기', photoCount: 0 }),
-    false
+    true
   );
   assert.equal(
     isReviewFormValid({ rating: 5, review: '후기', photoCount: 1 }),
@@ -37,7 +38,15 @@ test('requires both a photo and comment to enable review submission', () => {
   );
 });
 
-test('rejects more than the maximum number of review photos', () => {
+test('accepts only an integer photo count between zero and the maximum', () => {
+  assert.equal(
+    isReviewFormValid({ rating: 5, review: 'valid review', photoCount: -1 }),
+    false
+  );
+  assert.equal(
+    isReviewFormValid({ rating: 5, review: 'valid review', photoCount: 0.5 }),
+    false
+  );
   assert.equal(
     isReviewFormValid({ rating: 5, review: 'valid review', photoCount: 6 }),
     false

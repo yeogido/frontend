@@ -7,6 +7,7 @@ import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useCardTap } from '../../hooks/useCardTap';
 
 import ReviewActionMenu from './ReviewActionMenu';
+import ReviewerAvatar from './ReviewerAvatar';
 
 // Figma 390 디자인 기준 리터럴 px (카드 자체 폭 290 기준)
 const CARD_DESIGN_WIDTH = 342;
@@ -202,19 +203,7 @@ function ReviewCard({
                 marginTop: isCourseReviewList ? 8 : 0,
               }}
             >
-              {profileImage ? (
-                <img
-                  src={profileImage}
-                  alt={`${nickname} 프로필`}
-                  className="shrink-0 rounded-full object-cover"
-                  style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
-                />
-              ) : (
-                <div
-                  className="shrink-0 rounded-full bg-[#EAEAEA]"
-                  style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
-                />
-              )}
+              <ReviewerAvatar src={profileImage} size={AVATAR_SIZE} />
 
               <div
                 className="flex min-w-0 flex-col"

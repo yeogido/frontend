@@ -27,7 +27,7 @@ function mapTags(hashtags: string[]): DetailTag[] {
 }
 
 function mapCourses(
-  courses: CultureContentDetail['courses'],
+  courses: CultureContentDetail['courses']
 ): FestivalRelatedCourse[] {
   return courses.map((course) => ({
     id: course.courseId,
@@ -42,7 +42,7 @@ function mapCourses(
 }
 
 export function mapCultureContentDetailToFestivalDetail(
-  content: CultureContentDetail,
+  content: CultureContentDetail
 ): FestivalDetail {
   const image = toImageUrl(content.thumbnailImageUrl ?? content.thumbnailImage);
 
@@ -60,6 +60,7 @@ export function mapCultureContentDetailToFestivalDetail(
     homepageLabel: '공식 홈페이지',
     place: {
       id: content.place.placeId,
+      courseItemId: content.place.courseItemId,
       name: content.place.name,
       address: content.place.roadAddress,
       hours: '',

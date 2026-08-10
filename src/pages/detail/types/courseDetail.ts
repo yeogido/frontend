@@ -1,6 +1,10 @@
 import type { GeoPoint } from '../../../components/kakaomap/types';
 import type { DetailTag } from '../../../types/detail';
 import type { BadgeId } from '../../../constants/badges';
+import type {
+  OperatingDay,
+  TimeFromPrevious,
+} from '../../../apis/localRecommendations';
 
 export interface CourseBadgeItem {
   readonly id: string | number;
@@ -40,6 +44,8 @@ export interface CourseStopDto {
   readonly liked: boolean;
   readonly latitude?: number;
   readonly longitude?: number;
+  readonly operatingDays?: readonly OperatingDay[];
+  readonly timesFromPrevious: readonly TimeFromPrevious[];
   readonly transportToNext?: string;
 }
 
@@ -54,6 +60,8 @@ export interface CourseStop {
   readonly image: string;
   readonly liked: boolean;
   readonly location?: GeoPoint;
+  readonly operatingDays?: readonly OperatingDay[];
+  readonly timesFromPrevious: readonly TimeFromPrevious[];
   readonly transportToNext?: string;
 }
 

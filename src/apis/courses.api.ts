@@ -5,6 +5,7 @@ import type {
   GetCoursesParams,
   GetCoursesResponse,
   GetPopularCoursesParams,
+  PopularLocalCourse,
   RecommendedCourse,
 } from '../types/course.type';
 
@@ -29,6 +30,18 @@ export async function getPopularCourses(
     const { data } = await apiClient.get<Course[]>('/courses/popular', {
       params,
     });
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function getPopularLocalCourses(): Promise<PopularLocalCourse[]> {
+  try {
+    const { data } = await apiClient.get<PopularLocalCourse[]>(
+      '/courses/popular/local',
+    );
 
     return data;
   } catch (error) {

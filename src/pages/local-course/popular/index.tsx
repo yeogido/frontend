@@ -16,6 +16,7 @@ import {
   useMyCourseIds,
 } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -67,11 +68,13 @@ const companionTypeByLabel: Record<string, CourseCompanionType | undefined> = {
 };
 
 // LOCAL 코스 목록은 RECOMMEND 정렬을 지원하지 않아(COURSE4008),
-// '추천순' 필터는 최신순으로 대체한다.
+// 우리동네 코스에는 '추천순' 옵션 자체가 없다.
 const sortByLabel: Record<string, CourseSort> = {
-  추천순: 'LATEST',
+  인기순: 'POPULAR',
+  최신순: 'LATEST',
   저장순: 'SAVED',
   후기순: 'REVIEW',
+  거리순: 'DISTANCE',
 };
 
 const durationLabelByType: Record<CourseDurationType, string> = {
@@ -101,6 +104,9 @@ function LocalCoursePopularPage() {
     handleFilterSelect,
   } = useLocalCourseFilters();
 
+  const isDistanceSort = selectedFilters.sort === '거리순';
+  const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
+
   const {
     data,
     fetchNextPage,
@@ -108,14 +114,21 @@ function LocalCoursePopularPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useCourses({
-    courseType: 'LOCAL',
-    transportType: transportTypeByLabel[selectedFilters.transport],
-    durationType: durationTypeByLabel[selectedFilters.duration],
-    companionType: companionTypeByLabel[selectedFilters.companion],
-    sort: sortByLabel[selectedFilters.sort],
-    size: 20,
-  });
+  } = useCourses(
+    {
+      courseType: 'LOCAL',
+      transportType: transportTypeByLabel[selectedFilters.transport],
+      durationType: durationTypeByLabel[selectedFilters.duration],
+      companionType: companionTypeByLabel[selectedFilters.companion],
+      sort: sortByLabel[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: 20,
+    },
+    { enabled: !isDistanceSort || distanceSortCoordinates !== null }
+  );
 
   const courses = data?.pages.flatMap((page) => page.items) ?? [];
 

@@ -11,6 +11,7 @@ import { useVisibleItemCount } from '../../hooks/useVisibleItemCount';
 import type { TagId } from '../../types/tag.type';
 
 import ReviewActionMenu from './ReviewActionMenu';
+import ReviewerAvatar from './ReviewerAvatar';
 import TagChip from './TagChip';
 
 const CARD_DESIGN_WIDTH = 342;
@@ -216,15 +217,7 @@ function CourseReviewCard({
 
         <div className="flex items-center justify-between px-4 pt-3">
           <div className="flex min-w-0 items-center gap-2">
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt={`${nickname} 프로필`}
-                className="h-7 w-7 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <div className="h-7 w-7 shrink-0 rounded-full bg-[#E4E4E4]" />
-            )}
+            <ReviewerAvatar src={profileImage} size={28} />
 
             <div className="min-w-0">
               <p className="truncate text-[12px] leading-none">
