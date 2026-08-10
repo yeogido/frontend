@@ -11,6 +11,7 @@ import { getCompanionIcon } from '../../utils/companionIcon';
 import ReviewActionMenu from './ReviewActionMenu';
 import TagChip, { type TagType } from './TagChip';
 
+
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
 // 개별 vw 계산 대신 useScaleFrame이 전체를 한 번에 scale한다.
 const CARD_DESIGN_WIDTH = 342;

@@ -1,4 +1,20 @@
 import { apiClient } from './common';
+import type { DayOfWeek } from '../utils/operatingHours';
+
+export interface OperatingDay {
+  dayOfWeek: DayOfWeek;
+  /** HH:mm */
+  openTime: string;
+  /** HH:mm */
+  closeTime: string;
+}
+
+export type TransportMode = 'WALK' | 'PUBLIC' | 'CAR';
+
+export interface TimeFromPrevious {
+  transportMode: TransportMode;
+  durationMinutes: number;
+}
 
 export type CourseItem =
   | {
@@ -8,23 +24,28 @@ export type CourseItem =
       /** 라이브 스펙에서 PLACE의 선택 필드 — 모르면 아예 보내지 않는다(빈 문자열 금지). */
       categoryGroupCode?: string;
       name: string;
-      roadAddress: string;
-      lotAddress: string;
+      roadAddress: string | null;
+      lotAddress: string | null;
       latitude: number;
       longitude: number;
       imageKey: string | null;
+      /** 장소 영업시간 — 모르면 아예 보내지 않는다(기존 값 유지). */
+      operatingDays?: OperatingDay[];
+      /** 이전 코스 아이템과의 이동 소요시간 — 첫 번째 아이템에는 없다. */
+      timesFromPrevious?: TimeFromPrevious[];
     }
-  | { order: number; type: 'CONTENT'; contentId: number };
+  | {
+      order: number;
+      type: 'CONTENT';
+      contentId: number;
+      timesFromPrevious?: TimeFromPrevious[];
+    };
 
 export interface CreateLocalRecommendationRequest {
   title: string;
   regionId: number;
   description: string;
-  durationType:
-    | 'DAY_TRIP'
-    | 'ONE_NIGHT'
-    | 'TWO_NIGHT'
-    | 'THREE_PLUS';
+  durationType: 'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
   transportType: 'WALK' | 'PUBLIC' | 'CAR';
   companionType: 'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
   monthStart: number;

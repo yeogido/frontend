@@ -26,6 +26,9 @@ export interface ReviewCourseSummary {
   thumbnailUrl: string;
   durationType: string;
   transportType: string;
+  companionType: string;
+  /** 해시태그 이름 목록. contentTags의 toContentTagIds로 칩 ID로 바꾼다. */
+  tags: string[];
   isLiked: boolean;
 }
 
@@ -35,6 +38,8 @@ export interface ReviewDetail {
   content: string;
   rating: number;
   createdAt: string;
+  /** 비로그인 요청에는 false로 온다. */
+  isMine: boolean;
   images: ReviewImage[];
   author: ReviewAuthor;
   course: ReviewCourseSummary;
@@ -73,6 +78,8 @@ export interface CourseReviewPreview {
   author: ReviewAuthor;
   rating: number;
   content: string;
+  /** 비로그인 요청에는 false로 온다. */
+  isMine: boolean;
   images: ReviewImage[];
   createdAt: string;
 }

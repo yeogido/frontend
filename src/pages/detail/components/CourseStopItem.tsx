@@ -1,8 +1,17 @@
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { FaHeart as FilledHeartIcon } from 'react-icons/fa6';
+import { IoChevronDown } from 'react-icons/io5';
+import carIcon from '../../../assets/icons/transport-car.svg';
+import operatingStatusClockIcon from '../../../assets/icons/operating-status-clock.svg';
+import transitIcon from '../../../assets/icons/transport-transit.svg';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import {
+  formatOperatingDay,
+  formatTodayOperatingHours,
+  isOperatingNow,
+} from '../../../utils/operatingHours';
 import type { CourseStop } from '../types/courseDetail';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -23,9 +32,19 @@ const META_MARGIN_TOP = 2;
 const META_FONT_SIZE = 11;
 const META_LINE_HEIGHT = 16;
 const TRANSPORT_MARGIN_TOP = 4;
+const TRANSPORT_GAP = 10;
+const TRANSPORT_ICON_GAP = 4;
+const TRANSPORT_ICON_SIZE = 12;
+const HOURS_STATUS_ICON_SIZE = 12;
+const HOURS_STATUS_ICON_GAP = 5;
+const HOURS_STATUS_TO_CHEVRON_GAP = 6;
+const HOURS_CHEVRON_SIZE = 10;
+const HOURS_LIST_MARGIN_TOP = 2;
 const LIKE_BUTTON_MARGIN_TOP = 2;
 const LIKE_BUTTON_SIZE = 24;
 const LIKE_ICON_SIZE = 18;
+const OPEN_STATUS_LABEL = '영업 중';
+const CLOSED_STATUS_LABEL = '영업 종료';
 
 export interface CourseStopItemProps {
   readonly stop: CourseStop;
@@ -33,6 +52,8 @@ export interface CourseStopItemProps {
   readonly onLikeToggle: () => void;
   readonly isLikeAvailable?: boolean;
   readonly isLikePending?: boolean;
+  /** 있으면 영업시간이 드롭다운(영업중/영업종료 + 요일별 시간)으로 표시된다. */
+  /** 바로 이전 코스 아이템과의 이동 소요시간. 첫 번째 아이템은 비교 대상이 없어 항상 undefined다. */
 }
 
 export function CourseStopItem({
@@ -43,9 +64,26 @@ export function CourseStopItem({
   isLikePending = false,
 }: CourseStopItemProps) {
   const scale = useGlobalScale();
-  const [transportType, ...transportRest] = (stop.transportToNext ?? '').split(
-    ' '
-  );
+  const [isHoursOpen, setIsHoursOpen] = useState(false);
+  const operatingDays = stop.operatingDays ?? [];
+  const canExpandHours = operatingDays.length > 0;
+  // 요일별 영업시간을 파싱할 수 있으면 현재 요일·시각 기준으로 직접 계산하고,
+  // 파싱할 수 없는 경우(휴무 표기만 있거나 형식이 다른 경우)에만 구글이
+  // 내려준 openNow 값으로 대체한다.
+  const isOpenNow = isOperatingNow(operatingDays);
+  const hoursStatusLabel =
+    isOpenNow === undefined
+      ? undefined
+      : isOpenNow
+        ? OPEN_STATUS_LABEL
+        : CLOSED_STATUS_LABEL;
+  const todayHours = formatTodayOperatingHours(operatingDays);
+  const carDurationMinutes = stop.timesFromPrevious.find(
+    (time) => time.transportMode === 'CAR'
+  )?.durationMinutes;
+  const transitDurationMinutes = stop.timesFromPrevious.find(
+    (time) => time.transportMode === 'PUBLIC'
+  )?.durationMinutes;
   const isActive = stop.liked;
   const location = stop.location;
   const canRoute = isValidGeoPoint(location);
@@ -138,30 +176,141 @@ export function CourseStopItem({
         >
           {stop.address}
         </p>
-        {stop.hours && (
-          <p
-            className="text-gray-3 truncate font-sans"
-            style={{
-              fontSize: META_FONT_SIZE * scale,
-              lineHeight: `${META_LINE_HEIGHT * scale}px`,
-            }}
-          >
-            {stop.hours}
-          </p>
-        )}
+        {(todayHours || stop.placeId !== undefined) &&
+          (canExpandHours ? (
+            <div>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsHoursOpen((open) => !open);
+                }}
+                onKeyDown={(event) => event.stopPropagation()}
+                aria-expanded={isHoursOpen}
+                className="text-gray-3 flex max-w-full items-center"
+                style={{ gap: HOURS_STATUS_TO_CHEVRON_GAP * scale }}
+              >
+                <span
+                  className="flex min-w-0 items-center"
+                  style={{ gap: HOURS_STATUS_ICON_GAP * scale }}
+                >
+                  {isHoursOpen && hoursStatusLabel ? (
+                    <img
+                      src={operatingStatusClockIcon}
+                      alt=""
+                      aria-hidden="true"
+                      style={{
+                        width: HOURS_STATUS_ICON_SIZE * scale,
+                        height: HOURS_STATUS_ICON_SIZE * scale,
+                      }}
+                    />
+                  ) : null}
+                  <span
+                    className="truncate font-sans"
+                    style={{
+                      fontSize: META_FONT_SIZE * scale,
+                      lineHeight: `${META_LINE_HEIGHT * scale}px`,
+                    }}
+                  >
+                    {isHoursOpen && hoursStatusLabel
+                      ? hoursStatusLabel
+                      : (todayHours ?? '영업시간 정보 없음')}
+                  </span>
+                </span>
+                <IoChevronDown
+                  aria-hidden="true"
+                  className={`shrink-0 transition-transform ${isHoursOpen ? 'rotate-180' : ''}`}
+                  style={{ fontSize: HOURS_CHEVRON_SIZE * scale }}
+                />
+              </button>
 
-        {stop.transportToNext && (
-          <p
-            className="text-gray-4 truncate font-sans"
+              {isHoursOpen && (
+                <ul style={{ marginTop: HOURS_LIST_MARGIN_TOP * scale }}>
+                  {operatingDays.map((operatingDay) => (
+                    <li
+                      key={operatingDay.dayOfWeek}
+                      className="text-gray-3 font-sans"
+                      style={{
+                        fontSize: META_FONT_SIZE * scale,
+                        lineHeight: `${META_LINE_HEIGHT * scale}px`,
+                      }}
+                    >
+                      {formatOperatingDay(operatingDay)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <p
+              className="text-gray-3 truncate font-sans"
+              style={{
+                fontSize: META_FONT_SIZE * scale,
+                lineHeight: `${META_LINE_HEIGHT * scale}px`,
+              }}
+            >
+              {todayHours ?? '영업시간 정보 없음'}
+            </p>
+          ))}
+
+        {(carDurationMinutes !== undefined ||
+          transitDurationMinutes !== undefined) && (
+          <div
+            className="text-gray-4 flex items-center"
             style={{
               marginTop: TRANSPORT_MARGIN_TOP * scale,
-              fontSize: META_FONT_SIZE * scale,
-              lineHeight: `${META_LINE_HEIGHT * scale}px`,
+              gap: TRANSPORT_GAP * scale,
             }}
           >
-            <span className="text-gray-4 font-semibold">{transportType}</span>{' '}
-            {transportRest.join(' ')}
-          </p>
+            {carDurationMinutes !== undefined && (
+              <span
+                className="flex items-center"
+                style={{ gap: TRANSPORT_ICON_GAP * scale }}
+              >
+                <img
+                  src={carIcon}
+                  alt="자동차"
+                  style={{
+                    width: TRANSPORT_ICON_SIZE * scale,
+                    height: TRANSPORT_ICON_SIZE * scale,
+                  }}
+                />
+                <span
+                  className="font-sans"
+                  style={{
+                    fontSize: META_FONT_SIZE * scale,
+                    lineHeight: `${META_LINE_HEIGHT * scale}px`,
+                  }}
+                >
+                  {carDurationMinutes}분
+                </span>
+              </span>
+            )}
+            {transitDurationMinutes !== undefined && (
+              <span
+                className="flex items-center"
+                style={{ gap: TRANSPORT_ICON_GAP * scale }}
+              >
+                <img
+                  src={transitIcon}
+                  alt="대중교통"
+                  style={{
+                    width: TRANSPORT_ICON_SIZE * scale,
+                    height: TRANSPORT_ICON_SIZE * scale,
+                  }}
+                />
+                <span
+                  className="font-sans"
+                  style={{
+                    fontSize: META_FONT_SIZE * scale,
+                    lineHeight: `${META_LINE_HEIGHT * scale}px`,
+                  }}
+                >
+                  {transitDurationMinutes}분
+                </span>
+              </span>
+            )}
+          </div>
         )}
       </div>
 

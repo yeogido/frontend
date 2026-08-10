@@ -50,8 +50,14 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const savedHashtagIds = useLocalRecommendationStore(
     (state) => state.draft.hashtagIds
   );
+  const savedCoverImageKey = useLocalRecommendationStore(
+    (state) => state.draft.coverImageKey
+  );
   const savedCoverImage = useLocalRecommendationStore(
     (state) => state.pendingImages[LOCAL_RECOMMENDATION_COVER_IMAGE_ID]
+  );
+  const existingThumbnailUrl = useLocalRecommendationStore(
+    (state) => state.draft.existingThumbnailUrl
   );
   const setPendingImage = useLocalRecommendationStore(
     (state) => state.setPendingImage
@@ -59,20 +65,27 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const removePendingImage = useLocalRecommendationStore(
     (state) => state.removePendingImage
   );
+  const clearThumbnail = useLocalRecommendationStore(
+    (state) => state.clearThumbnail
+  );
   const imageRecoveryRequired = useLocalRecommendationStore(
     (state) => state.imageRecoveryRequired
   );
   const hasPendingImages = useLocalRecommendationStore(
     (state) => Object.keys(state.pendingImages).length > 0
   );
-  const [photo, setPhoto] = useState<PhotoSelection | null>(() =>
-    savedCoverImage
-      ? {
-          file: savedCoverImage.originalFile,
-          previewUrl: savedCoverImage.previewUrl,
-        }
-      : null
-  );
+  const [photo, setPhoto] = useState<PhotoSelection | null>(() => {
+    if (savedCoverImage) {
+      return {
+        file: savedCoverImage.originalFile,
+        previewUrl: savedCoverImage.previewUrl,
+      };
+    }
+    // 새로 고른 파일이 없으면(수정 진입 직후) 기존 대표 사진을 보여준다.
+    return existingThumbnailUrl
+      ? { file: null, previewUrl: existingThumbnailUrl }
+      : null;
+  });
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(
     () => new Set(savedTagIds as TagId[])
   );
@@ -104,6 +117,9 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const handlePhotoChange = (file: File | null) => {
     if (!file) {
       removePendingImage(LOCAL_RECOMMENDATION_COVER_IMAGE_ID);
+      // 기존 대표 사진을 보여주고 있었다면 재사용 fallback도 함께 지운다 —
+      // 안 그러면 지운 뒤에도 제출 시 기존 key를 그대로 다시 쓰게 된다.
+      clearThumbnail();
       setPhoto(null);
       return;
     }
@@ -122,7 +138,9 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
     setTagSelection({
       tagIds: Array.from(result.selectedTagIds),
       hashtagIds: savedHashtagIds,
-      coverImageKey: null,
+      // coverImageKey는 사진 선택/삭제 핸들러에서만 바꾼다 — 여기서는
+      // 기존 값을 그대로 넘겨 수정 진입 시 prefill된 값이 안 지워지게 한다.
+      coverImageKey: savedCoverImageKey,
     });
     setLimitMessage(
       result.limitReached ? '키워드는 최대 5개까지 선택할 수 있어요.' : ''
@@ -140,9 +158,8 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
     setSubmitError('');
 
     try {
-      const loadedHashtags = await (
-        hashtagLoadPromiseRef.current ?? Promise.resolve(hashtags)
-      );
+      const loadedHashtags = await (hashtagLoadPromiseRef.current ??
+        Promise.resolve(hashtags));
       const hashtagIds = mapTagIdsToHashtagIds(
         Array.from(selectedTagIds),
         loadedHashtags,
@@ -152,7 +169,9 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
       setTagSelection({
         tagIds: Array.from(selectedTagIds),
         hashtagIds,
-        coverImageKey: null,
+        // coverImageKey는 사진 선택/삭제 핸들러에서만 바꾼다 — 여기서는
+        // 기존 값을 그대로 넘겨 수정 진입 시 prefill된 값이 안 지워지게 한다.
+        coverImageKey: savedCoverImageKey,
       });
 
       completeTagSelection({
@@ -199,7 +218,8 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
 
         {shouldShowImageRecoveryMessage ? (
           <p className="text-main-5 mt-2 text-sm" role="alert">
-            새로고침으로 사진이 사라졌습니다. 대표 사진과 장소 사진을 다시 등록해 주세요.
+            새로고침으로 사진이 사라졌습니다. 대표 사진과 장소 사진을 다시
+            등록해 주세요.
           </p>
         ) : null}
         <RepresentativePhotoSection

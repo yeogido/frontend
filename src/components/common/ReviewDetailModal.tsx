@@ -5,6 +5,8 @@ import closeRounded from '../../assets/icons/close-rounded.svg';
 import darkStar from '../../assets/icons/dark star.svg';
 import star from '../../assets/icons/star.svg';
 
+import ReviewerAvatar from './ReviewerAvatar';
+
 const PHOTO_SIZE = 129;
 const PHOTO_GAP = 12;
 const STAR_SIZE = 14;
@@ -179,15 +181,7 @@ function ReviewDetailModal({
         </p>
 
         <div className="mt-3 flex min-h-[30px] items-center gap-2">
-          {profileImage ? (
-            <img
-              src={profileImage}
-              alt={`${nickname} 프로필`}
-              className="size-7 shrink-0 rounded-full object-cover"
-            />
-          ) : (
-            <div className="size-7 shrink-0 rounded-full bg-[#e4e4e4]" />
-          )}
+          <ReviewerAvatar src={profileImage} size={28} />
 
           <div className="min-w-0">
             <p className="truncate text-[12px] leading-none">

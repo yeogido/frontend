@@ -4,7 +4,6 @@ import {
   ReviewCard,
   ReviewCardSkeleton,
   ReviewDeleteDialog,
-  ReviewDetailModal,
   ReviewEditModal,
   SectionHeader,
 } from '../../../components/common';
@@ -12,13 +11,11 @@ import { useNavigate } from 'react-router-dom';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
-  useMyReviewIds,
   useRecentReviews,
   useReviewDelete,
-  useReviewDetailModal,
   useReviewEdit,
 } from '../../../hooks/useReviews';
-import { buildCourseDetailPath } from '../../../utils/routes';
+import { useOpenReviewInCourseDetail } from '../../../hooks/useOpenReviewInCourseDetail';
 import { toReviewCardProps } from '../../../utils/reviewCard';
 
 // Figma 390 디자인 기준 리터럴 px
@@ -32,21 +29,23 @@ const DOT_SIZE = 4;
 const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
 const ERROR_TEXT_SIZE = 13;
+/** 캐러셀에 그리는 후기 수. */
+const HOME_REVIEW_COUNT = 4;
 
 function ReviewSection() {
   const { data, isPending, isError } = useRecentReviews();
-  const myReviewIds = useMyReviewIds();
-  const reviews = (data?.items ?? []).map((review) =>
-    toReviewCardProps(review, myReviewIds)
-  );
+  // 홈은 사진이 있는 후기만 보여준다. 사진 없는 후기는 코스 상세·후기
+  // 전체보기에서 본문만 그리는 카드로 나온다.
+  const reviews = (data?.items ?? [])
+    .map(toReviewCardProps)
+    .filter((review) => review.images.length > 0)
+    .slice(0, HOME_REVIEW_COUNT);
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
-  const { openedReview, openReview, closeReview } =
-    useReviewDetailModal(reviews);
   const navigate = useNavigate();
   const scale = useGlobalScale();
-  const goToCourseDetail = (review: { courseType: string; courseId: number }) =>
-    navigate(buildCourseDetailPath(review.courseType, review.courseId));
+
+  const goToCourseDetail = useOpenReviewInCourseDetail();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -161,7 +160,7 @@ function ReviewSection() {
                   isMine={review.isMine}
                   onDeleteClick={() => requestDelete(review.id)}
                   onEditClick={() => requestEdit(review)}
-                  onClick={() => openReview(review.id)}
+                  onClick={() => goToCourseDetail(review)}
                 />
               </div>
             ))}
@@ -197,17 +196,9 @@ function ReviewSection() {
       )}
 
       {/*
-        카드를 누르면 후기 상세가 열리고, 코스로는 이 모달을 거쳐 간다.
         홈 후기는 좌우 스와이프 캐러셀이라 useCardTap이 10px 넘는 이동을
-        탭에서 제외한다(스와이프 중에는 모달이 열리지 않는다).
+        탭에서 제외한다(스와이프 중에는 코스 상세로 넘어가지 않는다).
       */}
-      <ReviewDetailModal
-        review={openedReview}
-        courseTitle={openedReview?.courseTitle}
-        onClose={closeReview}
-        onGoToCourse={openedReview && (() => goToCourseDetail(openedReview))}
-      />
-
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
 
       <ReviewDeleteDialog {...dialogProps} />

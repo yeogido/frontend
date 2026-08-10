@@ -1,5 +1,8 @@
 import {
+  forwardRef,
+  useCallback,
   useEffect,
+  useImperativeHandle,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -12,6 +15,10 @@ import { getApiErrorMessage } from '../../../apis/common';
 import { createPresignedUrl, uploadFileToPresignedUrl } from '../../../apis/files.api';
 import { useToast } from '../../../components/toast';
 import { ProfilePhotoPreview, type ProfilePhoto } from './ProfilePhotoPreview';
+import {
+  canSavePendingProfilePhoto,
+  PROFILE_PHOTO_BACKGROUND_COLOR,
+} from './profilePhotoSave';
 
 const PHOTO_FRAME_SIZE = 120;
 const MIN_ZOOM = 1;
@@ -30,7 +37,10 @@ interface ProfilePhotoEditorProps {
   readonly onPhotoChange?: () => void;
   // objectKey 업로드가 성공할 때마다 호출된다. 실제 계정에 반영하는 건
   // 폼의 다른 필드와 동일하게 "프로필 저장" 시점(PATCH)이다.
-  readonly onPhotoUploaded?: (objectKey: string) => void;
+  // 반환값을 await한다 — 호출부가 Promise를 돌려주면(예: PATCH까지
+  // 이어서 저장) 그게 끝나야 "확정"으로 반영한다. reject되면 업로드
+  // 실패와 동일하게 재시도 가능한 상태로 되돌린다.
+  readonly onPhotoUploaded?: (objectKey: string) => void | Promise<void>;
   // 사진을 고른 뒤 구도 확정(업로드 성공)까지 아직 끝나지 않은 상태 전체를
   // 알린다. 저장 버튼은 이 동안 비활성화해야 안전하다 — 그렇지 않으면
   // 빈 payload로 저장되면서 사진 변경이 조용히 사라질 수 있다.
@@ -38,19 +48,30 @@ interface ProfilePhotoEditorProps {
   readonly initialPhotoUrl?: string | null;
 }
 
-export function ProfilePhotoEditor({
+export interface ProfilePhotoEditorHandle {
+  commitPendingPhoto: () => Promise<string | null>;
+}
+
+export const ProfilePhotoEditor = forwardRef<
+  ProfilePhotoEditorHandle,
+  ProfilePhotoEditorProps
+>(function ProfilePhotoEditor({
   scale,
   onPhotoChange,
   onPhotoUploaded,
   onPendingChange,
   initialPhotoUrl,
-}: ProfilePhotoEditorProps) {
+}, ref) {
   const { showToast } = useToast();
   const [savedPhoto, setSavedPhoto] = useState<ProfilePhoto | null>(null);
   const [draftPhoto, setDraftPhoto] = useState<ProfilePhoto | null>(null);
   const [isTransforming, setIsTransforming] = useState(false);
   const [isAdjustmentEnabled, setIsAdjustmentEnabled] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  // 파일 읽기/원본 비율 계산(첫 await 전)도 큰 파일에서는 시간이 걸려,
+  // 이 구간에도 저장 버튼이 눌릴 수 있다. isTransforming/isUploading과
+  // 별개로 이 구간 자체를 pending으로 알린다.
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // 파일 선택과 구도 확정(commit) 시도를 모두 하나의 시퀀스로 취급한다.
   // 새 선택이나 새 확정 시도가 시작되면 값을 올려서, 그 이전 비동기
@@ -64,18 +85,32 @@ export function ProfilePhotoEditor({
     positionY: number;
   } | null>(null);
   const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
-  const hasSeededInitialPhotoRef = useRef(false);
+  // "마지막으로 반영한 URL"을 들고 있어서, initialPhotoUrl이 다른 값으로
+  // 바뀔 때마다(예: 업로드 후 쿼리가 refetch되어 서버 URL이 갱신될 때)
+  // 다시 반영할 수 있다. StrictMode의 effect 이중 실행(mount→cleanup→
+  // mount)에서 취소된 시도가 "이미 반영함"으로 잘못 기록되지 않도록,
+  // setSavedPhoto를 실제로 호출한 뒤에만(= .then 콜백 안에서) 갱신한다.
+  const lastSeededPhotoUrlRef = useRef<string | null>(null);
+  // 사용자가 사진을 한 번이라도 직접 고르면(handleFileChange) true로
+  // 고정한다. 그 이후로는 initialPhotoUrl이 나중에 바뀌어도(예: 서버
+  // 값이 아직 예전 사진일 때) 이 effect가 로컬 편집 결과를 되돌리지
+  // 않는다 — commitPhoto가 끝나며 isTransforming/isUploading이 바뀌는
+  // 순간 이 effect가 재실행되어 방금 확정한 사진을 예전 값으로 덮어쓰던
+  // 문제를 막는다.
+  const hasUserInteractedRef = useRef(false);
   const photo = draftPhoto ?? savedPhoto;
 
   useEffect(() => {
-    if (!initialPhotoUrl || hasSeededInitialPhotoRef.current) return;
+    if (!initialPhotoUrl) return;
+    if (hasUserInteractedRef.current) return;
+    if (initialPhotoUrl === lastSeededPhotoUrlRef.current) return;
 
-    hasSeededInitialPhotoRef.current = true;
     let isCancelled = false;
 
     void getImageAspectRatio(initialPhotoUrl).then((aspectRatio) => {
       if (isCancelled) return;
 
+      lastSeededPhotoUrlRef.current = initialPhotoUrl;
       setSavedPhoto({
         src: initialPhotoUrl,
         zoom: MIN_ZOOM,
@@ -95,8 +130,8 @@ export function ProfilePhotoEditor({
   // 아니다. 부모(프로필 수정 화면)가 이 동안 저장 버튼을 막을 수 있도록
   // 알려준다.
   useEffect(() => {
-    onPendingChange?.(isTransforming || isUploading);
-  }, [isTransforming, isUploading, onPendingChange]);
+    onPendingChange?.(isUploading || isProcessingFile);
+  }, [isTransforming, isUploading, isProcessingFile, onPendingChange]);
 
   const updateTransform = (update: (current: ProfilePhoto) => ProfilePhoto) => {
     setDraftPhoto((current) => {
@@ -109,13 +144,15 @@ export function ProfilePhotoEditor({
   const handleFileChange = async (file: File | undefined) => {
     if (!file || !file.type.startsWith('image/')) return;
 
+    hasUserInteractedRef.current = true;
     const attemptId = ++attemptIdRef.current;
+    setIsProcessingFile(true);
 
     try {
       const src = await readImageFile(file);
       const aspectRatio = await getImageAspectRatio(src);
 
-      if (attemptId !== attemptIdRef.current) return;
+      if (attemptId !== attemptIdRef.current) return null;
 
       setDraftPhoto({
         src,
@@ -130,13 +167,17 @@ export function ProfilePhotoEditor({
       setIsAdjustmentEnabled(true);
       onPhotoChange?.();
     } catch (error) {
-      if (attemptId !== attemptIdRef.current) return;
+      if (attemptId !== attemptIdRef.current) return null;
 
       showToast(getApiErrorMessage(error, PHOTO_LOAD_ERROR_MESSAGE));
+    } finally {
+      if (attemptId === attemptIdRef.current) {
+        setIsProcessingFile(false);
+      }
     }
   };
 
-  const commitPhoto = async (committedPhoto: ProfilePhoto) => {
+  const commitPhoto = useCallback(async (committedPhoto: ProfilePhoto) => {
     const attemptId = ++attemptIdRef.current;
 
     setIsTransforming(false);
@@ -146,8 +187,16 @@ export function ProfilePhotoEditor({
       // 업로드 연동이 없는 화면(조회 화면)에서는 로컬 미리보기만 확정한다.
       setSavedPhoto(committedPhoto);
       setDraftPhoto(null);
-      return;
+      return null;
     }
+
+    // 구도 조정 자체를 잃지 않도록 조정 화면으로 되돌린다 — 재선택부터
+    // 다시 시키지 않고 체크 버튼만 다시 누르면 재시도할 수 있게 한다.
+    const rollbackToRetry = () => {
+      setDraftPhoto(committedPhoto);
+      setIsTransforming(true);
+      setIsAdjustmentEnabled(true);
+    };
 
     setIsUploading(true);
 
@@ -163,27 +212,59 @@ export function ProfilePhotoEditor({
         AVATAR_EXPORT_MIME
       );
 
-      if (attemptId !== attemptIdRef.current) return;
+      if (attemptId !== attemptIdRef.current) return null;
 
-      // 업로드가 실제로 성공한 뒤에야 "확정된" 사진으로 반영한다.
+      try {
+        // 호출부가 Promise를 돌려주면(예: PATCH까지 이어서 저장) 그게
+        // 끝나야 진짜 "확정"이다. 실패하면 호출부가 이미 자신만의 에러
+        // 토스트를 띄웠다고 보고, 여기서는 추가 토스트 없이 재시도
+        // 가능한 상태로만 되돌린다.
+        await onPhotoUploaded(presignedUrl.objectKey);
+      } catch {
+        if (attemptId === attemptIdRef.current) rollbackToRetry();
+        return null;
+      }
+
+      if (attemptId !== attemptIdRef.current) return null;
+
+      // 업로드와 호출부의 저장까지 실제로 성공한 뒤에야 "확정된" 사진으로
+      // 반영한다.
       setSavedPhoto(committedPhoto);
       setDraftPhoto(null);
-      onPhotoUploaded(presignedUrl.objectKey);
+      return presignedUrl.objectKey;
     } catch (error) {
-      if (attemptId !== attemptIdRef.current) return;
+      if (attemptId !== attemptIdRef.current) return null;
 
       showToast(getApiErrorMessage(error, UPLOAD_ERROR_MESSAGE));
-      // 구도 조정 자체를 잃지 않도록 조정 화면으로 되돌린다 — 재선택부터
-      // 다시 시키지 않고 체크 버튼만 다시 누르면 재시도할 수 있게 한다.
-      setDraftPhoto(committedPhoto);
-      setIsTransforming(true);
-      setIsAdjustmentEnabled(true);
+      rollbackToRetry();
+      return null;
     } finally {
       if (attemptId === attemptIdRef.current) {
         setIsUploading(false);
       }
     }
-  };
+  }, [onPhotoUploaded, showToast]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      commitPendingPhoto: async () => {
+        if (
+          !canSavePendingProfilePhoto({
+            hasPendingPhoto: Boolean(draftPhoto),
+            isProcessingFile,
+            isUploading,
+          }) ||
+          !draftPhoto
+        ) {
+          return null;
+        }
+
+        return commitPhoto(draftPhoto);
+      },
+    }),
+    [commitPhoto, draftPhoto, isProcessingFile, isUploading]
+  );
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!photo || !isAdjustmentEnabled) return;
@@ -269,6 +350,8 @@ export function ProfilePhotoEditor({
     fileInputRef.current?.click();
   };
 
+  const isBusy = isUploading || isProcessingFile;
+
   return (
     <div className="relative">
       <ProfilePhotoPreview
@@ -279,6 +362,7 @@ export function ProfilePhotoEditor({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onWheel={handleWheel}
+        isProcessingFile={isProcessingFile}
       />
       <input
         ref={fileInputRef}
@@ -293,10 +377,12 @@ export function ProfilePhotoEditor({
       <button
         type="button"
         onClick={handleActionClick}
-        disabled={isUploading}
+        disabled={isBusy}
         aria-label={
-          isUploading
-            ? '프로필 사진 업로드 중'
+          isBusy
+            ? isUploading
+              ? '프로필 사진 업로드 중'
+              : '프로필 사진 처리 중'
             : isTransforming
               ? '프로필 사진 편집 저장'
               : '프로필 사진 수정'
@@ -304,7 +390,7 @@ export function ProfilePhotoEditor({
         className="absolute right-0 bottom-0 flex items-center justify-center rounded-full bg-[#f9f9f9]/80 disabled:opacity-70"
         style={{ width: 30 * scale, height: 30 * scale }}
       >
-        {isUploading ? (
+        {isBusy ? (
           <img
             src={loadingIcon}
             alt=""
@@ -325,7 +411,7 @@ export function ProfilePhotoEditor({
       </button>
     </div>
   );
-}
+});
 
 function clampPhotoPosition(photo: ProfilePhoto) {
   const aspectRatio = photo.aspectRatio || 1;
@@ -397,6 +483,8 @@ function createCroppedPhotoFile(photo: ProfilePhoto): Promise<File> {
       }
 
       const renderScale = AVATAR_EXPORT_SIZE / PHOTO_FRAME_SIZE;
+      context.fillStyle = PROFILE_PHOTO_BACKGROUND_COLOR;
+      context.fillRect(0, 0, AVATAR_EXPORT_SIZE, AVATAR_EXPORT_SIZE);
       const aspectRatio = photo.aspectRatio || 1;
       const baseWidth =
         aspectRatio >= 1

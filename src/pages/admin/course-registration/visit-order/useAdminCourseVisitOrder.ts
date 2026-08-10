@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../../../apis/common';
-import { updateCourse } from '../../../../apis/courses';
+import { getCourseDetail, updateCourse } from '../../../../apis/courses';
 import { fetchHashtags } from '../../../../apis/hashtags';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
 import { useToast } from '../../../../components/toast';
@@ -20,6 +20,10 @@ import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
+import {
+  fetchVisitEventTravelData,
+  type VisitEventTravelData,
+} from '../../../local-recommendation/visit-order-selection/useVisitEventTravelData';
 import { mapTagIdsToHashtagIds } from '../../../local-recommendation/tag-selection/hashtagMapping';
 import { VISIT_EVENT_PLACE_ID_PREFIX } from '../types';
 import {
@@ -181,6 +185,12 @@ export function useAdminCourseVisitOrder() {
             }
           : event
       );
+      let travelData: VisitEventTravelData | undefined;
+      try {
+        travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
+      } catch {
+        travelData = undefined;
+      }
 
       const hashtags = await fetchHashtags();
       const hashtagIds = mapTagIdsToHashtagIds(
@@ -198,6 +208,7 @@ export function useAdminCourseVisitOrder() {
           visitEvents: eventsWithImageKeys,
           thumbnailKey,
           hashtagIds,
+          travelData,
         });
 
         if (!updatePayload) {
@@ -215,6 +226,7 @@ export function useAdminCourseVisitOrder() {
         visitEvents: eventsWithImageKeys,
         thumbnailKey,
         hashtagIds,
+        travelData,
       });
 
       if (!payload) {
@@ -223,7 +235,7 @@ export function useAdminCourseVisitOrder() {
 
       return createLocalRecommendation(payload);
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
       queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
@@ -231,8 +243,21 @@ export function useAdminCourseVisitOrder() {
         queryClient.invalidateQueries({
           queryKey: ['courseDetail', editingCourseId],
         });
+        // invalidateQueries는 그 시점에 마운트돼서 보고 있는(active) 쿼리만
+        // 즉시 다시 불러온다 — 지금은 아직 상세 화면으로 이동하기 전이라
+        // 비활성 상태라 무효화만 되고 실제 재요청은 다음 마운트로 미뤄진다.
+        // 그 요청이 이동 직후 화면이 그려지는 타이밍과 겹치면 잠깐 예전
+        // 데이터가 보였다가 바뀌거나(연결이 느리면) 아예 안 바뀐 채로
+        // 남는 것처럼 보일 수 있어, 이동하기 전에 새 데이터를 직접
+        // 받아서 캐시에 채워 넣는다.
+        await queryClient.fetchQuery({
+          queryKey: ['yeogidoCourseDetail', editingCourseId],
+          queryFn: () => getCourseDetail(editingCourseId),
+        });
       }
-      showToast(editingCourseId ? '코스를 수정했어요.' : '코스가 등록되었어요.');
+      showToast(
+        editingCourseId ? '코스를 수정했어요.' : '코스가 등록되었어요.'
+      );
       // 여기서 reset()을 호출하면 region이 비워지면서 이 페이지의 가드
       // (useEffect: !region이면 region-selection으로 리다이렉트)가 먼저
       // 반응해 의도한 navigate보다 먼저 튕겨나가는 레이스가 생긴다

@@ -10,6 +10,7 @@ import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterL
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { toContentTagIds } from '../../../utils/contentTags';
 
 import { yeogidoCourseFilterGroups } from '../constants/filters';
@@ -61,8 +62,11 @@ const companionTypeByLabel: Record<string, CourseCompanionType | undefined> = {
 
 const sortByLabel: Record<string, CourseSort> = {
   추천순: 'RECOMMEND',
+  인기순: 'POPULAR',
+  최신순: 'LATEST',
   저장순: 'SAVED',
   후기순: 'REVIEW',
+  거리순: 'DISTANCE',
 };
 
 const durationLabelByType: Record<CourseDurationType, string> = {
@@ -88,6 +92,9 @@ function YeogidoCoursePopularPage() {
     handleFilterSelect,
   } = useYeogidoCourseFilters();
 
+  const isDistanceSort = selectedFilters.sort === '거리순';
+  const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
+
   const {
     data,
     fetchNextPage,
@@ -95,14 +102,21 @@ function YeogidoCoursePopularPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useCourses({
-    courseType: 'OFFICIAL',
-    transportType: transportTypeByLabel[selectedFilters.transport],
-    durationType: durationTypeByLabel[selectedFilters.duration],
-    companionType: companionTypeByLabel[selectedFilters.companion],
-    sort: sortByLabel[selectedFilters.sort],
-    size: 20,
-  });
+  } = useCourses(
+    {
+      courseType: 'OFFICIAL',
+      transportType: transportTypeByLabel[selectedFilters.transport],
+      durationType: durationTypeByLabel[selectedFilters.duration],
+      companionType: companionTypeByLabel[selectedFilters.companion],
+      sort: sortByLabel[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: 20,
+    },
+    { enabled: !isDistanceSort || distanceSortCoordinates !== null }
+  );
 
   const popularCourses = data?.pages.flatMap((page) => page.items) ?? [];
 

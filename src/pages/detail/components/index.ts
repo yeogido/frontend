@@ -3,6 +3,8 @@ export * from './DetailHeroSection';
 export * from './DetailReviewSection';
 export * from './DetailTitleSection';
 export * from './FavoriteButton';
+export { EditButton } from './EditButton';
+export type { EditButtonProps } from './EditButton';
 export * from './ReviewButton';
 export * from './ShareButton';
 export * from './CourseInfoBadgesCard';

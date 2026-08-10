@@ -41,10 +41,15 @@ export function usePlaceLikeMutation() {
     mutationFn: ({
       placeId,
       isLiked,
+      courseItemId,
     }: {
       placeId: number;
       isLiked: boolean;
-    }) => (isLiked ? removePlaceLike(placeId) : addPlaceLike(placeId)),
+      courseItemId: number;
+    }) =>
+      isLiked
+        ? removePlaceLike(placeId)
+        : addPlaceLike(placeId, 'COURSE_ITEM', courseItemId),
   });
 }
 

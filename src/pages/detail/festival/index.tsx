@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
+import type { NormalizedApiError } from '../../../apis/common';
 import CourseCard from '../../../components/common/CourseCard';
 import SectionHeader from '../../../components/common/SectionHeader';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
@@ -10,10 +12,13 @@ import {
   ResponsiveFullBleed,
   ResponsivePageShell,
 } from '../../../components/layout/ResponsivePageShell';
+import { useToast } from '../../../components/toast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
+import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import {
   formatTodayOpeningHours,
   usePlaceOpeningHours,
@@ -29,6 +34,7 @@ import {
   DetailPlaceCard,
   DetailStateGuard,
   DetailTitleSection,
+  EditButton,
   FavoriteButton,
   ShareButton,
   ShareToast,
@@ -50,11 +56,22 @@ const MAP_FALLBACK_HEIGHT = 342;
 const MAP_FALLBACK_RADIUS = 12;
 const MAP_FALLBACK_FONT_SIZE = 14;
 
+function isNormalizedApiError(error: unknown): error is NormalizedApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+  );
+}
+
 function FestivalDetailContent({ contentId }: { contentId: number }) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
   const { openLoginModal } = useLoginModal();
+  const { showToast } = useToast();
   const isValidContentId = Number.isInteger(contentId) && contentId > 0;
   const { data: content, error: queryError } =
     useCultureContentDetail(contentId);
@@ -62,9 +79,12 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     ? queryError
     : new Error('Invalid content ID');
   const { getLiked, toggleLike } = useContentLikeToggle();
+  const isAdmin = useIsAdmin();
+  const { editFestival } = useEditFestival();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null
   );
+  const placeLikeRequestInFlightRef = useRef(false);
   const [likedCourseIds, setLikedCourseIds] = useState<readonly number[]>([]);
   const { copied, isToastVisible, handleShare } = useShareToast();
 
@@ -124,12 +144,43 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     toggleLike(contentId, getLiked(contentId, festival.liked));
   };
 
-  const handlePlaceLikeToggle = () => {
-    runAuthAction(() =>
-      setPlaceLikedOverride(
-        (previous) => !(previous ?? festival?.place.liked ?? false)
-      )
-    );
+  const handlePlaceLikeToggle = async () => {
+    if (placeLikeRequestInFlightRef.current) return;
+
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    if (!festival) return;
+
+    const nextLiked = !(placeLikedOverride ?? festival.place.liked);
+    placeLikeRequestInFlightRef.current = true;
+    setPlaceLikedOverride(nextLiked);
+
+    try {
+      if (nextLiked) {
+        await addPlaceLike(
+          festival.place.id,
+          'CONTENT',
+          contentId
+        );
+      } else {
+        await removePlaceLike(festival.place.id);
+      }
+    } catch (error) {
+      setPlaceLikedOverride(!nextLiked);
+
+      if (isNormalizedApiError(error) && error.code === 'AUTH4011') {
+        clearAuth();
+        openLoginModal();
+        return;
+      }
+
+      showToast('좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      placeLikeRequestInFlightRef.current = false;
+    }
   };
 
   const handleCourseLikeToggle = (courseId: number) => {
@@ -161,11 +212,18 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                 imageUrl={festivalDetail.heroImageUrl}
                 title={festivalDetail.title}
                 rightAction={
-                  <FavoriteButton
-                    isActive={getLiked(contentId, festivalDetail.liked)}
-                    label={festivalDetail.title}
-                    onClick={handleFavoriteToggle}
-                  />
+                  isAdmin ? (
+                    <EditButton
+                      label={festivalDetail.title}
+                      onClick={() => void editFestival(contentId)}
+                    />
+                  ) : (
+                    <FavoriteButton
+                      isActive={getLiked(contentId, festivalDetail.liked)}
+                      label={festivalDetail.title}
+                      onClick={handleFavoriteToggle}
+                    />
+                  )
                 }
               />
             </ResponsiveFullBleed>
@@ -228,7 +286,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                 address={festivalDetail.place.address}
                 hours={festivalPlaceHours ?? '영업시간 정보 없음'}
                 liked={placeLikedOverride ?? festivalDetail.place.liked}
-                onLikeClick={handlePlaceLikeToggle}
+                onLikeClick={() => void handlePlaceLikeToggle()}
                 onClick={
                   isValidGeoPoint(festivalDetail.place.location)
                     ? () =>

@@ -1,4 +1,4 @@
-import ConfirmDialog from '../../../../components/common/ConfirmDialog';
+import ConfirmDialog from '../../../components/common/ConfirmDialog';
 
 export function UnsavedChangesDialog({
   isOpen,

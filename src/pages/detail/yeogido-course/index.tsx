@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import type { CourseDetailResult } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
@@ -31,7 +31,10 @@ function isNormalizedApiError(error: unknown): error is NormalizedApiError {
   );
 }
 
-function addPendingId(ids: ReadonlySet<number>, id: number): ReadonlySet<number> {
+function addPendingId(
+  ids: ReadonlySet<number>,
+  id: number
+): ReadonlySet<number> {
   return new Set(ids).add(id);
 }
 
@@ -46,6 +49,7 @@ function removePendingId(
 
 function YeogidoCourseDetailPage() {
   const { courseId: courseIdParam } = useParams<{ courseId?: string }>();
+  const navigate = useNavigate();
   const { openLoginModal } = useLoginModal();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const { showToast } = useToast();
@@ -133,11 +137,19 @@ function YeogidoCourseDetailPage() {
     }
   };
 
-  const handlePlaceLikeToggle = async (placeId: number, isLiked: boolean) => {
+  const handlePlaceLikeToggle = async (
+    placeId: number,
+    isLiked: boolean,
+    courseItemId: number
+  ) => {
     setPendingPlaceIds((ids) => addPendingId(ids, placeId));
 
     try {
-      const result = await placeLikeMutation.mutateAsync({ placeId, isLiked });
+      const result = await placeLikeMutation.mutateAsync({
+        placeId,
+        isLiked,
+        courseItemId,
+      });
       updateCachedCourseDetail((current) => ({
         ...current,
         courseItems: current.courseItems.map((item) =>
@@ -195,6 +207,7 @@ function YeogidoCourseDetailPage() {
           onContentLikeToggle={handleContentLikeToggle}
           pendingPlaceIds={pendingPlaceIds}
           pendingContentIds={pendingContentIds}
+          onBack={() => navigate('/yeogido-course')}
         />
       )}
     </DetailStateGuard>

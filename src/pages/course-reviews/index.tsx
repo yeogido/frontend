@@ -8,6 +8,7 @@ import {
   ReviewDeleteDialog,
   ReviewDetailModal,
   ReviewEditModal,
+  ReviewTextCard,
 } from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
@@ -17,7 +18,6 @@ import {
   getCourseReviewsFromPages,
   isCourseNotFoundError,
   useCourseReviews,
-  useMyReviewIds,
   useReviewDelete,
   useReviewDetailModal,
   useReviewEdit,
@@ -96,14 +96,10 @@ function CourseReviewsPage() {
   // courseId가 잘못되면 쿼리가 비활성이라 isPending이 계속 true다. 그대로
   // 두면 스피너가 멈추지 않으므로 로딩으로 보지 않는다.
   const isLoading = validCourseId !== undefined && isPending;
-  const myReviewIds = useMyReviewIds();
   const { requestDelete, dialogProps } = useReviewDelete();
   const { requestEdit, editorProps } = useReviewEdit();
 
-  const reviews = mapCourseReviewPreviews(
-    getCourseReviewsFromPages(data?.pages),
-    myReviewIds
-  );
+  const reviews = mapCourseReviewPreviews(getCourseReviewsFromPages(data?.pages));
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviews);
 
@@ -117,8 +113,6 @@ function CourseReviewsPage() {
     enabled: Boolean(hasNextPage) && !isFetchingNextPage,
     onIntersect: handleIntersect,
   });
-  // 이 화면은 이미 코스가 정해져 있어 타입 조회 없이 경로를 만들 수 있다.
-  const courseDetailPath = `/${courseType}/detail/${courseId}`;
 
   const renderMessage = (message: string) => (
     <p
@@ -200,24 +194,40 @@ function CourseReviewsPage() {
             renderMessage('아직 등록된 후기가 없습니다.')
           ) : (
             <>
-              {reviews.map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  images={review.images}
-                  courseTitle={courseTitle || undefined}
-                  profileImage={review.profileImage}
-                  nickname={review.nickname}
-                  meta={review.meta}
-                  content={review.content}
-                  rating={review.rating}
-                  isMine={review.isMine}
-                  onDeleteClick={() => requestDelete(review.id)}
-                  onEditClick={() => requestEdit(review)}
-                  onClick={() => openReview(review.id)}
-                  variant="course-review-list"
-                  className="[&>div>article]:!bg-[#F9F9F9]"
-                />
-              ))}
+              {/* 사진은 선택이라 없는 후기가 있다. 그때는 본문만 그린다. */}
+              {reviews.map((review) =>
+                review.images.length > 0 ? (
+                  <ReviewCard
+                    key={review.id}
+                    images={review.images}
+                    courseTitle={courseTitle || undefined}
+                    profileImage={review.profileImage}
+                    nickname={review.nickname}
+                    meta={review.meta}
+                    content={review.content}
+                    rating={review.rating}
+                    isMine={review.isMine}
+                    onDeleteClick={() => requestDelete(review.id)}
+                    onEditClick={() => requestEdit(review)}
+                    onClick={() => openReview(review.id)}
+                    variant="course-review-list"
+                    className="[&>div>article]:!bg-[#F9F9F9]"
+                  />
+                ) : (
+                  <ReviewTextCard
+                    key={review.id}
+                    profileImage={review.profileImage}
+                    nickname={review.nickname}
+                    meta={review.meta}
+                    content={review.content}
+                    rating={review.rating}
+                    isMine={review.isMine}
+                    onDeleteClick={() => requestDelete(review.id)}
+                    onEditClick={() => requestEdit(review)}
+                    onClick={() => openReview(review.id)}
+                  />
+                )
+              )}
 
               <div ref={loadMoreRef} aria-hidden="true" />
 
@@ -229,11 +239,11 @@ function CourseReviewsPage() {
         </div>
       </section>
 
+      {/* 이 코스의 후기 목록이라 '코스 바로가기'는 넣지 않는다. */}
       <ReviewDetailModal
         review={openedReview}
         courseTitle={courseTitle || undefined}
         onClose={closeReview}
-        onGoToCourse={() => navigate(courseDetailPath)}
       />
 
       <ReviewEditModal key={editorProps.review?.id} {...editorProps} />

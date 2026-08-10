@@ -93,6 +93,11 @@ function EventSelectionPage() {
     setFestivalsInStore([]);
   };
 
+  const handleSkip = () => {
+    handleRemoveAllFestivals();
+    navigate('/local-recommendation/place-selection');
+  };
+
   return (
     <>
       <SelectionPageLayout
@@ -146,6 +151,8 @@ function EventSelectionPage() {
         onItemRemove={handleRemoveFestival}
         onRemoveAll={handleRemoveAllFestivals}
         onSubmit={() => navigate('/local-recommendation/place-selection')}
+        skipButtonLabel="건너뛰기"
+        onSkip={handleSkip}
         renderItem={(festival, onItemRemove) => (
           <SelectionResultCard
             key={festival.id}
