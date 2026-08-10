@@ -63,6 +63,11 @@ export function BaseKakaoMap({
     { location: GeoPoint; element: HTMLDivElement }[]
   >([]);
   const routeRef = useRef<kakao.maps.Polyline | null>(null);
+  const focusedLocationRef = useRef<GeoPoint | null>(focusedLocation);
+
+  useEffect(() => {
+    focusedLocationRef.current = focusedLocation;
+  }, [focusedLocation]);
 
   const apiKey = import.meta.env.VITE_KAKAO_MAP_API_KEY;
   const [status, setStatus] = useState<MapSdkStatus>(
@@ -187,6 +192,19 @@ export function BaseKakaoMap({
         content: marker,
         yAnchor: 0.5,
       });
+    });
+
+    // 새로 생성된 마커 요소에 현재 focusedLocation 스타일 즉시 적용
+    newImageMarkerElements.forEach(({ location, element }) => {
+      const currentFocused = focusedLocationRef.current;
+      const isFocused =
+        !!currentFocused &&
+        location.latitude === currentFocused.latitude &&
+        location.longitude === currentFocused.longitude;
+
+      element.style.transform = isFocused
+        ? `scale(${IMAGE_MARKER_FOCUS_SCALE})`
+        : 'scale(1)';
     });
 
     markersRef.current = newMarkers;

@@ -96,28 +96,23 @@ export function CourseStopItem({
 
   return (
     <article
-      className={`relative grid items-start ${canFocus ? 'cursor-pointer' : ''}`}
+      className="relative grid items-start"
       style={{
         gridTemplateColumns: `${GRID_COL_ORDER * scale}px ${GRID_COL_IMAGE * scale}px minmax(0,1fr) ${GRID_COL_ACTION * scale}px`,
         gap: ROW_GAP * scale,
         paddingTop: ROW_PADDING_Y * scale,
         paddingBottom: ROW_PADDING_Y * scale,
       }}
-      onClick={canFocus ? onFocus : undefined}
-      role={canFocus ? 'button' : undefined}
-      tabIndex={canFocus ? 0 : undefined}
-      aria-label={canFocus ? `${stop.name} 지도에서 보기` : undefined}
-      onKeyDown={
-        canFocus
-          ? (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                onFocus?.();
-              }
-            }
-          : undefined
-      }
     >
+      {canFocus && (
+        <button
+          type="button"
+          onClick={onFocus}
+          aria-label={`${stop.name} 지도에서 보기`}
+          className="absolute inset-0 cursor-pointer"
+        />
+      )}
+
       <div
         className="relative flex h-full flex-col items-center"
         style={{ paddingTop: ORDER_ICON_PADDING_TOP * scale }}
@@ -177,7 +172,7 @@ export function CourseStopItem({
         </p>
         {(todayHours || stop.placeId !== undefined) &&
           (canExpandHours ? (
-            <div>
+            <div className="relative">
               <button
                 type="button"
                 onClick={(event) => {
@@ -320,7 +315,7 @@ export function CourseStopItem({
         onClick={handleLikeClick}
         onKeyDown={(event) => event.stopPropagation()}
         disabled={!isLikeAvailable || isLikePending}
-        className="flex items-center justify-center drop-shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="relative flex items-center justify-center drop-shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         style={{
           marginTop: LIKE_BUTTON_MARGIN_TOP * scale,
           height: LIKE_BUTTON_SIZE * scale,

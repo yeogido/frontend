@@ -20,12 +20,14 @@ const EMPTY_STATE_FONT_SIZE = 14;
 export interface CourseRouteMapProps {
   readonly stops: readonly CourseStop[];
   readonly focusedStopId?: number | null;
+  readonly onStopFocus?: (stopId: number) => void;
   readonly className?: string;
 }
 
 function CourseRouteMapComponent({
   stops,
   focusedStopId = null,
+  onStopFocus,
   className = '',
 }: CourseRouteMapProps) {
   const scale = useGlobalScale();
@@ -62,10 +64,11 @@ function CourseRouteMapComponent({
       );
 
       if (matchedStop) {
+        onStopFocus?.(matchedStop.id);
         openKakaoMapRoute(matchedStop.name, point);
       }
     },
-    [stops]
+    [onStopFocus, stops]
   );
 
   // 2. 좌표가 없으면 안내 문구 표시
@@ -124,6 +127,7 @@ function areRouteMapPropsEqual(
   return (
     prevProps.className === nextProps.className &&
     prevProps.focusedStopId === nextProps.focusedStopId &&
+    prevProps.onStopFocus === nextProps.onStopFocus &&
     prevProps.stops.length === nextProps.stops.length &&
     prevProps.stops.every((stop, index) => {
       const nextStop = nextProps.stops[index];

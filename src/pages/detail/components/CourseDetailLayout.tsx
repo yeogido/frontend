@@ -338,7 +338,11 @@ function CourseDetailLayoutContent({
           marginTop: MAP_MARGIN_TOP * scale,
         }}
       >
-        <CourseRouteMap stops={stops} focusedStopId={focusedStopId} />
+        <CourseRouteMap
+          stops={stops}
+          focusedStopId={focusedStopId}
+          onStopFocus={setFocusedStopId}
+        />
       </div>
 
       {/* 6. 코스 장소 리스트 */}
