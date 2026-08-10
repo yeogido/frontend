@@ -18,7 +18,10 @@ import {
 } from '../../../hooks/useReviews';
 import { useOpenReviewInCourseDetail } from '../../../hooks/useOpenReviewInCourseDetail';
 import { toReviewCardProps } from '../../../utils/reviewCard';
-import { HOME_CAROUSEL_CARD_GAP } from '../utils/homeCarouselLayout';
+import {
+  getHomeCarouselIndex,
+  HOME_CAROUSEL_CARD_GAP,
+} from '../utils/homeCarouselLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 32;
@@ -58,7 +61,7 @@ function ReviewSection() {
 
     let rafId: number;
 
-    const handleScroll = () => {
+    const updateActiveIndex = () => {
       cancelAnimationFrame(rafId);
 
       rafId = requestAnimationFrame(() => {
@@ -68,20 +71,25 @@ function ReviewSection() {
           return;
         }
 
-        const index = Math.round(
-          container.scrollLeft / (itemWidth + HOME_CAROUSEL_CARD_GAP * scale)
+        setActiveIndex(
+          getHomeCarouselIndex(
+            container.scrollLeft,
+            itemWidth,
+            scale,
+            reviews.length,
+          ),
         );
-        setActiveIndex(index);
       });
     };
 
-    container.addEventListener('scroll', handleScroll);
+    updateActiveIndex();
+    container.addEventListener('scroll', updateActiveIndex);
 
     return () => {
-      container.removeEventListener('scroll', handleScroll);
+      container.removeEventListener('scroll', updateActiveIndex);
       cancelAnimationFrame(rafId);
     };
-  }, [scale]);
+  }, [reviews.length, scale]);
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current;

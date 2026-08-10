@@ -22,7 +22,7 @@ import {
 } from './components';
 import type { TravelRecordFolder, TravelRecordView } from './types';
 import { getValidTravelRecordYear } from './utils/sessionFolders';
-import { getSavedTravelRecordId } from './utils/savedTravelRecord';
+import { getSavedTravelRecordState } from './utils/savedTravelRecord';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
@@ -34,13 +34,16 @@ function TravelRecordPage() {
   const location = useLocation();
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
-  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
-  const [recentlySavedFolderId] = useState(() =>
-    getSavedTravelRecordId(location.state)
+  const [savedTravelRecord] = useState(() =>
+    getSavedTravelRecordState(location.state),
   );
+  const [selectedYear, setSelectedYear] = useState(
+    () => savedTravelRecord?.year ?? new Date().getFullYear(),
+  );
+  const recentlySavedFolderId = savedTravelRecord?.id ?? null;
 
   useEffect(() => {
-    if (!getSavedTravelRecordId(location.state)) return;
+    if (!getSavedTravelRecordState(location.state)) return;
 
     navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, location.state, navigate]);
@@ -53,17 +56,22 @@ function TravelRecordPage() {
 
   useEffect(() => {
     // The available years only settle once the server years finish loading.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedYear((year) =>
-      getValidTravelRecordYear(years, year, new Date().getFullYear()),
-    );
+    if (years.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedYear((year) =>
+        getValidTravelRecordYear(years, year, new Date().getFullYear()),
+      );
+    }
   }, [years]);
 
-  const validSelectedYear = getValidTravelRecordYear(
-    years,
-    selectedYear,
-    new Date().getFullYear(),
-  );
+  const validSelectedYear =
+    years.length > 0
+      ? getValidTravelRecordYear(
+          years,
+          selectedYear,
+          new Date().getFullYear(),
+        )
+      : selectedYear;
 
   const {
     data: travelRecordsData,

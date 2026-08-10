@@ -83,6 +83,8 @@ export function FolderDecorationPalette({
 
   const selectStickerFile = useCallback(
     (file: File) => {
+      if (isInteractionDisabled) return;
+
       const message = validateCustomStickerFile(file);
 
       if (message) {
@@ -92,7 +94,7 @@ export function FolderDecorationPalette({
 
       setPendingFile(file);
     },
-    [showToast],
+    [isInteractionDisabled, showToast],
   );
 
   useEffect(() => {
@@ -103,6 +105,8 @@ export function FolderDecorationPalette({
     // 아이폰 사진 앱에서 복사한 피사체를 붙여넣는 경로. document에 걸어야
     // 특정 요소에 포커스를 맞추지 않아도 붙여넣기를 받을 수 있다.
     const handlePaste = (event: ClipboardEvent) => {
+      if (isInteractionDisabled) return;
+
       const items = Array.from(event.clipboardData?.items ?? []);
       const pastedImage = getPastedStickerImage(items);
 
@@ -119,7 +123,7 @@ export function FolderDecorationPalette({
     document.addEventListener('paste', handlePaste);
 
     return () => document.removeEventListener('paste', handlePaste);
-  }, [isUploadModalOpen, selectStickerFile, showToast]);
+  }, [isInteractionDisabled, isUploadModalOpen, selectStickerFile, showToast]);
 
   const handlePasteFromClipboard = async () => {
     const { clipboard } = navigator;
@@ -157,6 +161,8 @@ export function FolderDecorationPalette({
   };
 
   const addSticker = (stickerId: number, imageUrl: string) => {
+    if (isInteractionDisabled) return;
+
     if (isFolderFull) {
       onLimitReached();
       return;
@@ -173,6 +179,8 @@ export function FolderDecorationPalette({
    */
   const getStickerHandlers = (stickerId: number, imageUrl: string) => ({
     onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (isInteractionDisabled) return;
+
       if (event.pointerType === 'mouse' && event.button !== 0) {
         return;
       }

@@ -111,7 +111,12 @@ export function FolderDecorationCanvas({
   };
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!selectedDecoration || !editorMode || !canvasRef.current) return;
+    if (
+      isInteractionDisabled ||
+      !selectedDecoration ||
+      !editorMode ||
+      !canvasRef.current
+    ) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     if (editorMode === 'drag') {

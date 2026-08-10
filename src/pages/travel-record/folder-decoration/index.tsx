@@ -41,7 +41,10 @@ import {
 } from '../utils/travelRecordSave';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
 import { SAVE_SUCCESS_ANIMATION_MS } from './saveAnimation';
-import { isTravelRecordEditorLocked } from './saveState';
+import {
+  clearPhotoDraftAfterTravelRecordSave,
+  isTravelRecordEditorLocked,
+} from './saveState';
 import backIcon from '../../../assets/icons/back.svg';
 
 const previousPageLabel =
@@ -375,10 +378,15 @@ function TravelRecordFolderDecorationPage() {
       await new Promise<void>((resolve) => {
         window.setTimeout(resolve, SAVE_SUCCESS_ANIMATION_MS);
       });
-      await clearTravelRecordPhotoDraft();
+      await clearPhotoDraftAfterTravelRecordSave(clearTravelRecordPhotoDraft);
       clearEdit();
       showToast('여행 기록이 저장되었어요.');
-      navigate('/travel-record', { state: { savedTravelRecordId: result.id } });
+      navigate('/travel-record', {
+        state: {
+          savedTravelRecordId: result.id,
+          savedTravelRecordYear: selectedDateRange.startDate.getFullYear(),
+        },
+      });
     } catch (error) {
       isSavingRef.current = false;
       setIsSaving(false);
