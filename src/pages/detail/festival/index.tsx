@@ -46,6 +46,8 @@ import { toSafeExternalUrl, toTelHref } from '../mappers/festivalDetailMapper';
 import { useShareToast } from '../hooks/useShareToast';
 
 const PAGE_PADDING_BOTTOM = 32;
+const BACK_BUTTON_TOP = 12;
+const BACK_BUTTON_LEFT = 24;
 const TITLE_SECTION_PADDING_TOP = 15;
 const SECTION_MARGIN_TOP = 16;
 const INFO_CARD_MARGIN_TOP = 24;
@@ -218,7 +220,13 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                     )
                   }
                 />
-                <div className="absolute top-3 left-6 z-10">
+                <div
+                  className="absolute z-10"
+                  style={{
+                    top: BACK_BUTTON_TOP * scale,
+                    left: BACK_BUTTON_LEFT * scale,
+                  }}
+                >
                   <BackButton onClick={handleBack} />
                 </div>
               </div>
