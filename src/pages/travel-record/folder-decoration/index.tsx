@@ -41,6 +41,7 @@ import {
 } from '../utils/travelRecordSave';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
 import { SAVE_SUCCESS_ANIMATION_MS } from './saveAnimation';
+import { isTravelRecordEditorLocked } from './saveState';
 import backIcon from '../../../assets/icons/back.svg';
 
 const previousPageLabel =
@@ -114,6 +115,7 @@ function TravelRecordFolderDecorationPage() {
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaveComplete, setIsSaveComplete] = useState(false);
+  const isEditorLocked = isTravelRecordEditorLocked(isSaving);
   const folderPhotos = useMemo<[string, ...string[]] | null>(() => {
     const firstPhoto = previewPhotoUrls[0];
 
@@ -449,6 +451,7 @@ function TravelRecordFolderDecorationPage() {
             decorations={decorations}
             onChange={replaceDecorations}
             isSaveComplete={isSaveComplete}
+            isInteractionDisabled={isEditorLocked}
           />
           <h2 className="mt-3 text-center text-[16px] leading-none font-medium text-[#1c1c1c]">
             {regionName}
@@ -469,6 +472,7 @@ function TravelRecordFolderDecorationPage() {
           }
           onAddSticker={appendDecoration}
           onStickerDragStart={handleStickerDragStart}
+          isInteractionDisabled={isEditorLocked}
         />
 
         {draggingSticker

@@ -47,6 +47,7 @@ interface FolderDecorationPaletteProps {
     pointerId: number,
   ) => void;
   onLimitReached: () => void;
+  isInteractionDisabled?: boolean;
 }
 
 export function FolderDecorationPalette({
@@ -54,6 +55,7 @@ export function FolderDecorationPalette({
   onAddSticker,
   onStickerDragStart,
   onLimitReached,
+  isInteractionDisabled = false,
 }: FolderDecorationPaletteProps) {
   const { showToast } = useToast();
   const stickerCatalogQuery = useStickerCatalog();
@@ -323,7 +325,10 @@ export function FolderDecorationPalette({
   };
 
   return (
-    <section className="absolute inset-0 bg-[#f9f9f9]">
+    <section
+      inert={isInteractionDisabled}
+      className="absolute inset-0 bg-[#f9f9f9]"
+    >
       <div className="absolute top-7 left-6 flex w-[342px] gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {categoryGroups.map((group) => (
           <button

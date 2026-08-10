@@ -32,6 +32,7 @@ interface FolderDecorationCanvasProps {
   /** 목록에서 끌어온 스티커의 드롭 위치를 페이지가 계산할 수 있도록 넘겨받는다. */
   canvasRef: RefObject<HTMLDivElement | null>;
   isSaveComplete?: boolean;
+  isInteractionDisabled?: boolean;
 }
 
 /** 핸들 하나로 각도와 크기를 함께 조절한다. */
@@ -50,6 +51,7 @@ export function FolderDecorationCanvas({
   onChange,
   canvasRef,
   isSaveComplete = false,
+  isInteractionDisabled = false,
 }: FolderDecorationCanvasProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode | null>(null);
@@ -161,6 +163,7 @@ export function FolderDecorationCanvas({
   return (
     <div
       ref={canvasRef}
+      inert={isInteractionDisabled}
       className="relative h-[183px] w-[159px] touch-none"
       onPointerMove={handlePointerMove}
       onPointerUp={endEditing}
