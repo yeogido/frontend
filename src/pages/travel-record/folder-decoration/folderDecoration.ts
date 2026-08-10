@@ -168,8 +168,6 @@ export const MAX_FOLDER_DECORATION_COUNT = 10;
 /** \uC0AC\uC6A9\uC790\uAC00 \uBCF4\uC720\uD560 \uC218 \uC788\uB294 \uCEE4\uC2A4\uD140 \uC2A4\uD2F0\uCEE4 \uC218. \uCD08\uACFC\uD558\uBA74 \uC11C\uBC84\uAC00 STICKER4091\uC744 \uC900\uB2E4. */
 export const MAX_CUSTOM_STICKER_COUNT = 10;
 
-export const MAX_CUSTOM_STICKER_FILE_SIZE = 10 * 1024 * 1024;
-
 /**
  * \uCEE4\uC2A4\uD140 \uC2A4\uD2F0\uCEE4\uB294 \uBC30\uACBD\uC774 \uC5C6\uC5B4\uC57C \uD558\uBBC0\uB85C PNG\uB9CC \uBC1B\uB294\uB2E4. JPEG\uB294 \uD22C\uBA85\uB3C4\uB97C \uB2F4\uC9C0
  * \uBABB\uD574 \uBCC0\uD658\uD574\uB3C4 \uD770 \uC0AC\uAC01\uD615\uC774 \uB41C\uB2E4.
@@ -214,10 +212,6 @@ const clamp = (value: number, minimum: number, maximum: number) =>
 export const validateCustomStickerFile = (file: File): string => {
   if (file.type !== CUSTOM_STICKER_CONTENT_TYPE) {
     return '\uBC30\uACBD\uC774 \uC5C6\uB294 PNG \uC774\uBBF8\uC9C0\uB9CC \uCD94\uAC00\uD560 \uC218 \uC788\uC5B4\uC694.';
-  }
-
-  if (file.size > MAX_CUSTOM_STICKER_FILE_SIZE) {
-    return '\uD30C\uC77C \uD558\uB098\uB2F9 10MB \uC774\uD558\uC758 \uC774\uBBF8\uC9C0\uB9CC \uCD94\uAC00\uD560 \uC218 \uC788\uC5B4\uC694.';
   }
 
   return '';

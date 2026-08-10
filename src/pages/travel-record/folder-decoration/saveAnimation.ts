@@ -1,0 +1,1 @@
+export const SAVE_SUCCESS_ANIMATION_MS = 480;

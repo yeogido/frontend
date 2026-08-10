@@ -14,6 +14,8 @@ interface DraggingPhoto {
   offsetY: number;
   pointerX: number;
   pointerY: number;
+  width: number;
+  height: number;
   targetId: string | null;
 }
 
@@ -55,6 +57,8 @@ function useDraggablePhotoOrder({
       offsetY: event.clientY - rect.top,
       pointerX: event.clientX,
       pointerY: event.clientY,
+      width: rect.width,
+      height: rect.height,
       targetId: null,
     });
   };

@@ -1,3 +1,7 @@
+import { createPortal } from 'react-dom';
+
+import { getDraggingPhotoPreviewPosition } from '../draggingPhotoPreviewPosition';
+
 interface DraggingPhotoPreviewProps {
   draggingPhoto: {
     url: string;
@@ -5,6 +9,8 @@ interface DraggingPhotoPreviewProps {
     offsetY: number;
     pointerX: number;
     pointerY: number;
+    width: number;
+    height: number;
   } | null;
 }
 
@@ -13,13 +19,16 @@ function DraggingPhotoPreview({ draggingPhoto }: DraggingPhotoPreviewProps) {
     return null;
   }
 
-  return (
+  const position = getDraggingPhotoPreviewPosition(draggingPhoto);
+
+  return createPortal(
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed z-50 size-14 overflow-hidden rounded-xl shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
+      className="pointer-events-none fixed z-50 overflow-hidden rounded-xl shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
       style={{
-        left: draggingPhoto.pointerX - draggingPhoto.offsetX,
-        top: draggingPhoto.pointerY - draggingPhoto.offsetY,
+        ...position,
+        width: draggingPhoto.width,
+        height: draggingPhoto.height,
       }}
     >
       <img
@@ -28,7 +37,8 @@ function DraggingPhotoPreview({ draggingPhoto }: DraggingPhotoPreviewProps) {
         draggable={false}
         className="size-full object-cover"
       />
-    </div>
+    </div>,
+    document.body,
   );
 }
 
