@@ -77,7 +77,7 @@ function CourseSection() {
                   key={course.id}
                   {...course}
                   liked={getLiked(course.id, course.liked)}
-                  isMine={isAdmin}
+                  canManage={isAdmin}
                   showEdit
                   onClick={() =>
                     navigate(`/yeogido-course/detail/${course.id}`)

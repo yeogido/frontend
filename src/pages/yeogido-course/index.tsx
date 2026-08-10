@@ -432,7 +432,7 @@ function YeogidoCoursePage() {
                   <CourseCard
                     {...course}
                     liked={getLiked(course.id, course.liked)}
-                    isMine={isAdmin}
+                    canManage={isAdmin}
                     showEdit
                     onClick={() => goToCourseDetail(course.id)}
                     onLikeClick={() =>

@@ -317,7 +317,7 @@ function LocalCoursePage() {
                   <CourseCard
                     {...course}
                     liked={getLiked(course.id, course.liked)}
-                    isMine={isAdmin || myCourseIds.has(course.id)}
+                    canManage={isAdmin || myCourseIds.has(course.id)}
                     showEdit
                     onClick={() => goToCourseDetail(course.id)}
                     onLikeClick={() =>
