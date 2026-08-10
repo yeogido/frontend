@@ -2,10 +2,9 @@ import { useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
-  ConfirmDialog,
-  ContentCard,
   ContentCardSkeleton,
-  EditableContentCard,
+  FestivalContentCard,
+  FestivalDeleteDialog,
 } from '../../../components/common';
 import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentDelete } from '../../../hooks/useContentDelete';
@@ -155,44 +154,31 @@ function FestivalOngoingPage() {
                   imageClassName="aspect-[163/115] h-auto"
                 />
               ))
-            : festivals.map((festival) =>
-                isAdmin ? (
-                  <EditableContentCard
-                    key={festival.contentId}
-                    image={festival.thumbnailImageUrl}
-                    title={festival.title}
-                    firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-                    secondInfo={festival.regionName}
-                    tags={toContentTagIds(festival.hashtags)}
-                    className="w-full"
-                    onClick={() =>
-                      navigate(buildFestivalDetailPath(festival.contentId))
-                    }
-                    onEdit={() => void editFestival(festival.contentId)}
-                    onDelete={() => requestDelete(festival.contentId)}
-                  />
-                ) : (
-                  <ContentCard
-                    key={festival.contentId}
-                    image={festival.thumbnailImageUrl}
-                    title={festival.title}
-                    firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-                    secondInfo={festival.regionName}
-                    tags={toContentTagIds(festival.hashtags)}
-                    liked={getLiked(festival.contentId, false)}
-                    className="w-full"
-                    onClick={() =>
-                      navigate(buildFestivalDetailPath(festival.contentId))
-                    }
-                    onLikeClick={() =>
-                      toggleLike(
-                        festival.contentId,
-                        getLiked(festival.contentId, false)
-                      )
-                    }
-                  />
-                )
-              )}
+            : festivals.map((festival) => (
+                <FestivalContentCard
+                  key={festival.contentId}
+                  image={festival.thumbnailImageUrl}
+                  title={festival.title}
+                  startDate={festival.startDate}
+                  endDate={festival.endDate}
+                  regionName={festival.regionName}
+                  tags={toContentTagIds(festival.hashtags)}
+                  className="w-full"
+                  isAdmin={isAdmin}
+                  liked={getLiked(festival.contentId, false)}
+                  onClick={() =>
+                    navigate(buildFestivalDetailPath(festival.contentId))
+                  }
+                  onLikeClick={() =>
+                    toggleLike(
+                      festival.contentId,
+                      getLiked(festival.contentId, false)
+                    )
+                  }
+                  onEdit={() => void editFestival(festival.contentId)}
+                  onDelete={() => requestDelete(festival.contentId)}
+                />
+              ))}
 
           {isFetchingNextPage
             ? FESTIVAL_SKELETON_ITEMS.slice(0, 2).map((item) => (
@@ -235,11 +221,7 @@ function FestivalOngoingPage() {
           aria-hidden="true"
         />
       </section>
-      <ConfirmDialog
-        {...dialogProps}
-        title="행사를 삭제할까요?"
-        description="삭제한 행사는 되돌릴 수 없어요."
-      />
+      <FestivalDeleteDialog {...dialogProps} />
     </>
   );
 }

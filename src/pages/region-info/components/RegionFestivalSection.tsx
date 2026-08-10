@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 
 import {
-  ConfirmDialog,
   ContentCard,
   ContentCardSkeleton,
   EditableContentCard,
+  FestivalDeleteDialog,
   SectionHeader,
 } from '../../../components/common';
 
@@ -182,11 +182,7 @@ function RegionFestivalSection({
           ) : null}
         </div>
       </section>
-      <ConfirmDialog
-        {...dialogProps}
-        title="행사를 삭제할까요?"
-        description="삭제한 행사는 되돌릴 수 없어요."
-      />
+      <FestivalDeleteDialog {...dialogProps} />
     </>
   );
 }
