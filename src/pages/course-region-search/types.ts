@@ -9,4 +9,5 @@ export interface CityOption {
 export type CourseRegionSearchTarget =
   | 'course'
   | 'local-course'
-  | 'festival';
+  | 'festival'
+  | 'home';
