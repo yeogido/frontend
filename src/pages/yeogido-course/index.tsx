@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -32,6 +33,18 @@ const COURSE_REGION_SEARCH_FROM_COURSE = '?from=course';
 const POPULAR_COURSE_PREVIEW_COUNT = 2;
 const POPULAR_COURSE_SKELETON_ITEMS = [0, 1];
 const RECENT_COURSE_PREVIEW_COUNT = 2;
+const HERO_ROTATE_INTERVAL_MS = 2000;
+
+function shuffle<T>(items: readonly T[]): T[] {
+  const shuffled = [...items];
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled;
+}
 
 const durationLabelByType: Record<CourseDurationType, string> = {
   DAY_TRIP: '당일치기',
@@ -113,7 +126,7 @@ function YeogidoCoursePage() {
     refetch: refetchPopularCourses,
   } = useCourses({
     courseType: 'OFFICIAL',
-    sort: 'RECOMMEND',
+    sort: 'POPULAR',
     size: POPULAR_COURSE_PREVIEW_COUNT,
   });
   const popularCoursePreviews = (popularCourses?.pages[0]?.items ?? []).slice(
@@ -130,7 +143,30 @@ function YeogidoCoursePage() {
     isError: isRecommendedCoursesError,
     refetch: refetchRecommendedCourses,
   } = useRecommendedCourses();
-  const heroCourse = recommendedCourses?.[0];
+
+  // 상위 5개를 새로 받아온 시점에만 한 번 섞는다 — 2초마다 heroIndex가
+  // 바뀌어도(리렌더링) recommendedCourses 참조가 그대로면 다시 섞지 않는다.
+  const shuffledRecommendedCourses = useMemo(
+    () => shuffle(recommendedCourses ?? []),
+    [recommendedCourses]
+  );
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  useEffect(() => {
+    if (shuffledRecommendedCourses.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setHeroIndex(
+        (previousIndex) =>
+          (previousIndex + 1) % shuffledRecommendedCourses.length
+      );
+    }, HERO_ROTATE_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [shuffledRecommendedCourses.length]);
+
+  const heroCourse =
+    shuffledRecommendedCourses[heroIndex % shuffledRecommendedCourses.length];
   const heroTitle = heroCourse?.title ?? DEFAULT_HERO_TITLE;
   const heroDescription = heroCourse?.description ?? DEFAULT_HERO_DESCRIPTION;
   const heroDurationLabel = heroCourse
