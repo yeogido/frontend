@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { motion } from 'motion/react';
 import { IoResizeOutline } from 'react-icons/io5';
 
 import closeRoundedIcon from '../../../../assets/icons/close-rounded.svg';
@@ -30,6 +31,8 @@ interface FolderDecorationCanvasProps {
   onChange: (decorations: TravelFolderDecoration[]) => void;
   /** 목록에서 끌어온 스티커의 드롭 위치를 페이지가 계산할 수 있도록 넘겨받는다. */
   canvasRef: RefObject<HTMLDivElement | null>;
+  isSaveComplete?: boolean;
+  isInteractionDisabled?: boolean;
 }
 
 /** 핸들 하나로 각도와 크기를 함께 조절한다. */
@@ -47,6 +50,8 @@ export function FolderDecorationCanvas({
   decorations,
   onChange,
   canvasRef,
+  isSaveComplete = false,
+  isInteractionDisabled = false,
 }: FolderDecorationCanvasProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode | null>(null);
@@ -106,7 +111,12 @@ export function FolderDecorationCanvas({
   };
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!selectedDecoration || !editorMode || !canvasRef.current) return;
+    if (
+      isInteractionDisabled ||
+      !selectedDecoration ||
+      !editorMode ||
+      !canvasRef.current
+    ) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     if (editorMode === 'drag') {
@@ -158,16 +168,37 @@ export function FolderDecorationCanvas({
   return (
     <div
       ref={canvasRef}
+      inert={isInteractionDisabled}
       className="relative h-[183px] w-[159px] touch-none"
       onPointerMove={handlePointerMove}
       onPointerUp={endEditing}
       onPointerCancel={endEditing}
     >
-      <TravelFolderArtwork
-        photos={photos}
-        title={title}
-        decorations={decorations}
-      />
+      <motion.div
+        animate={
+          isSaveComplete
+            ? { scale: [1, 1.045, 1] }
+            : { scale: 1 }
+        }
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="absolute inset-0"
+      >
+        <TravelFolderArtwork
+          photos={photos}
+          title={title}
+          decorations={decorations}
+        />
+      </motion.div>
+      {isSaveComplete ? (
+        <span className="pointer-events-none absolute top-[53px] left-0 z-40 h-[130px] w-[159px] overflow-hidden rounded-b-[28px]" aria-hidden="true">
+          <motion.span
+            initial={{ x: -120, opacity: 0 }}
+            animate={{ x: 180, opacity: [0, 0.8, 0] }}
+            transition={{ duration: 0.42, ease: 'easeInOut' }}
+            className="absolute -top-8 h-[190px] w-12 -rotate-12 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent)]"
+          />
+        </span>
+      ) : null}
       {decorations.map((decoration) => {
         const isSelected = decoration.id === selectedId;
 

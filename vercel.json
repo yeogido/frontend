@@ -1,10 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/kakao-routing/walk",
-      "destination": "/api/kakao-routing/walk"
-    },
-    {
       "source": "/kakao-routing/car",
       "destination": "/api/kakao-routing/car"
     },

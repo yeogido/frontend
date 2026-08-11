@@ -2,10 +2,9 @@ import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { FaHeart as FilledHeartIcon } from 'react-icons/fa6';
 import { IoChevronDown } from 'react-icons/io5';
 import carIcon from '../../../assets/icons/transport-car.svg';
-import operatingStatusClockIcon from '../../../assets/icons/operating-status-clock.svg';
 import transitIcon from '../../../assets/icons/transport-transit.svg';
+import operatingStatusClockIcon from '../../../assets/icons/operating-status-clock.svg';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
-import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
   formatOperatingDay,
@@ -50,6 +49,7 @@ export interface CourseStopItemProps {
   readonly stop: CourseStop;
   readonly isLast: boolean;
   readonly onLikeToggle: () => void;
+  readonly onFocus?: () => void;
   readonly isLikeAvailable?: boolean;
   readonly isLikePending?: boolean;
   /** 있으면 영업시간이 드롭다운(영업중/영업종료 + 요일별 시간)으로 표시된다. */
@@ -60,6 +60,7 @@ export function CourseStopItem({
   stop,
   isLast,
   onLikeToggle,
+  onFocus,
   isLikeAvailable = true,
   isLikePending = false,
 }: CourseStopItemProps) {
@@ -78,6 +79,8 @@ export function CourseStopItem({
         ? OPEN_STATUS_LABEL
         : CLOSED_STATUS_LABEL;
   const todayHours = formatTodayOperatingHours(operatingDays);
+  const defaultHoursText =
+    todayHours ?? (canExpandHours ? '정기휴무' : '영업시간 정보 없음');
   const carDurationMinutes = stop.timesFromPrevious.find(
     (time) => time.transportMode === 'CAR'
   )?.durationMinutes;
@@ -86,9 +89,7 @@ export function CourseStopItem({
   )?.durationMinutes;
   const isActive = stop.liked;
   const location = stop.location;
-  const canRoute = isValidGeoPoint(location);
-
-  const handleRoute = () => openKakaoMapRoute(stop.name, location);
+  const canFocus = isValidGeoPoint(location) && !!onFocus;
 
   const handleLikeClick = (event: ReactMouseEvent) => {
     event.stopPropagation();
@@ -97,28 +98,23 @@ export function CourseStopItem({
 
   return (
     <article
-      className={`relative grid items-start ${canRoute ? 'cursor-pointer' : ''}`}
+      className="relative grid items-start"
       style={{
         gridTemplateColumns: `${GRID_COL_ORDER * scale}px ${GRID_COL_IMAGE * scale}px minmax(0,1fr) ${GRID_COL_ACTION * scale}px`,
         gap: ROW_GAP * scale,
         paddingTop: ROW_PADDING_Y * scale,
         paddingBottom: ROW_PADDING_Y * scale,
       }}
-      onClick={canRoute ? handleRoute : undefined}
-      role={canRoute ? 'button' : undefined}
-      tabIndex={canRoute ? 0 : undefined}
-      aria-label={canRoute ? `${stop.name} 카카오맵 길찾기` : undefined}
-      onKeyDown={
-        canRoute
-          ? (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                handleRoute();
-              }
-            }
-          : undefined
-      }
     >
+      {canFocus && (
+        <button
+          type="button"
+          onClick={onFocus}
+          aria-label={`${stop.name} 지도에서 보기`}
+          className="absolute inset-0 cursor-pointer"
+        />
+      )}
+
       <div
         className="relative flex h-full flex-col items-center"
         style={{ paddingTop: ORDER_ICON_PADDING_TOP * scale }}
@@ -176,9 +172,9 @@ export function CourseStopItem({
         >
           {stop.address}
         </p>
-        {(todayHours || stop.placeId !== undefined) &&
+        {(todayHours || canExpandHours || stop.placeId !== undefined) &&
           (canExpandHours ? (
-            <div>
+            <div className="relative">
               <button
                 type="button"
                 onClick={(event) => {
@@ -214,7 +210,7 @@ export function CourseStopItem({
                   >
                     {isHoursOpen && hoursStatusLabel
                       ? hoursStatusLabel
-                      : (todayHours ?? '영업시간 정보 없음')}
+                      : defaultHoursText}
                   </span>
                 </span>
                 <IoChevronDown
@@ -249,7 +245,7 @@ export function CourseStopItem({
                 lineHeight: `${META_LINE_HEIGHT * scale}px`,
               }}
             >
-              {todayHours ?? '영업시간 정보 없음'}
+              {defaultHoursText}
             </p>
           ))}
 
@@ -321,7 +317,7 @@ export function CourseStopItem({
         onClick={handleLikeClick}
         onKeyDown={(event) => event.stopPropagation()}
         disabled={!isLikeAvailable || isLikePending}
-        className="flex items-center justify-center drop-shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="relative flex items-center justify-center drop-shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         style={{
           marginTop: LIKE_BUTTON_MARGIN_TOP * scale,
           height: LIKE_BUTTON_SIZE * scale,

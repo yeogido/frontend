@@ -6,6 +6,10 @@ import {
 } from '../../../components/common';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import {
+  getHomeCarouselIndex,
+  HOME_CAROUSEL_CARD_GAP,
+} from '../utils/homeCarouselLayout';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 32;
@@ -60,7 +64,7 @@ function AdvertisementSection() {
 
     let rafId: number;
 
-    const handleScroll = () => {
+    const updateActiveIndex = () => {
       cancelAnimationFrame(rafId);
 
       rafId = requestAnimationFrame(() => {
@@ -70,18 +74,25 @@ function AdvertisementSection() {
           return;
         }
 
-        const index = Math.round(container.scrollLeft / itemWidth);
-        setActiveIndex(index);
+        setActiveIndex(
+          getHomeCarouselIndex(
+            container.scrollLeft,
+            itemWidth,
+            scale,
+            banners.length,
+          ),
+        );
       });
     };
 
-    container.addEventListener('scroll', handleScroll);
+    updateActiveIndex();
+    container.addEventListener('scroll', updateActiveIndex);
 
     return () => {
-      container.removeEventListener('scroll', handleScroll);
+      container.removeEventListener('scroll', updateActiveIndex);
       cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [scale]);
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current;
@@ -91,7 +102,8 @@ function AdvertisementSection() {
     }
 
     container.scrollTo({
-      left: container.clientWidth * index,
+      left:
+        (container.clientWidth + HOME_CAROUSEL_CARD_GAP * scale) * index,
       behavior: 'smooth',
     });
   };
@@ -112,6 +124,7 @@ function AdvertisementSection() {
         <div
           ref={scrollRef}
           className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
+          style={{ gap: HOME_CAROUSEL_CARD_GAP * scale }}
         >
           {isLoading ? (
             <div className="w-full shrink-0 snap-start snap-always">

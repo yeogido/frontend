@@ -26,6 +26,7 @@ import {
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import { getMyPostsFromPages, useMyPosts } from '../../hooks/useMyPosts';
+import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import {
   useReviewDelete,
   useReviewDetailModal,
@@ -81,9 +82,12 @@ function MyPostsPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { userId } = useAuth();
+
   const { goToCourseDetail, prefetchCourseDetail } =
     useNavigateToCourseDetail();
   const queryClient = useQueryClient();
+  const isBusinessUser = useIsBusinessUser();
+  
   const [keyword, setKeyword] = useState('');
 
   const {
@@ -222,8 +226,14 @@ function MyPostsPage() {
     onIntersect: handleIntersect,
   });
 
+  // 일반 사용자에게는 홍보글 필터 옵션 자체를 안 보여준다 — 골라봐야
+  // 항상 빈 결과라 혼란만 준다.
+  const categoryOptions = isBusinessUser
+    ? MY_POST_CATEGORY_OPTIONS
+    : MY_POST_CATEGORY_OPTIONS.filter((option) => option !== '홍보글');
+
   const filterGroups = [
-    { key: 'category', options: MY_POST_CATEGORY_OPTIONS },
+    { key: 'category', options: categoryOptions },
     { key: 'sort', options: MY_POST_SORT_OPTIONS },
   ] as const satisfies readonly {
     key: MyPostFilterKey;
@@ -262,7 +272,7 @@ function MyPostsPage() {
             lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
-          등록한 코스와 후기
+          {isBusinessUser ? '등록한 코스, 후기와 홍보글' : '등록한 코스와 후기'}
         </h1>
         <p
           className="text-gray-4 font-normal"
@@ -272,7 +282,9 @@ function MyPostsPage() {
             lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
           }}
         >
-          직접 등록한 코스와 후기를 확인해 보세요
+          {isBusinessUser
+            ? '직접 등록한 코스, 후기와 홍보글을 확인해보세요'
+            : '직접 등록한 코스와 후기를 확인해 보세요'}
         </p>
       </div>
 
@@ -380,7 +392,7 @@ function MyPostsPage() {
                   courseType={toTransportLabel(course.transportType)}
                   companion={toCompanionLabel(course.companionType)}
                   tags={toContentTagIds(course.hashtags)}
-                  isMine
+                  canManage
                   onClick={() => void goToCourseDetail(course.id)}
                   showEdit
                   onDeleteClick={() => requestCourseDelete(course.id)}

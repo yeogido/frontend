@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../apis/common';
 import { FloatingActionButton } from '../../components/common';
@@ -22,6 +22,7 @@ import {
 } from './components';
 import type { TravelRecordFolder, TravelRecordView } from './types';
 import { getValidTravelRecordYear } from './utils/sessionFolders';
+import { getSavedTravelRecordState } from './utils/savedTravelRecord';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
@@ -30,9 +31,22 @@ const TRAVEL_RECORD_PAGE_SIZE = 20;
 
 function TravelRecordPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   const [activeView, setActiveView] = useState<TravelRecordView>('folder');
-  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+  const [savedTravelRecord] = useState(() =>
+    getSavedTravelRecordState(location.state),
+  );
+  const [selectedYear, setSelectedYear] = useState(
+    () => savedTravelRecord?.year ?? new Date().getFullYear(),
+  );
+  const recentlySavedFolderId = savedTravelRecord?.id ?? null;
+
+  useEffect(() => {
+    if (!getSavedTravelRecordState(location.state)) return;
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const travelRecordYearsQuery = useTravelRecordYears();
   const years = useMemo(
@@ -42,17 +56,22 @@ function TravelRecordPage() {
 
   useEffect(() => {
     // The available years only settle once the server years finish loading.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedYear((year) =>
-      getValidTravelRecordYear(years, year, new Date().getFullYear()),
-    );
+    if (years.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedYear((year) =>
+        getValidTravelRecordYear(years, year, new Date().getFullYear()),
+      );
+    }
   }, [years]);
 
-  const validSelectedYear = getValidTravelRecordYear(
-    years,
-    selectedYear,
-    new Date().getFullYear(),
-  );
+  const validSelectedYear =
+    years.length > 0
+      ? getValidTravelRecordYear(
+          years,
+          selectedYear,
+          new Date().getFullYear(),
+        )
+      : selectedYear;
 
   const {
     data: travelRecordsData,
@@ -163,6 +182,7 @@ function TravelRecordPage() {
         <TravelFolderGrid
           folders={visibleFolders}
           onFolderClick={handleFolderClick}
+          recentlySavedFolderId={recentlySavedFolderId}
         />
       ) : (
         <TravelMapPanel folders={visibleFolders} />

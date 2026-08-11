@@ -1,6 +1,8 @@
 import { apiClient } from './common';
 
 import type {
+  BusinessPromotionCreateRequest,
+  BusinessPromotionCreateResponse,
   BusinessPromotionDetailResponse,
   BusinessPromotionListParams,
   BusinessPromotionListResponse,
@@ -24,6 +26,17 @@ export async function getBusinessPromotionDetail(
 ): Promise<BusinessPromotionDetailResponse> {
   const { data } = await apiClient.get<BusinessPromotionDetailResponse>(
     `/business-promotions/${promotionId}`
+  );
+
+  return data;
+}
+
+export async function createBusinessPromotion(
+  payload: BusinessPromotionCreateRequest
+): Promise<BusinessPromotionCreateResponse> {
+  const { data } = await apiClient.post<BusinessPromotionCreateResponse>(
+    '/business-promotions',
+    payload
   );
 
   return data;

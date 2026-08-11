@@ -8,3 +8,7 @@ import type { SelectedPhoto } from './types';
  */
 export const getFolderPreviewPhotoUrls = (photos: SelectedPhoto[]): string[] =>
   photos.slice(0, 2).map((photo) => photo.url);
+
+export const getFolderPreviewPhotoIds = <Photo extends { id: string }>(
+  photos: Photo[]
+) => photos.slice(0, 2).map((photo) => photo.id);

@@ -24,6 +24,7 @@ import {
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -93,6 +94,7 @@ function LocalCourseSearchPage() {
   const { getLiked, toggleLike } = useCourseLikeToggle();
   const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
     useMyCourseIds();
+  const isAdmin = useIsAdmin();
   const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -225,7 +227,7 @@ function LocalCourseSearchPage() {
                   />
                 ))
               : courses.map((course) =>
-                  myCourseIds.has(course.courseId) ? (
+                  isAdmin || myCourseIds.has(course.courseId) ? (
                     <EditableContentCard
                       key={course.courseId}
                       image={course.thumbnailUrl}

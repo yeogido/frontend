@@ -40,6 +40,11 @@ import {
   type TravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { SAVE_SUCCESS_ANIMATION_MS } from './saveAnimation';
+import {
+  clearPhotoDraftAfterTravelRecordSave,
+  isTravelRecordEditorLocked,
+} from './saveState';
 import backIcon from '../../../assets/icons/back.svg';
 
 const previousPageLabel =
@@ -112,6 +117,8 @@ function TravelRecordFolderDecorationPage() {
   const updateTravelRecordMutation = useUpdateTravelRecord();
   const isSavingRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSaveComplete, setIsSaveComplete] = useState(false);
+  const isEditorLocked = isTravelRecordEditorLocked(isSaving);
   const folderPhotos = useMemo<[string, ...string[]] | null>(() => {
     const firstPhoto = previewPhotoUrls[0];
 
@@ -367,9 +374,19 @@ function TravelRecordFolderDecorationPage() {
               ).travelRecordId,
             ),
           };
-      await clearTravelRecordPhotoDraft();
+      setIsSaveComplete(true);
+      await new Promise<void>((resolve) => {
+        window.setTimeout(resolve, SAVE_SUCCESS_ANIMATION_MS);
+      });
+      await clearPhotoDraftAfterTravelRecordSave(clearTravelRecordPhotoDraft);
       clearEdit();
-      navigate('/travel-record', { state: { savedTravelRecordId: result.id } });
+      showToast('여행 기록이 저장되었어요.');
+      navigate('/travel-record', {
+        state: {
+          savedTravelRecordId: result.id,
+          savedTravelRecordYear: selectedDateRange.startDate.getFullYear(),
+        },
+      });
     } catch (error) {
       isSavingRef.current = false;
       setIsSaving(false);
@@ -441,6 +458,8 @@ function TravelRecordFolderDecorationPage() {
             title={regionName}
             decorations={decorations}
             onChange={replaceDecorations}
+            isSaveComplete={isSaveComplete}
+            isInteractionDisabled={isEditorLocked}
           />
           <h2 className="mt-3 text-center text-[16px] leading-none font-medium text-[#1c1c1c]">
             {regionName}
@@ -461,6 +480,7 @@ function TravelRecordFolderDecorationPage() {
           }
           onAddSticker={appendDecoration}
           onStickerDragStart={handleStickerDragStart}
+          isInteractionDisabled={isEditorLocked}
         />
 
         {draggingSticker
