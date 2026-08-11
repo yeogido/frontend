@@ -12,20 +12,29 @@ import { useAdminCourseRegistrationStore } from '../store/adminCourseRegistratio
 import { toContentTagIds } from '../utils/contentTags';
 import { deriveImageKeyFromUrl } from '../utils/deriveImageKeyFromUrl';
 
-const DURATION_TYPE_TO_FORM: Record<string, CourseBasicInfoValues['duration']> = {
-  DAY_TRIP: 'day-trip',
-  ONE_NIGHT: '1-night-2-days',
-  TWO_NIGHT: '2-nights-3-days',
-  THREE_PLUS: '3-nights-or-more',
-};
+const DURATION_TYPE_TO_FORM: Record<string, CourseBasicInfoValues['duration']> =
+  {
+    DAY_TRIP: 'day-trip',
+    ONE_NIGHT: '1-night-2-days',
+    TWO_NIGHT: '2-nights-3-days',
+    THREE_PLUS: '3-nights-or-more',
+  };
 
-const TRANSPORT_TYPE_TO_FORM: Record<string, CourseBasicInfoValues['transport']> = {
+const TRANSPORT_TYPE_TO_FORM: Record<
+  string,
+  CourseBasicInfoValues['transport']
+> = {
   WALK: 'walking',
-  PUBLIC: 'public',
+  // 'PUBLIC'은 예전에 만들어진 코스에만 남아 있을 수 있는 값이라(생성/수정
+  // 요청 스펙에서 이미 빠짐) '뚜벅이'로 합쳐서 보여준다.
+  PUBLIC: 'walking',
   CAR: 'car',
 };
 
-const COMPANION_TYPE_TO_FORM: Record<string, CourseBasicInfoValues['companion']> = {
+const COMPANION_TYPE_TO_FORM: Record<
+  string,
+  CourseBasicInfoValues['companion']
+> = {
   SOLO: 'solo',
   FRIEND: 'friends',
   COUPLE: 'couple',
