@@ -22,7 +22,7 @@ import {
   TravelYearDropdown,
   TravelYearDropdownSkeleton,
 } from './components';
-import type { TravelRecordFolder, TravelRecordView } from './types';
+import type { TravelRecordFolder } from './types';
 import { getValidTravelRecordYear } from './utils/sessionFolders';
 import { getSavedTravelRecordState } from './utils/savedTravelRecord';
 
@@ -35,7 +35,12 @@ function TravelRecordPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
-  const [activeView, setActiveView] = useState<TravelRecordView>('folder');
+  // 상세·작성 화면에 다녀오면 이 페이지가 다시 마운트되므로, 보고 있던 탭은
+  // 컴포넌트 상태가 아니라 세션에 남겨 둔다.
+  const activeView = useTravelRecordSessionStore((state) => state.listView);
+  const setActiveView = useTravelRecordSessionStore(
+    (state) => state.setListView,
+  );
   const [savedTravelRecord] = useState(() =>
     getSavedTravelRecordState(location.state),
   );
