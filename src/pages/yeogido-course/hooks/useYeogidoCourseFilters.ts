@@ -6,12 +6,17 @@ import {
   type YeogidoCourseSelectedFilters,
 } from '../constants/filters';
 
-function useYeogidoCourseFilters() {
+function useYeogidoCourseFilters(
+  initialOverrides?: Partial<YeogidoCourseSelectedFilters>
+) {
   const filterContainerRef = useRef<HTMLDivElement | null>(null);
   const [openFilterKey, setOpenFilterKey] =
     useState<YeogidoCourseFilterKey | null>(null);
   const [selectedFilters, setSelectedFilters] =
-    useState<YeogidoCourseSelectedFilters>(initialYeogidoCourseSelectedFilters);
+    useState<YeogidoCourseSelectedFilters>(() => ({
+      ...initialYeogidoCourseSelectedFilters,
+      ...initialOverrides,
+    }));
 
   useEffect(() => {
     if (!openFilterKey) {
