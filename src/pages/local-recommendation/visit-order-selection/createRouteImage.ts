@@ -1,6 +1,9 @@
 import { loadKakaoMapsSdk } from '../../../components/kakaomap/utils/kakaoMap';
 import type { VisitEvent } from './constants';
-import { resolveVisitEventGeoPoints } from './useVisitEventTravelData';
+import {
+  resolveVisitEventGeoPoints,
+  TRAVEL_DATA_TIMEOUT_MS,
+} from './useVisitEventTravelData';
 
 const IMAGE_WIDTH = 680;
 const IMAGE_HEIGHT = 460;
@@ -135,17 +138,26 @@ async function drawImageMarker(
   }
 }
 
-async function fetchStaticMap(center: string, level: number): Promise<HTMLImageElement> {
+async function fetchStaticMap(
+  center: string,
+  level: number,
+  signal: AbortSignal
+): Promise<HTMLImageElement> {
   const params = new URLSearchParams({
     center,
     size: `${IMAGE_WIDTH}x${IMAGE_HEIGHT}`,
     lv: String(level),
   });
-  const response = await fetch(`/kakao-maps/static-map?${params}`);
+  const response = await fetch(`/kakao-maps/static-map?${params}`, { signal });
   if (!response.ok) throw new Error('Failed to load the route map.');
 
   const blob = await response.blob();
-  return loadImage(URL.createObjectURL(blob));
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    return await loadImage(objectUrl);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 export async function createRouteImage(
@@ -154,21 +166,31 @@ export async function createRouteImage(
   const apiKey = import.meta.env.VITE_KAKAO_MAP_API_KEY;
   if (!apiKey) throw new Error('Kakao Map API is not configured.');
 
-  const pointsByEventId = await resolveVisitEventGeoPoints(visitEvents);
-  const routeEvents = visitEvents.flatMap((event) => {
-    const point = pointsByEventId.get(event.id);
-    return point ? [{ event, point }] : [];
-  });
-  if (routeEvents.length === 0) {
-    throw new Error('No locations are available for the route image.');
-  }
-
-  await loadKakaoMapsSdk(apiKey);
-  const mapContainer = document.createElement('div');
-  mapContainer.style.cssText = `position:fixed;left:-10000px;top:0;width:${IMAGE_WIDTH}px;height:${IMAGE_HEIGHT}px;opacity:0;pointer-events:none;`;
-  document.body.append(mapContainer);
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(
+    () => controller.abort(),
+    TRAVEL_DATA_TIMEOUT_MS
+  );
 
   try {
+    const pointsByEventId = await resolveVisitEventGeoPoints(
+      visitEvents,
+      controller.signal
+    );
+    const routeEvents = visitEvents.flatMap((event) => {
+      const point = pointsByEventId.get(event.id);
+      return point ? [{ event, point }] : [];
+    });
+    if (routeEvents.length === 0) {
+      throw new Error('No locations are available for the route image.');
+    }
+
+    await loadKakaoMapsSdk(apiKey);
+    const mapContainer = document.createElement('div');
+    mapContainer.style.cssText = `position:fixed;left:-10000px;top:0;width:${IMAGE_WIDTH}px;height:${IMAGE_HEIGHT}px;opacity:0;pointer-events:none;`;
+    document.body.append(mapContainer);
+
+    try {
     const firstPoint = routeEvents[0].point;
     const map = new window.kakao.maps.Map(mapContainer, {
       center: new window.kakao.maps.LatLng(firstPoint.latitude, firstPoint.longitude),
@@ -187,7 +209,8 @@ export async function createRouteImage(
     const center = map.getCenter();
     const background = await fetchStaticMap(
       `${center.getLng()},${center.getLat()}`,
-      map.getLevel()
+      map.getLevel(),
+      controller.signal
     );
     const canvas = document.createElement('canvas');
     canvas.width = IMAGE_WIDTH;
@@ -196,8 +219,6 @@ export async function createRouteImage(
     if (!context) throw new Error('Failed to prepare the route image.');
 
     context.drawImage(background, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-    URL.revokeObjectURL(background.src);
-
     const projection = map.getProjection();
     const canvasPoints = routeEvents.map(({ point }) => {
       const pixel = projection.containerPointFromCoords(
@@ -231,7 +252,10 @@ export async function createRouteImage(
 
     const blob = await canvasBlob(canvas);
     return new File([blob], 'course-route.png', { type: 'image/png' });
+    } finally {
+      mapContainer.remove();
+    }
   } finally {
-    mapContainer.remove();
+    window.clearTimeout(timeoutId);
   }
 }

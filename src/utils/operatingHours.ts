@@ -210,6 +210,11 @@ export function isOperatingNow(
   const openMinutes = toMinutesSinceMidnight(today.openTime);
   const closeMinutes = toMinutesSinceMidnight(today.closeTime);
 
+  // The normalized representation for a 24-hour schedule is 00:00-23:59.
+  if (today.openTime === '00:00' && today.closeTime === '23:59') {
+    return true;
+  }
+
   // 자정을 넘겨 닫는 경우(예: 20:00~02:00)를 포함해 정상적인 경우까지 한 식으로 처리한다.
   if (closeMinutes > openMinutes) {
     return minutes >= openMinutes && minutes < closeMinutes;

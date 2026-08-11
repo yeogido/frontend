@@ -9,15 +9,6 @@ import type {
   RecommendedCourse,
 } from '../types/course.type';
 
-function withRouteImage<T extends { thumbnailUrl: string; routeImageUrl?: string | null }>(
-  course: T,
-): T {
-  return {
-    ...course,
-    thumbnailUrl: course.routeImageUrl ?? course.thumbnailUrl,
-  };
-}
-
 export async function getCourses(
   params: GetCoursesParams,
 ): Promise<GetCoursesResponse> {
@@ -26,7 +17,7 @@ export async function getCourses(
       params,
     });
 
-    return { ...data, items: data.items.map(withRouteImage) };
+    return data;
   } catch (error) {
     throw normalizeApiError(error);
   }
@@ -40,7 +31,7 @@ export async function getPopularCourses(
       params,
     });
 
-    return data.map(withRouteImage);
+    return data;
   } catch (error) {
     throw normalizeApiError(error);
   }
@@ -52,7 +43,7 @@ export async function getPopularLocalCourses(): Promise<PopularLocalCourse[]> {
       '/courses/popular/local',
     );
 
-    return data.map(withRouteImage);
+    return data;
   } catch (error) {
     throw normalizeApiError(error);
   }
