@@ -95,7 +95,7 @@ export function mapBusinessPromotionDetail(
     heroImageUrls,
     liked: detail.isLiked,
     tags: mapHashtagsToTags(detail.hashtags),
-    overview: detail.ownerComment,
+    overview: detail.shortDescription,
     address: detail.place.roadAddress,
     hours: formatBusinessHours(detail.businessHours),
     phone: detail.phoneNumber,

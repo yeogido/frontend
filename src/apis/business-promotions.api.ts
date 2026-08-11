@@ -6,6 +6,8 @@ import type {
   BusinessPromotionDetailResponse,
   BusinessPromotionListParams,
   BusinessPromotionListResponse,
+  BusinessPromotionUpdateRequest,
+  BusinessPromotionUpdateResponse,
 } from '../types/businessPromotion.type';
 
 export async function getBusinessPromotions(
@@ -40,4 +42,22 @@ export async function createBusinessPromotion(
   );
 
   return data;
+}
+
+export async function updateBusinessPromotion(
+  promotionId: number,
+  payload: BusinessPromotionUpdateRequest
+): Promise<BusinessPromotionUpdateResponse> {
+  const { data } = await apiClient.patch<BusinessPromotionUpdateResponse>(
+    `/business-promotions/${promotionId}`,
+    payload
+  );
+
+  return data;
+}
+
+export async function deleteBusinessPromotion(
+  promotionId: number
+): Promise<void> {
+  await apiClient.delete(`/business-promotions/${promotionId}`);
 }
