@@ -5,6 +5,7 @@ import oheart from '../../assets/icons/oheart.svg';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 
 import ReviewActionMenu from './ReviewActionMenu';
+import TagChip, { type TagType } from './TagChip';
 
 const CARD_DESIGN_WIDTH = 342;
 const HEART_SIZE = 16;
@@ -35,6 +36,13 @@ const LOCATION_ICON_GAP = 6;
 const LOCATION_ICON_SIZE = 14;
 const LOCATION_TEXT_SIZE = 13;
 
+// Figma Promotion_Card(node 930:9177) 기준: 위치 아래 구분선까지 12,
+// 구분선 아래 태그 줄까지 12, 태그칩 높이 25, 태그 사이 간격 12.
+const TAGS_DIVIDER_MARGIN_TOP = 12;
+const TAGS_MARGIN_TOP = 12;
+const TAGS_GAP = 12;
+const TAG_HEIGHT = 25;
+
 export interface PromotionCardProps {
   avatarUrl: string;
   profileName: string;
@@ -43,6 +51,7 @@ export interface PromotionCardProps {
   title: string;
   description: string;
   location: string;
+  tags?: TagType[];
   isMine?: boolean;
   liked?: boolean;
   onClick?: () => void;
@@ -60,6 +69,7 @@ function PromotionCard({
   title,
   description,
   location: locationText,
+  tags,
   isMine = false,
   liked = false,
   onClick,
@@ -194,6 +204,28 @@ function PromotionCard({
                 </span>
               </div>
             </div>
+
+            {tags && tags.length > 0 ? (
+              <>
+                <div
+                  className="border-t border-[#E4E4E4]"
+                  style={{ marginTop: TAGS_DIVIDER_MARGIN_TOP }}
+                />
+                <div
+                  className="flex flex-wrap"
+                  style={{ marginTop: TAGS_MARGIN_TOP, gap: TAGS_GAP }}
+                >
+                  {tags.map((tag) => (
+                    <TagChip
+                      key={tag}
+                      type={tag}
+                      className="w-auto"
+                      style={{ height: TAG_HEIGHT }}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
 

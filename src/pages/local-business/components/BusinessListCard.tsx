@@ -22,6 +22,7 @@ function BusinessListCard({
       title={business.title}
       description={business.description}
       location={business.location}
+      tags={business.tags}
       liked={business.liked}
       onClick={onClick}
       onLikeClick={onLikeClick}
