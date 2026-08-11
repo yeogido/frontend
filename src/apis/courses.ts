@@ -54,6 +54,7 @@ export interface CourseDetailResult {
   courseType: string;
   title: string;
   thumbnailUrl: string;
+  routeImageUrl?: string | null;
   description: string;
   tags: string[];
   durationType: string;

@@ -51,12 +51,34 @@ export interface CreateLocalRecommendationRequest {
   monthStart: number;
   monthEnd: number;
   thumbnailKey: string;
+  routeImageKey?: string;
   hashtagIds: number[];
   courseItems: CourseItem[];
 }
 
 export interface CreateLocalRecommendationResult {
   courseId: number;
+}
+
+function normalizeCourseItemsForStorage(
+  courseItems: readonly CourseItem[]
+): CourseItem[] {
+  return courseItems.map((courseItem) => {
+    if (courseItem.type !== 'PLACE' || !courseItem.operatingDays) {
+      return courseItem;
+    }
+
+    return {
+      ...courseItem,
+      operatingDays: courseItem.operatingDays.map((operatingDay) => ({
+        ...operatingDay,
+        closeTime:
+          operatingDay.closeTime === '24:00'
+            ? '23:59'
+            : operatingDay.closeTime,
+      })),
+    };
+  });
 }
 
 interface CourseClient {
@@ -73,7 +95,10 @@ export async function createLocalRecommendationWithClient<Result>(
   client: CourseClient,
   payload: CreateLocalRecommendationRequest
 ): Promise<Result> {
-  const response = await client.post<Result>('/courses', payload);
+  const response = await client.post<Result>('/courses', {
+    ...payload,
+    courseItems: normalizeCourseItemsForStorage(payload.courseItems),
+  });
 
   return response.data;
 }

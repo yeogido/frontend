@@ -24,7 +24,7 @@ export function toMyPostReviewCardProps(
   return {
     id: review.reviewId,
     courseId: course?.id,
-    image: course?.thumbnailUrl ?? '',
+    image: course?.routeImageUrl ?? course?.thumbnailUrl ?? '',
     title: course?.title ?? '',
     duration: course ? toDurationLabel(course.durationType) : '',
     courseType: course ? toTransportLabel(course.transportType) : '',

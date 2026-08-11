@@ -61,6 +61,7 @@ declare namespace kakao.maps {
       yAnchor?: number;
     });
     setMap(map: Map | null): void;
+    setZIndex(zIndex: number): void;
   }
   export class Polyline {
     constructor(options: {

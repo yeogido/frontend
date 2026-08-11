@@ -386,7 +386,7 @@ function MyPostsPage() {
               return (
                 <CourseCard
                   key={`course-${course.id}`}
-                  image={course.thumbnailUrl}
+                  image={course.routeImageUrl ?? course.thumbnailUrl}
                   title={course.title}
                   duration={toDurationLabel(course.durationType)}
                   courseType={toTransportLabel(course.transportType)}

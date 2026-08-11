@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getCourseDetail, updateCourse } from '../../../../apis/courses';
-import { uploadCourseImages } from '../../../../apis/files';
+import { uploadCourseImage, uploadCourseImages } from '../../../../apis/files';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
 import {
   LOCAL_RECOMMENDATION_COVER_IMAGE_ID,
@@ -25,6 +25,7 @@ import {
   getCourseRequestValidationError,
 } from '../buildCourseRequest';
 import { buildVisitEvents } from '../buildVisitEvents';
+import { createRouteImage } from '../createRouteImage';
 import type { VisitEvent } from '../constants';
 import {
   fetchVisitEventTravelData,
@@ -207,10 +208,13 @@ export function useVisitOrderSelection() {
             getCourseDetail(currentDraft.editingCourseId as number),
         });
       } else {
+        const routeImage = await createRouteImage(eventsWithImageKeys);
+        const routeImageKey = await uploadCourseImage(routeImage);
         const payload = buildCourseRequest(
           draftWithCoverKey,
           eventsWithImageKeys,
-          travelData
+          travelData,
+          routeImageKey
         );
         if (!payload) {
           throw new Error('코스 정보가 모두 입력되어야 등록할 수 있습니다.');

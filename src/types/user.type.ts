@@ -11,6 +11,7 @@ export interface MyCourseSummary {
   id: number;
   title: string;
   thumbnailUrl: string;
+  routeImageUrl?: string | null;
   durationType: string;
   transportType: string;
   companionType: string;

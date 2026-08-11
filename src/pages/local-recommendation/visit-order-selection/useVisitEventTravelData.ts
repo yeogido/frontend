@@ -33,7 +33,7 @@ function toMinutes(seconds: number | null): number | undefined {
     : Math.round(seconds / SECONDS_PER_MINUTE);
 }
 
-async function getGeoPointByEventId(
+export async function resolveVisitEventGeoPoints(
   visitEvents: readonly VisitEvent[],
   signal?: AbortSignal
 ): Promise<ReadonlyMap<string, GeoPoint>> {
@@ -170,7 +170,7 @@ export async function fetchVisitEventTravelData(
   );
 
   try {
-    const geoPointByEventId = await getGeoPointByEventId(
+    const geoPointByEventId = await resolveVisitEventGeoPoints(
       visitEvents,
       controller.signal
     );

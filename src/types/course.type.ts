@@ -26,6 +26,7 @@ export type CourseSort =
 export interface Course {
   courseId: number;
   thumbnailUrl: string;
+  routeImageUrl?: string | null;
   title: string;
   region: string;
   durationType: CourseDurationType;
@@ -74,6 +75,7 @@ export interface PopularLocalCourseAuthor {
 export interface PopularLocalCourse {
   courseId: number;
   thumbnailUrl: string;
+  routeImageUrl?: string | null;
   title: string;
   durationType: CourseDurationType;
   companionType: CourseCompanionType;
