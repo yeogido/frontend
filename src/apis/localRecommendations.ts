@@ -46,7 +46,11 @@ export interface CreateLocalRecommendationRequest {
   regionId: number;
   description: string;
   durationType: 'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
-  transportType: 'WALK' | 'PUBLIC' | 'CAR';
+  // 라이브 스펙(CourseCreateRequest) 기준 이동수단은 WALK/CAR만 받는다 —
+  // PUBLIC은 더 이상 유효한 요청 값이 아니다(과거 데이터에만 남아 있을 수
+  // 있고, 그건 응답 쪽 CourseDetailResult.transportType이 느슨한 string인
+  // 이유이기도 하다).
+  transportType: 'WALK' | 'CAR';
   companionType: 'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
   monthStart: number;
   monthEnd: number;

@@ -186,7 +186,7 @@ function FestivalSearchPage() {
                     title={festival.title}
                     firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                     secondInfo={festival.regionName}
-                    liked={getLiked(festival.contentId, false)}
+                    liked={getLiked(festival.contentId, festival.isLiked)}
                     tags={toContentTagIds(festival.hashtags)}
                     className="w-full"
                     onClick={() =>
@@ -195,7 +195,7 @@ function FestivalSearchPage() {
                     onLikeClick={() =>
                       toggleLike(
                         festival.contentId,
-                        getLiked(festival.contentId, false)
+                        getLiked(festival.contentId, festival.isLiked)
                       )
                     }
                   />

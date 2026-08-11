@@ -123,7 +123,8 @@ export interface CreateCourseReviewResponse {
 /*
  * 여기부터는 리뷰 수정용.
  *
- * 두 목록 응답 모두 imageKey를 내려주므로 후기가 보이는 네 화면 전부에서
+ * 후기를 내려주는 세 응답(GET /reviews, GET /courses/{id}/reviews,
+ * GET /users/me/posts)이 모두 imageKey를 주므로, 후기가 보이는 화면 전부에서
  * 수정에 들어갈 수 있다.
  */
 export interface ReviewImageRequest {

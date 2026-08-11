@@ -91,13 +91,16 @@ function YeogidoCoursePopularPage() {
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/yeogido-course/detail/${courseId}`);
   };
+  // 이 페이지는 "인기 추천 코스"라 최초 진입 시 정렬 기본값도 인기순이어야
+  // 한다 — 공용 훅의 기본값(추천순)은 다른 화면(검색 등)에도 쓰이므로
+  // 여기서만 초기값을 덮어쓴다.
   const {
     filterContainerRef,
     openFilterKey,
     selectedFilters,
     handleFilterToggle,
     handleFilterSelect,
-  } = useYeogidoCourseFilters();
+  } = useYeogidoCourseFilters({ sort: '인기순' });
 
   const isDistanceSort = selectedFilters.sort === '거리순';
   const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
