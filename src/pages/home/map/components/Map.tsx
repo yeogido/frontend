@@ -31,6 +31,8 @@ interface MapProps {
   markers?: readonly MapMarker[];
   /** 여행 기록 페이지에서 받아온 지역별 대표 사진. 없으면 빈 객체 */
   regionPhotos?: RegionPhotoMap;
+  /** 여행 기록이 없는 지역을 눌렀을 때. 없으면 지역 정보 페이지로 이동한다. */
+  onRegionWithoutRecordSelect?: (regionName: string) => void;
 }
 
 function Map({
@@ -40,6 +42,7 @@ function Map({
   initialZoom = minZoom,
   markers = [],
   regionPhotos = {},
+  onRegionWithoutRecordSelect,
 }: MapProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const mapViewportRef = useRef<SVGGElement | null>(null);
@@ -139,6 +142,7 @@ function Map({
           labelRenderScale={zoomLevel * labelBaseScale}
           markers={markers}
           regionPhotos={regionPhotos}
+          onRegionWithoutRecordSelect={onRegionWithoutRecordSelect}
         />
       </svg>
 
