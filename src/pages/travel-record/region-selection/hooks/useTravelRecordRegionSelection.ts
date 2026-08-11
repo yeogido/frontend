@@ -1,5 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
+import { searchRegions } from '../../../../apis/regions.api';
 import {
   addStoredRecentSearch,
   getStoredRecentSearches,
@@ -16,6 +18,10 @@ import {
   MAX_VISIBLE_REGION_SUGGESTIONS,
   recentSearchStorageOptions,
 } from '../constants';
+import {
+  findTravelRecordRegionByName,
+  resolveTravelRecordRegionFromSearch,
+} from '../recentSearchRegion';
 import { getTravelRecordRegionSuggestions } from '../regionSuggestions';
 import type { TravelRecordRegion } from '../types';
 
@@ -23,6 +29,7 @@ function useTravelRecordRegionSelection(
   popularRegions: readonly TravelRecordRegion[],
   initialSelectedRegion: TravelRecordRegion | null = null,
 ) {
+  const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>(() =>
     getStoredRecentSearches(recentSearchStorageOptions),
@@ -71,17 +78,47 @@ function useTravelRecordRegionSelection(
     addRecentSearch(selectedTravelMapRegion.selectionName);
   };
 
+  // 최근 검색 칩은 인기 지역에 없는 지역(예: '전주')일 수 있고, 그때는 화면에
+  // 올라와 있는 목록만으로는 지역을 찾지 못해 칩이 눌리지 않는다. 이름으로 지역
+  // 검색을 한 번 더 해서 선택까지 이어지게 한다.
+  const selectSearchedRegionName = async (regionName: string) => {
+    const keyword = regionName.trim();
+
+    if (!keyword) {
+      return;
+    }
+
+    try {
+      const searchResults = await queryClient.fetchQuery({
+        queryKey: ['travelRecordRegions', 'search', keyword],
+        queryFn: () => searchRegions(keyword),
+      });
+      const region = resolveTravelRecordRegionFromSearch(
+        searchResults,
+        keyword,
+      );
+
+      if (region) {
+        selectRegion(region);
+      }
+    } catch {
+      // 검색에 실패하면 선택을 바꾸지 않고 그대로 둔다.
+    }
+  };
+
   const selectRegionName = (regionName: string) => {
-    const region = [...searchedRegions, ...popularRegions].find(
-      (region) =>
-        region.name === regionName ||
-        region.province === regionName ||
-        region.selectionName === regionName,
+    const region = findTravelRecordRegionByName(
+      [...searchedRegions, ...popularRegions],
+      regionName,
     );
 
     if (region) {
       selectRegion(region);
+
+      return;
     }
+
+    void selectSearchedRegionName(regionName);
   };
 
   const updateQuery = (nextQuery: string) => {
