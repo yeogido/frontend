@@ -35,6 +35,9 @@ export interface ContentPublishModalProps {
   /** contentId의 상세 조회 결과 — 로딩 중이거나 실패하면 undefined. */
   detail: CultureContentDetail | undefined;
   isDetailPending: boolean;
+  isDetailError: boolean;
+  detailError: unknown;
+  onRetryDetail: () => void;
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (payload: ContentPublishRequest) => void;
@@ -51,13 +54,15 @@ function ContentPublishForm({
   isSubmitting,
   onSubmit,
 }: ContentPublishFormProps) {
-  const scale = Math.min(useGlobalScale(), 1);
+  // 이 폼은 이미 transform: scale(...)로 통째로 확대/축소되는 모달 카드
+  // 안에 있다(ContentPublishModal의 outer section) — 여기서 또 scale을
+  // 곱하면 이중으로 적용된다. 그래서 리터럴 px 그대로 쓴다.
   const inputStyle = {
-    height: INPUT_HEIGHT * scale,
-    paddingLeft: INPUT_PADDING_X * scale,
-    paddingRight: INPUT_PADDING_X * scale,
-    fontSize: INPUT_FONT_SIZE * scale,
-    borderRadius: INPUT_RADIUS * scale,
+    height: INPUT_HEIGHT,
+    paddingLeft: INPUT_PADDING_X,
+    paddingRight: INPUT_PADDING_X,
+    fontSize: INPUT_FONT_SIZE,
+    borderRadius: INPUT_RADIUS,
   };
   const inputClassName =
     'border-gray-2 placeholder:text-gray-4 focus:border-main-5 w-full border bg-white outline-none';
@@ -201,7 +206,9 @@ function ContentPublishForm({
 function ContentPublishModal({
   contentId,
   detail,
-  isDetailPending,
+  isDetailError,
+  detailError,
+  onRetryDetail,
   isSubmitting,
   onClose,
   onSubmit,
@@ -239,13 +246,32 @@ function ContentPublishModal({
           내용을 확인하고 필요한 정보를 보완한 뒤 게시하세요
         </p>
 
-        {detail && !isDetailPending ? (
+        {detail ? (
+          // 재조회가 실패해도(isDetailError) 이전에 받아둔 detail이 남아
+          // 있으면 그걸로 계속 폼을 보여준다 — 값을 고치던 중에 화면이
+          // 갑자기 빈 에러 상태로 바뀌지 않게 한다.
           <ContentPublishForm
             key={contentId}
             detail={detail}
             isSubmitting={isSubmitting}
             onSubmit={onSubmit}
           />
+        ) : isDetailError ? (
+          <div className="mt-8 flex flex-col items-center gap-3 pb-8">
+            <p className="text-main-5 text-center text-[13px]">
+              {getApiErrorMessage(
+                detailError,
+                '콘텐츠 정보를 불러오지 못했어요.'
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={onRetryDetail}
+              className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+            >
+              다시 시도
+            </button>
+          </div>
         ) : (
           <p className="mt-8 pb-8 text-center text-[13px] text-[#7f7f7f]">
             콘텐츠 정보를 불러오는 중이에요...
