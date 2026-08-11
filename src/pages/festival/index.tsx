@@ -10,6 +10,7 @@ import {
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useContentDelete } from '../../hooks/useContentDelete';
+import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
 import { useCultureContents } from '../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
 import { useEditFestival } from '../../hooks/useEditFestival';
@@ -18,13 +19,11 @@ import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
 import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
 
-import lotusFestivalImage from './assets/lotus-festival.webp';
 import { FeaturedFestivalBanner } from './components';
 import useFestivalPreviews from './hooks/useFestivalPreviews';
 import type { FeaturedFestival } from './types';
 
 const ONGOING_PREVIEW_ITEM_COUNT = 2;
-const BANNER_ITEM_COUNT = 5;
 const BANNER_ROTATE_INTERVAL_MS = 2000;
 
 const PAGE_PADDING_X = 24;
@@ -58,20 +57,19 @@ function FestivalPage() {
     });
   const ongoingFestivals = ongoingContentsData?.pages[0]?.items ?? [];
 
-  // 메인 배너: 추천순 상위 5개를 2초마다 자동 전환한다.
-  const { data: bannerContentsData } = useCultureContents({
-    sort: 'RECOMMEND',
-    size: BANNER_ITEM_COUNT,
-  });
-  const bannerFestivals: FeaturedFestival[] = (
-    bannerContentsData?.pages[0]?.items ?? []
-  ).map((content) => ({
-    id: content.contentId,
-    image: content.thumbnailImageUrl ?? lotusFestivalImage,
-    title: content.title,
-    description: content.regionName,
-    period: `${content.startDate} ~ ${content.endDate}`,
-  }));
+  // 메인 배너: 배너 전용 API(/contents/banner)가 이미 여러 개를 내려줘서
+  // 2초마다 자동 전환한다. 목록 API(/contents)는 날짜를 월까지만 내려주게
+  // 바뀌었지만 배너 전용 API는 일자까지 그대로 내려준다.
+  const { data: cultureContentBanners } = useCultureContentBanners();
+  const bannerFestivals: FeaturedFestival[] = (cultureContentBanners ?? []).map(
+    (banner) => ({
+      id: banner.contentId,
+      image: banner.thumbnailImage,
+      title: banner.title,
+      description: banner.description,
+      period: `${banner.startDate} ~ ${banner.endDate}`,
+    })
+  );
   const [bannerIndex, setBannerIndex] = useState(0);
 
   useEffect(() => {
