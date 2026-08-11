@@ -137,7 +137,7 @@ function RegionCourseSection({
                     canManageCourse(course.courseId) ? (
                       <EditableContentCard
                         key={course.courseId}
-                        image={course.thumbnailUrl}
+                        image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                         title={course.title}
                         firstInfo={toDurationLabel(course.durationType)}
                         secondInfo={course.region}
@@ -153,7 +153,7 @@ function RegionCourseSection({
                     ) : (
                       <ContentCard
                         key={course.courseId}
-                        image={course.thumbnailUrl}
+                        image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                         title={course.title}
                         firstInfo={toDurationLabel(course.durationType)}
                         secondInfo={course.region}

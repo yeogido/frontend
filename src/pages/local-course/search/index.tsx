@@ -230,7 +230,7 @@ function LocalCourseSearchPage() {
                   isAdmin || myCourseIds.has(course.courseId) ? (
                     <EditableContentCard
                       key={course.courseId}
-                      image={course.thumbnailUrl}
+                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}
@@ -243,7 +243,7 @@ function LocalCourseSearchPage() {
                   ) : (
                     <ContentCard
                       key={course.courseId}
-                      image={course.thumbnailUrl}
+                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}

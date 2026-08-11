@@ -393,7 +393,7 @@ function YeogidoCoursePage() {
                   isAdmin ? (
                     <EditableContentCard
                       key={course.courseId}
-                      image={course.thumbnailUrl}
+                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}
@@ -405,7 +405,7 @@ function YeogidoCoursePage() {
                   ) : (
                     <ContentCard
                       key={course.courseId}
-                      image={course.thumbnailUrl}
+                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}

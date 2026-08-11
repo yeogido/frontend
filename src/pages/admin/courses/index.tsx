@@ -338,7 +338,7 @@ function AdminCoursesPage() {
               : popularCoursePreviews.map((course) => (
                   <EditableContentCard
                     key={course.courseId}
-                    image={course.thumbnailUrl}
+                    image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={toDurationLabel(course.durationType)}
                     secondInfo={course.region}
