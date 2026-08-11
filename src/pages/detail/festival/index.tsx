@@ -1,14 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQueries } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import {
-  addPlaceLike,
-  getCourseDetail,
-  removePlaceLike,
-} from '../../../apis/courses';
+import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
 import CourseCard from '../../../components/common/CourseCard';
+import CourseCardSkeleton from '../../../components/common/CourseCardSkeleton';
 import SectionHeader from '../../../components/common/SectionHeader';
 import BackButton from '../../local-recommendation/components/BackButton';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
@@ -22,7 +18,10 @@ import { useToast } from '../../../components/toast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
-import { useNavigateToCourseDetail } from '../../../hooks/useCourses';
+import {
+  useCourses,
+  useNavigateToCourseDetail,
+} from '../../../hooks/useCourses';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useLoginModal } from '../../../hooks/useLoginModal';
@@ -31,9 +30,13 @@ import {
   formatTodayOpeningHours,
   usePlaceOpeningHours,
 } from '../../../hooks/usePlaceOpeningHours';
-import { isCourseNotFoundError } from '../../../hooks/useReviews';
 import { useAuthStore } from '../../../store/auth.store';
 import { toContentTagIds } from '../../../utils/contentTags';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
 import { buildFestivalCoursesPath } from '../../../utils/routes';
 import { saveRecentCultureContent } from '../../../utils/recentCultureContents';
 
@@ -65,6 +68,7 @@ const COURSE_SECTION_MARGIN_TOP = 12;
 const COURSE_LIST_MARGIN_TOP = 24;
 const COURSE_CARD_GAP = 16;
 const RELATED_COURSE_PREVIEW_COUNT = 2;
+const RELATED_COURSE_SKELETON_ITEMS = [0, 1];
 const MAP_FALLBACK_HEIGHT = 342;
 const MAP_FALLBACK_RADIUS = 12;
 const MAP_FALLBACK_FONT_SIZE = 14;
@@ -128,39 +132,26 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
       )
     : undefined;
 
-  // 상세 응답의 courses에는 태그가 없어(다른 필드는 다 있다), 코스 상세를
-  // 따로 받아 태그를 채운다. 삭제된 코스를 걸러낸 "뒤"에 미리보기 개수만큼
-  // 잘라야 하므로(먼저 자르면 앞쪽이 삭제된 코스일 때 미리보기가 실제보다
-  // 적게 보인다), 연결된 코스 전체를 조회 대상으로 삼는다.
-  const relatedCourses = festival?.relatedCourses ?? [];
-  const relatedCourseDetailQueries = useQueries({
-    queries: relatedCourses.map((course) => ({
-      queryKey: ['courseDetail', course.id],
-      queryFn: () => getCourseDetail(course.id),
-      staleTime: 1000 * 60,
-      // 삭제된 코스(COURSE4041)는 재시도해도 절대 성공하지 않는다 —
-      // 기본 재시도(3회)를 두면 삭제 판정이 늦어지고 요청만 늘어난다.
-      retry: (failureCount: number, error: unknown) =>
-        !isCourseNotFoundError(error) && failureCount < 3,
-    })),
-  });
-  // 행사에 코스가 연결된 뒤 그 코스가 삭제돼도 행사 쪽 목록에는 여전히
-  // 남아 있을 수 있다(코스 상세 조회는 COURSE4041로 404) — 그런 항목은
-  // 클릭해도 여는 게 불가능하니 상세 조회로 삭제를 확인하는 즉시 뺀 다음
-  // 미리보기 개수만큼 자른다.
-  const previewCoursesWithTags = relatedCourses
-    .map((course, index) => ({
-      course,
-      query: relatedCourseDetailQueries[index],
-    }))
-    .filter(
-      ({ query }) => !(query?.isError && isCourseNotFoundError(query.error))
-    )
-    .slice(0, RELATED_COURSE_PREVIEW_COUNT)
-    .map(({ course, query }) => ({
-      ...course,
-      tags: toContentTagIds(query?.data?.tags ?? []),
-    }));
+  // "이 행사가 포함된 코스" 미리보기는 인기순 상위 2개를 그대로 보여준다.
+  // GET /courses?contentId=...&sort=POPULAR가 삭제된 코스 제외·태그
+  // 포함까지 다 해주므로, 여기서 따로 상세 조회나 필터링을 할 필요가 없다.
+  const { data: popularRelatedCourses, isPending: isRelatedCoursesPending } =
+    useCourses(
+      { contentId, sort: 'POPULAR', size: RELATED_COURSE_PREVIEW_COUNT },
+      { enabled: isValidContentId }
+    );
+  const previewCoursesWithTags = (
+    popularRelatedCourses?.pages[0]?.items ?? []
+  ).map((course) => ({
+    id: course.courseId,
+    image: course.thumbnailUrl,
+    title: course.title,
+    duration: toDurationLabel(course.durationType),
+    courseType: toTransportLabel(course.transportType),
+    companion: toCompanionLabel(course.companionType),
+    tags: toContentTagIds(course.tags),
+    liked: course.isLiked,
+  }));
 
   useEffect(() => {
     if (!content) return;
@@ -366,25 +357,29 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                     gap: COURSE_CARD_GAP * scale,
                   }}
                 >
-                  {previewCoursesWithTags.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      image={course.image}
-                      title={course.title}
-                      duration={course.duration}
-                      courseType={course.courseType}
-                      companion={course.companion}
-                      tags={[...course.tags]}
-                      liked={getCourseLiked(course.id, course.liked)}
-                      onClick={() => void goToCourseDetail(course.id)}
-                      onLikeClick={() =>
-                        toggleCourseLike(
-                          course.id,
-                          getCourseLiked(course.id, course.liked)
-                        )
-                      }
-                    />
-                  ))}
+                  {isRelatedCoursesPending
+                    ? RELATED_COURSE_SKELETON_ITEMS.map((item) => (
+                        <CourseCardSkeleton key={item} />
+                      ))
+                    : previewCoursesWithTags.map((course) => (
+                        <CourseCard
+                          key={course.id}
+                          image={course.image}
+                          title={course.title}
+                          duration={course.duration}
+                          courseType={course.courseType}
+                          companion={course.companion}
+                          tags={[...course.tags]}
+                          liked={getCourseLiked(course.id, course.liked)}
+                          onClick={() => void goToCourseDetail(course.id)}
+                          onLikeClick={() =>
+                            toggleCourseLike(
+                              course.id,
+                              getCourseLiked(course.id, course.liked)
+                            )
+                          }
+                        />
+                      ))}
                 </div>
               </>
             ) : null}

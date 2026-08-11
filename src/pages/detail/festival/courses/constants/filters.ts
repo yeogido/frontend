@@ -20,8 +20,8 @@ export const festivalCoursesFilterGroups = [
   },
   {
     key: 'sort',
-    defaultLabel: '전체',
-    options: ['전체', '인기순', '최신순', '저장순', '후기순', '거리순'],
+    defaultLabel: '인기순',
+    options: ['인기순', '전체', '최신순', '저장순', '후기순', '거리순'],
   },
 ] as const;
 
