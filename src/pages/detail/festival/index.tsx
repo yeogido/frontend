@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
+import {
+  addPlaceLike,
+  getCourseDetail,
+  removePlaceLike,
+} from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
 import CourseCard from '../../../components/common/CourseCard';
 import SectionHeader from '../../../components/common/SectionHeader';
@@ -17,6 +22,7 @@ import { useToast } from '../../../components/toast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { useNavigateToCourseDetail } from '../../../hooks/useCourses';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useLoginModal } from '../../../hooks/useLoginModal';
@@ -25,8 +31,10 @@ import {
   formatTodayOpeningHours,
   usePlaceOpeningHours,
 } from '../../../hooks/usePlaceOpeningHours';
+import { isCourseNotFoundError } from '../../../hooks/useReviews';
 import { useAuthStore } from '../../../store/auth.store';
-import { buildCourseSearchPath } from '../../../utils/routes';
+import { toContentTagIds } from '../../../utils/contentTags';
+import { buildFestivalCoursesPath } from '../../../utils/routes';
 import { saveRecentCultureContent } from '../../../utils/recentCultureContents';
 
 import {
@@ -56,6 +64,7 @@ const PLACE_CARD_MARGIN_TOP = 4;
 const COURSE_SECTION_MARGIN_TOP = 12;
 const COURSE_LIST_MARGIN_TOP = 24;
 const COURSE_CARD_GAP = 16;
+const RELATED_COURSE_PREVIEW_COUNT = 2;
 const MAP_FALLBACK_HEIGHT = 342;
 const MAP_FALLBACK_RADIUS = 12;
 const MAP_FALLBACK_FONT_SIZE = 14;
@@ -85,6 +94,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const { getLiked, toggleLike } = useContentLikeToggle();
   const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
     useCourseLikeToggle();
+  const { goToCourseDetail } = useNavigateToCourseDetail();
   const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
@@ -117,6 +127,37 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
         }
       )
     : undefined;
+
+  // 상세 응답의 courses에는 태그가 없어(다른 필드는 다 있다), 미리보기에
+  // 보여줄 만큼(2개)만 코스 상세를 따로 받아 태그를 채운다.
+  const previewCourses =
+    festival?.relatedCourses.slice(0, RELATED_COURSE_PREVIEW_COUNT) ?? [];
+  const previewCourseDetailQueries = useQueries({
+    queries: previewCourses.map((course) => ({
+      queryKey: ['courseDetail', course.id],
+      queryFn: () => getCourseDetail(course.id),
+      staleTime: 1000 * 60,
+      // 삭제된 코스(COURSE4041)는 재시도해도 절대 성공하지 않는다 —
+      // 기본 재시도(3회)를 두면 삭제 판정이 늦어지고 요청만 늘어난다.
+      retry: (failureCount: number, error: unknown) =>
+        !isCourseNotFoundError(error) && failureCount < 3,
+    })),
+  });
+  // 행사에 코스가 연결된 뒤 그 코스가 삭제돼도 행사 쪽 목록에는 여전히
+  // 남아 있을 수 있다(코스 상세 조회는 COURSE4041로 404) — 그런 항목은
+  // 클릭해도 여는 게 불가능하니 상세 조회로 삭제를 확인하는 즉시 뺀다.
+  const previewCoursesWithTags = previewCourses
+    .map((course, index) => ({
+      course,
+      query: previewCourseDetailQueries[index],
+    }))
+    .filter(
+      ({ query }) => !(query?.isError && isCourseNotFoundError(query.error))
+    )
+    .map(({ course, query }) => ({
+      ...course,
+      tags: toContentTagIds(query?.data?.tags ?? []),
+    }));
 
   useEffect(() => {
     if (!content) return;
@@ -306,14 +347,11 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
             {festivalDetail.relatedCourses.length > 0 ? (
               <>
                 <div style={{ marginTop: COURSE_SECTION_MARGIN_TOP * scale }}>
-                  {/* 이 행사를 포함한 코스만 걸러 보는 검색 API가 없어
-                      장소명 키워드 검색으로 대신 보낸다 — 코스 제목/지역
-                      텍스트만 매칭이라 결과가 없을 수 있다. */}
                   <SectionHeader
                     title="이 행사가 포함된 코스"
                     actionText="전체보기"
                     onActionClick={() =>
-                      navigate(buildCourseSearchPath(festivalDetail.place.name))
+                      navigate(buildFestivalCoursesPath(contentId))
                     }
                   />
                 </div>
@@ -325,7 +363,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                     gap: COURSE_CARD_GAP * scale,
                   }}
                 >
-                  {festivalDetail.relatedCourses.map((course) => (
+                  {previewCoursesWithTags.map((course) => (
                     <CourseCard
                       key={course.id}
                       image={course.image}
@@ -335,9 +373,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                       companion={course.companion}
                       tags={[...course.tags]}
                       liked={getCourseLiked(course.id, course.liked)}
-                      onClick={() =>
-                        navigate(`/yeogido-course/detail/${course.id}`)
-                      }
+                      onClick={() => void goToCourseDetail(course.id)}
                       onLikeClick={() =>
                         toggleCourseLike(
                           course.id,
