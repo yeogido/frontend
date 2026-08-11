@@ -64,6 +64,7 @@ import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
+import FestivalRelatedCoursesPage from '../pages/detail/festival/courses';
 import RegionInfoPage from '../pages/region-info';
 import LikesPage from '../pages/likes';
 import MyPostsPage from '../pages/my-posts';
@@ -104,6 +105,11 @@ function AppRouter() {
         <Route path="/festival/recent" element={<FestivalRecentPage />} />
 
         <Route path="/festival/search" element={<FestivalSearchPage />} />
+
+        <Route
+          path="/festival/detail/:festivalId/courses"
+          element={<FestivalRelatedCoursesPage />}
+        />
 
         <Route
           path="/course-region-search"

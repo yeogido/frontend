@@ -42,6 +42,8 @@ export interface CultureContent {
   regionName: string;
   hashtags: string[];
   likeCount: number;
+  /** 목록 응답에 실제 좋아요 여부가 내려온다 — 상세(liked)와 필드명만 다르다. */
+  isLiked: boolean;
   startDate: string;
   endDate: string;
 }

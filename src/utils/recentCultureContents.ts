@@ -16,7 +16,7 @@ function notifyRecentCultureContentsUpdated(): void {
 
 export function upsertRecentCultureContent(
   contents: readonly RecentCultureContent[],
-  content: RecentCultureContent,
+  content: RecentCultureContent
 ): RecentCultureContent[] {
   return [
     content,
@@ -24,12 +24,22 @@ export function upsertRecentCultureContent(
   ].slice(0, MAX_RECENT_CULTURE_CONTENTS);
 }
 
+// 목록 조회 API(/contents)는 응답의 startDate/endDate를 "YYYY.MM"(월까지)로
+// 내려주도록 바뀌었지만, 상세 조회(/contents/{id})는 여전히 일자까지 내려준다.
+// "최근 본 행사"는 상세 페이지 방문 시점에 저장한 값을 그대로 쓰므로, 카드에
+// 보여줄 때는 다른 카드들과 형식을 맞추기 위해 월까지만 잘라 보여준다.
+function toYearMonthLabel(date: string): string {
+  const match = date.match(/^(\d{4})[-./](\d{2})/);
+
+  return match ? `${match[1]}.${match[2]}` : date;
+}
+
 export function getStoredRecentCultureContents(): RecentCultureContent[] {
   if (typeof window === 'undefined') return [];
 
   try {
     const storedContents = window.localStorage.getItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      RECENT_CULTURE_CONTENTS_STORAGE_KEY
     );
 
     if (!storedContents) return [];
@@ -37,7 +47,14 @@ export function getStoredRecentCultureContents(): RecentCultureContent[] {
     const parsedContents: unknown = JSON.parse(storedContents);
 
     return Array.isArray(parsedContents)
-      ? parsedContents.filter(isRecentCultureContent).slice(0, MAX_RECENT_CULTURE_CONTENTS)
+      ? parsedContents
+          .filter(isRecentCultureContent)
+          .slice(0, MAX_RECENT_CULTURE_CONTENTS)
+          .map((content) => ({
+            ...content,
+            startDate: toYearMonthLabel(content.startDate),
+            endDate: toYearMonthLabel(content.endDate),
+          }))
       : [];
   } catch {
     return [];
@@ -50,12 +67,12 @@ export function saveRecentCultureContent(content: RecentCultureContent): void {
   try {
     const contents = upsertRecentCultureContent(
       getStoredRecentCultureContents(),
-      content,
+      content
     );
 
     window.localStorage.setItem(
       RECENT_CULTURE_CONTENTS_STORAGE_KEY,
-      JSON.stringify(contents),
+      JSON.stringify(contents)
     );
     notifyRecentCultureContentsUpdated();
   } catch {
@@ -72,12 +89,12 @@ export function removeRecentCultureContent(contentId: number): void {
     if (!contents.some((content) => content.contentId === contentId)) return;
 
     const updatedContents = contents.filter(
-      (content) => content.contentId !== contentId,
+      (content) => content.contentId !== contentId
     );
 
     window.localStorage.setItem(
       RECENT_CULTURE_CONTENTS_STORAGE_KEY,
-      JSON.stringify(updatedContents),
+      JSON.stringify(updatedContents)
     );
     notifyRecentCultureContentsUpdated();
   } catch {
@@ -87,7 +104,7 @@ export function removeRecentCultureContent(contentId: number): void {
 
 export function updateRecentCultureContentLikeState(
   contentId: number,
-  liked: boolean,
+  liked: boolean
 ): void {
   if (typeof window === 'undefined') return;
 
@@ -97,12 +114,12 @@ export function updateRecentCultureContentLikeState(
     if (!contents.some((content) => content.contentId === contentId)) return;
 
     const updatedContents = contents.map((content) =>
-      content.contentId === contentId ? { ...content, liked } : content,
+      content.contentId === contentId ? { ...content, liked } : content
     );
 
     window.localStorage.setItem(
       RECENT_CULTURE_CONTENTS_STORAGE_KEY,
-      JSON.stringify(updatedContents),
+      JSON.stringify(updatedContents)
     );
     notifyRecentCultureContentsUpdated();
   } catch {
