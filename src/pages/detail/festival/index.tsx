@@ -128,12 +128,13 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
       )
     : undefined;
 
-  // 상세 응답의 courses에는 태그가 없어(다른 필드는 다 있다), 미리보기에
-  // 보여줄 만큼(2개)만 코스 상세를 따로 받아 태그를 채운다.
-  const previewCourses =
-    festival?.relatedCourses.slice(0, RELATED_COURSE_PREVIEW_COUNT) ?? [];
-  const previewCourseDetailQueries = useQueries({
-    queries: previewCourses.map((course) => ({
+  // 상세 응답의 courses에는 태그가 없어(다른 필드는 다 있다), 코스 상세를
+  // 따로 받아 태그를 채운다. 삭제된 코스를 걸러낸 "뒤"에 미리보기 개수만큼
+  // 잘라야 하므로(먼저 자르면 앞쪽이 삭제된 코스일 때 미리보기가 실제보다
+  // 적게 보인다), 연결된 코스 전체를 조회 대상으로 삼는다.
+  const relatedCourses = festival?.relatedCourses ?? [];
+  const relatedCourseDetailQueries = useQueries({
+    queries: relatedCourses.map((course) => ({
       queryKey: ['courseDetail', course.id],
       queryFn: () => getCourseDetail(course.id),
       staleTime: 1000 * 60,
@@ -145,15 +146,17 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   });
   // 행사에 코스가 연결된 뒤 그 코스가 삭제돼도 행사 쪽 목록에는 여전히
   // 남아 있을 수 있다(코스 상세 조회는 COURSE4041로 404) — 그런 항목은
-  // 클릭해도 여는 게 불가능하니 상세 조회로 삭제를 확인하는 즉시 뺀다.
-  const previewCoursesWithTags = previewCourses
+  // 클릭해도 여는 게 불가능하니 상세 조회로 삭제를 확인하는 즉시 뺀 다음
+  // 미리보기 개수만큼 자른다.
+  const previewCoursesWithTags = relatedCourses
     .map((course, index) => ({
       course,
-      query: previewCourseDetailQueries[index],
+      query: relatedCourseDetailQueries[index],
     }))
     .filter(
       ({ query }) => !(query?.isError && isCourseNotFoundError(query.error))
     )
+    .slice(0, RELATED_COURSE_PREVIEW_COUNT)
     .map(({ course, query }) => ({
       ...course,
       tags: toContentTagIds(query?.data?.tags ?? []),

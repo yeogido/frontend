@@ -151,6 +151,14 @@ function FestivalRelatedCoursesPage() {
       courseDetailQueries[index],
     ])
   );
+  // 코스 상세 조회가 끝나기 전에는 삭제 여부(deletedCourseIds)도, 태그도,
+  // 거리도 아직 확정되지 않은 상태다 — 이 조회들이 끝나기 전까지는 목록을
+  // 그리지 않고 스켈레톤을 유지해, 삭제된 코스가 잠깐 보였다 사라지거나
+  // 태그/정렬이 늦게 반영되는 깜빡임을 막는다.
+  const isCourseDetailsPending = courseDetailQueries.some(
+    (query) => query.isPending
+  );
+  const isListLoading = isPending || isCourseDetailsPending;
   const deletedCourseIds = new Set(
     allCourseIds.filter((courseId) => {
       const query = courseDetailQueryById.get(courseId);
@@ -203,7 +211,7 @@ function FestivalRelatedCoursesPage() {
       })
     : coursesWithDistance;
 
-  const hasEmptyResult = !isPending && !isError && courses.length === 0;
+  const hasEmptyResult = !isListLoading && !isError && courses.length === 0;
 
   return (
     <section
@@ -258,7 +266,7 @@ function FestivalRelatedCoursesPage() {
           rowGap: LIST_GAP * scale,
         }}
       >
-        {isPending
+        {isListLoading
           ? SKELETON_ITEMS.map((item) => (
               <ContentCardSkeleton
                 key={item}
