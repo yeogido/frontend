@@ -1,11 +1,10 @@
-import {
-  apiClient,
-  normalizeApiError,
-} from './common';
+import { apiClient, normalizeApiError } from './common';
 
 import type {
   ContentCreateRequest,
   ContentCreateResult,
+  ContentPublishRequest,
+  ContentPublishResult,
   CultureContentBanner,
   CultureContentDetail,
   GetCultureContentsParams,
@@ -14,12 +13,12 @@ import type {
 
 export async function getCultureContents(
   params: GetCultureContentsParams = {},
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<GetCultureContentsResponse> {
   try {
     const { data } = await apiClient.get<GetCultureContentsResponse>(
       '/contents',
-      { params, signal },
+      { params, signal }
     );
 
     return data;
@@ -29,11 +28,11 @@ export async function getCultureContents(
 }
 
 export async function getCultureContentDetail(
-  contentId: number,
+  contentId: number
 ): Promise<CultureContentDetail> {
   try {
     const { data } = await apiClient.get<CultureContentDetail>(
-      `/contents/${contentId}`,
+      `/contents/${contentId}`
     );
 
     return data;
@@ -46,9 +45,8 @@ export async function getCultureContentBanners(): Promise<
   CultureContentBanner[]
 > {
   try {
-    const { data } = await apiClient.get<CultureContentBanner[]>(
-      '/contents/banner',
-    );
+    const { data } =
+      await apiClient.get<CultureContentBanner[]>('/contents/banner');
 
     return data;
   } catch (error) {
@@ -57,12 +55,12 @@ export async function getCultureContentBanners(): Promise<
 }
 
 export async function createCultureContent(
-  payload: ContentCreateRequest,
+  payload: ContentCreateRequest
 ): Promise<ContentCreateResult> {
   try {
     const { data } = await apiClient.post<ContentCreateResult>(
       '/contents',
-      payload,
+      payload
     );
 
     return data;
@@ -73,12 +71,12 @@ export async function createCultureContent(
 
 export async function updateCultureContent(
   contentId: number,
-  payload: ContentCreateRequest,
+  payload: ContentCreateRequest
 ): Promise<ContentCreateResult> {
   try {
     const { data } = await apiClient.patch<ContentCreateResult>(
       `/contents/${contentId}`,
-      payload,
+      payload
     );
 
     return data;
@@ -90,6 +88,23 @@ export async function updateCultureContent(
 export async function deleteCultureContent(contentId: number): Promise<void> {
   try {
     await apiClient.delete(`/contents/${contentId}`);
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+/** 관광공사 동기화로 PENDING 상태인 콘텐츠를 검토·보완 후 게시한다. */
+export async function publishContent(
+  contentId: number,
+  payload: ContentPublishRequest
+): Promise<ContentPublishResult> {
+  try {
+    const { data } = await apiClient.patch<ContentPublishResult>(
+      `/contents/${contentId}/publish`,
+      payload
+    );
+
+    return data;
   } catch (error) {
     throw normalizeApiError(error);
   }
