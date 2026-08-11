@@ -121,14 +121,14 @@ function RegionFestivalSection({
                       firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
                       secondInfo={festival.regionName}
                       tags={toContentTagIds(festival.hashtags)}
-                      liked={getLiked(festival.contentId, false)}
+                      liked={getLiked(festival.contentId, festival.isLiked)}
                       onClick={() =>
                         navigate(buildFestivalDetailPath(festival.contentId))
                       }
                       onLikeClick={() =>
                         toggleLike(
                           festival.contentId,
-                          getLiked(festival.contentId, false)
+                          getLiked(festival.contentId, festival.isLiked)
                         )
                       }
                     />

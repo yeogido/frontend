@@ -5,6 +5,7 @@ import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
 import CourseCard from '../../../components/common/CourseCard';
 import SectionHeader from '../../../components/common/SectionHeader';
+import BackButton from '../../local-recommendation/components/BackButton';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
@@ -15,6 +16,7 @@ import {
 import { useToast } from '../../../components/toast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
+import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useLoginModal } from '../../../hooks/useLoginModal';
@@ -44,6 +46,8 @@ import { toSafeExternalUrl, toTelHref } from '../mappers/festivalDetailMapper';
 import { useShareToast } from '../hooks/useShareToast';
 
 const PAGE_PADDING_BOTTOM = 32;
+const BACK_BUTTON_TOP = 12;
+const BACK_BUTTON_LEFT = 24;
 const TITLE_SECTION_PADDING_TOP = 15;
 const SECTION_MARGIN_TOP = 16;
 const INFO_CARD_MARGIN_TOP = 24;
@@ -79,13 +83,14 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     ? queryError
     : new Error('Invalid content ID');
   const { getLiked, toggleLike } = useContentLikeToggle();
+  const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
+    useCourseLikeToggle();
   const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null
   );
   const placeLikeRequestInFlightRef = useRef(false);
-  const [likedCourseIds, setLikedCourseIds] = useState<readonly number[]>([]);
   const { copied, isToastVisible, handleShare } = useShareToast();
 
   const festival = content
@@ -129,13 +134,15 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     });
   }, [content]);
 
-  const runAuthAction = (action: () => void) => {
-    if (!isAuthenticated) {
-      openLoginModal();
-      return;
+  const handleBack = () => {
+    // history.state.idx는 react-router의 브라우저 히스토리 항목 인덱스라,
+    // 0이면 이 탭에서 처음 들어온 화면(직접 링크로 진입 등)이라 뒤로 갈
+    // 곳이 없다 — 그때만 행사 목록으로 대체 이동한다.
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/festival');
     }
-
-    action();
   };
 
   const handleFavoriteToggle = () => {
@@ -160,11 +167,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
 
     try {
       if (nextLiked) {
-        await addPlaceLike(
-          festival.place.id,
-          'CONTENT',
-          contentId
-        );
+        await addPlaceLike(festival.place.id, 'CONTENT', contentId);
       } else {
         await removePlaceLike(festival.place.id);
       }
@@ -183,16 +186,6 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     }
   };
 
-  const handleCourseLikeToggle = (courseId: number) => {
-    runAuthAction(() => {
-      setLikedCourseIds((previousIds) =>
-        previousIds.includes(courseId)
-          ? previousIds.filter((id) => id !== courseId)
-          : [...previousIds, courseId]
-      );
-    });
-  };
-
   return (
     <DetailStateGuard
       error={contentError ? '행사 정보를 불러오지 못했습니다.' : null}
@@ -208,24 +201,35 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
             className="bg-white"
           >
             <ResponsiveFullBleed>
-              <DetailHeroSection
-                imageUrl={festivalDetail.heroImageUrl}
-                title={festivalDetail.title}
-                rightAction={
-                  isAdmin ? (
-                    <EditButton
-                      label={festivalDetail.title}
-                      onClick={() => void editFestival(contentId)}
-                    />
-                  ) : (
-                    <FavoriteButton
-                      isActive={getLiked(contentId, festivalDetail.liked)}
-                      label={festivalDetail.title}
-                      onClick={handleFavoriteToggle}
-                    />
-                  )
-                }
-              />
+              <div className="relative">
+                <DetailHeroSection
+                  imageUrl={festivalDetail.heroImageUrl}
+                  title={festivalDetail.title}
+                  rightAction={
+                    isAdmin ? (
+                      <EditButton
+                        label={festivalDetail.title}
+                        onClick={() => void editFestival(contentId)}
+                      />
+                    ) : (
+                      <FavoriteButton
+                        isActive={getLiked(contentId, festivalDetail.liked)}
+                        label={festivalDetail.title}
+                        onClick={handleFavoriteToggle}
+                      />
+                    )
+                  }
+                />
+                <div
+                  className="absolute z-10"
+                  style={{
+                    top: BACK_BUTTON_TOP * scale,
+                    left: BACK_BUTTON_LEFT * scale,
+                  }}
+                >
+                  <BackButton onClick={handleBack} />
+                </div>
+              </div>
             </ResponsiveFullBleed>
 
             <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
@@ -302,6 +306,9 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
             {festivalDetail.relatedCourses.length > 0 ? (
               <>
                 <div style={{ marginTop: COURSE_SECTION_MARGIN_TOP * scale }}>
+                  {/* 이 행사를 포함한 코스만 걸러 보는 검색 API가 없어
+                      장소명 키워드 검색으로 대신 보낸다 — 코스 제목/지역
+                      텍스트만 매칭이라 결과가 없을 수 있다. */}
                   <SectionHeader
                     title="이 행사가 포함된 코스"
                     actionText="전체보기"
@@ -327,11 +334,16 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                       courseType={course.courseType}
                       companion={course.companion}
                       tags={[...course.tags]}
-                      liked={likedCourseIds.includes(course.id)}
+                      liked={getCourseLiked(course.id, course.liked)}
                       onClick={() =>
                         navigate(`/yeogido-course/detail/${course.id}`)
                       }
-                      onLikeClick={() => handleCourseLikeToggle(course.id)}
+                      onLikeClick={() =>
+                        toggleCourseLike(
+                          course.id,
+                          getCourseLiked(course.id, course.liked)
+                        )
+                      }
                     />
                   ))}
                 </div>
