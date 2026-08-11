@@ -21,7 +21,8 @@ interface TravelFolderCardProps {
 }
 
 interface TravelFolderArtworkProps {
-  photos: [string, ...string[]];
+  /** 빈 배열이면 사진 없는 빈 폴더로 그린다. */
+  photos: readonly string[];
   photoKeys?: string[];
   animatePhotoChanges?: boolean;
   isRecentlySaved?: boolean;

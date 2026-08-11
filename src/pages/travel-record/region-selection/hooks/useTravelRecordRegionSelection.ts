@@ -26,7 +26,6 @@ import { getTravelRecordRegionSuggestions } from '../regionSuggestions';
 import type { TravelRecordRegion } from '../types';
 
 function useTravelRecordRegionSelection(
-  popularRegions: readonly TravelRecordRegion[],
   initialSelectedRegion: TravelRecordRegion | null = null,
 ) {
   const queryClient = useQueryClient();
@@ -48,17 +47,13 @@ function useTravelRecordRegionSelection(
     [regionSearchQuery.data],
   );
 
-  const displayedPopularRegions = popularRegions;
-
   const visibleSuggestions = useMemo(() => {
     return getTravelRecordRegionSuggestions({
       query,
-      popularRegions,
       searchedRegions,
       selectedRegion,
-    })
-      .slice(0, MAX_VISIBLE_REGION_SUGGESTIONS);
-  }, [popularRegions, query, searchedRegions, selectedRegion]);
+    }).slice(0, MAX_VISIBLE_REGION_SUGGESTIONS);
+  }, [query, searchedRegions, selectedRegion]);
 
   const addRecentSearch = (keyword: string) => {
     const nextSearches = addStoredRecentSearch(keyword, {
@@ -78,9 +73,8 @@ function useTravelRecordRegionSelection(
     addRecentSearch(selectedTravelMapRegion.selectionName);
   };
 
-  // 최근 검색 칩은 인기 지역에 없는 지역(예: '전주')일 수 있고, 그때는 화면에
-  // 올라와 있는 목록만으로는 지역을 찾지 못해 칩이 눌리지 않는다. 이름으로 지역
-  // 검색을 한 번 더 해서 선택까지 이어지게 한다.
+  // 최근 검색 칩을 누를 때는 검색창이 비어 있어 화면에 올라와 있는 검색 결과가
+  // 없다. 이름으로 지역 검색을 한 번 더 해서 선택까지 이어지게 한다.
   const selectSearchedRegionName = async (regionName: string) => {
     const keyword = regionName.trim();
 
@@ -107,10 +101,7 @@ function useTravelRecordRegionSelection(
   };
 
   const selectRegionName = (regionName: string) => {
-    const region = findTravelRecordRegionByName(
-      [...searchedRegions, ...popularRegions],
-      regionName,
-    );
+    const region = findTravelRecordRegionByName(searchedRegions, regionName);
 
     if (region) {
       selectRegion(region);
@@ -162,7 +153,6 @@ function useTravelRecordRegionSelection(
   };
 
   return {
-    filteredRegions: displayedPopularRegions,
     isSuggestionOpen,
     query,
     recentSearches,
@@ -172,7 +162,6 @@ function useTravelRecordRegionSelection(
     clearSelectedRegion,
     openSuggestions,
     removeRecentSearch,
-    selectRegion,
     selectRegionName,
     submitSearch,
     updateQuery,

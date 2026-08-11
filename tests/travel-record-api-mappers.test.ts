@@ -78,17 +78,7 @@ test('maps Region API responses to travel record selectable regions', () => {
   });
 });
 
-test('keeps popular regions fixed while search results feed suggestions only', () => {
-  const popularRegions = [
-    {
-      id: '26',
-      regionId: 26,
-      name: 'Busan',
-      province: 'Busan Metropolitan City',
-      selectionName: 'Busan',
-      imageSrc: 'busan.jpg',
-    },
-  ];
+test('offers one suggestion per name even when regions share it', () => {
   const searchedRegions = [
     {
       id: '1114',
@@ -111,13 +101,11 @@ test('keeps popular regions fixed while search results feed suggestions only', (
   assert.deepEqual(
     getTravelRecordRegionSuggestions({
       query: 'Jung',
-      popularRegions,
       searchedRegions,
       selectedRegion: null,
     }),
     ['Jung-gu'],
   );
-  assert.deepEqual(popularRegions.map((region) => region.id), ['26']);
 });
 
 test('excludes special and metropolitan city districts from travel map selection', () => {
