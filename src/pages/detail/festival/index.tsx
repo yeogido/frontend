@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
 import CourseCard from '../../../components/common/CourseCard';
+import CourseCardSkeleton from '../../../components/common/CourseCardSkeleton';
 import SectionHeader from '../../../components/common/SectionHeader';
 import BackButton from '../../local-recommendation/components/BackButton';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
@@ -17,6 +18,10 @@ import { useToast } from '../../../components/toast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import {
+  useCourses,
+  useNavigateToCourseDetail,
+} from '../../../hooks/useCourses';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useLoginModal } from '../../../hooks/useLoginModal';
@@ -26,7 +31,13 @@ import {
   usePlaceOpeningHours,
 } from '../../../hooks/usePlaceOpeningHours';
 import { useAuthStore } from '../../../store/auth.store';
-import { buildCourseSearchPath } from '../../../utils/routes';
+import { toContentTagIds } from '../../../utils/contentTags';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
+import { buildFestivalCoursesPath } from '../../../utils/routes';
 import { saveRecentCultureContent } from '../../../utils/recentCultureContents';
 
 import {
@@ -56,6 +67,8 @@ const PLACE_CARD_MARGIN_TOP = 4;
 const COURSE_SECTION_MARGIN_TOP = 12;
 const COURSE_LIST_MARGIN_TOP = 24;
 const COURSE_CARD_GAP = 16;
+const RELATED_COURSE_PREVIEW_COUNT = 2;
+const RELATED_COURSE_SKELETON_ITEMS = [0, 1];
 const MAP_FALLBACK_HEIGHT = 342;
 const MAP_FALLBACK_RADIUS = 12;
 const MAP_FALLBACK_FONT_SIZE = 14;
@@ -85,6 +98,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const { getLiked, toggleLike } = useContentLikeToggle();
   const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
     useCourseLikeToggle();
+  const { goToCourseDetail } = useNavigateToCourseDetail();
   const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
@@ -117,6 +131,27 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
         }
       )
     : undefined;
+
+  // "이 행사가 포함된 코스" 미리보기는 인기순 상위 2개를 그대로 보여준다.
+  // GET /courses?contentId=...&sort=POPULAR가 삭제된 코스 제외·태그
+  // 포함까지 다 해주므로, 여기서 따로 상세 조회나 필터링을 할 필요가 없다.
+  const { data: popularRelatedCourses, isPending: isRelatedCoursesPending } =
+    useCourses(
+      { contentId, sort: 'POPULAR', size: RELATED_COURSE_PREVIEW_COUNT },
+      { enabled: isValidContentId }
+    );
+  const previewCoursesWithTags = (
+    popularRelatedCourses?.pages[0]?.items ?? []
+  ).map((course) => ({
+    id: course.courseId,
+    image: course.thumbnailUrl,
+    title: course.title,
+    duration: toDurationLabel(course.durationType),
+    courseType: toTransportLabel(course.transportType),
+    companion: toCompanionLabel(course.companionType),
+    tags: toContentTagIds(course.tags),
+    liked: course.isLiked,
+  }));
 
   useEffect(() => {
     if (!content) return;
@@ -306,14 +341,11 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
             {festivalDetail.relatedCourses.length > 0 ? (
               <>
                 <div style={{ marginTop: COURSE_SECTION_MARGIN_TOP * scale }}>
-                  {/* 이 행사를 포함한 코스만 걸러 보는 검색 API가 없어
-                      장소명 키워드 검색으로 대신 보낸다 — 코스 제목/지역
-                      텍스트만 매칭이라 결과가 없을 수 있다. */}
                   <SectionHeader
                     title="이 행사가 포함된 코스"
                     actionText="전체보기"
                     onActionClick={() =>
-                      navigate(buildCourseSearchPath(festivalDetail.place.name))
+                      navigate(buildFestivalCoursesPath(contentId))
                     }
                   />
                 </div>
@@ -325,27 +357,29 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                     gap: COURSE_CARD_GAP * scale,
                   }}
                 >
-                  {festivalDetail.relatedCourses.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      image={course.image}
-                      title={course.title}
-                      duration={course.duration}
-                      courseType={course.courseType}
-                      companion={course.companion}
-                      tags={[...course.tags]}
-                      liked={getCourseLiked(course.id, course.liked)}
-                      onClick={() =>
-                        navigate(`/yeogido-course/detail/${course.id}`)
-                      }
-                      onLikeClick={() =>
-                        toggleCourseLike(
-                          course.id,
-                          getCourseLiked(course.id, course.liked)
-                        )
-                      }
-                    />
-                  ))}
+                  {isRelatedCoursesPending
+                    ? RELATED_COURSE_SKELETON_ITEMS.map((item) => (
+                        <CourseCardSkeleton key={item} />
+                      ))
+                    : previewCoursesWithTags.map((course) => (
+                        <CourseCard
+                          key={course.id}
+                          image={course.image}
+                          title={course.title}
+                          duration={course.duration}
+                          courseType={course.courseType}
+                          companion={course.companion}
+                          tags={[...course.tags]}
+                          liked={getCourseLiked(course.id, course.liked)}
+                          onClick={() => void goToCourseDetail(course.id)}
+                          onLikeClick={() =>
+                            toggleCourseLike(
+                              course.id,
+                              getCourseLiked(course.id, course.liked)
+                            )
+                          }
+                        />
+                      ))}
                 </div>
               </>
             ) : null}

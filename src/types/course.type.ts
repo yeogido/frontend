@@ -3,25 +3,13 @@ export type CourseType = 'OFFICIAL' | 'LOCAL';
 export type CourseTransportType = 'WALK' | 'PUBLIC' | 'CAR';
 
 export type CourseDurationType =
-  | 'DAY_TRIP'
-  | 'ONE_NIGHT'
-  | 'TWO_NIGHT'
-  | 'THREE_PLUS';
+  'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
 
 export type CourseCompanionType =
-  | 'SOLO'
-  | 'FRIEND'
-  | 'COUPLE'
-  | 'FAMILY'
-  | 'PET';
+  'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
 
 export type CourseSort =
-  | 'RECOMMEND'
-  | 'POPULAR'
-  | 'DISTANCE'
-  | 'LATEST'
-  | 'SAVED'
-  | 'REVIEW';
+  'RECOMMEND' | 'POPULAR' | 'DISTANCE' | 'LATEST' | 'SAVED' | 'REVIEW';
 
 export interface Course {
   courseId: number;
@@ -43,8 +31,11 @@ export interface GetCoursesResponse {
 }
 
 export interface GetCoursesParams {
-  courseType: CourseType;
+  /** 미전달 시 서버가 OFFICIAL/LOCAL 코스를 모두 반환한다. */
+  courseType?: CourseType;
   keyword?: string;
+  /** 코스에 CONTENT 타입 항목으로 포함된 콘텐츠(행사 등) ID로 필터링한다. */
+  contentId?: number;
   regionId?: number;
   transportType?: CourseTransportType;
   durationType?: CourseDurationType;
