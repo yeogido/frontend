@@ -3,7 +3,7 @@ import location from '../../../assets/icons/location.svg';
 import people from '../../../assets/icons/people.svg';
 import upload from '../../../assets/icons/upload.svg';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import type { ReviewCourseCardData } from '../reviewCourse';
+import type { ReviewCourseCardData } from '../mappers/reviewCourse';
 
 // Figma 390 디자인 기준 리터럴 px
 const CARD_MARGIN_TOP = 29;

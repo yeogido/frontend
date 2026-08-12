@@ -44,7 +44,7 @@ import BackButton from '../../local-recommendation/components/BackButton';
 import {
   getCourseReviewsPath,
   type CourseReviewType,
-} from '../../course-reviews/courseReviewRoute';
+} from '../../../utils/courseReviewRoute';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 25;

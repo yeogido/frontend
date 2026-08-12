@@ -21,6 +21,8 @@ import {
   fromRegion,
   fromSearchResult,
   getNeighborhoodLabel,
+  sortNeighborhoodsByRelevance,
+  toRegionSearchSuggestions,
 } from './utils';
 
 function LocalRecommendationPage() {
@@ -50,9 +52,16 @@ function LocalRecommendationPage() {
   });
   const trimmedSearchQuery = searchQuery.trim();
   const searchNeighborhoods = async (query: string) =>
-    (await searchRegions(query)).map(fromSearchResult);
+    sortNeighborhoodsByRelevance(
+      (await searchRegions(query)).map(fromSearchResult),
+      query,
+    );
+  // 키에 'neighborhoods'를 넣어 RegionSearchResult[]를 캐싱하는 지역 검색창과
+  // 갈라 둔다. 같은 키를 쓰면 서로의 캐시를 읽어 모양이 다른 객체가 오고
+  // (Neighborhood에는 fullName이, RegionSearchResult에는 id가 없다) 필드가
+  // undefined가 되어 터지거나 엉뚱한 항목이 선택된다.
   const searchResultsQuery = useQuery({
-    queryKey: ['regions', 'search', trimmedSearchQuery],
+    queryKey: ['regions', 'search', 'neighborhoods', trimmedSearchQuery],
     queryFn: () => searchNeighborhoods(trimmedSearchQuery),
     enabled: trimmedSearchQuery.length > 0,
     staleTime: 30_000,
@@ -69,8 +78,9 @@ function LocalRecommendationPage() {
         imageSrc: '',
       }
     : null;
-  const searchSuggestions =
-    searchResultsQuery.data?.map((region) => region.name) ?? [];
+  const searchSuggestions = toRegionSearchSuggestions(
+    searchResultsQuery.data ?? [],
+  );
 
   const handleSelectNeighborhood = (candidate: Neighborhood) => {
     setSearchQuery('');
@@ -95,13 +105,13 @@ function LocalRecommendationPage() {
       trimmedQuery === trimmedSearchQuery && searchResultsQuery.data
         ? searchResultsQuery.data
         : await queryClient.fetchQuery({
-            queryKey: ['regions', 'search', trimmedQuery],
+            queryKey: ['regions', 'search', 'neighborhoods', trimmedQuery],
             queryFn: () => searchNeighborhoods(trimmedQuery),
             staleTime: 30_000,
           });
-    const matched = results.find((region) => region.name === trimmedQuery);
+    const firstResult = results[0];
 
-    if (matched) handleSelectNeighborhood(matched);
+    if (firstResult) handleSelectNeighborhood(firstResult);
   };
 
   const handleQueryChange = (query: string) => {
@@ -111,11 +121,33 @@ function LocalRecommendationPage() {
 
   const handleSuggestionSelect = (suggestion: string) => {
     setIsSuggestionOpen(false);
-    void handleSearch(suggestion);
+
+    const selectedSuggestion = searchSuggestions.find(
+      (item) => item.label === suggestion,
+    );
+    // selectedSuggestion을 못 찾았을 때 옵셔널 체이닝 결과가 undefined면
+    // id가 undefined인 항목과 맞아떨어져 첫 결과가 잡힌다. 먼저 걸러낸다.
+    const candidate =
+      selectedSuggestion &&
+      searchResultsQuery.data?.find(
+        (item) => item.id === selectedSuggestion.regionId,
+      );
+
+    if (candidate) {
+      handleSelectNeighborhood(candidate);
+    }
   };
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const firstVisibleResult = searchResultsQuery.data?.[0];
+
+    if (firstVisibleResult) {
+      handleSelectNeighborhood(firstVisibleResult);
+      return;
+    }
+
     void handleSearch(searchQuery);
   };
 
@@ -140,12 +172,22 @@ function LocalRecommendationPage() {
               query={searchQuery}
               onQueryChange={handleQueryChange}
               onFocus={() => setIsSuggestionOpen(searchQuery.trim().length > 0)}
+              onEnter={() => {
+                const firstVisibleResult = searchResultsQuery.data?.[0];
+
+                if (firstVisibleResult) {
+                  handleSelectNeighborhood(firstVisibleResult);
+                  return;
+                }
+
+                void handleSearch(searchQuery);
+              }}
             />
           )}
           {!selectedRegion && isSuggestionOpen ? (
             <RegionSuggestionList
               query={searchQuery}
-              suggestions={searchSuggestions}
+              suggestions={searchSuggestions.map((item) => item.label)}
               onSelect={handleSuggestionSelect}
             />
           ) : null}

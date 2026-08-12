@@ -4,7 +4,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
   REVIEW_CONTENT_MAX_LENGTH,
   REVIEW_CONTENT_PLACEHOLDER,
-} from '../reviewForm';
+} from '../../../utils/reviewForm';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 31;

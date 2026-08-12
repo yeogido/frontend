@@ -99,10 +99,10 @@ export function buildAdminCourseRequest(
     region,
     basicInfo,
     thumbnailKey,
-    routeImageKey,
     hashtagIds,
     visitEvents,
     travelData,
+    routeImageKey,
   } = params;
 
   if (getAdminCourseRequestValidationError(params)) {

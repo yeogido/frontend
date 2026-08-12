@@ -11,10 +11,10 @@ import { useKakaoLogin } from '../../../../hooks/useKakaoLogin';
 import { useNaverLogin } from '../../../../hooks/useNaverLogin';
 
 const PAGE_PADDING_X = 24;
-const PAGE_PADDING_TOP = 32;
+const PAGE_PADDING_TOP = 56;
 const PAGE_PADDING_BOTTOM = 40;
 
-const LOGO_MARGIN_TOP = 48;
+const LOGO_MARGIN_TOP = 0;
 
 const LOGO_SIZE = 92;
 const YEOGIDO_WIDTH = 91;

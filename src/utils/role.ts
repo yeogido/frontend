@@ -1,6 +1,15 @@
 export const BUSINESS_ROLE = 'BUSINESS';
 export const ADMIN_ROLE = 'ADMIN';
 
+const ROLE_LABEL: Record<string, string> = {
+  [BUSINESS_ROLE]: '소상공인',
+  [ADMIN_ROLE]: '관리자',
+};
+
+export function getRoleLabel(role: string | undefined) {
+  return role ? ROLE_LABEL[role.toUpperCase()] : undefined;
+}
+
 /**
  * 소상공인 권한인지 본다.
  *

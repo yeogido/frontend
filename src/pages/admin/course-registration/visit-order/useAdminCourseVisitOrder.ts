@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../../../apis/common';
 import { getCourseDetail, updateCourse } from '../../../../apis/courses';
+import { uploadCourseImage } from '../../../../apis/files';
 import { fetchHashtags } from '../../../../apis/hashtags';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
 import { useToast } from '../../../../components/toast';
@@ -20,8 +21,8 @@ import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import { useAuthStore } from '../../../../store/auth.store';
 import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
-import { createRouteImage } from '../../../local-recommendation/visit-order-selection/createRouteImage';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
+import { createRouteImage } from '../../../local-recommendation/visit-order-selection/createRouteImage';
 import {
   fetchVisitEventTravelData,
   type VisitEventTravelData,
@@ -220,8 +221,11 @@ export function useAdminCourseVisitOrder() {
         return updateCourse(editingCourseId, updatePayload);
       }
 
+      // 우리동네 추천 코스 등록과 동일하게, 신규 등록일 때만 방문 순서로
+      // 지도 경로 이미지를 만들어 올린다(수정 요청에는 routeImageKey 필드
+      // 자체가 없어 못 바꾼다).
       const routeImage = await createRouteImage(eventsWithImageKeys);
-      const [routeImageKey] = await uploadAdminCourseImages([routeImage]);
+      const routeImageKey = await uploadCourseImage(routeImage);
 
       const payload = buildAdminCourseRequest({
         region,

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getCourseReviewsPath } from '../src/pages/course-reviews/courseReviewRoute.ts';
+import { getCourseReviewsPath } from '../src/utils/courseReviewRoute.ts';
 import { buildCourseDetailPath } from '../src/utils/routes.ts';
 
 test('builds the review-list path for local courses', () => {

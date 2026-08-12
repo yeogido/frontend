@@ -26,6 +26,7 @@ import {
   removeStoredRecentSearch,
 } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
+import { getExplicitRegionId } from '../../../utils/regionSearch';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
 
 import { FestivalFilterBar } from '../components';
@@ -83,6 +84,7 @@ function FestivalSearchPage() {
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
   const subRegion = searchParams.get('subRegion') ?? '';
+  const explicitRegionId = getExplicitRegionId(searchParams.get('regionId'));
   const regionLabel =
     region && subRegion ? `${region} ${subRegion}` : subRegion || region;
   const displaySearchQuery = keyword || regionLabel;
@@ -90,7 +92,7 @@ function FestivalSearchPage() {
     regionId,
     isPending: isRegionPending,
     isError: isRegionError,
-  } = useResolvedRegion(regionLabel || undefined);
+  } = useResolvedRegion(regionLabel || undefined, explicitRegionId);
   const isRegionSearchReady =
     !regionLabel || (!isRegionPending && !isRegionError);
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
@@ -160,6 +162,7 @@ function FestivalSearchPage() {
       nextSearchParams.set('keyword', trimmedQuery);
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
       setRecentSearchSuggestions(
         addStoredRecentSearch(trimmedQuery, {
           ...recentSearchStorageOptions,
@@ -170,6 +173,7 @@ function FestivalSearchPage() {
       nextSearchParams.delete('keyword');
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
     }
 
     setSearchParams(nextSearchParams);

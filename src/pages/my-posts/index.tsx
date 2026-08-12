@@ -308,7 +308,7 @@ function MyPostsPage() {
                   meta={reviewCard.meta}
                   content={reviewCard.content}
                   rating={reviewCard.rating}
-                  isMine
+                  isMine={reviewCard.isMine}
                   onClick={() => void openReviewDetail(reviewCard)}
                   onEditClick={() => requestEdit(reviewCard)}
                   onDeleteClick={() => requestDelete(reviewCard.id)}
