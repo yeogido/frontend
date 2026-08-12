@@ -1,24 +1,40 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { addPlaceLike, removePlaceLike } from '../../apis/courses';
+import { getApiErrorMessage, normalizeApiError } from '../../apis/common';
 import {
+  ConfirmDialog,
   FloatingActionButton,
   PromotionCardSkeleton,
   RegionImageCarousel,
 } from '../../components/common';
+import { useToast } from '../../components/toast';
 import { REGION_CITY_IDS } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
+import { useBusinessPromotionDelete } from '../../hooks/useBusinessPromotions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { REGION_IMAGE_ALL_ID } from '../../components/common/RegionImageCarouselOption';
 import { useLoginModal } from '../../hooks/useLoginModal';
 import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import { useAuthStore } from '../../store/auth.store';
-import { buildLocalBusinessDetailPath } from '../../utils/routes';
+import {
+  buildBusinessPromotionEditPath,
+  buildLocalBusinessDetailPath,
+} from '../../utils/routes';
 
 import { BusinessGrid, BusinessList, BusinessToolbar } from './components';
-import { regionImageOptions } from './constants';
+import {
+  businessCategories,
+  businessSortOptions,
+  regionImageOptions,
+} from './constants';
 import type { BusinessCategory, BusinessSort, BusinessViewMode } from './types';
 import useLocalBusinesses from './hooks/useLocalBusinesses';
+
+const DEFAULT_CATEGORY: BusinessCategory = '전체';
+const DEFAULT_SORT: BusinessSort = '추천순';
+const DEFAULT_VIEW_MODE: BusinessViewMode = 'grid';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -29,7 +45,7 @@ const DESCRIPTION_MARGIN_TOP = 6;
 const DESCRIPTION_SIZE = 14;
 const DESCRIPTION_LINE_HEIGHT = 17;
 const CAROUSEL_MARGIN_TOP = 12;
-const LIST_MARGIN_TOP = 16;
+const LIST_MARGIN_TOP = 24;
 const GRID_GAP_X = 16;
 const GRID_GAP_Y = 18;
 const LIST_GAP = 16;
@@ -42,22 +58,49 @@ function LocalBusinessPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
   const isBusinessUser = useIsBusinessUser();
   const { openLoginModal } = useLoginModal();
-  const [searchParams] = useSearchParams();
+  const { showToast } = useToast();
+  // 지역/카테고리/정렬/보기모드를 전부 별도 state로 복제해두면(예전 방식),
+  // 값을 바꿔도 URL은 그대로라 상세 페이지로 갔다가 뒤로가기로
+  // 돌아왔을 때(컴포넌트가 통째로 리마운트됨) 다시 기본값으로 되돌아가는
+  // 버그가 있었다. URL을 단일 진실 공급원으로 두고 매 렌더 파생시키면,
+  // 변경도 브라우저 히스토리에 남아 뒤로가기로 돌아와도 그대로 유지된다.
+  const [searchParams, setSearchParams] = useSearchParams();
   const regionParam = searchParams.get('region');
-  const initialRegionId: RegionCityId | typeof REGION_IMAGE_ALL_ID = REGION_CITY_IDS.includes(
-    regionParam as RegionCityId
+  // 지역 캐러셀 첫 항목이 '전국'이라 기본값도 전국이다. URL에 지역이 없거나
+  // 모르는 값이면(전국 선택 시의 'all' 포함) 전국으로 떨어진다.
+  const selectedRegionId: RegionCityId | typeof REGION_IMAGE_ALL_ID =
+    REGION_CITY_IDS.includes(regionParam as RegionCityId)
+      ? (regionParam as RegionCityId)
+      : REGION_IMAGE_ALL_ID;
+
+  const categoryParam = searchParams.get('category');
+  const selectedCategory = businessCategories.includes(
+    categoryParam as BusinessCategory
   )
-    ? (regionParam as RegionCityId)
-    : REGION_IMAGE_ALL_ID;
-  const [selectedCategory, setSelectedCategory] =
-    useState<BusinessCategory>('전체');
-  const [sortBy, setSortBy] = useState<BusinessSort>('추천순');
-  const [viewMode, setViewMode] = useState<BusinessViewMode>('grid');
-  const [selectedRegionId, setSelectedRegionId] = useState<
-    RegionCityId | typeof REGION_IMAGE_ALL_ID
-  >(initialRegionId);
+    ? (categoryParam as BusinessCategory)
+    : DEFAULT_CATEGORY;
+
+  const sortParam = searchParams.get('sort');
+  const sortBy = businessSortOptions.includes(sortParam as BusinessSort)
+    ? (sortParam as BusinessSort)
+    : DEFAULT_SORT;
+
+  const viewParam = searchParams.get('view');
+  const viewMode: BusinessViewMode =
+    viewParam === 'grid' || viewParam === 'card'
+      ? viewParam
+      : DEFAULT_VIEW_MODE;
+
+  const updateSearchParam = (key: string, value: string) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.set(key, value);
+      return next;
+    });
+  };
 
   const {
     businesses,
@@ -72,8 +115,11 @@ function LocalBusinessPage() {
   });
   const hasEmptyResult = !isPending && !isError && businesses.length === 0;
 
-  // 소상공인 홍보 좋아요는 아직 백엔드 API가 없어, 상세페이지와 동일하게
-  // 로컬 상태로만 토글한다(새로고침하면 초기화됨).
+  const { requestDelete: requestPromotionDelete, dialogProps: promotionDeleteDialogProps } =
+    useBusinessPromotionDelete();
+
+  // 상세페이지(handleFavoriteToggle)와 동일한 낙관적 업데이트 패턴 —
+  // 서버 응답을 기다리지 않고 먼저 하트를 바꾸고, 실패하면 되돌린다.
   const [likedOverrides, setLikedOverrides] = useState<
     Record<string, boolean>
   >({});
@@ -82,28 +128,80 @@ function LocalBusinessPage() {
     liked: likedOverrides[business.id] ?? business.liked,
   }));
 
+  // 카드가 여러 장이라 상세페이지처럼 boolean 하나로는 안 되고, 카드별로
+  // 이미 요청 중인지 따로 추적해야 한다 — 같은 카드 연타만 막고, 다른
+  // 카드는 동시에 눌러도 되게 businessId 단위 Set을 쓴다.
+  const likeRequestInFlightRef = useRef<Set<string>>(new Set());
+
   const handleCardClick = (businessId: string) => {
     navigate(buildLocalBusinessDetailPath(businessId));
   };
 
-  const handleLikeClick = (businessId: string) => {
+  const handleEditClick = (businessId: string) => {
+    navigate(buildBusinessPromotionEditPath(businessId));
+  };
+
+  const handleDeleteClick = (businessId: string) => {
+    requestPromotionDelete(Number(businessId));
+  };
+
+  const handleLikeClick = async (businessId: string) => {
     if (!isAuthenticated) {
       openLoginModal();
       return;
     }
 
-    const current = businessesWithLikeOverrides.find(
-      (business) => business.id === businessId
-    )?.liked;
+    if (likeRequestInFlightRef.current.has(businessId)) return;
 
-    setLikedOverrides((previous) => ({
-      ...previous,
-      [businessId]: !(current ?? false),
-    }));
+    const business = businessesWithLikeOverrides.find(
+      (item) => item.id === businessId
+    );
+    if (!business) return;
+
+    const nextLiked = !business.liked;
+    likeRequestInFlightRef.current.add(businessId);
+    setLikedOverrides((previous) => ({ ...previous, [businessId]: nextLiked }));
+
+    try {
+      if (nextLiked) {
+        await addPlaceLike(business.placeId, 'PROMOTION', Number(businessId));
+      } else {
+        await removePlaceLike(business.placeId);
+      }
+    } catch (error) {
+      setLikedOverrides((previous) => ({
+        ...previous,
+        [businessId]: !nextLiked,
+      }));
+
+      if (normalizeApiError(error).code === 'AUTH4011') {
+        clearAuth();
+        openLoginModal();
+        return;
+      }
+
+      showToast(
+        getApiErrorMessage(error, '좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      );
+    } finally {
+      likeRequestInFlightRef.current.delete(businessId);
+    }
   };
 
   const handleSelectRegion = (region: { id: string }) => {
-    setSelectedRegionId(region.id as RegionCityId | typeof REGION_IMAGE_ALL_ID);
+    updateSearchParam('region', region.id);
+  };
+
+  const handleSelectCategory = (category: BusinessCategory) => {
+    updateSearchParam('category', category);
+  };
+
+  const handleSortChange = (sort: BusinessSort) => {
+    updateSearchParam('sort', sort);
+  };
+
+  const handleToggleView = () => {
+    updateSearchParam('view', viewMode === 'grid' ? 'card' : 'grid');
   };
 
   const handleStartPromotionRegistration = () => {
@@ -156,11 +254,9 @@ function LocalBusinessPage() {
         selectedCategory={selectedCategory}
         sortBy={sortBy}
         viewMode={viewMode}
-        onSelectCategory={setSelectedCategory}
-        onSortChange={setSortBy}
-        onToggleView={() =>
-          setViewMode((current) => (current === 'grid' ? 'card' : 'grid'))
-        }
+        onSelectCategory={handleSelectCategory}
+        onSortChange={handleSortChange}
+        onToggleView={handleToggleView}
       />
 
       <div style={{ marginTop: LIST_MARGIN_TOP * scale }}>
@@ -183,7 +279,9 @@ function LocalBusinessPage() {
           <BusinessGrid
             businesses={businessesWithLikeOverrides}
             onCardClick={handleCardClick}
-            onLikeClick={handleLikeClick}
+            onLikeClick={(businessId) => void handleLikeClick(businessId)}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
             gapX={GRID_GAP_X * scale}
             gapY={GRID_GAP_Y * scale}
           />
@@ -191,7 +289,9 @@ function LocalBusinessPage() {
           <BusinessList
             businesses={businessesWithLikeOverrides}
             onCardClick={handleCardClick}
-            onLikeClick={handleLikeClick}
+            onLikeClick={(businessId) => void handleLikeClick(businessId)}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
             gap={LIST_GAP * scale}
           />
         )}
@@ -242,6 +342,12 @@ function LocalBusinessPage() {
           onClick={handleStartPromotionRegistration}
         />
       ) : null}
+
+      <ConfirmDialog
+        {...promotionDeleteDialogProps}
+        title="홍보글을 삭제할까요?"
+        description="삭제한 홍보글은 되돌릴 수 없어요."
+      />
     </section>
   );
 }

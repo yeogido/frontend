@@ -195,6 +195,10 @@ function AppRouter() {
           path="/business-promotion-registration"
           element={<BusinessPromotionRegistrationPage />}
         />
+        <Route
+          path="/business-promotion-registration/:promotionId/edit"
+          element={<BusinessPromotionRegistrationPage />}
+        />
       </Route>
 
       <Route element={<ProtectedRoute />}>

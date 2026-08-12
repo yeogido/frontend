@@ -57,7 +57,6 @@ function PromotionInfoForm({
     mode: 'onChange',
     defaultValues: {
       shortDescription: '',
-      ownerComment: '',
       openDays: [],
       dayTimes: {},
       phoneNumber: '',
@@ -69,7 +68,6 @@ function PromotionInfoForm({
   const openDays = useWatch({ control, name: 'openDays' });
   const dayTimes = useWatch({ control, name: 'dayTimes' });
   const shortDescription = useWatch({ control, name: 'shortDescription' });
-  const ownerComment = useWatch({ control, name: 'ownerComment' });
   const phoneNumber = useWatch({ control, name: 'phoneNumber' });
   const snsAccount = useWatch({ control, name: 'snsAccount' });
 
@@ -82,7 +80,6 @@ function PromotionInfoForm({
   useEffect(() => {
     onValuesChange?.({
       shortDescription,
-      ownerComment,
       openDays,
       dayTimes,
       phoneNumber,
@@ -91,7 +88,6 @@ function PromotionInfoForm({
   }, [
     onValuesChange,
     shortDescription,
-    ownerComment,
     openDays,
     dayTimes,
     phoneNumber,
@@ -110,7 +106,7 @@ function PromotionInfoForm({
 
   // 제출 버튼 활성화 조건을 zod 스키마와 별개로 직접 계산한다(4단계
   // PhotoTagSelectionScreen의 isReady와 같은 패턴). 필수 필드(사업장 소개,
-  // 사장님 한마디, 전화번호)와, "선택된" 요일들의 시작/종료 시간만 검사하고
+  // 전화번호)와, "선택된" 요일들의 시작/종료 시간만 검사하고
   // SNS 계정과 선택 안 한 요일의 값은 아예 보지 않는다.
   const isDayHoursReady = openDays.every((day) => {
     const hour = dayTimes[day];
@@ -125,7 +121,6 @@ function PromotionInfoForm({
 
   const isReady =
     shortDescription.trim().length > 0 &&
-    ownerComment.trim().length > 0 &&
     phoneNumber.trim().length > 0 &&
     openDays.length > 0 &&
     isDayHoursReady;
@@ -159,22 +154,6 @@ function PromotionInfoForm({
             id="promotion-short-description"
             type="text"
             placeholder="여행자들에게 전하고 싶은 한마디를 적어보세요"
-            className="border-gray-2 placeholder:text-gray-4 focus:border-main-5 w-full border bg-white outline-none"
-            style={inputStyle}
-          />
-        </FormField>
-
-        {/* Figma 목업엔 없는 필드지만 스웨거 BusinessRegisterReqDTO에서
-            ownerComment가 shortDescription과 별개로 필수라 추가했다. */}
-        <FormField
-          id="promotion-owner-comment"
-          label="사장님의 한마디를 남겨주세요"
-        >
-          <input
-            {...register('ownerComment')}
-            id="promotion-owner-comment"
-            type="text"
-            placeholder="가게를 찾아준 손님들에게 전하고 싶은 인사말을 적어보세요"
             className="border-gray-2 placeholder:text-gray-4 focus:border-main-5 w-full border bg-white outline-none"
             style={inputStyle}
           />
