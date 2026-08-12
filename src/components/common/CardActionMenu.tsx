@@ -32,6 +32,7 @@ function CardActionMenu({
   triggerSize = 20,
   ariaLabel = '카드 메뉴',
 }: CardActionMenuProps) {
+  const hasMenuItems = Boolean(onEdit || onDelete);
   const scale = useGlobalScale();
   const triggerId = useId();
   const menuId = useId();
@@ -43,6 +44,10 @@ function CardActionMenu({
   >();
 
   useEffect(() => {
+    if (!hasMenuItems) {
+      return;
+    }
+
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
 
@@ -57,7 +62,7 @@ function CardActionMenu({
     document.addEventListener('pointerdown', handlePointerDown);
 
     return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, []);
+  }, [hasMenuItems]);
 
   useEffect(() => {
     if (!isOpen) return;

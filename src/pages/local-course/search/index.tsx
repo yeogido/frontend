@@ -15,6 +15,8 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
+import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import {
   addStoredRecentSearch,
@@ -94,6 +96,8 @@ function LocalCourseSearchPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
+  const { editLocalCourse } = useEditLocalCourse();
+  const isAdmin = useIsAdmin();
   const { requestDelete, dialogProps } = useCourseDelete();
 
   const handleCourseClick = (courseId: number | string) => {
@@ -291,6 +295,11 @@ function LocalCourseSearchPage() {
                       tags={toContentTagIds(course.tags)}
                       className="w-full"
                       onClick={() => handleCourseClick(course.courseId)}
+                      onEdit={
+                        isAdmin
+                          ? undefined
+                          : () => void editLocalCourse(course.courseId)
+                      }
                       onDelete={() => requestDelete(course.courseId)}
                     />
                   ) : (
