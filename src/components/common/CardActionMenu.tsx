@@ -111,7 +111,11 @@ function CardActionMenu({
   const menuItems = [
     { key: 'edit', label: '수정', action: onEdit },
     { key: 'delete', label: '삭제', action: onDelete },
-  ];
+  ].filter((item) => Boolean(item.action));
+
+  if (menuItems.length === 0) {
+    return null;
+  }
 
   return (
     <>

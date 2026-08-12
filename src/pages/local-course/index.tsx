@@ -16,7 +16,6 @@ import {
   usePopularLocalCourses,
 } from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
-import { useEditLocalCourse } from '../../hooks/useEditLocalCourse';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
@@ -59,7 +58,6 @@ function LocalCoursePage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
   const {
@@ -227,9 +225,6 @@ function LocalCoursePage() {
                             getLiked(course.courseId, course.isLiked)
                           )
                         }
-                        onEditClick={() =>
-                          void editLocalCourse(course.courseId)
-                        }
                         onDeleteClick={() => requestDelete(course.courseId)}
                       />
                     </div>
@@ -315,12 +310,10 @@ function LocalCoursePage() {
                     {...course}
                     liked={getLiked(course.id, course.liked)}
                     canManage={course.canManage}
-                    showEdit
                     onClick={() => goToCourseDetail(course.id)}
                     onLikeClick={() =>
                       toggleLike(course.id, getLiked(course.id, course.liked))
                     }
-                    onEditClick={() => void editLocalCourse(course.id)}
                     onDeleteClick={() => requestDelete(course.id)}
                   />
                 </div>

@@ -14,6 +14,7 @@ import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toContentTagIds } from '../../../utils/contentTags';
 import {
   toCompanionLabel,
@@ -87,8 +88,9 @@ function LocalCoursePopularPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
+  const { editLocalCourse } = useEditLocalCourse();
+  const isAdmin = useIsAdmin();
 
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/local-course/detail/${courseId}`);
@@ -221,7 +223,11 @@ function LocalCoursePopularPage() {
                     tags={toContentTagIds(course.tags)}
                     className="w-full"
                     onClick={() => handleCourseClick(course.courseId)}
-                    onEdit={() => void editLocalCourse(course.courseId)}
+                    onEdit={
+                      isAdmin
+                        ? undefined
+                        : () => void editLocalCourse(course.courseId)
+                    }
                     onDelete={() => requestDelete(course.courseId)}
                   />
                 ) : (

@@ -9,7 +9,7 @@ const IMAGE_WIDTH = 680;
 const IMAGE_HEIGHT = 460;
 const DEFAULT_MAP_LEVEL = 5;
 const ROUTE_COLOR = '#ff6f41';
-const MARKER_SIZE = 110;
+const MARKER_SIZE = 100;
 const MARKER_RADIUS = 12;
 const MAP_READY_TIMEOUT_MS = 2_000;
 const IMAGE_LOAD_TIMEOUT_MS = 8_000;
@@ -18,7 +18,10 @@ type CapturableMap = kakao.maps.Map & {
   getCenter(): { getLat(): number; getLng(): number };
   getLevel(): number;
   getProjection(): {
-    containerPointFromCoords(latLng: kakao.maps.LatLng): { x: number; y: number };
+    containerPointFromCoords(latLng: kakao.maps.LatLng): {
+      x: number;
+      y: number;
+    };
   };
 };
 
@@ -32,7 +35,11 @@ function waitForMapIdle(map: kakao.maps.Map): Promise<void> {
       resolve();
     };
     const eventApi = window.kakao.maps.event as unknown as {
-      addListener(target: kakao.maps.Map, type: 'idle', handler: () => void): void;
+      addListener(
+        target: kakao.maps.Map,
+        type: 'idle',
+        handler: () => void
+      ): void;
     };
     const timeoutId = window.setTimeout(complete, MAP_READY_TIMEOUT_MS);
     eventApi.addListener(map, 'idle', complete);
@@ -191,67 +198,72 @@ export async function createRouteImage(
     document.body.append(mapContainer);
 
     try {
-    const firstPoint = routeEvents[0].point;
-    const map = new window.kakao.maps.Map(mapContainer, {
-      center: new window.kakao.maps.LatLng(firstPoint.latitude, firstPoint.longitude),
-      level: DEFAULT_MAP_LEVEL,
-    }) as CapturableMap;
+      const firstPoint = routeEvents[0].point;
+      const map = new window.kakao.maps.Map(mapContainer, {
+        center: new window.kakao.maps.LatLng(
+          firstPoint.latitude,
+          firstPoint.longitude
+        ),
+        level: DEFAULT_MAP_LEVEL,
+      }) as CapturableMap;
 
-    if (routeEvents.length > 1) {
-      const bounds = new window.kakao.maps.LatLngBounds();
-      routeEvents.forEach(({ point }) => {
-        bounds.extend(new window.kakao.maps.LatLng(point.latitude, point.longitude));
-      });
-      map.setBounds(bounds);
-    }
-    await waitForMapIdle(map);
+      if (routeEvents.length > 1) {
+        const bounds = new window.kakao.maps.LatLngBounds();
+        routeEvents.forEach(({ point }) => {
+          bounds.extend(
+            new window.kakao.maps.LatLng(point.latitude, point.longitude)
+          );
+        });
+        map.setBounds(bounds);
+      }
+      await waitForMapIdle(map);
 
-    const center = map.getCenter();
-    const background = await fetchStaticMap(
-      `${center.getLng()},${center.getLat()}`,
-      map.getLevel(),
-      controller.signal
-    );
-    const canvas = document.createElement('canvas');
-    canvas.width = IMAGE_WIDTH;
-    canvas.height = IMAGE_HEIGHT;
-    const context = canvas.getContext('2d');
-    if (!context) throw new Error('Failed to prepare the route image.');
-
-    context.drawImage(background, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-    const projection = map.getProjection();
-    const canvasPoints = routeEvents.map(({ point }) => {
-      const pixel = projection.containerPointFromCoords(
-        new window.kakao.maps.LatLng(point.latitude, point.longitude)
+      const center = map.getCenter();
+      const background = await fetchStaticMap(
+        `${center.getLng()},${center.getLat()}`,
+        map.getLevel(),
+        controller.signal
       );
-      return { x: pixel.x, y: pixel.y };
-    });
+      const canvas = document.createElement('canvas');
+      canvas.width = IMAGE_WIDTH;
+      canvas.height = IMAGE_HEIGHT;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Failed to prepare the route image.');
 
-    if (canvasPoints.length > 1) {
-      context.beginPath();
-      context.moveTo(canvasPoints[0].x, canvasPoints[0].y);
-      canvasPoints.slice(1).forEach(({ x, y }) => context.lineTo(x, y));
-      context.setLineDash([12, 10]);
-      context.lineWidth = 6;
-      context.lineCap = 'round';
-      context.strokeStyle = ROUTE_COLOR;
-      context.stroke();
-      context.setLineDash([]);
-    }
+      context.drawImage(background, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+      const projection = map.getProjection();
+      const canvasPoints = routeEvents.map(({ point }) => {
+        const pixel = projection.containerPointFromCoords(
+          new window.kakao.maps.LatLng(point.latitude, point.longitude)
+        );
+        return { x: pixel.x, y: pixel.y };
+      });
 
-    await Promise.all(
-      routeEvents.map(({ event }, index) =>
-        drawImageMarker(
-          context,
-          canvasPoints[index].x,
-          canvasPoints[index].y,
-          event.imageSrc
+      if (canvasPoints.length > 1) {
+        context.beginPath();
+        context.moveTo(canvasPoints[0].x, canvasPoints[0].y);
+        canvasPoints.slice(1).forEach(({ x, y }) => context.lineTo(x, y));
+        context.setLineDash([12, 10]);
+        context.lineWidth = 6;
+        context.lineCap = 'round';
+        context.strokeStyle = ROUTE_COLOR;
+        context.stroke();
+        context.setLineDash([]);
+      }
+
+      await Promise.all(
+        routeEvents.map(({ event }, index) =>
+          drawImageMarker(
+            context,
+            canvasPoints[index].x,
+            canvasPoints[index].y,
+            event.imageSrc
+          )
         )
-      )
-    );
+      );
 
-    const blob = await canvasBlob(canvas);
-    return new File([blob], 'course-route.png', { type: 'image/png' });
+      const blob = await canvasBlob(canvas);
+      return new File([blob], 'course-route.png', { type: 'image/png' });
     } finally {
       mapContainer.remove();
     }

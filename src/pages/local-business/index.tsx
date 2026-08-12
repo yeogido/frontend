@@ -16,7 +16,7 @@ import { useBusinessPromotionDelete } from '../../hooks/useBusinessPromotions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { REGION_IMAGE_ALL_ID } from '../../components/common/RegionImageCarouselOption';
 import { useLoginModal } from '../../hooks/useLoginModal';
-import { useIsAdmin, useIsBusinessUser } from '../../hooks/useMyProfile';
+import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import { useAuthStore } from '../../store/auth.store';
 import {
   buildBusinessPromotionEditPath,
@@ -60,7 +60,6 @@ function LocalBusinessPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const isBusinessUser = useIsBusinessUser();
-  const isAdmin = useIsAdmin();
   const { openLoginModal } = useLoginModal();
   const { showToast } = useToast();
   // 지역/카테고리/정렬/보기모드를 전부 별도 state로 복제해두면(예전 방식),
@@ -136,7 +135,6 @@ function LocalBusinessPage() {
   }
   const businessesWithLikeOverrides = businesses.map((business) => ({
     ...business,
-    isMine: business.isMine || isAdmin,
     liked: likedOverrides[business.id] ?? business.liked,
   }));
 

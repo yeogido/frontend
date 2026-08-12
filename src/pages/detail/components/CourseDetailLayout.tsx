@@ -37,6 +37,7 @@ import {
 } from '../../../hooks/useReviews';
 import { useEditCourse } from '../../../hooks/useEditCourse';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useAuthStore } from '../../../store/auth.store';
 import { mapCourseReviewPreviews } from '../mappers/courseReviewMapper';
 import BackButton from '../../local-recommendation/components/BackButton';
@@ -119,10 +120,15 @@ function CourseDetailLayoutContent({
   const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
   const numericCourseId = Number(course.id);
+  const isAdmin = useIsAdmin();
   // 소유권/관리자 판단은 이제 API의 canManage 값을 그대로 따른다 — 서버가
   // local-course는 작성자 여부로, yeogido-course는 관리자 권한으로 이미
-  // 판단해 내려준다.
-  const canEdit = isAuthenticated && course.canManage;
+  // 판단해 내려준다. 다만 local-course는 어드민도 남의 글의 canManage가
+  // true로 내려오므로, 어드민에게는 수정 대신 기존 좋아요 표시를 유지한다.
+  const canEdit =
+    isAuthenticated &&
+    course.canManage &&
+    !(reviewType === 'local-course' && isAdmin);
   const { editLocalCourse } = useEditLocalCourse();
   const { editCourse } = useEditCourse();
   const { data: courseReviews } = useCourseReviewPreviews(

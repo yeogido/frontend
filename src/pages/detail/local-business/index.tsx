@@ -17,7 +17,6 @@ import { useBusinessPromotionDelete } from '../../../hooks/useBusinessPromotions
 import { useBusinessPromotionDetail } from '../../../hooks/useBusinessPromotionDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useAuthStore } from '../../../store/auth.store';
 import { buildBusinessPromotionEditPath } from '../../../utils/routes';
 
@@ -67,7 +66,6 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const clearAuth = useAuthStore((state) => state.clearAuth);
-  const isAdmin = useIsAdmin();
   const { openLoginModal } = useLoginModal();
   const { showToast } = useToast();
   const isValidPromotionId = Number.isInteger(promotionId) && promotionId > 0;
@@ -187,7 +185,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                   imageUrls={businessDetail.heroImageUrls}
                   title={businessDetail.title}
                   rightAction={
-                    businessDetail.isMine || isAdmin ? (
+                    businessDetail.isMine ? (
                       <ReviewActionMenu
                         onEditClick={() =>
                           navigate(
