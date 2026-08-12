@@ -19,12 +19,14 @@ import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
 import { buildBusinessPromotionEditPath } from '../../../utils/routes';
 
+import BackButton from '../../local-recommendation/components/BackButton';
 import {
   DetailDescriptionCard,
   DetailInfoCard,
   DetailPlaceCard,
   DetailStateGuard,
   DetailTitleSection,
+  FavoriteButton,
   ShareButton,
   ShareToast,
 } from '../components';
@@ -35,8 +37,9 @@ import { toSafeExternalUrl, toTelHref } from '../mappers/festivalDetailMapper';
 import DetailHeroCarousel from './components/DetailHeroCarousel';
 
 const PAGE_PADDING_BOTTOM = 32;
+const BACK_BUTTON_TOP = 12;
+const BACK_BUTTON_LEFT = 24;
 const TITLE_SECTION_PADDING_TOP = 24;
-const TITLE_ACTION_GAP = 8;
 const DESCRIPTION_MARGIN_TOP = 12;
 const INFO_CARD_MARGIN_TOP = 12;
 const MAP_MARGIN_TOP = 12;
@@ -121,6 +124,17 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
     }
   };
 
+  // festival/index.tsx의 handleBack과 동일한 패턴 — history.state.idx가
+  // 0이면 이 탭에서 처음 들어온 화면(직접 링크 진입 등)이라 뒤로 갈 곳이
+  // 없다, 그때만 목록으로 대체 이동한다.
+  const handleBack = () => {
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/local-business');
+    }
+  };
+
   return (
     <>
       <DetailStateGuard error={errorMessage} data={business}>
@@ -131,22 +145,12 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
             className="bg-white"
           >
             <ResponsiveFullBleed>
-              <DetailHeroCarousel
-                imageUrls={businessDetail.heroImageUrls}
-                title={businessDetail.title}
-              />
-            </ResponsiveFullBleed>
-
-            <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
-              <DetailTitleSection
-                title={businessDetail.title}
-                tags={businessDetail.tags}
-                action={
-                  <div
-                    className="flex items-center"
-                    style={{ gap: TITLE_ACTION_GAP * scale }}
-                  >
-                    {businessDetail.isMine ? (
+              <div className="relative">
+                <DetailHeroCarousel
+                  imageUrls={businessDetail.heroImageUrls}
+                  title={businessDetail.title}
+                  rightAction={
+                    businessDetail.isMine ? (
                       <ReviewActionMenu
                         onEditClick={() =>
                           navigate(
@@ -157,14 +161,39 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                           requestPromotionDelete(businessDetail.id)
                         }
                         triggerClassName=""
+                        triggerSize={28}
                         ariaLabel="홍보글 메뉴"
                       />
-                    ) : null}
-                    <ShareButton
-                      onClick={handleShare}
-                      label={`${businessDetail.title} 공유하기`}
-                    />
-                  </div>
+                    ) : (
+                      <FavoriteButton
+                        isActive={likedOverride ?? businessDetail.liked}
+                        label={businessDetail.title}
+                        onClick={() => void handleFavoriteToggle()}
+                      />
+                    )
+                  }
+                />
+                <div
+                  className="absolute z-10"
+                  style={{
+                    top: BACK_BUTTON_TOP * scale,
+                    left: BACK_BUTTON_LEFT * scale,
+                  }}
+                >
+                  <BackButton onClick={handleBack} />
+                </div>
+              </div>
+            </ResponsiveFullBleed>
+
+            <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
+              <DetailTitleSection
+                title={businessDetail.title}
+                tags={businessDetail.tags}
+                action={
+                  <ShareButton
+                    onClick={handleShare}
+                    label={`${businessDetail.title} 공유하기`}
+                  />
                 }
               />
             </div>

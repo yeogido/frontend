@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
@@ -14,13 +14,21 @@ const DOT_GAP = 4;
 const DOT_SIZE = 4;
 const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
+// DetailHeroSection의 rightAction 자리와 같은 오프셋(우측 상단 16px).
+const ACTION_OFFSET = 16;
 
 interface DetailHeroCarouselProps {
   readonly imageUrls: readonly string[];
   readonly title: string;
+  /** 우측 상단에 얹는 액션(좋아요 또는 본인 글이면 수정/삭제 메뉴). */
+  readonly rightAction?: ReactNode;
 }
 
-function DetailHeroCarousel({ imageUrls, title }: DetailHeroCarouselProps) {
+function DetailHeroCarousel({
+  imageUrls,
+  title,
+  rightAction,
+}: DetailHeroCarouselProps) {
   const scale = useGlobalScale();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -78,6 +86,15 @@ function DetailHeroCarousel({ imageUrls, title }: DetailHeroCarouselProps) {
           />
         ))}
       </div>
+
+      {rightAction ? (
+        <div
+          className="absolute z-10 flex items-center justify-center"
+          style={{ top: ACTION_OFFSET * scale, right: ACTION_OFFSET * scale }}
+        >
+          {rightAction}
+        </div>
+      ) : null}
 
       {/* 사진이 1장뿐이면 넘길 게 없으니 점을 아예 안 보여준다. */}
       {imageUrls.length > 1 ? (
