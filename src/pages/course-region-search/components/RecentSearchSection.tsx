@@ -36,6 +36,10 @@ function RecentSearchSection({
     useScaleFrame(SECTION_DESIGN_WIDTH);
   const hasSearches = searches.length > 0;
 
+  if (!hasSearches) {
+    return null;
+  }
+
   return (
     <section
       ref={outerRef}
@@ -68,11 +72,7 @@ function RecentSearchSection({
           <button
             type="button"
             onClick={onClear}
-            disabled={!hasSearches}
-            aria-hidden={!hasSearches}
-            className={`text-gray-4 font-normal ${
-              hasSearches ? '' : 'invisible'
-            }`}
+            className="text-gray-4 font-normal"
             style={{
               paddingTop: CLEAR_TOP,
               fontSize: CLEAR_SIZE,

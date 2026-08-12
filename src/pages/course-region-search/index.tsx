@@ -92,6 +92,7 @@ function CourseRegionSearchPage() {
         <>
           <CitySelectionSection
             cities={cities}
+            hasRecentSearches={recentSearches.length > 0}
             selectedCityId={selectedCityId}
             onSelect={selectCity}
           />
