@@ -237,7 +237,6 @@ function LocalCourseSearchPage() {
             placeholder="지역명 또는 도시명을 검색해 주세요"
             label="지역명 또는 도시명 검색"
             suggestions={recentSearchSuggestions}
-            openSuggestionsOnMount
             onRemoveSuggestion={handleRemoveRecentSearchSuggestion}
             pinnedSuggestion={{
               label: '전국 확인하기',

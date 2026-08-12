@@ -230,7 +230,6 @@ function YeogidoCourseSearchPage() {
             placeholder="코스명 또는 지역명을 검색해 주세요"
             label="코스명 또는 지역명 검색"
             suggestions={recentSearchSuggestions}
-            openSuggestionsOnMount
             onRemoveSuggestion={handleRemoveRecentSearchSuggestion}
             pinnedSuggestion={{
               label: '전국 확인하기',

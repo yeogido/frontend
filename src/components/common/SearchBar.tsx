@@ -12,7 +12,6 @@ import { IoSearch } from 'react-icons/io5';
 
 import closeRounded from '../../assets/icons/close-rounded.svg';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
-import { shouldOpenSuggestionsOnMount } from './searchBarUtils';
 
 const SEARCH_BAR_DESIGN_WIDTH = 342;
 
@@ -25,7 +24,6 @@ export interface SearchBarProps {
   suggestions?: readonly string[];
   noResultsText?: string;
   hideEmptySuggestions?: boolean;
-  openSuggestionsOnMount?: boolean;
   pinnedSuggestion?: {
     label: string;
     onSelect: () => void;
@@ -43,7 +41,6 @@ function SearchBar({
   suggestions = [],
   noResultsText = '검색 결과가 없습니다',
   hideEmptySuggestions = false,
-  openSuggestionsOnMount = false,
   pinnedSuggestion,
   onRemoveSuggestion,
   className = '',
@@ -63,13 +60,10 @@ function SearchBar({
   });
   const hasSuggestions = suggestions.length > 0;
   const hasMenuItems = hasSuggestions || pinnedSuggestion !== undefined;
-  const [isOpen, setIsOpen] = useState(() =>
-    shouldOpenSuggestionsOnMount(
-      openSuggestionsOnMount,
-      initialQuery,
-      hasMenuItems
-    )
-  );
+  // 마운트 시에는 항상 닫아 둔다. 열어서 시작하면 '전국 확인하기'처럼 결과를
+  // 보러 이동한 화면이 드롭다운에 가려진 채 랜딩한다. 목록은 입력창을
+  // 포커스할 때(handleFocus) 연다.
+  const [isOpen, setIsOpen] = useState(false);
   const query =
     queryState.source === initialQuery ? queryState.value : initialQuery;
 
