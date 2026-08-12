@@ -5,6 +5,9 @@ export type ContentSort = 'RECOMMEND' | 'LIKE' | 'DISTANCE' | 'DEADLINE';
 
 export type ContentStatus = 'UPCOMING' | 'ONGOING' | 'ENDED';
 
+/** 관광공사 동기화 콘텐츠 검토 상태 — 생략하면 서버 기본값은 PUBLISHED다. */
+export type ContentPublicationStatus = 'PENDING' | 'PUBLISHED';
+
 export type ContentPlaceSource = 'KAKAO' | 'TOUR_API';
 
 export interface ContentCreatePlace {
@@ -34,6 +37,27 @@ export interface ContentCreateResult {
   contentId: number;
 }
 
+/** 동기화된 관광공사 콘텐츠 게시 요청 — 전부 선택값이고, 생략한 값은 동기화된 값을 유지한다. */
+export interface ContentPublishRequest {
+  title?: string;
+  description?: string;
+  category?: ContentCategory;
+  hashtagIds?: number[];
+  recommendPriority?: number;
+}
+
+export interface ContentPublishResult {
+  contentId: number;
+}
+
+export interface TourContentSyncResult {
+  receivedCount: number;
+  createdCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  synchronizedAt: string;
+}
+
 export interface CultureContent {
   contentId: number;
   placeId: number;
@@ -46,6 +70,8 @@ export interface CultureContent {
   isLiked: boolean;
   startDate: string;
   endDate: string;
+  /** 관리자만 PENDING으로 조회 가능. 생략 시(대부분의 응답) 항상 PUBLISHED다. */
+  publicationStatus?: ContentPublicationStatus;
 }
 
 export interface CultureContentBanner {
@@ -123,6 +149,8 @@ export interface GetCultureContentsParams {
   regionId?: number;
   category?: ContentCategory;
   statuses?: ContentStatus[];
+  /** 생략하면 서버 기본값 PUBLISHED만 조회된다 — PENDING은 관리자 전용. */
+  publicationStatus?: ContentPublicationStatus;
   keyword?: string;
   sort?: ContentSort;
   latitude?: number;
