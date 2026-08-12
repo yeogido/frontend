@@ -8,7 +8,9 @@ test('maps a course summary response into review-course card data', () => {
     courseId: 3,
     title: '강릉 혼자 여행 코스',
     thumbnailUrl: 'https://example.com/course.png',
-    durationType: 'TWO_NIGHTS_THREE_DAYS',
+    // Swagger의 CourseSummaryResponse.durationType enum 값을 쓴다.
+    // (별칭 표기는 course-enum-labels.test.ts가 따로 검증한다)
+    durationType: 'TWO_NIGHT',
     transportType: 'WALK',
     companionType: 'SOLO',
   });
