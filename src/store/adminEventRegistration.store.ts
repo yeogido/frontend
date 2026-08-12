@@ -18,6 +18,15 @@ interface AdminEventRegistrationState {
    * 있음)로 덮어써 그 값을 그대로 제출에 실어 보낸다.
    */
   placeSource: ContentPlaceSource;
+  /**
+   * 수정 진입 시 상세 조회로 채워둔 place의 식별 키(`source:externalPlaceId`).
+   * 제출 시점의 place가 이 키와 같으면 "admin이 장소를 안 바꿨다"는 뜻이라
+   * place 필드 자체를 요청에서 뺀다 — 관광공사 동기화로 이미 존재하는
+   * 장소를 그대로 다시 보내면(officialLinks/thumbnailImageKey와 같은 이유로)
+   * 서버가 500을 내는 문제가 있었다. 새로 등록하거나 place-selection에서
+   * 다른 장소를 고르면 null이 되어 항상 그대로 보낸다.
+   */
+  originalPlaceKey: string | null;
   basicInfo: AdminEventBasicInfo;
   photo: AdminEventPhoto | null;
   /**
@@ -31,6 +40,7 @@ interface AdminEventRegistrationState {
   editingContentId: number | null;
   setPlace: (place: PlaceItem | null) => void;
   setPlaceSource: (source: ContentPlaceSource) => void;
+  setOriginalPlaceKey: (key: string | null) => void;
   setBasicInfo: (basicInfo: AdminEventBasicInfo) => void;
   setPhoto: (photo: AdminEventPhoto | null) => void;
   setExistingThumbnailKey: (key: string | null) => void;
@@ -44,6 +54,7 @@ export const useAdminEventRegistrationStore =
   create<AdminEventRegistrationState>()((set, get) => ({
     place: null,
     placeSource: 'KAKAO',
+    originalPlaceKey: null,
     basicInfo: createEmptyAdminEventBasicInfo(),
     photo: null,
     existingThumbnailKey: null,
@@ -52,6 +63,7 @@ export const useAdminEventRegistrationStore =
     editingContentId: null,
     setPlace: (place) => set({ place }),
     setPlaceSource: (placeSource) => set({ placeSource }),
+    setOriginalPlaceKey: (originalPlaceKey) => set({ originalPlaceKey }),
     setBasicInfo: (basicInfo) => set({ basicInfo }),
     setPhoto: (photo) => {
       const previousPhoto = get().photo;
@@ -71,6 +83,7 @@ export const useAdminEventRegistrationStore =
       set({
         place: null,
         placeSource: 'KAKAO',
+        originalPlaceKey: null,
         basicInfo: createEmptyAdminEventBasicInfo(),
         photo: null,
         existingThumbnailKey: null,

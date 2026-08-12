@@ -10,6 +10,17 @@ export type ContentPublicationStatus = 'PENDING' | 'PUBLISHED';
 
 export type ContentPlaceSource = 'KAKAO' | 'TOUR_API';
 
+export type OfficialLinkType =
+  'OFFICIAL_WEBSITE' | 'INSTAGRAM' | 'FACEBOOK' | 'YOUTUBE' | 'BLOG' | 'ETC';
+
+/** 공식 홈페이지·SNS 등 외부 링크 하나. 생성/수정 요청과 상세 응답 모두
+ * 이제 officialUrl(string) 대신 이 배열을 쓴다(라이브 스펙 확인). */
+export interface OfficialLink {
+  type: OfficialLinkType;
+  label: string;
+  url: string;
+}
+
 export interface ContentCreatePlace {
   externalPlaceId: string;
   source: ContentPlaceSource;
@@ -21,15 +32,22 @@ export interface ContentCreatePlace {
 }
 
 export interface ContentCreateRequest {
-  place: ContentCreatePlace;
+  /** 수정 요청에서 생략하면(undefined) 기존 장소를 그대로 유지한다 —
+   * 라이브 스펙: "변경할 장소 정보. 생략하면 기존 장소를 유지합니다." */
+  place?: ContentCreatePlace;
   title: string;
   description: string;
   category: ContentCategory;
   startDate: string;
   endDate: string;
   contactPhone: string;
-  officialUrl: string;
-  thumbnailImageKey: string;
+  /** 수정 요청에서 생략하면(undefined) 기존 링크 목록을 그대로 유지한다 —
+   * 라이브 스펙: "교체할 외부 링크 목록. 생략하면 기존 목록을 유지합니다." */
+  officialLinks?: OfficialLink[];
+  /** 생성 시엔 사실상 필수(폼 검증이 사진 없으면 제출을 막는다), 수정
+   * 요청에서 생략하면 기존 이미지를 유지한다 — "새 대표 사진 Key. 생략하면
+   * 기존 이미지를 유지합니다." */
+  thumbnailImageKey?: string;
   hashtagIds: number[];
 }
 
@@ -122,7 +140,7 @@ export interface CultureContentDetail {
   endDate: string;
   liked: boolean;
   phone: string;
-  officialUrl: string;
+  officialLinks: OfficialLink[];
   place: CultureContentPlace;
   courses: CultureContentCourse[];
 }
