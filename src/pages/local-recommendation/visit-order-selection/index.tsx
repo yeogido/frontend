@@ -37,13 +37,9 @@ function VisitOrderSelectionPage() {
 
     if (result) {
       const detailPath = `/local-course/detail/${result.courseId}`;
-      if (isEditing) {
-        navigate(detailPath);
-      } else {
-        navigate(detailPath, {
-          state: { fromCourseCreationFlow: true },
-        });
-      }
+      navigate(detailPath, {
+        state: { fromCourseCreationFlow: true },
+      });
     }
   };
 

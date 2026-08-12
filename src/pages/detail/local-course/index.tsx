@@ -100,7 +100,7 @@ function LocalCourseDetailPage() {
   }
 
   const handleBack = () => {
-    // 코스 생성 플로우(방문 순서 정하기)를 마치고 넘어온 상세 페이지라면,
+    // 코스 등록·수정 플로우(방문 순서 정하기)를 마치고 넘어온 상세 페이지라면,
     // 뒤로가기로 그 플로우(장소 선택 등)로 되돌아가지 않고 인기 코스
     // 목록으로 보낸다.
     const cameFromCourseCreationFlow = Boolean(
