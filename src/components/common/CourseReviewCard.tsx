@@ -12,6 +12,7 @@ import type { TagId } from '../../types/tag.type';
 
 import ReviewActionMenu from './ReviewActionMenu';
 import ReviewerAvatar from './ReviewerAvatar';
+import ReviewerName from './ReviewerName';
 import TagChip from './TagChip';
 
 const CARD_DESIGN_WIDTH = 342;
@@ -215,18 +216,22 @@ function CourseReviewCard({
 
         <div className="mx-4 border-t border-[#E4E4E4]" />
 
-        <div className="flex items-center justify-between px-4 pt-3">
-          <div className="flex min-w-0 items-center gap-2">
+        <div className="flex items-center px-4 pt-3">
+          <div className="flex w-[128px] shrink-0 items-center gap-2">
             <ReviewerAvatar src={profileImage} size={28} isMine={isMine} />
 
-            <div className="min-w-0">
+            <div className="w-[92px] shrink-0">
               {/* 닉네임만 줄이고 메타('20대 여')는 지킨다. 한 줄에 묶어
-                  truncate하면 뒤에 오는 메타부터 잘려 성별이 사라진다. */}
+                  truncate하면 뒤에 오는 메타부터 잘려 성별이 사라진다.
+                  닉네임 칸은 12px 기준 3글자(36px)로 고정한다. 폭이 내용에
+                  따라 변하면 카드마다 메타 시작 위치가 어긋나 목록이
+                  들쭉날쭉해진다. */}
               <p className="flex min-w-0 items-baseline text-[12px] leading-none">
-                <span className="truncate font-semibold text-[#1C1C1C]">
-                  {nickname}
-                </span>
-                <span className="ml-1 shrink-0 font-normal text-[#7F7F7F]">
+                <ReviewerName
+                  nickname={nickname}
+                  className="text-[12px] font-semibold text-[#1C1C1C]"
+                />
+                <span className="shrink-0 font-normal text-[#7F7F7F]">
                   · {meta}
                 </span>
               </p>
@@ -246,7 +251,7 @@ function CourseReviewCard({
             </div>
           </div>
 
-          <p className="ml-3 line-clamp-2 w-[178px] text-[12px] leading-[15px] text-[#1C1C1C]">
+          <p className="ml-2 min-w-0 flex-1 line-clamp-2 text-[12px] leading-[15px] text-[#1C1C1C]">
             {content}
           </p>
         </div>
