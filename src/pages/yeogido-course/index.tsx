@@ -22,7 +22,6 @@ import {
 } from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useEditCourse } from '../../hooks/useEditCourse';
-import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
@@ -116,7 +115,6 @@ function YeogidoCoursePage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
   const {
@@ -289,7 +287,9 @@ function YeogidoCoursePage() {
             >
               {heroCourse?.routeImageUrl?.trim() || heroCourse?.thumbnailUrl ? (
                 <img
-                  src={heroCourse.routeImageUrl?.trim() || heroCourse.thumbnailUrl}
+                  src={
+                    heroCourse.routeImageUrl?.trim() || heroCourse.thumbnailUrl
+                  }
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 h-full w-full object-cover"
@@ -390,10 +390,12 @@ function YeogidoCoursePage() {
                   <ContentCardSkeleton key={item} />
                 ))
               : popularCoursePreviews.map((course) =>
-                  isAdmin ? (
+                  course.canManage ? (
                     <EditableContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}
@@ -405,7 +407,9 @@ function YeogidoCoursePage() {
                   ) : (
                     <ContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}
@@ -468,7 +472,7 @@ function YeogidoCoursePage() {
                   <CourseCard
                     {...course}
                     liked={getLiked(course.id, course.liked)}
-                    canManage={isAdmin}
+                    canManage={course.canManage}
                     showEdit
                     onClick={() => goToCourseDetail(course.id)}
                     onLikeClick={() =>

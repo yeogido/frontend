@@ -64,6 +64,7 @@ export interface CourseDetailResult {
   endMonth: number;
   companionType: string;
   isLiked: boolean;
+  canManage: boolean;
   courseItems: CourseDetailItem[];
   author?: CourseDetailAuthor;
 }

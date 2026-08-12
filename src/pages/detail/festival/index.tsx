@@ -185,6 +185,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
       startDate: content.startDate,
       endDate: content.endDate,
       liked: content.liked,
+      canManage: content.canManage,
     });
   }, [content]);
 

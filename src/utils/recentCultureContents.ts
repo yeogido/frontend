@@ -141,6 +141,7 @@ function isRecentCultureContent(value: unknown): value is RecentCultureContent {
     content.hashtags.every((hashtag) => typeof hashtag === 'string') &&
     typeof content.startDate === 'string' &&
     typeof content.endDate === 'string' &&
-    typeof content.liked === 'boolean'
+    typeof content.liked === 'boolean' &&
+    typeof content.canManage === 'boolean'
   );
 }

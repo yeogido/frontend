@@ -20,7 +20,6 @@ import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditCourse } from '../../../hooks/useEditCourse';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -87,7 +86,6 @@ function YeogidoCourseSearchPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -111,8 +109,11 @@ function YeogidoCourseSearchPage() {
   } = useYeogidoCourseFilters();
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
-    useDistanceSortCoordinates();
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
 
   const {
     data,
@@ -226,10 +227,12 @@ function YeogidoCourseSearchPage() {
                   />
                 ))
               : yeogidoCourses.map((course) =>
-                  isAdmin ? (
+                  course.canManage ? (
                     <EditableContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}
@@ -242,7 +245,9 @@ function YeogidoCourseSearchPage() {
                   ) : (
                     <ContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}

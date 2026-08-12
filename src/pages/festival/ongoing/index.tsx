@@ -12,7 +12,6 @@ import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
@@ -65,14 +64,16 @@ function FestivalOngoingPage() {
   // 확인했다).
   const region = searchParams.get('region') ?? '';
   const { getLiked, toggleLike } = useContentLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
     useFestivalFilters();
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
-  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
-    useDistanceSortCoordinates();
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
   const {
     data,
     fetchNextPage,
@@ -80,15 +81,20 @@ function FestivalOngoingPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useCultureContents({
-    statuses: ['ONGOING'],
-    keyword: region || undefined,
-    category: categoryByFilterValue[selectedFilters.category],
-    sort: sortByFilterValue[selectedFilters.sort],
-    latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
-    longitude: isDistanceSort ? distanceSortCoordinates?.longitude : undefined,
-    size: PAGE_SIZE,
-  }, { enabled: !isDistanceSort || status === 'ready' || status === 'failed' });
+  } = useCultureContents(
+    {
+      statuses: ['ONGOING'],
+      keyword: region || undefined,
+      category: categoryByFilterValue[selectedFilters.category],
+      sort: sortByFilterValue[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: PAGE_SIZE,
+    },
+    { enabled: !isDistanceSort || status === 'ready' || status === 'failed' }
+  );
 
   const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
@@ -175,7 +181,7 @@ function FestivalOngoingPage() {
                   regionName={festival.regionName}
                   tags={toContentTagIds(festival.hashtags)}
                   className="w-full"
-                  isAdmin={isAdmin}
+                  isAdmin={festival.canManage}
                   liked={getLiked(festival.contentId, festival.isLiked)}
                   onClick={() =>
                     navigate(buildFestivalDetailPath(festival.contentId))

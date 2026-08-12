@@ -14,7 +14,6 @@ import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditFestival } from '../../../hooks/useEditFestival';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
@@ -59,7 +58,6 @@ function FestivalSearchPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { getLiked, toggleLike } = useContentLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -72,8 +70,11 @@ function FestivalSearchPage() {
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
     useFestivalFilters();
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
-  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
-    useDistanceSortCoordinates();
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
 
   const {
     data,
@@ -82,14 +83,19 @@ function FestivalSearchPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useCultureContents({
-    keyword: displaySearchQuery.trim() || undefined,
-    category: categoryByFilterValue[selectedFilters.category],
-    sort: sortByFilterValue[selectedFilters.sort],
-    latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
-    longitude: isDistanceSort ? distanceSortCoordinates?.longitude : undefined,
-    size: 20,
-  }, { enabled: !isDistanceSort || status === 'ready' || status === 'failed' });
+  } = useCultureContents(
+    {
+      keyword: displaySearchQuery.trim() || undefined,
+      category: categoryByFilterValue[selectedFilters.category],
+      sort: sortByFilterValue[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: 20,
+    },
+    { enabled: !isDistanceSort || status === 'ready' || status === 'failed' }
+  );
 
   const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
@@ -175,7 +181,7 @@ function FestivalSearchPage() {
                 />
               ))
             : festivals.map((festival) =>
-                isAdmin ? (
+                festival.canManage ? (
                   <EditableContentCard
                     key={festival.contentId}
                     image={festival.thumbnailImageUrl}

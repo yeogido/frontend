@@ -11,7 +11,6 @@ import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -26,7 +25,6 @@ function FestivalSection() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useContentLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const { data, isPending: isLoading } = useCultureContents({
@@ -76,7 +74,7 @@ function FestivalSection() {
                     endDate={festival.endDate}
                     regionName={festival.regionName}
                     tags={toContentTagIds(festival.hashtags)}
-                    isAdmin={isAdmin}
+                    isAdmin={festival.canManage}
                     liked={getLiked(festival.contentId, festival.isLiked)}
                     onClick={() =>
                       navigate(buildFestivalDetailPath(festival.contentId))
