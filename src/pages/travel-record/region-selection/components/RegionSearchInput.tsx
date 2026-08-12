@@ -57,14 +57,19 @@ function RegionSearchInput({
             onEnter();
           }}
           onKeyUp={(event) => {
-            if (
-              event.key !== 'Enter' ||
-              !onEnter ||
-              !shouldSelectAfterCompositionRef.current
-            ) {
-              if (event.key === 'Enter' && skipEnterKeyUpRef.current) {
-                skipEnterKeyUpRef.current = false;
-              }
+            if (event.key !== 'Enter' || !onEnter) {
+              return;
+            }
+
+            // keydown에서 이미 처리한 Enter다. 조합 플래그가 남아 있더라도
+            // 여기서 한 번 더 실행하면 안 되므로 플래그째 정리하고 끝낸다.
+            if (skipEnterKeyUpRef.current) {
+              skipEnterKeyUpRef.current = false;
+              shouldSelectAfterCompositionRef.current = false;
+              return;
+            }
+
+            if (!shouldSelectAfterCompositionRef.current) {
               return;
             }
 
