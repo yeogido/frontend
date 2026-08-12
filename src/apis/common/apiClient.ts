@@ -124,7 +124,7 @@ function reissueAccessToken(): Promise<string> {
   reissuePromise = apiClient
     .post<LoginResult>('/auth/reissue', { refreshToken })
     .then(({ data }) => {
-      useAuthStore.getState().setAuth(data);
+      useAuthStore.getState().refreshTokens(data);
       return data.accessToken;
     })
     .finally(() => {

@@ -21,6 +21,11 @@ interface AuthState {
   // 용도다 — 요청 시작 시점의 값과 완료 시점의 값이 다르면 반영하지 않는다.
   authGeneration: number;
   setAuth: (auth: LoginResult) => void;
+  // 토큰 재발급 전용. 로그인 상태를 유지한 채 accessToken/refreshToken/role만
+  // 갱신하고 authGeneration은 올리지 않는다 — 같은 세션이 계속되는
+  // 것뿐이라, 재발급 중 진행 중이던 좋아요 요청의 성공 응답까지 "세대가
+  // 바뀌었다"며 무시돼선 안 된다.
+  refreshTokens: (auth: LoginResult) => void;
   clearAuth: () => void;
 }
 
@@ -46,6 +51,13 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: Boolean(auth.accessToken),
           authGeneration: state.authGeneration + 1,
         })),
+      refreshTokens: (auth) =>
+        set({
+          accessToken: auth.accessToken,
+          refreshToken: auth.refreshToken,
+          userId: auth.userId,
+          role: auth.role,
+        }),
       clearAuth: () =>
         set((state) => ({
           ...initialState,
