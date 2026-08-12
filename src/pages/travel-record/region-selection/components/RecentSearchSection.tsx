@@ -13,7 +13,11 @@ function RecentSearchSection({
   onRemove,
   onSelect,
 }: RecentSearchSectionProps) {
-  const hasSearches = searches.length > 0;
+  // 최근 검색이 하나도 없으면 제목과 '전체 삭제'만 남아 빈 자리가 생기므로
+  // 섹션을 통째로 감춘다.
+  if (searches.length === 0) {
+    return null;
+  }
 
   return (
     <section
@@ -27,11 +31,7 @@ function RecentSearchSection({
         <button
           type="button"
           onClick={onClear}
-          disabled={!hasSearches}
-          aria-hidden={!hasSearches}
-          className={`text-gray-4 pt-[3px] text-[12px] leading-[14px] font-normal ${
-            hasSearches ? '' : 'invisible'
-          }`}
+          className="text-gray-4 pt-[3px] text-[12px] leading-[14px] font-normal"
         >
           전체 삭제
         </button>

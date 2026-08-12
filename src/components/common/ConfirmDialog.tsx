@@ -60,7 +60,10 @@ function ConfirmDialog({
       >
         <h2 className="text-xl font-semibold text-[#1c1c1c]">{title}</h2>
         {description && (
-          <p className="mt-3 text-sm text-[#7f7f7f]">{description}</p>
+          // 줄바꿈 위치를 직접 잡는 문구가 있어 개행을 그대로 살린다.
+          <p className="mt-3 text-sm whitespace-pre-line text-[#7f7f7f]">
+            {description}
+          </p>
         )}
         <div className="mt-6 flex gap-2">
           <button
