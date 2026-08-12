@@ -271,7 +271,9 @@ test('maps a travel record summary cover image URL to the folder photo', () => {
       id: '10',
       regionId: 27,
       regionCode: '26',
-      regionName: '부산광역시',
+      // 표시용 이름은 Region API의 축약형이다. GeoJSON 도형 이름
+      // ('부산광역시')은 regionCode로만 쓴다.
+      regionName: '부산',
       title: 'Busan',
       folderTheme: 'BASIC',
       startDate: '2026-07-20',
@@ -299,6 +301,29 @@ test('falls back to the record title for the region name when no region info is 
 
   assert.equal(folder.regionName, 'Busan');
   assert.equal(folder.regionCode, '');
+});
+
+test('keeps the short region name when only the full name matches a map shape', () => {
+  const summary: TravelRecordSummary = {
+    travelRecordId: 12,
+    title: '서울',
+    regionId: 1,
+    startDate: '2026-07-20',
+    endDate: '2026-07-22',
+    coverImageUrl: 'https://example.com/travel-records/12/image-1.jpg',
+    folderTheme: 'BASIC',
+    createdAt: '2026-07-23T09:00:00',
+  };
+
+  // GeoJSON에는 '서울'이 없고 '서울특별시'만 있다. 도형은 그걸로 찾되,
+  // 폴더 이름과 수정 화면에는 Region API가 준 '서울'이 보여야 한다.
+  const folder = mapTravelRecordSummaryToFolder(summary, {
+    name: '서울',
+    fullName: '서울특별시',
+  });
+
+  assert.equal(folder.regionName, '서울');
+  assert.equal(folder.regionCode, '11');
 });
 
 test('resolves a district-level region name against the city map shape', () => {
