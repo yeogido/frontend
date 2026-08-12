@@ -10,6 +10,7 @@ import { BIRTH_YEARS } from '../../../../constants/birthYears';
 import { useRegions } from '../../../../hooks/useRegions';
 import { useAuthStore } from '../../../../store/auth.store';
 import type { SocialGender } from '../../../../types/auth.type';
+import { getFullRegionName } from '../../../../utils/regionName';
 
 import SelectField from './SelectField';
 
@@ -185,7 +186,7 @@ function SocialProfileForm({
                   { value: '', label: '거주 중인 지역을 선택해 주세요' },
                   ...(regionsData?.regions ?? []).map((region) => ({
                     value: String(region.regionId),
-                    label: region.name,
+                    label: getFullRegionName(region.name),
                   })),
                 ]}
               />

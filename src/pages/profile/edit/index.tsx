@@ -17,8 +17,9 @@ import { BIRTH_YEARS } from '../../../constants/birthYears';
 import { useAuth } from '../../../hooks/useAuth';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useMyProfile, useUpdateMyProfile } from '../../../hooks/useMyProfile';
-import { useRegion, useRegions } from '../../../hooks/useRegions';
+import { useRegions } from '../../../hooks/useRegions';
 import type { UpdateMyProfileRequest } from '../../../types/user.type';
+import { getFullRegionName } from '../../../utils/regionName';
 import {
   ProfilePhotoEditor,
   type ProfilePhotoEditorHandle,
@@ -58,12 +59,6 @@ function ProfileEditPage() {
   const [name, setName] = useState(initialName);
   const [regionId, setRegionId] = useState(initialRegionId);
   const [birthYear, setBirthYear] = useState(initialBirthYear);
-  // GET /regions 목록의 name은 축약형("서울")이고, 풀네임("서울특별시")은
-  // 단건 상세(GET /regions/{id})의 fullName에만 있다. 목록 26개를 전부
-  // 상세 조회로 바꾸는 대신, 현재 선택된 값의 트리거 표시만 우선 맞춘다.
-  const { data: selectedRegionDetail } = useRegion(
-    regionId ? Number(regionId) : undefined
-  );
   const [isPhotoChanged, setIsPhotoChanged] = useState(false);
   const [profileImageKey, setProfileImageKey] = useState<string | undefined>(
     undefined
@@ -99,7 +94,7 @@ function ProfileEditPage() {
       { value: '', label: '사는 지역을 선택해 주세요' },
       ...(regionsData?.regions ?? []).map((region) => ({
         value: String(region.regionId),
-        label: region.name,
+        label: getFullRegionName(region.name),
       })),
     ],
     [regionsData?.regions]
@@ -252,7 +247,6 @@ function ProfileEditPage() {
               options={regionOptions}
               scale={scale}
               ariaLabel="사는 지역"
-              triggerLabel={selectedRegionDetail?.fullName}
             />
           </ProfileFormField>
 

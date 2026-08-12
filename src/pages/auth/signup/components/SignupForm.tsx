@@ -20,6 +20,7 @@ import {
 import { BIRTH_YEARS } from '../../../../constants/birthYears';
 import { useRegions } from '../../../../hooks/useRegions';
 import type { SignupGender } from '../../../../types/auth.type';
+import { getFullRegionName } from '../../../../utils/regionName';
 import {
   signupSchema,
   SIGNUP_EMAIL_PATTERN,
@@ -421,7 +422,7 @@ function SignupForm({ onBack }: SignupFormProps) {
                     { value: '', label: '거주 중인 지역을 선택해 주세요' },
                     ...(regionsData?.regions ?? []).map((region) => ({
                       value: String(region.regionId),
-                      label: region.name,
+                      label: getFullRegionName(region.name),
                     })),
                   ]}
                 />
