@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { getSubRegions, searchRegions } from '../../../apis/regions.api';
@@ -24,6 +24,7 @@ import { isNationwideCity } from '../utils/citySelection';
 import {
   getRecentSearchLocation,
   getSubRegionRecentSearch,
+  isKnownRegionPath,
 } from '../utils/recentSearch';
 
 import useRegionOptions from './useRegionOptions';
@@ -62,6 +63,7 @@ function createSearchResultLocation(params: {
 
 function useCourseRegionSearch() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const {
     cities,
@@ -150,11 +152,40 @@ function useCourseRegionSearch() {
     setRecentSearches(nextSearches);
   };
 
-  const navigateToSearchResult = (keyword: string) => {
+  // 시/도의 하위 지역 이름을 확인한다. 조회에 실패하면 검증할 수 없으므로
+  // 지역으로 단정하지 않고 빈 목록을 돌려 키워드 검색으로 떨어뜨린다.
+  const fetchSubRegionNames = async (regionId: number | undefined) => {
+    if (regionId === undefined) {
+      return [];
+    }
+
+    try {
+      const subRegions = await queryClient.fetchQuery({
+        queryKey: ['regions', regionId, 'sub-regions'],
+        queryFn: () => getSubRegions(regionId),
+        staleTime: 5 * 60_000,
+      });
+
+      return subRegions.map((subRegion) => subRegion.name);
+    } catch {
+      return [];
+    }
+  };
+
+  const navigateToSearchResult = async (keyword: string) => {
     const recentSearchLocation = getRecentSearchLocation(keyword, cities);
     const matchedCity = recentSearchLocation?.city;
+    const district = recentSearchLocation?.district;
+    const isRegionPath =
+      matchedCity !== undefined &&
+      isKnownRegionPath(
+        district,
+        district === undefined
+          ? []
+          : await fetchSubRegionNames(matchedCity.regionId)
+      );
 
-    if (matchedCity) {
+    if (matchedCity && isRegionPath) {
       if (searchTargetConfig.navigatesToRegionInfo) {
         navigate(`/region-info/${encodeURIComponent(matchedCity.name)}`, {
           state: { [REGION_INFO_ID_STATE_KEY]: matchedCity.regionId },
@@ -167,7 +198,7 @@ function useCourseRegionSearch() {
         createSearchResultLocation({
           targetPathname: searchTargetPathname,
           city: matchedCity.name,
-          district: recentSearchLocation?.district,
+          district,
         })
       );
 
@@ -190,12 +221,12 @@ function useCourseRegionSearch() {
     }
 
     addRecentSearch(keyword);
-    navigateToSearchResult(keyword);
+    void navigateToSearchResult(keyword);
   };
 
   const selectRecentSearch = (keyword: string) => {
     addRecentSearch(keyword);
-    navigateToSearchResult(keyword);
+    void navigateToSearchResult(keyword);
   };
 
   const removeRecentSearch = (targetIndex: number) => {
