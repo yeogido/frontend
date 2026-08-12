@@ -245,8 +245,10 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
 
           {/* MY: 마이페이지 메뉴 — 관리자 계정은 여행기록/좋아요/내가 등록한
               게시물이 의미가 없어(관리자 전용 콘텐츠는 별도 API가 없다)
-              이 섹션 자체를 안 보여준다. */}
-          {!isAdmin && (
+              이 섹션 자체를 안 보여준다. isAdmin은 role 조회 중엔 false라,
+              isProfilePending도 같이 확인해야 관리자가 로딩 중 잠깐이라도
+              MY 섹션을 보는 깜빡임이 없다. */}
+          {!isProfilePending && !isAdmin && (
             <>
               <div
                 className="shrink-0"
