@@ -56,6 +56,7 @@ function SearchBar({
   const inputId = useId();
   const listboxId = useId();
   const searchBarRef = useRef<HTMLFormElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [queryState, setQueryState] = useState({
     value: initialQuery,
     source: initialQuery,
@@ -142,6 +143,12 @@ function SearchBar({
     }
   };
 
+  const handleClear = () => {
+    updateQuery('');
+    onQueryChange?.('');
+    inputRef.current?.focus();
+  };
+
   const handleBlur = (event: FocusEvent<HTMLFormElement>) => {
     const nextFocusedElement = event.relatedTarget;
 
@@ -179,15 +186,16 @@ function SearchBar({
           <label htmlFor={inputId} className="sr-only">
             {label}
           </label>
-          <div className="border-gray-2 bg-pure-white flex h-[47px] w-full items-center gap-2.5 overflow-hidden rounded-xl border px-[13px]">
+          <div className="border-gray-2 bg-pure-white relative flex h-[47px] w-full items-center gap-2.5 overflow-hidden rounded-xl border px-[13px]">
             <IoSearch
               aria-hidden="true"
               className="text-gray-4 shrink-0 text-[24px]"
             />
 
             <input
+              ref={inputRef}
               id={inputId}
-              type="search"
+              type="text"
               value={query}
               onFocus={handleFocus}
               onChange={(event) => {
@@ -205,8 +213,23 @@ function SearchBar({
               aria-controls={hasMenuItems ? listboxId : undefined}
               aria-expanded={hasMenuItems ? isOpen : undefined}
               aria-autocomplete={hasMenuItems ? 'list' : undefined}
-              className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-normal font-medium outline-none"
+              className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent pr-9 text-[12px] leading-normal font-medium outline-none"
             />
+            {query ? (
+              <button
+                type="button"
+                onClick={handleClear}
+                aria-label="검색어 지우기"
+                className="absolute right-[19px] flex size-4 items-center justify-center"
+              >
+                <img
+                  src={closeRounded}
+                  alt=""
+                  aria-hidden="true"
+                  className="size-full"
+                />
+              </button>
+            ) : null}
           </div>
           {hasMenuItems &&
           isOpen &&
