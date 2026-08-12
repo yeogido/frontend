@@ -109,4 +109,12 @@ test('clearRecentCultureContentsLikedState unsets liked on every recent content 
   const contents = getStoredRecentCultureContents();
   assert.equal(contents.length, 1);
   assert.equal(contents[0].liked, false);
+
+  // 표시용으로 "YYYY.MM"까지만 자른 날짜가 저장소에 그대로 다시 쓰여서는
+  // 안 된다 — 원본 일자(day) 정보가 사라지는 회귀를 막는다.
+  const storedRaw = JSON.parse(
+    storage.get(RECENT_CULTURE_CONTENTS_STORAGE_KEY) ?? '[]'
+  );
+  assert.equal(storedRaw[0].startDate, '2026-07-30');
+  assert.equal(storedRaw[0].endDate, '2026-07-30');
 });

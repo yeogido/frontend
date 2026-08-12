@@ -15,6 +15,11 @@ interface AuthState {
   userId: number | null;
   role: string | null;
   isAuthenticated: boolean;
+  // 로그인/로그아웃마다 하나씩 올라간다. 로그아웃 전에 시작된 좋아요 요청이
+  // 로그아웃(또는 그 사이의 재로그인) 이후에 완료됐을 때, 응답을 그 시점의
+  // 로컬 상태(override/최근 목록/localStorage)에 반영해도 되는지 판별하는
+  // 용도다 — 요청 시작 시점의 값과 완료 시점의 값이 다르면 반영하지 않는다.
+  authGeneration: number;
   setAuth: (auth: LoginResult) => void;
   clearAuth: () => void;
 }
@@ -31,15 +36,22 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       ...initialState,
       isAuthenticated: false,
+      authGeneration: 0,
       setAuth: (auth) =>
-        set({
+        set((state) => ({
           accessToken: auth.accessToken,
           refreshToken: auth.refreshToken,
           userId: auth.userId,
           role: auth.role,
           isAuthenticated: Boolean(auth.accessToken),
-        }),
-      clearAuth: () => set({ ...initialState, isAuthenticated: false }),
+          authGeneration: state.authGeneration + 1,
+        })),
+      clearAuth: () =>
+        set((state) => ({
+          ...initialState,
+          isAuthenticated: false,
+          authGeneration: state.authGeneration + 1,
+        })),
     }),
     {
       name: 'auth-storage',

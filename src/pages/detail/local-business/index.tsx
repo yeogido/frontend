@@ -101,6 +101,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
     if (!business) return;
 
     const nextLiked = !(likedOverride ?? business.liked);
+    const requestAuthGeneration = useAuthStore.getState().authGeneration;
     placeLikeRequestInFlightRef.current = true;
     setLikedOverride(nextLiked);
 
@@ -111,7 +112,11 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
         await removePlaceLike(business.placeId);
       }
     } catch (error) {
-      setLikedOverride(!nextLiked);
+      // 요청이 나간 뒤 로그아웃(또는 재로그인)해서 인증 세대가 바뀌었다면,
+      // 지금은 이 실패를 되돌릴 세션이 아니므로 override를 건드리지 않는다.
+      if (useAuthStore.getState().authGeneration === requestAuthGeneration) {
+        setLikedOverride(!nextLiked);
+      }
 
       if (isNormalizedApiError(error) && error.code === 'AUTH4011') {
         clearAuth();

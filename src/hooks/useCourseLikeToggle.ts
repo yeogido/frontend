@@ -9,6 +9,7 @@ import { updateRecentCourseLikeState } from '../utils/recentCourses';
 interface ToggleCourseLikeVariables {
   courseId: number;
   isLiked: boolean;
+  authGeneration: number;
 }
 
 export function useCourseLikeToggle() {
@@ -45,10 +46,20 @@ export function useCourseLikeToggle() {
   const likeMutation = useMutation({
     mutationFn: ({ courseId, isLiked }: ToggleCourseLikeVariables) =>
       isLiked ? removeCourseLike(courseId) : addCourseLike(courseId),
-    onSuccess: (result, { courseId }) => {
+    onSuccess: (result, { courseId, authGeneration }) => {
+      // 요청이 나간 뒤 로그아웃(또는 재로그인)해서 인증 세대가 바뀌었다면,
+      // 지금은 이 응답을 신뢰할 세션이 아니므로 어떤 상태도 건드리지 않는다.
+      if (useAuthStore.getState().authGeneration !== authGeneration) {
+        return;
+      }
+
       updateRecentCourseLikeState(courseId, result.isLiked);
     },
-    onError: (_error, { courseId, isLiked }) => {
+    onError: (_error, { courseId, isLiked, authGeneration }) => {
+      if (useAuthStore.getState().authGeneration !== authGeneration) {
+        return;
+      }
+
       setLikedOverrides((previous) => ({
         ...previous,
         [courseId]: isLiked,
@@ -85,7 +96,11 @@ export function useCourseLikeToggle() {
       [courseId]: !currentLiked,
     }));
 
-    likeMutation.mutate({ courseId, isLiked: currentLiked });
+    likeMutation.mutate({
+      courseId,
+      isLiked: currentLiked,
+      authGeneration: useAuthStore.getState().authGeneration,
+    });
   };
 
   return { getLiked, toggleLike };

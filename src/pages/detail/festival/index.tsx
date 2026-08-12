@@ -210,6 +210,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     if (!festival) return;
 
     const nextLiked = !(placeLikedOverride ?? festival.place.liked);
+    const requestAuthGeneration = useAuthStore.getState().authGeneration;
     placeLikeRequestInFlightRef.current = true;
     setPlaceLikedOverride(nextLiked);
 
@@ -220,7 +221,11 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
         await removePlaceLike(festival.place.id);
       }
     } catch (error) {
-      setPlaceLikedOverride(!nextLiked);
+      // 요청이 나간 뒤 로그아웃(또는 재로그인)해서 인증 세대가 바뀌었다면,
+      // 지금은 이 실패를 되돌릴 세션이 아니므로 override를 건드리지 않는다.
+      if (useAuthStore.getState().authGeneration === requestAuthGeneration) {
+        setPlaceLikedOverride(!nextLiked);
+      }
 
       if (isNormalizedApiError(error) && error.code === 'AUTH4011') {
         clearAuth();

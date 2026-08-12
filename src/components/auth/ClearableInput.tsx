@@ -15,6 +15,13 @@ const ClearableInput = forwardRef<HTMLInputElement, ClearableInputProps>(
     const [hasValue, setHasValue] = useState(
       Boolean(props.value ?? props.defaultValue ?? '')
     );
+    // 제어형 입력(value prop이 있는 경우)은 매 렌더의 value가 진실의
+    // 출처다. 예: 인증번호 재전송 시 부모가 value=''로 비우면, change
+    // 이벤트 없이도 X 버튼이 즉시 사라져야 한다. value prop이 없는
+    // react-hook-form 비제어 입력에서는 change/마운트 시 갱신되는
+    // hasValue state를 그대로 쓴다.
+    const hasInputValue =
+      props.value !== undefined ? String(props.value).length > 0 : hasValue;
 
     const setRefs = (node: HTMLInputElement | null) => {
       inputRef.current = node;
@@ -62,10 +69,10 @@ const ClearableInput = forwardRef<HTMLInputElement, ClearableInputProps>(
           {...props}
           ref={setRefs}
           onChange={handleChange}
-          className={`${className ?? ''} ${hasValue && !props.disabled ? 'pr-11' : ''}`}
+          className={`${className ?? ''} ${hasInputValue && !props.disabled ? 'pr-11' : ''}`}
         />
 
-        {hasValue && !props.disabled && (
+        {hasInputValue && !props.disabled && (
           <button
             type="button"
             onClick={handleClear}

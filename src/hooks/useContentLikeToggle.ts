@@ -13,6 +13,7 @@ import { updateRecentCultureContentLikeState } from '../utils/recentCultureConte
 interface ToggleContentLikeVariables {
   contentId: number;
   isLiked: boolean;
+  authGeneration: number;
 }
 
 export function useContentLikeToggle() {
@@ -50,7 +51,13 @@ export function useContentLikeToggle() {
   const likeMutation = useMutation({
     mutationFn: ({ contentId, isLiked }: ToggleContentLikeVariables) =>
       isLiked ? removeContentLike(contentId) : addContentLike(contentId),
-    onSuccess: (result, { contentId }) => {
+    onSuccess: (result, { contentId, authGeneration }) => {
+      // 요청이 나간 뒤 로그아웃(또는 재로그인)해서 인증 세대가 바뀌었다면,
+      // 지금은 이 응답을 신뢰할 세션이 아니므로 어떤 상태도 건드리지 않는다.
+      if (useAuthStore.getState().authGeneration !== authGeneration) {
+        return;
+      }
+
       setLikedOverrides((previous) => ({
         ...previous,
         [contentId]: result.isLiked,
@@ -58,7 +65,11 @@ export function useContentLikeToggle() {
       setStoredContentLikeOverride(contentId, result.isLiked);
       updateRecentCultureContentLikeState(contentId, result.isLiked);
     },
-    onError: (_error, { contentId, isLiked }) => {
+    onError: (_error, { contentId, isLiked, authGeneration }) => {
+      if (useAuthStore.getState().authGeneration !== authGeneration) {
+        return;
+      }
+
       setLikedOverrides((previous) => ({
         ...previous,
         [contentId]: isLiked,
@@ -94,7 +105,11 @@ export function useContentLikeToggle() {
       [contentId]: !currentLiked,
     }));
 
-    likeMutation.mutate({ contentId, isLiked: currentLiked });
+    likeMutation.mutate({
+      contentId,
+      isLiked: currentLiked,
+      authGeneration: useAuthStore.getState().authGeneration,
+    });
   };
 
   return { getLiked, toggleLike };
