@@ -9,6 +9,7 @@ const LIST_GAP = 4;
 export interface CourseStopListProps {
   readonly stops: readonly CourseStop[];
   readonly onStopLikeToggle: (stopId: number) => void;
+  readonly onStopFocus?: (stopId: number) => void;
   readonly pendingPlaceIds?: ReadonlySet<number>;
   readonly pendingContentIds?: ReadonlySet<number>;
   readonly className?: string;
@@ -17,6 +18,7 @@ export interface CourseStopListProps {
 export function CourseStopList({
   stops,
   onStopLikeToggle,
+  onStopFocus,
   pendingPlaceIds = new Set<number>(),
   pendingContentIds = new Set<number>(),
   className = '',
@@ -34,12 +36,14 @@ export function CourseStopList({
           stop={stop}
           isLast={index === stops.length - 1}
           onLikeToggle={() => onStopLikeToggle(stop.id)}
+          onFocus={onStopFocus ? () => onStopFocus(stop.id) : undefined}
           isLikeAvailable={
             stop.placeId !== undefined || stop.contentId !== undefined
           }
           isLikePending={
             (stop.placeId !== undefined && pendingPlaceIds.has(stop.placeId)) ||
-            (stop.contentId !== undefined && pendingContentIds.has(stop.contentId))
+            (stop.contentId !== undefined &&
+              pendingContentIds.has(stop.contentId))
           }
         />
       ))}

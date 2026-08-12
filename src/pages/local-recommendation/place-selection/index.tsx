@@ -39,7 +39,7 @@ function PlaceSelectionPage() {
   }, [imageRecoveryRequired, navigate]);
 
   const handleConfirmImage = () => {
-    if (!pendingPlace) return;
+    if (!pendingPlace || !pendingImageFile) return;
 
     addSelectedPlace(pendingPlace, pendingImageFile, pendingImagePreviewUrl);
     clearModalState();

@@ -94,6 +94,11 @@ function AdminCourseEventSelectionPage() {
     );
   };
 
+  const handleSkip = () => {
+    setSelectedEventsInStore([]);
+    navigate('/admin/course-registration/place-selection');
+  };
+
   return (
     <>
       <SelectionPageLayout
@@ -150,6 +155,8 @@ function AdminCourseEventSelectionPage() {
         onItemRemove={handleRemoveEvent}
         onRemoveAll={() => setSelectedEventsInStore([])}
         onSubmit={() => navigate('/admin/course-registration/place-selection')}
+        skipButtonLabel="건너뛰기"
+        onSkip={handleSkip}
         renderItem={(event, onItemRemove) => (
           <SelectionResultCard
             key={event.id}

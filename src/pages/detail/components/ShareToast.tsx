@@ -17,7 +17,7 @@ export interface ShareToastProps {
 export function ShareToast({
   copied,
   isToastVisible,
-  message = '복사 됨',
+  message = '복사됨',
 }: ShareToastProps) {
   const scale = useGlobalScale();
 

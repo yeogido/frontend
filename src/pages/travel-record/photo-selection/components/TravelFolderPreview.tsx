@@ -1,5 +1,8 @@
 import { TravelFolderArtwork } from '../../components';
-import { getFolderPreviewPhotoUrls } from '../folderPreviewPhotos';
+import {
+  getFolderPreviewPhotoUrls,
+  getFolderPreviewPhotoIds,
+} from '../folderPreviewPhotos';
 import type { SelectedPhoto } from '../types';
 
 interface TravelFolderPreviewProps {
@@ -11,6 +14,7 @@ const previewLabel = '여행 폴더 미리보기';
 
 function TravelFolderPreview({ photos, regionName }: TravelFolderPreviewProps) {
   const [firstPhotoUrl, ...restPhotoUrls] = getFolderPreviewPhotoUrls(photos);
+  const photoKeys = getFolderPreviewPhotoIds(photos);
 
   if (!firstPhotoUrl) {
     return null;
@@ -24,6 +28,8 @@ function TravelFolderPreview({ photos, regionName }: TravelFolderPreviewProps) {
       {/* 꾸미기는 다음 화면에서 하므로 스티커 없이 사진만 보여 준다. */}
       <TravelFolderArtwork
         photos={[firstPhotoUrl, ...restPhotoUrls]}
+        photoKeys={photoKeys}
+        animatePhotoChanges
         title={regionName}
         decorations={[]}
       />

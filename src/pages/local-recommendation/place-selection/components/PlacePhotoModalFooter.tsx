@@ -7,16 +7,21 @@ const BUTTON_FONT_SIZE = 18;
 
 interface PlacePhotoModalFooterProps {
   onConfirm: () => void;
+  disabled?: boolean;
 }
 
-function PlacePhotoModalFooter({ onConfirm }: PlacePhotoModalFooterProps) {
+function PlacePhotoModalFooter({
+  onConfirm,
+  disabled = false,
+}: PlacePhotoModalFooterProps) {
   const scale = useGlobalScale();
 
   return (
     <button
       type="button"
       onClick={onConfirm}
-      className="bg-main-5 text-pure-white w-full shrink-0 font-semibold"
+      disabled={disabled}
+      className="bg-main-5 text-pure-white w-full shrink-0 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
       style={{
         marginTop: FOOTER_MARGIN_TOP * scale,
         height: BUTTON_HEIGHT * scale,

@@ -30,10 +30,10 @@ const DAY_OF_WEEK_LABEL: Record<string, string> = {
 
 const NO_HOURS_LABEL = '영업시간 정보 없음';
 
-function getHeroImageUrl(images: BusinessPromotionImage[]): string {
-  const sorted = [...images].sort((a, b) => a.sortOrder - b.sortOrder);
-
-  return sorted[0]?.imageUrl ?? '';
+function getHeroImageUrls(images: BusinessPromotionImage[]): string[] {
+  return [...images]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((image) => image.imageUrl);
 }
 
 function formatBusinessHours(
@@ -85,10 +85,14 @@ function mapHashtagsToTags(hashtags: string[]): DetailTag[] {
 export function mapBusinessPromotionDetail(
   detail: BusinessPromotionDetailResponse
 ): BusinessPromotionDetail {
+  const heroImageUrls = getHeroImageUrls(detail.images);
+
   return {
     id: detail.promotionId,
+    placeId: detail.place.placeId,
     title: detail.place.name,
-    heroImageUrl: getHeroImageUrl(detail.images),
+    heroImageUrl: heroImageUrls[0] ?? '',
+    heroImageUrls,
     liked: detail.isLiked,
     tags: mapHashtagsToTags(detail.hashtags),
     overview: detail.ownerComment,

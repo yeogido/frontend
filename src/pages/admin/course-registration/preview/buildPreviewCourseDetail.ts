@@ -17,13 +17,18 @@ import type { DetailTag } from '../../../../types/detail';
 import type { TagId } from '../../../../types/tag.type';
 import type { AdminCoursePhoto } from '../types';
 
-const TRANSPORT_BADGE_ICON: Record<CourseBasicInfoValues['transport'], BadgeId> = {
+const TRANSPORT_BADGE_ICON: Record<
+  CourseBasicInfoValues['transport'],
+  BadgeId
+> = {
   walking: 'walk',
-  public: 'people',
   car: 'car',
 };
 
-const COMPANION_BADGE_ICON: Record<CourseBasicInfoValues['companion'], BadgeId> = {
+const COMPANION_BADGE_ICON: Record<
+  CourseBasicInfoValues['companion'],
+  BadgeId
+> = {
   solo: 'solo',
   friends: 'group',
   couple: 'favorite',
@@ -83,6 +88,7 @@ export function buildPreviewCourseDetail(params: {
     hours: '',
     image: event.imageSrc || courseImage,
     liked: false,
+    timesFromPrevious: [],
     latitude: event.kind === 'PLACE' ? event.latitude : undefined,
     longitude: event.kind === 'PLACE' ? event.longitude : undefined,
   }));

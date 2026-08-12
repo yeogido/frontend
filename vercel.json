@@ -1,12 +1,28 @@
 {
   "rewrites": [
     {
-      "source": "/kakao-routing/walk",
-      "destination": "/api/kakao-routing/walk"
+      "source": "/kakao-routing/car",
+      "destination": "/api/kakao-routing/car"
+    },
+    {
+      "source": "/kakao-local/search/address.json",
+      "destination": "/api/kakao-local/address"
+    },
+    {
+      "source": "/odsay-api/searchPubTransPathT",
+      "destination": "/api/odsay/transit"
     },
     {
       "source": "/google-places/hours",
       "destination": "/api/google-places/hours"
+    },
+    {
+      "source": "/google-places/photo",
+      "destination": "/api/google-places/photo"
+    },
+    {
+      "source": "/google-places/image",
+      "destination": "/api/google-places/image"
     },
     {
       "source": "/(.*)",

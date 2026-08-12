@@ -33,8 +33,8 @@ export interface CourseCardProps {
   companion: string;
   tags: TagType[];
   liked?: boolean;
-  /** 본인이 등록한 코스면 좋아요 대신 더보기(수정/삭제) 메뉴를 같은 자리에 띄운다. */
-  isMine?: boolean;
+  /** 본인이 등록했거나 관리자라 수정 권한이 있으면, 좋아요 대신 같은 자리에 더보기(수정/삭제) 메뉴를 띄운다. */
+  canManage?: boolean;
   onClick?: () => void;
   onLikeClick?: () => void;
   onEditClick?: () => void;
@@ -50,7 +50,7 @@ function CourseCard({
   companion,
   tags,
   liked = false,
-  isMine = false,
+  canManage = false,
   onClick,
   onLikeClick,
   onEditClick,
@@ -225,8 +225,8 @@ function CourseCard({
           </div>
         </div>
 
-        {/* Like / 더보기: 본인 코스는 좋아요 대신 같은 자리에 수정·삭제 메뉴를 띄운다. */}
-        {isMine && (onEditClick || onDeleteClick) ? (
+        {/* Like / 더보기: 수정 권한이 있으면 좋아요 대신 같은 자리에 수정·삭제 메뉴를 띄운다. */}
+        {canManage && (onEditClick || onDeleteClick) ? (
           <ReviewActionMenu
             onEditClick={onEditClick}
             showEdit={showEdit}

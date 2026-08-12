@@ -35,6 +35,7 @@ function SelectedPlaceSection({
           description={place.address}
           imageSrc={place.imagePreviewUrl}
           imageAlt={`${place.title} 장소 이미지`}
+          visual={place.imagePreviewUrl ? 'photo' : 'marker'}
           action="remove"
           onItemRemove={onItemRemove}
         />

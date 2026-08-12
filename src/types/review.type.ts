@@ -26,6 +26,9 @@ export interface ReviewCourseSummary {
   thumbnailUrl: string;
   durationType: string;
   transportType: string;
+  companionType: string;
+  /** 해시태그 이름 목록. contentTags의 toContentTagIds로 칩 ID로 바꾼다. */
+  tags: string[];
   isLiked: boolean;
 }
 
@@ -35,6 +38,8 @@ export interface ReviewDetail {
   content: string;
   rating: number;
   createdAt: string;
+  /** 비로그인 요청에는 false로 온다. */
+  isMine: boolean;
   images: ReviewImage[];
   author: ReviewAuthor;
   course: ReviewCourseSummary;
@@ -73,6 +78,8 @@ export interface CourseReviewPreview {
   author: ReviewAuthor;
   rating: number;
   content: string;
+  /** 비로그인 요청에는 false로 온다. */
+  isMine: boolean;
   images: ReviewImage[];
   createdAt: string;
 }
@@ -115,7 +122,8 @@ export interface CreateCourseReviewResponse {
 /*
  * 여기부터는 리뷰 수정용.
  *
- * 두 목록 응답 모두 imageKey를 내려주므로 후기가 보이는 네 화면 전부에서
+ * 후기를 내려주는 세 응답(GET /reviews, GET /courses/{id}/reviews,
+ * GET /users/me/posts)이 모두 imageKey를 주므로, 후기가 보이는 화면 전부에서
  * 수정에 들어갈 수 있다.
  */
 export interface ReviewImageRequest {

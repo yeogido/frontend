@@ -3,24 +3,13 @@ export type CourseType = 'OFFICIAL' | 'LOCAL';
 export type CourseTransportType = 'WALK' | 'PUBLIC' | 'CAR';
 
 export type CourseDurationType =
-  | 'DAY_TRIP'
-  | 'ONE_NIGHT'
-  | 'TWO_NIGHT'
-  | 'THREE_PLUS';
+  'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
 
 export type CourseCompanionType =
-  | 'SOLO'
-  | 'FRIEND'
-  | 'COUPLE'
-  | 'FAMILY'
-  | 'PET';
+  'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
 
 export type CourseSort =
-  | 'RECOMMEND'
-  | 'DISTANCE'
-  | 'LATEST'
-  | 'SAVED'
-  | 'REVIEW';
+  'RECOMMEND' | 'POPULAR' | 'DISTANCE' | 'LATEST' | 'SAVED' | 'REVIEW';
 
 export interface Course {
   courseId: number;
@@ -42,8 +31,11 @@ export interface GetCoursesResponse {
 }
 
 export interface GetCoursesParams {
-  courseType: CourseType;
+  /** 미전달 시 서버가 OFFICIAL/LOCAL 코스를 모두 반환한다. */
+  courseType?: CourseType;
   keyword?: string;
+  /** 코스에 CONTENT 타입 항목으로 포함된 콘텐츠(행사 등) ID로 필터링한다. */
+  contentId?: number;
   regionId?: number;
   transportType?: CourseTransportType;
   durationType?: CourseDurationType;
@@ -59,6 +51,27 @@ export interface GetCoursesParams {
 export interface GetPopularCoursesParams {
   courseType: CourseType;
   regionId?: number;
+}
+
+export interface PopularLocalCourseAuthor {
+  userId: number;
+  nickname: string;
+  // 문서 예시는 string이지만 실제 응답은 프로필 사진이 없으면 null을 준다.
+  profileImageUrl: string | null;
+}
+
+/** /courses/popular/local 전용 응답 — 인기순(없으면 최신순) 로컬 코스
+ * 최대 4개, 일반 코스 목록과 달리 작성자 정보를 포함하고 region은 없다. */
+export interface PopularLocalCourse {
+  courseId: number;
+  thumbnailUrl: string;
+  title: string;
+  durationType: CourseDurationType;
+  companionType: CourseCompanionType;
+  author: PopularLocalCourseAuthor;
+  createdAt: string;
+  tags: string[];
+  isLiked: boolean;
 }
 
 export interface RecommendedCourse {

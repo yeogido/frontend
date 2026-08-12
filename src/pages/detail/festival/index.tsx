@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
+import type { NormalizedApiError } from '../../../apis/common';
 import CourseCard from '../../../components/common/CourseCard';
+import CourseCardSkeleton from '../../../components/common/CourseCardSkeleton';
 import SectionHeader from '../../../components/common/SectionHeader';
+import BackButton from '../../local-recommendation/components/BackButton';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
@@ -10,16 +14,30 @@ import {
   ResponsiveFullBleed,
   ResponsivePageShell,
 } from '../../../components/layout/ResponsivePageShell';
+import { useToast } from '../../../components/toast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
+import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import {
+  useCourses,
+  useNavigateToCourseDetail,
+} from '../../../hooks/useCourses';
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
+import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import {
   formatTodayOpeningHours,
   usePlaceOpeningHours,
 } from '../../../hooks/usePlaceOpeningHours';
 import { useAuthStore } from '../../../store/auth.store';
-import { buildCourseSearchPath } from '../../../utils/routes';
+import { toContentTagIds } from '../../../utils/contentTags';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
+import { buildFestivalCoursesPath } from '../../../utils/routes';
 import { saveRecentCultureContent } from '../../../utils/recentCultureContents';
 
 import {
@@ -29,6 +47,7 @@ import {
   DetailPlaceCard,
   DetailStateGuard,
   DetailTitleSection,
+  EditButton,
   FavoriteButton,
   ShareButton,
   ShareToast,
@@ -38,6 +57,8 @@ import { toSafeExternalUrl, toTelHref } from '../mappers/festivalDetailMapper';
 import { useShareToast } from '../hooks/useShareToast';
 
 const PAGE_PADDING_BOTTOM = 32;
+const BACK_BUTTON_TOP = 12;
+const BACK_BUTTON_LEFT = 24;
 const TITLE_SECTION_PADDING_TOP = 15;
 const SECTION_MARGIN_TOP = 16;
 const INFO_CARD_MARGIN_TOP = 24;
@@ -46,15 +67,28 @@ const PLACE_CARD_MARGIN_TOP = 4;
 const COURSE_SECTION_MARGIN_TOP = 12;
 const COURSE_LIST_MARGIN_TOP = 24;
 const COURSE_CARD_GAP = 16;
+const RELATED_COURSE_PREVIEW_COUNT = 2;
+const RELATED_COURSE_SKELETON_ITEMS = [0, 1];
 const MAP_FALLBACK_HEIGHT = 342;
 const MAP_FALLBACK_RADIUS = 12;
 const MAP_FALLBACK_FONT_SIZE = 14;
+
+function isNormalizedApiError(error: unknown): error is NormalizedApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+  );
+}
 
 function FestivalDetailContent({ contentId }: { contentId: number }) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
   const { openLoginModal } = useLoginModal();
+  const { showToast } = useToast();
   const isValidContentId = Number.isInteger(contentId) && contentId > 0;
   const { data: content, error: queryError } =
     useCultureContentDetail(contentId);
@@ -62,10 +96,15 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     ? queryError
     : new Error('Invalid content ID');
   const { getLiked, toggleLike } = useContentLikeToggle();
+  const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
+    useCourseLikeToggle();
+  const { goToCourseDetail } = useNavigateToCourseDetail();
+  const isAdmin = useIsAdmin();
+  const { editFestival } = useEditFestival();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null
   );
-  const [likedCourseIds, setLikedCourseIds] = useState<readonly number[]>([]);
+  const placeLikeRequestInFlightRef = useRef(false);
   const { copied, isToastVisible, handleShare } = useShareToast();
 
   const festival = content
@@ -93,6 +132,27 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
       )
     : undefined;
 
+  // "이 행사가 포함된 코스" 미리보기는 인기순 상위 2개를 그대로 보여준다.
+  // GET /courses?contentId=...&sort=POPULAR가 삭제된 코스 제외·태그
+  // 포함까지 다 해주므로, 여기서 따로 상세 조회나 필터링을 할 필요가 없다.
+  const { data: popularRelatedCourses, isPending: isRelatedCoursesPending } =
+    useCourses(
+      { contentId, sort: 'POPULAR', size: RELATED_COURSE_PREVIEW_COUNT },
+      { enabled: isValidContentId }
+    );
+  const previewCoursesWithTags = (
+    popularRelatedCourses?.pages[0]?.items ?? []
+  ).map((course) => ({
+    id: course.courseId,
+    image: course.thumbnailUrl,
+    title: course.title,
+    duration: toDurationLabel(course.durationType),
+    courseType: toTransportLabel(course.transportType),
+    companion: toCompanionLabel(course.companionType),
+    tags: toContentTagIds(course.tags),
+    liked: course.isLiked,
+  }));
+
   useEffect(() => {
     if (!content) return;
 
@@ -109,13 +169,15 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     });
   }, [content]);
 
-  const runAuthAction = (action: () => void) => {
-    if (!isAuthenticated) {
-      openLoginModal();
-      return;
+  const handleBack = () => {
+    // history.state.idx는 react-router의 브라우저 히스토리 항목 인덱스라,
+    // 0이면 이 탭에서 처음 들어온 화면(직접 링크로 진입 등)이라 뒤로 갈
+    // 곳이 없다 — 그때만 행사 목록으로 대체 이동한다.
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/festival');
     }
-
-    action();
   };
 
   const handleFavoriteToggle = () => {
@@ -124,22 +186,39 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     toggleLike(contentId, getLiked(contentId, festival.liked));
   };
 
-  const handlePlaceLikeToggle = () => {
-    runAuthAction(() =>
-      setPlaceLikedOverride(
-        (previous) => !(previous ?? festival?.place.liked ?? false)
-      )
-    );
-  };
+  const handlePlaceLikeToggle = async () => {
+    if (placeLikeRequestInFlightRef.current) return;
 
-  const handleCourseLikeToggle = (courseId: number) => {
-    runAuthAction(() => {
-      setLikedCourseIds((previousIds) =>
-        previousIds.includes(courseId)
-          ? previousIds.filter((id) => id !== courseId)
-          : [...previousIds, courseId]
-      );
-    });
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    if (!festival) return;
+
+    const nextLiked = !(placeLikedOverride ?? festival.place.liked);
+    placeLikeRequestInFlightRef.current = true;
+    setPlaceLikedOverride(nextLiked);
+
+    try {
+      if (nextLiked) {
+        await addPlaceLike(festival.place.id, 'CONTENT', contentId);
+      } else {
+        await removePlaceLike(festival.place.id);
+      }
+    } catch (error) {
+      setPlaceLikedOverride(!nextLiked);
+
+      if (isNormalizedApiError(error) && error.code === 'AUTH4011') {
+        clearAuth();
+        openLoginModal();
+        return;
+      }
+
+      showToast('좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      placeLikeRequestInFlightRef.current = false;
+    }
   };
 
   return (
@@ -157,17 +236,35 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
             className="bg-white"
           >
             <ResponsiveFullBleed>
-              <DetailHeroSection
-                imageUrl={festivalDetail.heroImageUrl}
-                title={festivalDetail.title}
-                rightAction={
-                  <FavoriteButton
-                    isActive={getLiked(contentId, festivalDetail.liked)}
-                    label={festivalDetail.title}
-                    onClick={handleFavoriteToggle}
-                  />
-                }
-              />
+              <div className="relative">
+                <DetailHeroSection
+                  imageUrl={festivalDetail.heroImageUrl}
+                  title={festivalDetail.title}
+                  rightAction={
+                    isAdmin ? (
+                      <EditButton
+                        label={festivalDetail.title}
+                        onClick={() => void editFestival(contentId)}
+                      />
+                    ) : (
+                      <FavoriteButton
+                        isActive={getLiked(contentId, festivalDetail.liked)}
+                        label={festivalDetail.title}
+                        onClick={handleFavoriteToggle}
+                      />
+                    )
+                  }
+                />
+                <div
+                  className="absolute z-10"
+                  style={{
+                    top: BACK_BUTTON_TOP * scale,
+                    left: BACK_BUTTON_LEFT * scale,
+                  }}
+                >
+                  <BackButton onClick={handleBack} />
+                </div>
+              </div>
             </ResponsiveFullBleed>
 
             <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
@@ -228,7 +325,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                 address={festivalDetail.place.address}
                 hours={festivalPlaceHours ?? '영업시간 정보 없음'}
                 liked={placeLikedOverride ?? festivalDetail.place.liked}
-                onLikeClick={handlePlaceLikeToggle}
+                onLikeClick={() => void handlePlaceLikeToggle()}
                 onClick={
                   isValidGeoPoint(festivalDetail.place.location)
                     ? () =>
@@ -248,7 +345,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                     title="이 행사가 포함된 코스"
                     actionText="전체보기"
                     onActionClick={() =>
-                      navigate(buildCourseSearchPath(festivalDetail.place.name))
+                      navigate(buildFestivalCoursesPath(contentId))
                     }
                   />
                 </div>
@@ -260,22 +357,29 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                     gap: COURSE_CARD_GAP * scale,
                   }}
                 >
-                  {festivalDetail.relatedCourses.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      image={course.image}
-                      title={course.title}
-                      duration={course.duration}
-                      courseType={course.courseType}
-                      companion={course.companion}
-                      tags={[...course.tags]}
-                      liked={likedCourseIds.includes(course.id)}
-                      onClick={() =>
-                        navigate(`/yeogido-course/detail/${course.id}`)
-                      }
-                      onLikeClick={() => handleCourseLikeToggle(course.id)}
-                    />
-                  ))}
+                  {isRelatedCoursesPending
+                    ? RELATED_COURSE_SKELETON_ITEMS.map((item) => (
+                        <CourseCardSkeleton key={item} />
+                      ))
+                    : previewCoursesWithTags.map((course) => (
+                        <CourseCard
+                          key={course.id}
+                          image={course.image}
+                          title={course.title}
+                          duration={course.duration}
+                          courseType={course.courseType}
+                          companion={course.companion}
+                          tags={[...course.tags]}
+                          liked={getCourseLiked(course.id, course.liked)}
+                          onClick={() => void goToCourseDetail(course.id)}
+                          onLikeClick={() =>
+                            toggleCourseLike(
+                              course.id,
+                              getCourseLiked(course.id, course.liked)
+                            )
+                          }
+                        />
+                      ))}
                 </div>
               </>
             ) : null}

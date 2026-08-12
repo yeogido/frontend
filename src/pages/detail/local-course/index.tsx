@@ -31,7 +31,10 @@ function isNormalizedApiError(error: unknown): error is NormalizedApiError {
   );
 }
 
-function addPendingId(ids: ReadonlySet<number>, id: number): ReadonlySet<number> {
+function addPendingId(
+  ids: ReadonlySet<number>,
+  id: number
+): ReadonlySet<number> {
   return new Set(ids).add(id);
 }
 
@@ -94,6 +97,20 @@ function LocalCourseDetailPage() {
     return <NotFoundPage />;
   }
 
+  const handleBack = () => {
+    // history.state.idx는 react-router의 브라우저 히스토리 항목 인덱스라,
+    // 0이면 이 탭에서 처음 들어온 화면(직접 링크로 진입 등)이라 뒤로 갈
+    // 곳이 없다 — 그때만 우리동네 코스 목록으로 대체 이동한다. 그 외에는
+    // 실제로 들어온 경로(코스 검색, 행사에 포함된 코스 등)로 돌아간다.
+    // 대체 이동은 replace로 해서, 이 상세 페이지 항목이 히스토리에 남아
+    // 브라우저 자체 뒤로가기로 다시 여기로 돌아오는 걸 막는다.
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/local-course', { replace: true });
+    }
+  };
+
   const updateCachedCourseDetail = (
     updater: (courseDetail: CourseDetailResult) => CourseDetailResult
   ) => {
@@ -127,11 +144,19 @@ function LocalCourseDetailPage() {
     }
   };
 
-  const handlePlaceLikeToggle = async (placeId: number, isLiked: boolean) => {
+  const handlePlaceLikeToggle = async (
+    placeId: number,
+    isLiked: boolean,
+    courseItemId: number
+  ) => {
     setPendingPlaceIds((ids) => addPendingId(ids, placeId));
 
     try {
-      const result = await placeLikeMutation.mutateAsync({ placeId, isLiked });
+      const result = await placeLikeMutation.mutateAsync({
+        placeId,
+        isLiked,
+        courseItemId,
+      });
       updateCachedCourseDetail((current) => ({
         ...current,
         courseItems: current.courseItems.map((item) =>
@@ -189,7 +214,7 @@ function LocalCourseDetailPage() {
           onContentLikeToggle={handleContentLikeToggle}
           pendingPlaceIds={pendingPlaceIds}
           pendingContentIds={pendingContentIds}
-          onBack={() => navigate('/local-course')}
+          onBack={handleBack}
         />
       )}
     </DetailStateGuard>

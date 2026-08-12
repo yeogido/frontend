@@ -4,6 +4,7 @@ import type { TagId } from '../../../types/tag.type';
 
 export interface FestivalPlaceDto {
   readonly id: number;
+  readonly courseItemId?: number;
   readonly name: string;
   readonly address: string;
   readonly hours: string;
@@ -15,6 +16,7 @@ export interface FestivalPlaceDto {
 
 export interface FestivalPlace {
   readonly id: number;
+  readonly courseItemId: number;
   readonly name: string;
   readonly address: string;
   readonly hours: string;

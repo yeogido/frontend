@@ -1,10 +1,9 @@
 export type ContentCategory =
-  | 'EXPERIENCE'
-  | 'EXHIBITION'
-  | 'PERFORMANCE'
-  | 'FESTIVAL';
+  'EXPERIENCE' | 'EXHIBITION' | 'PERFORMANCE' | 'FESTIVAL';
 
 export type ContentSort = 'RECOMMEND' | 'LIKE' | 'DISTANCE' | 'DEADLINE';
+
+export type ContentStatus = 'UPCOMING' | 'ONGOING' | 'ENDED';
 
 export type ContentPlaceSource = 'KAKAO' | 'TOUR_API';
 
@@ -43,6 +42,8 @@ export interface CultureContent {
   regionName: string;
   hashtags: string[];
   likeCount: number;
+  /** 목록 응답에 실제 좋아요 여부가 내려온다 — 상세(liked)와 필드명만 다르다. */
+  isLiked: boolean;
   startDate: string;
   endDate: string;
 }
@@ -57,6 +58,7 @@ export interface CultureContentBanner {
 }
 
 export interface CultureContentPlace {
+  courseItemId: number;
   placeId: number;
   externalPlaceId?: string;
   source?: ContentPlaceSource;
@@ -99,16 +101,6 @@ export interface CultureContentDetail {
   courses: CultureContentCourse[];
 }
 
-export interface OngoingContent {
-  contentId: number;
-  title: string;
-  thumbnailImageUrl: string | null;
-  startDate: string;
-  endDate: string;
-  regionName: string;
-  hashtags: string[];
-}
-
 export interface RecentCultureContent {
   contentId: number;
   title: string;
@@ -130,6 +122,7 @@ export interface GetCultureContentsResponse {
 export interface GetCultureContentsParams {
   regionId?: number;
   category?: ContentCategory;
+  statuses?: ContentStatus[];
   keyword?: string;
   sort?: ContentSort;
   latitude?: number;

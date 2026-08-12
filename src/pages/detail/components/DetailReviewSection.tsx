@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { ReviewCard, SectionHeader } from '../../../components/common';
-import { MIN_TOUCH_TARGET } from '../../../constants/layout';
+import {
+  ReviewCard,
+  ReviewTextCard,
+  SectionHeader,
+} from '../../../components/common';
 import type { CourseReview } from '../types/courseDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { getCourseReviewIndex } from '../utils/courseReviewCarousel';
+import { getCourseReviewIndicatorSize } from '../utils/courseReviewIndicator';
+import { REVIEW_CAROUSEL_CLASS_NAME } from '../utils/reviewCarouselStyle';
 
 const SECTION_GAP = 14;
 const REVIEW_CARD_GAP = 16;
 
 const DOT_GAP = 4;
-const DOT_SIZE = 4;
-const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
+const PHOTO_REVIEW_CARD_HEIGHT = 286;
+const TEXT_REVIEW_CARD_HEIGHT = 100;
 
 // Figma 390 디자인 기준 리터럴 px (서브3-a.svg, 등록된 리뷰 없음 상태)
 const EMPTY_STATE_WIDTH = 342;
@@ -43,6 +48,11 @@ export function DetailReviewSection({
   const scale = useGlobalScale();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const activeReview = reviews[activeIndex];
+  const hasPhotoReview = Boolean(activeReview?.images.length);
+  const reviewCarouselHeight =
+    (hasPhotoReview ? PHOTO_REVIEW_CARD_HEIGHT : TEXT_REVIEW_CARD_HEIGHT) *
+    scale;
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -83,6 +93,7 @@ export function DetailReviewSection({
       return;
     }
 
+    setActiveIndex(index);
     container.scrollTo({
       left: (container.clientWidth + REVIEW_CARD_GAP * scale) * index,
       behavior: 'smooth',
@@ -118,34 +129,62 @@ export function DetailReviewSection({
       ) : (
         <div
           ref={scrollRef}
-          className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto"
-          style={{ gap: REVIEW_CARD_GAP * scale }}
+          className={REVIEW_CAROUSEL_CLASS_NAME}
+          style={{
+            height: reviewCarouselHeight,
+            gap: REVIEW_CARD_GAP * scale,
+          }}
         >
           {reviews.map((review) => (
             <div
               key={review.id}
               className="w-full shrink-0 snap-start snap-always"
             >
-              <ReviewCard
-                images={review.images}
-                courseTitle={courseTitle}
-                profileImage={review.profileImage}
-                nickname={review.nickname}
-                meta={review.meta}
-                content={review.content}
-                rating={review.rating}
-                isMine={review.isMine}
-                onDeleteClick={
-                  onReviewDelete ? () => onReviewDelete(review.id) : undefined
-                }
-                onEditClick={
-                  onReviewEdit ? () => onReviewEdit(review) : undefined
-                }
-                onClick={
-                  onReviewClick ? () => onReviewClick(review.id) : undefined
-                }
-                className="[&>div>article]:!bg-background"
-              />
+              {review.images.length > 0 ? (
+                <ReviewCard
+                  images={review.images}
+                  courseTitle={courseTitle}
+                  profileImage={review.profileImage}
+                  nickname={review.nickname}
+                  meta={review.meta}
+                  content={review.content}
+                  rating={review.rating}
+                  isMine={review.isMine}
+                  onDeleteClick={
+                    onReviewDelete
+                      ? () => onReviewDelete(review.id)
+                      : undefined
+                  }
+                  onEditClick={
+                    onReviewEdit ? () => onReviewEdit(review) : undefined
+                  }
+                  onClick={
+                    onReviewClick ? () => onReviewClick(review.id) : undefined
+                  }
+                  className="[&>div>article]:!bg-background"
+                />
+              ) : (
+                <ReviewTextCard
+                  profileImage={review.profileImage}
+                  nickname={review.nickname}
+                  meta={review.meta}
+                  content={review.content}
+                  rating={review.rating}
+                  isMine={review.isMine}
+                  onDeleteClick={
+                    onReviewDelete
+                      ? () => onReviewDelete(review.id)
+                      : undefined
+                  }
+                  onEditClick={
+                    onReviewEdit ? () => onReviewEdit(review) : undefined
+                  }
+                  onClick={
+                    onReviewClick ? () => onReviewClick(review.id) : undefined
+                  }
+                  className="[&>article]:!bg-background"
+                />
+              )}
             </div>
           ))}
         </div>
@@ -165,18 +204,14 @@ export function DetailReviewSection({
               onClick={() => scrollToIndex(index)}
               className="flex shrink-0 items-center justify-center"
               style={{
-                width: MIN_TOUCH_TARGET,
-                height: MIN_TOUCH_TARGET,
+                ...getCourseReviewIndicatorSize(index === activeIndex, scale),
               }}
             >
               <span
                 aria-hidden="true"
                 className="block shrink-0"
                 style={{
-                  width:
-                    (index === activeIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE) *
-                    scale,
-                  height: DOT_SIZE * scale,
+                  ...getCourseReviewIndicatorSize(index === activeIndex, scale),
                   borderRadius: DOT_RADIUS,
                   backgroundColor:
                     index === activeIndex ? '#FF6F41' : '#A1A1A1',

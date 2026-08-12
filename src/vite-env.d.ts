@@ -26,18 +26,40 @@ declare namespace kakao.maps {
     constructor();
     extend(latlng: LatLng): void;
   }
+  export class Size {
+    constructor(width: number, height: number);
+  }
+  export class Point {
+    constructor(x: number, y: number);
+  }
+  export class MarkerImage {
+    constructor(src: string, size: Size, options?: { offset?: Point });
+  }
   export class Map {
-    constructor(container: HTMLElement, options: { center: LatLng; level: number });
+    constructor(
+      container: HTMLElement,
+      options: { center: LatLng; level: number }
+    );
     setLevel(level: number): void;
     panTo(latlng: LatLng): void;
     setBounds(bounds: LatLngBounds): void;
   }
   export class Marker {
-    constructor(options: { map: Map; position: LatLng; title?: string });
+    constructor(options: {
+      map: Map;
+      position: LatLng;
+      title?: string;
+      image?: MarkerImage;
+    });
     setMap(map: Map | null): void;
   }
   export class CustomOverlay {
-    constructor(options: { map: Map; position: LatLng; content: HTMLElement | string; yAnchor?: number });
+    constructor(options: {
+      map: Map;
+      position: LatLng;
+      content: HTMLElement | string;
+      yAnchor?: number;
+    });
     setMap(map: Map | null): void;
   }
   export class Polyline {
@@ -50,6 +72,13 @@ declare namespace kakao.maps {
       strokeStyle?: string;
     });
     setMap(map: Map | null): void;
+  }
+  export namespace event {
+    function addListener(
+      target: Marker,
+      type: 'click',
+      handler: () => void
+    ): void;
   }
   export function load(callback: () => void): void;
 }

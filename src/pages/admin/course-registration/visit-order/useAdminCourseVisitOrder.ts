@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../../../apis/common';
-import { updateCourse } from '../../../../apis/courses';
+import { getCourseDetail, updateCourse } from '../../../../apis/courses';
 import { fetchHashtags } from '../../../../apis/hashtags';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
 import { useToast } from '../../../../components/toast';
@@ -20,6 +20,10 @@ import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
+import {
+  fetchVisitEventTravelData,
+  type VisitEventTravelData,
+} from '../../../local-recommendation/visit-order-selection/useVisitEventTravelData';
 import { mapTagIdsToHashtagIds } from '../../../local-recommendation/tag-selection/hashtagMapping';
 import { VISIT_EVENT_PLACE_ID_PREFIX } from '../types';
 import {
@@ -28,7 +32,10 @@ import {
   getAdminCourseRequestValidationError,
 } from './buildAdminCourseRequest';
 import { buildAdminVisitEvents } from './buildAdminVisitEvents';
-import { uploadAdminCourseImages } from './uploadAdminCourseImages';
+import {
+  fetchImageAsFile,
+  uploadAdminCourseImages,
+} from './uploadAdminCourseImages';
 
 const REGISTER_ERROR_MESSAGE = '코스 등록에 실패했습니다. 다시 시도해 주세요.';
 
@@ -118,12 +125,38 @@ export function useAdminCourseVisitOrder() {
         throw new Error(validationError);
       }
 
-      // 장소별 사진은 선택 사항이라, 실제로 파일을 등록한 장소만 업로드 대상에
-      // 넣는다. 대표 사진은 새로 고른 경우에만 업로드하고(맨 앞에 넣어 결과
-      // 배열의 첫 번째가 되게 한다), 수정 중 그대로 둔 경우 상세 조회로
+      // 장소별 사진은 선택 사항이다. 직접 올린 파일이 있으면 그걸 쓰고,
+      // 없지만 검색 시점에 가져온 구글 이미지(imageSrc)가 있으면 그 원격
+      // 이미지를 내려받아 업로드 대상에 넣는다 — 그래야 구글 이미지로
+      // 넘어간 장소도 imageKey를 받아 최종 등록에 반영된다. 구글 이미지
+      // 다운로드가 실패하면(예: 만료된 URL) 해당 장소만 이미지 없이
+      // 진행한다. 대표 사진은 새로 고른 경우에만 업로드하고(맨 앞에 넣어 결과
+      // 배열의 첫 번째가
+      // 되게 한다), 수정 중 그대로 둔 경우 상세 조회로
       // 알아낸 기존 key를 재사용한다.
-      const placeImageUploads = selectedPlaces.flatMap((place) =>
-        place.photoFile ? [{ placeId: place.id, file: place.photoFile }] : []
+      const placeImageEntries = await Promise.all(
+        selectedPlaces.map(async (place) => {
+          if (place.photoFile) {
+            return { placeId: place.id, file: place.photoFile };
+          }
+
+          if (place.imageSrc) {
+            try {
+              const file = await fetchImageAsFile(
+                place.imageSrc,
+                `${place.id}.jpg`
+              );
+              return { placeId: place.id, file };
+            } catch {
+              return null;
+            }
+          }
+
+          return null;
+        })
+      );
+      const placeImageUploads = placeImageEntries.filter(
+        (entry): entry is { placeId: string; file: File } => entry !== null
       );
       const uploadedKeys = await uploadAdminCourseImages(
         photo?.file
@@ -152,6 +185,12 @@ export function useAdminCourseVisitOrder() {
             }
           : event
       );
+      let travelData: VisitEventTravelData | undefined;
+      try {
+        travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
+      } catch {
+        travelData = undefined;
+      }
 
       const hashtags = await fetchHashtags();
       const hashtagIds = mapTagIdsToHashtagIds(
@@ -169,6 +208,7 @@ export function useAdminCourseVisitOrder() {
           visitEvents: eventsWithImageKeys,
           thumbnailKey,
           hashtagIds,
+          travelData,
         });
 
         if (!updatePayload) {
@@ -186,6 +226,7 @@ export function useAdminCourseVisitOrder() {
         visitEvents: eventsWithImageKeys,
         thumbnailKey,
         hashtagIds,
+        travelData,
       });
 
       if (!payload) {
@@ -194,7 +235,7 @@ export function useAdminCourseVisitOrder() {
 
       return createLocalRecommendation(payload);
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
       queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
@@ -202,8 +243,21 @@ export function useAdminCourseVisitOrder() {
         queryClient.invalidateQueries({
           queryKey: ['courseDetail', editingCourseId],
         });
+        // invalidateQueries는 그 시점에 마운트돼서 보고 있는(active) 쿼리만
+        // 즉시 다시 불러온다 — 지금은 아직 상세 화면으로 이동하기 전이라
+        // 비활성 상태라 무효화만 되고 실제 재요청은 다음 마운트로 미뤄진다.
+        // 그 요청이 이동 직후 화면이 그려지는 타이밍과 겹치면 잠깐 예전
+        // 데이터가 보였다가 바뀌거나(연결이 느리면) 아예 안 바뀐 채로
+        // 남는 것처럼 보일 수 있어, 이동하기 전에 새 데이터를 직접
+        // 받아서 캐시에 채워 넣는다.
+        await queryClient.fetchQuery({
+          queryKey: ['yeogidoCourseDetail', editingCourseId],
+          queryFn: () => getCourseDetail(editingCourseId),
+        });
       }
-      showToast(editingCourseId ? '코스를 수정했어요.' : '코스가 등록되었어요.');
+      showToast(
+        editingCourseId ? '코스를 수정했어요.' : '코스가 등록되었어요.'
+      );
       // 여기서 reset()을 호출하면 region이 비워지면서 이 페이지의 가드
       // (useEffect: !region이면 region-selection으로 리다이렉트)가 먼저
       // 반응해 의도한 navigate보다 먼저 튕겨나가는 레이스가 생긴다

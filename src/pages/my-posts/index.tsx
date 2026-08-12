@@ -18,15 +18,20 @@ import {
   MY_POST_FILTER_GRID_CLASS_NAME,
 } from '../../constants/courseFilterLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { useCourseDelete, useNavigateToCourseDetail } from '../../hooks/useCourses';
+import {
+  useCourseDelete,
+  useNavigateToCourseDetail,
+} from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import { getMyPostsFromPages, useMyPosts } from '../../hooks/useMyPosts';
+import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import {
   useReviewDelete,
   useReviewDetailModal,
   useReviewEdit,
 } from '../../hooks/useReviews';
+import { toCourseDetailState } from '../../utils/reviewNavigation';
 import { formatBusinessPromotionDate } from '../local-business/mappers/businessPromotionMapper';
 import { toContentTagIds } from '../../utils/contentTags';
 import {
@@ -69,7 +74,11 @@ function MyPostsPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { userId } = useAuth();
-  const { goToCourseDetail } = useNavigateToCourseDetail();
+
+  const { goToCourseDetail, prefetchCourseDetail } =
+    useNavigateToCourseDetail();
+  const isBusinessUser = useIsBusinessUser();
+  
   const [keyword, setKeyword] = useState('');
 
   const {
@@ -103,14 +112,36 @@ function MyPostsPage() {
   const { requestEdit, editorProps } = useReviewEdit();
 
   const reviewsForModal = items.flatMap((item) =>
-    item.review
-      ? [toMyPostReviewCardProps(item.review, item.course)]
-      : []
+    item.review ? [toMyPostReviewCardProps(item.review, item.course)] : []
   );
   const { openedReview, openReview, closeReview } =
     useReviewDetailModal(reviewsForModal);
-  // 코스 정보가 아직 안 내려오는 리뷰가 있어(myPostReviewCard 참고) 없을 수 있다.
-  const openedCourseId = openedReview?.courseId;
+
+  /**
+   * 후기 카드를 누르면 그 코스의 상세로 가서 후기 상세를 띄운다.
+   *
+   * 이 화면은 코스 타입(OFFICIAL·LOCAL)을 모르므로 goToCourseDetail이 코스를
+   * 먼저 조회해 경로를 정한다. 코스를 모르는 후기는 갈 곳이 없어 이 화면에서
+   * 모달로 연다.
+   */
+  const openReviewDetail = async (review: {
+    id: number;
+    courseId?: number;
+    content: string;
+    images: string[];
+    profileImage: string;
+    nickname: string;
+    meta: string;
+    rating: number;
+  }) => {
+    if (review.courseId === undefined) {
+      openReview(review.id);
+      return;
+    }
+
+    await prefetchCourseDetail(review.courseId);
+    await goToCourseDetail(review.courseId, toCourseDetailState(review));
+  };
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -123,8 +154,14 @@ function MyPostsPage() {
     onIntersect: handleIntersect,
   });
 
+  // 일반 사용자에게는 홍보글 필터 옵션 자체를 안 보여준다 — 골라봐야
+  // 항상 빈 결과라 혼란만 준다.
+  const categoryOptions = isBusinessUser
+    ? MY_POST_CATEGORY_OPTIONS
+    : MY_POST_CATEGORY_OPTIONS.filter((option) => option !== '홍보글');
+
   const filterGroups = [
-    { key: 'category', options: MY_POST_CATEGORY_OPTIONS },
+    { key: 'category', options: categoryOptions },
     { key: 'sort', options: MY_POST_SORT_OPTIONS },
   ] as const satisfies readonly {
     key: MyPostFilterKey;
@@ -163,7 +200,7 @@ function MyPostsPage() {
             lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
-          등록한 코스와 후기
+          {isBusinessUser ? '등록한 코스, 후기와 홍보글' : '등록한 코스와 후기'}
         </h1>
         <p
           className="text-gray-4 font-normal"
@@ -173,7 +210,9 @@ function MyPostsPage() {
             lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
           }}
         >
-          직접 등록한 코스와 후기를 확인해 보세요
+          {isBusinessUser
+            ? '직접 등록한 코스, 후기와 홍보글을 확인해보세요'
+            : '직접 등록한 코스와 후기를 확인해 보세요'}
         </p>
       </div>
 
@@ -262,15 +301,8 @@ function MyPostsPage() {
                   content={reviewCard.content}
                   rating={reviewCard.rating}
                   isMine
-                  onClick={() => openReview(reviewCard.id)}
-                  onEditClick={() =>
-                    requestEdit({
-                      id: reviewCard.id,
-                      content: reviewCard.content,
-                      rating: reviewCard.rating,
-                      editableImages: [],
-                    })
-                  }
+                  onClick={() => void openReviewDetail(reviewCard)}
+                  onEditClick={() => requestEdit(reviewCard)}
                   onDeleteClick={() => requestDelete(reviewCard.id)}
                 />
               );
@@ -288,7 +320,7 @@ function MyPostsPage() {
                   courseType={toTransportLabel(course.transportType)}
                   companion={toCompanionLabel(course.companionType)}
                   tags={toContentTagIds(course.hashtags)}
-                  isMine
+                  canManage
                   onClick={() => void goToCourseDetail(course.id)}
                   showEdit
                   onDeleteClick={() => requestCourseDelete(course.id)}
@@ -333,16 +365,11 @@ function MyPostsPage() {
         title="코스를 삭제할까요?"
         description="삭제한 코스는 되돌릴 수 없어요."
       />
-      {/* 카드 탭이 후기 상세를 열게 되면서, 코스로는 이 모달을 거쳐 간다. */}
-      <ReviewDetailModal
-        review={openedReview}
-        onClose={closeReview}
-        onGoToCourse={
-          openedCourseId !== undefined
-            ? () => void goToCourseDetail(openedCourseId)
-            : undefined
-        }
-      />
+      {/*
+        코스를 모르는 후기만 여기서 연다. 코스를 아는 후기는 코스 상세로
+        넘어가 그쪽 모달이 뜬다.
+      */}
+      <ReviewDetailModal review={openedReview} onClose={closeReview} />
     </section>
   );
 }

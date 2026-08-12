@@ -1,6 +1,11 @@
 import type { DetailTag } from '../../../types/detail';
 import type { CultureContentDetail } from '../../../types/content.type';
 import { toContentTagId } from '../../../utils/contentTags';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
 
 import type {
   FestivalDetail,
@@ -26,23 +31,25 @@ function mapTags(hashtags: string[]): DetailTag[] {
   });
 }
 
-function mapCourses(
-  courses: CultureContentDetail['courses'],
+export function mapFestivalRelatedCourses(
+  courses: CultureContentDetail['courses']
 ): FestivalRelatedCourse[] {
   return courses.map((course) => ({
     id: course.courseId,
     image: toImageUrl(course.thumbnailImageUrl ?? course.thumbnailImage),
     title: course.title,
-    duration: course.duration ?? course.durationType ?? '',
-    courseType: course.transportType,
-    companion: course.companionType,
+    duration: course.durationType
+      ? toDurationLabel(course.durationType)
+      : (course.duration ?? ''),
+    courseType: toTransportLabel(course.transportType),
+    companion: toCompanionLabel(course.companionType),
     tags: [],
     liked: course.liked,
   }));
 }
 
 export function mapCultureContentDetailToFestivalDetail(
-  content: CultureContentDetail,
+  content: CultureContentDetail
 ): FestivalDetail {
   const image = toImageUrl(content.thumbnailImageUrl ?? content.thumbnailImage);
 
@@ -60,6 +67,7 @@ export function mapCultureContentDetailToFestivalDetail(
     homepageLabel: '공식 홈페이지',
     place: {
       id: content.place.placeId,
+      courseItemId: content.place.courseItemId,
       name: content.place.name,
       address: content.place.roadAddress,
       hours: '',
@@ -70,6 +78,6 @@ export function mapCultureContentDetailToFestivalDetail(
         longitude: content.place.longitude,
       },
     },
-    relatedCourses: mapCourses(content.courses),
+    relatedCourses: mapFestivalRelatedCourses(content.courses),
   };
 }

@@ -4,7 +4,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ContentCard,
   ContentCardSkeleton,
+  CourseDeleteDialog,
   CourseFilterBar,
+  EditableContentCard,
   SearchBar,
 } from '../../../components/common';
 import {
@@ -14,8 +16,11 @@ import {
 import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
 import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourseSearch';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useCourses } from '../../../hooks/useCourses';
+import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
+import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
+import { useEditCourse } from '../../../hooks/useEditCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -64,8 +69,11 @@ const companionTypeByLabel: Record<string, CourseCompanionType | undefined> = {
 
 const sortByLabel: Record<string, CourseSort> = {
   추천순: 'RECOMMEND',
+  인기순: 'POPULAR',
+  최신순: 'LATEST',
   저장순: 'SAVED',
   후기순: 'REVIEW',
+  거리순: 'DISTANCE',
 };
 
 const durationLabelByType: Record<CourseDurationType, string> = {
@@ -79,6 +87,9 @@ function YeogidoCourseSearchPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
+  const isAdmin = useIsAdmin();
+  const { editCourse } = useEditCourse();
+  const { requestDelete, dialogProps } = useCourseDelete();
 
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/yeogido-course/detail/${courseId}`);
@@ -99,6 +110,9 @@ function YeogidoCourseSearchPage() {
     handleFilterSelect,
   } = useYeogidoCourseFilters();
 
+  const isDistanceSort = selectedFilters.sort === '거리순';
+  const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
+
   const {
     data,
     fetchNextPage,
@@ -106,19 +120,25 @@ function YeogidoCourseSearchPage() {
     isError,
     isFetchingNextPage,
     isPending,
-  } = useCourses({
-    courseType: 'OFFICIAL',
-    keyword: displaySearchQuery.trim() || undefined,
-    transportType: transportTypeByLabel[selectedFilters.transport],
-    durationType: durationTypeByLabel[selectedFilters.duration],
-    companionType: companionTypeByLabel[selectedFilters.companion],
-    sort: sortByLabel[selectedFilters.sort],
-    size: 20,
-  });
+  } = useCourses(
+    {
+      courseType: 'OFFICIAL',
+      keyword: displaySearchQuery.trim() || undefined,
+      transportType: transportTypeByLabel[selectedFilters.transport],
+      durationType: durationTypeByLabel[selectedFilters.duration],
+      companionType: companionTypeByLabel[selectedFilters.companion],
+      sort: sortByLabel[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: 20,
+    },
+    { enabled: !isDistanceSort || distanceSortCoordinates !== null }
+  );
 
   const yeogidoCourses = data?.pages.flatMap((page) => page.items) ?? [];
-  const hasEmptyResult =
-    !isPending && !isError && yeogidoCourses.length === 0;
+  const hasEmptyResult = !isPending && !isError && yeogidoCourses.length === 0;
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -153,111 +173,131 @@ function YeogidoCourseSearchPage() {
   };
 
   return (
-    <section
-      className="mx-auto flex min-h-screen w-full flex-col"
-      style={{
-        paddingLeft: PAGE_PADDING_X * scale,
-        paddingRight: PAGE_PADDING_X * scale,
-        paddingTop: PAGE_PADDING_TOP * scale,
-        paddingBottom: PAGE_PADDING_BOTTOM * scale,
-      }}
-    >
-      <div className="w-full">
-        <SearchBar
-              initialQuery={displaySearchQuery}
-              placeholder="코스명 또는 지역명을 검색해 주세요"
-              label="코스명 또는 지역명 검색"
-              suggestions={yeogidoCourseSearchSuggestions}
-              onSearch={handleSearch}
-            />
-      <CourseFilterBar
-        filterGroups={yeogidoCourseFilterGroups}
-        selectedFilters={selectedFilters}
-        openFilterKey={openFilterKey}
-        filterContainerRef={filterContainerRef}
-        isExtendedTransport={isExtendedTransportFilterLabel(selectedFilters.transport)}
-        marginTop={FILTER_MARGIN_TOP}
-        onToggle={handleFilterToggle}
-        onSelect={handleFilterSelect}
-      />
-        <div
-          className="grid grid-cols-2"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            columnGap: LIST_GAP * scale,
-            rowGap: LIST_GAP * scale,
-          }}
-        >
-          {isPending
-            ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
-                <ContentCardSkeleton
-                  key={item}
-                  className="w-full"
-                  imageClassName="aspect-[163/115] h-auto"
-                />
-              ))
-            : yeogidoCourses.map((course) => (
-                <ContentCard
-                  key={course.courseId}
-                  image={course.thumbnailUrl}
-                  title={course.title}
-                  firstInfo={durationLabelByType[course.durationType]}
-                  secondInfo={course.region}
-                  tags={toContentTagIds(course.tags)}
-                  liked={getLiked(course.courseId, course.isLiked)}
-                  className="w-full"
-                  onClick={() => handleCourseClick(course.courseId)}
-                  onLikeClick={() =>
-                    toggleLike(
-                      course.courseId,
-                      getLiked(course.courseId, course.isLiked)
-                    )
-                  }
-                />
-              ))}
+    <>
+      <section
+        className="mx-auto flex min-h-screen w-full flex-col"
+        style={{
+          paddingLeft: PAGE_PADDING_X * scale,
+          paddingRight: PAGE_PADDING_X * scale,
+          paddingTop: PAGE_PADDING_TOP * scale,
+          paddingBottom: PAGE_PADDING_BOTTOM * scale,
+        }}
+      >
+        <div className="w-full">
+          <SearchBar
+            initialQuery={displaySearchQuery}
+            placeholder="코스명 또는 지역명을 검색해 주세요"
+            label="코스명 또는 지역명 검색"
+            suggestions={yeogidoCourseSearchSuggestions}
+            onSearch={handleSearch}
+          />
+          <CourseFilterBar
+            filterGroups={yeogidoCourseFilterGroups}
+            selectedFilters={selectedFilters}
+            openFilterKey={openFilterKey}
+            filterContainerRef={filterContainerRef}
+            isExtendedTransport={isExtendedTransportFilterLabel(
+              selectedFilters.transport
+            )}
+            marginTop={FILTER_MARGIN_TOP}
+            onToggle={handleFilterToggle}
+            onSelect={handleFilterSelect}
+          />
+          <div
+            className="grid grid-cols-2"
+            style={{
+              marginTop: LIST_MARGIN_TOP * scale,
+              columnGap: LIST_GAP * scale,
+              rowGap: LIST_GAP * scale,
+            }}
+          >
+            {isPending
+              ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
+                  <ContentCardSkeleton
+                    key={item}
+                    className="w-full"
+                    imageClassName="aspect-[163/115] h-auto"
+                  />
+                ))
+              : yeogidoCourses.map((course) =>
+                  isAdmin ? (
+                    <EditableContentCard
+                      key={course.courseId}
+                      image={course.thumbnailUrl}
+                      title={course.title}
+                      firstInfo={durationLabelByType[course.durationType]}
+                      secondInfo={course.region}
+                      tags={toContentTagIds(course.tags)}
+                      className="w-full"
+                      onClick={() => handleCourseClick(course.courseId)}
+                      onEdit={() => void editCourse(course.courseId)}
+                      onDelete={() => requestDelete(course.courseId)}
+                    />
+                  ) : (
+                    <ContentCard
+                      key={course.courseId}
+                      image={course.thumbnailUrl}
+                      title={course.title}
+                      firstInfo={durationLabelByType[course.durationType]}
+                      secondInfo={course.region}
+                      tags={toContentTagIds(course.tags)}
+                      liked={getLiked(course.courseId, course.isLiked)}
+                      className="w-full"
+                      onClick={() => handleCourseClick(course.courseId)}
+                      onLikeClick={() =>
+                        toggleLike(
+                          course.courseId,
+                          getLiked(course.courseId, course.isLiked)
+                        )
+                      }
+                    />
+                  )
+                )}
 
-          {isFetchingNextPage
-            ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
-                <ContentCardSkeleton
-                  key={`next-page-${item}`}
-                  className="w-full"
-                  imageClassName="aspect-[163/115] h-auto"
-                />
-              ))
-            : null}
+            {isFetchingNextPage
+              ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
+                  <ContentCardSkeleton
+                    key={`next-page-${item}`}
+                    className="w-full"
+                    imageClassName="aspect-[163/115] h-auto"
+                  />
+                ))
+              : null}
+          </div>
+
+          {hasEmptyResult ? (
+            <p
+              className="text-gray-4 text-center font-medium"
+              style={{
+                marginTop: EMPTY_MARGIN_TOP * scale,
+                fontSize: MESSAGE_TEXT_SIZE * scale,
+              }}
+            >
+              검색 결과가 없습니다.
+            </p>
+          ) : null}
+
+          {isError ? (
+            <p
+              className="text-main-5 text-center font-medium"
+              style={{
+                marginTop: ERROR_MARGIN_TOP * scale,
+                fontSize: MESSAGE_TEXT_SIZE * scale,
+              }}
+            >
+              코스 목록을 불러오지 못했어요.
+            </p>
+          ) : null}
+
+          <div
+            ref={loadMoreRef}
+            style={{ height: LOAD_MORE_HEIGHT * scale }}
+            aria-hidden="true"
+          />
         </div>
-
-        {hasEmptyResult ? (
-          <p
-            className="text-center font-medium text-gray-4"
-            style={{
-              marginTop: EMPTY_MARGIN_TOP * scale,
-              fontSize: MESSAGE_TEXT_SIZE * scale,
-            }}
-          >
-            검색 결과가 없습니다.
-          </p>
-        ) : null}
-
-        {isError ? (
-          <p
-            className="text-main-5 text-center font-medium"
-            style={{
-              marginTop: ERROR_MARGIN_TOP * scale,
-              fontSize: MESSAGE_TEXT_SIZE * scale,
-            }}
-          >
-            코스 목록을 불러오지 못했어요.
-          </p>
-        ) : null}
-
-        <div
-          ref={loadMoreRef}
-          style={{ height: LOAD_MORE_HEIGHT * scale }}
-          aria-hidden="true"
-        />
-      </div>
-    </section>
+      </section>
+      <CourseDeleteDialog {...dialogProps} />
+    </>
   );
 }
 

@@ -1,11 +1,10 @@
-import type {
-  CreateLocalRecommendationRequest,
-} from '../../../../apis/localRecommendations';
+import type { CreateLocalRecommendationRequest } from '../../../../apis/localRecommendations';
 import type { UpdateCourseRequest } from '../../../../apis/courses';
 import type { CourseBasicInfoValues } from '../../../local-recommendation/course-basic-info/schema';
 import type { Neighborhood } from '../../../local-recommendation/region-selection/types';
 import { buildCourseItemsFromVisitEvents } from '../../../local-recommendation/visit-order-selection/buildCourseRequest';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
+import type { VisitEventTravelData } from '../../../local-recommendation/visit-order-selection/useVisitEventTravelData';
 import type { AdminCoursePhoto } from '../types';
 
 // local-recommendation/visit-order-selection/buildCourseRequest.ts와 동일한
@@ -26,7 +25,6 @@ const TRANSPORT_TYPE_MAP: Record<
   CreateLocalRecommendationRequest['transportType']
 > = {
   walking: 'WALK',
-  public: 'PUBLIC',
   car: 'CAR',
 };
 
@@ -53,11 +51,13 @@ interface AdminCourseRequestParams {
 export function getAdminCourseRequestValidationError(
   params: AdminCourseRequestParams
 ): string | null {
-  const { region, basicInfo, photo, existingThumbnailKey, visitEvents } = params;
+  const { region, basicInfo, photo, existingThumbnailKey, visitEvents } =
+    params;
 
   if (!region) return '지역 선택 단계에서 지역을 선택해 주세요.';
   if (!basicInfo) return '기본 정보 입력 단계에서 코스 정보를 입력해 주세요.';
-  if (!photo?.file && !existingThumbnailKey) return '대표 사진을 등록해 주세요.';
+  if (!photo?.file && !existingThumbnailKey)
+    return '대표 사진을 등록해 주세요.';
   if (visitEvents.length === 0) {
     return '방문할 장소 또는 행사를 하나 이상 추가해 주세요.';
   }
@@ -91,9 +91,17 @@ export function buildAdminCourseRequest(
   params: AdminCourseRequestParams & {
     thumbnailKey: string;
     hashtagIds: number[];
+    travelData?: VisitEventTravelData;
   }
 ): CreateLocalRecommendationRequest | null {
-  const { region, basicInfo, thumbnailKey, hashtagIds, visitEvents } = params;
+  const {
+    region,
+    basicInfo,
+    thumbnailKey,
+    hashtagIds,
+    visitEvents,
+    travelData,
+  } = params;
 
   if (getAdminCourseRequestValidationError(params)) {
     return null;
@@ -122,7 +130,7 @@ export function buildAdminCourseRequest(
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey,
     hashtagIds,
-    courseItems: buildCourseItemsFromVisitEvents(visitEvents),
+    courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
   };
 }
 
@@ -136,9 +144,11 @@ export function buildAdminCourseUpdateRequest(
   params: AdminCourseRequestParams & {
     thumbnailKey: string;
     hashtagIds: number[];
+    travelData?: VisitEventTravelData;
   }
 ): UpdateCourseRequest | null {
-  const { basicInfo, thumbnailKey, hashtagIds, visitEvents } = params;
+  const { basicInfo, thumbnailKey, hashtagIds, visitEvents, travelData } =
+    params;
 
   if (getAdminCourseRequestValidationError(params)) {
     return null;
@@ -166,6 +176,6 @@ export function buildAdminCourseUpdateRequest(
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey,
     hashtagIds,
-    courseItems: buildCourseItemsFromVisitEvents(visitEvents),
+    courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
   };
 }

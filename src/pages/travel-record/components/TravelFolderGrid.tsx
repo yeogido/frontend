@@ -5,11 +5,16 @@ import type { TravelRecordFolder } from '../types';
 interface TravelFolderGridProps {
   folders: TravelRecordFolder[];
   onFolderClick: (folder: TravelRecordFolder) => void;
+  recentlySavedFolderId?: string | null;
 }
 
 const folderListLabel = '\uC5EC\uD589 \uD3F4\uB354 \uBAA9\uB85D';
 
-function TravelFolderGrid({ folders, onFolderClick }: TravelFolderGridProps) {
+function TravelFolderGrid({
+  folders,
+  onFolderClick,
+  recentlySavedFolderId,
+}: TravelFolderGridProps) {
   if (folders.length === 0) {
     return (
       <section
@@ -39,6 +44,7 @@ function TravelFolderGrid({ folders, onFolderClick }: TravelFolderGridProps) {
           key={folder.id}
           folder={folder}
           onClick={onFolderClick}
+          isRecentlySaved={String(folder.id) === recentlySavedFolderId}
         />
       ))}
     </section>

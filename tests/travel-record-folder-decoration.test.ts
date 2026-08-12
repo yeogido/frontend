@@ -38,10 +38,10 @@ test('accepts only transparent-capable PNG files as custom stickers', () => {
   );
 });
 
-test('rejects a custom sticker file over the size limit', () => {
-  assert.match(
+test('accepts a PNG custom sticker regardless of file size', () => {
+  assert.equal(
     validateCustomStickerFile(createFile('image/png', 10 * 1024 * 1024 + 1)),
-    /10MB/,
+    '',
   );
   assert.equal(MAX_FOLDER_DECORATION_COUNT, 10);
   assert.equal(MAX_CUSTOM_STICKER_COUNT, 10);

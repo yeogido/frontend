@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import AdminRoute from '../components/auth/AdminRoute';
+import BusinessRoute from '../components/auth/BusinessRoute';
 
 import HomePage from '../pages/home';
 import LoginPage from '../pages/auth/login';
@@ -62,6 +64,7 @@ import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
+import FestivalRelatedCoursesPage from '../pages/detail/festival/courses';
 import RegionInfoPage from '../pages/region-info';
 import LikesPage from '../pages/likes';
 import MyPostsPage from '../pages/my-posts';
@@ -70,6 +73,7 @@ import CourseReviewsPage from '../pages/course-reviews';
 import ProfilePage from '../pages/profile';
 import ProfileEditPage from '../pages/profile/edit';
 import BusinessVerificationPage from '../pages/business-verification';
+import BusinessPromotionRegistrationPage from '../pages/business-promotion-registration';
 
 function AppRouter() {
   return (
@@ -101,6 +105,11 @@ function AppRouter() {
         <Route path="/festival/recent" element={<FestivalRecentPage />} />
 
         <Route path="/festival/search" element={<FestivalSearchPage />} />
+
+        <Route
+          path="/festival/detail/:festivalId/courses"
+          element={<FestivalRelatedCoursesPage />}
+        />
 
         <Route
           path="/course-region-search"
@@ -143,36 +152,49 @@ function AppRouter() {
           element={<CourseReviewsPage />}
         />
 
-        <Route path="/admin" element={<AdminPage />} />
-        <Route
-          path="/admin/festivals/ongoing"
-          element={<AdminFestivalsOngoingPage />}
-        />
-        <Route
-          path="/admin/festivals/recent"
-          element={<AdminFestivalsRecentPage />}
-        />
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminPage />} />
+          <Route
+            path="/admin/festivals/ongoing"
+            element={<AdminFestivalsOngoingPage />}
+          />
+          <Route
+            path="/admin/festivals/recent"
+            element={<AdminFestivalsRecentPage />}
+          />
 
-        <Route path="/admin/courses" element={<AdminCoursesPage />} />
-        <Route
-          path="/admin/courses/popular"
-          element={<AdminCoursesPopularPage />}
-        />
-        <Route
-          path="/admin/courses/recent"
-          element={<AdminCoursesRecentPage />}
-        />
-        <Route
-          path="/admin/courses/detail/:courseId"
-          element={<AdminCourseMockDetailPage />}
-        />
+          <Route path="/admin/courses" element={<AdminCoursesPage />} />
+          <Route
+            path="/admin/courses/popular"
+            element={<AdminCoursesPopularPage />}
+          />
+          <Route
+            path="/admin/courses/recent"
+            element={<AdminCoursesRecentPage />}
+          />
+          <Route
+            path="/admin/courses/detail/:courseId"
+            element={<AdminCourseMockDetailPage />}
+          />
+        </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path="/travel-record" element={<TravelRecordPage />} />
+          <Route
+            path="/travel-record/:folderId"
+            element={<TravelRecordDetailPage />}
+          />
           <Route path="/likes" element={<LikesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/my-posts" element={<MyPostsPage />} />
         </Route>
+      </Route>
+
+      <Route element={<BusinessRoute />}>
+        <Route
+          path="/business-promotion-registration"
+          element={<BusinessPromotionRegistrationPage />}
+        />
       </Route>
 
       <Route element={<ProtectedRoute />}>
@@ -210,10 +232,6 @@ function AppRouter() {
         <Route
           path="/travel-record/:travelRecordId/edit/date"
           element={<TravelRecordDateSelectionPage />}
-        />
-        <Route
-          path="/travel-record/:folderId"
-          element={<TravelRecordDetailPage />}
         />
         <Route
           path="/travel-record/photo-selection"
@@ -268,7 +286,7 @@ function AppRouter() {
       />
       <Route path="/review" element={<ReviewPage />} />
 
-      <Route element={<ProtectedRoute />}>
+      <Route element={<AdminRoute />}>
         <Route
           path="/admin/event-registration/place-selection"
           element={<AdminPlaceSelectionPage />}

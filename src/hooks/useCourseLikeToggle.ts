@@ -49,6 +49,7 @@ export function useCourseLikeToggle() {
       });
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['popularCourses'] });
+      queryClient.invalidateQueries({ queryKey: ['popularLocalCourses'] });
     },
   });
 
