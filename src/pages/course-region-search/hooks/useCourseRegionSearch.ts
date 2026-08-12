@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { getSubRegions, searchRegions } from '../../../apis/regions.api';
 import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { REGION_INFO_ID_STATE_KEY } from '../../../constants/regions';
-import type { SubRegion } from '../../../types/region.type';
 import {
   addStoredRecentSearch,
   getStoredRecentSearches,
@@ -23,37 +22,14 @@ import {
 import type { CityOption } from '../types';
 import { isNationwideCity } from '../utils/citySelection';
 import {
-  getAllRegionRecentSearch,
   getRecentSearchLocation,
   getSubRegionRecentSearch,
 } from '../utils/recentSearch';
 
 import useRegionOptions from './useRegionOptions';
 
-interface RegionPathStep {
-  id: number;
-  name: string;
-}
-
-const REGION_PATH_STATE_KEY = 'courseRegionPath';
 const recentSearchStorageOptions = {
   storageKey: COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
-};
-
-const getRegionPathFromState = (state: unknown): RegionPathStep[] => {
-  if (
-    typeof state === 'object' &&
-    state !== null &&
-    REGION_PATH_STATE_KEY in state
-  ) {
-    const path = (state as Record<string, unknown>)[REGION_PATH_STATE_KEY];
-
-    if (Array.isArray(path)) {
-      return path as RegionPathStep[];
-    }
-  }
-
-  return [];
 };
 
 function createSearchResultLocation(params: {
@@ -86,8 +62,6 @@ function createSearchResultLocation(params: {
 
 function useCourseRegionSearch() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const {
     cities,
@@ -109,14 +83,9 @@ function useCourseRegionSearch() {
   const trimmedSearchQuery = searchQuery.trim();
 
   const selectedCity = cities.find((city) => city.id === selectedCityId);
-  const regionPath = getRegionPathFromState(location.state);
-  const selectedParentDistrict = regionPath.at(-1);
 
-  // 지금 보고 있는 단계(도시 바로 아래, 혹은 그 아래로 한 번 더 들어간 지역)의
-  // 상위 regionId. 이게 바뀔 때마다 그 하위 지역 목록을 새로 조회한다.
-  const currentParentRegionId = selectedParentDistrict
-    ? selectedParentDistrict.id
-    : selectedCity?.regionId;
+  // 선택된 광역 지역의 regionId로 시·군·구 목록을 조회한다.
+  const currentParentRegionId = selectedCity?.regionId;
 
   const subRegionsQuery = useQuery({
     queryKey: ['regions', currentParentRegionId, 'sub-regions'],
@@ -243,19 +212,6 @@ function useCourseRegionSearch() {
     setRecentSearches([]);
   };
 
-  const updateRegionPathState = (path: RegionPathStep[], replace = false) => {
-    navigate(
-      {
-        pathname: location.pathname,
-        search: location.search,
-      },
-      {
-        replace,
-        state: path.length > 0 ? { [REGION_PATH_STATE_KEY]: path } : null,
-      }
-    );
-  };
-
   const selectCity = (city: CityOption) => {
     if (isNationwideCity(city.id)) {
       navigate(getNationwideSearchPath(searchTarget));
@@ -263,7 +219,6 @@ function useCourseRegionSearch() {
       return;
     }
 
-    updateRegionPathState([], true);
     setSelectedCityId(city.id);
     setSelectedDistrict('전체');
   };
@@ -272,7 +227,7 @@ function useCourseRegionSearch() {
     navigate(getNationwideSearchPagePath(searchTarget));
   };
 
-  const selectDistrict = async (district: string) => {
+  const selectDistrict = (district: string) => {
     if (!selectedCity) {
       return;
     }
@@ -280,18 +235,11 @@ function useCourseRegionSearch() {
     setSelectedDistrict(district);
 
     if (district === '전체') {
-      // 드릴다운해서 하위 지역을 보는 중이면 그 지역(예: 고양시) 기준 '전체',
-      // 아니면 도시 자체 기준 '전체'로 이동한다.
-      const targetName = selectedParentDistrict?.name ?? selectedCity.name;
-      const targetRegionId = selectedParentDistrict?.id ?? selectedCity.regionId;
-
-      addRecentSearch(
-        getAllRegionRecentSearch(selectedCity.name, selectedParentDistrict?.name)
-      );
+      addRecentSearch(selectedCity.name);
 
       if (searchTargetConfig.navigatesToRegionInfo) {
-        navigate(`/region-info/${encodeURIComponent(targetName)}`, {
-          state: { [REGION_INFO_ID_STATE_KEY]: targetRegionId },
+        navigate(`/region-info/${encodeURIComponent(selectedCity.name)}`, {
+          state: { [REGION_INFO_ID_STATE_KEY]: selectedCity.regionId },
         });
 
         return;
@@ -300,7 +248,7 @@ function useCourseRegionSearch() {
       navigate(
         createSearchResultLocation({
           targetPathname: searchTargetPathname,
-          city: targetName,
+          city: selectedCity.name,
         })
       );
 
@@ -315,48 +263,13 @@ function useCourseRegionSearch() {
       return;
     }
 
-    // 이 지역이 더 하위 지역을 갖고 있는지 확인해서, 있으면 한 단계 더
-    // 들어가고 없으면(리프) 검색 결과로 바로 넘어간다. 조회에 실패하면
-    // 사용자가 더 못 넘어가고 멈추기보다는 리프인 것처럼 진행시킨다.
-    let children: SubRegion[];
-
-    try {
-      children = await queryClient.fetchQuery({
-        queryKey: ['regions', clicked.subRegionId, 'sub-regions'],
-        queryFn: () => getSubRegions(clicked.subRegionId),
-        staleTime: 5 * 60_000,
-      });
-    } catch {
-      children = [];
-    }
-
-    if (children.length > 0) {
-      updateRegionPathState([
-        ...regionPath,
-        { id: clicked.subRegionId, name: clicked.name },
-      ]);
-      setSelectedDistrict('전체');
-
-      return;
-    }
-
-    const districtLabel = [...regionPath.map((step) => step.name), clicked.name].join(
-      ' '
-    );
-
-    addRecentSearch(
-      getSubRegionRecentSearch(
-        selectedCity.name,
-        regionPath.map((step) => step.name),
-        clicked.name
-      )
-    );
+    addRecentSearch(getSubRegionRecentSearch(selectedCity.name, clicked.name));
 
     navigate(
       createSearchResultLocation({
         targetPathname: searchTargetPathname,
         city: selectedCity.name,
-        district: districtLabel,
+        district: clicked.name,
       })
     );
   };
@@ -370,7 +283,6 @@ function useCourseRegionSearch() {
     selectedCity,
     selectedCityId,
     selectedDistrict,
-    selectedParentDistrict,
     visibleDistricts,
     searchLabel: searchTargetConfig.searchLabel,
     searchPlaceholder: searchTargetConfig.searchPlaceholder,
