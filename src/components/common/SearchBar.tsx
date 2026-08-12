@@ -29,6 +29,7 @@ export interface SearchBarProps {
     onSelect: () => void;
   };
   onRemoveSuggestion?: (suggestion: string) => void;
+  removableSuggestions?: readonly string[];
   className?: string;
   onSearch?: (query: string) => void;
   onQueryChange?: (query: string) => void;
@@ -43,6 +44,7 @@ function SearchBar({
   hideEmptySuggestions = false,
   pinnedSuggestion,
   onRemoveSuggestion,
+  removableSuggestions,
   className = '',
   onSearch,
   onQueryChange,
@@ -288,7 +290,9 @@ function SearchBar({
                       >
                         {suggestion}
                       </button>
-                      {onRemoveSuggestion ? (
+                      {onRemoveSuggestion &&
+                      (!removableSuggestions ||
+                        removableSuggestions.includes(suggestion)) ? (
                         <button
                           type="button"
                           aria-label={`${suggestion} 최근 검색어 삭제`}

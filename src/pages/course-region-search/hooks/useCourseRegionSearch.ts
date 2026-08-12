@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -102,10 +102,7 @@ function useCourseRegionSearch() {
       ? ['전체', ...(subRegionsQuery.data ?? []).map((region) => region.name)]
       : [];
 
-  const defaultSearchSuggestions = useMemo(
-    () => getUniqueSearches([...recentSearches, ...cities.map((city) => city.name)]),
-    [cities, recentSearches]
-  );
+  const defaultSearchSuggestions = recentSearches;
 
   // 검색창에 입력하는 즉시(타이핑마다) 백엔드에 물어 연관 검색어를 채운다.
   // 백엔드가 이름 LIKE(부분 문자열) 매칭이라 SearchBar의 로컬 재필터를
@@ -129,7 +126,6 @@ function useCourseRegionSearch() {
     trimmedSearchQuery.length > 0
       ? getUniqueSearches(liveSearchSuggestions ?? defaultSearchSuggestions)
       : defaultSearchSuggestions;
-
   const updateSearchQuery = (query: string) => {
     setSearchQuery(query);
   };

@@ -58,12 +58,21 @@ function CourseRegionSearchPage() {
             placeholder={searchPlaceholder}
             label={searchLabel}
             suggestions={searchSuggestions}
+            noResultsText="최근 검색기록이 없습니다."
             pinnedSuggestion={{
               label: '전국 확인하기',
               onSelect: selectNationwideSearch,
             }}
             onSearch={submitSearch}
             onQueryChange={updateSearchQuery}
+            onRemoveSuggestion={(suggestion) => {
+              const index = recentSearches.indexOf(suggestion);
+
+              if (index !== -1) {
+                removeRecentSearch(index);
+              }
+            }}
+            removableSuggestions={recentSearches}
           />
 
 
