@@ -18,6 +18,7 @@ export interface ReviewDetailModalReview {
   nickname: string;
   meta: string;
   rating?: number;
+  isMine?: boolean;
 }
 
 export interface ReviewDetailModalProps {
@@ -104,8 +105,15 @@ function ReviewDetailModal({
     return null;
   }
 
-  const { images = [], content, profileImage, nickname, meta, rating = 5 } =
-    review;
+  const {
+    images = [],
+    content,
+    profileImage,
+    nickname,
+    meta,
+    rating = 5,
+    isMine = false,
+  } = review;
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
   const title = courseTitle ? `${courseTitle}의 후기예요!` : '여행자의 후기예요!';
 
@@ -181,7 +189,7 @@ function ReviewDetailModal({
         </p>
 
         <div className="mt-3 flex min-h-[30px] items-center gap-2">
-          <ReviewerAvatar src={profileImage} size={28} />
+          <ReviewerAvatar src={profileImage} size={28} isMine={isMine} />
 
           <div className="min-w-0">
             <p className="truncate text-[12px] leading-none">

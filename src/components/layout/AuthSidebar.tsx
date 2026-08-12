@@ -8,6 +8,7 @@ import { Divider } from '../ui';
 
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import ProfileAvatar from '../common/ProfileAvatar';
 import { useLogout } from '../../hooks/useLogout';
 import { useIsAdmin, useMyProfile } from '../../hooks/useMyProfile';
 import { APP_MAX_WIDTH } from '../../constants/layout';
@@ -137,26 +138,10 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 gap: PROFILE_GAP * scale,
               }}
             >
-              {profile?.profileImageUrl ? (
-                <img
-                  src={profile.profileImageUrl}
-                  alt=""
-                  aria-hidden="true"
-                  className="shrink-0 rounded-full object-cover"
-                  style={{
-                    width: AVATAR_SIZE * scale,
-                    height: AVATAR_SIZE * scale,
-                  }}
-                />
-              ) : (
-                <div
-                  className="shrink-0 rounded-full bg-[#E4E4E4]"
-                  style={{
-                    width: AVATAR_SIZE * scale,
-                    height: AVATAR_SIZE * scale,
-                  }}
-                />
-              )}
+              <ProfileAvatar
+                src={profile?.profileImageUrl}
+                size={AVATAR_SIZE * scale}
+              />
 
               <div className="flex min-w-0 flex-col items-start text-left">
                 <div
