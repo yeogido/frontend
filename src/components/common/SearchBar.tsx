@@ -11,6 +11,7 @@ import {
 import { IoSearch } from 'react-icons/io5';
 
 import { useScaleFrame } from '../../hooks/useScaleFrame';
+import { shouldOpenSuggestionsOnMount } from './searchBarUtils';
 
 const SEARCH_BAR_DESIGN_WIDTH = 342;
 
@@ -23,6 +24,7 @@ export interface SearchBarProps {
   suggestions?: readonly string[];
   noResultsText?: string;
   hideEmptySuggestions?: boolean;
+  openSuggestionsOnMount?: boolean;
   pinnedSuggestion?: {
     label: string;
     onSelect: () => void;
@@ -39,6 +41,7 @@ function SearchBar({
   suggestions = [],
   noResultsText = '검색 결과가 없습니다',
   hideEmptySuggestions = false,
+  openSuggestionsOnMount = false,
   pinnedSuggestion,
   className = '',
   onSearch,
@@ -54,9 +57,15 @@ function SearchBar({
     value: initialQuery,
     source: initialQuery,
   });
-  const [isOpen, setIsOpen] = useState(false);
   const hasSuggestions = suggestions.length > 0;
   const hasMenuItems = hasSuggestions || pinnedSuggestion !== undefined;
+  const [isOpen, setIsOpen] = useState(() =>
+    shouldOpenSuggestionsOnMount(
+      openSuggestionsOnMount,
+      initialQuery,
+      hasMenuItems
+    )
+  );
   const query =
     queryState.source === initialQuery ? queryState.value : initialQuery;
 

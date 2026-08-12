@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -9,12 +9,8 @@ import {
   EditableContentCard,
   SearchBar,
 } from '../../../components/common';
-import {
-  COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
-  courseRegionRecentSearchKeywords,
-} from '../../../constants/recentSearches';
+import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
-import { yeogidoCourseSearchSuggestions } from '../../../constants/yeogidoCourseSearch';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
@@ -22,7 +18,10 @@ import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordi
 import { useEditCourse } from '../../../hooks/useEditCourse';
 import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
-import { addStoredRecentSearch } from '../../../utils/recentSearches';
+import {
+  addStoredRecentSearch,
+  getStoredRecentSearches,
+} from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 
 import { yeogidoCourseFilterGroups } from '../constants/filters';
@@ -46,6 +45,9 @@ const EMPTY_MARGIN_TOP = 40;
 const ERROR_MARGIN_TOP = 24;
 const MESSAGE_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
+const recentSearchStorageOptions = {
+  storageKey: COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
+};
 
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
@@ -96,6 +98,9 @@ function YeogidoCourseSearchPage() {
     navigate(`/yeogido-course/detail/${courseId}`);
   };
   const [searchParams, setSearchParams] = useSearchParams();
+  const [recentSearchSuggestions, setRecentSearchSuggestions] = useState(
+    () => getStoredRecentSearches(recentSearchStorageOptions)
+  );
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
   const subRegion = searchParams.get('subRegion') ?? '';
@@ -177,10 +182,12 @@ function YeogidoCourseSearchPage() {
       nextSearchParams.set('keyword', trimmedQuery);
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
-      addStoredRecentSearch(trimmedQuery, {
-        storageKey: COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
-        fallbackSearches: courseRegionRecentSearchKeywords,
-      });
+      setRecentSearchSuggestions(
+        addStoredRecentSearch(trimmedQuery, {
+          ...recentSearchStorageOptions,
+          currentSearches: recentSearchSuggestions,
+        })
+      );
     } else {
       nextSearchParams.delete('keyword');
       nextSearchParams.delete('region');
@@ -206,7 +213,8 @@ function YeogidoCourseSearchPage() {
             initialQuery={displaySearchQuery}
             placeholder="코스명 또는 지역명을 검색해 주세요"
             label="코스명 또는 지역명 검색"
-            suggestions={yeogidoCourseSearchSuggestions}
+            suggestions={recentSearchSuggestions}
+            openSuggestionsOnMount
             pinnedSuggestion={{
               label: '전국 확인하기',
               onSelect: () => navigate('/yeogido-course/search'),

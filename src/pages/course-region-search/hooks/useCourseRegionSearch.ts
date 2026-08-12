@@ -3,10 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { getSubRegions, searchRegions } from '../../../apis/regions.api';
-import {
-  COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
-  courseRegionRecentSearchKeywords,
-} from '../../../constants/recentSearches';
+import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { REGION_INFO_ID_STATE_KEY } from '../../../constants/regions';
 import type { SubRegion } from '../../../types/region.type';
 import {
@@ -41,7 +38,6 @@ interface RegionPathStep {
 const REGION_PATH_STATE_KEY = 'courseRegionPath';
 const recentSearchStorageOptions = {
   storageKey: COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
-  fallbackSearches: courseRegionRecentSearchKeywords,
 };
 
 const getRegionPathFromState = (state: unknown): RegionPathStep[] => {

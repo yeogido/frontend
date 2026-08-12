@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -17,15 +17,17 @@ import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { buildFestivalDetailPath } from '../../../utils/routes';
-import { addStoredRecentSearch } from '../../../utils/recentSearches';
+import {
+  addStoredRecentSearch,
+  getStoredRecentSearches,
+  getUniqueSearches,
+} from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
 
 import { FestivalFilterBar } from '../components';
 import {
   FESTIVAL_RECENT_SEARCH_STORAGE_KEY,
-  festivalRecentSearchKeywords,
-  festivalSearchSuggestions,
 } from '../constants/search';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
 import useFestivalFilters from '../hooks/useFestivalFilters';
@@ -39,6 +41,12 @@ const EMPTY_MARGIN_TOP = 40;
 const ERROR_MARGIN_TOP = 24;
 const MESSAGE_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
+const recentSearchStorageOptions = {
+  storageKey: COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
+};
+const festivalRecentSearchStorageOptions = {
+  storageKey: FESTIVAL_RECENT_SEARCH_STORAGE_KEY,
+};
 
 const categoryByFilterValue: Record<string, ContentCategory | undefined> = {
   ALL: undefined,
@@ -63,6 +71,12 @@ function FestivalSearchPage() {
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [recentSearchSuggestions, setRecentSearchSuggestions] = useState(() =>
+    getUniqueSearches([
+      ...getStoredRecentSearches(recentSearchStorageOptions),
+      ...getStoredRecentSearches(festivalRecentSearchStorageOptions),
+    ])
+  );
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
   const subRegion = searchParams.get('subRegion') ?? '';
@@ -121,10 +135,12 @@ function FestivalSearchPage() {
       nextSearchParams.set('keyword', trimmedQuery);
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
-      addStoredRecentSearch(trimmedQuery, {
-        storageKey: FESTIVAL_RECENT_SEARCH_STORAGE_KEY,
-        fallbackSearches: festivalRecentSearchKeywords,
-      });
+      setRecentSearchSuggestions(
+        addStoredRecentSearch(trimmedQuery, {
+          ...recentSearchStorageOptions,
+          currentSearches: recentSearchSuggestions,
+        })
+      );
     } else {
       nextSearchParams.delete('keyword');
       nextSearchParams.delete('region');
@@ -150,7 +166,8 @@ function FestivalSearchPage() {
           initialQuery={displaySearchQuery}
           placeholder="행사명 또는 지역명을 검색해 주세요"
           label="행사명 또는 지역명 검색"
-          suggestions={festivalSearchSuggestions}
+          suggestions={recentSearchSuggestions}
+          openSuggestionsOnMount
           pinnedSuggestion={{
             label: '전국 확인하기',
             onSelect: () => navigate('/festival/search'),
