@@ -155,7 +155,6 @@ export interface RecentCultureContent {
   hashtags: string[];
   startDate: string;
   endDate: string;
-  canManage: boolean;
   liked: boolean;
 }
 

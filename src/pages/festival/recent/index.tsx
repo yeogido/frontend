@@ -9,6 +9,7 @@ import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useRecentCultureContents } from '../../../hooks/useRecentCultureContents';
+import { useRecentCultureContentPermissions } from '../../../hooks/useRecentCultureContentPermissions';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 
@@ -32,6 +33,9 @@ function FestivalRecentPage() {
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const recentFestivals = useRecentCultureContents();
+  const canManageByContentId = useRecentCultureContentPermissions(
+    recentFestivals.map((festival) => festival.contentId)
+  );
 
   return (
     <>
@@ -85,7 +89,7 @@ function FestivalRecentPage() {
                 regionName={festival.regionName}
                 tags={toContentTagIds(festival.hashtags)}
                 className="w-full"
-                isAdmin={festival.canManage}
+                isAdmin={canManageByContentId.get(festival.contentId) ?? false}
                 liked={getLiked(festival.contentId, festival.liked)}
                 onClick={() =>
                   navigate(buildFestivalDetailPath(festival.contentId))

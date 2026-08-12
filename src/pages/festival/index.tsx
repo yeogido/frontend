@@ -15,6 +15,7 @@ import { useCultureContents } from '../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
 import { useEditFestival } from '../../hooks/useEditFestival';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
+import { useRecentCultureContentPermissions } from '../../hooks/useRecentCultureContentPermissions';
 import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
 
@@ -48,6 +49,9 @@ function FestivalPage() {
   const { requestDelete, dialogProps } = useContentDelete();
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
+  const canManageByContentId = useRecentCultureContentPermissions(
+    recentFestivals.map((festival) => festival.contentId)
+  );
   const { data: ongoingContentsData, isPending: isOngoingContentsPending } =
     useCultureContents({
       statuses: ['ONGOING'],
@@ -226,7 +230,7 @@ function FestivalPage() {
                   regionName={festival.regionName}
                   tags={toContentTagIds(festival.hashtags)}
                   className="w-full"
-                  isAdmin={festival.canManage}
+                  isAdmin={canManageByContentId.get(festival.contentId) ?? false}
                   liked={getLiked(festival.contentId, festival.liked)}
                   onClick={() =>
                     navigate(buildFestivalDetailPath(festival.contentId))

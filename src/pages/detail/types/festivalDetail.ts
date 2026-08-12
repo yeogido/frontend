@@ -58,6 +58,7 @@ export interface FestivalDetail {
   readonly title: string;
   readonly heroImageUrl: string;
   readonly liked: boolean;
+  readonly canManage: boolean;
   readonly tags: readonly DetailTag[];
   readonly overview: string;
   readonly address: string;

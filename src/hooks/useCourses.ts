@@ -10,6 +10,7 @@ import {
 
 import { getApiErrorMessage } from '../apis/common';
 import { useToast } from '../components/toast';
+import { useAuthStore } from '../store/auth.store';
 import { removeRecentCourse } from '../utils/recentCourses';
 import { buildCourseDetailPath } from '../utils/routes';
 import type { CourseDetailNavigationState } from '../utils/reviewNavigation';
@@ -49,14 +50,16 @@ export function useCourses(
   params: GetCoursesParams,
   options?: { enabled?: boolean }
 ) {
+  const authGeneration = useAuthStore((state) => state.authGeneration);
+
   return useInfiniteQuery<
     GetCoursesResponse,
     NormalizedApiError,
     InfiniteData<GetCoursesResponse, CoursesPageParam>,
-    [string, GetCoursesParams],
+    [string, number, GetCoursesParams],
     CoursesPageParam
   >({
-    queryKey: ['courses', params],
+    queryKey: ['courses', authGeneration, params],
     queryFn: ({ pageParam }) =>
       getCourses({
         ...params,

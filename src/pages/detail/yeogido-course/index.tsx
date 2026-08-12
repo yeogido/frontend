@@ -52,6 +52,7 @@ function YeogidoCourseDetailPage() {
   const navigate = useNavigate();
   const { openLoginModal } = useLoginModal();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const parsedCourseId = Number(courseIdParam);
@@ -122,7 +123,7 @@ function YeogidoCourseDetailPage() {
     updater: (courseDetail: CourseDetailResult) => CourseDetailResult
   ) => {
     queryClient.setQueryData<CourseDetailResult>(
-      ['yeogidoCourseDetail', courseId],
+      ['yeogidoCourseDetail', authGeneration, courseId],
       (current) => (current ? updater(current) : current)
     );
   };

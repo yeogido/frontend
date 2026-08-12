@@ -9,13 +9,16 @@ import {
   removePlaceLike,
   removeCourseLike,
 } from '../../../apis/courses';
+import { useAuthStore } from '../../../store/auth.store';
 
 const DETAIL_STALE_TIME = 1000 * 60;
 const DETAIL_GC_TIME = 1000 * 60 * 5;
 
 export function useYeogidoCourseDetail(courseId: number | null) {
+  const authGeneration = useAuthStore((state) => state.authGeneration);
+
   return useQuery({
-    queryKey: ['yeogidoCourseDetail', courseId],
+    queryKey: ['yeogidoCourseDetail', authGeneration, courseId],
     queryFn: () => getCourseDetail(courseId as number),
     enabled: courseId !== null,
     staleTime: DETAIL_STALE_TIME,
