@@ -15,7 +15,11 @@ import { useAuthStore } from '../../store/auth.store';
 import { buildLocalBusinessDetailPath } from '../../utils/routes';
 
 import { BusinessGrid, BusinessList, BusinessToolbar } from './components';
-import { regionImageOptions } from './constants';
+import {
+  businessCategories,
+  businessSortOptions,
+  regionImageOptions,
+} from './constants';
 import type { BusinessCategory, BusinessSort, BusinessViewMode } from './types';
 import useLocalBusinesses from './hooks/useLocalBusinesses';
 
@@ -43,19 +47,46 @@ function LocalBusinessPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isBusinessUser = useIsBusinessUser();
   const { openLoginModal } = useLoginModal();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // 카테고리/정렬/보기 방식/지역을 URL 쿼리 파라미터에 반영해, 상세
+  // 페이지에서 뒤로가기로 돌아왔을 때(컴포넌트가 다시 마운트돼도)
+  // 선택값이 유지되게 한다.
   const regionParam = searchParams.get('region');
-  const initialRegionId = REGION_CITY_IDS.includes(
-    regionParam as RegionCityId
-  )
+  const selectedRegionId = REGION_CITY_IDS.includes(regionParam as RegionCityId)
     ? (regionParam as RegionCityId)
     : DEFAULT_REGION_CITY_ID;
-  const [selectedCategory, setSelectedCategory] =
-    useState<BusinessCategory>('전체');
-  const [sortBy, setSortBy] = useState<BusinessSort>('추천순');
-  const [viewMode, setViewMode] = useState<BusinessViewMode>('grid');
-  const [selectedRegionId, setSelectedRegionId] =
-    useState<RegionCityId>(initialRegionId);
+
+  const categoryParam = searchParams.get('category');
+  const selectedCategory = businessCategories.includes(
+    categoryParam as BusinessCategory
+  )
+    ? (categoryParam as BusinessCategory)
+    : '전체';
+
+  const sortParam = searchParams.get('sort');
+  const sortBy = businessSortOptions.includes(sortParam as BusinessSort)
+    ? (sortParam as BusinessSort)
+    : '추천순';
+
+  const viewMode: BusinessViewMode =
+    searchParams.get('view') === 'card' ? 'card' : 'grid';
+
+  const updateSearchParam = (
+    key: string,
+    value: string,
+    defaultValue: string
+  ) => {
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    if (value === defaultValue) {
+      nextSearchParams.delete(key);
+    } else {
+      nextSearchParams.set(key, value);
+    }
+
+    setSearchParams(nextSearchParams);
+  };
 
   const {
     businesses,
@@ -101,7 +132,19 @@ function LocalBusinessPage() {
   };
 
   const handleSelectRegion = (region: { id: string }) => {
-    setSelectedRegionId(region.id as RegionCityId);
+    updateSearchParam('region', region.id, DEFAULT_REGION_CITY_ID);
+  };
+
+  const handleSelectCategory = (category: BusinessCategory) => {
+    updateSearchParam('category', category, '전체');
+  };
+
+  const handleSortChange = (sort: BusinessSort) => {
+    updateSearchParam('sort', sort, '추천순');
+  };
+
+  const handleToggleView = () => {
+    updateSearchParam('view', viewMode === 'grid' ? 'card' : 'grid', 'grid');
   };
 
   const handleStartPromotionRegistration = () => {
@@ -154,11 +197,9 @@ function LocalBusinessPage() {
         selectedCategory={selectedCategory}
         sortBy={sortBy}
         viewMode={viewMode}
-        onSelectCategory={setSelectedCategory}
-        onSortChange={setSortBy}
-        onToggleView={() =>
-          setViewMode((current) => (current === 'grid' ? 'card' : 'grid'))
-        }
+        onSelectCategory={handleSelectCategory}
+        onSortChange={handleSortChange}
+        onToggleView={handleToggleView}
       />
 
       <div style={{ marginTop: LIST_MARGIN_TOP * scale }}>

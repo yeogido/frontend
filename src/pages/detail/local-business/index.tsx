@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
@@ -15,6 +15,7 @@ import { useBusinessPromotionDetail } from '../../../hooks/useBusinessPromotionD
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
+import BackButton from '../../local-recommendation/components/BackButton';
 
 import {
   DetailDescriptionCard,
@@ -32,6 +33,8 @@ import { toSafeExternalUrl, toTelHref } from '../mappers/festivalDetailMapper';
 import DetailHeroCarousel from './components/DetailHeroCarousel';
 
 const PAGE_PADDING_BOTTOM = 32;
+const BACK_BUTTON_TOP = 12;
+const BACK_BUTTON_LEFT = 24;
 const TITLE_SECTION_PADDING_TOP = 24;
 const DESCRIPTION_MARGIN_TOP = 12;
 const INFO_CARD_MARGIN_TOP = 12;
@@ -53,6 +56,7 @@ function isNormalizedApiError(error: unknown): error is NormalizedApiError {
 }
 
 function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
+  const navigate = useNavigate();
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const clearAuth = useAuthStore((state) => state.clearAuth);
@@ -76,6 +80,17 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
         ? queryError.message
         : NOT_FOUND_MESSAGE
       : null;
+
+  const handleBack = () => {
+    // history.state.idx는 react-router의 브라우저 히스토리 항목 인덱스라,
+    // 0이면 이 탭에서 처음 들어온 화면(직접 링크로 진입 등)이라 뒤로 갈
+    // 곳이 없다 — 그때만 우리동네 업체 목록으로 대체 이동한다.
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/local-business', { replace: true });
+    }
+  };
 
   const handleFavoriteToggle = async () => {
     if (placeLikeRequestInFlightRef.current) return;
@@ -121,10 +136,21 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
           className="bg-white"
         >
           <ResponsiveFullBleed>
-            <DetailHeroCarousel
-              imageUrls={businessDetail.heroImageUrls}
-              title={businessDetail.title}
-            />
+            <div className="relative">
+              <DetailHeroCarousel
+                imageUrls={businessDetail.heroImageUrls}
+                title={businessDetail.title}
+              />
+              <div
+                className="absolute z-10"
+                style={{
+                  top: BACK_BUTTON_TOP * scale,
+                  left: BACK_BUTTON_LEFT * scale,
+                }}
+              >
+                <BackButton onClick={handleBack} />
+              </div>
+            </div>
           </ResponsiveFullBleed>
 
           <div style={{ paddingTop: TITLE_SECTION_PADDING_TOP * scale }}>
