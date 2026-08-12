@@ -34,10 +34,8 @@ import {
 } from './components';
 
 const PAGE_PADDING_X = 24;
-// 버튼(하단 162)~검색창 간격이 눈에 띄게 넓어 보인다는 피드백으로 더
-// 당김 — 히어로 높이(223) 기준으로 이 값만큼 검색창을 곡선 아래쪽에
-// 겹쳐 올린다.
-const PAGE_PADDING_TOP = -30;
+// Figma 검색바 시작점(y=246)에 맞춰 277px 히어로와 31px 겹친다.
+const PAGE_PADDING_TOP = -31;
 const PAGE_PADDING_BOTTOM = 40;
 const SECTION_MARGIN_TOP = 24;
 const LIST_MARGIN_TOP = 12;
