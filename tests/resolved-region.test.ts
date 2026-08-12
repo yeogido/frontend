@@ -6,6 +6,15 @@ import {
   getRegionSearchKeyword,
 } from '../src/utils/regionSearch.ts';
 
+// GET /regions/search?keyword=중구 의 실제 응답 순서다. 서울이 먼저 온다.
+const 중구_SEARCH_RESULTS = [
+  { regionId: 18, name: '중구', fullName: '서울특별시 중구' },
+  { regionId: 34, name: '중구', fullName: '부산광역시 중구' },
+  { regionId: 52, name: '중구', fullName: '대구광역시 중구' },
+  { regionId: 77, name: '중구', fullName: '대전광역시 중구' },
+  { regionId: 272, name: '중구', fullName: '울산광역시 중구' },
+];
+
 test('matches a nested region by the final name in a shortened region path', () => {
   assert.deepEqual(
     findRegionSearchMatch('서울 마포구', [
@@ -17,4 +26,45 @@ test('matches a nested region by the final name in a shortened region path', () 
 
 test('uses the final region name as a search keyword for a nested path', () => {
   assert.equal(getRegionSearchKeyword('서울 마포구'), '마포구');
+});
+
+test('picks the sub-region belonging to the province in the region path', () => {
+  assert.equal(findRegionSearchMatch('부산 중구', 중구_SEARCH_RESULTS)?.regionId, 34);
+  assert.equal(findRegionSearchMatch('대전 중구', 중구_SEARCH_RESULTS)?.regionId, 77);
+  assert.equal(findRegionSearchMatch('서울 중구', 중구_SEARCH_RESULTS)?.regionId, 18);
+});
+
+test('normalizes official province names when comparing with a short path', () => {
+  const results = [
+    { regionId: 100, name: '고성군', fullName: '강원특별자치도 고성군' },
+    { regionId: 200, name: '고성군', fullName: '경상남도 고성군' },
+  ];
+
+  assert.equal(findRegionSearchMatch('강원 고성군', results)?.regionId, 100);
+  assert.equal(findRegionSearchMatch('경남 고성군', results)?.regionId, 200);
+});
+
+test('matches a province whose name is a prefix of its own sub-regions', () => {
+  // GET /regions/search?keyword=부산 은 이름 LIKE 검색이라 부산진구도 함께 온다.
+  assert.equal(
+    findRegionSearchMatch('부산', [
+      { regionId: 27, name: '부산', fullName: '부산광역시' },
+      { regionId: 41, name: '부산진구', fullName: '부산광역시 부산진구' },
+    ])?.regionId,
+    27
+  );
+});
+
+test('matches a sub-region nested two levels under its province', () => {
+  assert.equal(
+    findRegionSearchMatch('제주 구좌읍', [
+      { regionId: 300, name: '구좌읍', fullName: '제주특별자치도 제주시 구좌읍' },
+    ])?.regionId,
+    300
+  );
+});
+
+test('gives up instead of guessing when the name stays ambiguous', () => {
+  assert.equal(findRegionSearchMatch('중구', 중구_SEARCH_RESULTS), undefined);
+  assert.equal(findRegionSearchMatch('경기 중구', 중구_SEARCH_RESULTS), undefined);
 });
