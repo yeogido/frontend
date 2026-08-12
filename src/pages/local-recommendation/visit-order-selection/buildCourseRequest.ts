@@ -152,8 +152,7 @@ export function getCourseRequestValidationError(
 function buildCommonCourseFields(
   draft: LocalRecommendationDraft,
   visitEvents: readonly VisitEvent[],
-  travelData: VisitEventTravelData | undefined,
-  routeImageKey: string
+  travelData: VisitEventTravelData | undefined
 ): UpdateCourseRequest | null {
   const { basicInfo, coverImageKey } = draft;
 
@@ -182,7 +181,6 @@ function buildCommonCourseFields(
     monthStart: Number(basicInfo.visitStartMonth),
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey: coverImageKey,
-    routeImageKey,
     hashtagIds: draft.hashtagIds,
     courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
   };
@@ -203,15 +201,14 @@ export function buildCourseRequest(
   const common = buildCommonCourseFields(
     draft,
     visitEvents,
-    travelData,
-    routeImageKey
+    travelData
   );
 
   if (!common) {
     return null;
   }
 
-  return { ...common, regionId: neighborhood.id };
+  return { ...common, regionId: neighborhood.id, routeImageKey };
 }
 
 /**
@@ -222,7 +219,14 @@ export function buildLocalCourseUpdateRequest(
   draft: LocalRecommendationDraft,
   visitEvents: readonly VisitEvent[],
   travelData: VisitEventTravelData | undefined,
-  routeImageKey: string
+  routeImageKey?: string
 ): UpdateCourseRequest | null {
-  return buildCommonCourseFields(draft, visitEvents, travelData, routeImageKey);
+  const common = buildCommonCourseFields(draft, visitEvents, travelData);
+
+  return common
+    ? {
+        ...common,
+        ...(routeImageKey ? { routeImageKey } : {}),
+      }
+    : null;
 }
