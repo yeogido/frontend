@@ -8,11 +8,36 @@ import {
 } from '../../../../components/common';
 import { useContentDelete } from '../../../../hooks/useContentDelete';
 import { useCultureContents } from '../../../../hooks/useCultureContents';
+import { useDistanceSortCoordinates } from '../../../../hooks/useDistanceSortCoordinates';
 import { useEditFestival } from '../../../../hooks/useEditFestival';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../../hooks/useInfiniteScroll';
 import { toContentTagIds } from '../../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../../utils/routes';
+import type {
+  ContentCategory,
+  ContentSort,
+} from '../../../../types/content.type';
+
+import { FestivalFilterBar } from '../../../festival/components';
+import useFestivalFilters from '../../../festival/hooks/useFestivalFilters';
+
+// festival/ongoing과 동일한 필터 매핑 — 페이지마다 로컬로 둔다(다른 화면과
+// 공유하는 순간 한쪽만 옵션이 바뀌어도 매핑이 깨질 수 있다).
+const categoryByFilterValue: Record<string, ContentCategory | undefined> = {
+  ALL: undefined,
+  EXPERIENCE: 'EXPERIENCE',
+  EXHIBITION: 'EXHIBITION',
+  PERFORMANCE: 'PERFORMANCE',
+  FESTIVAL: 'FESTIVAL',
+};
+
+const sortByFilterValue: Record<string, ContentSort> = {
+  RECOMMENDED: 'RECOMMEND',
+  SAVED: 'LIKE',
+  DISTANCE: 'DISTANCE',
+  ENDING_SOON: 'DEADLINE',
+};
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -38,6 +63,14 @@ const PAGE_SIZE = 20;
 function AdminFestivalsOngoingPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const { selectedFilters, handleSortSelect, handleCategorySelect } =
+    useFestivalFilters();
+  const isDistanceSort = selectedFilters.sort === 'DISTANCE';
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
   const {
     data,
     fetchNextPage,
@@ -46,7 +79,19 @@ function AdminFestivalsOngoingPage() {
     isError,
     isFetchingNextPage,
     refetch,
-  } = useCultureContents({ statuses: ['ONGOING'], size: PAGE_SIZE });
+  } = useCultureContents(
+    {
+      statuses: ['ONGOING'],
+      category: categoryByFilterValue[selectedFilters.category],
+      sort: sortByFilterValue[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: PAGE_SIZE,
+    },
+    { enabled: !isDistanceSort || status === 'ready' || status === 'failed' }
+  );
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
 
@@ -96,6 +141,18 @@ function AdminFestivalsOngoingPage() {
             등록된 행사를 확인하고 수정하거나 삭제할 수 있어요
           </p>
         </div>
+
+        <FestivalFilterBar
+          selectedSort={selectedFilters.sort}
+          selectedCategory={selectedFilters.category}
+          onSortSelect={(sort) => {
+            handleSortSelect(sort);
+            if (sort === 'DISTANCE') {
+              void requestCoordinates();
+            }
+          }}
+          onCategorySelect={handleCategorySelect}
+        />
 
         <div
           className="grid grid-cols-2"

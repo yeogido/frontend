@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import vector from '../../../assets/icons/vector.svg';
+import { HorizontalFadeScroll } from '../../../components/common';
 import { useScaleFrame } from '../../../hooks/useScaleFrame';
 import {
   festivalCategoryOptions,
@@ -138,7 +139,11 @@ function FestivalFilterBar({
           ) : null}
         </div>
 
-        <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <HorizontalFadeScroll
+          className="min-w-0 flex-1"
+          contentClassName="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          fadeWidth={8}
+        >
           {festivalCategoryOptions.map((category) => {
             const isSelected = selectedCategory === category.value;
 
@@ -158,7 +163,7 @@ function FestivalFilterBar({
               </button>
             );
           })}
-        </div>
+        </HorizontalFadeScroll>
       </div>
     </div>
   );
