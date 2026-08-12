@@ -14,13 +14,24 @@ import { clearRecentCultureContentsLikedState } from '../utils/recentCultureCont
 export function useResetLikesOnLogout(): void {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const wasAuthenticatedRef = useRef(isAuthenticated);
+  // 부팅 시 이미 비로그인이면(로그인→로그아웃 "전환" 자체가 없는 경우)
+  // wasAuthenticatedRef만으로는 절대 못 잡는다 — 예: 토큰이 만료돼
+  // main.tsx의 validateStoredSession()이 리액트 마운트 전에 이미
+  // clearAuth()를 불러버린 경우. 그래서 최초 1회는 전환 여부와 무관하게
+  // "지금 비로그인인가"만 보고 정리한다.
+  const hasCheckedInitialAuthRef = useRef(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
     const wasAuthenticated = wasAuthenticatedRef.current;
     wasAuthenticatedRef.current = isAuthenticated;
 
-    if (!wasAuthenticated || isAuthenticated) {
+    const isLogoutTransition = wasAuthenticated && !isAuthenticated;
+    const isLoggedOutOnBoot =
+      !hasCheckedInitialAuthRef.current && !isAuthenticated;
+    hasCheckedInitialAuthRef.current = true;
+
+    if (!isLogoutTransition && !isLoggedOutOnBoot) {
       return;
     }
 

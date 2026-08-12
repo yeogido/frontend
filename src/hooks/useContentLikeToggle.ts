@@ -20,9 +20,16 @@ export function useContentLikeToggle() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
   const queryClient = useQueryClient();
+  // 비로그인 상태로 앱이 부팅되면(전환이 아니라 처음부터 비로그인) 아래
+  // wasAuthenticated 리셋은 절대 타지 않는다 — 그 경우 localStorage에 남은
+  // 이전 세션의 override를 그대로 신뢰하면 안 되므로 아예 읽지 않는다.
   const [likedOverrides, setLikedOverrides] = useState<
     Record<number, boolean>
-  >(() => getStoredContentLikeOverrides());
+  >(() =>
+    useAuthStore.getState().isAuthenticated
+      ? getStoredContentLikeOverrides()
+      : {}
+  );
   const [pendingContentIds, setPendingContentIds] = useState<
     ReadonlySet<number>
   >(() => new Set());
