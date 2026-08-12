@@ -40,6 +40,11 @@ function AdminEventBasicInfoPage() {
   );
   const [form, setForm] = useState(() => ({
     ...basicInfo,
+    // 링크 입력칸은 "공식 홈페이지" 하나만 둔다 — 관광공사 동기화 콘텐츠는
+    // 인스타그램 등 다른 타입 링크로 채워져 있을 수 있는데, 그것도 그냥
+    // 이 칸에 그대로 보여주고 그대로 저장한다(타입은 항상 OFFICIAL_WEBSITE로
+    // 정규화). 링크 타입별로 칸을 따로 두면 관리가 복잡해져서 단순화했다.
+    homepage: basicInfo.officialLinks[0]?.url ?? '',
     placeName: basicInfo.placeName || place?.title || '',
   }));
 
@@ -67,15 +72,27 @@ function AdminEventBasicInfoPage() {
     form.phone.trim() === '' || PHONE_PATTERN.test(form.phone.trim());
   const isReady = Boolean(
     form.placeName.trim() &&
-      form.startDate &&
-      form.endDate &&
-      !isEndDateBeforeStart &&
-      isPhoneValid
+    form.startDate &&
+    form.endDate &&
+    !isEndDateBeforeStart &&
+    isPhoneValid
   );
 
   const handleSubmit = () => {
     if (!isReady) return;
-    setBasicInfo(form);
+    const trimmedHomepage = form.homepage.trim();
+    setBasicInfo({
+      ...form,
+      officialLinks: trimmedHomepage
+        ? [
+            {
+              type: 'OFFICIAL_WEBSITE',
+              label: '공식 홈페이지',
+              url: trimmedHomepage,
+            },
+          ]
+        : [],
+    });
     navigate('/admin/event-registration/photo-tag');
   };
 
@@ -146,10 +163,7 @@ function AdminEventBasicInfoPage() {
           </FormField>
 
           <div>
-            <p
-              className="mb-3 font-semibold"
-              style={{ fontSize: 16 * scale }}
-            >
+            <p className="mb-3 font-semibold" style={{ fontSize: 16 * scale }}>
               행사 기간을 입력해 주세요
             </p>
             <div
@@ -187,7 +201,10 @@ function AdminEventBasicInfoPage() {
             ) : null}
           </div>
 
-          <FormField id="event-phone" label="연락 가능한 전화번호를 입력해 주세요">
+          <FormField
+            id="event-phone"
+            label="연락 가능한 전화번호를 입력해 주세요"
+          >
             <input
               id="event-phone"
               type="tel"
