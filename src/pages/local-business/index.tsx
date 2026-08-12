@@ -6,9 +6,10 @@ import {
   PromotionCardSkeleton,
   RegionImageCarousel,
 } from '../../components/common';
-import { DEFAULT_REGION_CITY_ID, REGION_CITY_IDS } from '../../constants/regions';
+import { REGION_CITY_IDS } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { REGION_IMAGE_ALL_ID } from '../../components/common/RegionImageCarouselOption';
 import { useLoginModal } from '../../hooks/useLoginModal';
 import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import { useAuthStore } from '../../store/auth.store';
@@ -45,17 +46,18 @@ function LocalBusinessPage() {
   const { openLoginModal } = useLoginModal();
   const [searchParams] = useSearchParams();
   const regionParam = searchParams.get('region');
-  const initialRegionId = REGION_CITY_IDS.includes(
+  const initialRegionId: RegionCityId | typeof REGION_IMAGE_ALL_ID = REGION_CITY_IDS.includes(
     regionParam as RegionCityId
   )
     ? (regionParam as RegionCityId)
-    : DEFAULT_REGION_CITY_ID;
+    : REGION_IMAGE_ALL_ID;
   const [selectedCategory, setSelectedCategory] =
     useState<BusinessCategory>('전체');
   const [sortBy, setSortBy] = useState<BusinessSort>('추천순');
   const [viewMode, setViewMode] = useState<BusinessViewMode>('grid');
-  const [selectedRegionId, setSelectedRegionId] =
-    useState<RegionCityId>(initialRegionId);
+  const [selectedRegionId, setSelectedRegionId] = useState<
+    RegionCityId | typeof REGION_IMAGE_ALL_ID
+  >(initialRegionId);
 
   const {
     businesses,
@@ -101,7 +103,7 @@ function LocalBusinessPage() {
   };
 
   const handleSelectRegion = (region: { id: string }) => {
-    setSelectedRegionId(region.id as RegionCityId);
+    setSelectedRegionId(region.id as RegionCityId | typeof REGION_IMAGE_ALL_ID);
   };
 
   const handleStartPromotionRegistration = () => {

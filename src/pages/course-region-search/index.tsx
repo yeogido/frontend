@@ -27,6 +27,7 @@ function CourseRegionSearchPage() {
     recentSearches,
     searchSuggestions,
     selectedCity,
+    selectedCityId,
     selectedDistrict,
     selectedParentDistrict,
     visibleDistricts,
@@ -87,20 +88,22 @@ function CourseRegionSearchPage() {
         </p>
       ) : null}
 
-      {!isRegionLoading && !isRegionError && selectedCity ? (
+      {!isRegionLoading && !isRegionError ? (
         <>
           <CitySelectionSection
             cities={cities}
-            selectedCityId={selectedCity.id}
+            selectedCityId={selectedCityId}
             onSelect={selectCity}
           />
 
-          <DistrictSelectionSection
-            districts={visibleDistricts}
-            selectedDistrict={selectedDistrict}
-            parentDistrictName={selectedParentDistrict?.name}
-            onSelect={selectDistrict}
-          />
+          {selectedCity ? (
+            <DistrictSelectionSection
+              districts={visibleDistricts}
+              selectedDistrict={selectedDistrict}
+              parentDistrictName={selectedParentDistrict?.name}
+              onSelect={selectDistrict}
+            />
+          ) : null}
         </>
       ) : null}
     </section>

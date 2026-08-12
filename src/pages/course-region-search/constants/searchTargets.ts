@@ -45,6 +45,17 @@ export const courseRegionSearchTargets: Record<
   },
 };
 
+const nationwideSearchPaths: Record<CourseRegionSearchTarget, string> = {
+  course: '/yeogido-course',
+  'local-course': '/local-course',
+  festival: '/festival/search',
+  home: '/yeogido-course',
+};
+
+export const getNationwideSearchPath = (
+  target: CourseRegionSearchTarget
+) => nationwideSearchPaths[target];
+
 export const getCourseRegionSearchTarget = (
   target: string | null
 ): CourseRegionSearchTarget => {

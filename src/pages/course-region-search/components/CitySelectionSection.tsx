@@ -1,6 +1,7 @@
 import { RegionImageCarousel } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import type { CityOption } from '../types';
+import { getCourseRegionCityOptions } from '../utils/citySelection';
 
 const SECTION_MARGIN_TOP = 32;
 
@@ -24,7 +25,7 @@ function CitySelectionSection({
       style={{ marginTop: SECTION_MARGIN_TOP * scale }}
     >
       <RegionImageCarousel
-        options={cities}
+        options={getCourseRegionCityOptions(cities)}
         selectedId={selectedCityId}
         ariaLabel="도시 목록"
         onSelect={onSelect}

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import type { RegionCityId } from '../../../constants/regions';
+import { REGION_IMAGE_ALL_ID } from '../../../components/common/RegionImageCarouselOption';
 import { useBusinessPromotions } from '../../../hooks/useBusinessPromotions';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { useRegions } from '../../../hooks/useRegions';
@@ -17,7 +18,7 @@ const PAGE_SIZE = 10;
 interface UseLocalBusinessesParams {
   selectedCategory: BusinessCategory;
   sortBy: BusinessSort;
-  selectedRegionId: RegionCityId;
+  selectedRegionId: RegionCityId | typeof REGION_IMAGE_ALL_ID;
 }
 
 function useLocalBusinesses({
@@ -30,7 +31,10 @@ function useLocalBusinesses({
     isPending: isRegionsPending,
     isError: isRegionsError,
   } = useRegions();
-  const regionId = resolveRegionId(selectedRegionId, regionsData?.regions);
+  const regionId =
+    selectedRegionId === REGION_IMAGE_ALL_ID
+      ? undefined
+      : resolveRegionId(selectedRegionId, regionsData?.regions);
 
   const {
     data,
