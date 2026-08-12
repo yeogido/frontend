@@ -10,10 +10,11 @@ import {
   RegionImageCarousel,
 } from '../../components/common';
 import { useToast } from '../../components/toast';
-import { DEFAULT_REGION_CITY_ID, REGION_CITY_IDS } from '../../constants/regions';
+import { REGION_CITY_IDS } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
 import { useBusinessPromotionDelete } from '../../hooks/useBusinessPromotions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { REGION_IMAGE_ALL_ID } from '../../components/common/RegionImageCarouselOption';
 import { useLoginModal } from '../../hooks/useLoginModal';
 import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import { useAuthStore } from '../../store/auth.store';
@@ -68,9 +69,12 @@ function LocalBusinessPage() {
   // 변경도 브라우저 히스토리에 남아 뒤로가기로 돌아와도 그대로 유지된다.
   const [searchParams, setSearchParams] = useSearchParams();
   const regionParam = searchParams.get('region');
-  const selectedRegionId = REGION_CITY_IDS.includes(regionParam as RegionCityId)
-    ? (regionParam as RegionCityId)
-    : DEFAULT_REGION_CITY_ID;
+  // 지역 캐러셀 첫 항목이 '전국'이라 기본값도 전국이다. URL에 지역이 없거나
+  // 모르는 값이면(전국 선택 시의 'all' 포함) 전국으로 떨어진다.
+  const selectedRegionId: RegionCityId | typeof REGION_IMAGE_ALL_ID =
+    REGION_CITY_IDS.includes(regionParam as RegionCityId)
+      ? (regionParam as RegionCityId)
+      : REGION_IMAGE_ALL_ID;
 
   const categoryParam = searchParams.get('category');
   const selectedCategory = businessCategories.includes(

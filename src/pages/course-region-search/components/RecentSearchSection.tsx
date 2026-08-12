@@ -1,4 +1,5 @@
 import closeRounded from '../../../assets/icons/close-rounded.svg';
+import { HorizontalFadeScroll } from '../../../components/common';
 import { useScaleFrame } from '../../../hooks/useScaleFrame';
 
 const SECTION_DESIGN_WIDTH = 342;
@@ -8,7 +9,6 @@ const TITLE_LINE_HEIGHT = 19;
 const CLEAR_TOP = 3;
 const CLEAR_SIZE = 12;
 const CLEAR_LINE_HEIGHT = 14;
-const CHIP_MARGIN_TOP = 12;
 const CHIP_HEIGHT = 32;
 const CHIP_GAP = 8;
 const CHIP_MIN_WIDTH = 65;
@@ -35,6 +35,10 @@ function RecentSearchSection({
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(SECTION_DESIGN_WIDTH);
   const hasSearches = searches.length > 0;
+
+  if (!hasSearches) {
+    return null;
+  }
 
   return (
     <section
@@ -68,11 +72,7 @@ function RecentSearchSection({
           <button
             type="button"
             onClick={onClear}
-            disabled={!hasSearches}
-            aria-hidden={!hasSearches}
-            className={`text-gray-4 font-normal ${
-              hasSearches ? '' : 'invisible'
-            }`}
+            className="text-gray-4 font-normal"
             style={{
               paddingTop: CLEAR_TOP,
               fontSize: CLEAR_SIZE,
@@ -83,10 +83,11 @@ function RecentSearchSection({
           </button>
         </div>
 
-        <div
-          className="flex overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{
-            marginTop: CHIP_MARGIN_TOP,
+        <HorizontalFadeScroll
+          className="mt-3 w-full"
+          contentClassName="flex overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          fadeWidth={8}
+          contentStyle={{
             height: CHIP_HEIGHT,
             gap: CHIP_GAP,
           }}
@@ -126,7 +127,7 @@ function RecentSearchSection({
               </button>
             </div>
           ))}
-        </div>
+        </HorizontalFadeScroll>
       </div>
     </section>
   );
