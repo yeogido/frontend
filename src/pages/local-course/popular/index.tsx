@@ -20,6 +20,10 @@ import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordi
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toContentTagIds } from '../../../utils/contentTags';
+import {
+  toCompanionLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
 
 import { localCourseFilterGroups } from '../constants/filters';
 import { LOCAL_COURSE_SKELETON_ITEMS } from '../constants/ui';
@@ -218,7 +222,8 @@ function LocalCoursePopularPage() {
                     image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={durationLabelByType[course.durationType]}
-                    secondInfo={course.region}
+                    secondInfo={toTransportLabel(course.transportType)}
+                    thirdInfo={toCompanionLabel(course.companionType)}
                     tags={toContentTagIds(course.tags)}
                     className="w-full"
                     onClick={() => handleCourseClick(course.courseId)}
@@ -231,7 +236,8 @@ function LocalCoursePopularPage() {
                     image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={durationLabelByType[course.durationType]}
-                    secondInfo={course.region}
+                    secondInfo={toTransportLabel(course.transportType)}
+                    thirdInfo={toCompanionLabel(course.companionType)}
                     tags={toContentTagIds(course.tags)}
                     liked={getLiked(course.courseId, course.isLiked)}
                     className="w-full"

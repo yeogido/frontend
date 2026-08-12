@@ -12,8 +12,8 @@ import {
   useMyProfile,
   useUpdateMyProfile,
 } from '../../hooks/useMyProfile';
-import { useRegion } from '../../hooks/useRegions';
 import { useAuthStore } from '../../store/auth.store';
+import { getFullRegionName } from '../../utils/regionName';
 import {
   ProfileDetailSection,
   ProfilePhotoEditor,
@@ -45,11 +45,11 @@ function ProfilePage() {
     primaryBusiness?.representativeName ??
     profile?.name ??
     (userId ? `회원 #${userId}` : '회원');
-  // GET /regions 목록의 name은 축약형("서울")이라, 풀네임("서울특별시")이
-  // 있는 단건 상세(GET /regions/{id})를 regionId로 조회해서 우선 쓴다.
-  // 아직 로딩 중이거나 목록에 없으면 서버가 준 region 문자열로 대체한다.
-  const { data: selectedRegionDetail } = useRegion(profile?.regionId);
-  const regionName = selectedRegionDetail?.fullName ?? profile?.region;
+  // profile.region은 축약형("서울")으로 내려온다 — 화면에는 정식 명칭으로
+  // 바꿔서 보여준다.
+  const regionName = profile?.region
+    ? getFullRegionName(profile.region)
+    : undefined;
 
   const handleWithdrawalConfirm = async () => {
     try {
