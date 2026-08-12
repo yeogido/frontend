@@ -114,7 +114,19 @@ function BusinessPromotionRegistrationPage() {
   // 확인 완료) 수정 화면에는 장소 선택 단계가 없다 — 곧장 정보 입력부터
   // 시작해 등록 플로우의 나머지 두 단계만 재사용한다.
   const isEditMode = promotionIdParam !== undefined;
-  const promotionId = isEditMode ? Number(promotionIdParam) : undefined;
+  // 라우트 파라미터는 임의 문자열도 받을 수 있다(/edit/abc 등). 숫자가
+  // 아니면 promotionId를 undefined로 둬서 훅이 조회 자체를 안 하게 하고,
+  // 아래에서 로딩 스피너 대신 곧장 에러 화면으로 보낸다 — 안 그러면
+  // useBusinessPromotionDetail이 계속 비활성 상태로 남아 로딩 스피너가
+  // 끝없이 돈다.
+  const parsedPromotionId = isEditMode ? Number(promotionIdParam) : undefined;
+  const promotionId =
+    parsedPromotionId !== undefined &&
+    Number.isInteger(parsedPromotionId) &&
+    parsedPromotionId > 0
+      ? parsedPromotionId
+      : undefined;
+  const isInvalidPromotionId = isEditMode && promotionId === undefined;
 
   const detailQuery = useBusinessPromotionDetail(promotionId ?? 0);
 
@@ -351,7 +363,12 @@ function BusinessPromotionRegistrationPage() {
         void queryClient.invalidateQueries({ queryKey: ['businessPromotions'] });
         void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
         showToast(UPDATE_SUCCESS_MESSAGE);
-        navigate(buildLocalBusinessDetailPath(promotionId));
+        // replace: true — 이탈 방지 가드가 dirty 진입 시 같은 URL로 안전판
+        // history 항목을 하나 더 pushState해 둔다. 여기서 그냥 navigate(push)
+        // 하면 상세 페이지에서 뒤로 갔을 때 그 안전판과 원래 항목이 같은
+        // 등록/수정 화면으로 연속 두 번 나타난다. replace로 안전판 항목
+        // 자체를 상세 페이지 항목으로 바꿔치기해 한 번만 나타나게 한다.
+        navigate(buildLocalBusinessDetailPath(promotionId), { replace: true });
       } catch (error) {
         if (normalizeApiError(error).code === PROMOTION_NOT_FOUND_CODE) {
           showToast(PROMOTION_NOT_FOUND_MESSAGE);
@@ -380,7 +397,11 @@ function BusinessPromotionRegistrationPage() {
     try {
       const result = await createBusinessPromotion(payload);
       showToast(REGISTER_SUCCESS_MESSAGE);
-      navigate(buildLocalBusinessDetailPath(result.promotionId));
+      // replace: true — 위 수정 성공 분기와 같은 이유(이탈 방지 가드의
+      // 안전판 history 항목 중복 방지).
+      navigate(buildLocalBusinessDetailPath(result.promotionId), {
+        replace: true,
+      });
     } catch (error) {
       showToast(getApiErrorMessage(error, REGISTER_ERROR_MESSAGE));
     }
@@ -394,7 +415,7 @@ function BusinessPromotionRegistrationPage() {
   };
 
   if (isEditMode && !hasSeeded) {
-    if (detailQuery.isError) {
+    if (isInvalidPromotionId || detailQuery.isError) {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
           <p className="text-gray-5 text-sm">{DETAIL_LOAD_ERROR_MESSAGE}</p>

@@ -13,6 +13,7 @@ import {
 import { getApiErrorMessage, normalizeApiError } from '../apis/common';
 import { useToast } from '../components/toast';
 import type {
+  BusinessPromotionItem,
   BusinessPromotionListParams,
   BusinessPromotionListResponse,
 } from '../types/businessPromotion.type';
@@ -71,10 +72,14 @@ const PROMOTION_NOT_FOUND_CODE = 'BUSINESS_PROMOTION4041';
 const isPromotionNotFoundError = (error: unknown) =>
   normalizeApiError(error).code === PROMOTION_NOT_FOUND_CODE;
 
-interface MyPostsSnapshot {
+interface DeleteSnapshot {
   previousMyPosts: [
     readonly unknown[],
     InfiniteData<GetMyPostsResponse> | undefined,
+  ][];
+  previousBusinessPromotions: [
+    readonly unknown[],
+    InfiniteData<BusinessPromotionListResponse> | undefined,
   ][];
 }
 
@@ -91,14 +96,20 @@ interface MyPostsSnapshot {
 function useDeleteBusinessPromotion() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, unknown, number, MyPostsSnapshot>({
+  return useMutation<void, unknown, number, DeleteSnapshot>({
     mutationFn: deleteBusinessPromotion,
     onMutate: async (promotionId) => {
-      await queryClient.cancelQueries({ queryKey: ['myPosts'] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['myPosts'] }),
+        queryClient.cancelQueries({ queryKey: ['businessPromotions'] }),
+      ]);
 
       const previousMyPosts = queryClient.getQueriesData<
         InfiniteData<GetMyPostsResponse>
       >({ queryKey: ['myPosts'] });
+      const previousBusinessPromotions = queryClient.getQueriesData<
+        InfiniteData<BusinessPromotionListResponse>
+      >({ queryKey: ['businessPromotions'] });
 
       queryClient.setQueriesData<InfiniteData<GetMyPostsResponse>>(
         { queryKey: ['myPosts'] },
@@ -116,12 +127,35 @@ function useDeleteBusinessPromotion() {
             : data
       );
 
-      return { previousMyPosts };
+      // local-business 목록(/local-business, useLocalBusinesses)도 이
+      // 쿼리 키를 쓴다 — my-posts만 낙관적으로 지우면 그 목록의 카드는
+      // invalidateQueries가 재조회를 끝낼 때까지 화면에 남아 있는다.
+      queryClient.setQueriesData<InfiniteData<BusinessPromotionListResponse>>(
+        { queryKey: ['businessPromotions'] },
+        (data) =>
+          data
+            ? {
+                ...data,
+                pages: data.pages.map((page) => ({
+                  ...page,
+                  items: page.items.filter(
+                    (item: BusinessPromotionItem) =>
+                      item.promotionId !== promotionId
+                  ),
+                })),
+              }
+            : data
+      );
+
+      return { previousMyPosts, previousBusinessPromotions };
     },
     onError: (error, _, context) => {
       if (isPromotionNotFoundError(error)) return;
 
       context?.previousMyPosts.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      context?.previousBusinessPromotions.forEach(([queryKey, data]) => {
         queryClient.setQueryData(queryKey, data);
       });
     },
