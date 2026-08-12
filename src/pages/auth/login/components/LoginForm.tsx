@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AuthField,
+  BackButton,
+  ClearableInput,
   KakaoIcon,
   NaverIcon,
   PasswordInput,
@@ -34,6 +36,7 @@ function LoginForm({
   onNaverLogin,
   isNaverLoading,
 }: LoginFormProps) {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -58,6 +61,8 @@ function LoginForm({
     <div className="min-h-dvh w-full bg-background">
       <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
         <div className="flex-1">
+          <BackButton onClick={() => navigate(-1)} />
+
           <h1 className="text-[28px] font-bold leading-none text-black">
             로그인
           </h1>
@@ -78,7 +83,7 @@ function LoginForm({
                 label="이메일"
                 error={errors.email?.message}
               >
-                <input
+                <ClearableInput
                   {...register('email')}
                   id="login-email"
                   type="email"

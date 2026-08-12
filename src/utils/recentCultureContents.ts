@@ -127,6 +127,31 @@ export function updateRecentCultureContentLikeState(
   }
 }
 
+// 비로그인 상태에서는 좋아요를 가질 수 없으므로, 로그아웃 시 "최근 본
+// 행사" 목록은 그대로 두고 각 항목의 좋아요 표시만 지운다.
+export function clearRecentCultureContentsLikedState(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const contents = getStoredRecentCultureContents();
+
+    if (!contents.some((content) => content.liked)) return;
+
+    const updatedContents = contents.map((content) => ({
+      ...content,
+      liked: false,
+    }));
+
+    window.localStorage.setItem(
+      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      JSON.stringify(updatedContents)
+    );
+    notifyRecentCultureContentsUpdated();
+  } catch {
+    return;
+  }
+}
+
 function isRecentCultureContent(value: unknown): value is RecentCultureContent {
   if (typeof value !== 'object' || value === null) return false;
 
