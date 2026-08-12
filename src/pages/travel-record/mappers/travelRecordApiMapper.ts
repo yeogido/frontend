@@ -34,7 +34,11 @@ const resolveTravelRecordMapRegion = (
   });
 
   return {
-    regionName: match?.name ?? fallbackName,
+    // 표시용 이름은 지역 API의 축약형('서울')을 쓴다. findMapRegion이 주는
+    // 이름은 GeoJSON 도형 이름('서울특별시')이라 지도 조회에만 맞고, 그대로
+    // 쓰면 폴더 이름과 수정 화면의 선택 지역이 정식 명칭으로 보인다.
+    regionName: regionInfo?.name ?? match?.name ?? fallbackName,
+    // 지도에 그릴 도형은 이름이 아니라 이 코드로 찾는다.
     regionCode: match?.code ?? '',
   };
 };

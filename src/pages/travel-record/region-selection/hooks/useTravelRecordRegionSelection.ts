@@ -7,6 +7,7 @@ import {
   getStoredRecentSearches,
   saveRecentSearches,
 } from '../../../../utils/recentSearches';
+import { useRegions } from '../../../../hooks/useRegions';
 import { useTravelRecordRegionSearch } from '../../../../hooks/useTravelRecordRegions';
 import { mapRegionSearchToTravelRecordRegion } from '../../mappers/travelRecordApiMapper';
 import {
@@ -29,6 +30,9 @@ function useTravelRecordRegionSelection(
   initialSelectedRegion: TravelRecordRegion | null = null,
 ) {
   const queryClient = useQueryClient();
+  // 광역시 산하 구를 상위 광역시로 올릴 때 그 지역의 id가 필요하다.
+  // 하드코딩하면 백엔드가 ID를 재부여했을 때 엉뚱한 지역에 저장된다.
+  const { data: regionsData } = useRegions();
   const [query, setQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>(() =>
     getStoredRecentSearches(recentSearchStorageOptions),
@@ -79,7 +83,10 @@ function useTravelRecordRegionSelection(
   };
 
   const selectRegion = (region: TravelRecordRegion) => {
-    const selectedTravelMapRegion = normalizeTravelMapSelectedRegion(region);
+    const selectedTravelMapRegion = normalizeTravelMapSelectedRegion(
+      region,
+      regionsData?.regions,
+    );
 
     setSelectedRegion(selectedTravelMapRegion);
     setQuery(selectedTravelMapRegion.selectionName);
