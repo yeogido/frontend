@@ -122,12 +122,21 @@ export function mapCourseApiDetailToDto(
 
 // 코스 상세 응답에는 region이 내려오지 않아, 첫 번째 코스 아이템 주소에서
 // 시/도 다음 토큰(구/군 등)을 지역명으로 대략 추출한다.
+// 세종특별자치시는 구/군 없이 시 다음에 바로 도로명이 오는 주소 체계라
+// 두 번째 토큰을 그대로 쓰면 도로명이 지역명으로 잘못 뽑힌다 — 그런 단일
+// 행정구역은 시/도 토큰 자체를 지역명으로 쓴다.
+const SINGLE_TIER_REGIONS = ['세종특별자치시'];
+
 function deriveRegionFromCourseItems(
   courseItems: CourseDetailResult['courseItems']
 ): string {
   const address = courseItems[0]?.roadAddress || courseItems[0]?.lotAddress;
+  if (!address) return '';
 
-  return address?.split(' ')[1] ?? '';
+  const tokens = address.split(' ');
+  if (SINGLE_TIER_REGIONS.includes(tokens[0])) return tokens[0];
+
+  return tokens[1] ?? '';
 }
 
 // durationLabels/transportLabels/companionLabels가 인식하는 레거시 별칭까지
