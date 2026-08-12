@@ -136,6 +136,11 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 top: PROFILE_TOP * scale,
                 left: PROFILE_LEFT * scale,
                 gap: PROFILE_GAP * scale,
+                // left만 지정하면 이름이 길 때 버튼이 드로어 오른쪽 끝까지
+                // 늘어나 왼쪽(24px)과 달리 오른쪽 여백이 0이 된다. right를
+                // 함께 주면 버튼이 가로 전체를 차지해 이름 옆 빈 공간을
+                // 눌러도 프로필로 이동하므로, maxWidth로 경계만 만든다.
+                maxWidth: `calc(100% - ${PROFILE_LEFT * 2 * scale}px)`,
               }}
             >
               <ProfileAvatar
