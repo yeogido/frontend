@@ -45,6 +45,18 @@ function toNullableAddress(address: string): string | null {
   return trimmedAddress || null;
 }
 
+function normalizeOperatingDaysForStorage(
+  operatingDays: readonly OperatingDay[]
+): OperatingDay[] {
+  return operatingDays.map((operatingDay) => ({
+    ...operatingDay,
+    closeTime:
+      operatingDay.closeTime === '24:00'
+        ? '23:59'
+        : operatingDay.closeTime,
+  }));
+}
+
 export function buildCourseItemsFromVisitEvents(
   visitEvents: readonly VisitEvent[],
   travelData?: VisitEventTravelData
@@ -58,8 +70,7 @@ export function buildCourseItemsFromVisitEvents(
         : undefined;
 
     if (event.kind === 'PLACE') {
-      const operatingDays: OperatingDay[] | undefined =
-        travelData?.operatingDaysByEventId.get(event.id);
+      const operatingDays = travelData?.operatingDaysByEventId.get(event.id);
 
       return {
         order,
@@ -77,7 +88,9 @@ export function buildCourseItemsFromVisitEvents(
         latitude: event.latitude,
         longitude: event.longitude,
         imageKey: event.imageKey,
-        ...(operatingDays && operatingDays.length > 0 ? { operatingDays } : {}),
+        ...(operatingDays && operatingDays.length > 0
+          ? { operatingDays: normalizeOperatingDaysForStorage(operatingDays) }
+          : {}),
         ...(timesFromPrevious && timesFromPrevious.length > 0
           ? { timesFromPrevious }
           : {}),
@@ -176,7 +189,8 @@ function buildCommonCourseFields(
 export function buildCourseRequest(
   draft: LocalRecommendationDraft,
   visitEvents: readonly VisitEvent[],
-  travelData?: VisitEventTravelData
+  travelData: VisitEventTravelData | undefined,
+  routeImageKey: string
 ): CreateLocalRecommendationRequest | null {
   const { neighborhood } = draft;
 
@@ -190,7 +204,7 @@ export function buildCourseRequest(
     return null;
   }
 
-  return { ...common, regionId: neighborhood.id };
+  return { ...common, regionId: neighborhood.id, routeImageKey };
 }
 
 /**

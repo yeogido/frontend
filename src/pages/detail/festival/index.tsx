@@ -144,7 +144,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
     popularRelatedCourses?.pages[0]?.items ?? []
   ).map((course) => ({
     id: course.courseId,
-    image: course.thumbnailUrl,
+    image: course.routeImageUrl?.trim() || course.thumbnailUrl,
     title: course.title,
     duration: toDurationLabel(course.durationType),
     courseType: toTransportLabel(course.transportType),

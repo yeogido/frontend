@@ -166,6 +166,18 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       proxy: {
+        '/kakao-maps/static-map': {
+          target: 'https://dapi.kakao.com',
+          changeOrigin: true,
+          headers: {
+            Authorization: `KakaoAK ${env.KAKAO_REST_API_KEY}`,
+          },
+          rewrite: (path) =>
+            path.replace(
+              /^\/kakao-maps\/static-map/,
+              '/v2/maps/staticmap'
+            ),
+        },
         '/kakao-routing/car': {
           target: 'https://apis-navi.kakaomobility.com',
           changeOrigin: true,
