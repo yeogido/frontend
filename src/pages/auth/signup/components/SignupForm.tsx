@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { getApiErrorMessage } from '../../../../apis/common';
@@ -20,11 +20,14 @@ import {
 import { BIRTH_YEARS } from '../../../../constants/birthYears';
 import { useRegions } from '../../../../hooks/useRegions';
 import type { SignupGender } from '../../../../types/auth.type';
+import { getFullRegionName } from '../../../../utils/regionName';
 import {
   signupSchema,
   SIGNUP_EMAIL_PATTERN,
   type SignupFormValues,
 } from '../schema';
+
+import SelectField from './SelectField';
 
 const genders: { label: string; value: SignupGender }[] = [
   { label: '여성', value: 'FEMALE' },
@@ -406,23 +409,25 @@ function SignupForm({ onBack }: SignupFormProps) {
             label="사는 지역"
             error={errors.regionId?.message}
           >
-            <SelectField>
-              <select
-                {...register('regionId')}
-                id="signup-region"
-                className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
-              >
-                <option value="">거주 중인 지역을 선택해 주세요</option>
-                {(regionsData?.regions ?? []).map((region) => (
-                  <option
-                    key={region.regionId}
-                    value={region.regionId}
-                  >
-                    {region.name}
-                  </option>
-                ))}
-              </select>
-            </SelectField>
+            <Controller
+              control={control}
+              name="regionId"
+              render={({ field }) => (
+                <SelectField
+                  id="signup-region"
+                  ariaLabel="사는 지역"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={[
+                    { value: '', label: '거주 중인 지역을 선택해 주세요' },
+                    ...(regionsData?.regions ?? []).map((region) => ({
+                      value: String(region.regionId),
+                      label: getFullRegionName(region.name),
+                    })),
+                  ]}
+                />
+              )}
+            />
           </AuthField>
 
           <AuthField
@@ -430,23 +435,25 @@ function SignupForm({ onBack }: SignupFormProps) {
             label="성별"
             error={errors.gender?.message}
           >
-            <SelectField>
-              <select
-                {...register('gender')}
-                id="signup-gender"
-                className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
-              >
-                <option value="">성별을 선택해 주세요</option>
-                {genders.map((genderOption) => (
-                  <option
-                    key={genderOption.value}
-                    value={genderOption.value}
-                  >
-                    {genderOption.label}
-                  </option>
-                ))}
-              </select>
-            </SelectField>
+            <Controller
+              control={control}
+              name="gender"
+              render={({ field }) => (
+                <SelectField
+                  id="signup-gender"
+                  ariaLabel="성별"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={[
+                    { value: '', label: '성별을 선택해 주세요' },
+                    ...genders.map((genderOption) => ({
+                      value: genderOption.value,
+                      label: genderOption.label,
+                    })),
+                  ]}
+                />
+              )}
+            />
           </AuthField>
 
           <AuthField
@@ -454,23 +461,22 @@ function SignupForm({ onBack }: SignupFormProps) {
             label="태어난 연도"
             error={errors.birthYear?.message}
           >
-            <SelectField>
-              <select
-                {...register('birthYear')}
-                id="signup-birth-year"
-                className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
-              >
-                <option value="">태어난 연도를 선택해 주세요</option>
-                {BIRTH_YEARS.map((year) => (
-                  <option
-                    key={year}
-                    value={year}
-                  >
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </SelectField>
+            <Controller
+              control={control}
+              name="birthYear"
+              render={({ field }) => (
+                <SelectField
+                  id="signup-birth-year"
+                  ariaLabel="태어난 연도"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={[
+                    { value: '', label: '태어난 연도를 선택해 주세요' },
+                    ...BIRTH_YEARS.map((year) => ({ value: year, label: year })),
+                  ]}
+                />
+              )}
+            />
           </AuthField>
         </div>
 
@@ -526,29 +532,6 @@ function SectionField({
           {error}
         </p>
       )}
-    </div>
-  );
-}
-
-function SelectField({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative">
-      {children}
-
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 20 20"
-        className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-4"
-        fill="none"
-      >
-        <path
-          d="M5 7.5L10 12.5L15 7.5"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
     </div>
   );
 }

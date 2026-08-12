@@ -102,27 +102,24 @@ function LocalBusinessPage() {
     });
   };
 
-  const {
-    businesses,
-    isError,
-    isFetchingNextPage,
-    isPending,
-    loadMoreRef,
-  } = useLocalBusinesses({
-    selectedCategory,
-    sortBy,
-    selectedRegionId,
-  });
+  const { businesses, isError, isFetchingNextPage, isPending, loadMoreRef } =
+    useLocalBusinesses({
+      selectedCategory,
+      sortBy,
+      selectedRegionId,
+    });
   const hasEmptyResult = !isPending && !isError && businesses.length === 0;
 
-  const { requestDelete: requestPromotionDelete, dialogProps: promotionDeleteDialogProps } =
-    useBusinessPromotionDelete();
+  const {
+    requestDelete: requestPromotionDelete,
+    dialogProps: promotionDeleteDialogProps,
+  } = useBusinessPromotionDelete();
 
   // 상세페이지(handleFavoriteToggle)와 동일한 낙관적 업데이트 패턴 —
   // 서버 응답을 기다리지 않고 먼저 하트를 바꾸고, 실패하면 되돌린다.
-  const [likedOverrides, setLikedOverrides] = useState<
-    Record<string, boolean>
-  >({});
+const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
+    {}
+  );
   const [wasAuthenticated, setWasAuthenticated] = useState(isAuthenticated);
 
   // 비로그인 상태는 좋아요를 가질 수 없으므로, 로그아웃하면 이 화면이
@@ -136,7 +133,6 @@ function LocalBusinessPage() {
       setLikedOverrides({});
     }
   }
-
   const businessesWithLikeOverrides = businesses.map((business) => ({
     ...business,
     liked: likedOverrides[business.id] ?? business.liked,
@@ -195,7 +191,10 @@ function LocalBusinessPage() {
       }
 
       showToast(
-        getApiErrorMessage(error, '좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.')
+        getApiErrorMessage(
+          error,
+          '좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.'
+        )
       );
     } finally {
       likeRequestInFlightRef.current.delete(businessId);
@@ -283,7 +282,7 @@ function LocalBusinessPage() {
             </div>
           ) : (
             <p
-              className="text-center font-medium text-gray-4"
+              className="text-gray-4 text-center font-medium"
               style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
             >
               불러오는 중...
@@ -322,7 +321,7 @@ function LocalBusinessPage() {
 
       {hasEmptyResult ? (
         <p
-          className="text-center font-medium text-gray-4"
+          className="text-gray-4 text-center font-medium"
           style={{
             marginTop: EMPTY_MARGIN_TOP * scale,
             fontSize: MESSAGE_TEXT_SIZE * scale,

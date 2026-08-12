@@ -22,6 +22,7 @@ export interface Course {
   companionType: CourseCompanionType;
   tags: string[];
   isLiked: boolean;
+  canManage: boolean;
 }
 
 export interface GetCoursesResponse {
@@ -74,6 +75,7 @@ export interface PopularLocalCourse {
   createdAt: string;
   tags: string[];
   isLiked: boolean;
+  canManage: boolean;
 }
 
 export interface RecommendedCourse {

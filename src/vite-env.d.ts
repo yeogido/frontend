@@ -126,6 +126,11 @@ interface KakaoSDK {
 interface NaverLoginWithNaverId {
   init(): void;
   authorize(): void;
+  // authorize()와 달리 이미 동의한 사용자에게도 네이버 동의 화면을 강제로
+  // 다시 띄운다(URL에 auth_type=reprompt가 붙는 차이뿐). 내부적으로
+  // logout()이 init()에서 만들어지는 loginStatus를 참조하므로, init()을
+  // 먼저 호출한 뒤에만 안전하게 쓸 수 있다.
+  reprompt(): void;
   getLoginStatus(callback: (status: boolean) => void): void;
   accessToken: { accessToken: string; ttl: number } | null;
 }

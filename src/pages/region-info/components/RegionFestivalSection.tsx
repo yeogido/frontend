@@ -13,7 +13,6 @@ import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useEditFestival } from '../../../hooks/useEditFestival';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 
@@ -30,19 +29,22 @@ const RETRY_BUTTON_PADDING_Y = 8;
 
 interface RegionFestivalSectionProps {
   regionName: string;
+  /** 제목 표시 전용 전체 이름(예: "충청남도"). 생략하면 regionName을 그대로
+   * 보여준다 — regionName은 검색 키워드·쿼리 파라미터에도 쓰여서 그대로 둔다. */
+  regionDisplayName?: string;
   regionId?: number;
   isRegionLoading?: boolean;
 }
 
 function RegionFestivalSection({
   regionName,
+  regionDisplayName = regionName,
   regionId,
   isRegionLoading = false,
 }: RegionFestivalSectionProps) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useContentLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
 
@@ -73,7 +75,7 @@ function RegionFestivalSection({
           }}
         >
           <SectionHeader
-            title={`${regionName}에서 진행 중인 행사`}
+            title={`${regionDisplayName}에서 진행 중인 행사`}
             actionText="전체보기"
             onActionClick={() =>
               navigate(
@@ -99,7 +101,7 @@ function RegionFestivalSection({
                 </>
               ) : (
                 festivals.map((festival) =>
-                  isAdmin ? (
+                  festival.canManage ? (
                     <EditableContentCard
                       key={festival.contentId}
                       image={festival.thumbnailImageUrl}

@@ -58,6 +58,7 @@ export function mapCultureContentDetailToFestivalDetail(
     title: content.title,
     heroImageUrl: image,
     liked: content.liked,
+    canManage: content.canManage,
     tags: mapTags(content.hashtags),
     overview: content.description,
     address: content.place.roadAddress,

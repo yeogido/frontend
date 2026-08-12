@@ -90,6 +90,7 @@ export interface CultureContent {
   endDate: string;
   /** 관리자만 PENDING으로 조회 가능. 생략 시(대부분의 응답) 항상 PUBLISHED다. */
   publicationStatus?: ContentPublicationStatus;
+  canManage: boolean;
 }
 
 export interface CultureContentBanner {
@@ -143,6 +144,7 @@ export interface CultureContentDetail {
   officialLinks: OfficialLink[];
   place: CultureContentPlace;
   courses: CultureContentCourse[];
+  canManage: boolean;
 }
 
 export interface RecentCultureContent {

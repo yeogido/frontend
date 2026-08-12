@@ -108,5 +108,6 @@ export function mapCourseDetailDtoToViewModel(
     overview: dto.overview ?? '',
     stops,
     reviews: dto.reviews ?? [],
+    canManage: Boolean(dto.canManage),
   };
 }

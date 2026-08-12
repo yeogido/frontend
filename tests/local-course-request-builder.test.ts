@@ -42,5 +42,6 @@ const visitEvents = [
 test('omits the route image key from an update when no new key is supplied', () => {
   const payload = buildLocalCourseUpdateRequest(draft, visitEvents, undefined);
 
-  assert.equal('routeImageKey' in (payload ?? {}), false);
+  assert.ok(payload);
+  assert.equal('routeImageKey' in payload, false);
 });

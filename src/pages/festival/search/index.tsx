@@ -15,7 +15,6 @@ import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditFestival } from '../../../hooks/useEditFestival';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { buildFestivalDetailPath } from '../../../utils/routes';
@@ -70,7 +69,6 @@ function FestivalSearchPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { getLiked, toggleLike } = useContentLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -98,8 +96,11 @@ function FestivalSearchPage() {
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
     useFestivalFilters();
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
-  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
-    useDistanceSortCoordinates();
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
 
   const {
     data,
@@ -237,7 +238,7 @@ function FestivalSearchPage() {
                 />
               ))
             : festivals.map((festival) =>
-                isAdmin ? (
+                festival.canManage ? (
                   <EditableContentCard
                     key={festival.contentId}
                     image={festival.thumbnailImageUrl}

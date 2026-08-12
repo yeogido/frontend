@@ -53,6 +53,7 @@ function LocalCourseDetailPage() {
   const location = useLocation();
   const { openLoginModal } = useLoginModal();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const parsedCourseId = Number(courseIdParam);
@@ -129,7 +130,7 @@ function LocalCourseDetailPage() {
     updater: (courseDetail: CourseDetailResult) => CourseDetailResult
   ) => {
     queryClient.setQueryData<CourseDetailResult>(
-      ['localCourseDetail', courseId],
+      ['localCourseDetail', authGeneration, courseId],
       (current) => (current ? updater(current) : current)
     );
   };

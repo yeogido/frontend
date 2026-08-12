@@ -25,7 +25,6 @@ import {
 import { useCultureContentDetail } from '../../../hooks/useCultureContentDetail';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import {
   formatTodayOpeningHours,
   usePlaceOpeningHours,
@@ -118,7 +117,6 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
     useCourseLikeToggle();
   const { goToCourseDetail } = useNavigateToCourseDetail();
-  const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null
@@ -278,7 +276,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                   imageUrl={festivalDetail.heroImageUrl}
                   title={festivalDetail.title}
                   rightAction={
-                    isAdmin ? (
+                    festivalDetail.canManage ? (
                       <EditButton
                         label={festivalDetail.title}
                         onClick={() => void editFestival(contentId)}
