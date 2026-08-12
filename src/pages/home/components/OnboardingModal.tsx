@@ -12,6 +12,7 @@ import sticker1 from '../../../assets/icons/sticker1.svg';
 import sticker2 from '../../../assets/icons/sticker2.svg';
 import sticker3 from '../../../assets/icons/sticker3.svg';
 import sticker4 from '../../../assets/icons/sticker4.svg';
+import { MIN_TOUCH_TARGET } from '../../../constants/layout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { dismissOnboardingPermanently } from '../../../utils/onboarding';
 import {
@@ -25,8 +26,12 @@ import {
 const CARD_WIDTH = 342;
 const CARD_HEIGHT = 453;
 const CARD_RADIUS = 12;
-const CLOSE_BUTTON_INSET = 20;
+const CLOSE_ICON_INSET = 20;
 const CLOSE_ICON_SIZE = 24;
+// 아이콘은 20/20에 24x24로 그대로 두고, 탭 영역만 44x44(MIN_TOUCH_TARGET)로
+// 넓혀서 아이콘 중심(20+12=32)에 히트박스 중심이 맞도록 안쪽으로 당긴다.
+const CLOSE_HIT_AREA_INSET =
+  CLOSE_ICON_INSET - (MIN_TOUCH_TARGET - CLOSE_ICON_SIZE) / 2;
 const DOT_TOP = 36;
 const DOT_SIZE = 4;
 const DOT_ACTIVE_WIDTH = 20;
@@ -118,8 +123,22 @@ interface OnboardingModalProps {
 function OnboardingModal({ onClose }: OnboardingModalProps) {
   const scale = Math.min(useGlobalScale(), 1);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  const handleClose = () => {
+    if (dontShowAgain) dismissOnboardingPermanently();
+    onClose();
+  };
+
+  // Escape 핸들러가 매번 최신 dontShowAgain을 보되, 이 때문에 아래
+  // 키보드/포커스 effect가 매 토글마다 다시 실행되진 않도록 ref로 참조한다.
+  // ref 갱신은 렌더 중이 아니라 effect(커밋 이후)에서 한다.
+  const handleCloseRef = useRef(handleClose);
+  useEffect(() => {
+    handleCloseRef.current = handleClose;
+  });
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -140,11 +159,15 @@ function OnboardingModal({ onClose }: OnboardingModalProps) {
           return;
         }
 
+        // 이 컴포넌트는 바깥 카드에만 transform: scale()을 걸고 gap 등
+        // 안쪽 값은 리터럴 px 그대로라, clientWidth/gap 모두 이미
+        // 스케일과 무관한 실제 레이아웃 값이다 — scale을 또 곱하면
+        // 좁은 화면에서 스냅 지점과 계산이 어긋난다.
         setActiveIndex(
           getHomeCarouselIndex(
             container.scrollLeft,
             itemWidth,
-            scale,
+            1,
             slides.length
           )
         );
@@ -158,14 +181,30 @@ function OnboardingModal({ onClose }: OnboardingModalProps) {
       container.removeEventListener('scroll', updateActiveIndex);
       cancelAnimationFrame(rafId);
     };
-  }, [scale]);
+  }, []);
+
+  // 모달이 떠 있는 동안 배경 스크롤을 막고, 열릴 때 닫기 버튼으로 포커스를
+  // 옮겼다가 닫히면 원래 포커스였던 요소로 되돌린다. Esc로도 닫을 수 있게 한다.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    closeButtonRef.current?.focus();
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') handleCloseRef.current();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
+    };
+  }, []);
 
   if (typeof document === 'undefined') return null;
-
-  const handleClose = () => {
-    if (dontShowAgain) dismissOnboardingPermanently();
-    onClose();
-  };
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
@@ -256,22 +295,23 @@ function OnboardingModal({ onClose }: OnboardingModalProps) {
         </div>
 
         <button
+          ref={closeButtonRef}
           type="button"
           aria-label="닫기"
           onClick={handleClose}
           className="absolute z-10 flex items-center justify-center"
           style={{
-            top: CLOSE_BUTTON_INSET,
-            left: CLOSE_BUTTON_INSET,
-            width: CLOSE_ICON_SIZE,
-            height: CLOSE_ICON_SIZE,
+            top: CLOSE_HIT_AREA_INSET,
+            left: CLOSE_HIT_AREA_INSET,
+            width: MIN_TOUCH_TARGET,
+            height: MIN_TOUCH_TARGET,
           }}
         >
           <img
             src={closeRounded}
             alt=""
             aria-hidden="true"
-            className="size-full"
+            style={{ width: CLOSE_ICON_SIZE, height: CLOSE_ICON_SIZE }}
           />
         </button>
 
@@ -311,6 +351,7 @@ function OnboardingModal({ onClose }: OnboardingModalProps) {
         >
           <button
             type="button"
+            aria-pressed={dontShowAgain}
             onClick={() => setDontShowAgain((prev) => !prev)}
             className="flex items-center"
             style={{ gap: FOOTER_GAP }}
