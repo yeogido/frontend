@@ -19,6 +19,7 @@ import {
   LOCAL_RECOMMENDATION_COVER_IMAGE_ID,
   useLocalRecommendationStore,
 } from '../../../../store/localRecommendation.store';
+import { useAuthStore } from '../../../../store/auth.store';
 import eventThumbnail from '../assets/event-thumbnail.png';
 import {
   buildCourseRequest,
@@ -207,7 +208,11 @@ export function useVisitOrderSelection() {
         // 그 요청이 이동 직후 렌더링과 겹치면 잠깐 예전 데이터가 보이거나
         // 안 바뀐 것처럼 남을 수 있어 이동 전에 직접 새로 받아 채워 둔다.
         await queryClient.fetchQuery({
-          queryKey: ['localCourseDetail', currentDraft.editingCourseId],
+          queryKey: [
+            'localCourseDetail',
+            useAuthStore.getState().authGeneration,
+            currentDraft.editingCourseId,
+          ],
           queryFn: () =>
             getCourseDetail(currentDraft.editingCourseId as number),
         });

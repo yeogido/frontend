@@ -18,6 +18,7 @@ import { createLocalRecommendation } from '../../../../apis/localRecommendations
 import { useToast } from '../../../../components/toast';
 import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
+import { useAuthStore } from '../../../../store/auth.store';
 import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
 import { createRouteImage } from '../../../local-recommendation/visit-order-selection/createRouteImage';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
@@ -141,7 +142,7 @@ export function useAdminCourseVisitOrder() {
             return { placeId: place.id, file: place.photoFile };
           }
 
-          if (place.imageSrc) {
+          if (!place.existingImageKey && place.imageSrc) {
             try {
               const file = await fetchImageAsFile(
                 place.imageSrc,
@@ -193,13 +194,6 @@ export function useAdminCourseVisitOrder() {
         travelData = undefined;
       }
 
-      // local-recommendation의 등록/수정 흐름과 동일하게, 경로 이미지
-      // 생성/업로드 실패를 조용히 넘기지 않는다 — 실패하면 아래 throw가
-      // registerMutation의 에러로 그대로 전파돼 등록/수정 자체가 실패로
-      // 처리된다.
-      const routeImage = await createRouteImage(eventsWithImageKeys);
-      const [routeImageKey] = await uploadAdminCourseImages([routeImage]);
-
       const hashtags = await fetchHashtags();
       const hashtagIds = mapTagIdsToHashtagIds(
         keywordTagIds,
@@ -215,7 +209,6 @@ export function useAdminCourseVisitOrder() {
           existingThumbnailKey,
           visitEvents: eventsWithImageKeys,
           thumbnailKey,
-          routeImageKey,
           hashtagIds,
           travelData,
         });
@@ -226,6 +219,9 @@ export function useAdminCourseVisitOrder() {
 
         return updateCourse(editingCourseId, updatePayload);
       }
+
+      const routeImage = await createRouteImage(eventsWithImageKeys);
+      const [routeImageKey] = await uploadAdminCourseImages([routeImage]);
 
       const payload = buildAdminCourseRequest({
         region,
@@ -264,7 +260,11 @@ export function useAdminCourseVisitOrder() {
         // 남는 것처럼 보일 수 있어, 이동하기 전에 새 데이터를 직접
         // 받아서 캐시에 채워 넣는다.
         await queryClient.fetchQuery({
-          queryKey: ['yeogidoCourseDetail', editingCourseId],
+          queryKey: [
+            'yeogidoCourseDetail',
+            useAuthStore.getState().authGeneration,
+            editingCourseId,
+          ],
           queryFn: () => getCourseDetail(editingCourseId),
         });
       }
@@ -302,7 +302,9 @@ export function useAdminCourseVisitOrder() {
     handleSubmit,
     isSubmitting: registerMutation.isPending,
     submitError: registerMutation.error
-      ? getApiErrorMessage(registerMutation.error, REGISTER_ERROR_MESSAGE)
+      ? registerMutation.error instanceof Error
+        ? registerMutation.error.message
+        : getApiErrorMessage(registerMutation.error, REGISTER_ERROR_MESSAGE)
       : null,
   };
 }
