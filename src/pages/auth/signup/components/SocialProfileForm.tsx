@@ -11,6 +11,8 @@ import { useRegions } from '../../../../hooks/useRegions';
 import { useAuthStore } from '../../../../store/auth.store';
 import type { SocialGender } from '../../../../types/auth.type';
 
+import SelectField from './SelectField';
+
 const genders: { label: string; value: SocialGender }[] = [
   { label: '여성', value: 'FEMALE' },
   { label: '남성', value: 'MALE' },
@@ -174,60 +176,48 @@ function SocialProfileForm({
             </Field>
 
             <Field label="사는 지역" htmlFor="social-signup-region">
-              <SelectField>
-                <select
-                  id="social-signup-region"
-                  value={regionId}
-                  onChange={(event) => setRegionId(event.target.value)}
-                  className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
-                >
-                  <option value="">거주 중인 지역을 선택해 주세요</option>
-                  {(regionsData?.regions ?? []).map((region) => (
-                    <option key={region.regionId} value={region.regionId}>
-                      {region.name}
-                    </option>
-                  ))}
-                </select>
-              </SelectField>
+              <SelectField
+                id="social-signup-region"
+                ariaLabel="사는 지역"
+                value={regionId}
+                onChange={setRegionId}
+                options={[
+                  { value: '', label: '거주 중인 지역을 선택해 주세요' },
+                  ...(regionsData?.regions ?? []).map((region) => ({
+                    value: String(region.regionId),
+                    label: region.name,
+                  })),
+                ]}
+              />
             </Field>
 
             <Field label="성별" htmlFor="social-signup-gender">
-              <SelectField>
-                <select
-                  id="social-signup-gender"
-                  value={gender}
-                  onChange={(event) => setGender(event.target.value)}
-                  className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
-                >
-                  <option value="">성별을 선택해 주세요</option>
-                  {genders.map((genderOption) => (
-                    <option
-                      key={genderOption.value}
-                      value={genderOption.value}
-                    >
-                      {genderOption.label}
-                    </option>
-                  ))}
-                </select>
-              </SelectField>
+              <SelectField
+                id="social-signup-gender"
+                ariaLabel="성별"
+                value={gender}
+                onChange={setGender}
+                options={[
+                  { value: '', label: '성별을 선택해 주세요' },
+                  ...genders.map((genderOption) => ({
+                    value: genderOption.value,
+                    label: genderOption.label,
+                  })),
+                ]}
+              />
             </Field>
 
             <Field label="태어난 연도" htmlFor="social-signup-birth-year">
-              <SelectField>
-                <select
-                  id="social-signup-birth-year"
-                  value={birthYear}
-                  onChange={(event) => setBirthYear(event.target.value)}
-                  className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
-                >
-                  <option value="">태어난 연도를 선택해 주세요</option>
-                  {BIRTH_YEARS.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </SelectField>
+              <SelectField
+                id="social-signup-birth-year"
+                ariaLabel="태어난 연도"
+                value={birthYear}
+                onChange={setBirthYear}
+                options={[
+                  { value: '', label: '태어난 연도를 선택해 주세요' },
+                  ...BIRTH_YEARS.map((year) => ({ value: year, label: year })),
+                ]}
+              />
             </Field>
           </div>
 
@@ -268,29 +258,6 @@ function Field({
         {label}
       </label>
       {children}
-    </div>
-  );
-}
-
-function SelectField({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative">
-      {children}
-
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 20 20"
-        className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-4"
-        fill="none"
-      >
-        <path
-          d="M5 7.5L10 12.5L15 7.5"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
     </div>
   );
 }

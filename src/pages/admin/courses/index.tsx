@@ -321,7 +321,7 @@ function AdminCoursesPage() {
         <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
           <SectionHeader
             title="인기 추천 코스"
-            actionText="자세히 보기"
+            actionText="전체 보기"
             onActionClick={() => navigate('/admin/courses/popular')}
           />
           <div

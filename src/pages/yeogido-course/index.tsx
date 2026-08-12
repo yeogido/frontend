@@ -26,6 +26,10 @@ import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
+import {
+  toCompanionLabel,
+  toTransportLabel,
+} from '../../utils/courseEnumLabels';
 import type { CourseDurationType } from '../../types/course.type';
 
 const COURSE_REGION_SEARCH_PATH = '/course-region-search';
@@ -374,7 +378,7 @@ function YeogidoCoursePage() {
         <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
           <SectionHeader
             title="인기 추천 코스"
-            actionText="자세히 보기"
+            actionText="전체 보기"
             onActionClick={goToPopularCourses}
           />
 
@@ -396,7 +400,8 @@ function YeogidoCoursePage() {
                       image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={course.region}
+                      secondInfo={toTransportLabel(course.transportType)}
+                      thirdInfo={toCompanionLabel(course.companionType)}
                       tags={toContentTagIds(course.tags)}
                       onClick={() => goToCourseDetail(course.courseId)}
                       onEdit={() => void editCourse(course.courseId)}
@@ -408,7 +413,8 @@ function YeogidoCoursePage() {
                       image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={course.region}
+                      secondInfo={toTransportLabel(course.transportType)}
+                      thirdInfo={toCompanionLabel(course.companionType)}
                       tags={toContentTagIds(course.tags)}
                       liked={getLiked(course.courseId, course.isLiked)}
                       onClick={() => goToCourseDetail(course.courseId)}
