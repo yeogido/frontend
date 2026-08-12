@@ -1,6 +1,5 @@
 interface RecentSearchStorageOptions {
   storageKey: string;
-  fallbackSearches?: readonly string[];
   maxItems?: number;
 }
 
@@ -19,31 +18,27 @@ const limitRecentSearches = (
   maxItems = DEFAULT_RECENT_SEARCH_LIMIT
 ) => getUniqueSearches(searches).slice(0, maxItems);
 
+// 저장된 기록이 없으면 빈 목록으로 시작한다. 예시 검색어를 미리 채워 두면
+// 사용자가 검색한 적 없는 값이 '최근 검색'으로 보인다.
 export const getStoredRecentSearches = ({
   storageKey,
-  fallbackSearches = [],
   maxItems = DEFAULT_RECENT_SEARCH_LIMIT,
 }: RecentSearchStorageOptions) => {
-  const fallbackUniqueSearches = limitRecentSearches(
-    fallbackSearches,
-    maxItems
-  );
-
   if (typeof window === 'undefined') {
-    return fallbackUniqueSearches;
+    return [];
   }
 
   try {
     const storedSearches = window.localStorage.getItem(storageKey);
 
     if (!storedSearches) {
-      return fallbackUniqueSearches;
+      return [];
     }
 
     const parsedSearches: unknown = JSON.parse(storedSearches);
 
     if (!Array.isArray(parsedSearches)) {
-      return fallbackUniqueSearches;
+      return [];
     }
 
     return limitRecentSearches(
@@ -54,7 +49,7 @@ export const getStoredRecentSearches = ({
       maxItems
     );
   } catch {
-    return fallbackUniqueSearches;
+    return [];
   }
 };
 

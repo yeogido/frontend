@@ -2,11 +2,11 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { IoChevronDown } from 'react-icons/io5';
 
-import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
   courseReviewSortOptions,
   type CourseReviewSort,
-} from './courseReviewSort';
+} from '../constants/courseReviewSort';
 
 interface CourseReviewSortDropdownProps {
   readonly value: CourseReviewSort;
