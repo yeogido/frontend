@@ -145,24 +145,82 @@ test('excludes special and metropolitan city districts from travel map selection
   );
 });
 
+// GET /regions 응답 형태. 백엔드가 ID를 재부여해도 이 목록만 따라가면 된다.
+const TOP_LEVEL_REGIONS = [
+  { regionId: 1, name: '서울', imageUrl: null },
+  { regionId: 2, name: '부산', imageUrl: null },
+  { regionId: 4, name: '광주', imageUrl: null },
+];
+
 test('normalizes a selected popular metropolitan district to its parent region', () => {
   assert.deepEqual(
-    normalizeTravelMapSelectedRegion({
-      id: '34',
-      regionId: 34,
-      name: '중구',
-      province: '부산광역시 중구',
-      selectionName: '중구',
-      imageSrc: 'busan-junggu.jpg',
-    }),
+    normalizeTravelMapSelectedRegion(
+      {
+        id: '34',
+        regionId: 34,
+        name: '중구',
+        province: '부산광역시 중구',
+        selectionName: '중구',
+        imageSrc: 'busan-junggu.jpg',
+      },
+      TOP_LEVEL_REGIONS,
+    ),
     {
-      id: '27',
-      regionId: 27,
+      id: '2',
+      regionId: 2,
       name: '부산',
       province: '부산광역시',
       selectionName: '부산',
       imageSrc: 'busan-junggu.jpg',
     },
+  );
+});
+
+test('takes the parent region id from the API list, never a hardcoded table', () => {
+  // 광주를 옛 하드코딩 값(54)으로 저장하면 현재 체계에서 부산 수영구가 된다.
+  const gwangjuDistrict = {
+    id: '99',
+    regionId: 99,
+    name: '동구',
+    province: '광주광역시 동구',
+    selectionName: '동구',
+  };
+
+  assert.equal(
+    normalizeTravelMapSelectedRegion(gwangjuDistrict, TOP_LEVEL_REGIONS)
+      .regionId,
+    4,
+  );
+});
+
+test('keeps a metropolitan city itself unchanged', () => {
+  const gwangju = {
+    id: '4',
+    regionId: 4,
+    name: '광주',
+    province: '광주광역시',
+    selectionName: '광주',
+  };
+
+  assert.deepEqual(
+    normalizeTravelMapSelectedRegion(gwangju, TOP_LEVEL_REGIONS),
+    gwangju,
+  );
+});
+
+test('keeps the selection unchanged while the region list is unavailable', () => {
+  // 목록을 못 받았는데 추측한 id로 저장하면 엉뚱한 지역에 기록이 남는다.
+  const busanDistrict = {
+    id: '34',
+    regionId: 34,
+    name: '중구',
+    province: '부산광역시 중구',
+    selectionName: '중구',
+  };
+
+  assert.deepEqual(
+    normalizeTravelMapSelectedRegion(busanDistrict, []),
+    busanDistrict,
   );
 });
 
@@ -176,7 +234,7 @@ test('excludes 울산 districts from selection even without a parent region id',
   assert.equal(isTravelMapSelectableRegion({ fullName: '울산광역시' }), true);
 });
 
-test('keeps a region unchanged when its metropolitan parent has no region id', () => {
+test('keeps a region unchanged when its metropolitan parent is not in the list', () => {
   const ulsanDistrict = {
     id: '900',
     regionId: 900,
@@ -186,7 +244,10 @@ test('keeps a region unchanged when its metropolitan parent has no region id', (
     imageSrc: '',
   };
 
-  assert.deepEqual(normalizeTravelMapSelectedRegion(ulsanDistrict), ulsanDistrict);
+  assert.deepEqual(
+    normalizeTravelMapSelectedRegion(ulsanDistrict, TOP_LEVEL_REGIONS),
+    ulsanDistrict,
+  );
 });
 
 test('maps a travel record summary cover image URL to the folder photo', () => {
