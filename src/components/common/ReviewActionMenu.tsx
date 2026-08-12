@@ -21,6 +21,8 @@ export interface ReviewActionMenuProps {
   onDeleteClick?: () => void;
   /** 카드마다 버튼이 놓이는 자리가 달라 트리거 배치는 밖에서 정한다. */
   triggerClassName?: string;
+  /** 기본 20px. 히어로 이미지 위처럼 더 크게 보여야 하는 자리에서 넘긴다. */
+  triggerSize?: number;
   /** 카드 종류마다 스크린리더 안내를 다르게 하려면 넘긴다. */
   ariaLabel?: string;
 }
@@ -36,6 +38,7 @@ function ReviewActionMenu({
   showEdit = false,
   onDeleteClick,
   triggerClassName = '-mt-[3px] -mr-[3px] ml-2',
+  triggerSize = TRIGGER_SIZE,
   ariaLabel = '리뷰 메뉴',
 }: ReviewActionMenuProps) {
   const scale = useGlobalScale();
@@ -151,13 +154,13 @@ function ReviewActionMenu({
           setIsOpen((current) => !current);
         }}
         className={`flex shrink-0 items-center justify-center ${triggerClassName}`}
-        style={{ width: TRIGGER_SIZE, height: TRIGGER_SIZE }}
+        style={{ width: triggerSize, height: triggerSize }}
       >
         <img
           src={more}
           alt=""
           aria-hidden="true"
-          style={{ width: TRIGGER_SIZE, height: TRIGGER_SIZE }}
+          style={{ width: triggerSize, height: triggerSize }}
         />
       </button>
 

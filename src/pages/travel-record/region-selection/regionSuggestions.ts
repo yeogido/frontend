@@ -2,14 +2,12 @@ const normalizeRegionSearchText = (text: string) => text.replace(/\s/g, '');
 
 interface GetTravelRecordRegionSuggestionsParams {
   query: string;
-  popularRegions: readonly { selectionName: string }[];
   searchedRegions: readonly { selectionName: string }[];
   selectedRegion: unknown;
 }
 
 export const getTravelRecordRegionSuggestions = ({
   query,
-  popularRegions,
   searchedRegions,
   selectedRegion,
 }: GetTravelRecordRegionSuggestionsParams) => {
@@ -19,12 +17,9 @@ export const getTravelRecordRegionSuggestions = ({
     return [];
   }
 
-  const suggestionSource =
-    searchedRegions.length > 0 ? searchedRegions : popularRegions;
-
   return Array.from(
     new Set(
-      suggestionSource
+      searchedRegions
         .map((region) => region.selectionName)
         .filter((suggestion) =>
           normalizeRegionSearchText(suggestion).includes(normalizedQuery),

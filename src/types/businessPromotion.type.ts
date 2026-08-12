@@ -32,6 +32,8 @@ export interface BusinessPromotionItem {
   hashtags: string[];
   author: BusinessPromotionAuthor;
   likeCount: number;
+  // 로그인 사용자가 작성한 홍보글 여부. 비로그인 요청 시 false(스웨거 확인 완료).
+  isMine: boolean;
   isLiked: boolean;
   createdAt: string;
 }
@@ -55,7 +57,10 @@ export interface BusinessPromotionBusinessHour {
   closeTime: string;
 }
 
+// 스웨거 기준: ImageInfo. imageKey는 화면에 노출하진 않지만, 수정(PATCH)
+// 화면에서 기존 이미지를 그대로 images 배열에 다시 실어 보낼 때 필요하다.
 export interface BusinessPromotionImage {
+  imageKey: string;
   imageUrl: string;
   sortOrder: number;
 }
@@ -70,7 +75,6 @@ export interface BusinessPromotionDetailResponse {
   place: BusinessPromotionPlace;
   promotionCategory: string;
   shortDescription: string;
-  ownerComment: string;
   businessHours: BusinessPromotionBusinessHour[];
   snsAccount: string;
   phoneNumber: string;
@@ -78,6 +82,8 @@ export interface BusinessPromotionDetailResponse {
   images: BusinessPromotionImage[];
   author: BusinessPromotionAuthor;
   likeCount: number;
+  // 로그인 사용자가 작성한 홍보글 여부. 비로그인 요청 시 false(스웨거 확인 완료).
+  isMine: boolean;
   isLiked: boolean;
   createdAt: string;
   updatedAt: string;
@@ -107,12 +113,13 @@ export interface BusinessPromotionImageRequest {
 // businessInfoId는 GET /users/me/businesses(BusinessInfoResponse.businessInfoId)로
 // 받아온, 인증 완료된 내 사업장 ID다 — place 검색 결과의 placeId가 아니다.
 // hashtagIds도 라벨 문자열이 아니라 ID 배열이다.
-// 필수: businessInfoId, shortDescription, ownerComment, businessHours(1개 이상),
+// ownerComment는 회의 결정으로 shortDescription과 통합되며 스펙에서 삭제됐다
+// (기획 결론 — shortDescription 하나로 정리).
+// 필수: businessInfoId, shortDescription, businessHours(1개 이상),
 // phoneNumber, promotionCategory, images(1~5개). snsAccount·hashtagIds는 선택.
 export interface BusinessPromotionCreateRequest {
   businessInfoId: number;
   shortDescription: string;
-  ownerComment: string;
   businessHours: BusinessPromotionHourRequest[];
   snsAccount?: string;
   phoneNumber: string;
@@ -123,5 +130,29 @@ export interface BusinessPromotionCreateRequest {
 
 // 스웨거 기준: BusinessRegisterResDTO
 export interface BusinessPromotionCreateResponse {
+  promotionId: number;
+}
+
+// 스웨거 기준: BusinessUpdateReqDTO (PATCH /business-promotions/{id}).
+// 등록 요청(BusinessRegisterReqDTO)과 달리 businessInfoId(장소)와
+// ownerComment는 이 스키마에 아예 없다 — 둘 다 수정 API로는 못 바꾼다.
+// 그 외 필드는 전부 선택이라 보낸 필드만 부분 수정되고, businessHours·
+// hashtagIds·images는 보내는 순간 배열 전체가 교체된다(부분 추가/삭제 아님).
+// snsAccount를 완전히 지우고 싶을 땐 snsAccount를 아예 안 보내고
+// clearSnsAccount: true만 보낸다 — 스웨거엔 없지만 실제로는 둘을 같이
+// 보내면 COMMON4001로 거부된다(백엔드 확인).
+export interface BusinessPromotionUpdateRequest {
+  shortDescription?: string;
+  businessHours?: BusinessPromotionHourRequest[];
+  snsAccount?: string;
+  clearSnsAccount?: boolean;
+  phoneNumber?: string;
+  hashtagIds?: number[];
+  promotionCategory?: BusinessPromotionCategoryParam;
+  images?: BusinessPromotionImageRequest[];
+}
+
+// 스웨거 기준: BusinessUpdateResDTO
+export interface BusinessPromotionUpdateResponse {
   promotionId: number;
 }

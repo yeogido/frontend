@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AdvertisementCard,
@@ -21,6 +21,8 @@ const DOT_GAP = 4;
 const DOT_SIZE = 4;
 const DOT_ACTIVE_WIDTH = 20;
 const DOT_RADIUS = 100;
+
+const BANNER_ROTATE_INTERVAL_MS = 2000;
 
 const banners = [
   {
@@ -79,8 +81,8 @@ function AdvertisementSection() {
             container.scrollLeft,
             itemWidth,
             scale,
-            banners.length,
-          ),
+            banners.length
+          )
         );
       });
     };
@@ -94,19 +96,36 @@ function AdvertisementSection() {
     };
   }, [scale]);
 
-  const scrollToIndex = (index: number) => {
-    const container = scrollRef.current;
+  const scrollToIndex = useCallback(
+    (index: number) => {
+      const container = scrollRef.current;
 
-    if (!container) {
+      if (!container) {
+        return;
+      }
+
+      container.scrollTo({
+        left: (container.clientWidth + HOME_CAROUSEL_CARD_GAP * scale) * index,
+        behavior: 'smooth',
+      });
+    },
+    [scale]
+  );
+
+  // activeIndex는 스크롤 위치로부터 파생되므로, 이걸 의존성에 두면 사용자가
+  // 직접 스와이프했을 때도 타이머가 그 시점부터 다시 2초를 세게 되어
+  // 자동 전환과 수동 스와이프가 서로 어긋나지 않는다.
+  useEffect(() => {
+    if (isLoading || banners.length <= 1) {
       return;
     }
 
-    container.scrollTo({
-      left:
-        (container.clientWidth + HOME_CAROUSEL_CARD_GAP * scale) * index,
-      behavior: 'smooth',
-    });
-  };
+    const timer = setInterval(() => {
+      scrollToIndex((activeIndex + 1) % banners.length);
+    }, BANNER_ROTATE_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [activeIndex, isLoading, scrollToIndex]);
 
   return (
     <section
@@ -123,7 +142,7 @@ function AdvertisementSection() {
         {/* Carousel: 카드 1개가 화면을 꽉 채우며 스와이프로 다음 카드로 스냅 이동 */}
         <div
           ref={scrollRef}
-          className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
+          className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto"
           style={{ gap: HOME_CAROUSEL_CARD_GAP * scale }}
         >
           {isLoading ? (
@@ -170,8 +189,7 @@ function AdvertisementSection() {
                   borderRadius: DOT_RADIUS,
                   backgroundColor:
                     index === activeIndex ? '#FF6F41' : '#A1A1A1',
-                  transition:
-                    'width 0.2s ease, background-color 0.2s ease',
+                  transition: 'width 0.2s ease, background-color 0.2s ease',
                 }}
               />
             ))}

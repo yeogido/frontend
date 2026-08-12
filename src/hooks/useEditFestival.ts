@@ -24,6 +24,9 @@ export function useEditFestival() {
   const setPlaceSource = useAdminEventRegistrationStore(
     (state) => state.setPlaceSource
   );
+  const setOriginalPlaceKey = useAdminEventRegistrationStore(
+    (state) => state.setOriginalPlaceKey
+  );
   const setBasicInfo = useAdminEventRegistrationStore(
     (state) => state.setBasicInfo
   );
@@ -63,10 +66,13 @@ export function useEditFestival() {
           latitude: detail.place.latitude,
           longitude: detail.place.longitude,
         });
-        setPlaceSource(detail.place.source ?? 'KAKAO');
+        const source = detail.place.source ?? 'KAKAO';
+        setPlaceSource(source);
+        setOriginalPlaceKey(`${source}:${detail.place.externalPlaceId}`);
       } else {
         setPlace(null);
         setPlaceSource('KAKAO');
+        setOriginalPlaceKey(null);
       }
 
       const thumbnailUrl = detail.thumbnailImage ?? detail.thumbnailImageUrl;
@@ -78,10 +84,16 @@ export function useEditFestival() {
       setBasicInfo({
         placeName: detail.title,
         placeIntro: detail.description,
-        startDate: detail.startDate,
-        endDate: detail.endDate,
+        // 상세 조회는 날짜를 "2026.09.11"처럼 점으로 내려주는데,
+        // EventDateGroup은 "YYYY-MM-DD"(대시)로 split해서 연/월/일
+        // 드롭다운을 채운다 — 그대로 넘기면 세 칸 다 비어 보인다.
+        startDate: detail.startDate.replace(/\./g, '-'),
+        endDate: detail.endDate.replace(/\./g, '-'),
         phone: detail.phone,
-        homepage: detail.officialUrl,
+        // 홈페이지 칸 하나로 다 담을 수 없는 타입(인스타그램 등)도 있어서
+        // 있는 그대로 넘긴다 — basic-info 화면이 전부 보여주고, 그대로
+        // 안 건드리면 그대로 다시 제출돼 조용히 지워지지 않는다.
+        officialLinks: detail.officialLinks,
       });
       setKeywordTagIds(toContentTagIds(detail.hashtags));
       setEditingContentId(contentId);

@@ -281,15 +281,6 @@ function TravelRecordDetailPage() {
     };
   };
 
-  const handleShare = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      showToast('여행 기록 주소를 복사했어요.');
-    } catch {
-      showToast('주소를 복사하지 못했어요.');
-    }
-  };
-
   const handleEdit = async () => {
     if (!travelRecordId) {
       return;
@@ -403,7 +394,6 @@ function TravelRecordDetailPage() {
               {[
                 { label: '수정', onClick: () => void handleEdit() },
                 { label: '삭제', onClick: () => setIsDeleteDialogOpen(true) },
-                { label: '공유', onClick: () => void handleShare() },
               ].map(({ label, onClick }) => (
                 <button
                   key={label}

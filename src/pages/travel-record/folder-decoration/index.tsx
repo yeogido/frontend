@@ -98,6 +98,7 @@ function TravelRecordFolderDecorationPage() {
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
   const editSession = useTravelRecordSessionStore((state) => state.editSession);
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
+  const setListView = useTravelRecordSessionStore((state) => state.setListView);
   // 다른 기록의 편집 세션이 남아 있을 수 있고, 저장 후 뒤로가기로 되돌아오면
   // 세션이 이미 비워져 있다. id가 일치할 때만 서버 상태를 복원한 것으로 본다.
   const restoredEditSession =
@@ -381,6 +382,9 @@ function TravelRecordFolderDecorationPage() {
       await clearPhotoDraftAfterTravelRecordSave(clearTravelRecordPhotoDraft);
       clearEdit();
       showToast('여행 기록이 저장되었어요.');
+      // 방금 만든 폴더를 강조해 보여 주는 자리는 폴더 목록이라, 지도를 보던
+      // 중에 저장했더라도 저장 직후에는 폴더 탭으로 돌려보낸다.
+      setListView('folder');
       navigate('/travel-record', {
         state: {
           savedTravelRecordId: result.id,
