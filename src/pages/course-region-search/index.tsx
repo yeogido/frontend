@@ -29,7 +29,6 @@ function CourseRegionSearchPage() {
     selectedCity,
     selectedCityId,
     selectedDistrict,
-    selectedParentDistrict,
     visibleDistricts,
     searchLabel,
     searchPlaceholder,
@@ -106,7 +105,6 @@ function CourseRegionSearchPage() {
             <DistrictSelectionSection
               districts={visibleDistricts}
               selectedDistrict={selectedDistrict}
-              parentDistrictName={selectedParentDistrict?.name}
               onSelect={selectDistrict}
             />
           ) : null}

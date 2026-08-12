@@ -1,13 +1,8 @@
-export const getAllRegionRecentSearch = (
-  cityName: string,
-  parentRegionName?: string
-) => parentRegionName ?? cityName;
-
+// 지역 API가 시/도 → 시·군·구 2단계뿐이라 최근 검색어도 두 토큰까지만 만든다.
 export const getSubRegionRecentSearch = (
   cityName: string,
-  parentRegionNames: readonly string[],
   districtName: string
-) => [cityName, ...parentRegionNames, districtName].join(' ');
+) => `${cityName} ${districtName}`;
 
 interface CityNameOption {
   name: string;
