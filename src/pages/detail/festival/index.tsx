@@ -73,6 +73,15 @@ const MAP_FALLBACK_HEIGHT = 342;
 const MAP_FALLBACK_RADIUS = 12;
 const MAP_FALLBACK_FONT_SIZE = 14;
 
+// 상세 응답엔 목록 API의 regionName 같은 필드가 없다(코스 상세와 동일한
+// 이유 — mappers/courseApiDetailMapper.ts의 deriveRegionFromCourseItems
+// 참고). place.name은 장소명이라 관광공사 동기화 콘텐츠는 행사 제목과
+// 같은 값이 오는 경우가 있어("최근 본 행사" 카드에 행사 제목이 위치처럼
+// 뜨던 원인) 대신 도로명 주소에서 시/도+구·군을 뽑아 쓴다.
+function deriveRegionFromAddress(address: string | undefined): string {
+  return address?.split(' ').slice(0, 2).join(' ') ?? '';
+}
+
 function isNormalizedApiError(error: unknown): error is NormalizedApiError {
   return (
     typeof error === 'object' &&
@@ -161,7 +170,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
       title: content.title,
       thumbnailImageUrl:
         content.thumbnailImageUrl ?? content.thumbnailImage ?? '',
-      regionName: content.place.name,
+      regionName: deriveRegionFromAddress(content.place.roadAddress),
       hashtags: content.hashtags,
       startDate: content.startDate,
       endDate: content.endDate,
