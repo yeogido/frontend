@@ -5,7 +5,10 @@ import {
   getCourseRegionCityOptions,
   isNationwideCity,
 } from '../src/pages/course-region-search/utils/citySelection.ts';
-import { getNationwideSearchPath } from '../src/pages/course-region-search/constants/searchTargets.ts';
+import {
+  getNationwideSearchPagePath,
+  getNationwideSearchPath,
+} from '../src/pages/course-region-search/constants/searchTargets.ts';
 
 test('prepends the nationwide option before city options', () => {
   const cities = [
@@ -28,4 +31,11 @@ test('uses each search target default page for a nationwide selection', () => {
   assert.equal(getNationwideSearchPath('home'), '/yeogido-course');
   assert.equal(getNationwideSearchPath('local-course'), '/local-course');
   assert.equal(getNationwideSearchPath('festival'), '/festival/search');
+});
+
+test('uses each target search page for the pinned nationwide search action', () => {
+  assert.equal(getNationwideSearchPagePath('course'), '/yeogido-course/search');
+  assert.equal(getNationwideSearchPagePath('home'), '/yeogido-course/search');
+  assert.equal(getNationwideSearchPagePath('local-course'), '/local-course/search');
+  assert.equal(getNationwideSearchPagePath('festival'), '/festival/search');
 });

@@ -23,6 +23,10 @@ export interface SearchBarProps {
   suggestions?: readonly string[];
   noResultsText?: string;
   hideEmptySuggestions?: boolean;
+  pinnedSuggestion?: {
+    label: string;
+    onSelect: () => void;
+  };
   className?: string;
   onSearch?: (query: string) => void;
   onQueryChange?: (query: string) => void;
@@ -35,6 +39,7 @@ function SearchBar({
   suggestions = [],
   noResultsText = '검색 결과가 없습니다',
   hideEmptySuggestions = false,
+  pinnedSuggestion,
   className = '',
   onSearch,
   onQueryChange,
@@ -51,6 +56,7 @@ function SearchBar({
   });
   const [isOpen, setIsOpen] = useState(false);
   const hasSuggestions = suggestions.length > 0;
+  const hasMenuItems = hasSuggestions || pinnedSuggestion !== undefined;
   const query =
     queryState.source === initialQuery ? queryState.value : initialQuery;
 
@@ -113,7 +119,7 @@ function SearchBar({
   };
 
   const handleFocus = () => {
-    if (hasSuggestions) {
+    if (hasMenuItems) {
       setIsOpen(true);
     }
   };
@@ -177,31 +183,51 @@ function SearchBar({
                 updateQuery(nextQuery);
                 onQueryChange?.(nextQuery);
 
-                if (hasSuggestions) {
+                if (hasMenuItems) {
                   setIsOpen(true);
                 }
               }}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              role={hasSuggestions ? 'combobox' : undefined}
-              aria-controls={hasSuggestions ? listboxId : undefined}
-              aria-expanded={hasSuggestions ? isOpen : undefined}
-              aria-autocomplete={hasSuggestions ? 'list' : undefined}
+              role={hasMenuItems ? 'combobox' : undefined}
+              aria-controls={hasMenuItems ? listboxId : undefined}
+              aria-expanded={hasMenuItems ? isOpen : undefined}
+              aria-autocomplete={hasMenuItems ? 'list' : undefined}
               className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[12px] leading-normal font-medium outline-none"
             />
           </div>
-          {hasSuggestions &&
+          {hasMenuItems &&
           isOpen &&
-          (filteredSuggestions.length > 0 || !hideEmptySuggestions) ? (
+          (pinnedSuggestion ||
+            filteredSuggestions.length > 0 ||
+            !hideEmptySuggestions) ? (
             <div
               id={listboxId}
               role="listbox"
               aria-label="검색어 추천 목록"
               className="absolute top-[53px] left-0 z-[100] flex w-full flex-col"
             >
+              {pinnedSuggestion ? (
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected="false"
+                  onClick={() => {
+                    setIsOpen(false);
+                    pinnedSuggestion.onSelect();
+                  }}
+                  className={`border-gray-2 bg-pure-white text-main-5 relative h-[47px] w-full border px-[34px] text-left text-[12px] leading-none font-medium whitespace-nowrap ${
+                    filteredSuggestions.length > 0 || !hideEmptySuggestions
+                      ? 'rounded-t-xl'
+                      : 'rounded-xl'
+                  }`}
+                >
+                  {pinnedSuggestion.label}
+                </button>
+              ) : null}
               {filteredSuggestions.length > 0 ? (
                 filteredSuggestions.map((suggestion, index) => {
-                  const isFirst = index === 0;
+                  const isFirst = index === 0 && !pinnedSuggestion;
                   const isLast = index === filteredSuggestions.length - 1;
                   const optionRadius =
                     isFirst && isLast
@@ -220,22 +246,24 @@ function SearchBar({
                       aria-selected={query === suggestion}
                       onClick={() => handleSuggestionSelect(suggestion)}
                       className={`border-gray-2 bg-pure-white text-gray-4 relative h-[47px] w-full border px-[34px] text-left text-[12px] leading-none font-medium whitespace-nowrap ${optionRadius} ${
-                        index > 0 ? '-mt-px' : ''
+                        index > 0 || pinnedSuggestion ? '-mt-px' : ''
                       }`}
                     >
                       {suggestion}
                     </button>
                   );
                 })
-              ) : (
+              ) : !hideEmptySuggestions ? (
                 <div
                   role="option"
                   aria-selected="false"
-                  className="border-gray-2 bg-pure-white text-gray-4 flex h-[47px] w-full items-center rounded-xl border px-[34px] text-[12px] leading-none font-medium whitespace-nowrap"
+                  className={`border-gray-2 bg-pure-white text-gray-4 flex h-[47px] w-full items-center border px-[34px] text-[12px] leading-none font-medium whitespace-nowrap ${
+                    pinnedSuggestion ? 'rounded-b-xl -mt-px' : 'rounded-xl'
+                  }`}
                 >
                   {noResultsText}
                 </div>
-              )}
+              ) : null}
             </div>
           ) : null}{' '}
         </form>

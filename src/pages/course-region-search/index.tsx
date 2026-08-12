@@ -36,6 +36,7 @@ function CourseRegionSearchPage() {
     clearRecentSearches,
     removeRecentSearch,
     selectCity,
+    selectNationwideSearch,
     selectDistrict,
     selectRecentSearch,
     submitSearch,
@@ -58,6 +59,10 @@ function CourseRegionSearchPage() {
             placeholder={searchPlaceholder}
             label={searchLabel}
             suggestions={searchSuggestions}
+            pinnedSuggestion={{
+              label: '전국 확인하기',
+              onSelect: selectNationwideSearch,
+            }}
             onSearch={submitSearch}
             onQueryChange={updateSearchQuery}
           />

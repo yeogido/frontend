@@ -137,6 +137,10 @@ function FestivalSearchPage() {
           placeholder="행사명 또는 지역명을 검색해 주세요"
           label="행사명 또는 지역명 검색"
           suggestions={festivalSearchSuggestions}
+          pinnedSuggestion={{
+            label: '전국 확인하기',
+            onSelect: () => navigate('/festival/search'),
+          }}
           onSearch={handleSearch}
         />
 

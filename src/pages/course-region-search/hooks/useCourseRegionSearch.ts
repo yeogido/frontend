@@ -20,6 +20,7 @@ import {
   COURSE_REGION_SEARCH_TARGET_PARAM,
   courseRegionSearchTargets,
   getCourseRegionSearchTarget,
+  getNationwideSearchPagePath,
   getNationwideSearchPath,
 } from '../constants/searchTargets';
 import type { CityOption } from '../types';
@@ -269,6 +270,10 @@ function useCourseRegionSearch() {
     setSelectedDistrict('전체');
   };
 
+  const selectNationwideSearch = () => {
+    navigate(getNationwideSearchPagePath(searchTarget));
+  };
+
   const selectDistrict = async (district: string) => {
     if (!selectedCity) {
       return;
@@ -362,6 +367,7 @@ function useCourseRegionSearch() {
     clearRecentSearches,
     removeRecentSearch,
     selectCity,
+    selectNationwideSearch,
     selectDistrict,
     selectRecentSearch,
     submitSearch,
