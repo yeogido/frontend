@@ -7,13 +7,11 @@ export function ProfileInfoList({
   email,
   region,
   birthYear,
-  isBusinessProfile = false,
 }: {
   scale: number;
   email: string;
   region: string;
   birthYear: string;
-  isBusinessProfile?: boolean;
 }) {
   // '사는지역'은 가입할 때 고른 거주 지역이다. 사업장 주소를 여기에 넣으면
   // 사업장이 여럿일 때 어느 쪽인지도 알 수 없고 의미도 다르다. 사업장 주소는
@@ -23,9 +21,7 @@ export function ProfileInfoList({
     { icon: profileLocation, label: '사는지역', value: region },
     { icon: cake, label: '태어난 연도', value: birthYear },
   ];
-  const visibleProfileInfo = isBusinessProfile
-    ? profileInfo.slice(0, 2)
-    : profileInfo;
+  const visibleProfileInfo = profileInfo;
 
   return (
     <div className="w-full overflow-hidden rounded-xl bg-[#f9f9f9]">
