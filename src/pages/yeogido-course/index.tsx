@@ -22,7 +22,6 @@ import {
 } from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useEditCourse } from '../../hooks/useEditCourse';
-import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
@@ -121,7 +120,6 @@ function YeogidoCoursePage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
   const {
@@ -399,7 +397,7 @@ function YeogidoCoursePage() {
                   <ContentCardSkeleton key={item} />
                 ))
               : popularCoursePreviews.map((course) =>
-                  isAdmin ? (
+                  course.canManage ? (
                     <EditableContentCard
                       key={course.courseId}
                       image={
@@ -483,7 +481,7 @@ function YeogidoCoursePage() {
                   <CourseCard
                     {...course}
                     liked={getLiked(course.id, course.liked)}
-                    canManage={isAdmin}
+                    canManage={course.canManage}
                     showEdit
                     onClick={() => goToCourseDetail(course.id)}
                     onLikeClick={() =>

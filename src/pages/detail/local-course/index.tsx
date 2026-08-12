@@ -52,6 +52,7 @@ function LocalCourseDetailPage() {
   const navigate = useNavigate();
   const { openLoginModal } = useLoginModal();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const parsedCourseId = Number(courseIdParam);
@@ -98,24 +99,17 @@ function LocalCourseDetailPage() {
   }
 
   const handleBack = () => {
-    // history.state.idx는 react-router의 브라우저 히스토리 항목 인덱스라,
-    // 0이면 이 탭에서 처음 들어온 화면(직접 링크로 진입 등)이라 뒤로 갈
-    // 곳이 없다 — 그때만 우리동네 코스 목록으로 대체 이동한다. 그 외에는
-    // 실제로 들어온 경로(코스 검색, 행사에 포함된 코스 등)로 돌아간다.
-    // 대체 이동은 replace로 해서, 이 상세 페이지 항목이 히스토리에 남아
+    // 진입 경로와 무관하게 뒤로가기는 항상 인기 추천 코스 목록으로
+    // 보낸다. replace로 이동해 이 상세 페이지 항목이 히스토리에 남아
     // 브라우저 자체 뒤로가기로 다시 여기로 돌아오는 걸 막는다.
-    if (window.history.state?.idx > 0) {
-      navigate(-1);
-    } else {
-      navigate('/local-course', { replace: true });
-    }
+    navigate('/local-course/popular', { replace: true });
   };
 
   const updateCachedCourseDetail = (
     updater: (courseDetail: CourseDetailResult) => CourseDetailResult
   ) => {
     queryClient.setQueryData<CourseDetailResult>(
-      ['localCourseDetail', courseId],
+      ['localCourseDetail', authGeneration, courseId],
       (current) => (current ? updater(current) : current)
     );
   };

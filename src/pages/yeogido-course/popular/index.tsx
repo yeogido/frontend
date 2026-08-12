@@ -14,7 +14,6 @@ import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditCourse } from '../../../hooks/useEditCourse';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toContentTagIds } from '../../../utils/contentTags';
 import {
   toCompanionLabel,
@@ -88,7 +87,6 @@ function YeogidoCoursePopularPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -107,8 +105,11 @@ function YeogidoCoursePopularPage() {
   } = useYeogidoCourseFilters({ sort: '인기순' });
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
-    useDistanceSortCoordinates();
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
 
   const {
     data,
@@ -212,7 +213,7 @@ function YeogidoCoursePopularPage() {
                 />
               ))
             : popularCourses.map((course) =>
-                isAdmin ? (
+                course.canManage ? (
                   <EditableContentCard
                     key={course.courseId}
                     image={course.routeImageUrl?.trim() || course.thumbnailUrl}

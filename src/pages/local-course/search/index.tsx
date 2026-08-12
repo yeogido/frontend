@@ -12,15 +12,10 @@ import {
 import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import {
-  useCourseDelete,
-  useCourses,
-  useMyCourseIds,
-} from '../../../hooks/useCourses';
+import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import {
   addStoredRecentSearch,
@@ -100,9 +95,6 @@ function LocalCourseSearchPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
-    useMyCourseIds();
-  const isAdmin = useIsAdmin();
   const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -136,8 +128,11 @@ function LocalCourseSearchPage() {
   } = useLocalCourseFilters();
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
-    useDistanceSortCoordinates();
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
 
   const {
     data,
@@ -273,7 +268,7 @@ function LocalCourseSearchPage() {
               rowGap: LIST_GAP * scale,
             }}
           >
-            {isPending || isMyCourseIdsPending
+            {isPending
               ? LOCAL_COURSE_SKELETON_ITEMS.map((item) => (
                   <ContentCardSkeleton
                     key={item}
@@ -282,10 +277,12 @@ function LocalCourseSearchPage() {
                   />
                 ))
               : courses.map((course) =>
-                  isAdmin || myCourseIds.has(course.courseId) ? (
+                  course.canManage ? (
                     <EditableContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={toTransportLabel(course.transportType)}
@@ -299,7 +296,9 @@ function LocalCourseSearchPage() {
                   ) : (
                     <ContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={toTransportLabel(course.transportType)}

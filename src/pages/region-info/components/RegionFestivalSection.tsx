@@ -13,7 +13,6 @@ import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useEditFestival } from '../../../hooks/useEditFestival';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 
@@ -46,7 +45,6 @@ function RegionFestivalSection({
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useContentLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
 
@@ -103,7 +101,7 @@ function RegionFestivalSection({
                 </>
               ) : (
                 festivals.map((festival) =>
-                  isAdmin ? (
+                  festival.canManage ? (
                     <EditableContentCard
                       key={festival.contentId}
                       image={festival.thumbnailImageUrl}

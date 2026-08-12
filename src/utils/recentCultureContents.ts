@@ -1,4 +1,5 @@
 import type { RecentCultureContent } from '../types/content.type';
+import { useAuthStore } from '../store/auth.store';
 
 export const RECENT_CULTURE_CONTENTS_STORAGE_KEY = 'recent-culture-contents';
 export const MAX_RECENT_CULTURE_CONTENTS = 10;
@@ -12,6 +13,14 @@ export const RECENT_CULTURE_CONTENTS_UPDATED_EVENT =
 function notifyRecentCultureContentsUpdated(): void {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new Event(RECENT_CULTURE_CONTENTS_UPDATED_EVENT));
+}
+
+function getStorageKey(): string {
+  const userId = useAuthStore.getState().userId;
+
+  return userId === null
+    ? RECENT_CULTURE_CONTENTS_STORAGE_KEY
+    : `${RECENT_CULTURE_CONTENTS_STORAGE_KEY}:${userId}`;
 }
 
 export function upsertRecentCultureContent(
@@ -41,19 +50,28 @@ function getStoredRecentCultureContentsRaw(): RecentCultureContent[] {
   if (typeof window === 'undefined') return [];
 
   try {
-    const storedContents = window.localStorage.getItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY
-    );
+    const storageKey = getStorageKey();
+    const storedContents =
+      window.localStorage.getItem(storageKey) ??
+      (storageKey === RECENT_CULTURE_CONTENTS_STORAGE_KEY
+        ? null
+        : window.localStorage.getItem(RECENT_CULTURE_CONTENTS_STORAGE_KEY));
 
     if (!storedContents) return [];
 
     const parsedContents: unknown = JSON.parse(storedContents);
 
-    return Array.isArray(parsedContents)
+    const contents = Array.isArray(parsedContents)
       ? parsedContents
-          .filter(isRecentCultureContent)
+          .flatMap(toRecentCultureContent)
           .slice(0, MAX_RECENT_CULTURE_CONTENTS)
       : [];
+
+    if (contents.length > 0) {
+      window.localStorage.setItem(storageKey, JSON.stringify(contents));
+    }
+
+    return contents;
   } catch {
     return [];
   }
@@ -77,7 +95,7 @@ export function saveRecentCultureContent(content: RecentCultureContent): void {
     );
 
     window.localStorage.setItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      getStorageKey(),
       JSON.stringify(contents)
     );
     notifyRecentCultureContentsUpdated();
@@ -99,7 +117,7 @@ export function removeRecentCultureContent(contentId: number): void {
     );
 
     window.localStorage.setItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      getStorageKey(),
       JSON.stringify(updatedContents)
     );
     notifyRecentCultureContentsUpdated();
@@ -124,7 +142,7 @@ export function updateRecentCultureContentLikeState(
     );
 
     window.localStorage.setItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      getStorageKey(),
       JSON.stringify(updatedContents)
     );
     notifyRecentCultureContentsUpdated();
@@ -149,13 +167,25 @@ export function clearRecentCultureContentsLikedState(): void {
     }));
 
     window.localStorage.setItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      getStorageKey(),
       JSON.stringify(updatedContents)
     );
     notifyRecentCultureContentsUpdated();
   } catch {
     return;
   }
+}
+
+function toRecentCultureContent(value: unknown): RecentCultureContent[] {
+  if (!isRecentCultureContent(value)) return [];
+
+  const content = { ...(value as RecentCultureContent) } as Record<
+    string,
+    unknown
+  >;
+  delete content.canManage;
+
+  return [content as unknown as RecentCultureContent];
 }
 
 function isRecentCultureContent(value: unknown): value is RecentCultureContent {

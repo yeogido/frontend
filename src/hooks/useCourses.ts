@@ -10,11 +10,10 @@ import {
 
 import { getApiErrorMessage } from '../apis/common';
 import { useToast } from '../components/toast';
-import { collectMyCourseIds } from '../utils/collectMyCourseIds';
+import { useAuthStore } from '../store/auth.store';
 import { removeRecentCourse } from '../utils/recentCourses';
 import { buildCourseDetailPath } from '../utils/routes';
 import type { CourseDetailNavigationState } from '../utils/reviewNavigation';
-import { useAuth } from './useAuth';
 
 import {
   getCourses,
@@ -29,7 +28,6 @@ import {
 } from '../apis/courses';
 import type { CourseDetailResult, CourseSummaryResult } from '../apis/courses';
 import type { NormalizedApiError } from '../apis/common';
-import { getMyPosts } from '../apis/users.api';
 import type {
   Course,
   GetCoursesParams,
@@ -52,14 +50,16 @@ export function useCourses(
   params: GetCoursesParams,
   options?: { enabled?: boolean }
 ) {
+  const authGeneration = useAuthStore((state) => state.authGeneration);
+
   return useInfiniteQuery<
     GetCoursesResponse,
     NormalizedApiError,
     InfiniteData<GetCoursesResponse, CoursesPageParam>,
-    [string, GetCoursesParams],
+    [string, number, GetCoursesParams],
     CoursesPageParam
   >({
-    queryKey: ['courses', params],
+    queryKey: ['courses', authGeneration, params],
     queryFn: ({ pageParam }) =>
       getCourses({
         ...params,
@@ -101,49 +101,6 @@ export function useRecommendedCourses() {
     queryKey: ['recommendedCourses'],
     queryFn: getRecommendedCourses,
   });
-}
-
-const MY_POSTS_PAGE_SIZE = 50;
-
-const EMPTY_COURSE_IDS: ReadonlySet<number> = new Set();
-
-/**
- * 내가 쓴 코스의 ID 집합 — useMyReviewIds와 같은 이유(작성자 식별자가
- * 응답에 없다)로 내 게시물 목록에서 코스만 받아 ID로 대조한다.
- */
-export interface MyCourseIdsResult {
-  courseIds: ReadonlySet<number>;
-  /** true인 동안은 아직 소유권을 모르는 상태다 — 이 값으로 판단해야 하는
-   * 액션(수정 메뉴/좋아요)을 확정 전에 성급하게 그리면 안 된다. */
-  isPending: boolean;
-}
-
-export function useMyCourseIds(): MyCourseIdsResult {
-  const { isAuthenticated, userId } = useAuth();
-
-  const { data, isPending } = useQuery({
-    // userId를 키에 넣어야, 로그아웃 후 다른 계정으로 로그인해도 이전
-    // 세션의 캐시를 그대로 재사용하지 않는다.
-    queryKey: ['myCourseIds', userId],
-    queryFn: () =>
-      collectMyCourseIds((cursorId) =>
-        getMyPosts({
-          category: 'COURSE',
-          size: MY_POSTS_PAGE_SIZE,
-          cursorId,
-        })
-      ),
-    enabled: isAuthenticated,
-    staleTime: 1000 * 60,
-  });
-
-  if (!isAuthenticated) {
-    // 쿼리가 비활성화된 채라 isPending이 계속 true로 남아있을 수 있다 —
-    // 비로그인은 "모름"이 아니라 "확정적으로 없음"이라 기다릴 게 없다.
-    return { courseIds: EMPTY_COURSE_IDS, isPending: false };
-  }
-
-  return { courseIds: data ?? EMPTY_COURSE_IDS, isPending };
 }
 
 export function useCourseDelete() {

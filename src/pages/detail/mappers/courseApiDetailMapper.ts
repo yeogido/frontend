@@ -117,6 +117,7 @@ export function mapCourseApiDetailToDto(
     overview: course.description,
     stops: toCourseStops(course),
     reviews: [],
+    canManage: course.canManage,
   };
 }
 
@@ -204,5 +205,6 @@ export function mapCourseApiDetailToCourseSummary(
     companionType: toCanonicalCompanionType(course.companionType),
     tags: course.tags,
     isLiked: course.isLiked,
+    canManage: course.canManage,
   };
 }

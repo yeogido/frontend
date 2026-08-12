@@ -51,9 +51,7 @@ function normalizeOperatingDaysForStorage(
   return operatingDays.map((operatingDay) => ({
     ...operatingDay,
     closeTime:
-      operatingDay.closeTime === '24:00'
-        ? '23:59'
-        : operatingDay.closeTime,
+      operatingDay.closeTime === '24:00' ? '23:59' : operatingDay.closeTime,
   }));
 }
 

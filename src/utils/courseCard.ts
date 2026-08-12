@@ -17,5 +17,6 @@ export function toCourseCardProps(course: Course) {
     companion: toCompanionLabel(course.companionType),
     tags: toContentTagIds(course.tags),
     liked: course.isLiked,
+    canManage: course.canManage,
   };
 }
