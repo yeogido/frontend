@@ -22,8 +22,12 @@ import {
   getPopularLocalCourses,
   getRecommendedCourses,
 } from '../apis/courses.api';
-import { deleteCourse, getCourseDetail } from '../apis/courses';
-import type { CourseDetailResult } from '../apis/courses';
+import {
+  deleteCourse,
+  getCourseDetail,
+  getCourseSummary,
+} from '../apis/courses';
+import type { CourseDetailResult, CourseSummaryResult } from '../apis/courses';
 import type { NormalizedApiError } from '../apis/common';
 import { getMyPosts } from '../apis/users.api';
 import type {
@@ -228,6 +232,21 @@ export function useCourseDetail(courseId: number | null) {
   return useQuery<CourseDetailResult, NormalizedApiError>({
     queryKey: ['courseDetail', courseId],
     queryFn: () => getCourseDetail(courseId as number),
+    enabled: courseId !== null,
+    staleTime: DETAIL_STALE_TIME,
+    gcTime: DETAIL_GC_TIME,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * 리뷰 작성 화면 전용 코스 요약. GET /courses/{courseId}/summary를 쓴다 —
+ * 카드에 필요한 필드만 오는 대신 상세(useCourseDetail)보다 가볍다.
+ */
+export function useCourseSummary(courseId: number | null) {
+  return useQuery<CourseSummaryResult, NormalizedApiError>({
+    queryKey: ['courseSummary', courseId],
+    queryFn: () => getCourseSummary(courseId as number),
     enabled: courseId !== null,
     staleTime: DETAIL_STALE_TIME,
     gcTime: DETAIL_GC_TIME,
