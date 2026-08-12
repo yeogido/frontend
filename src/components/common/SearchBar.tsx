@@ -274,16 +274,21 @@ function SearchBar({
                           : '';
 
                   return (
+                    // option은 내부의 인터랙티브 요소를 접근성 트리에 노출하지
+                    // 않는다. 행 전체를 option으로 삼으면 삭제 버튼이 가려지고
+                    // 선택 버튼도 활성화 대상으로 잡히지 않으므로, 껍데기는
+                    // role="none"으로 비우고 선택 버튼 자체를 option으로 둔다.
                     <div
                       key={suggestion}
-                      role="option"
-                      aria-selected={query === suggestion}
+                      role="none"
                       className={`border-gray-2 bg-pure-white text-gray-4 relative flex h-[47px] w-full items-center border text-[12px] leading-none font-medium whitespace-nowrap ${optionRadius} ${
                         index > 0 || pinnedSuggestion ? '-mt-px' : ''
                       }`}
                     >
                       <button
                         type="button"
+                        role="option"
+                        aria-selected={query === suggestion}
                         onClick={() => handleSuggestionSelect(suggestion)}
                         className="h-full min-w-0 flex-1 px-[34px] pr-[16px] text-left"
                       >
@@ -306,6 +311,7 @@ function SearchBar({
                 <div
                   role="option"
                   aria-selected="false"
+                  aria-disabled="true"
                   className={`border-gray-2 bg-pure-white text-gray-4 flex h-[47px] w-full items-center border px-[34px] text-[12px] leading-none font-medium whitespace-nowrap ${
                     pinnedSuggestion ? 'rounded-b-xl -mt-px' : 'rounded-xl'
                   }`}
