@@ -1,9 +1,12 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
   ContentCard,
   ContentCardSkeleton,
   CourseCard,
+  CourseDeleteDialog,
+  EditableContentCard,
   LoadingSpinner,
   SearchTriggerButton,
   SectionHeader,
@@ -12,8 +15,14 @@ import {
 import calendar from '../../assets/icons/calendar.svg';
 import location from '../../assets/icons/location.svg';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import { useCourses, useRecommendedCourses } from '../../hooks/useCourses';
+import {
+  useCourseDelete,
+  useCourses,
+  useRecommendedCourses,
+} from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
+import { useEditCourse } from '../../hooks/useEditCourse';
+import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
@@ -24,6 +33,18 @@ const COURSE_REGION_SEARCH_FROM_COURSE = '?from=course';
 const POPULAR_COURSE_PREVIEW_COUNT = 2;
 const POPULAR_COURSE_SKELETON_ITEMS = [0, 1];
 const RECENT_COURSE_PREVIEW_COUNT = 2;
+const HERO_ROTATE_INTERVAL_MS = 2000;
+
+function shuffle<T>(items: readonly T[]): T[] {
+  const shuffled = [...items];
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled;
+}
 
 const durationLabelByType: Record<CourseDurationType, string> = {
   DAY_TRIP: '당일치기',
@@ -95,6 +116,9 @@ function YeogidoCoursePage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
+  const isAdmin = useIsAdmin();
+  const { editCourse } = useEditCourse();
+  const { requestDelete, dialogProps } = useCourseDelete();
   const {
     data: popularCourses,
     isPending: isPopularCoursesPending,
@@ -102,12 +126,13 @@ function YeogidoCoursePage() {
     refetch: refetchPopularCourses,
   } = useCourses({
     courseType: 'OFFICIAL',
-    sort: 'RECOMMEND',
+    sort: 'POPULAR',
     size: POPULAR_COURSE_PREVIEW_COUNT,
   });
-  const popularCoursePreviews = (
-    popularCourses?.pages[0]?.items ?? []
-  ).slice(0, POPULAR_COURSE_PREVIEW_COUNT);
+  const popularCoursePreviews = (popularCourses?.pages[0]?.items ?? []).slice(
+    0,
+    POPULAR_COURSE_PREVIEW_COUNT
+  );
   const recentCoursePreviews = useRecentCourses()
     .filter((course) => course.courseType === 'OFFICIAL')
     .slice(0, RECENT_COURSE_PREVIEW_COUNT)
@@ -118,7 +143,30 @@ function YeogidoCoursePage() {
     isError: isRecommendedCoursesError,
     refetch: refetchRecommendedCourses,
   } = useRecommendedCourses();
-  const heroCourse = recommendedCourses?.[0];
+
+  // 상위 5개를 새로 받아온 시점에만 한 번 섞는다 — 2초마다 heroIndex가
+  // 바뀌어도(리렌더링) recommendedCourses 참조가 그대로면 다시 섞지 않는다.
+  const shuffledRecommendedCourses = useMemo(
+    () => shuffle(recommendedCourses ?? []),
+    [recommendedCourses]
+  );
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  useEffect(() => {
+    if (shuffledRecommendedCourses.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setHeroIndex(
+        (previousIndex) =>
+          (previousIndex + 1) % shuffledRecommendedCourses.length
+      );
+    }, HERO_ROTATE_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [shuffledRecommendedCourses.length]);
+
+  const heroCourse =
+    shuffledRecommendedCourses[heroIndex % shuffledRecommendedCourses.length];
   const heroTitle = heroCourse?.title ?? DEFAULT_HERO_TITLE;
   const heroDescription = heroCourse?.description ?? DEFAULT_HERO_DESCRIPTION;
   const heroDurationLabel = heroCourse
@@ -147,275 +195,296 @@ function YeogidoCoursePage() {
   };
 
   return (
-    <section
-      className="mx-auto flex min-h-screen w-full flex-col"
-      style={{
-        paddingLeft: PAGE_PADDING_X * scale,
-        paddingRight: PAGE_PADDING_X * scale,
-        paddingTop: PAGE_PADDING_TOP * scale,
-        paddingBottom: PAGE_PADDING_BOTTOM * scale,
-      }}
-    >
-      <div>
-        <h1
-          className="font-semibold text-black"
-          style={{
-            fontSize: TITLE_SIZE * scale,
-            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          여기도 가볼까?
-        </h1>
-        <p
-          className="text-gray-4 font-normal"
-          style={{
-            marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: DESCRIPTION_SIZE * scale,
-            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          새로운 여행지를 발견해 보세요
-        </p>
-      </div>
-
-      <div style={{ marginTop: SEARCH_MARGIN_TOP * scale }}>
-        <SearchTriggerButton
-          label="코스명 또는 지역명 검색 화면으로 이동"
-          placeholder="코스명 또는 지역명을 검색해 주세요"
-          onClick={goToCourseRegionSearch}
-        />
-      </div>
-
-      {isRecommendedCoursesPending ? (
-        <div
-          className="flex items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#8EA98C_0%,#507047_100%)]"
-          style={{
-            height: HERO_HEIGHT * scale,
-            marginTop: HERO_MARGIN_TOP * scale,
-            borderRadius: HERO_RADIUS * scale,
-          }}
-        >
-          <LoadingSpinner label="추천 코스를 불러오는 중" />
-        </div>
-      ) : isRecommendedCoursesError ? (
-        <div
-          className="bg-gray-1 flex flex-col items-center justify-center gap-3 overflow-hidden"
-          style={{
-            height: HERO_HEIGHT * scale,
-            marginTop: HERO_MARGIN_TOP * scale,
-            borderRadius: HERO_RADIUS * scale,
-          }}
-        >
-          <p
-            className="text-gray-4 text-center font-medium"
-            style={{ fontSize: ERROR_TEXT_SIZE * scale }}
-          >
-            추천 코스를 불러오지 못했어요.
-          </p>
-          <button
-            type="button"
-            onClick={() => void refetchRecommendedCourses()}
-            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
-          >
-            다시 시도
-          </button>
-        </div>
-      ) : (
-      <button
-        type="button"
-        onClick={() =>
-          heroCourse
-            ? goToCourseDetail(heroCourse.courseId)
-            : goToCourseRegionSearch()
-        }
-        className="block w-full overflow-hidden text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+    <>
+      <section
+        className="mx-auto flex min-h-screen w-full flex-col"
         style={{
-          marginTop: HERO_MARGIN_TOP * scale,
-          borderRadius: HERO_RADIUS * scale,
+          paddingLeft: PAGE_PADDING_X * scale,
+          paddingRight: PAGE_PADDING_X * scale,
+          paddingTop: PAGE_PADDING_TOP * scale,
+          paddingBottom: PAGE_PADDING_BOTTOM * scale,
         }}
       >
-        <div
-          className="relative overflow-hidden bg-[linear-gradient(180deg,#8EA98C_0%,#507047_100%)]"
-          style={{ height: HERO_HEIGHT * scale }}
-        >
-          {heroCourse?.thumbnailUrl ? (
-            <img
-              src={heroCourse.thumbnailUrl}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : null}
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.45),rgba(0,0,0,0.05))]" />
-          <div
-            className="text-pure-white absolute"
+        <div>
+          <h1
+            className="font-semibold text-black"
             style={{
-              top: HERO_TITLE_TOP * scale,
-              left: HERO_TITLE_LEFT * scale,
-              width: HERO_TITLE_WIDTH * scale,
+              fontSize: TITLE_SIZE * scale,
+              lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
             }}
           >
-            <p
-              className="font-semibold"
-              style={{
-                fontSize: HERO_TITLE_SIZE * scale,
-                lineHeight: `${HERO_TITLE_LINE_HEIGHT * scale}px`,
-              }}
-            >
-              {heroTitle}
-            </p>
-            <p
-              className="text-pure-white/85 font-normal"
-              style={{
-                marginTop: HERO_DESCRIPTION_MARGIN_TOP * scale,
-                fontSize: HERO_DESCRIPTION_SIZE * scale,
-                lineHeight: `${HERO_DESCRIPTION_LINE_HEIGHT * scale}px`,
-              }}
-            >
-              {heroDescription}
-            </p>
-          </div>
-          <div
-            className="text-pure-white absolute flex items-center font-medium"
+            여기도 가볼까?
+          </h1>
+          <p
+            className="text-gray-4 font-normal"
             style={{
-              bottom: HERO_META_BOTTOM * scale,
-              left: HERO_META_LEFT * scale,
-              gap: HERO_META_GAP * scale,
-              fontSize: HERO_META_SIZE * scale,
-              lineHeight: `${HERO_META_LINE_HEIGHT * scale}px`,
+              marginTop: DESCRIPTION_MARGIN_TOP * scale,
+              fontSize: DESCRIPTION_SIZE * scale,
+              lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
             }}
           >
-            <span
-              className="flex items-center"
-              style={{ gap: HERO_META_ITEM_GAP * scale }}
-            >
-              <img
-                src={calendar}
-                alt=""
-                aria-hidden="true"
-                className="brightness-0 invert"
-                style={{
-                  width: HERO_ICON_SIZE * scale,
-                  height: HERO_ICON_SIZE * scale,
-                }}
-              />
-              {heroDurationLabel}
-            </span>
-            <span
-              className="flex items-center"
-              style={{ gap: HERO_META_ITEM_GAP * scale }}
-            >
-              <img
-                src={location}
-                alt=""
-                aria-hidden="true"
-                className="brightness-0 invert"
-                style={{
-                  width: HERO_ICON_SIZE * scale,
-                  height: HERO_ICON_SIZE * scale,
-                }}
-              />
-              {heroTransportLabel}
-            </span>
-          </div>
-        </div>
-      </button>
-      )}
-
-      <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
-        <SectionHeader
-          title="인기 추천 코스"
-          actionText="자세히 보기"
-          onActionClick={goToPopularCourses}
-        />
-
-        <div
-          className="flex [scrollbar-width:none] overflow-x-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            gap: LIST_GAP * scale,
-          }}
-        >
-          {isPopularCoursesPending
-            ? POPULAR_COURSE_SKELETON_ITEMS.map((item) => (
-                <ContentCardSkeleton key={item} />
-              ))
-            : popularCoursePreviews.map((course) => (
-                <ContentCard
-                  key={course.courseId}
-                  image={course.thumbnailUrl}
-                  title={course.title}
-                  firstInfo={durationLabelByType[course.durationType]}
-                  secondInfo={course.region}
-                  tags={toContentTagIds(course.tags)}
-                  liked={getLiked(course.courseId, course.isLiked)}
-                  onClick={() => goToCourseDetail(course.courseId)}
-                  onLikeClick={() =>
-                    toggleLike(
-                      course.courseId,
-                      getLiked(course.courseId, course.isLiked)
-                    )
-                  }
-                />
-              ))}
+            새로운 여행지를 발견해 보세요
+          </p>
         </div>
 
-        {!isPopularCoursesPending && isPopularCoursesError ? (
+        <div style={{ marginTop: SEARCH_MARGIN_TOP * scale }}>
+          <SearchTriggerButton
+            label="코스명 또는 지역명 검색 화면으로 이동"
+            placeholder="코스명 또는 지역명을 검색해 주세요"
+            onClick={goToCourseRegionSearch}
+          />
+        </div>
+
+        {isRecommendedCoursesPending ? (
           <div
-            className="flex flex-col items-center"
+            className="flex items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#8EA98C_0%,#507047_100%)]"
             style={{
-              marginTop: ERROR_MARGIN_TOP * scale,
-              gap: ERROR_MARGIN_TOP * scale,
+              height: HERO_HEIGHT * scale,
+              marginTop: HERO_MARGIN_TOP * scale,
+              borderRadius: HERO_RADIUS * scale,
+            }}
+          >
+            <LoadingSpinner label="추천 코스를 불러오는 중" />
+          </div>
+        ) : isRecommendedCoursesError ? (
+          <div
+            className="bg-gray-1 flex flex-col items-center justify-center gap-3 overflow-hidden"
+            style={{
+              height: HERO_HEIGHT * scale,
+              marginTop: HERO_MARGIN_TOP * scale,
+              borderRadius: HERO_RADIUS * scale,
             }}
           >
             <p
-              className="text-main-5 text-center font-medium"
+              className="text-gray-4 text-center font-medium"
               style={{ fontSize: ERROR_TEXT_SIZE * scale }}
             >
-              코스 목록을 불러오지 못했어요.
+              추천 코스를 불러오지 못했어요.
             </p>
             <button
               type="button"
-              onClick={() => void refetchPopularCourses()}
+              onClick={() => void refetchRecommendedCourses()}
               className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
             >
               다시 시도
             </button>
           </div>
-        ) : null}
-      </section>
+        ) : (
+          <button
+            type="button"
+            onClick={() =>
+              heroCourse
+                ? goToCourseDetail(heroCourse.courseId)
+                : goToCourseRegionSearch()
+            }
+            className="block w-full overflow-hidden text-left shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+            style={{
+              marginTop: HERO_MARGIN_TOP * scale,
+              borderRadius: HERO_RADIUS * scale,
+            }}
+          >
+            <div
+              className="relative overflow-hidden bg-[linear-gradient(180deg,#8EA98C_0%,#507047_100%)]"
+              style={{ height: HERO_HEIGHT * scale }}
+            >
+              {heroCourse?.thumbnailUrl ? (
+                <img
+                  src={heroCourse.thumbnailUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : null}
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.45),rgba(0,0,0,0.05))]" />
+              <div
+                className="text-pure-white absolute"
+                style={{
+                  top: HERO_TITLE_TOP * scale,
+                  left: HERO_TITLE_LEFT * scale,
+                  width: HERO_TITLE_WIDTH * scale,
+                }}
+              >
+                <p
+                  className="font-semibold"
+                  style={{
+                    fontSize: HERO_TITLE_SIZE * scale,
+                    lineHeight: `${HERO_TITLE_LINE_HEIGHT * scale}px`,
+                  }}
+                >
+                  {heroTitle}
+                </p>
+                <p
+                  className="text-pure-white/85 font-normal"
+                  style={{
+                    marginTop: HERO_DESCRIPTION_MARGIN_TOP * scale,
+                    fontSize: HERO_DESCRIPTION_SIZE * scale,
+                    lineHeight: `${HERO_DESCRIPTION_LINE_HEIGHT * scale}px`,
+                  }}
+                >
+                  {heroDescription}
+                </p>
+              </div>
+              <div
+                className="text-pure-white absolute flex items-center font-medium"
+                style={{
+                  bottom: HERO_META_BOTTOM * scale,
+                  left: HERO_META_LEFT * scale,
+                  gap: HERO_META_GAP * scale,
+                  fontSize: HERO_META_SIZE * scale,
+                  lineHeight: `${HERO_META_LINE_HEIGHT * scale}px`,
+                }}
+              >
+                <span
+                  className="flex items-center"
+                  style={{ gap: HERO_META_ITEM_GAP * scale }}
+                >
+                  <img
+                    src={calendar}
+                    alt=""
+                    aria-hidden="true"
+                    className="brightness-0 invert"
+                    style={{
+                      width: HERO_ICON_SIZE * scale,
+                      height: HERO_ICON_SIZE * scale,
+                    }}
+                  />
+                  {heroDurationLabel}
+                </span>
+                <span
+                  className="flex items-center"
+                  style={{ gap: HERO_META_ITEM_GAP * scale }}
+                >
+                  <img
+                    src={location}
+                    alt=""
+                    aria-hidden="true"
+                    className="brightness-0 invert"
+                    style={{
+                      width: HERO_ICON_SIZE * scale,
+                      height: HERO_ICON_SIZE * scale,
+                    }}
+                  />
+                  {heroTransportLabel}
+                </span>
+              </div>
+            </div>
+          </button>
+        )}
 
-      {recentCoursePreviews.length > 0 ? (
         <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
           <SectionHeader
-            title="최근 본 코스"
-            actionText="전체 보기"
-            onActionClick={goToRecentCourses}
+            title="인기 추천 코스"
+            actionText="자세히 보기"
+            onActionClick={goToPopularCourses}
           />
 
           <div
-            className="grid grid-cols-1"
+            className="flex [scrollbar-width:none] overflow-x-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             style={{
               marginTop: LIST_MARGIN_TOP * scale,
               gap: LIST_GAP * scale,
             }}
           >
-            {recentCoursePreviews.map((course) => (
-              <div key={course.id} className="w-full">
-                <CourseCard
-                  {...course}
-                  liked={getLiked(course.id, course.liked)}
-                  onClick={() => goToCourseDetail(course.id)}
-                  onLikeClick={() =>
-                    toggleLike(course.id, getLiked(course.id, course.liked))
-                  }
-                />
-              </div>
-            ))}
+            {isPopularCoursesPending
+              ? POPULAR_COURSE_SKELETON_ITEMS.map((item) => (
+                  <ContentCardSkeleton key={item} />
+                ))
+              : popularCoursePreviews.map((course) =>
+                  isAdmin ? (
+                    <EditableContentCard
+                      key={course.courseId}
+                      image={course.thumbnailUrl}
+                      title={course.title}
+                      firstInfo={durationLabelByType[course.durationType]}
+                      secondInfo={course.region}
+                      tags={toContentTagIds(course.tags)}
+                      onClick={() => goToCourseDetail(course.courseId)}
+                      onEdit={() => void editCourse(course.courseId)}
+                      onDelete={() => requestDelete(course.courseId)}
+                    />
+                  ) : (
+                    <ContentCard
+                      key={course.courseId}
+                      image={course.thumbnailUrl}
+                      title={course.title}
+                      firstInfo={durationLabelByType[course.durationType]}
+                      secondInfo={course.region}
+                      tags={toContentTagIds(course.tags)}
+                      liked={getLiked(course.courseId, course.isLiked)}
+                      onClick={() => goToCourseDetail(course.courseId)}
+                      onLikeClick={() =>
+                        toggleLike(
+                          course.courseId,
+                          getLiked(course.courseId, course.isLiked)
+                        )
+                      }
+                    />
+                  )
+                )}
           </div>
+
+          {!isPopularCoursesPending && isPopularCoursesError ? (
+            <div
+              className="flex flex-col items-center"
+              style={{
+                marginTop: ERROR_MARGIN_TOP * scale,
+                gap: ERROR_MARGIN_TOP * scale,
+              }}
+            >
+              <p
+                className="text-main-5 text-center font-medium"
+                style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+              >
+                코스 목록을 불러오지 못했어요.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refetchPopularCourses()}
+                className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
+              >
+                다시 시도
+              </button>
+            </div>
+          ) : null}
         </section>
-      ) : null}
-    </section>
+
+        {recentCoursePreviews.length > 0 ? (
+          <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
+            <SectionHeader
+              title="최근 본 코스"
+              actionText="전체 보기"
+              onActionClick={goToRecentCourses}
+            />
+
+            <div
+              className="grid grid-cols-1"
+              style={{
+                marginTop: LIST_MARGIN_TOP * scale,
+                gap: LIST_GAP * scale,
+              }}
+            >
+              {recentCoursePreviews.map((course) => (
+                <div key={course.id} className="w-full">
+                  <CourseCard
+                    {...course}
+                    liked={getLiked(course.id, course.liked)}
+                    canManage={isAdmin}
+                    showEdit
+                    onClick={() => goToCourseDetail(course.id)}
+                    onLikeClick={() =>
+                      toggleLike(course.id, getLiked(course.id, course.liked))
+                    }
+                    onEditClick={() => void editCourse(course.id)}
+                    onDeleteClick={() => requestDelete(course.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </section>
+      <CourseDeleteDialog {...dialogProps} />
+    </>
   );
 }
 

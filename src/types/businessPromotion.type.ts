@@ -32,6 +32,8 @@ export interface BusinessPromotionItem {
   hashtags: string[];
   author: BusinessPromotionAuthor;
   likeCount: number;
+  // 로그인 사용자가 작성한 홍보글 여부. 비로그인 요청 시 false(스웨거 확인 완료).
+  isMine: boolean;
   isLiked: boolean;
   createdAt: string;
 }
@@ -80,6 +82,8 @@ export interface BusinessPromotionDetailResponse {
   images: BusinessPromotionImage[];
   author: BusinessPromotionAuthor;
   likeCount: number;
+  // 로그인 사용자가 작성한 홍보글 여부. 비로그인 요청 시 false(스웨거 확인 완료).
+  isMine: boolean;
   isLiked: boolean;
   createdAt: string;
   updatedAt: string;

@@ -139,8 +139,13 @@ function useDeleteBusinessPromotion() {
  * 홍보글 삭제 확인 흐름. useCourseDelete/useReviewDelete와 같은 모양으로,
  * 화면은 requestDelete만 연결하고 dialogProps를 ConfirmDialog에 그대로
  * 펼치면 된다.
+ *
+ * onSuccess는 목록 화면(my-posts, local-business 목록)에는 필요 없다 —
+ * 캐시에서 낙관적으로 지운 항목이 그냥 사라지면 되니까. 반면 상세 페이지는
+ * 삭제 후에도 그 자리에 남아있으면 안 되니, 목록으로 돌려보내는 navigate를
+ * 호출부에서 넘긴다.
  */
-export function useBusinessPromotionDelete() {
+export function useBusinessPromotionDelete(onSuccess?: () => void) {
   const [targetPromotionId, setTargetPromotionId] = useState<number | null>(
     null
   );
@@ -156,6 +161,7 @@ export function useBusinessPromotionDelete() {
       await deleteMutation.mutateAsync(targetPromotionId);
       closeDialog();
       showToast('홍보글을 삭제했어요.');
+      onSuccess?.();
     } catch (error) {
       closeDialog();
 

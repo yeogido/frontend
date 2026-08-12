@@ -4,11 +4,16 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ContentCard,
   ContentCardSkeleton,
+  EditableContentCard,
+  FestivalDeleteDialog,
   SearchBar,
 } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
+import { useEditFestival } from '../../../hooks/useEditFestival';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
@@ -53,6 +58,9 @@ function FestivalSearchPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { getLiked, toggleLike } = useContentLikeToggle();
+  const isAdmin = useIsAdmin();
+  const { editFestival } = useEditFestival();
+  const { requestDelete, dialogProps } = useContentDelete();
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
@@ -60,11 +68,8 @@ function FestivalSearchPage() {
   const regionLabel =
     region && subRegion ? `${region} ${subRegion}` : subRegion || region;
   const displaySearchQuery = keyword || regionLabel;
-  const {
-    selectedFilters,
-    handleSortSelect,
-    handleCategorySelect,
-  } = useFestivalFilters();
+  const { selectedFilters, handleSortSelect, handleCategorySelect } =
+    useFestivalFilters();
 
   const {
     data,
@@ -116,111 +121,130 @@ function FestivalSearchPage() {
   };
 
   return (
-    <section
-      className="mx-auto flex min-h-screen w-full flex-col bg-background"
-      style={{
-        paddingLeft: PAGE_PADDING_X * scale,
-        paddingRight: PAGE_PADDING_X * scale,
-        paddingTop: PAGE_PADDING_TOP * scale,
-        paddingBottom: PAGE_PADDING_BOTTOM * scale,
-      }}
-      aria-label="추천 행사 검색"
-    >
-        <SearchBar
-            initialQuery={displaySearchQuery}
-            placeholder="행사명 또는 지역명을 검색해 주세요"
-            label="행사명 또는 지역명 검색"
-            suggestions={festivalSearchSuggestions}
-            onSearch={handleSearch}
-          />
-
-
-      <FestivalFilterBar
-        selectedSort={selectedFilters.sort}
-        selectedCategory={selectedFilters.category}
-        onSortSelect={handleSortSelect}
-        onCategorySelect={handleCategorySelect}
-      />
-
-      <div
-        className="grid grid-cols-2"
+    <>
+      <section
+        className="bg-background mx-auto flex min-h-screen w-full flex-col"
         style={{
-          marginTop: LIST_MARGIN_TOP * scale,
-          columnGap: LIST_GAP * scale,
-          rowGap: LIST_GAP * scale,
+          paddingLeft: PAGE_PADDING_X * scale,
+          paddingRight: PAGE_PADDING_X * scale,
+          paddingTop: PAGE_PADDING_TOP * scale,
+          paddingBottom: PAGE_PADDING_BOTTOM * scale,
         }}
+        aria-label="추천 행사 검색"
       >
-        {isPending
-          ? FESTIVAL_SKELETON_ITEMS.map((item) => (
-              <ContentCardSkeleton
-                key={item}
-                className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
-              />
-            ))
-          : festivals.map((festival) => (
-              <ContentCard
-                key={festival.contentId}
-                image={festival.thumbnailImageUrl}
-                title={festival.title}
-                firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
-                secondInfo={festival.regionName}
-                liked={getLiked(festival.contentId, false)}
-                tags={toContentTagIds(festival.hashtags)}
-                className="w-full"
-                onClick={() =>
-                  navigate(buildFestivalDetailPath(festival.contentId))
-                }
-                onLikeClick={() =>
-                  toggleLike(
-                    festival.contentId,
-                    getLiked(festival.contentId, false)
-                  )
-                }
-              />
-            ))}
+        <SearchBar
+          initialQuery={displaySearchQuery}
+          placeholder="행사명 또는 지역명을 검색해 주세요"
+          label="행사명 또는 지역명 검색"
+          suggestions={festivalSearchSuggestions}
+          onSearch={handleSearch}
+        />
 
-        {isFetchingNextPage
-          ? FESTIVAL_SKELETON_ITEMS.slice(0, 4).map((item) => (
-              <ContentCardSkeleton
-                key={`next-page-${item}`}
-                className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
-              />
-            ))
-          : null}
-      </div>
+        <FestivalFilterBar
+          selectedSort={selectedFilters.sort}
+          selectedCategory={selectedFilters.category}
+          onSortSelect={handleSortSelect}
+          onCategorySelect={handleCategorySelect}
+        />
 
-      {hasEmptyResult ? (
-        <p
-          className="text-center font-medium text-gray-4"
+        <div
+          className="grid grid-cols-2"
           style={{
-            marginTop: EMPTY_MARGIN_TOP * scale,
-            fontSize: MESSAGE_TEXT_SIZE * scale,
+            marginTop: LIST_MARGIN_TOP * scale,
+            columnGap: LIST_GAP * scale,
+            rowGap: LIST_GAP * scale,
           }}
         >
-          검색 결과가 없습니다.
-        </p>
-      ) : null}
+          {isPending
+            ? FESTIVAL_SKELETON_ITEMS.map((item) => (
+                <ContentCardSkeleton
+                  key={item}
+                  className="w-full"
+                  imageClassName="aspect-[163/115] h-auto"
+                />
+              ))
+            : festivals.map((festival) =>
+                isAdmin ? (
+                  <EditableContentCard
+                    key={festival.contentId}
+                    image={festival.thumbnailImageUrl}
+                    title={festival.title}
+                    firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                    secondInfo={festival.regionName}
+                    tags={toContentTagIds(festival.hashtags)}
+                    className="w-full"
+                    onClick={() =>
+                      navigate(buildFestivalDetailPath(festival.contentId))
+                    }
+                    onEdit={() => void editFestival(festival.contentId)}
+                    onDelete={() => requestDelete(festival.contentId)}
+                  />
+                ) : (
+                  <ContentCard
+                    key={festival.contentId}
+                    image={festival.thumbnailImageUrl}
+                    title={festival.title}
+                    firstInfo={`${festival.startDate} ~ ${festival.endDate}`}
+                    secondInfo={festival.regionName}
+                    liked={getLiked(festival.contentId, festival.isLiked)}
+                    tags={toContentTagIds(festival.hashtags)}
+                    className="w-full"
+                    onClick={() =>
+                      navigate(buildFestivalDetailPath(festival.contentId))
+                    }
+                    onLikeClick={() =>
+                      toggleLike(
+                        festival.contentId,
+                        getLiked(festival.contentId, festival.isLiked)
+                      )
+                    }
+                  />
+                )
+              )}
 
-      {isError ? (
-        <p
-          className="text-main-5 text-center font-medium"
-          style={{
-            marginTop: ERROR_MARGIN_TOP * scale,
-            fontSize: MESSAGE_TEXT_SIZE * scale,
-          }}
-        >
-          행사 목록을 불러오지 못했어요.
-        </p>
-      ) : null}
+          {isFetchingNextPage
+            ? FESTIVAL_SKELETON_ITEMS.slice(0, 4).map((item) => (
+                <ContentCardSkeleton
+                  key={`next-page-${item}`}
+                  className="w-full"
+                  imageClassName="aspect-[163/115] h-auto"
+                />
+              ))
+            : null}
+        </div>
 
-      <div
-        ref={loadMoreRef}
-        style={{ height: LOAD_MORE_HEIGHT * scale }}
-        aria-hidden="true"
-      />
-    </section>
+        {hasEmptyResult ? (
+          <p
+            className="text-gray-4 text-center font-medium"
+            style={{
+              marginTop: EMPTY_MARGIN_TOP * scale,
+              fontSize: MESSAGE_TEXT_SIZE * scale,
+            }}
+          >
+            검색 결과가 없습니다.
+          </p>
+        ) : null}
+
+        {isError ? (
+          <p
+            className="text-main-5 text-center font-medium"
+            style={{
+              marginTop: ERROR_MARGIN_TOP * scale,
+              fontSize: MESSAGE_TEXT_SIZE * scale,
+            }}
+          >
+            행사 목록을 불러오지 못했어요.
+          </p>
+        ) : null}
+
+        <div
+          ref={loadMoreRef}
+          style={{ height: LOAD_MORE_HEIGHT * scale }}
+          aria-hidden="true"
+        />
+      </section>
+      <FestivalDeleteDialog {...dialogProps} />
+    </>
   );
 }
 

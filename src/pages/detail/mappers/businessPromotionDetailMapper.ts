@@ -94,6 +94,7 @@ export function mapBusinessPromotionDetail(
     heroImageUrl: heroImageUrls[0] ?? '',
     heroImageUrls,
     liked: detail.isLiked,
+    isMine: detail.isMine,
     tags: mapHashtagsToTags(detail.hashtags),
     overview: detail.shortDescription,
     address: detail.place.roadAddress,

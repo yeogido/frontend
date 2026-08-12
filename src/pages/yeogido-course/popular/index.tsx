@@ -4,13 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import {
   ContentCard,
   ContentCardSkeleton,
+  CourseDeleteDialog,
   CourseFilterBar,
+  EditableContentCard,
 } from '../../../components/common';
 import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useCourses } from '../../../hooks/useCourses';
+import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
+import { useEditCourse } from '../../../hooks/useEditCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toContentTagIds } from '../../../utils/contentTags';
 
 import { yeogidoCourseFilterGroups } from '../constants/filters';
@@ -80,17 +84,23 @@ function YeogidoCoursePopularPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
+  const isAdmin = useIsAdmin();
+  const { editCourse } = useEditCourse();
+  const { requestDelete, dialogProps } = useCourseDelete();
 
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/yeogido-course/detail/${courseId}`);
   };
+  // 이 페이지는 "인기 추천 코스"라 최초 진입 시 정렬 기본값도 인기순이어야
+  // 한다 — 공용 훅의 기본값(추천순)은 다른 화면(검색 등)에도 쓰이므로
+  // 여기서만 초기값을 덮어쓴다.
   const {
     filterContainerRef,
     openFilterKey,
     selectedFilters,
     handleFilterToggle,
     handleFilterSelect,
-  } = useYeogidoCourseFilters();
+  } = useYeogidoCourseFilters({ sort: '인기순' });
 
   const isDistanceSort = selectedFilters.sort === '거리순';
   const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
@@ -132,111 +142,131 @@ function YeogidoCoursePopularPage() {
   });
 
   return (
-    <section
-      className="mx-auto flex min-h-screen w-full flex-col"
-      style={{
-        paddingLeft: PAGE_PADDING_X * scale,
-        paddingRight: PAGE_PADDING_X * scale,
-        paddingTop: PAGE_PADDING_TOP * scale,
-        paddingBottom: PAGE_PADDING_BOTTOM * scale,
-      }}
-    >
-      <div>
-        <h1
-          className="font-semibold text-black"
-          style={{
-            fontSize: TITLE_SIZE * scale,
-            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          인기 추천 코스
-        </h1>
-        <p
-          className="text-gray-4 font-normal"
-          style={{
-            marginTop: DESCRIPTION_MARGIN_TOP * scale,
-            fontSize: DESCRIPTION_SIZE * scale,
-            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
-          }}
-        >
-          여행자들이 가장 많이 찾는 추천 코스
-        </p>
-      </div>
-      <CourseFilterBar
-        filterGroups={yeogidoCourseFilterGroups}
-        selectedFilters={selectedFilters}
-        openFilterKey={openFilterKey}
-        filterContainerRef={filterContainerRef}
-        isExtendedTransport={isExtendedTransportFilterLabel(selectedFilters.transport)}
-        marginTop={FILTER_MARGIN_TOP}
-        onToggle={handleFilterToggle}
-        onSelect={handleFilterSelect}
-      />
-      <div
-        className="grid grid-cols-2"
+    <>
+      <section
+        className="mx-auto flex min-h-screen w-full flex-col"
         style={{
-          marginTop: LIST_MARGIN_TOP * scale,
-          columnGap: LIST_GAP * scale,
-          rowGap: LIST_GAP * scale,
+          paddingLeft: PAGE_PADDING_X * scale,
+          paddingRight: PAGE_PADDING_X * scale,
+          paddingTop: PAGE_PADDING_TOP * scale,
+          paddingBottom: PAGE_PADDING_BOTTOM * scale,
         }}
       >
-        {isPending
-          ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
-              <ContentCardSkeleton
-                key={item}
-                className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
-              />
-            ))
-          : popularCourses.map((course) => (
-              <ContentCard
-                key={course.courseId}
-                image={course.thumbnailUrl}
-                title={course.title}
-                firstInfo={durationLabelByType[course.durationType]}
-                secondInfo={course.region}
-                tags={toContentTagIds(course.tags)}
-                liked={getLiked(course.courseId, course.isLiked)}
-                className="w-full"
-                onClick={() => handleCourseClick(course.courseId)}
-                onLikeClick={() =>
-                  toggleLike(
-                    course.courseId,
-                    getLiked(course.courseId, course.isLiked)
-                  )
-                }
-              />
-            ))}
-
-        {isFetchingNextPage
-          ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
-              <ContentCardSkeleton
-                key={`next-page-${item}`}
-                className="w-full"
-                imageClassName="aspect-[163/115] h-auto"
-              />
-            ))
-          : null}
-      </div>
-
-      {isError ? (
-        <p
-          className="text-main-5 text-center font-medium"
+        <div>
+          <h1
+            className="font-semibold text-black"
+            style={{
+              fontSize: TITLE_SIZE * scale,
+              lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+            }}
+          >
+            인기 추천 코스
+          </h1>
+          <p
+            className="text-gray-4 font-normal"
+            style={{
+              marginTop: DESCRIPTION_MARGIN_TOP * scale,
+              fontSize: DESCRIPTION_SIZE * scale,
+              lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+            }}
+          >
+            여행자들이 가장 많이 찾는 추천 코스
+          </p>
+        </div>
+        <CourseFilterBar
+          filterGroups={yeogidoCourseFilterGroups}
+          selectedFilters={selectedFilters}
+          openFilterKey={openFilterKey}
+          filterContainerRef={filterContainerRef}
+          isExtendedTransport={isExtendedTransportFilterLabel(
+            selectedFilters.transport
+          )}
+          marginTop={FILTER_MARGIN_TOP}
+          onToggle={handleFilterToggle}
+          onSelect={handleFilterSelect}
+        />
+        <div
+          className="grid grid-cols-2"
           style={{
-            marginTop: ERROR_MARGIN_TOP * scale,
-            fontSize: ERROR_TEXT_SIZE * scale,
+            marginTop: LIST_MARGIN_TOP * scale,
+            columnGap: LIST_GAP * scale,
+            rowGap: LIST_GAP * scale,
           }}
         >
-          코스 목록을 불러오지 못했어요.
-        </p>
-      ) : null}
+          {isPending
+            ? YEOGIDO_COURSE_SKELETON_ITEMS.map((item) => (
+                <ContentCardSkeleton
+                  key={item}
+                  className="w-full"
+                  imageClassName="aspect-[163/115] h-auto"
+                />
+              ))
+            : popularCourses.map((course) =>
+                isAdmin ? (
+                  <EditableContentCard
+                    key={course.courseId}
+                    image={course.thumbnailUrl}
+                    title={course.title}
+                    firstInfo={durationLabelByType[course.durationType]}
+                    secondInfo={course.region}
+                    tags={toContentTagIds(course.tags)}
+                    className="w-full"
+                    onClick={() => handleCourseClick(course.courseId)}
+                    onEdit={() => void editCourse(course.courseId)}
+                    onDelete={() => requestDelete(course.courseId)}
+                  />
+                ) : (
+                  <ContentCard
+                    key={course.courseId}
+                    image={course.thumbnailUrl}
+                    title={course.title}
+                    firstInfo={durationLabelByType[course.durationType]}
+                    secondInfo={course.region}
+                    tags={toContentTagIds(course.tags)}
+                    liked={getLiked(course.courseId, course.isLiked)}
+                    className="w-full"
+                    onClick={() => handleCourseClick(course.courseId)}
+                    onLikeClick={() =>
+                      toggleLike(
+                        course.courseId,
+                        getLiked(course.courseId, course.isLiked)
+                      )
+                    }
+                  />
+                )
+              )}
 
-      <div
-        ref={loadMoreRef}
-        style={{ height: LOAD_MORE_HEIGHT * scale }}
-        aria-hidden="true"
-      />
-    </section>
+          {isFetchingNextPage
+            ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
+                <ContentCardSkeleton
+                  key={`next-page-${item}`}
+                  className="w-full"
+                  imageClassName="aspect-[163/115] h-auto"
+                />
+              ))
+            : null}
+        </div>
+
+        {isError ? (
+          <p
+            className="text-main-5 text-center font-medium"
+            style={{
+              marginTop: ERROR_MARGIN_TOP * scale,
+              fontSize: ERROR_TEXT_SIZE * scale,
+            }}
+          >
+            코스 목록을 불러오지 못했어요.
+          </p>
+        ) : null}
+
+        <div
+          ref={loadMoreRef}
+          style={{ height: LOAD_MORE_HEIGHT * scale }}
+          aria-hidden="true"
+        />
+      </section>
+      <CourseDeleteDialog {...dialogProps} />
+    </>
   );
 }
 

@@ -18,4 +18,5 @@ export interface BusinessItem {
   image: string;
   tags: TagType[];
   liked: boolean;
+  isMine: boolean;
 }

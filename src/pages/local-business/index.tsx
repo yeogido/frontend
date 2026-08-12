@@ -2,17 +2,22 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
+  ConfirmDialog,
   FloatingActionButton,
   PromotionCardSkeleton,
   RegionImageCarousel,
 } from '../../components/common';
 import { DEFAULT_REGION_CITY_ID, REGION_CITY_IDS } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
+import { useBusinessPromotionDelete } from '../../hooks/useBusinessPromotions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useLoginModal } from '../../hooks/useLoginModal';
 import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import { useAuthStore } from '../../store/auth.store';
-import { buildLocalBusinessDetailPath } from '../../utils/routes';
+import {
+  buildBusinessPromotionEditPath,
+  buildLocalBusinessDetailPath,
+} from '../../utils/routes';
 
 import { BusinessGrid, BusinessList, BusinessToolbar } from './components';
 import {
@@ -36,7 +41,7 @@ const DESCRIPTION_MARGIN_TOP = 6;
 const DESCRIPTION_SIZE = 14;
 const DESCRIPTION_LINE_HEIGHT = 17;
 const CAROUSEL_MARGIN_TOP = 12;
-const LIST_MARGIN_TOP = 16;
+const LIST_MARGIN_TOP = 24;
 const GRID_GAP_X = 16;
 const GRID_GAP_Y = 18;
 const LIST_GAP = 16;
@@ -102,6 +107,9 @@ function LocalBusinessPage() {
   });
   const hasEmptyResult = !isPending && !isError && businesses.length === 0;
 
+  const { requestDelete: requestPromotionDelete, dialogProps: promotionDeleteDialogProps } =
+    useBusinessPromotionDelete();
+
   // 소상공인 홍보 좋아요는 아직 백엔드 API가 없어, 상세페이지와 동일하게
   // 로컬 상태로만 토글한다(새로고침하면 초기화됨).
   const [likedOverrides, setLikedOverrides] = useState<
@@ -114,6 +122,14 @@ function LocalBusinessPage() {
 
   const handleCardClick = (businessId: string) => {
     navigate(buildLocalBusinessDetailPath(businessId));
+  };
+
+  const handleEditClick = (businessId: string) => {
+    navigate(buildBusinessPromotionEditPath(businessId));
+  };
+
+  const handleDeleteClick = (businessId: string) => {
+    requestPromotionDelete(Number(businessId));
   };
 
   const handleLikeClick = (businessId: string) => {
@@ -224,6 +240,8 @@ function LocalBusinessPage() {
             businesses={businessesWithLikeOverrides}
             onCardClick={handleCardClick}
             onLikeClick={handleLikeClick}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
             gapX={GRID_GAP_X * scale}
             gapY={GRID_GAP_Y * scale}
           />
@@ -232,6 +250,8 @@ function LocalBusinessPage() {
             businesses={businessesWithLikeOverrides}
             onCardClick={handleCardClick}
             onLikeClick={handleLikeClick}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
             gap={LIST_GAP * scale}
           />
         )}
@@ -282,6 +302,12 @@ function LocalBusinessPage() {
           onClick={handleStartPromotionRegistration}
         />
       ) : null}
+
+      <ConfirmDialog
+        {...promotionDeleteDialogProps}
+        title="홍보글을 삭제할까요?"
+        description="삭제한 홍보글은 되돌릴 수 없어요."
+      />
     </section>
   );
 }

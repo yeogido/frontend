@@ -186,9 +186,20 @@ function useCourseRegionSearch() {
     const matchedCity = findMatchingCity(keyword);
 
     if (matchedCity) {
-      navigate(`/region-info/${encodeURIComponent(matchedCity.name)}`, {
-        state: { [REGION_INFO_ID_STATE_KEY]: matchedCity.regionId },
-      });
+      if (searchTargetConfig.navigatesToRegionInfo) {
+        navigate(`/region-info/${encodeURIComponent(matchedCity.name)}`, {
+          state: { [REGION_INFO_ID_STATE_KEY]: matchedCity.regionId },
+        });
+
+        return;
+      }
+
+      navigate(
+        createSearchResultLocation({
+          targetPathname: searchTargetPathname,
+          city: matchedCity.name,
+        })
+      );
 
       return;
     }
@@ -263,9 +274,20 @@ function useCourseRegionSearch() {
       const targetName = selectedParentDistrict?.name ?? selectedCity.name;
       const targetRegionId = selectedParentDistrict?.id ?? selectedCity.regionId;
 
-      navigate(`/region-info/${encodeURIComponent(targetName)}`, {
-        state: { [REGION_INFO_ID_STATE_KEY]: targetRegionId },
-      });
+      if (searchTargetConfig.navigatesToRegionInfo) {
+        navigate(`/region-info/${encodeURIComponent(targetName)}`, {
+          state: { [REGION_INFO_ID_STATE_KEY]: targetRegionId },
+        });
+
+        return;
+      }
+
+      navigate(
+        createSearchResultLocation({
+          targetPathname: searchTargetPathname,
+          city: targetName,
+        })
+      );
 
       return;
     }

@@ -33,6 +33,14 @@ interface BusinessToolbarProps {
  * 나란히 놓이므로, transform이 바꾸지 않는 레이아웃 폭을 실측해
  * 스케일된 폭만큼 직접 예약해 줘야 카테고리 스크롤 영역과 겹치거나
  * 벌어지지 않는다(useScaleFrame과 같은 원리, 폭 버전).
+ *
+ * 카테고리 스크롤 컨테이너도 마찬가지로 height를 TOOLBAR_HEIGHT * scale로
+ * 직접 지정해야 한다 — transform은 페인트만 바꿀 뿐 레이아웃 박스 크기에는
+ * 영향을 주지 않아서, height를 안 주면 컨테이너가 scale=1 기준 높이(29px)로
+ * 고정된다. overflow-x-auto만 주고 overflow-y를 명시하지 않으면 스펙상
+ * overflow-y가 auto로 계산되는데, scale이 1이 아닌 뷰포트에서는 시각적으로
+ * 커지거나 작아진 칩이 이 고정 높이 박스에 잘리거나(위아래로 잘림) 반대로
+ * 위/아래 요소와 겹쳐 보였다.
  */
 function BusinessToolbar({
   selectedCategory,
@@ -92,7 +100,10 @@ function BusinessToolbar({
         </div>
       </div>
 
-      <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        style={{ height: TOOLBAR_HEIGHT * scale }}
+      >
         <div
           className="flex w-max items-center"
           style={{

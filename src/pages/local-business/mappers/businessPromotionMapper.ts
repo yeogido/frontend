@@ -99,5 +99,6 @@ export function mapBusinessPromotionItemToBusinessItem(
     image: item.thumbnailImageUrl,
     tags: toContentTagIds(item.hashtags),
     liked: item.isLiked,
+    isMine: item.isMine,
   };
 }
