@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { isReviewFormValid } from '../src/pages/review/reviewForm.ts';
+import { isReviewFormValid } from '../src/utils/reviewForm.ts';
 
 test('requires a rating between one and five', () => {
   assert.equal(
