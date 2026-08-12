@@ -89,6 +89,7 @@ export function mapBusinessPromotionItemToBusinessItem(
 ): BusinessItem {
   return {
     id: String(item.promotionId),
+    placeId: item.placeId,
     title: item.placeName,
     description: item.shortDescription,
     location: item.regionName,
@@ -99,5 +100,6 @@ export function mapBusinessPromotionItemToBusinessItem(
     image: item.thumbnailImageUrl,
     tags: toContentTagIds(item.hashtags),
     liked: item.isLiked,
+    isMine: item.isMine,
   };
 }

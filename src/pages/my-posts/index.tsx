@@ -18,6 +18,7 @@ import {
   MY_POST_FILTER_GRID_CLASS_NAME,
 } from '../../constants/courseFilterLayout';
 import { useAuth } from '../../hooks/useAuth';
+import { useBusinessPromotionDelete } from '../../hooks/useBusinessPromotions';
 import {
   useCourseDelete,
   useNavigateToCourseDetail,
@@ -39,7 +40,10 @@ import {
   toDurationLabel,
   toTransportLabel,
 } from '../../utils/courseEnumLabels';
-import { buildLocalBusinessDetailPath } from '../../utils/routes';
+import {
+  buildBusinessPromotionEditPath,
+  buildLocalBusinessDetailPath,
+} from '../../utils/routes';
 
 import {
   MY_POST_CATEGORY_OPTIONS,
@@ -109,6 +113,10 @@ function MyPostsPage() {
     requestDelete: requestCourseDelete,
     dialogProps: courseDeleteDialogProps,
   } = useCourseDelete();
+  const {
+    requestDelete: requestPromotionDelete,
+    dialogProps: promotionDeleteDialogProps,
+  } = useBusinessPromotionDelete();
   const { requestEdit, editorProps } = useReviewEdit();
 
   const reviewsForModal = items.flatMap((item) =>
@@ -343,7 +351,17 @@ function MyPostsPage() {
                   location={promotion.roadAddress}
                   isMine
                   onClick={() =>
-                    navigate(buildLocalBusinessDetailPath(promotion.placeId))
+                    navigate(
+                      buildLocalBusinessDetailPath(promotion.promotionId)
+                    )
+                  }
+                  onEditClick={() =>
+                    navigate(
+                      buildBusinessPromotionEditPath(promotion.promotionId)
+                    )
+                  }
+                  onDeleteClick={() =>
+                    requestPromotionDelete(promotion.promotionId)
                   }
                 />
               );
@@ -364,6 +382,11 @@ function MyPostsPage() {
         {...courseDeleteDialogProps}
         title="코스를 삭제할까요?"
         description="삭제한 코스는 되돌릴 수 없어요."
+      />
+      <ConfirmDialog
+        {...promotionDeleteDialogProps}
+        title="홍보글을 삭제할까요?"
+        description="삭제한 홍보글은 되돌릴 수 없어요."
       />
       {/*
         코스를 모르는 후기만 여기서 연다. 코스를 아는 후기는 코스 상세로

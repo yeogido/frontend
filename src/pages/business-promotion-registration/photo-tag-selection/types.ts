@@ -12,11 +12,15 @@ export const promotionCategoryOptions: readonly PromotionCategoryLabel[] =
     (category): category is PromotionCategoryLabel => category !== '전체'
   );
 
-export interface PhotoTagSelectionPhoto {
-  id: string;
-  file: File;
-  previewUrl: string;
-}
+/**
+ * 화면에 놓인 사진 한 장. 새로 고른 사진은 File을 들고 있다가 제출 시
+ * 업로드하고, 수정 화면에서 프리필된 기존 사진은 File 없이 서버가 이미
+ * 갖고 있는 imageKey를 그대로 되돌려 보낸다(ReviewEditModal의
+ * EditablePhoto와 같은 모양).
+ */
+export type PhotoTagSelectionPhoto =
+  | { id: string; kind: 'new'; file: File; previewUrl: string }
+  | { id: string; kind: 'existing'; imageKey: string; previewUrl: string };
 
 export interface PhotoTagSelectionImage {
   imageKey: string;

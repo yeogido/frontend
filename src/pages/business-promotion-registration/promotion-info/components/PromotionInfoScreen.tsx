@@ -24,7 +24,12 @@ const PLACE_ADDRESS_MARGIN_TOP = 4;
 const PLACE_ADDRESS_SIZE = 13;
 
 interface PromotionInfoScreenProps {
-  business: BusinessInfoResponse;
+  /**
+   * 카드에 이름·주소만 그리므로, 수정 화면에서는 BusinessInfoResponse
+   * 전체 대신 홍보글 상세의 place 정보로 채운 이 두 필드만 넘긴다
+   * (수정 API엔 businessInfoId가 없어 장소 재선택 자체가 없다).
+   */
+  business: Pick<BusinessInfoResponse, 'businessName' | 'businessAddress'>;
   defaultValues?: Partial<PromotionInfoFormValues>;
   onValuesChange?: (values: PromotionInfoFormValues) => void;
   onNext: (values: PromotionInfoResult) => void | Promise<void>;

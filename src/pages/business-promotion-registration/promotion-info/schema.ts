@@ -29,7 +29,6 @@ export type DayTimeEntry = z.infer<typeof dayTimeEntrySchema>;
 export const promotionInfoSchema = z
   .object({
     shortDescription: z.string().trim().min(1, '사업장 소개를 입력해 주세요.'),
-    ownerComment: z.string().trim().min(1, '사장님의 한마디를 입력해 주세요.'),
     openDays: z
       .array(z.enum(DAY_OF_WEEK_VALUES))
       .min(1, '요일을 1개 이상 선택해 주세요.'),
@@ -97,7 +96,6 @@ export interface PromotionInfoBusinessHour {
 // promotionCategory(사진/키워드 선택)는 다른 단계에서 채워 최종 합쳐진다.
 export interface PromotionInfoResult {
   shortDescription: string;
-  ownerComment: string;
   businessHours: PromotionInfoBusinessHour[];
   phoneNumber: string;
   snsAccount?: string;
@@ -112,7 +110,6 @@ export function toPromotionInfoResult(
 ): PromotionInfoResult {
   return {
     shortDescription: values.shortDescription,
-    ownerComment: values.ownerComment,
     businessHours: values.openDays.map((dayOfWeek) => {
       const hour = values.dayTimes[dayOfWeek];
       return {
