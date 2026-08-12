@@ -92,12 +92,14 @@ export function buildAdminCourseRequest(
     thumbnailKey: string;
     hashtagIds: number[];
     travelData?: VisitEventTravelData;
+    routeImageKey: string;
   }
 ): CreateLocalRecommendationRequest | null {
   const {
     region,
     basicInfo,
     thumbnailKey,
+    routeImageKey,
     hashtagIds,
     visitEvents,
     travelData,
@@ -129,6 +131,7 @@ export function buildAdminCourseRequest(
     monthStart: Number(basicInfo.visitStartMonth),
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey,
+    routeImageKey,
     hashtagIds,
     courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
   };
@@ -145,10 +148,17 @@ export function buildAdminCourseUpdateRequest(
     thumbnailKey: string;
     hashtagIds: number[];
     travelData?: VisitEventTravelData;
+    routeImageKey: string;
   }
 ): UpdateCourseRequest | null {
-  const { basicInfo, thumbnailKey, hashtagIds, visitEvents, travelData } =
-    params;
+  const {
+    basicInfo,
+    thumbnailKey,
+    routeImageKey,
+    hashtagIds,
+    visitEvents,
+    travelData,
+  } = params;
 
   if (getAdminCourseRequestValidationError(params)) {
     return null;
@@ -175,6 +185,7 @@ export function buildAdminCourseUpdateRequest(
     monthStart: Number(basicInfo.visitStartMonth),
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey,
+    routeImageKey,
     hashtagIds,
     courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
   };

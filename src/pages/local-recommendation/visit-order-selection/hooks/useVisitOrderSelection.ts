@@ -180,13 +180,21 @@ export function useVisitOrderSelection() {
         travelData = undefined;
       }
 
+      // 코스 경로 이미지는 등록·수정 모두 매번 새로 만들어 최신 방문 순서를
+      // 반영한다. 실패를 조용히 넘기면 오래된(또는 없는) 경로 이미지로
+      // 등록/수정이 성사돼 버리므로, 여기서 던지는 에러는 그대로
+      // 바깥 catch로 전파해 등록/수정 자체를 실패시킨다.
+      const routeImage = await createRouteImage(eventsWithImageKeys);
+      const routeImageKey = await uploadCourseImage(routeImage);
+
       let result: { courseId: number };
 
       if (currentDraft.editingCourseId) {
         const updatePayload = buildLocalCourseUpdateRequest(
           draftWithCoverKey,
           eventsWithImageKeys,
-          travelData
+          travelData,
+          routeImageKey
         );
         if (!updatePayload) {
           throw new Error('코스 정보가 모두 입력되어야 수정할 수 있습니다.');
@@ -209,8 +217,6 @@ export function useVisitOrderSelection() {
             getCourseDetail(currentDraft.editingCourseId as number),
         });
       } else {
-        const routeImage = await createRouteImage(eventsWithImageKeys);
-        const routeImageKey = await uploadCourseImage(routeImage);
         const payload = buildCourseRequest(
           draftWithCoverKey,
           eventsWithImageKeys,

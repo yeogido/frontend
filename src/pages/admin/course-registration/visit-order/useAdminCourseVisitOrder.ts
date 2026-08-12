@@ -19,6 +19,7 @@ import { useToast } from '../../../../components/toast';
 import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
+import { createRouteImage } from '../../../local-recommendation/visit-order-selection/createRouteImage';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
 import {
   fetchVisitEventTravelData,
@@ -192,6 +193,13 @@ export function useAdminCourseVisitOrder() {
         travelData = undefined;
       }
 
+      // local-recommendation의 등록/수정 흐름과 동일하게, 경로 이미지
+      // 생성/업로드 실패를 조용히 넘기지 않는다 — 실패하면 아래 throw가
+      // registerMutation의 에러로 그대로 전파돼 등록/수정 자체가 실패로
+      // 처리된다.
+      const routeImage = await createRouteImage(eventsWithImageKeys);
+      const [routeImageKey] = await uploadAdminCourseImages([routeImage]);
+
       const hashtags = await fetchHashtags();
       const hashtagIds = mapTagIdsToHashtagIds(
         keywordTagIds,
@@ -207,6 +215,7 @@ export function useAdminCourseVisitOrder() {
           existingThumbnailKey,
           visitEvents: eventsWithImageKeys,
           thumbnailKey,
+          routeImageKey,
           hashtagIds,
           travelData,
         });
@@ -225,6 +234,7 @@ export function useAdminCourseVisitOrder() {
         existingThumbnailKey,
         visitEvents: eventsWithImageKeys,
         thumbnailKey,
+        routeImageKey,
         hashtagIds,
         travelData,
       });
@@ -268,7 +278,9 @@ export function useAdminCourseVisitOrder() {
       // 상세페이지로 이동한다. 관리자 계정으로 호출하면 서버가 courseType을
       // OFFICIAL로 만들어 여기도 추천 코스 상세(/yeogido-course/detail)에서
       // 조회된다.
-      navigate(`/yeogido-course/detail/${result.courseId}`);
+      navigate(`/yeogido-course/detail/${result.courseId}`, {
+        state: { fromAdminCourseCreationFlow: true },
+      });
     },
   });
 

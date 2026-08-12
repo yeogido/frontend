@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import type { CourseDetailResult } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
@@ -50,6 +50,7 @@ function removePendingId(
 function YeogidoCourseDetailPage() {
   const { courseId: courseIdParam } = useParams<{ courseId?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { openLoginModal } = useLoginModal();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const { showToast } = useToast();
@@ -105,6 +106,19 @@ function YeogidoCourseDetailPage() {
   }
 
   const handleBack = () => {
+    // 관리자 코스 생성/수정 플로우(방문 순서 정하기)를 마치고 넘어온 상세 페이지라면,
+    // 뒤로가기로 그 플로우(장소/행사 선택 등)로 되돌아가지 않고 관리자 코스
+    // 인기 목록으로 보낸다.
+    const cameFromAdminCourseCreationFlow = Boolean(
+      (location.state as { fromAdminCourseCreationFlow?: boolean } | null)
+        ?.fromAdminCourseCreationFlow
+    );
+
+    if (cameFromAdminCourseCreationFlow) {
+      navigate('/admin/courses/popular', { replace: true });
+      return;
+    }
+
     // history.state.idx는 react-router의 브라우저 히스토리 항목 인덱스라,
     // 0이면 이 탭에서 처음 들어온 화면(직접 링크로 진입 등)이라 뒤로 갈
     // 곳이 없다 — 그때만 여기도 코스 목록으로 대체 이동한다. 그 외에는
