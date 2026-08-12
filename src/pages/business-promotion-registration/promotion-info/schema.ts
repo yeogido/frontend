@@ -70,16 +70,11 @@ export const promotionInfoSchema = z
           message: '종료 시간을 선택해 주세요.',
           path: ['dayTimes', day, 'closeTime'],
         });
-        return;
       }
 
-      if (isOpenTimeValid && openTime >= closeTime) {
-        ctx.addIssue({
-          code: 'custom',
-          message: '마감 시간은 오픈 시간보다 늦어야 해요.',
-          path: ['dayTimes', day, 'closeTime'],
-        });
-      }
+      // 마감 시간이 오픈 시간보다 이른 것도 허용한다(예: 18:00~02:00 같은
+      // 심야 영업). 자정을 넘겨 영업하는 가게가 있어 오픈/마감 시간의
+      // 선후 관계를 제한하지 않기로 함.
     });
   });
 
