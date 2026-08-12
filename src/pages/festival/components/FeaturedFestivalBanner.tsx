@@ -8,9 +8,11 @@ const TITLE_TOP = 24;
 const TITLE_LEFT = 16;
 const TITLE_WIDTH = 163;
 const TITLE_SIZE = 16;
+const TITLE_HEIGHT = 19;
 const DESCRIPTION_MARGIN_TOP = 10;
 const DESCRIPTION_SIZE = 10;
 const DESCRIPTION_LINE_HEIGHT = 12;
+const DESCRIPTION_HEIGHT = 24;
 const META_BOTTOM = 14;
 const META_LEFT = 16;
 const META_GAP = 2;
@@ -54,7 +56,14 @@ function FeaturedFestivalBanner({
           width: TITLE_WIDTH * scale,
         }}
       >
-        <p className="font-semibold" style={{ fontSize: TITLE_SIZE * scale }}>
+        <p
+          className="truncate font-semibold"
+          style={{
+            fontSize: TITLE_SIZE * scale,
+            lineHeight: `${TITLE_HEIGHT * scale}px`,
+            height: TITLE_HEIGHT * scale,
+          }}
+        >
           {festival.title}
         </p>
         <p
@@ -63,6 +72,7 @@ function FeaturedFestivalBanner({
             marginTop: DESCRIPTION_MARGIN_TOP * scale,
             fontSize: DESCRIPTION_SIZE * scale,
             lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+            height: DESCRIPTION_HEIGHT * scale,
           }}
         >
           {festival.description}
