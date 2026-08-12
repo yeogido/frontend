@@ -60,7 +60,7 @@ export function toReviewCourseCardProps(review: ReviewDetail) {
     isMine: review.isMine,
     // 카드 썸네일은 후기 사진의 첫 장이다. 사진 없이 쓴 후기도 있어(서버가
     // 0장을 허용한다) 그때는 코스 썸네일로 떨어뜨린다.
-    image: images[0] ?? review.course.thumbnailUrl,
+    image: review.course.routeImageUrl ?? images[0] ?? review.course.thumbnailUrl,
     images,
     editableImages: toEditableImages(review.images),
     title: review.course.title,

@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/kakao-maps/static-map",
+      "destination": "/api/kakao-maps/static-map"
+    },
+    {
       "source": "/kakao-routing/car",
       "destination": "/api/kakao-routing/car"
     },

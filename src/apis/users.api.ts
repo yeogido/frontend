@@ -32,7 +32,32 @@ export async function getMyPosts(
       { params },
     );
 
-    return data;
+    return {
+      ...data,
+      items: data.items.map((item) => ({
+        ...item,
+        course: item.course
+          ? {
+              ...item.course,
+              thumbnailUrl:
+                item.course.routeImageUrl ?? item.course.thumbnailUrl,
+            }
+          : undefined,
+        review: item.review
+          ? {
+              ...item.review,
+              course: item.review.course
+                ? {
+                    ...item.review.course,
+                    thumbnailUrl:
+                      item.review.course.routeImageUrl ??
+                      item.review.course.thumbnailUrl,
+                  }
+                : undefined,
+            }
+          : undefined,
+      })),
+    };
   } catch (error) {
     throw normalizeApiError(error);
   }

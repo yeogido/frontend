@@ -103,7 +103,8 @@ function YeogidoCoursePopularPage() {
   } = useYeogidoCourseFilters({ sort: '인기순' });
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
+  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
+    useDistanceSortCoordinates();
 
   const {
     data,
@@ -125,7 +126,7 @@ function YeogidoCoursePopularPage() {
         : undefined,
       size: 20,
     },
-    { enabled: !isDistanceSort || distanceSortCoordinates !== null }
+    { enabled: !isDistanceSort || status === 'ready' || status === 'failed' }
   );
 
   const popularCourses = data?.pages.flatMap((page) => page.items) ?? [];
@@ -183,7 +184,12 @@ function YeogidoCoursePopularPage() {
           )}
           marginTop={FILTER_MARGIN_TOP}
           onToggle={handleFilterToggle}
-          onSelect={handleFilterSelect}
+          onSelect={(filterKey, option) => {
+            handleFilterSelect(filterKey, option);
+            if (filterKey === 'sort' && sortByLabel[option] === 'DISTANCE') {
+              void requestCoordinates();
+            }
+          }}
         />
         <div
           className="grid grid-cols-2"
@@ -205,7 +211,7 @@ function YeogidoCoursePopularPage() {
                 isAdmin ? (
                   <EditableContentCard
                     key={course.courseId}
-                    image={course.thumbnailUrl}
+                    image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={durationLabelByType[course.durationType]}
                     secondInfo={course.region}
@@ -218,7 +224,7 @@ function YeogidoCoursePopularPage() {
                 ) : (
                   <ContentCard
                     key={course.courseId}
-                    image={course.thumbnailUrl}
+                    image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={durationLabelByType[course.durationType]}
                     secondInfo={course.region}

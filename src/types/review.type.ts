@@ -24,6 +24,7 @@ export interface ReviewCourseSummary {
   courseType: string;
   title: string;
   thumbnailUrl: string;
+  routeImageUrl?: string | null;
   durationType: string;
   transportType: string;
   companionType: string;

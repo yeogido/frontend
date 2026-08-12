@@ -10,6 +10,7 @@ import {
   formatOperatingDay,
   formatTodayOperatingHours,
   isOperatingNow,
+  isTwentyFourHoursEveryDay,
 } from '../../../utils/operatingHours';
 import type { CourseStop } from '../types/courseDetail';
 
@@ -67,7 +68,9 @@ export function CourseStopItem({
   const scale = useGlobalScale();
   const [isHoursOpen, setIsHoursOpen] = useState(false);
   const operatingDays = stop.operatingDays ?? [];
-  const canExpandHours = operatingDays.length > 0;
+  const isTwentyFourHourOperation = isTwentyFourHoursEveryDay(operatingDays);
+  const canExpandHours =
+    operatingDays.length > 0 && !isTwentyFourHourOperation;
   // 요일별 영업시간을 파싱할 수 있으면 현재 요일·시각 기준으로 직접 계산하고,
   // 파싱할 수 없는 경우(휴무 표기만 있거나 형식이 다른 경우)에만 구글이
   // 내려준 openNow 값으로 대체한다.
