@@ -3,6 +3,7 @@ import {
   useId,
   useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -34,9 +35,13 @@ function SelectField({ id, value, onChange, options, ariaLabel }: SelectFieldPro
   const buttonId = useId();
   const listboxId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const hasFocusedOnOpenRef = useRef(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [panelStyle, setPanelStyle] = useState<{
     top: number;
     left: number;
@@ -50,6 +55,22 @@ function SelectField({ id, value, onChange, options, ariaLabel }: SelectFieldPro
   const selectedOption =
     options.find((option) => option.value === value) ?? options[0];
   const panelHeight = Math.min(options.length * OPTION_HEIGHT, MAX_PANEL_HEIGHT);
+
+  const closeAndRestoreFocus = () => {
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const openDropdown = () => {
+    const initialIndex = Math.max(
+      options.findIndex((option) => option.value === value),
+      0
+    );
+
+    setActiveIndex(initialIndex);
+    hasFocusedOnOpenRef.current = false;
+    setIsOpen(true);
+  };
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -103,6 +124,18 @@ function SelectField({ id, value, onChange, options, ariaLabel }: SelectFieldPro
     };
   }, [isOpen, panelHeight]);
 
+  // 열릴 때 선택된 옵션(없으면 첫 옵션)으로 포커스를 옮긴다. panelStyle이
+  // 잡히고 포털이 실제로 그려진 뒤에만 옮길 수 있어서, isOpen만으로는
+  // 시점을 알 수 없어 panelStyle도 같이 본다. 한 번 연 세션에 한 번만
+  // 옮기도록 hasFocusedOnOpenRef로 막는다(리사이즈 등으로 panelStyle이
+  // 다시 계산돼도 포커스가 계속 튀지 않게).
+  useEffect(() => {
+    if (!isOpen || !panelStyle || hasFocusedOnOpenRef.current) return;
+
+    hasFocusedOnOpenRef.current = true;
+    optionRefs.current[activeIndex]?.focus();
+  }, [isOpen, panelStyle, activeIndex]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -115,10 +148,8 @@ function SelectField({ id, value, onChange, options, ariaLabel }: SelectFieldPro
 
       const inset = VIEWPORT_INSET;
       const trackHeight = listbox.clientHeight - inset * 2;
-      const thumbHeight = Math.max(
-        32,
-        (listbox.clientHeight / listbox.scrollHeight) * trackHeight
-      );
+      const thumbHeight =
+        (listbox.clientHeight / listbox.scrollHeight) * trackHeight;
       const maxThumbTop = trackHeight - thumbHeight;
       const progress =
         listbox.scrollTop / (listbox.scrollHeight - listbox.clientHeight);
@@ -168,16 +199,52 @@ function SelectField({ id, value, onChange, options, ariaLabel }: SelectFieldPro
       progress * (listbox.scrollHeight - listbox.clientHeight);
   };
 
+  const focusOption = (index: number) => {
+    setActiveIndex(index);
+    optionRefs.current[index]?.focus();
+  };
+
+  const handleListboxKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        focusOption(Math.min(activeIndex + 1, options.length - 1));
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        focusOption(Math.max(activeIndex - 1, 0));
+        break;
+      case 'Home':
+        event.preventDefault();
+        focusOption(0);
+        break;
+      case 'End':
+        event.preventDefault();
+        focusOption(options.length - 1);
+        break;
+      case 'Escape':
+        event.preventDefault();
+        closeAndRestoreFocus();
+        break;
+      case 'Tab':
+        setIsOpen(false);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <div ref={rootRef} className="relative">
       <button
+        ref={triggerRef}
         id={id ?? buttonId}
         type="button"
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={listboxId}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => (isOpen ? setIsOpen(false) : openDropdown())}
         className="flex h-12 w-full items-center justify-between rounded-[12px] border border-gray-2 bg-white px-4 text-left text-sm font-medium text-gray-4 outline-none focus:border-main-5"
       >
         <span className="truncate">{selectedOption?.label}</span>
@@ -202,6 +269,7 @@ function SelectField({ id, value, onChange, options, ariaLabel }: SelectFieldPro
                 ref={listboxRef}
                 role="listbox"
                 aria-labelledby={id ?? buttonId}
+                onKeyDown={handleListboxKeyDown}
                 onScroll={() => {
                   const listbox = listboxRef.current;
                   if (!listbox || !scrollThumb) return;
@@ -219,20 +287,25 @@ function SelectField({ id, value, onChange, options, ariaLabel }: SelectFieldPro
                 }}
                 className="h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
-                {options.map((option) => {
+                {options.map((option, index) => {
                   const isSelected = option.value === value;
 
                   return (
                     <button
                       key={option.value}
+                      ref={(el) => {
+                        optionRefs.current[index] = el;
+                      }}
                       type="button"
                       role="option"
                       aria-selected={isSelected}
+                      tabIndex={index === activeIndex ? 0 : -1}
+                      onFocus={() => setActiveIndex(index)}
                       onClick={() => {
                         onChange(option.value);
-                        setIsOpen(false);
+                        closeAndRestoreFocus();
                       }}
-                      className={`flex w-full items-center border-b border-gray-2 px-3.5 text-left text-sm font-medium text-gray-4 last:border-b-0 ${isSelected ? 'bg-gray-2' : 'bg-white'}`}
+                      className={`flex w-full items-center border-b border-gray-2 px-3.5 text-left text-sm font-medium text-gray-4 last:border-b-0 outline-none ${isSelected ? 'bg-gray-2' : 'bg-white'}`}
                       style={{ height: OPTION_HEIGHT }}
                     >
                       {option.label}

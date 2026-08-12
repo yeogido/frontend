@@ -19,7 +19,11 @@ import { useEditCourse } from '../../../hooks/useEditCourse';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toContentTagIds } from '../../../utils/contentTags';
-import { toDurationLabel } from '../../../utils/courseEnumLabels';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
 import { buildCourseDetailPath } from '../../../utils/routes';
 import type { CourseSort, CourseType } from '../../../types/course.type';
 
@@ -140,7 +144,8 @@ function RegionCourseSection({
                         image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                         title={course.title}
                         firstInfo={toDurationLabel(course.durationType)}
-                        secondInfo={course.region}
+                        secondInfo={toTransportLabel(course.transportType)}
+                        thirdInfo={toCompanionLabel(course.companionType)}
                         tags={toContentTagIds(course.tags)}
                         onClick={() =>
                           navigate(
@@ -156,7 +161,8 @@ function RegionCourseSection({
                         image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                         title={course.title}
                         firstInfo={toDurationLabel(course.durationType)}
-                        secondInfo={course.region}
+                        secondInfo={toTransportLabel(course.transportType)}
+                        thirdInfo={toCompanionLabel(course.companionType)}
                         tags={toContentTagIds(course.tags)}
                         liked={getLiked(course.courseId, course.isLiked)}
                         onClick={() =>

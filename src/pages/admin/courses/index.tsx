@@ -22,7 +22,11 @@ import { useEditCourse } from '../../../hooks/useEditCourse';
 import { useRecentCourses } from '../../../hooks/useRecentCourses';
 import { useAdminCourseRegistrationStore } from '../../../store/adminCourseRegistration.store';
 import { toContentTagIds } from '../../../utils/contentTags';
-import { toDurationLabel } from '../../../utils/courseEnumLabels';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
 import { toCourseCardProps } from '../../../utils/courseCard';
 import { buildCourseDetailPath } from '../../../utils/routes';
 
@@ -346,7 +350,8 @@ function AdminCoursesPage() {
                     image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={toDurationLabel(course.durationType)}
-                    secondInfo={course.region}
+                    secondInfo={toTransportLabel(course.transportType)}
+                    thirdInfo={toCompanionLabel(course.companionType)}
                     tags={toContentTagIds(course.tags)}
                     onClick={() => goToCourseDetail(course.courseId)}
                     onEdit={() => void editCourse(course.courseId)}

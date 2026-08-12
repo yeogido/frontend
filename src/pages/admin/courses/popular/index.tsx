@@ -14,6 +14,10 @@ import { useDistanceSortCoordinates } from '../../../../hooks/useDistanceSortCoo
 import { useEditCourse } from '../../../../hooks/useEditCourse';
 import useInfiniteScroll from '../../../../hooks/useInfiniteScroll';
 import { toContentTagIds } from '../../../../utils/contentTags';
+import {
+  toCompanionLabel,
+  toTransportLabel,
+} from '../../../../utils/courseEnumLabels';
 import { buildCourseDetailPath } from '../../../../utils/routes';
 import type {
   CourseCompanionType,
@@ -209,7 +213,8 @@ function AdminCoursesPopularPage() {
                   image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                   title={course.title}
                   firstInfo={durationLabelByType[course.durationType]}
-                  secondInfo={course.region}
+                  secondInfo={toTransportLabel(course.transportType)}
+                  thirdInfo={toCompanionLabel(course.companionType)}
                   tags={toContentTagIds(course.tags)}
                   className="w-full"
                   onClick={() => goToCourseDetail(course.courseId)}
