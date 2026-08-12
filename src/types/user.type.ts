@@ -1,6 +1,8 @@
 // GET /users/me/posts 응답 중 프론트가 실제로 쓰는 부분만 정의한다.
 // enum은 다른 응답과 마찬가지로 string으로 받고 표시 시점에 매핑한다.
 
+import type { ReviewImage } from './review.type';
+
 export type MyPostCategory = 'ALL' | 'COURSE' | 'REVIEW' | 'PROMOTION';
 
 /**
@@ -46,6 +48,8 @@ export interface MyReview {
   rating: number;
   content: string;
   createdAt: string;
+  /** 다른 후기 API(ReviewDetail·CourseReviewPreview)와 같은 모양이다. */
+  images: ReviewImage[];
   /** 백엔드가 코스 정보를 함께 내려줄 때만 채워진다(현재 응답 예시엔 없음). */
   course?: MyCourseSummary;
 }

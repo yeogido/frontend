@@ -28,7 +28,9 @@ const TRANSPORT_TYPE_TO_FORM: Record<
   CourseBasicInfoValues['transport']
 > = {
   WALK: 'walking',
-  PUBLIC: 'public',
+  // 'PUBLIC'은 예전에 만들어진 코스에만 남아 있을 수 있는 값이라(생성/수정
+  // 요청 스펙에서 이미 빠짐) '뚜벅이'로 합쳐서 보여준다.
+  PUBLIC: 'walking',
   CAR: 'car',
 };
 
