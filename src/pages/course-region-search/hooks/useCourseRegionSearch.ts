@@ -122,7 +122,7 @@ function useCourseRegionSearch() {
   // 드롭다운을 닫아버린다. 응답이 아직 없을 때는(로딩 중) 기본 목록을,
   // 응답이 왔지만 결과가 없을 때는([]) 그대로 빈 목록을 보여준다.
   const liveSearchSuggestions = searchResultsQuery.data?.map(
-    (region) => region.name
+    (region) => region.fullName
   );
 
   const searchSuggestions =
