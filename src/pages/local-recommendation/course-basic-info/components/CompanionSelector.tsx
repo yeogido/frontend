@@ -1,10 +1,10 @@
 import {
-  FaDog,
-  FaHeart,
-  FaPeopleGroup,
-  FaPeopleRoof,
-  FaUser,
-} from 'react-icons/fa6';
+  MdDiversity3,
+  MdFace,
+  MdFavorite,
+  MdGroup,
+  MdPets,
+} from 'react-icons/md';
 
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
@@ -18,7 +18,7 @@ const GRID_GAP = 8;
 const CARD_MIN_HEIGHT = 56;
 const CARD_PADDING_X = 4;
 const CARD_PADDING_Y = 8;
-const ICON_SIZE = 18;
+const ICON_SIZE = 24;
 const LABEL_MARGIN_TOP = 4;
 const LABEL_FONT_SIZE = 10;
 const CARD_BORDER_RADIUS = 12;
@@ -28,12 +28,14 @@ interface CompanionSelectorProps {
   onChange: (value: CourseBasicInfoValues['companion']) => void;
 }
 
+// 피그마 노드(541:6237)의 아이콘과 1:1로 맞춘다 — material-symbols:face,
+// group-rounded, favorite-rounded, diversity-3-rounded, pets.
 const icons = {
-  solo: FaUser,
-  friends: FaPeopleGroup,
-  couple: FaHeart,
-  family: FaPeopleRoof,
-  pet: FaDog,
+  solo: MdFace,
+  friends: MdGroup,
+  couple: MdFavorite,
+  family: MdDiversity3,
+  pet: MdPets,
 };
 
 function CompanionSelector({ value, onChange }: CompanionSelectorProps) {
