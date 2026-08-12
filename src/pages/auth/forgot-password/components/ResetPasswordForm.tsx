@@ -5,7 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { getApiErrorMessage } from '../../../../apis/common';
 import { resetPassword } from '../../../../apis/auth.api';
-import { AuthField } from '../../../../components/auth';
+import {
+  AuthField,
+  BackButton,
+  PasswordInput,
+} from '../../../../components/auth';
 import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
@@ -69,6 +73,8 @@ function ResetPasswordForm() {
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
       <div className="flex-1">
+        <BackButton onClick={() => navigate(-1)} />
+
         <h1 className="text-[28px] font-bold leading-none text-black">
           비밀번호 재설정
         </h1>
@@ -87,10 +93,9 @@ function ResetPasswordForm() {
               label="비밀번호"
               error={errors.password?.message}
             >
-              <input
+              <PasswordInput
                 {...register('password')}
                 id="reset-password"
-                type="password"
                 placeholder="비밀번호"
                 className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />
@@ -101,10 +106,9 @@ function ResetPasswordForm() {
               label="비밀번호 확인"
               error={errors.passwordConfirm?.message}
             >
-              <input
+              <PasswordInput
                 {...register('passwordConfirm')}
                 id="reset-password-confirm"
-                type="password"
                 placeholder="비밀번호 확인"
                 className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
               />

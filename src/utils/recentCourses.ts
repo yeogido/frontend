@@ -112,6 +112,31 @@ export function updateRecentCourseLikeState(
   }
 }
 
+// 비로그인 상태에서는 좋아요를 가질 수 없으므로, 로그아웃 시 "최근 본
+// 코스" 목록은 그대로 두고 각 항목의 좋아요 표시만 지운다.
+export function clearRecentCoursesLikedState(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const courses = getStoredRecentCourses();
+
+    if (!courses.some((course) => course.isLiked)) return;
+
+    const updatedCourses = courses.map((course) => ({
+      ...course,
+      isLiked: false,
+    }));
+
+    window.localStorage.setItem(
+      RECENT_COURSES_STORAGE_KEY,
+      JSON.stringify(updatedCourses)
+    );
+    notifyRecentCoursesUpdated();
+  } catch {
+    return;
+  }
+}
+
 function isRecentCourse(value: unknown): value is RecentCourse {
   if (typeof value !== 'object' || value === null) return false;
 

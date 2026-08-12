@@ -7,7 +7,11 @@ import {
   sendPasswordResetCode,
   verifyPasswordResetCode,
 } from '../../../../apis/auth.api';
-import { AuthField } from '../../../../components/auth';
+import {
+  AuthField,
+  BackButton,
+  ClearableInput,
+} from '../../../../components/auth';
 import { SIGNUP_EMAIL_PATTERN } from '../../signup/schema';
 
 const SEND_CODE_ERROR_MESSAGE =
@@ -190,6 +194,8 @@ function ForgotPasswordForm() {
   return (
     <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
       <div className="flex-1">
+        <BackButton onClick={() => navigate(-1)} />
+
         <h1 className="text-[28px] font-bold leading-none text-black">
           비밀번호 찾기
         </h1>
@@ -209,13 +215,14 @@ function ForgotPasswordForm() {
           >
             <div className="space-y-2">
               <div className="flex gap-2">
-                <input
+                <ClearableInput
                   id="forgot-password-email"
                   type="email"
                   placeholder="이메일"
                   value={email}
                   onChange={(event) => handleEmailChange(event.target.value)}
-                  className="block h-12 min-w-0 flex-1 rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
+                  wrapperClassName="min-w-0 flex-1"
+                  className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
                 />
 
                 <button
@@ -237,13 +244,14 @@ function ForgotPasswordForm() {
                     인증번호
                   </label>
 
-                  <input
+                  <ClearableInput
                     id="forgot-password-code"
                     type="text"
                     placeholder="인증번호"
                     value={code}
                     onChange={(event) => handleCodeChange(event.target.value)}
-                    className="block h-12 min-w-0 flex-1 rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
+                    wrapperClassName="min-w-0 flex-1"
+                    className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
                   />
 
                   <button
