@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getSubRegions, searchRegions } from '../../../apis/regions.api';
 import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { REGION_INFO_ID_STATE_KEY } from '../../../constants/regions';
+import { toShortRegionPath } from '../../../utils/regionSearch';
 import {
   addStoredRecentSearch,
   getStoredRecentSearches,
@@ -210,7 +211,9 @@ function useCourseRegionSearch() {
   };
 
   const submitSearch = (query: string) => {
-    const keyword = query.trim();
+    // 제안 목록은 fullName("대전광역시 동구")을 보여주므로, 저장·이동에는
+    // 시·군·구 목록과 같은 짧은 표기("대전 동구")로 맞춘다.
+    const keyword = toShortRegionPath(query);
 
     if (!keyword) {
       return;

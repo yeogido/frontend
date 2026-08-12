@@ -22,6 +22,22 @@ const getProvinceName = (fullName: string) => {
 };
 
 /**
+ * 검색 제안은 동명 지역을 구분하려고 fullName("대전광역시 동구")을 보여주지만,
+ * 최근 검색어와 URL(region=)은 짧은 이름("대전 동구")을 쓴다. 첫 토큰만 짧은
+ * 이름으로 바꿔 표기를 한 형태로 모은다. 그러지 않으면 같은 지역이 두 형태로
+ * 쌓이고, 시/도 이름이 안 맞아 지역 필터로도 해석되지 않는다.
+ */
+export const toShortRegionPath = (regionPath: string) => {
+  const [provinceOfficialName, ...rest] = splitRegionPath(regionPath);
+
+  if (!provinceOfficialName) {
+    return regionPath.trim();
+  }
+
+  return [normalizeRegionName(provinceOfficialName), ...rest].join(' ');
+};
+
+/**
  * "중구"·"동구"·"고성군"처럼 이름이 같은 시/군/구가 여러 시/도에 존재한다.
  * 이름만으로 `find`하면 응답 순서상 항상 서울(또는 첫 시/도)이 잡혀서 엉뚱한
  * 지역의 결과를 조용히 보여주게 되므로, "부산 중구"처럼 시/도 토큰이 함께
