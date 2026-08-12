@@ -48,6 +48,7 @@ const HERO_TITLE_LINE_HEIGHT = 19;
 const HERO_DESCRIPTION_MARGIN_TOP = 10;
 const HERO_DESCRIPTION_SIZE = 10;
 const HERO_DESCRIPTION_LINE_HEIGHT = 12;
+const HERO_DESCRIPTION_HEIGHT = 24;
 const HERO_META_BOTTOM = 14;
 const HERO_META_LEFT = 16;
 const HERO_META_GAP = 10;
@@ -236,7 +237,9 @@ function AdminCoursesPage() {
             >
               {heroCourse?.routeImageUrl?.trim() || heroCourse?.thumbnailUrl ? (
                 <img
-                  src={heroCourse.routeImageUrl?.trim() || heroCourse.thumbnailUrl}
+                  src={
+                    heroCourse.routeImageUrl?.trim() || heroCourse.thumbnailUrl
+                  }
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 h-full w-full object-cover"
@@ -252,20 +255,22 @@ function AdminCoursesPage() {
                 }}
               >
                 <p
-                  className="font-semibold"
+                  className="truncate font-semibold"
                   style={{
                     fontSize: HERO_TITLE_SIZE * scale,
                     lineHeight: `${HERO_TITLE_LINE_HEIGHT * scale}px`,
+                    height: HERO_TITLE_LINE_HEIGHT * scale,
                   }}
                 >
                   {heroTitle}
                 </p>
                 <p
-                  className="text-pure-white/85 font-normal"
+                  className="text-pure-white/85 line-clamp-2 font-normal"
                   style={{
                     marginTop: HERO_DESCRIPTION_MARGIN_TOP * scale,
                     fontSize: HERO_DESCRIPTION_SIZE * scale,
                     lineHeight: `${HERO_DESCRIPTION_LINE_HEIGHT * scale}px`,
+                    height: HERO_DESCRIPTION_HEIGHT * scale,
                   }}
                 >
                   {heroDescription}
