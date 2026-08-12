@@ -99,7 +99,9 @@ export interface UpdateCourseRequest {
   title: string;
   description: string;
   durationType: 'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
-  transportType: 'WALK' | 'PUBLIC' | 'CAR';
+  // 라이브 스펙(CourseUpdateRequest) 기준 이동수단은 WALK/CAR만 받는다 —
+  // PUBLIC은 더 이상 유효한 요청 값이 아니다.
+  transportType: 'WALK' | 'CAR';
   companionType: 'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
   monthStart: number;
   monthEnd: number;

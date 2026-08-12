@@ -3,8 +3,9 @@ import {
   toDurationLabel,
   toReviewerMetaLabel,
   toTransportLabel,
-} from '../../../utils/courseEnumLabels';
-import { toContentTagIds } from '../../../utils/contentTags';
+} from '../../../utils/courseEnumLabels.ts';
+import { toContentTagIds } from '../../../utils/contentTags.ts';
+import { toEditableImages, toImageUrls } from '../../../utils/reviewCard.ts';
 
 import type { MyCourseSummary, MyReview } from '../../../types/user.type';
 
@@ -20,11 +21,16 @@ export function toMyPostReviewCardProps(
   fallbackCourse?: MyCourseSummary,
 ) {
   const course = review.course ?? fallbackCourse;
+  const images = toImageUrls(review.images);
 
   return {
     id: review.reviewId,
     courseId: course?.id,
-    image: course?.thumbnailUrl ?? '',
+    // 다른 화면과 같이 카드 썸네일은 후기 사진의 첫 장으로 쓴다. 사진 없이 쓴
+    // 후기도 있어(서버가 0장을 허용한다) 그때는 코스 썸네일로 떨어뜨린다.
+    image: images[0] ?? course?.thumbnailUrl ?? '',
+    images,
+    editableImages: toEditableImages(review.images),
     title: course?.title ?? '',
     duration: course ? toDurationLabel(course.durationType) : '',
     courseType: course ? toTransportLabel(course.transportType) : '',

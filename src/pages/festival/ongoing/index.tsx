@@ -165,14 +165,14 @@ function FestivalOngoingPage() {
                   tags={toContentTagIds(festival.hashtags)}
                   className="w-full"
                   isAdmin={isAdmin}
-                  liked={getLiked(festival.contentId, false)}
+                  liked={getLiked(festival.contentId, festival.isLiked)}
                   onClick={() =>
                     navigate(buildFestivalDetailPath(festival.contentId))
                   }
                   onLikeClick={() =>
                     toggleLike(
                       festival.contentId,
-                      getLiked(festival.contentId, false)
+                      getLiked(festival.contentId, festival.isLiked)
                     )
                   }
                   onEdit={() => void editFestival(festival.contentId)}

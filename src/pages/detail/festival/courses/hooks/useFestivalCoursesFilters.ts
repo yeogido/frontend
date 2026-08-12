@@ -1,22 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 
 import {
-  initialYeogidoCourseSelectedFilters,
-  type YeogidoCourseFilterKey,
-  type YeogidoCourseSelectedFilters,
+  initialFestivalCoursesSelectedFilters,
+  type FestivalCoursesFilterKey,
+  type FestivalCoursesSelectedFilters,
 } from '../constants/filters';
 
-function useYeogidoCourseFilters(
-  initialOverrides?: Partial<YeogidoCourseSelectedFilters>
-) {
+function useFestivalCoursesFilters() {
   const filterContainerRef = useRef<HTMLDivElement | null>(null);
   const [openFilterKey, setOpenFilterKey] =
-    useState<YeogidoCourseFilterKey | null>(null);
+    useState<FestivalCoursesFilterKey | null>(null);
   const [selectedFilters, setSelectedFilters] =
-    useState<YeogidoCourseSelectedFilters>(() => ({
-      ...initialYeogidoCourseSelectedFilters,
-      ...initialOverrides,
-    }));
+    useState<FestivalCoursesSelectedFilters>(
+      initialFestivalCoursesSelectedFilters
+    );
 
   useEffect(() => {
     if (!openFilterKey) {
@@ -38,14 +35,14 @@ function useYeogidoCourseFilters(
     };
   }, [openFilterKey]);
 
-  const handleFilterToggle = (filterKey: YeogidoCourseFilterKey) => {
+  const handleFilterToggle = (filterKey: FestivalCoursesFilterKey) => {
     setOpenFilterKey((currentFilterKey) =>
       currentFilterKey === filterKey ? null : filterKey
     );
   };
 
   const handleFilterSelect = (
-    filterKey: YeogidoCourseFilterKey,
+    filterKey: FestivalCoursesFilterKey,
     option: string
   ) => {
     setSelectedFilters((currentFilters) => ({
@@ -64,4 +61,4 @@ function useYeogidoCourseFilters(
   };
 }
 
-export default useYeogidoCourseFilters;
+export default useFestivalCoursesFilters;

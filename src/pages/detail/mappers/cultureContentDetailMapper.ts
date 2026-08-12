@@ -1,6 +1,11 @@
 import type { DetailTag } from '../../../types/detail';
 import type { CultureContentDetail } from '../../../types/content.type';
 import { toContentTagId } from '../../../utils/contentTags';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
 
 import type {
   FestivalDetail,
@@ -26,16 +31,18 @@ function mapTags(hashtags: string[]): DetailTag[] {
   });
 }
 
-function mapCourses(
+export function mapFestivalRelatedCourses(
   courses: CultureContentDetail['courses']
 ): FestivalRelatedCourse[] {
   return courses.map((course) => ({
     id: course.courseId,
     image: toImageUrl(course.thumbnailImageUrl ?? course.thumbnailImage),
     title: course.title,
-    duration: course.duration ?? course.durationType ?? '',
-    courseType: course.transportType,
-    companion: course.companionType,
+    duration: course.durationType
+      ? toDurationLabel(course.durationType)
+      : (course.duration ?? ''),
+    courseType: toTransportLabel(course.transportType),
+    companion: toCompanionLabel(course.companionType),
     tags: [],
     liked: course.liked,
   }));
@@ -71,6 +78,6 @@ export function mapCultureContentDetailToFestivalDetail(
         longitude: content.place.longitude,
       },
     },
-    relatedCourses: mapCourses(content.courses),
+    relatedCourses: mapFestivalRelatedCourses(content.courses),
   };
 }
