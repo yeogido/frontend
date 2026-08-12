@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import more from '../../assets/icons/more.svg';
@@ -83,7 +83,7 @@ function ReviewActionMenu({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen) return;
 
     const updatePanelStyle = () => {
@@ -106,9 +106,14 @@ function ReviewActionMenu({
 
     updatePanelStyle();
     window.addEventListener('resize', updatePanelStyle);
+    // capture:true — 트리거를 감싼 스크롤 컨테이너(카드 리스트 등) 어디서
+    // 스크롤이 나든 잡아서, 패널이 열린 화면 좌표에 고정된 채(트리거만
+    // 스크롤되어) 다른 카드 위에 얹혀 보이는 걸 막는다.
+    window.addEventListener('scroll', updatePanelStyle, true);
 
     return () => {
       window.removeEventListener('resize', updatePanelStyle);
+      window.removeEventListener('scroll', updatePanelStyle, true);
     };
   }, [isOpen, scale]);
 
