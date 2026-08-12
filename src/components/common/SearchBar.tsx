@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { IoSearch } from 'react-icons/io5';
 
+import closeRounded from '../../assets/icons/close-rounded.svg';
 import { useScaleFrame } from '../../hooks/useScaleFrame';
 import { shouldOpenSuggestionsOnMount } from './searchBarUtils';
 
@@ -29,6 +30,7 @@ export interface SearchBarProps {
     label: string;
     onSelect: () => void;
   };
+  onRemoveSuggestion?: (suggestion: string) => void;
   className?: string;
   onSearch?: (query: string) => void;
   onQueryChange?: (query: string) => void;
@@ -43,6 +45,7 @@ function SearchBar({
   hideEmptySuggestions = false,
   openSuggestionsOnMount = false,
   pinnedSuggestion,
+  onRemoveSuggestion,
   className = '',
   onSearch,
   onQueryChange,
@@ -248,18 +251,32 @@ function SearchBar({
                           : '';
 
                   return (
-                    <button
+                    <div
                       key={suggestion}
-                      type="button"
                       role="option"
                       aria-selected={query === suggestion}
-                      onClick={() => handleSuggestionSelect(suggestion)}
-                      className={`border-gray-2 bg-pure-white text-gray-4 relative h-[47px] w-full border px-[34px] text-left text-[12px] leading-none font-medium whitespace-nowrap ${optionRadius} ${
+                      className={`border-gray-2 bg-pure-white text-gray-4 relative flex h-[47px] w-full items-center border text-[12px] leading-none font-medium whitespace-nowrap ${optionRadius} ${
                         index > 0 || pinnedSuggestion ? '-mt-px' : ''
                       }`}
                     >
-                      {suggestion}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSuggestionSelect(suggestion)}
+                        className="h-full min-w-0 flex-1 px-[34px] pr-[16px] text-left"
+                      >
+                        {suggestion}
+                      </button>
+                      {onRemoveSuggestion ? (
+                        <button
+                          type="button"
+                          aria-label={`${suggestion} 최근 검색어 삭제`}
+                          onClick={() => onRemoveSuggestion(suggestion)}
+                          className="absolute right-[19px] flex size-[16px] items-center justify-center"
+                        >
+                          <img src={closeRounded} alt="" aria-hidden="true" />
+                        </button>
+                      ) : null}
+                    </div>
                   );
                 })
               ) : !hideEmptySuggestions ? (

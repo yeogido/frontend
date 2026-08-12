@@ -25,6 +25,7 @@ import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import {
   addStoredRecentSearch,
   getStoredRecentSearches,
+  removeStoredRecentSearch,
 } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -204,6 +205,15 @@ function LocalCourseSearchPage() {
     setSearchParams(nextSearchParams);
   };
 
+  const handleRemoveRecentSearchSuggestion = (suggestion: string) => {
+    setRecentSearchSuggestions(
+      removeStoredRecentSearch(suggestion, {
+        ...recentSearchStorageOptions,
+        currentSearches: recentSearchSuggestions,
+      })
+    );
+  };
+
   return (
     <>
       <section
@@ -222,6 +232,7 @@ function LocalCourseSearchPage() {
             label="지역명 또는 도시명 검색"
             suggestions={recentSearchSuggestions}
             openSuggestionsOnMount
+            onRemoveSuggestion={handleRemoveRecentSearchSuggestion}
             pinnedSuggestion={{
               label: '전국 확인하기',
               onSelect: () => navigate('/local-course/search'),

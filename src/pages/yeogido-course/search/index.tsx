@@ -21,6 +21,7 @@ import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import {
   addStoredRecentSearch,
   getStoredRecentSearches,
+  removeStoredRecentSearch,
 } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -197,6 +198,15 @@ function YeogidoCourseSearchPage() {
     setSearchParams(nextSearchParams);
   };
 
+  const handleRemoveRecentSearchSuggestion = (suggestion: string) => {
+    setRecentSearchSuggestions(
+      removeStoredRecentSearch(suggestion, {
+        ...recentSearchStorageOptions,
+        currentSearches: recentSearchSuggestions,
+      })
+    );
+  };
+
   return (
     <>
       <section
@@ -215,6 +225,7 @@ function YeogidoCourseSearchPage() {
             label="코스명 또는 지역명 검색"
             suggestions={recentSearchSuggestions}
             openSuggestionsOnMount
+            onRemoveSuggestion={handleRemoveRecentSearchSuggestion}
             pinnedSuggestion={{
               label: '전국 확인하기',
               onSelect: () => navigate('/yeogido-course/search'),

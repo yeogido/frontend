@@ -8,6 +8,7 @@ import {
   FestivalDeleteDialog,
   SearchBar,
 } from '../../../components/common';
+import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useCultureContents } from '../../../hooks/useCultureContents';
@@ -21,6 +22,7 @@ import {
   addStoredRecentSearch,
   getStoredRecentSearches,
   getUniqueSearches,
+  removeStoredRecentSearch,
 } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
@@ -150,6 +152,19 @@ function FestivalSearchPage() {
     setSearchParams(nextSearchParams);
   };
 
+  const handleRemoveRecentSearchSuggestion = (suggestion: string) => {
+    setRecentSearchSuggestions(
+      removeStoredRecentSearch(suggestion, {
+        ...recentSearchStorageOptions,
+        currentSearches: recentSearchSuggestions,
+      })
+    );
+    removeStoredRecentSearch(suggestion, {
+      ...festivalRecentSearchStorageOptions,
+      currentSearches: getStoredRecentSearches(festivalRecentSearchStorageOptions),
+    });
+  };
+
   return (
     <>
       <section
@@ -168,6 +183,7 @@ function FestivalSearchPage() {
           label="행사명 또는 지역명 검색"
           suggestions={recentSearchSuggestions}
           openSuggestionsOnMount
+          onRemoveSuggestion={handleRemoveRecentSearchSuggestion}
           pinnedSuggestion={{
             label: '전국 확인하기',
             onSelect: () => navigate('/festival/search'),
