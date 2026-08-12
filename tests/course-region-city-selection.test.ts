@@ -29,7 +29,7 @@ test('recognizes the nationwide city selection', () => {
 test('uses each search target default page for a nationwide selection', () => {
   assert.equal(getNationwideSearchPath('course'), '/yeogido-course');
   assert.equal(getNationwideSearchPath('home'), '/yeogido-course');
-  assert.equal(getNationwideSearchPath('local-course'), '/local-course');
+  assert.equal(getNationwideSearchPath('local-course'), '/local-course/search');
   assert.equal(getNationwideSearchPath('festival'), '/festival/search');
 });
 
