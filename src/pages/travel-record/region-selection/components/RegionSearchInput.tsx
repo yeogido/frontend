@@ -7,14 +7,18 @@ interface RegionSearchInputProps {
   query: string;
   onQueryChange: (query: string) => void;
   onFocus: () => void;
+  onEnter?: () => void;
 }
 
 function RegionSearchInput({
   query,
   onQueryChange,
   onFocus,
+  onEnter,
 }: RegionSearchInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const shouldSelectAfterCompositionRef = useRef(false);
+  const skipEnterKeyUpRef = useRef(false);
 
   const handleClear = () => {
     onQueryChange('');
@@ -38,6 +42,36 @@ function RegionSearchInput({
           value={query}
           onFocus={onFocus}
           onChange={(event) => onQueryChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || !onEnter) {
+              return;
+            }
+
+            if (event.nativeEvent.isComposing) {
+              shouldSelectAfterCompositionRef.current = true;
+              return;
+            }
+
+            event.preventDefault();
+            skipEnterKeyUpRef.current = true;
+            onEnter();
+          }}
+          onKeyUp={(event) => {
+            if (
+              event.key !== 'Enter' ||
+              !onEnter ||
+              !shouldSelectAfterCompositionRef.current
+            ) {
+              if (event.key === 'Enter' && skipEnterKeyUpRef.current) {
+                skipEnterKeyUpRef.current = false;
+              }
+              return;
+            }
+
+            shouldSelectAfterCompositionRef.current = false;
+            event.preventDefault();
+            onEnter();
+          }}
           placeholder="지역명 또는 도시명을 검색해 주세요"
           autoComplete="off"
           className="text-gray-4 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent pr-9 text-[12px] leading-none font-medium outline-none"

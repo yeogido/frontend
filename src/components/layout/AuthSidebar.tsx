@@ -44,6 +44,11 @@ const LOGOUT_PADDING_Y = 16;
 const LOGOUT_ICON_SIZE = 20;
 const LOGOUT_GAP = 12;
 
+const ROLE_LABEL: Record<string, string | undefined> = {
+  BUSINESS: '소상공인',
+  ADMIN: '관리자',
+};
+
 /**
  * 로그인 전용 메뉴. path가 없는 항목은 아직 연결된 화면이 없어
  * 클릭 시 사이드바만 닫는다. 화면이 만들어지면 path를 채워 넣는다.
@@ -79,6 +84,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
   // 프로필 조회가 끝나기 전에는 실제로 존재하는 userId 기반의 안전한
   // 표시값으로 대체한다.
   const displayName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
+  const roleLabel = profile ? ROLE_LABEL[profile.role] : undefined;
 
   return (
     // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
@@ -157,12 +163,25 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
               )}
 
               <div className="flex min-w-0 flex-col items-start text-left">
-                <span
-                  className="truncate leading-none font-semibold text-[#1C1C1C]"
-                  style={{ fontSize: NAME_TEXT_SIZE * scale }}
+                <div
+                  className="flex min-w-0 items-center"
+                  style={{ gap: 4 * scale }}
                 >
-                  {displayName}
-                </span>
+                  <span
+                    className="truncate leading-none font-semibold text-[#1C1C1C]"
+                    style={{ fontSize: NAME_TEXT_SIZE * scale }}
+                  >
+                    {displayName}
+                  </span>
+                  {roleLabel ? (
+                    <span
+                      className="shrink-0 leading-none font-normal text-[#7f7f7f]"
+                      style={{ fontSize: EMAIL_TEXT_SIZE * scale }}
+                    >
+                      {roleLabel}
+                    </span>
+                  ) : null}
+                </div>
                 {profile?.email && (
                   <span
                     className="truncate leading-none font-medium text-[#7f7f7f]"

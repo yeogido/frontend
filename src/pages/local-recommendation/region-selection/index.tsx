@@ -21,6 +21,8 @@ import {
   fromRegion,
   fromSearchResult,
   getNeighborhoodLabel,
+  sortNeighborhoodsByRelevance,
+  toRegionSearchSuggestions,
 } from './utils';
 
 function LocalRecommendationPage() {
@@ -50,7 +52,10 @@ function LocalRecommendationPage() {
   });
   const trimmedSearchQuery = searchQuery.trim();
   const searchNeighborhoods = async (query: string) =>
-    (await searchRegions(query)).map(fromSearchResult);
+    sortNeighborhoodsByRelevance(
+      (await searchRegions(query)).map(fromSearchResult),
+      query,
+    );
   const searchResultsQuery = useQuery({
     queryKey: ['regions', 'search', trimmedSearchQuery],
     queryFn: () => searchNeighborhoods(trimmedSearchQuery),
@@ -69,8 +74,9 @@ function LocalRecommendationPage() {
         imageSrc: '',
       }
     : null;
-  const searchSuggestions =
-    searchResultsQuery.data?.map((region) => region.name) ?? [];
+  const searchSuggestions = toRegionSearchSuggestions(
+    searchResultsQuery.data ?? [],
+  );
 
   const handleSelectNeighborhood = (candidate: Neighborhood) => {
     setSearchQuery('');
@@ -99,9 +105,9 @@ function LocalRecommendationPage() {
             queryFn: () => searchNeighborhoods(trimmedQuery),
             staleTime: 30_000,
           });
-    const matched = results.find((region) => region.name === trimmedQuery);
+    const firstResult = results[0];
 
-    if (matched) handleSelectNeighborhood(matched);
+    if (firstResult) handleSelectNeighborhood(firstResult);
   };
 
   const handleQueryChange = (query: string) => {
@@ -111,11 +117,29 @@ function LocalRecommendationPage() {
 
   const handleSuggestionSelect = (suggestion: string) => {
     setIsSuggestionOpen(false);
-    void handleSearch(suggestion);
+
+    const selectedSuggestion = searchSuggestions.find(
+      (item) => item.label === suggestion,
+    );
+    const candidate = searchResultsQuery.data?.find(
+      (item) => item.id === selectedSuggestion?.regionId,
+    );
+
+    if (candidate) {
+      handleSelectNeighborhood(candidate);
+    }
   };
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const firstVisibleResult = searchResultsQuery.data?.[0];
+
+    if (firstVisibleResult) {
+      handleSelectNeighborhood(firstVisibleResult);
+      return;
+    }
+
     void handleSearch(searchQuery);
   };
 
@@ -140,12 +164,22 @@ function LocalRecommendationPage() {
               query={searchQuery}
               onQueryChange={handleQueryChange}
               onFocus={() => setIsSuggestionOpen(searchQuery.trim().length > 0)}
+              onEnter={() => {
+                const firstVisibleResult = searchResultsQuery.data?.[0];
+
+                if (firstVisibleResult) {
+                  handleSelectNeighborhood(firstVisibleResult);
+                  return;
+                }
+
+                void handleSearch(searchQuery);
+              }}
             />
           )}
           {!selectedRegion && isSuggestionOpen ? (
             <RegionSuggestionList
               query={searchQuery}
-              suggestions={searchSuggestions}
+              suggestions={searchSuggestions.map((item) => item.label)}
               onSelect={handleSuggestionSelect}
             />
           ) : null}
