@@ -22,6 +22,16 @@ export function getStoredContentLikeOverrides(): Record<number, boolean> {
   }
 }
 
+export function clearStoredContentLikeOverrides(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.removeItem(CONTENT_LIKE_OVERRIDES_STORAGE_KEY);
+  } catch {
+    return;
+  }
+}
+
 export function setStoredContentLikeOverride(
   contentId: number,
   liked: boolean,

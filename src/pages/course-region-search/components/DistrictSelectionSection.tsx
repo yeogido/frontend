@@ -8,14 +8,12 @@ const DISTRICT_NAME_SIZE = 14;
 
 interface DistrictSelectionSectionProps {
   districts: readonly string[];
-  parentDistrictName?: string;
   selectedDistrict: string;
   onSelect: (district: string) => void;
 }
 
 function DistrictSelectionSection({
   districts,
-  parentDistrictName,
   selectedDistrict,
   onSelect,
 }: DistrictSelectionSectionProps) {
@@ -25,9 +23,7 @@ function DistrictSelectionSection({
   return (
     <section
       ref={outerRef}
-      aria-label={
-        parentDistrictName ? `${parentDistrictName} 구 선택` : '자치구 선택'
-      }
+      aria-label="시·군·구 선택"
       className="relative z-[3] overflow-visible"
       style={{
         marginTop: SECTION_MARGIN_TOP * scale,

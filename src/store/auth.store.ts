@@ -3,17 +3,29 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { LoginResult } from '../types/auth.type';
 
-// 권한(role)은 여기에 두지 않는다. 로그인 응답에 role이 없어서 저장해 두면
-// 재로그인 시점에 비워지고, 인증 직후에도 서버와 어긋난다. 백엔드가 DB의
-// role로 인가하므로 프론트도 GET /users/me를 진실의 출처로 쓴다
-// (useMyProfile).
+// login/reissue/social-login/social-signup 응답에 role이 포함되어 있어(스웨거
+// AuthTokenRes/AuthSocialLoginRes 기준), 인증 시점에 서버가 준 값을 그대로
+// 저장한다. 다만 소상공인/관리자 전용 화면·버튼처럼 "인가"에 직접 쓰이는
+// 판단은 지금도 GET /users/me(useMyProfile)를 진실의 출처로 쓴다 — 세션 도중
+// 관리자가 역할을 바꾸는 경우까지 반영하려면 재조회가 필요하기 때문이다.
+// 이 role은 그 전까지 화면을 미리 그리는 용도로만 쓴다.
 interface AuthState {
   accessToken: string;
   refreshToken: string;
   userId: number | null;
+  role: string | null;
   isAuthenticated: boolean;
+  // 로그인/로그아웃마다 하나씩 올라간다. 로그아웃 전에 시작된 좋아요 요청이
+  // 로그아웃(또는 그 사이의 재로그인) 이후에 완료됐을 때, 응답을 그 시점의
+  // 로컬 상태(override/최근 목록/localStorage)에 반영해도 되는지 판별하는
+  // 용도다 — 요청 시작 시점의 값과 완료 시점의 값이 다르면 반영하지 않는다.
+  authGeneration: number;
   setAuth: (auth: LoginResult) => void;
-  setTokens: (accessToken: string, refreshToken: string) => void;
+  // 토큰 재발급 전용. 로그인 상태를 유지한 채 accessToken/refreshToken/role만
+  // 갱신하고 authGeneration은 올리지 않는다 — 같은 세션이 계속되는
+  // 것뿐이라, 재발급 중 진행 중이던 좋아요 요청의 성공 응답까지 "세대가
+  // 바뀌었다"며 무시돼선 안 된다.
+  refreshTokens: (auth: LoginResult) => void;
   clearAuth: () => void;
 }
 
@@ -21,36 +33,54 @@ const initialState = {
   accessToken: '',
   refreshToken: '',
   userId: null,
-  isAuthenticated: false,
+  role: null,
 };
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       ...initialState,
+      isAuthenticated: false,
+      authGeneration: 0,
       setAuth: (auth) =>
+        set((state) => ({
+          accessToken: auth.accessToken,
+          refreshToken: auth.refreshToken,
+          userId: auth.userId,
+          role: auth.role,
+          isAuthenticated: Boolean(auth.accessToken),
+          authGeneration: state.authGeneration + 1,
+        })),
+      refreshTokens: (auth) =>
         set({
           accessToken: auth.accessToken,
           refreshToken: auth.refreshToken,
           userId: auth.userId,
-          isAuthenticated: Boolean(auth.accessToken),
+          role: auth.role,
         }),
-      setTokens: (accessToken, refreshToken) =>
-        set({ accessToken, refreshToken }),
-      clearAuth: () => set(initialState),
+      clearAuth: () =>
+        set((state) => ({
+          ...initialState,
+          isAuthenticated: false,
+          authGeneration: state.authGeneration + 1,
+        })),
     }),
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
-      version: 3,
-      // version 2로 저장된 세션에는 role이 들어 있다. 그대로 두면 스토어에
-      // 타입에 없는 값이 섞여 남으므로 떨어뜨린다.
+      version: 4,
+      // version 3까지는 role을 저장하지 않았으므로(과거엔 일부러 뺐다),
+      // role 없이 넘어온 옛 세션은 null로 채운다 — 다음 로그인/재발급에서
+      // 서버가 준 값으로 자연스럽게 채워진다.
       migrate: (persistedState) => {
         const stored = { ...((persistedState ?? {}) as AuthState) } as Record<
           string,
           unknown
         >;
-        delete stored.role;
+
+        if (typeof stored.role !== 'string') {
+          stored.role = null;
+        }
 
         return stored as unknown as AuthState;
       },

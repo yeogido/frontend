@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-import { KakaoIcon, NaverIcon } from '../../../../components/auth';
+import { BackButton, KakaoIcon, NaverIcon } from '../../../../components/auth';
 
 import logo from '../../../../assets/icons/logo.svg';
 import yeogido from '../../../../assets/icons/yeogido.svg';
@@ -11,9 +11,10 @@ import { useKakaoLogin } from '../../../../hooks/useKakaoLogin';
 import { useNaverLogin } from '../../../../hooks/useNaverLogin';
 
 const PAGE_PADDING_X = 24;
-const PAGE_PADDING_TOP = 56;
+const PAGE_PADDING_TOP = 32;
+const PAGE_PADDING_BOTTOM = 40;
 
-const LOGO_MARGIN_TOP = 95;
+const LOGO_MARGIN_TOP = 48;
 
 const LOGO_SIZE = 92;
 const YEOGIDO_WIDTH = 91;
@@ -53,6 +54,7 @@ interface SignupStartProps {
 }
 
 function SignupStart({ onEmailStart }: SignupStartProps) {
+  const navigate = useNavigate();
   const scale = useGlobalScale();
 
   const s = (value: number) => value * scale;
@@ -96,10 +98,13 @@ function SignupStart({ onEmailStart }: SignupStartProps) {
         className="mx-auto flex min-h-dvh w-full max-w-[500px] flex-col"
         style={{
           paddingTop: s(PAGE_PADDING_TOP),
+          paddingBottom: s(PAGE_PADDING_BOTTOM),
           paddingLeft: s(PAGE_PADDING_X),
           paddingRight: s(PAGE_PADDING_X),
         }}
       >
+        <BackButton onClick={() => navigate(-1)} />
+
         <div
           className="flex flex-col items-center"
           style={{

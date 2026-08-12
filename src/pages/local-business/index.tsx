@@ -10,13 +10,11 @@ import {
   RegionImageCarousel,
 } from '../../components/common';
 import { useToast } from '../../components/toast';
-import {
-  DEFAULT_REGION_CITY_ID,
-  REGION_CITY_IDS,
-} from '../../constants/regions';
+import { REGION_CITY_IDS } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
 import { useBusinessPromotionDelete } from '../../hooks/useBusinessPromotions';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { REGION_IMAGE_ALL_ID } from '../../components/common/RegionImageCarouselOption';
 import { useLoginModal } from '../../hooks/useLoginModal';
 import { useIsBusinessUser } from '../../hooks/useMyProfile';
 import { useAuthStore } from '../../store/auth.store';
@@ -71,9 +69,12 @@ function LocalBusinessPage() {
   // 변경도 브라우저 히스토리에 남아 뒤로가기로 돌아와도 그대로 유지된다.
   const [searchParams, setSearchParams] = useSearchParams();
   const regionParam = searchParams.get('region');
-  const selectedRegionId = REGION_CITY_IDS.includes(regionParam as RegionCityId)
-    ? (regionParam as RegionCityId)
-    : DEFAULT_REGION_CITY_ID;
+  // 지역 캐러셀 첫 항목이 '전국'이라 기본값도 전국이다. URL에 지역이 없거나
+  // 모르는 값이면(전국 선택 시의 'all' 포함) 전국으로 떨어진다.
+  const selectedRegionId: RegionCityId | typeof REGION_IMAGE_ALL_ID =
+    REGION_CITY_IDS.includes(regionParam as RegionCityId)
+      ? (regionParam as RegionCityId)
+      : REGION_IMAGE_ALL_ID;
 
   const categoryParam = searchParams.get('category');
   const selectedCategory = businessCategories.includes(
@@ -116,9 +117,22 @@ function LocalBusinessPage() {
 
   // 상세페이지(handleFavoriteToggle)와 동일한 낙관적 업데이트 패턴 —
   // 서버 응답을 기다리지 않고 먼저 하트를 바꾸고, 실패하면 되돌린다.
-  const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
+const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
     {}
   );
+  const [wasAuthenticated, setWasAuthenticated] = useState(isAuthenticated);
+
+  // 비로그인 상태는 좋아요를 가질 수 없으므로, 로그아웃하면 이 화면이
+  // 언마운트되지 않아도 눌러뒀던 하트 표시가 바로 풀리게 한다. 렌더 중에
+  // 바로 반영해야 해서(useEffect의 setState는 린트로 금지) 이전 인증
+  // 상태와 비교해 바뀐 순간 초기화한다.
+  if (wasAuthenticated !== isAuthenticated) {
+    setWasAuthenticated(isAuthenticated);
+
+    if (!isAuthenticated) {
+      setLikedOverrides({});
+    }
+  }
   const businessesWithLikeOverrides = businesses.map((business) => ({
     ...business,
     liked: likedOverrides[business.id] ?? business.liked,

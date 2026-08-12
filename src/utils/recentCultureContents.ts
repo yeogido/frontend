@@ -34,7 +34,10 @@ function toYearMonthLabel(date: string): string {
   return match ? `${match[1]}.${match[2]}` : date;
 }
 
-export function getStoredRecentCultureContents(): RecentCultureContent[] {
+// 저장된 그대로(날짜 변환 없이) 읽는다. 읽고 다시 쓰는(read-modify-write)
+// 함수들은 반드시 이 원본을 써야 한다 — 표시용으로 잘라낸 날짜를 그대로
+// 저장소에 되돌려 쓰면 원래 저장돼 있던 일자 단위 정보가 사라진다.
+function getStoredRecentCultureContentsRaw(): RecentCultureContent[] {
   if (typeof window === 'undefined') return [];
 
   try {
@@ -50,15 +53,18 @@ export function getStoredRecentCultureContents(): RecentCultureContent[] {
       ? parsedContents
           .filter(isRecentCultureContent)
           .slice(0, MAX_RECENT_CULTURE_CONTENTS)
-          .map((content) => ({
-            ...content,
-            startDate: toYearMonthLabel(content.startDate),
-            endDate: toYearMonthLabel(content.endDate),
-          }))
       : [];
   } catch {
     return [];
   }
+}
+
+export function getStoredRecentCultureContents(): RecentCultureContent[] {
+  return getStoredRecentCultureContentsRaw().map((content) => ({
+    ...content,
+    startDate: toYearMonthLabel(content.startDate),
+    endDate: toYearMonthLabel(content.endDate),
+  }));
 }
 
 export function saveRecentCultureContent(content: RecentCultureContent): void {
@@ -66,7 +72,7 @@ export function saveRecentCultureContent(content: RecentCultureContent): void {
 
   try {
     const contents = upsertRecentCultureContent(
-      getStoredRecentCultureContents(),
+      getStoredRecentCultureContentsRaw(),
       content
     );
 
@@ -84,7 +90,7 @@ export function removeRecentCultureContent(contentId: number): void {
   if (typeof window === 'undefined') return;
 
   try {
-    const contents = getStoredRecentCultureContents();
+    const contents = getStoredRecentCultureContentsRaw();
 
     if (!contents.some((content) => content.contentId === contentId)) return;
 
@@ -109,13 +115,38 @@ export function updateRecentCultureContentLikeState(
   if (typeof window === 'undefined') return;
 
   try {
-    const contents = getStoredRecentCultureContents();
+    const contents = getStoredRecentCultureContentsRaw();
 
     if (!contents.some((content) => content.contentId === contentId)) return;
 
     const updatedContents = contents.map((content) =>
       content.contentId === contentId ? { ...content, liked } : content
     );
+
+    window.localStorage.setItem(
+      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      JSON.stringify(updatedContents)
+    );
+    notifyRecentCultureContentsUpdated();
+  } catch {
+    return;
+  }
+}
+
+// 비로그인 상태에서는 좋아요를 가질 수 없으므로, 로그아웃 시 "최근 본
+// 행사" 목록은 그대로 두고 각 항목의 좋아요 표시만 지운다.
+export function clearRecentCultureContentsLikedState(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const contents = getStoredRecentCultureContentsRaw();
+
+    if (!contents.some((content) => content.liked)) return;
+
+    const updatedContents = contents.map((content) => ({
+      ...content,
+      liked: false,
+    }));
 
     window.localStorage.setItem(
       RECENT_CULTURE_CONTENTS_STORAGE_KEY,

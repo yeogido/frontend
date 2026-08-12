@@ -4,8 +4,11 @@ import { ToastProvider } from './components/toast';
 
 import { APP_MAX_WIDTH } from './constants/layout';
 import { LoginModalProvider } from './contexts/LoginModalProvider';
+import { useResetLikesOnLogout } from './hooks/useResetLikesOnLogout';
 
 function App() {
+  useResetLikesOnLogout();
+
   return (
     <LoginModalProvider>
       <ToastProvider>
