@@ -206,7 +206,8 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                   // 조회가 끝나기 전이면 이동을 미룬다 — 여기서 그냥
                   // isAdmin(로딩 중엔 false)을 쓰면 실제 관리자가 일반
                   // 경로로 잘못 이동해버린다.
-                  const hasAdminOverride = menu.path in ADMIN_MENU_PATH_OVERRIDE;
+                  const hasAdminOverride =
+                    menu.path in ADMIN_MENU_PATH_OVERRIDE;
                   if (hasAdminOverride && isProfilePending) {
                     return;
                   }
@@ -235,51 +236,57 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
 
           <Divider />
 
-          {/* MY: 마이페이지 메뉴 */}
-          <div
-            className="shrink-0"
-            style={{
-              paddingLeft: MENU_PADDING_X * scale,
-              paddingTop: MY_LABEL_PADDING_TOP * scale,
-              paddingBottom: MY_LABEL_PADDING_BOTTOM * scale,
-            }}
-          >
-            <span
-              className="leading-none font-semibold text-[#FF6F41]"
-              style={{ fontSize: MY_LABEL_SIZE * scale }}
-            >
-              MY
-            </span>
-          </div>
-
-          <nav className="flex shrink-0 flex-col">
-            {MY_MENU.map((menu) => (
-              <button
-                key={menu.label}
-                type="button"
-                onClick={() => {
-                  if (menu.path) {
-                    menu.onNavigate?.();
-                    navigate(menu.path);
-                  }
-                  onClose();
-                }}
-                className="flex items-center justify-between text-left"
+          {/* MY: 마이페이지 메뉴 — 관리자 계정은 여행기록/좋아요/내가 등록한
+              게시물이 의미가 없어(관리자 전용 콘텐츠는 별도 API가 없다)
+              이 섹션 자체를 안 보여준다. */}
+          {!isAdmin && (
+            <>
+              <div
+                className="shrink-0"
                 style={{
-                  height: MENU_ITEM_HEIGHT * scale,
                   paddingLeft: MENU_PADDING_X * scale,
-                  paddingRight: MENU_PADDING_X * scale,
+                  paddingTop: MY_LABEL_PADDING_TOP * scale,
+                  paddingBottom: MY_LABEL_PADDING_BOTTOM * scale,
                 }}
               >
                 <span
-                  className="leading-none font-medium"
-                  style={{ fontSize: TEXT_BASE * scale }}
+                  className="leading-none font-semibold text-[#FF6F41]"
+                  style={{ fontSize: MY_LABEL_SIZE * scale }}
                 >
-                  {menu.label}
+                  MY
                 </span>
-              </button>
-            ))}
-          </nav>
+              </div>
+
+              <nav className="flex shrink-0 flex-col">
+                {MY_MENU.map((menu) => (
+                  <button
+                    key={menu.label}
+                    type="button"
+                    onClick={() => {
+                      if (menu.path) {
+                        menu.onNavigate?.();
+                        navigate(menu.path);
+                      }
+                      onClose();
+                    }}
+                    className="flex items-center justify-between text-left"
+                    style={{
+                      height: MENU_ITEM_HEIGHT * scale,
+                      paddingLeft: MENU_PADDING_X * scale,
+                      paddingRight: MENU_PADDING_X * scale,
+                    }}
+                  >
+                    <span
+                      className="leading-none font-medium"
+                      style={{ fontSize: TEXT_BASE * scale }}
+                    >
+                      {menu.label}
+                    </span>
+                  </button>
+                ))}
+              </nav>
+            </>
+          )}
 
           {/* 로그아웃: 메뉴가 짧아도 항상 사이드바 하단에 붙도록 mt-auto로 민다 */}
           <div className="mt-auto shrink-0">
