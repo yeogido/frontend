@@ -28,6 +28,7 @@ import {
   removeStoredRecentSearch,
 } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
+import { getExplicitRegionId } from '../../../utils/regionSearch';
 
 import { localCourseFilterGroups } from '../constants/filters';
 import { LOCAL_COURSE_SKELETON_ITEMS } from '../constants/ui';
@@ -112,6 +113,7 @@ function LocalCourseSearchPage() {
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
   const subRegion = searchParams.get('subRegion') ?? '';
+  const explicitRegionId = getExplicitRegionId(searchParams.get('regionId'));
   const regionSearchQuery =
     region && subRegion ? `${region} ${subRegion}` : subRegion || region;
   const displaySearchQuery = keyword || regionSearchQuery;
@@ -119,7 +121,7 @@ function LocalCourseSearchPage() {
     regionId,
     isPending: isRegionPending,
     isError: isRegionError,
-  } = useResolvedRegion(regionSearchQuery || undefined);
+  } = useResolvedRegion(regionSearchQuery || undefined, explicitRegionId);
   const isRegionSearchReady =
     !regionSearchQuery || (!isRegionPending && !isRegionError);
 
@@ -196,6 +198,7 @@ function LocalCourseSearchPage() {
       nextSearchParams.set('keyword', trimmedQuery);
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
       setRecentSearchSuggestions(
         addStoredRecentSearch(trimmedQuery, {
           ...recentSearchStorageOptions,
@@ -206,6 +209,7 @@ function LocalCourseSearchPage() {
       nextSearchParams.delete('keyword');
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
     }
 
     setSearchParams(nextSearchParams);

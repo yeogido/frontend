@@ -39,6 +39,7 @@ function createSearchResultLocation(params: {
   keyword?: string;
   city?: string;
   district?: string;
+  regionId?: number;
 }) {
   const searchParams = new URLSearchParams();
 
@@ -52,6 +53,10 @@ function createSearchResultLocation(params: {
 
   if (params.district && params.district !== '전체') {
     searchParams.set('subRegion', params.district);
+  }
+
+  if (params.regionId !== undefined) {
+    searchParams.set('regionId', String(params.regionId));
   }
 
   const search = searchParams.toString();
@@ -298,9 +303,10 @@ function useCourseRegionSearch() {
     navigate(
       createSearchResultLocation({
         targetPathname: searchTargetPathname,
-        city: selectedCity.name,
-        district: clicked.name,
-      })
+          city: selectedCity.name,
+          district: clicked.name,
+          regionId: clicked.subRegionId,
+        })
     );
   };
 

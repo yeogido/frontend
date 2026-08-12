@@ -8,6 +8,17 @@ const splitRegionPath = (regionPath: string) =>
 export const getRegionSearchKeyword = (regionPath: string) =>
   splitRegionPath(regionPath).at(-1) ?? regionPath;
 
+/** URL에 전달된 지역 ID는 양의 정수일 때만 신뢰한다. */
+export const getExplicitRegionId = (value: string | null) => {
+  if (!value || !/^\d+$/.test(value)) {
+    return undefined;
+  }
+
+  const regionId = Number(value);
+
+  return Number.isSafeInteger(regionId) && regionId > 0 ? regionId : undefined;
+};
+
 /**
  * 검색 응답의 fullName은 정식 행정구역명("부산광역시 중구")인데 URL로 들어오는
  * 지역 경로는 짧은 이름("부산 중구")이라 두 문자열은 그대로 비교되지 않는다.

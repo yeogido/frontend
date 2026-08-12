@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   findRegionSearchMatch,
+  getExplicitRegionId,
   getRegionSearchKeyword,
   toShortRegionPath,
 } from '../src/utils/regionSearch.ts';
@@ -81,4 +82,13 @@ test('leaves free text untouched when normalizing a region path', () => {
 test('gives up instead of guessing when the name stays ambiguous', () => {
   assert.equal(findRegionSearchMatch('중구', 중구_SEARCH_RESULTS), undefined);
   assert.equal(findRegionSearchMatch('경기 중구', 중구_SEARCH_RESULTS), undefined);
+});
+
+test('accepts only a positive integer as an explicit region id', () => {
+  assert.equal(getExplicitRegionId('24'), 24);
+  assert.equal(getExplicitRegionId(''), undefined);
+  assert.equal(getExplicitRegionId('0'), undefined);
+  assert.equal(getExplicitRegionId('-1'), undefined);
+  assert.equal(getExplicitRegionId('24.5'), undefined);
+  assert.equal(getExplicitRegionId('서울'), undefined);
 });

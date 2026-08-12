@@ -24,6 +24,7 @@ import {
   removeStoredRecentSearch,
 } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
+import { getExplicitRegionId } from '../../../utils/regionSearch';
 
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
@@ -105,6 +106,7 @@ function YeogidoCourseSearchPage() {
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
   const subRegion = searchParams.get('subRegion') ?? '';
+  const explicitRegionId = getExplicitRegionId(searchParams.get('regionId'));
   const regionSearchQuery =
     region && subRegion ? `${region} ${subRegion}` : subRegion || region;
   const displaySearchQuery = keyword || regionSearchQuery;
@@ -112,7 +114,7 @@ function YeogidoCourseSearchPage() {
     regionId,
     isPending: isRegionPending,
     isError: isRegionError,
-  } = useResolvedRegion(regionSearchQuery || undefined);
+  } = useResolvedRegion(regionSearchQuery || undefined, explicitRegionId);
   const isRegionSearchReady =
     !regionSearchQuery || (!isRegionPending && !isRegionError);
 
@@ -189,6 +191,7 @@ function YeogidoCourseSearchPage() {
       nextSearchParams.set('keyword', trimmedQuery);
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
       setRecentSearchSuggestions(
         addStoredRecentSearch(trimmedQuery, {
           ...recentSearchStorageOptions,
@@ -199,6 +202,7 @@ function YeogidoCourseSearchPage() {
       nextSearchParams.delete('keyword');
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
     }
 
     setSearchParams(nextSearchParams);
