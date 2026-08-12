@@ -19,6 +19,7 @@ import { createLocalRecommendation } from '../../../../apis/localRecommendations
 import { useToast } from '../../../../components/toast';
 import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
+import { useAuthStore } from '../../../../store/auth.store';
 import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
 import { createRouteImage } from '../../../local-recommendation/visit-order-selection/createRouteImage';
@@ -142,7 +143,7 @@ export function useAdminCourseVisitOrder() {
             return { placeId: place.id, file: place.photoFile };
           }
 
-          if (place.imageSrc) {
+          if (!place.existingImageKey && place.imageSrc) {
             try {
               const file = await fetchImageAsFile(
                 place.imageSrc,
@@ -233,9 +234,9 @@ export function useAdminCourseVisitOrder() {
         existingThumbnailKey,
         visitEvents: eventsWithImageKeys,
         thumbnailKey,
+        routeImageKey,
         hashtagIds,
         travelData,
-        routeImageKey,
       });
 
       if (!payload) {
@@ -263,7 +264,11 @@ export function useAdminCourseVisitOrder() {
         // 남는 것처럼 보일 수 있어, 이동하기 전에 새 데이터를 직접
         // 받아서 캐시에 채워 넣는다.
         await queryClient.fetchQuery({
-          queryKey: ['yeogidoCourseDetail', editingCourseId],
+          queryKey: [
+            'yeogidoCourseDetail',
+            useAuthStore.getState().authGeneration,
+            editingCourseId,
+          ],
           queryFn: () => getCourseDetail(editingCourseId),
         });
       }
@@ -280,7 +285,9 @@ export function useAdminCourseVisitOrder() {
       // 상세페이지로 이동한다. 관리자 계정으로 호출하면 서버가 courseType을
       // OFFICIAL로 만들어 여기도 추천 코스 상세(/yeogido-course/detail)에서
       // 조회된다.
-      navigate(`/yeogido-course/detail/${result.courseId}`);
+      navigate(`/yeogido-course/detail/${result.courseId}`, {
+        state: { fromAdminCourseCreationFlow: true },
+      });
     },
   });
 
@@ -299,7 +306,9 @@ export function useAdminCourseVisitOrder() {
     handleSubmit,
     isSubmitting: registerMutation.isPending,
     submitError: registerMutation.error
-      ? getApiErrorMessage(registerMutation.error, REGISTER_ERROR_MESSAGE)
+      ? registerMutation.error instanceof Error
+        ? registerMutation.error.message
+        : getApiErrorMessage(registerMutation.error, REGISTER_ERROR_MESSAGE)
       : null,
   };
 }

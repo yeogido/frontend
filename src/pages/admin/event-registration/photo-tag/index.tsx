@@ -229,7 +229,9 @@ function AdminEventPhotoTagPage() {
       // 여기서 스토어를 reset하면 place가 비워지면서 이 페이지의 가드(useEffect)가
       // /admin으로 되돌려버리는 것과 경쟁 상태가 생긴다. 다음 등록을 시작할 때
       // FAB(admin/index.tsx)가 이미 reset을 호출하므로 여기서는 이동만 한다.
-      navigate(buildFestivalDetailPath(result.contentId));
+      navigate(buildFestivalDetailPath(result.contentId), {
+        state: { fromAdminEventRegistrationFlow: true },
+      });
     } catch (error) {
       setSubmitError(
         getApiErrorMessage(

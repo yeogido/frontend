@@ -16,6 +16,7 @@ import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import {
   addStoredRecentSearch,
@@ -56,7 +57,6 @@ const recentSearchStorageOptions = {
 
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  대중교통: 'PUBLIC',
   자차: 'CAR',
 };
 
@@ -97,6 +97,7 @@ function LocalCourseSearchPage() {
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
   const { editLocalCourse } = useEditLocalCourse();
+  const isAdmin = useIsAdmin();
   const { requestDelete, dialogProps } = useCourseDelete();
 
   const handleCourseClick = (courseId: number | string) => {
@@ -294,7 +295,11 @@ function LocalCourseSearchPage() {
                       tags={toContentTagIds(course.tags)}
                       className="w-full"
                       onClick={() => handleCourseClick(course.courseId)}
-                      onEdit={() => void editLocalCourse(course.courseId)}
+                      onEdit={
+                        isAdmin
+                          ? undefined
+                          : () => void editLocalCourse(course.courseId)
+                      }
                       onDelete={() => requestDelete(course.courseId)}
                     />
                   ) : (

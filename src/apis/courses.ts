@@ -130,6 +130,7 @@ export interface UpdateCourseRequest {
   monthStart: number;
   monthEnd: number;
   thumbnailKey: string;
+  routeImageKey?: string;
   hashtagIds: number[];
   courseItems: UpdateCourseItem[];
 }

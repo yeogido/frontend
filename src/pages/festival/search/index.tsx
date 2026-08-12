@@ -10,6 +10,7 @@ import {
 } from '../../../components/common';
 import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
@@ -29,9 +30,7 @@ import { getExplicitRegionId } from '../../../utils/regionSearch';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
 
 import { FestivalFilterBar } from '../components';
-import {
-  FESTIVAL_RECENT_SEARCH_STORAGE_KEY,
-} from '../constants/search';
+import { FESTIVAL_RECENT_SEARCH_STORAGE_KEY } from '../constants/search';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
 import useFestivalFilters from '../hooks/useFestivalFilters';
 
@@ -69,6 +68,7 @@ const sortByFilterValue: Record<string, ContentSort> = {
 function FestivalSearchPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
+  const isAdmin = useIsAdmin();
   const { getLiked, toggleLike } = useContentLikeToggle();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
@@ -111,19 +111,24 @@ function FestivalSearchPage() {
     isError,
     isFetchingNextPage,
     isPending: isCultureContentsPending,
-  } = useCultureContents({
-    keyword: keyword.trim() || undefined,
-    regionId,
-    category: categoryByFilterValue[selectedFilters.category],
-    sort: sortByFilterValue[selectedFilters.sort],
-    latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
-    longitude: isDistanceSort ? distanceSortCoordinates?.longitude : undefined,
-    size: 20,
-  }, {
-    enabled:
-      isRegionSearchReady &&
-      (!isDistanceSort || status === 'ready' || status === 'failed'),
-  });
+  } = useCultureContents(
+    {
+      keyword: keyword.trim() || undefined,
+      regionId,
+      category: categoryByFilterValue[selectedFilters.category],
+      sort: sortByFilterValue[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: 20,
+    },
+    {
+      enabled:
+        isRegionSearchReady &&
+        (!isDistanceSort || status === 'ready' || status === 'failed'),
+    }
+  );
 
   // 지역 해석이 실패하면 useCultureContents는 enabled:false로 남는데, 비활성
   // 쿼리는 status가 'pending'에서 갱신되지 않는다. 그대로 두면 에러 문구
@@ -184,7 +189,9 @@ function FestivalSearchPage() {
     );
     removeStoredRecentSearch(suggestion, {
       ...festivalRecentSearchStorageOptions,
-      currentSearches: getStoredRecentSearches(festivalRecentSearchStorageOptions),
+      currentSearches: getStoredRecentSearches(
+        festivalRecentSearchStorageOptions
+      ),
     });
   };
 
@@ -242,7 +249,7 @@ function FestivalSearchPage() {
                 />
               ))
             : festivals.map((festival) =>
-                festival.canManage ? (
+                festival.canManage || isAdmin ? (
                   <EditableContentCard
                     key={festival.contentId}
                     image={festival.thumbnailImageUrl}

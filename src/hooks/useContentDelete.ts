@@ -6,7 +6,7 @@ import { deleteCultureContent } from '../apis/contents.api';
 import { useToast } from '../components/toast';
 import { removeRecentCultureContent } from '../utils/recentCultureContents';
 
-export function useContentDelete() {
+export function useContentDelete(onSuccess?: () => void) {
   const [targetContentId, setTargetContentId] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -18,6 +18,7 @@ export function useContentDelete() {
       void queryClient.invalidateQueries({ queryKey: ['contents', 'ongoing'] });
       queryClient.removeQueries({ queryKey: ['cultureContent', contentId] });
       removeRecentCultureContent(contentId);
+      onSuccess?.();
     },
   });
 

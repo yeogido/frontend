@@ -56,7 +56,6 @@ const recentSearchStorageOptions = {
 
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  대중교통: 'PUBLIC',
   자차: 'CAR',
 };
 

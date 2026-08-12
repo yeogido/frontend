@@ -68,8 +68,8 @@ export function getAdminCourseRequestValidationError(
     visitEvents.some(
       (event) =>
         event.kind === 'PLACE' &&
-        !event.roadAddress.trim() &&
-        !event.lotAddress.trim()
+        !event.roadAddress?.trim() &&
+        !event.lotAddress?.trim()
     )
   ) {
     return '장소의 도로명 주소 또는 지번 주소를 입력해 주세요.';
@@ -131,9 +131,9 @@ export function buildAdminCourseRequest(
     monthStart: Number(basicInfo.visitStartMonth),
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey,
+    routeImageKey,
     hashtagIds,
     courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
-    routeImageKey,
   };
 }
 
@@ -148,10 +148,17 @@ export function buildAdminCourseUpdateRequest(
     thumbnailKey: string;
     hashtagIds: number[];
     travelData?: VisitEventTravelData;
+    routeImageKey?: string;
   }
 ): UpdateCourseRequest | null {
-  const { basicInfo, thumbnailKey, hashtagIds, visitEvents, travelData } =
-    params;
+  const {
+    basicInfo,
+    thumbnailKey,
+    routeImageKey,
+    hashtagIds,
+    visitEvents,
+    travelData,
+  } = params;
 
   if (getAdminCourseRequestValidationError(params)) {
     return null;
@@ -178,6 +185,7 @@ export function buildAdminCourseUpdateRequest(
     monthStart: Number(basicInfo.visitStartMonth),
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey,
+    ...(routeImageKey ? { routeImageKey } : {}),
     hashtagIds,
     courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
   };

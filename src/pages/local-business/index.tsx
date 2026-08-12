@@ -117,7 +117,7 @@ function LocalBusinessPage() {
 
   // 상세페이지(handleFavoriteToggle)와 동일한 낙관적 업데이트 패턴 —
   // 서버 응답을 기다리지 않고 먼저 하트를 바꾸고, 실패하면 되돌린다.
-const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
+  const [likedOverrides, setLikedOverrides] = useState<Record<string, boolean>>(
     {}
   );
   const [wasAuthenticated, setWasAuthenticated] = useState(isAuthenticated);
