@@ -9,6 +9,7 @@ import {
 import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
+import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useIsAdmin } from '../../../hooks/useMyProfile';
@@ -69,6 +70,9 @@ function FestivalOngoingPage() {
   const { requestDelete, dialogProps } = useContentDelete();
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
     useFestivalFilters();
+  const isDistanceSort = selectedFilters.sort === 'DISTANCE';
+  const { coordinates: distanceSortCoordinates, requestCoordinates } =
+    useDistanceSortCoordinates();
   const {
     data,
     fetchNextPage,
@@ -81,8 +85,10 @@ function FestivalOngoingPage() {
     keyword: region || undefined,
     category: categoryByFilterValue[selectedFilters.category],
     sort: sortByFilterValue[selectedFilters.sort],
+    latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+    longitude: isDistanceSort ? distanceSortCoordinates?.longitude : undefined,
     size: PAGE_SIZE,
-  });
+  }, { enabled: !isDistanceSort || distanceSortCoordinates !== null });
 
   const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
@@ -134,7 +140,12 @@ function FestivalOngoingPage() {
         <FestivalFilterBar
           selectedSort={selectedFilters.sort}
           selectedCategory={selectedFilters.category}
-          onSortSelect={handleSortSelect}
+          onSortSelect={(sort) => {
+            handleSortSelect(sort);
+            if (sort === 'DISTANCE') {
+              void requestCoordinates();
+            }
+          }}
           onCategorySelect={handleCategorySelect}
         />
 

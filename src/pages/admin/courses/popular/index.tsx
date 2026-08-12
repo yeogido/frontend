@@ -93,7 +93,8 @@ function AdminCoursesPopularPage() {
   } = useYeogidoCourseFilters();
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
+  const { coordinates: distanceSortCoordinates, requestCoordinates } =
+    useDistanceSortCoordinates();
 
   const {
     data,
@@ -178,7 +179,12 @@ function AdminCoursesPopularPage() {
           )}
           marginTop={FILTER_MARGIN_TOP}
           onToggle={handleFilterToggle}
-          onSelect={handleFilterSelect}
+          onSelect={(filterKey, option) => {
+            handleFilterSelect(filterKey, option);
+            if (filterKey === 'sort' && sortByLabel[option] === 'DISTANCE') {
+              void requestCoordinates();
+            }
+          }}
         />
 
         <div

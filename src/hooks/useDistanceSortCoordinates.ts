@@ -1,9 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import {
-  getCurrentMapCoordinates,
-  type MapCoordinates,
-} from '../components/kakaomap/utils/kakaoMap';
+import { requestUserLocation, type UserLocation } from '../utils/geolocation';
 
 /**
  * 거리순 정렬이 선택됐을 때만 위치 정보를 요청한다. 거리순 API는 위도/경도가
@@ -12,22 +9,16 @@ import {
  * 권한 거부/실패 시에도 getCurrentMapCoordinates가 서울시청 좌표로
  * 대체해주므로 별도 에러 처리는 필요 없다.
  */
-export function useDistanceSortCoordinates(isDistanceSortActive: boolean) {
-  const [coordinates, setCoordinates] = useState<MapCoordinates | null>(null);
+export function useDistanceSortCoordinates() {
+  const [coordinates, setCoordinates] = useState<UserLocation | null>(null);
 
-  useEffect(() => {
-    if (!isDistanceSortActive || coordinates) return;
+  const requestCoordinates = useCallback(async () => {
+    if (coordinates) return coordinates;
 
-    let cancelled = false;
+    const location = await requestUserLocation();
+    setCoordinates(location);
+    return location;
+  }, [coordinates]);
 
-    void getCurrentMapCoordinates().then((coords) => {
-      if (!cancelled) setCoordinates(coords);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isDistanceSortActive, coordinates]);
-
-  return coordinates;
+  return { coordinates, requestCoordinates };
 }
