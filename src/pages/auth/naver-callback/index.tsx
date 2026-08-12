@@ -95,6 +95,7 @@ function NaverCallbackPage() {
 
               setAuth({
                 userId: result.userId as number,
+                role: result.role as string,
                 accessToken: result.accessToken as string,
                 refreshToken: result.refreshToken as string,
               });

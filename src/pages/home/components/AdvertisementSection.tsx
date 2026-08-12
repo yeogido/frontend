@@ -5,6 +5,11 @@ import {
   AdvertisementCardSkeleton,
 } from '../../../components/common';
 
+import ad1 from '../../../assets/images/ad1.svg';
+import ad2 from '../../../assets/images/ad2.svg';
+import ad3 from '../../../assets/images/ad3.svg';
+import ad4 from '../../../assets/images/ad4.svg';
+import ad5 from '../../../assets/images/ad5.svg';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
   getHomeCarouselIndex,
@@ -27,24 +32,43 @@ const BANNER_ROTATE_INTERVAL_MS = 2000;
 const banners = [
   {
     id: 1,
-    image: '',
-    titleWhite: '무료로 전국 여행하는 법',
-    titleOrangeBold: '여행지원금',
-    titleOrangeRegular: ' 총정리',
+    image: ad1,
+    titleWhite: '2026 섬 방문의 해',
+    titleOrangeBold: '전국 섬 여행지원금',
+    titleOrangeRegular: '',
+    link: 'https://www.visitisland.kr/promotion',
   },
   {
     id: 2,
-    image: '',
-    titleWhite: '숨은 명소를 찾는 법',
-    titleOrangeBold: '로컬 큐레이션',
-    titleOrangeRegular: ' 무료 체험',
+    image: ad2,
+    titleWhite: '지역사랑 농어촌',
+    titleOrangeBold: '인구감소 지역 휴가지원',
+    titleOrangeRegular: '',
+    link: 'https://korean.visitkorea.or.kr/dgtourcard/tour50.do',
   },
   {
     id: 3,
-    image: '',
-    titleWhite: '여기도와 함께하는',
-    titleOrangeBold: '가을 여행',
-    titleOrangeRegular: ' 특가 이벤트',
+    image: ad3,
+    titleWhite: '2026 여름맞이',
+    titleOrangeBold: '숙박 세일 페스타',
+    titleOrangeRegular: '',
+    link: 'https://ktostay.visitkorea.or.kr/',
+  },
+  {
+    id: 4,
+    image: ad4,
+    titleWhite: '숲이 주는 즐거움',
+    titleOrangeBold: '산림복지서비스이용권',
+    titleOrangeRegular: '',
+    link: 'https://www.fowi.or.kr/user/contents/contentsView.do?cntntsId=106',
+  },
+  {
+    id: 5,
+    image: ad5,
+    titleWhite: '2026',
+    titleOrangeBold: '근로자 휴가지원사업',
+    titleOrangeRegular: '',
+    link: 'https://vacation.visitkorea.or.kr/travel/worker/renewal/workerMain.do',
   },
 ];
 
@@ -160,6 +184,9 @@ function AdvertisementSection() {
                   titleWhite={banner.titleWhite}
                   titleOrangeBold={banner.titleOrangeBold}
                   titleOrangeRegular={banner.titleOrangeRegular}
+                  onClick={() =>
+                    window.open(banner.link, '_blank', 'noopener,noreferrer')
+                  }
                 />
               </div>
             ))

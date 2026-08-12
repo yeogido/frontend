@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { getApiErrorMessage } from '../../../../apis/common';
@@ -11,15 +11,23 @@ import {
   signup,
   verifyEmailCode,
 } from '../../../../apis/auth.api';
-import { AuthField, PasswordInput } from '../../../../components/auth';
+import {
+  AuthField,
+  BackButton,
+  ClearableInput,
+  PasswordInput,
+} from '../../../../components/auth';
 import { BIRTH_YEARS } from '../../../../constants/birthYears';
 import { useRegions } from '../../../../hooks/useRegions';
 import type { SignupGender } from '../../../../types/auth.type';
+import { getFullRegionName } from '../../../../utils/regionName';
 import {
   signupSchema,
   SIGNUP_EMAIL_PATTERN,
   type SignupFormValues,
 } from '../schema';
+
+import SelectField from './SelectField';
 
 const genders: { label: string; value: SignupGender }[] = [
   { label: '여성', value: 'FEMALE' },
@@ -34,7 +42,7 @@ const EMAIL_CHECK_ERROR_MESSAGE =
 const SEND_CODE_ERROR_MESSAGE =
   '인증번호 전송에 실패했습니다. 다시 시도해 주세요.';
 const SEND_CODE_SUCCESS_MESSAGE =
-  '인증번호를 전송했어요. 10분 안에 입력해 주세요.';
+  '인증번호를 전송했어요. 5분 이내에 입력해 주세요.';
 const VERIFY_CODE_ERROR_MESSAGE =
   '인증번호가 올바르지 않습니다. 다시 확인해 주세요.';
 const VERIFY_CODE_SUCCESS_MESSAGE = '이메일 인증이 완료됐어요.';
@@ -48,7 +56,11 @@ type EmailAuthStatus =
   | 'verified'
   | 'error';
 
-function SignupForm() {
+interface SignupFormProps {
+  onBack: () => void;
+}
+
+function SignupForm({ onBack }: SignupFormProps) {
   const navigate = useNavigate();
   const { data: regionsData } = useRegions();
   const [emailCheck, setEmailCheck] = useState<{
@@ -234,6 +246,8 @@ function SignupForm() {
         className="flex-1"
         onSubmit={handleSubmit(onSubmit)}
       >
+        <BackButton onClick={onBack} />
+
         <h1 className="text-[28px] font-bold leading-none text-black">
           회원가입
         </h1>
@@ -248,7 +262,7 @@ function SignupForm() {
             label="이름"
             error={errors.name?.message}
           >
-              <input
+              <ClearableInput
                 {...register('name')}
                 id="signup-name"
                 type="text"
@@ -264,7 +278,7 @@ function SignupForm() {
           >
             <div className="space-y-2">
               <div className="flex gap-2">
-                <input
+                <ClearableInput
                   // emailCheckRequestIdRef는 handleEmailChange/handleEmailBlur
                   // 안에서만 읽고 쓴다 — 둘 다 실제 이벤트(change/blur)가
                   // 발생해야 실행되는 콜백이라 렌더링 중엔 절대 접근되지
@@ -277,7 +291,8 @@ function SignupForm() {
                   id="signup-email"
                   type="email"
                   placeholder="이메일"
-                  className="block h-12 min-w-0 flex-1 rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
+                  wrapperClassName="min-w-0 flex-1"
+                  className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
                 />
 
                 <button
@@ -310,14 +325,15 @@ function SignupForm() {
                 >
                   인증번호
                 </label>
-                <input
+                <ClearableInput
                   id="signup-code"
                   type="text"
                   placeholder="인증번호"
                   value={authCode}
                   onChange={(event) => setAuthCode(event.target.value)}
                   disabled={!canEnterCode}
-                  className="block h-12 min-w-0 flex-1 rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 disabled:bg-gray-2 disabled:text-gray-4 focus:border-main-5"
+                  wrapperClassName="min-w-0 flex-1"
+                  className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 disabled:bg-gray-2 disabled:text-gray-4 focus:border-main-5"
                 />
 
                 <button
@@ -393,23 +409,25 @@ function SignupForm() {
             label="사는 지역"
             error={errors.regionId?.message}
           >
-            <SelectField>
-              <select
-                {...register('regionId')}
-                id="signup-region"
-                className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
-              >
-                <option value="">거주 중인 지역을 선택해 주세요</option>
-                {(regionsData?.regions ?? []).map((region) => (
-                  <option
-                    key={region.regionId}
-                    value={region.regionId}
-                  >
-                    {region.name}
-                  </option>
-                ))}
-              </select>
-            </SelectField>
+            <Controller
+              control={control}
+              name="regionId"
+              render={({ field }) => (
+                <SelectField
+                  id="signup-region"
+                  ariaLabel="사는 지역"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={[
+                    { value: '', label: '거주 중인 지역을 선택해 주세요' },
+                    ...(regionsData?.regions ?? []).map((region) => ({
+                      value: String(region.regionId),
+                      label: getFullRegionName(region.name),
+                    })),
+                  ]}
+                />
+              )}
+            />
           </AuthField>
 
           <AuthField
@@ -417,23 +435,25 @@ function SignupForm() {
             label="성별"
             error={errors.gender?.message}
           >
-            <SelectField>
-              <select
-                {...register('gender')}
-                id="signup-gender"
-                className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
-              >
-                <option value="">성별을 선택해 주세요</option>
-                {genders.map((genderOption) => (
-                  <option
-                    key={genderOption.value}
-                    value={genderOption.value}
-                  >
-                    {genderOption.label}
-                  </option>
-                ))}
-              </select>
-            </SelectField>
+            <Controller
+              control={control}
+              name="gender"
+              render={({ field }) => (
+                <SelectField
+                  id="signup-gender"
+                  ariaLabel="성별"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={[
+                    { value: '', label: '성별을 선택해 주세요' },
+                    ...genders.map((genderOption) => ({
+                      value: genderOption.value,
+                      label: genderOption.label,
+                    })),
+                  ]}
+                />
+              )}
+            />
           </AuthField>
 
           <AuthField
@@ -441,23 +461,22 @@ function SignupForm() {
             label="태어난 연도"
             error={errors.birthYear?.message}
           >
-            <SelectField>
-              <select
-                {...register('birthYear')}
-                id="signup-birth-year"
-                className="block h-12 w-full appearance-none rounded-[12px] border border-gray-2 bg-white px-4 pr-11 text-sm text-gray-4 outline-none focus:border-main-5"
-              >
-                <option value="">태어난 연도를 선택해 주세요</option>
-                {BIRTH_YEARS.map((year) => (
-                  <option
-                    key={year}
-                    value={year}
-                  >
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </SelectField>
+            <Controller
+              control={control}
+              name="birthYear"
+              render={({ field }) => (
+                <SelectField
+                  id="signup-birth-year"
+                  ariaLabel="태어난 연도"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={[
+                    { value: '', label: '태어난 연도를 선택해 주세요' },
+                    ...BIRTH_YEARS.map((year) => ({ value: year, label: year })),
+                  ]}
+                />
+              )}
+            />
           </AuthField>
         </div>
 
@@ -513,29 +532,6 @@ function SectionField({
           {error}
         </p>
       )}
-    </div>
-  );
-}
-
-function SelectField({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative">
-      {children}
-
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 20 20"
-        className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-4"
-        fill="none"
-      >
-        <path
-          d="M5 7.5L10 12.5L15 7.5"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
     </div>
   );
 }

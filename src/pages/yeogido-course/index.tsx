@@ -22,10 +22,13 @@ import {
 } from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useEditCourse } from '../../hooks/useEditCourse';
-import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
+import {
+  toCompanionLabel,
+  toTransportLabel,
+} from '../../utils/courseEnumLabels';
 import type { CourseDurationType } from '../../types/course.type';
 
 const COURSE_REGION_SEARCH_PATH = '/course-region-search';
@@ -98,6 +101,7 @@ const HERO_TITLE_LINE_HEIGHT = 19;
 const HERO_DESCRIPTION_MARGIN_TOP = 10;
 const HERO_DESCRIPTION_SIZE = 10;
 const HERO_DESCRIPTION_LINE_HEIGHT = 12;
+const HERO_DESCRIPTION_HEIGHT = 24;
 const HERO_META_BOTTOM = 14;
 const HERO_META_LEFT = 16;
 const HERO_META_GAP = 10;
@@ -116,7 +120,6 @@ function YeogidoCoursePage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
   const {
@@ -289,7 +292,9 @@ function YeogidoCoursePage() {
             >
               {heroCourse?.routeImageUrl?.trim() || heroCourse?.thumbnailUrl ? (
                 <img
-                  src={heroCourse.routeImageUrl?.trim() || heroCourse.thumbnailUrl}
+                  src={
+                    heroCourse.routeImageUrl?.trim() || heroCourse.thumbnailUrl
+                  }
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 h-full w-full object-cover"
@@ -305,20 +310,22 @@ function YeogidoCoursePage() {
                 }}
               >
                 <p
-                  className="font-semibold"
+                  className="truncate font-semibold"
                   style={{
                     fontSize: HERO_TITLE_SIZE * scale,
                     lineHeight: `${HERO_TITLE_LINE_HEIGHT * scale}px`,
+                    height: HERO_TITLE_LINE_HEIGHT * scale,
                   }}
                 >
                   {heroTitle}
                 </p>
                 <p
-                  className="text-pure-white/85 font-normal"
+                  className="text-pure-white/85 line-clamp-2 font-normal"
                   style={{
                     marginTop: HERO_DESCRIPTION_MARGIN_TOP * scale,
                     fontSize: HERO_DESCRIPTION_SIZE * scale,
                     lineHeight: `${HERO_DESCRIPTION_LINE_HEIGHT * scale}px`,
+                    height: HERO_DESCRIPTION_HEIGHT * scale,
                   }}
                 >
                   {heroDescription}
@@ -374,7 +381,7 @@ function YeogidoCoursePage() {
         <section style={{ marginTop: SECTION_MARGIN_TOP * scale }}>
           <SectionHeader
             title="인기 추천 코스"
-            actionText="자세히 보기"
+            actionText="전체 보기"
             onActionClick={goToPopularCourses}
           />
 
@@ -390,13 +397,16 @@ function YeogidoCoursePage() {
                   <ContentCardSkeleton key={item} />
                 ))
               : popularCoursePreviews.map((course) =>
-                  isAdmin ? (
+                  course.canManage ? (
                     <EditableContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={course.region}
+                      secondInfo={toTransportLabel(course.transportType)}
+                      thirdInfo={toCompanionLabel(course.companionType)}
                       tags={toContentTagIds(course.tags)}
                       onClick={() => goToCourseDetail(course.courseId)}
                       onEdit={() => void editCourse(course.courseId)}
@@ -405,10 +415,13 @@ function YeogidoCoursePage() {
                   ) : (
                     <ContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={course.region}
+                      secondInfo={toTransportLabel(course.transportType)}
+                      thirdInfo={toCompanionLabel(course.companionType)}
                       tags={toContentTagIds(course.tags)}
                       liked={getLiked(course.courseId, course.isLiked)}
                       onClick={() => goToCourseDetail(course.courseId)}
@@ -468,7 +481,7 @@ function YeogidoCoursePage() {
                   <CourseCard
                     {...course}
                     liked={getLiked(course.id, course.liked)}
-                    canManage={isAdmin}
+                    canManage={course.canManage}
                     showEdit
                     onClick={() => goToCourseDetail(course.id)}
                     onLikeClick={() =>

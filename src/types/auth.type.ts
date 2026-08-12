@@ -4,8 +4,11 @@ export interface LoginRequest {
 }
 
 // 서버 응답의 result 필드 구조 (스웨거 기준: POST /api/v1/auth/login)
+// role은 USER | ADMIN | BUSINESS지만, UserProfileResponse와 같은 이유로
+// 유니온으로 좁히지 않는다 (types/user.type.ts 참고).
 export interface LoginResult {
   userId: number;
+  role: string;
   accessToken: string;
   refreshToken: string;
 }
@@ -23,11 +26,12 @@ export type SocialLoginRequest =
   | { provider: 'KAKAO'; authorizationCode: string; redirectUri: string };
 
 // 서버 응답의 result 필드 구조 (스웨거 기준: POST /api/v1/auth/social-login)
-// 기존 회원(isNewUser: false)이면 userId/accessToken/refreshToken이,
+// 기존 회원(isNewUser: false)이면 userId/role/accessToken/refreshToken이,
 // 신규 회원(isNewUser: true)이면 temporaryToken/email/name이 채워진다.
 export interface SocialLoginResult {
   isNewUser: boolean;
   userId: number | null;
+  role: string | null;
   accessToken: string | null;
   refreshToken: string | null;
   temporaryToken: string | null;

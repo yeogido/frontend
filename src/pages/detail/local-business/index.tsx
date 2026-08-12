@@ -77,6 +77,19 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
     requestDelete: requestPromotionDelete,
     dialogProps: promotionDeleteDialogProps,
   } = useBusinessPromotionDelete(() => navigate('/local-business'));
+  const [wasAuthenticated, setWasAuthenticated] = useState(isAuthenticated);
+
+  // 비로그인 상태는 좋아요를 가질 수 없으므로, 로그아웃하면 이 화면이
+  // 언마운트되지 않아도 눌러뒀던 하트 표시가 바로 풀리게 한다. 렌더 중에
+  // 바로 반영해야 해서(useEffect의 setState는 린트로 금지) 이전 인증
+  // 상태와 비교해 바뀐 순간 초기화한다.
+  if (wasAuthenticated !== isAuthenticated) {
+    setWasAuthenticated(isAuthenticated);
+
+    if (!isAuthenticated) {
+      setLikedOverride(null);
+    }
+  }
 
   const business = detailResponse
     ? mapBusinessPromotionDetail(detailResponse)
@@ -101,6 +114,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
     if (!business) return;
 
     const nextLiked = !(likedOverride ?? business.liked);
+    const requestAuthGeneration = useAuthStore.getState().authGeneration;
     placeLikeRequestInFlightRef.current = true;
     setLikedOverride(nextLiked);
 
@@ -111,7 +125,11 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
         await removePlaceLike(business.placeId);
       }
     } catch (error) {
-      setLikedOverride(!nextLiked);
+      // 요청이 나간 뒤 로그아웃(또는 재로그인)해서 인증 세대가 바뀌었다면,
+      // 지금은 이 실패를 되돌릴 세션이 아니므로 override를 건드리지 않는다.
+      if (useAuthStore.getState().authGeneration === requestAuthGeneration) {
+        setLikedOverride(!nextLiked);
+      }
 
       if (isNormalizedApiError(error) && error.code === 'AUTH4011') {
         clearAuth();

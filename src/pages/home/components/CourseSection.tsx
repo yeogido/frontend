@@ -11,7 +11,6 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useEditCourse } from '../../../hooks/useEditCourse';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toCourseCardProps } from '../../../utils/courseCard';
 
 const SECTION_MARGIN_TOP = 32;
@@ -26,7 +25,6 @@ function CourseSection() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -77,7 +75,7 @@ function CourseSection() {
                   key={course.id}
                   {...course}
                   liked={getLiked(course.id, course.liked)}
-                  canManage={isAdmin}
+                  canManage={course.canManage}
                   showEdit
                   onClick={() =>
                     navigate(`/yeogido-course/detail/${course.id}`)

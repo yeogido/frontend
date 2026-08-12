@@ -10,14 +10,14 @@ import { toRegionPhotoMap } from '../map/types/regionPhoto';
 function MapSection() {
   const { records, isError, retry } = useTravelRecordsForMap();
   const regionInfoByRegionId = useTravelRecordRegionDetails(
-    records.map((record) => record.regionId),
+    records.map((record) => record.regionId)
   );
   const travelRecordFolders = getTravelRecordFoldersFromSummaries(
     records,
-    regionInfoByRegionId,
+    regionInfoByRegionId
   );
   const regionPhotos = toRegionPhotoMap(
-    getTravelRecordRegionPhotoRecords(travelRecordFolders),
+    getTravelRecordRegionPhotoRecords(travelRecordFolders)
   );
 
   return (
@@ -36,14 +36,12 @@ function MapSection() {
           />
         </div>
 
-        <h2 className="absolute left-4 top-4 text-[18px] font-semibold leading-[100%] text-[#1C1C1C]">
-          전국 지도
+        <h2 className="absolute top-4 left-4 text-[18px] leading-[100%] font-semibold text-[#1C1C1C]">
+          기록 지도
         </h2>
 
-        <p className="absolute left-4 top-[41px] text-[10px] font-normal leading-[100%] text-[#7F7F7F]">
-          지역을 클릭해서
-          <br />
-          다양한 정보를 확인해 보세요!
+        <p className="absolute top-[41px] left-4 text-[10px] leading-[100%] font-normal text-[#7F7F7F]">
+          다녀온 지역을 한눈에 확인해 보세요
         </p>
 
         {isError ? (

@@ -1,4 +1,5 @@
 import type { RecentCultureContent } from '../types/content.type';
+import { useAuthStore } from '../store/auth.store';
 
 export const RECENT_CULTURE_CONTENTS_STORAGE_KEY = 'recent-culture-contents';
 export const MAX_RECENT_CULTURE_CONTENTS = 10;
@@ -12,6 +13,14 @@ export const RECENT_CULTURE_CONTENTS_UPDATED_EVENT =
 function notifyRecentCultureContentsUpdated(): void {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new Event(RECENT_CULTURE_CONTENTS_UPDATED_EVENT));
+}
+
+function getStorageKey(): string {
+  const userId = useAuthStore.getState().userId;
+
+  return userId === null
+    ? RECENT_CULTURE_CONTENTS_STORAGE_KEY
+    : `${RECENT_CULTURE_CONTENTS_STORAGE_KEY}:${userId}`;
 }
 
 export function upsertRecentCultureContent(
@@ -34,31 +43,46 @@ function toYearMonthLabel(date: string): string {
   return match ? `${match[1]}.${match[2]}` : date;
 }
 
-export function getStoredRecentCultureContents(): RecentCultureContent[] {
+// 저장된 그대로(날짜 변환 없이) 읽는다. 읽고 다시 쓰는(read-modify-write)
+// 함수들은 반드시 이 원본을 써야 한다 — 표시용으로 잘라낸 날짜를 그대로
+// 저장소에 되돌려 쓰면 원래 저장돼 있던 일자 단위 정보가 사라진다.
+function getStoredRecentCultureContentsRaw(): RecentCultureContent[] {
   if (typeof window === 'undefined') return [];
 
   try {
-    const storedContents = window.localStorage.getItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY
-    );
+    const storageKey = getStorageKey();
+    const storedContents =
+      window.localStorage.getItem(storageKey) ??
+      (storageKey === RECENT_CULTURE_CONTENTS_STORAGE_KEY
+        ? null
+        : window.localStorage.getItem(RECENT_CULTURE_CONTENTS_STORAGE_KEY));
 
     if (!storedContents) return [];
 
     const parsedContents: unknown = JSON.parse(storedContents);
 
-    return Array.isArray(parsedContents)
+    const contents = Array.isArray(parsedContents)
       ? parsedContents
-          .filter(isRecentCultureContent)
+          .flatMap(toRecentCultureContent)
           .slice(0, MAX_RECENT_CULTURE_CONTENTS)
-          .map((content) => ({
-            ...content,
-            startDate: toYearMonthLabel(content.startDate),
-            endDate: toYearMonthLabel(content.endDate),
-          }))
       : [];
+
+    if (contents.length > 0) {
+      window.localStorage.setItem(storageKey, JSON.stringify(contents));
+    }
+
+    return contents;
   } catch {
     return [];
   }
+}
+
+export function getStoredRecentCultureContents(): RecentCultureContent[] {
+  return getStoredRecentCultureContentsRaw().map((content) => ({
+    ...content,
+    startDate: toYearMonthLabel(content.startDate),
+    endDate: toYearMonthLabel(content.endDate),
+  }));
 }
 
 export function saveRecentCultureContent(content: RecentCultureContent): void {
@@ -66,12 +90,12 @@ export function saveRecentCultureContent(content: RecentCultureContent): void {
 
   try {
     const contents = upsertRecentCultureContent(
-      getStoredRecentCultureContents(),
+      getStoredRecentCultureContentsRaw(),
       content
     );
 
     window.localStorage.setItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      getStorageKey(),
       JSON.stringify(contents)
     );
     notifyRecentCultureContentsUpdated();
@@ -84,7 +108,7 @@ export function removeRecentCultureContent(contentId: number): void {
   if (typeof window === 'undefined') return;
 
   try {
-    const contents = getStoredRecentCultureContents();
+    const contents = getStoredRecentCultureContentsRaw();
 
     if (!contents.some((content) => content.contentId === contentId)) return;
 
@@ -93,7 +117,7 @@ export function removeRecentCultureContent(contentId: number): void {
     );
 
     window.localStorage.setItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      getStorageKey(),
       JSON.stringify(updatedContents)
     );
     notifyRecentCultureContentsUpdated();
@@ -109,7 +133,7 @@ export function updateRecentCultureContentLikeState(
   if (typeof window === 'undefined') return;
 
   try {
-    const contents = getStoredRecentCultureContents();
+    const contents = getStoredRecentCultureContentsRaw();
 
     if (!contents.some((content) => content.contentId === contentId)) return;
 
@@ -118,13 +142,50 @@ export function updateRecentCultureContentLikeState(
     );
 
     window.localStorage.setItem(
-      RECENT_CULTURE_CONTENTS_STORAGE_KEY,
+      getStorageKey(),
       JSON.stringify(updatedContents)
     );
     notifyRecentCultureContentsUpdated();
   } catch {
     return;
   }
+}
+
+// 비로그인 상태에서는 좋아요를 가질 수 없으므로, 로그아웃 시 "최근 본
+// 행사" 목록은 그대로 두고 각 항목의 좋아요 표시만 지운다.
+export function clearRecentCultureContentsLikedState(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const contents = getStoredRecentCultureContentsRaw();
+
+    if (!contents.some((content) => content.liked)) return;
+
+    const updatedContents = contents.map((content) => ({
+      ...content,
+      liked: false,
+    }));
+
+    window.localStorage.setItem(
+      getStorageKey(),
+      JSON.stringify(updatedContents)
+    );
+    notifyRecentCultureContentsUpdated();
+  } catch {
+    return;
+  }
+}
+
+function toRecentCultureContent(value: unknown): RecentCultureContent[] {
+  if (!isRecentCultureContent(value)) return [];
+
+  const content = { ...(value as RecentCultureContent) } as Record<
+    string,
+    unknown
+  >;
+  delete content.canManage;
+
+  return [content as unknown as RecentCultureContent];
 }
 
 function isRecentCultureContent(value: unknown): value is RecentCultureContent {

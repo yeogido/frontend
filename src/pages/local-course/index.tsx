@@ -13,12 +13,10 @@ import { useLoginModal } from '../../hooks/useLoginModal';
 import { useAuthStore } from '../../store/auth.store';
 import {
   useCourseDelete,
-  useMyCourseIds,
   usePopularLocalCourses,
 } from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useEditLocalCourse } from '../../hooks/useEditLocalCourse';
-import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
@@ -59,9 +57,6 @@ function LocalCoursePage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
-    useMyCourseIds();
-  const isAdmin = useIsAdmin();
   const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -193,7 +188,7 @@ function LocalCoursePage() {
               gap: LIST_GAP * scale,
             }}
           >
-            {isPopularCoursesPending || isMyCourseIdsPending
+            {isPopularCoursesPending
               ? Array.from({ length: 1 }, (_, index) => (
                   <div
                     key={index}
@@ -203,7 +198,7 @@ function LocalCoursePage() {
                   </div>
                 ))
               : popularCoursePreviews.map((course) => {
-                  const isMine = isAdmin || myCourseIds.has(course.courseId);
+                  const isMine = course.canManage;
 
                   return (
                     <div
@@ -214,7 +209,9 @@ function LocalCoursePage() {
                         authorAvatarUrl={course.author.profileImageUrl}
                         authorName={course.author.nickname}
                         date={formatCourseCreatedAt(course.createdAt)}
-                        image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                        image={
+                          course.routeImageUrl?.trim() || course.thumbnailUrl
+                        }
                         title={course.title}
                         duration={toDurationLabel(course.durationType)}
                         companion={toCompanionLabel(course.companionType)}
@@ -315,7 +312,7 @@ function LocalCoursePage() {
                   <CourseCard
                     {...course}
                     liked={getLiked(course.id, course.liked)}
-                    canManage={isAdmin || myCourseIds.has(course.id)}
+                    canManage={course.canManage}
                     showEdit
                     onClick={() => goToCourseDetail(course.id)}
                     onLikeClick={() =>

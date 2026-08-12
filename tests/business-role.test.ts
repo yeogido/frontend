@@ -31,17 +31,18 @@ test('stays closed while the profile has not been fetched', () => {
   assert.equal(isBusinessRole(undefined), false);
 });
 
-test('keeps role out of the persisted auth store', () => {
-  // 로그인 응답에 role이 없어 저장해 두면 재로그인 시점에 비워지고, 인증
-  // 직후에도 서버와 어긋난다. 서버(GET /users/me)를 진실의 출처로 쓴다.
+test('stores role from the login/reissue response in the persisted auth store', () => {
+  // login/reissue/social-login/social-signup 응답에 role이 포함되어 있어
+  // (스웨거 AuthTokenRes/AuthSocialLoginRes 기준), 서버가 준 값을 그대로
+  // 저장한다. 다만 소상공인/관리자 화면을 여는 인가 판단은 여전히
+  // GET /users/me(useMyProfile)를 진실의 출처로 쓴다.
   const authStoreSource = readFileSync(
     new URL('../src/store/auth.store.ts', import.meta.url),
     'utf8'
   );
 
-  assert.doesNotMatch(authStoreSource, /setRole/);
-  assert.doesNotMatch(authStoreSource, /role:\s*string/);
-  // 이전 버전으로 저장된 role을 떨어뜨리는 migrate가 있어야 한다.
-  assert.match(authStoreSource, /version:\s*3/);
-  assert.match(authStoreSource, /delete stored\.role/);
+  assert.match(authStoreSource, /role:\s*auth\.role/);
+  assert.match(authStoreSource, /version:\s*4/);
+  // 옛 세션(role 없음)은 null로 채워야 한다.
+  assert.match(authStoreSource, /stored\.role = null/);
 });
