@@ -13,6 +13,7 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
+import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
@@ -94,6 +95,9 @@ function FestivalSearchPage() {
     !regionLabel || (!isRegionPending && !isRegionError);
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
     useFestivalFilters();
+  const isDistanceSort = selectedFilters.sort === 'DISTANCE';
+  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
+    useDistanceSortCoordinates();
 
   const {
     data,
@@ -107,8 +111,14 @@ function FestivalSearchPage() {
     regionId,
     category: categoryByFilterValue[selectedFilters.category],
     sort: sortByFilterValue[selectedFilters.sort],
+    latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+    longitude: isDistanceSort ? distanceSortCoordinates?.longitude : undefined,
     size: 20,
-  }, { enabled: isRegionSearchReady });
+  }, {
+    enabled:
+      isRegionSearchReady &&
+      (!isDistanceSort || status === 'ready' || status === 'failed'),
+  });
 
   const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult =
@@ -194,7 +204,12 @@ function FestivalSearchPage() {
         <FestivalFilterBar
           selectedSort={selectedFilters.sort}
           selectedCategory={selectedFilters.category}
-          onSortSelect={handleSortSelect}
+          onSortSelect={(sort) => {
+            handleSortSelect(sort);
+            if (sort === 'DISTANCE') {
+              void requestCoordinates();
+            }
+          }}
           onCategorySelect={handleCategorySelect}
         />
 

@@ -9,6 +9,16 @@ import type {
   RecommendedCourse,
 } from '../types/course.type';
 
+export function withRouteImage<
+  T extends { thumbnailUrl: string; routeImageUrl?: string | null },
+>(course: T): T {
+  const routeImageUrl = course.routeImageUrl?.trim();
+
+  return routeImageUrl
+    ? { ...course, thumbnailUrl: routeImageUrl, routeImageUrl }
+    : course;
+}
+
 export async function getCourses(
   params: GetCoursesParams,
 ): Promise<GetCoursesResponse> {
@@ -55,7 +65,7 @@ export async function getRecommendedCourses(): Promise<RecommendedCourse[]> {
       '/courses/recommended',
     );
 
-    return data;
+    return data.map(withRouteImage);
   } catch (error) {
     throw normalizeApiError(error);
   }

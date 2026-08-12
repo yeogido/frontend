@@ -6,7 +6,7 @@ import type { Course } from '../types/course.type';
 export function toCourseCardProps(course: Course) {
   return {
     id: course.courseId,
-    image: course.thumbnailUrl,
+    image: course.routeImageUrl?.trim() || course.thumbnailUrl,
     title: course.title,
     duration: toDurationLabel(course.durationType),
     courseType: course.region,

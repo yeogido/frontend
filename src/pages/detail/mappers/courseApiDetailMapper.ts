@@ -97,7 +97,7 @@ export function mapCourseApiDetailToDto(
   return {
     id: course.courseId,
     title: course.title,
-    heroImageUrl: course.thumbnailUrl,
+    heroImageUrl: course.routeImageUrl?.trim() || course.thumbnailUrl,
     liked: course.isLiked,
     tags: toDetailTags(course.tags),
     infoBadges: [
@@ -187,7 +187,7 @@ export function mapCourseApiDetailToCourseSummary(
 ): Course {
   return {
     courseId: course.courseId,
-    thumbnailUrl: course.thumbnailUrl,
+    thumbnailUrl: course.routeImageUrl?.trim() || course.thumbnailUrl,
     title: course.title,
     region: deriveRegionFromCourseItems(course.courseItems),
     durationType: toCanonicalDurationType(course.durationType),

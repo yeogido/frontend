@@ -125,7 +125,8 @@ function YeogidoCourseSearchPage() {
   } = useYeogidoCourseFilters();
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
+  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
+    useDistanceSortCoordinates();
 
   const {
     data,
@@ -152,7 +153,7 @@ function YeogidoCourseSearchPage() {
     {
       enabled:
         isRegionSearchReady &&
-        (!isDistanceSort || distanceSortCoordinates !== null),
+        (!isDistanceSort || status === 'ready' || status === 'failed'),
     }
   );
 
@@ -242,7 +243,12 @@ function YeogidoCourseSearchPage() {
             )}
             marginTop={FILTER_MARGIN_TOP}
             onToggle={handleFilterToggle}
-            onSelect={handleFilterSelect}
+            onSelect={(filterKey, option) => {
+              handleFilterSelect(filterKey, option);
+              if (filterKey === 'sort' && sortByLabel[option] === 'DISTANCE') {
+                void requestCoordinates();
+              }
+            }}
           />
           <div
             className="grid grid-cols-2"
@@ -264,7 +270,7 @@ function YeogidoCourseSearchPage() {
                   isAdmin ? (
                     <EditableContentCard
                       key={course.courseId}
-                      image={course.thumbnailUrl}
+                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}
@@ -277,7 +283,7 @@ function YeogidoCourseSearchPage() {
                   ) : (
                     <ContentCard
                       key={course.courseId}
-                      image={course.thumbnailUrl}
+                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}

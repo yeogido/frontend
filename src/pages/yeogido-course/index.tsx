@@ -287,9 +287,9 @@ function YeogidoCoursePage() {
               className="relative overflow-hidden bg-[linear-gradient(180deg,#8EA98C_0%,#507047_100%)]"
               style={{ height: HERO_HEIGHT * scale }}
             >
-              {heroCourse?.thumbnailUrl ? (
+              {heroCourse?.routeImageUrl?.trim() || heroCourse?.thumbnailUrl ? (
                 <img
-                  src={heroCourse.thumbnailUrl}
+                  src={heroCourse.routeImageUrl?.trim() || heroCourse.thumbnailUrl}
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 h-full w-full object-cover"
@@ -393,7 +393,7 @@ function YeogidoCoursePage() {
                   isAdmin ? (
                     <EditableContentCard
                       key={course.courseId}
-                      image={course.thumbnailUrl}
+                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}
@@ -405,7 +405,7 @@ function YeogidoCoursePage() {
                   ) : (
                     <ContentCard
                       key={course.courseId}
-                      image={course.thumbnailUrl}
+                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
                       secondInfo={course.region}

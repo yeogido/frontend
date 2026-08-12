@@ -43,6 +43,7 @@ interface RawLikedItemResponse {
   title: string;
   externalPlaceId?: string;
   thumbnailImage: string | null;
+  routeImageUrl?: string | null;
   duration: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -67,6 +68,7 @@ export interface LikedItemResponse {
   title: string;
   externalPlaceId?: string;
   thumbnailImage: string | null;
+  routeImageUrl?: string | null;
   duration: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -106,6 +108,10 @@ export async function getLikedItems(
       items: data.items.map((item) => ({
         ...item,
         category: LIKED_ITEM_RESPONSE_CATEGORY[item.category],
+        thumbnailImage:
+          item.category === 'COURSE'
+            ? (item.routeImageUrl ?? item.thumbnailImage)
+            : item.thumbnailImage,
       })),
     };
   } catch (error) {

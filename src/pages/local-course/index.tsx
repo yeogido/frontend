@@ -216,7 +216,7 @@ function LocalCoursePage() {
                         authorAvatarUrl={course.author.profileImageUrl}
                         authorName={course.author.nickname}
                         date={formatCourseCreatedAt(course.createdAt)}
-                        image={course.thumbnailUrl}
+                        image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                         title={course.title}
                         duration={toDurationLabel(course.durationType)}
                         companion={toCompanionLabel(course.companionType)}

@@ -24,6 +24,7 @@ import useFestivalPreviews from './hooks/useFestivalPreviews';
 import type { FeaturedFestival } from './types';
 
 const ONGOING_PREVIEW_ITEM_COUNT = 2;
+const BANNER_ITEM_COUNT = 5;
 const BANNER_ROTATE_INTERVAL_MS = 2000;
 
 const PAGE_PADDING_X = 24;
@@ -59,17 +60,19 @@ function FestivalPage() {
 
   // 메인 배너: 배너 전용 API(/contents/banner)가 이미 여러 개를 내려줘서
   // 2초마다 자동 전환한다. 목록 API(/contents)는 날짜를 월까지만 내려주게
-  // 바뀌었지만 배너 전용 API는 일자까지 그대로 내려준다.
+  // 바뀌었지만 배너 전용 API는 일자까지 그대로 내려준다. 다른 배너들처럼
+  // 상위 5개로 명시적으로 제한한다(지금은 API가 5개만 주지만, 응답 개수가
+  // 늘어나도 여기서 고정하기 위해).
   const { data: cultureContentBanners } = useCultureContentBanners();
-  const bannerFestivals: FeaturedFestival[] = (cultureContentBanners ?? []).map(
-    (banner) => ({
+  const bannerFestivals: FeaturedFestival[] = (cultureContentBanners ?? [])
+    .slice(0, BANNER_ITEM_COUNT)
+    .map((banner) => ({
       id: banner.contentId,
       image: banner.thumbnailImage,
       title: banner.title,
       description: banner.description,
       period: `${banner.startDate} ~ ${banner.endDate}`,
-    })
-  );
+    }));
   const [bannerIndex, setBannerIndex] = useState(0);
 
   useEffect(() => {

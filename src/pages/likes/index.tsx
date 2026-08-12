@@ -1,11 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  ContentCard,
-  CourseFilterBar,
-  SearchBar,
-} from '../../components/common';
+import { ContentCard, CourseFilterBar, SearchBar } from '../../components/common';
 import { useToast } from '../../components/toast';
 import {
   LIKED_ITEM_FILTER_GRID_CLASS_NAME,
@@ -25,6 +21,11 @@ import {
 } from '../../hooks/usePlaceOpeningHours';
 import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
+import {
+  readStoredUserLocation,
+  requestUserLocation,
+  type UserLocation,
+} from '../../utils/geolocation';
 
 import {
   LIKED_CATEGORY_OPTIONS,
@@ -68,6 +69,26 @@ function LikesPage() {
   const { goToCourseDetail } = useNavigateToCourseDetail();
   const [keyword, setKeyword] = useState('');
   const [unlikedIds, setUnlikedIds] = useState<ReadonlySet<string>>(new Set());
+  const [initialUserLocation] = useState<UserLocation | null>(() =>
+    readStoredUserLocation()
+  );
+  const [userLocation, setUserLocation] =
+    useState<UserLocation | null>(initialUserLocation);
+
+  useEffect(() => {
+    if (initialUserLocation) return;
+
+    let isActive = true;
+
+    void requestUserLocation().then((location) => {
+      if (!isActive) return;
+      setUserLocation(location);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [initialUserLocation]);
 
   const {
     filterContainerRef,
@@ -90,6 +111,8 @@ function LikesPage() {
     category,
     keyword: keyword.trim() || undefined,
     sort,
+    latitude: userLocation?.latitude,
+    longitude: userLocation?.longitude,
   });
 
   const activeLikedItems = useMemo(
@@ -313,6 +336,7 @@ function LikesPage() {
         style={{ height: LOAD_MORE_HEIGHT * scale }}
         aria-hidden="true"
       />
+
     </section>
   );
 }

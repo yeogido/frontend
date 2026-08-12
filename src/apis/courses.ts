@@ -1,4 +1,5 @@
 import { apiClient, normalizeApiError } from './common';
+import { withRouteImage } from './courses.api';
 import type {
   CourseItem as UpdateCourseItem,
   OperatingDay,
@@ -54,6 +55,7 @@ export interface CourseDetailResult {
   courseType: string;
   title: string;
   thumbnailUrl: string;
+  routeImageUrl?: string | null;
   description: string;
   tags: string[];
   durationType: string;
@@ -78,7 +80,7 @@ export async function getCourseDetail(
     `/courses/${courseId}`
   );
 
-  return data;
+  return withRouteImage(data);
 }
 
 export async function deleteCourse(courseId: number): Promise<void> {
