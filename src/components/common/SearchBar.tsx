@@ -214,13 +214,13 @@ function SearchBar({
                 type="button"
                 onClick={handleClear}
                 aria-label="검색어 지우기"
-                className="absolute right-[19px] flex size-4 items-center justify-center"
+                className="absolute right-[5px] flex size-11 items-center justify-center"
               >
                 <img
                   src={closeRounded}
                   alt=""
                   aria-hidden="true"
-                  className="size-full"
+                  className="size-4"
                 />
               </button>
             ) : null}
@@ -293,9 +293,14 @@ function SearchBar({
                           type="button"
                           aria-label={`${suggestion} 최근 검색어 삭제`}
                           onClick={() => onRemoveSuggestion(suggestion)}
-                          className="absolute right-[19px] flex size-[16px] items-center justify-center"
+                          className="absolute right-[5px] flex size-11 items-center justify-center"
                         >
-                          <img src={closeRounded} alt="" aria-hidden="true" />
+                          <img
+                            src={closeRounded}
+                            alt=""
+                            aria-hidden="true"
+                            className="size-4"
+                          />
                         </button>
                       ) : null}
                     </div>
