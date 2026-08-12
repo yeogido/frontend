@@ -64,7 +64,12 @@ export async function createCourseReview(
   }
 }
 
-/** 수정 화면이 아직 없다. 사유는 types/review.type.ts 참고. */
+/**
+ * 후기 수정.
+ *
+ * images를 생략하면 기존 사진이 유지되고, 빈 배열이면 전부 삭제된다. 요청
+ * 모양은 types/review.type.ts의 UpdateReviewRequest 참고.
+ */
 export async function updateReview(
   reviewId: number,
   request: UpdateReviewRequest,

@@ -38,7 +38,10 @@ export const courseBasicInfoSchema = z
       '11',
       '12',
     ]),
-    transport: z.enum(['walking', 'public', 'car']),
+    // 'public'(대중교통)은 더 이상 백엔드가 받지 않는 값이라(코스 생성/수정
+    // 요청 스펙의 transportType enum이 WALK/CAR만 허용) 뺐다 — '뚜벅이'
+    // 옵션이 이미 "대중교통과 도보로 이동"으로 대중교통을 포함한다.
+    transport: z.enum(['walking', 'car']),
     companion: z.enum(['solo', 'friends', 'couple', 'family', 'pet']),
   })
   .refine(

@@ -25,7 +25,6 @@ const TRANSPORT_TYPE_MAP: Record<
   CreateLocalRecommendationRequest['transportType']
 > = {
   walking: 'WALK',
-  public: 'PUBLIC',
   car: 'CAR',
 };
 

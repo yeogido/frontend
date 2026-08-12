@@ -11,6 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { getApiErrorMessage } from '../../../../apis/common';
 import { getCourseDetail, updateCourse } from '../../../../apis/courses';
 import { uploadCourseImages } from '../../../../apis/files';
 import { createLocalRecommendation } from '../../../../apis/localRecommendations';
@@ -222,10 +223,18 @@ export function useVisitOrderSelection() {
       resetDraft();
       return result;
     } catch (error) {
+      // 위 유효성 검사는 throw new Error(...)라 여기서 그대로 보여준다.
+      // 실제 API 실패(updateCourse/createLocalRecommendation 등)는 axios
+      // 인터셉터가 NormalizedApiError(일반 객체, Error 인스턴스 아님)로
+      // reject하므로, 그건 getApiErrorMessage로 서버가 내려준 실제 사유를
+      // 보여준다 — 안 그러면 항상 이 아래 기본 문구만 보여 원인을 알 수 없다.
       setSubmitError(
         error instanceof Error
           ? error.message
-          : '코스 등록에 실패했습니다. 다시 시도해 주세요.'
+          : getApiErrorMessage(
+              error,
+              '코스 등록에 실패했습니다. 다시 시도해 주세요.'
+            )
       );
       return null;
     } finally {
