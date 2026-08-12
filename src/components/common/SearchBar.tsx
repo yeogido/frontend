@@ -189,7 +189,7 @@ function SearchBar({
             <input
               ref={inputRef}
               id={inputId}
-              type="text"
+              type="search"
               value={query}
               onFocus={handleFocus}
               onChange={(event) => {

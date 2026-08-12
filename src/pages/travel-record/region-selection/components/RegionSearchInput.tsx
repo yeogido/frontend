@@ -34,7 +34,7 @@ function RegionSearchInput({
         <input
           ref={inputRef}
           id="travel-record-region-search"
-          type="text"
+          type="search"
           value={query}
           onFocus={onFocus}
           onChange={(event) => onQueryChange(event.target.value)}
