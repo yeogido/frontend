@@ -25,6 +25,7 @@ import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import { useIsAdmin } from '../../../hooks/useMyProfile';
+import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 
@@ -108,6 +109,13 @@ function LocalCourseSearchPage() {
   const regionSearchQuery =
     region && subRegion ? `${region} ${subRegion}` : subRegion || region;
   const displaySearchQuery = keyword || regionSearchQuery;
+  const {
+    regionId,
+    isPending: isRegionPending,
+    isError: isRegionError,
+  } = useResolvedRegion(regionSearchQuery || undefined);
+  const isRegionSearchReady =
+    !regionSearchQuery || (!isRegionPending && !isRegionError);
 
   const {
     filterContainerRef,
@@ -130,7 +138,8 @@ function LocalCourseSearchPage() {
   } = useCourses(
     {
       courseType: 'LOCAL',
-      keyword: displaySearchQuery.trim() || undefined,
+      keyword: keyword.trim() || undefined,
+      regionId,
       transportType: transportTypeByLabel[selectedFilters.transport],
       durationType: durationTypeByLabel[selectedFilters.duration],
       companionType: companionTypeByLabel[selectedFilters.companion],
@@ -141,11 +150,20 @@ function LocalCourseSearchPage() {
         : undefined,
       size: 20,
     },
-    { enabled: !isDistanceSort || distanceSortCoordinates !== null }
+    {
+      enabled:
+        isRegionSearchReady &&
+        (!isDistanceSort || distanceSortCoordinates !== null),
+    }
   );
 
   const courses = data?.pages.flatMap((page) => page.items) ?? [];
-  const hasEmptyResult = !isPending && !isError && courses.length === 0;
+  const hasEmptyResult =
+    !isRegionPending &&
+    !isPending &&
+    !isError &&
+    !isRegionError &&
+    courses.length === 0;
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -288,7 +306,7 @@ function LocalCourseSearchPage() {
             </p>
           ) : null}
 
-          {isError ? (
+          {isError || isRegionError ? (
             <p
               className="text-main-5 text-center font-medium"
               style={{

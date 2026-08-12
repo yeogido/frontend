@@ -14,6 +14,7 @@ import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useIsAdmin } from '../../../hooks/useMyProfile';
+import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import { addStoredRecentSearch } from '../../../utils/recentSearches';
@@ -68,6 +69,13 @@ function FestivalSearchPage() {
   const regionLabel =
     region && subRegion ? `${region} ${subRegion}` : subRegion || region;
   const displaySearchQuery = keyword || regionLabel;
+  const {
+    regionId,
+    isPending: isRegionPending,
+    isError: isRegionError,
+  } = useResolvedRegion(regionLabel || undefined);
+  const isRegionSearchReady =
+    !regionLabel || (!isRegionPending && !isRegionError);
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
     useFestivalFilters();
 
@@ -79,14 +87,20 @@ function FestivalSearchPage() {
     isFetchingNextPage,
     isPending,
   } = useCultureContents({
-    keyword: displaySearchQuery.trim() || undefined,
+    keyword: keyword.trim() || undefined,
+    regionId,
     category: categoryByFilterValue[selectedFilters.category],
     sort: sortByFilterValue[selectedFilters.sort],
     size: 20,
-  });
+  }, { enabled: isRegionSearchReady });
 
   const festivals = data?.pages.flatMap((page) => page.items) ?? [];
-  const hasEmptyResult = !isPending && !isError && festivals.length === 0;
+  const hasEmptyResult =
+    !isRegionPending &&
+    !isPending &&
+    !isError &&
+    !isRegionError &&
+    festivals.length === 0;
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -229,7 +243,7 @@ function FestivalSearchPage() {
           </p>
         ) : null}
 
-        {isError ? (
+        {isError || isRegionError ? (
           <p
             className="text-main-5 text-center font-medium"
             style={{

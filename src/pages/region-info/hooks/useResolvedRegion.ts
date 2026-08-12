@@ -2,6 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 
 import { searchRegions } from '../../../apis/regions.api';
 import { useRegions } from '../../../hooks/useRegions';
+import {
+  findRegionSearchMatch,
+  getRegionSearchKeyword,
+} from '../../../utils/regionSearch';
 
 /**
  * URL에 담긴 지역 이름(시/도든 시/군/구든)을 실제 regionId로 변환한다.
@@ -17,6 +21,7 @@ export function useResolvedRegion(
   explicitRegionId?: number
 ) {
   const hasExplicitRegionId = explicitRegionId !== undefined;
+  const needsResolution = !hasExplicitRegionId && Boolean(rawName);
 
   const regionsQuery = useRegions();
 
@@ -26,16 +31,13 @@ export function useResolvedRegion(
       : undefined;
 
   const searchEnabled =
-    !hasExplicitRegionId &&
-    Boolean(rawName) &&
-    !topLevelMatch &&
-    regionsQuery.isSuccess;
+    needsResolution && !topLevelMatch && regionsQuery.isSuccess;
 
   // hasExplicitRegionId일 때도 훅 호출 순서를 항상 동일하게 유지하기 위해
   // useQuery는 무조건 호출하고 enabled로만 실행 여부를 가른다.
   const searchQuery = useQuery({
     queryKey: ['regions', 'search', rawName],
-    queryFn: () => searchRegions(rawName as string),
+    queryFn: () => searchRegions(getRegionSearchKeyword(rawName as string)),
     enabled: searchEnabled,
     staleTime: 5 * 60_000,
   });
@@ -48,13 +50,15 @@ export function useResolvedRegion(
     };
   }
 
-  const searchMatch = searchQuery.data?.find(
-    (region) => region.name === rawName
-  );
+  const searchMatch = searchQuery.data
+    ? findRegionSearchMatch(rawName as string, searchQuery.data)
+    : undefined;
 
   const isPending =
-    regionsQuery.isPending || (searchEnabled && searchQuery.isPending);
+    needsResolution &&
+    (regionsQuery.isPending || (searchEnabled && searchQuery.isPending));
   const isError =
+    needsResolution &&
     !isPending &&
     (regionsQuery.isError ||
       (searchEnabled && searchQuery.isError) ||

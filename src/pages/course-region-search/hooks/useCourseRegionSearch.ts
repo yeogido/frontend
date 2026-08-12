@@ -25,6 +25,11 @@ import {
 } from '../constants/searchTargets';
 import type { CityOption } from '../types';
 import { isNationwideCity } from '../utils/citySelection';
+import {
+  getAllRegionRecentSearch,
+  getRecentSearchLocation,
+  getSubRegionRecentSearch,
+} from '../utils/recentSearch';
 
 import useRegionOptions from './useRegionOptions';
 
@@ -180,13 +185,9 @@ function useCourseRegionSearch() {
     setRecentSearches(nextSearches);
   };
 
-  const findMatchingCity = (keyword: string) =>
-    cities.find(
-      (city) => keyword === city.name || keyword.startsWith(`${city.name} `)
-    );
-
   const navigateToSearchResult = (keyword: string) => {
-    const matchedCity = findMatchingCity(keyword);
+    const recentSearchLocation = getRecentSearchLocation(keyword, cities);
+    const matchedCity = recentSearchLocation?.city;
 
     if (matchedCity) {
       if (searchTargetConfig.navigatesToRegionInfo) {
@@ -201,6 +202,7 @@ function useCourseRegionSearch() {
         createSearchResultLocation({
           targetPathname: searchTargetPathname,
           city: matchedCity.name,
+          district: recentSearchLocation?.district,
         })
       );
 
@@ -287,6 +289,10 @@ function useCourseRegionSearch() {
       const targetName = selectedParentDistrict?.name ?? selectedCity.name;
       const targetRegionId = selectedParentDistrict?.id ?? selectedCity.regionId;
 
+      addRecentSearch(
+        getAllRegionRecentSearch(selectedCity.name, selectedParentDistrict?.name)
+      );
+
       if (searchTargetConfig.navigatesToRegionInfo) {
         navigate(`/region-info/${encodeURIComponent(targetName)}`, {
           state: { [REGION_INFO_ID_STATE_KEY]: targetRegionId },
@@ -340,6 +346,14 @@ function useCourseRegionSearch() {
 
     const districtLabel = [...regionPath.map((step) => step.name), clicked.name].join(
       ' '
+    );
+
+    addRecentSearch(
+      getSubRegionRecentSearch(
+        selectedCity.name,
+        regionPath.map((step) => step.name),
+        clicked.name
+      )
     );
 
     navigate(
