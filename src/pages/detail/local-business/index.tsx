@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
 import { getApiErrorMessage } from '../../../apis/common';
@@ -17,6 +17,7 @@ import { useBusinessPromotionDelete } from '../../../hooks/useBusinessPromotions
 import { useBusinessPromotionDetail } from '../../../hooks/useBusinessPromotionDetail';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useLoginModal } from '../../../hooks/useLoginModal';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useAuthStore } from '../../../store/auth.store';
 import { buildBusinessPromotionEditPath } from '../../../utils/routes';
 
@@ -62,9 +63,11 @@ function isNormalizedApiError(error: unknown): error is NormalizedApiError {
 
 function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
   const scale = useGlobalScale();
+  const location = useLocation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const isAdmin = useIsAdmin();
   const { openLoginModal } = useLoginModal();
   const { showToast } = useToast();
   const isValidPromotionId = Number.isInteger(promotionId) && promotionId > 0;
@@ -138,7 +141,10 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
       }
 
       showToast(
-        getApiErrorMessage(error, '좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.')
+        getApiErrorMessage(
+          error,
+          '좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.'
+        )
       );
     } finally {
       placeLikeRequestInFlightRef.current = false;
@@ -149,6 +155,16 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
   // 0이면 이 탭에서 처음 들어온 화면(직접 링크 진입 등)이라 뒤로 갈 곳이
   // 없다, 그때만 목록으로 대체 이동한다.
   const handleBack = () => {
+    const cameFromBusinessPromotionFlow = Boolean(
+      (location.state as { fromBusinessPromotionFlow?: boolean } | null)
+        ?.fromBusinessPromotionFlow
+    );
+
+    if (cameFromBusinessPromotionFlow) {
+      navigate('/local-business', { replace: true });
+      return;
+    }
+
     if (window.history.state?.idx > 0) {
       navigate(-1);
     } else {
@@ -171,7 +187,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                   imageUrls={businessDetail.heroImageUrls}
                   title={businessDetail.title}
                   rightAction={
-                    businessDetail.isMine ? (
+                    businessDetail.isMine || isAdmin ? (
                       <ReviewActionMenu
                         onEditClick={() =>
                           navigate(

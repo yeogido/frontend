@@ -44,11 +44,14 @@ import type {
 type Step = 'place' | 'info' | 'photo-tag';
 
 const REGISTER_SUCCESS_MESSAGE = '홍보 게시물을 등록했어요.';
-const REGISTER_ERROR_MESSAGE = '홍보 게시물 등록에 실패했어요. 다시 시도해 주세요.';
+const REGISTER_ERROR_MESSAGE =
+  '홍보 게시물 등록에 실패했어요. 다시 시도해 주세요.';
 const UPDATE_SUCCESS_MESSAGE = '홍보 게시물을 수정했어요.';
-const UPDATE_ERROR_MESSAGE = '홍보 게시물 수정에 실패했어요. 다시 시도해 주세요.';
+const UPDATE_ERROR_MESSAGE =
+  '홍보 게시물 수정에 실패했어요. 다시 시도해 주세요.';
 const NO_CHANGES_MESSAGE = '변경된 내용이 없어요.';
-const PROMOTION_NOT_FOUND_MESSAGE = '이미 삭제되었거나 존재하지 않는 게시물이에요.';
+const PROMOTION_NOT_FOUND_MESSAGE =
+  '이미 삭제되었거나 존재하지 않는 게시물이에요.';
 const DETAIL_LOAD_ERROR_MESSAGE = '홍보 게시물 정보를 불러오지 못했어요.';
 
 const PROMOTION_NOT_FOUND_CODE = 'BUSINESS_PROMOTION4041';
@@ -149,9 +152,7 @@ function BusinessPromotionRegistrationPage() {
   const [selectedTagIds, setSelectedTagIds] = useState<Set<TagId>>(
     () => new Set()
   );
-  const [category, setCategory] = useState<PromotionCategoryLabel | null>(
-    null
-  );
+  const [category, setCategory] = useState<PromotionCategoryLabel | null>(null);
 
   // 수정 모드: 기존 값을 한 번만 채워 넣고(그 이후엔 사용자 입력이
   // 우선한다), 제출 시 무엇이 바뀌었는지 비교할 원본 스냅샷도 함께 둔다.
@@ -168,8 +169,9 @@ function BusinessPromotionRegistrationPage() {
     const openDays = detail.businessHours.map(
       (hour) => hour.dayOfWeek as DayOfWeek
     );
-    const dayTimes: Partial<Record<DayOfWeek, { openTime: string; closeTime: string }>> =
-      {};
+    const dayTimes: Partial<
+      Record<DayOfWeek, { openTime: string; closeTime: string }>
+    > = {};
     detail.businessHours.forEach((hour) => {
       dayTimes[hour.dayOfWeek as DayOfWeek] = {
         openTime: hour.openTime,
@@ -253,9 +255,9 @@ function BusinessPromotionRegistrationPage() {
   // 있든 상관없이 popstate로 잡힌다.
   const isPromotionInfoDirty = Boolean(
     promotionInfoDraft?.shortDescription ||
-      promotionInfoDraft?.phoneNumber ||
-      promotionInfoDraft?.snsAccount ||
-      (promotionInfoDraft?.openDays?.length ?? 0) > 0
+    promotionInfoDraft?.phoneNumber ||
+    promotionInfoDraft?.snsAccount ||
+    (promotionInfoDraft?.openDays?.length ?? 0) > 0
   );
 
   const snapshot = editSnapshot;
@@ -263,26 +265,26 @@ function BusinessPromotionRegistrationPage() {
   // "원본과 달라졌으면 dirty"로 판단해야 한다.
   const isEditDirty = Boolean(
     isEditMode &&
-      snapshot &&
-      (promotionInfoDraft?.shortDescription !== snapshot.shortDescription ||
-        promotionInfoDraft?.phoneNumber !== snapshot.phoneNumber ||
-        (promotionInfoDraft?.snsAccount ?? '') !== snapshot.snsAccount ||
-        !areBusinessHoursEqual(
-          (promotionInfoDraft?.openDays ?? []).map((day) => ({
-            dayOfWeek: day,
-            openTime: promotionInfoDraft?.dayTimes?.[day]?.openTime ?? '',
-            closeTime: promotionInfoDraft?.dayTimes?.[day]?.closeTime ?? '',
-          })),
-          snapshot.businessHours
-        ) ||
-        photos.length !== snapshot.images.length ||
-        photos.some(
-          (photo, index) =>
-            photo.kind !== 'existing' ||
-            photo.imageKey !== snapshot.images[index]?.imageKey
-        ) ||
-        !areTagIdSetsEqual(selectedTagIds, snapshot.selectedTagIds) ||
-        category !== snapshot.category)
+    snapshot &&
+    (promotionInfoDraft?.shortDescription !== snapshot.shortDescription ||
+      promotionInfoDraft?.phoneNumber !== snapshot.phoneNumber ||
+      (promotionInfoDraft?.snsAccount ?? '') !== snapshot.snsAccount ||
+      !areBusinessHoursEqual(
+        (promotionInfoDraft?.openDays ?? []).map((day) => ({
+          dayOfWeek: day,
+          openTime: promotionInfoDraft?.dayTimes?.[day]?.openTime ?? '',
+          closeTime: promotionInfoDraft?.dayTimes?.[day]?.closeTime ?? '',
+        })),
+        snapshot.businessHours
+      ) ||
+      photos.length !== snapshot.images.length ||
+      photos.some(
+        (photo, index) =>
+          photo.kind !== 'existing' ||
+          photo.imageKey !== snapshot.images[index]?.imageKey
+      ) ||
+      !areTagIdSetsEqual(selectedTagIds, snapshot.selectedTagIds) ||
+      category !== snapshot.category)
   );
 
   const isDirty = isEditMode
@@ -321,7 +323,10 @@ function BusinessPromotionRegistrationPage() {
         payload.phoneNumber = promotionInfo.phoneNumber;
       }
       if (
-        !areBusinessHoursEqual(promotionInfo.businessHours, snapshot.businessHours)
+        !areBusinessHoursEqual(
+          promotionInfo.businessHours,
+          snapshot.businessHours
+        )
       ) {
         payload.businessHours = promotionInfo.businessHours;
       }
@@ -360,7 +365,9 @@ function BusinessPromotionRegistrationPage() {
         void queryClient.invalidateQueries({
           queryKey: ['businessPromotion', promotionId],
         });
-        void queryClient.invalidateQueries({ queryKey: ['businessPromotions'] });
+        void queryClient.invalidateQueries({
+          queryKey: ['businessPromotions'],
+        });
         void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
         showToast(UPDATE_SUCCESS_MESSAGE);
         // replace: true — 이탈 방지 가드가 dirty 진입 시 같은 URL로 안전판
@@ -368,7 +375,10 @@ function BusinessPromotionRegistrationPage() {
         // 하면 상세 페이지에서 뒤로 갔을 때 그 안전판과 원래 항목이 같은
         // 등록/수정 화면으로 연속 두 번 나타난다. replace로 안전판 항목
         // 자체를 상세 페이지 항목으로 바꿔치기해 한 번만 나타나게 한다.
-        navigate(buildLocalBusinessDetailPath(promotionId), { replace: true });
+        navigate(buildLocalBusinessDetailPath(promotionId), {
+          replace: true,
+          state: { fromBusinessPromotionFlow: true },
+        });
       } catch (error) {
         if (normalizeApiError(error).code === PROMOTION_NOT_FOUND_CODE) {
           showToast(PROMOTION_NOT_FOUND_MESSAGE);
@@ -401,6 +411,7 @@ function BusinessPromotionRegistrationPage() {
       // 안전판 history 항목 중복 방지).
       navigate(buildLocalBusinessDetailPath(result.promotionId), {
         replace: true,
+        state: { fromBusinessPromotionFlow: true },
       });
     } catch (error) {
       showToast(getApiErrorMessage(error, REGISTER_ERROR_MESSAGE));
@@ -436,7 +447,12 @@ function BusinessPromotionRegistrationPage() {
       );
     }
 
-    return <LoadingSpinner className="min-h-screen" label="홍보글 정보를 불러오는 중" />;
+    return (
+      <LoadingSpinner
+        className="min-h-screen"
+        label="홍보글 정보를 불러오는 중"
+      />
+    );
   }
 
   let content: ReactNode;
