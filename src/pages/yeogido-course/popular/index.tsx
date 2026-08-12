@@ -103,7 +103,7 @@ function YeogidoCoursePopularPage() {
   } = useYeogidoCourseFilters({ sort: '인기순' });
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const { coordinates: distanceSortCoordinates, requestCoordinates } =
+  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
     useDistanceSortCoordinates();
 
   const {
@@ -126,7 +126,7 @@ function YeogidoCoursePopularPage() {
         : undefined,
       size: 20,
     },
-    { enabled: !isDistanceSort || distanceSortCoordinates !== null }
+    { enabled: !isDistanceSort || status === 'ready' || status === 'failed' }
   );
 
   const popularCourses = data?.pages.flatMap((page) => page.items) ?? [];

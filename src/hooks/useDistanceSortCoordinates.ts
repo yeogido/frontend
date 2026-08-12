@@ -2,6 +2,12 @@ import { useCallback, useState } from 'react';
 
 import { requestUserLocation, type UserLocation } from '../utils/geolocation';
 
+export type DistanceSortLocationStatus =
+  | 'idle'
+  | 'pending'
+  | 'ready'
+  | 'failed';
+
 /**
  * 거리순 정렬이 선택됐을 때만 위치 정보를 요청한다. 거리순 API는 위도/경도가
  * 없으면 400(COURSE4006)을 내려서, 좌표를 받기 전까지는 요청 자체를 막아야
@@ -11,14 +17,17 @@ import { requestUserLocation, type UserLocation } from '../utils/geolocation';
  */
 export function useDistanceSortCoordinates() {
   const [coordinates, setCoordinates] = useState<UserLocation | null>(null);
+  const [status, setStatus] = useState<DistanceSortLocationStatus>('idle');
 
   const requestCoordinates = useCallback(async () => {
     if (coordinates) return coordinates;
 
+    setStatus('pending');
     const location = await requestUserLocation();
     setCoordinates(location);
+    setStatus(location ? 'ready' : 'failed');
     return location;
   }, [coordinates]);
 
-  return { coordinates, requestCoordinates };
+  return { coordinates, status, requestCoordinates };
 }

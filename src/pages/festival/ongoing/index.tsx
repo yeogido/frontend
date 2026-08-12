@@ -71,7 +71,7 @@ function FestivalOngoingPage() {
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
     useFestivalFilters();
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
-  const { coordinates: distanceSortCoordinates, requestCoordinates } =
+  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
     useDistanceSortCoordinates();
   const {
     data,
@@ -88,7 +88,7 @@ function FestivalOngoingPage() {
     latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
     longitude: isDistanceSort ? distanceSortCoordinates?.longitude : undefined,
     size: PAGE_SIZE,
-  }, { enabled: !isDistanceSort || distanceSortCoordinates !== null });
+  }, { enabled: !isDistanceSort || status === 'ready' || status === 'failed' });
 
   const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;

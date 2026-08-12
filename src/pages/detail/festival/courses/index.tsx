@@ -101,7 +101,7 @@ function FestivalRelatedCoursesPage() {
   } = useFestivalCoursesFilters();
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const { coordinates: distanceSortCoordinates, requestCoordinates } =
+  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
     useDistanceSortCoordinates();
 
   const { data: content } = useCultureContentDetail(contentId);
@@ -129,7 +129,7 @@ function FestivalRelatedCoursesPage() {
     {
       enabled:
         isValidContentId &&
-        (!isDistanceSort || distanceSortCoordinates !== null),
+        (!isDistanceSort || status === 'ready' || status === 'failed'),
     }
   );
 
