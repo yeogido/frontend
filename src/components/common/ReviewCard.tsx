@@ -203,7 +203,11 @@ function ReviewCard({
                 marginTop: isCourseReviewList ? 8 : 0,
               }}
             >
-              <ReviewerAvatar src={profileImage} size={AVATAR_SIZE} />
+              <ReviewerAvatar
+                src={profileImage}
+                size={AVATAR_SIZE}
+                isMine={isMine}
+              />
 
               <div
                 className="flex min-w-0 flex-col"

@@ -41,5 +41,6 @@ export function toMyPostReviewCardProps(
     meta: toReviewerMetaLabel(review.ageGroup, review.gender),
     content: review.content,
     rating: review.rating,
+    isMine: true,
   };
 }

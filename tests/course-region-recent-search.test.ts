@@ -22,6 +22,15 @@ test('restores a stored sub-region path when a recent search is selected', () =>
   });
 });
 
+test('restores an official full region name as its short city and sub-region path', () => {
+  const city = { id: 'daejeon', name: '대전' };
+
+  assert.deepEqual(getRecentSearchLocation('대전광역시 동구', [city]), {
+    city,
+    district: '동구',
+  });
+});
+
 test('keeps free text as a keyword search instead of a region filter', () => {
   const city = { id: 'seoul', name: '서울' };
   const { district } = getRecentSearchLocation('서울 맛집', [city]) ?? {};

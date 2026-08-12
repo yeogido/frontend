@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import ProfileAvatar from './ProfileAvatar';
+import { useMyProfile } from '../../hooks/useMyProfile';
+import { getReviewerAvatarSource } from './reviewerAvatarSource';
 
 /**
  * 후기 작성자의 프로필 사진.
@@ -13,34 +15,24 @@ export interface ReviewerAvatarProps {
   src: string;
   /** 디자인 기준 지름(px). 카드마다 스케일이 달라 숫자로 받는다. */
   size: number;
+  isMine?: boolean;
   className?: string;
 }
 
-function ReviewerAvatar({ src, size, className = '' }: ReviewerAvatarProps) {
-  const [hasFailed, setHasFailed] = useState(false);
+function ReviewerAvatar({
+  src,
+  size,
+  isMine = false,
+  className = '',
+}: ReviewerAvatarProps) {
+  const { data: profile } = useMyProfile();
+  const avatarSource = getReviewerAvatarSource({
+    reviewImageUrl: src,
+    isMine,
+    currentProfileImageUrl: profile?.profileImageUrl,
+  });
 
-  const style = { width: size, height: size };
-
-  if (!src || hasFailed) {
-    return (
-      <div
-        className={`bg-gray-2 shrink-0 rounded-full ${className}`}
-        style={style}
-        aria-hidden="true"
-      />
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt=""
-      aria-hidden="true"
-      onError={() => setHasFailed(true)}
-      className={`shrink-0 rounded-full object-cover ${className}`}
-      style={style}
-    />
-  );
+  return <ProfileAvatar src={avatarSource} size={size} className={className} />;
 }
 
 export default ReviewerAvatar;

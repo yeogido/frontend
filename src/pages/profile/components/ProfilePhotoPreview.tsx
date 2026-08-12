@@ -4,6 +4,7 @@ import {
   PROFILE_PHOTO_BACKGROUND_COLOR,
   shouldShowDefaultProfilePhoto,
 } from './profilePhotoSave';
+import { getDefaultProfileAvatarIconStyle } from '../../../components/common/defaultProfileAvatar';
 
 export interface ProfilePhoto {
   src: string;
@@ -74,7 +75,7 @@ export function ProfilePhotoPreview({
           alt=""
           aria-hidden="true"
           className="absolute left-1/2 -translate-x-1/2"
-          style={{ top: 5 * scale, width: scaledSize, height: 115 * scale }}
+          style={getDefaultProfileAvatarIconStyle(scaledSize)}
         />
       ) : null}
     </div>

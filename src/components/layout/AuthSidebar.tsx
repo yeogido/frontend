@@ -8,10 +8,12 @@ import { Divider } from '../ui';
 
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import ProfileAvatar from '../common/ProfileAvatar';
 import { useLogout } from '../../hooks/useLogout';
 import { useIsAdmin, useMyProfile } from '../../hooks/useMyProfile';
 import { APP_MAX_WIDTH } from '../../constants/layout';
 import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
+import { getRoleLabel } from '../../utils/role';
 
 /**
  * 관리자로 로그인했을 때, 사이드바 메뉴 이름은 그대로 두고 실제 이동
@@ -79,6 +81,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
   // 프로필 조회가 끝나기 전에는 실제로 존재하는 userId 기반의 안전한
   // 표시값으로 대체한다.
   const displayName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
+  const roleLabel = getRoleLabel(profile?.role);
 
   return (
     // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
@@ -133,36 +136,38 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 top: PROFILE_TOP * scale,
                 left: PROFILE_LEFT * scale,
                 gap: PROFILE_GAP * scale,
+                // left만 지정하면 이름이 길 때 버튼이 드로어 오른쪽 끝까지
+                // 늘어나 왼쪽(24px)과 달리 오른쪽 여백이 0이 된다. right를
+                // 함께 주면 버튼이 가로 전체를 차지해 이름 옆 빈 공간을
+                // 눌러도 프로필로 이동하므로, maxWidth로 경계만 만든다.
+                maxWidth: `calc(100% - ${PROFILE_LEFT * 2 * scale}px)`,
               }}
             >
-              {profile?.profileImageUrl ? (
-                <img
-                  src={profile.profileImageUrl}
-                  alt=""
-                  aria-hidden="true"
-                  className="shrink-0 rounded-full object-cover"
-                  style={{
-                    width: AVATAR_SIZE * scale,
-                    height: AVATAR_SIZE * scale,
-                  }}
-                />
-              ) : (
-                <div
-                  className="shrink-0 rounded-full bg-[#E4E4E4]"
-                  style={{
-                    width: AVATAR_SIZE * scale,
-                    height: AVATAR_SIZE * scale,
-                  }}
-                />
-              )}
+              <ProfileAvatar
+                src={profile?.profileImageUrl}
+                size={AVATAR_SIZE * scale}
+              />
 
               <div className="flex min-w-0 flex-col items-start text-left">
-                <span
-                  className="truncate leading-none font-semibold text-[#1C1C1C]"
-                  style={{ fontSize: NAME_TEXT_SIZE * scale }}
+                <div
+                  className="flex min-w-0 items-center"
+                  style={{ gap: 4 * scale }}
                 >
-                  {displayName}
-                </span>
+                  <span
+                    className="truncate leading-none font-semibold text-[#1C1C1C]"
+                    style={{ fontSize: NAME_TEXT_SIZE * scale }}
+                  >
+                    {displayName}
+                  </span>
+                  {roleLabel ? (
+                    <span
+                      className="shrink-0 leading-none font-normal text-[#7f7f7f]"
+                      style={{ fontSize: EMAIL_TEXT_SIZE * scale }}
+                    >
+                      {roleLabel}
+                    </span>
+                  ) : null}
+                </div>
                 {profile?.email && (
                   <span
                     className="truncate leading-none font-medium text-[#7f7f7f]"
