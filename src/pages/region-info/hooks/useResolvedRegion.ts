@@ -23,6 +23,13 @@ export function useResolvedRegion(
   const hasExplicitRegionId = explicitRegionId !== undefined;
   const needsResolution = !hasExplicitRegionId && Boolean(rawName);
 
+  // 백엔드는 "서울 강남구" 같은 경로 전체로는 아무것도 찾지 못하므로 마지막
+  // 토큰만 보낸다. queryKey에도 실제로 보내는 키워드를 그대로 써야 한다.
+  // 경로 전체를 키로 쓰면, 같은 ['regions','search', X] 키로 경로 전체를
+  // 조회하는 지역 검색창(useCourseRegionSearch)과 캐시가 겹쳐 서로의 결과를
+  // 가져다 쓰게 된다(빈 배열 → 잘못된 '지역 없음').
+  const searchKeyword = rawName ? getRegionSearchKeyword(rawName) : undefined;
+
   const regionsQuery = useRegions();
 
   const topLevelMatch =
@@ -36,8 +43,8 @@ export function useResolvedRegion(
   // hasExplicitRegionId일 때도 훅 호출 순서를 항상 동일하게 유지하기 위해
   // useQuery는 무조건 호출하고 enabled로만 실행 여부를 가른다.
   const searchQuery = useQuery({
-    queryKey: ['regions', 'search', rawName],
-    queryFn: () => searchRegions(getRegionSearchKeyword(rawName as string)),
+    queryKey: ['regions', 'search', searchKeyword],
+    queryFn: () => searchRegions(searchKeyword as string),
     enabled: searchEnabled,
     staleTime: 5 * 60_000,
   });
