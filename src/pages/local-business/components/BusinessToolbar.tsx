@@ -1,9 +1,14 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
+import { HorizontalFadeScroll } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 import { businessCategories } from '../constants';
-import type { BusinessCategory, BusinessSort, BusinessViewMode } from '../types';
+import type {
+  BusinessCategory,
+  BusinessSort,
+  BusinessViewMode,
+} from '../types';
 import BusinessCategoryChips from './BusinessCategoryChips';
 import BusinessSortDropdown from './BusinessSortDropdown';
 import BusinessViewToggle from './BusinessViewToggle';
@@ -52,7 +57,10 @@ function BusinessToolbar({
 }: BusinessToolbarProps) {
   const scale = useGlobalScale();
   const fixedInnerRef = useRef<HTMLDivElement>(null);
-  const [fixedSize, setFixedSize] = useState<{ width: number; height: number }>();
+  const [fixedSize, setFixedSize] = useState<{
+    width: number;
+    height: number;
+  }>();
 
   useLayoutEffect(() => {
     const inner = fixedInnerRef.current;
@@ -100,9 +108,11 @@ function BusinessToolbar({
         </div>
       </div>
 
-      <div
-        className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-        style={{ height: TOOLBAR_HEIGHT * scale }}
+      <HorizontalFadeScroll
+        className="min-w-0 flex-1"
+        contentClassName="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        contentStyle={{ height: TOOLBAR_HEIGHT * scale }}
+        fadeWidth={8}
       >
         <div
           className="flex w-max items-center"
@@ -118,7 +128,7 @@ function BusinessToolbar({
             onSelectCategory={onSelectCategory}
           />
         </div>
-      </div>
+      </HorizontalFadeScroll>
     </div>
   );
 }
