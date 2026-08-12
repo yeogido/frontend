@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-import addIcon from '../../../assets/icons/material-symbols_add-2-rounded.svg';
+import addIcon from '../../../assets/icons/profile-add.svg';
 import type { BusinessInfoResponse } from '../../../types/business.type';
 
 export function BusinessPlaceList({
@@ -62,7 +62,7 @@ export function BusinessPlaceList({
         >
           <span
             className="font-semibold"
-            style={{ fontSize: 14 * scale, lineHeight: `${17 * scale}px` }}
+            style={{ fontSize: 14 * scale, lineHeight: `${20 * scale}px` }}
           >
             사업장 추가인증하기
           </span>

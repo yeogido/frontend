@@ -1,6 +1,6 @@
 import cake from '../../../assets/icons/cake.svg';
-import location from '../../../assets/icons/location.svg';
 import mail from '../../../assets/icons/mail.svg';
+import profileLocation from '../../../assets/icons/profile-location.svg';
 
 export function ProfileInfoList({
   scale,
@@ -20,7 +20,7 @@ export function ProfileInfoList({
   // 아래 '내 사업장' 목록이 이미 보여준다.
   const profileInfo = [
     { icon: mail, label: '이메일', value: email },
-    { icon: location, label: '사는지역', value: region },
+    { icon: profileLocation, label: '사는지역', value: region },
     { icon: cake, label: '태어난 연도', value: birthYear },
   ];
   const visibleProfileInfo = isBusinessProfile
