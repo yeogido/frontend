@@ -11,7 +11,7 @@ function SignUpPage() {
   return step === 'start' ? (
     <SignupStart onEmailStart={() => setStep('email')} />
   ) : (
-    <SignupForm />
+    <SignupForm onBack={() => setStep('start')} />
   );
 }
 

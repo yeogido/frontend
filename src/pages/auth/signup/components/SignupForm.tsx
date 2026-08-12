@@ -11,7 +11,12 @@ import {
   signup,
   verifyEmailCode,
 } from '../../../../apis/auth.api';
-import { AuthField, PasswordInput } from '../../../../components/auth';
+import {
+  AuthField,
+  BackButton,
+  ClearableInput,
+  PasswordInput,
+} from '../../../../components/auth';
 import { BIRTH_YEARS } from '../../../../constants/birthYears';
 import { useRegions } from '../../../../hooks/useRegions';
 import type { SignupGender } from '../../../../types/auth.type';
@@ -34,7 +39,7 @@ const EMAIL_CHECK_ERROR_MESSAGE =
 const SEND_CODE_ERROR_MESSAGE =
   '인증번호 전송에 실패했습니다. 다시 시도해 주세요.';
 const SEND_CODE_SUCCESS_MESSAGE =
-  '인증번호를 전송했어요. 10분 안에 입력해 주세요.';
+  '인증번호를 전송했어요. 5분 이내에 입력해 주세요.';
 const VERIFY_CODE_ERROR_MESSAGE =
   '인증번호가 올바르지 않습니다. 다시 확인해 주세요.';
 const VERIFY_CODE_SUCCESS_MESSAGE = '이메일 인증이 완료됐어요.';
@@ -48,7 +53,11 @@ type EmailAuthStatus =
   | 'verified'
   | 'error';
 
-function SignupForm() {
+interface SignupFormProps {
+  onBack: () => void;
+}
+
+function SignupForm({ onBack }: SignupFormProps) {
   const navigate = useNavigate();
   const { data: regionsData } = useRegions();
   const [emailCheck, setEmailCheck] = useState<{
@@ -234,6 +243,8 @@ function SignupForm() {
         className="flex-1"
         onSubmit={handleSubmit(onSubmit)}
       >
+        <BackButton onClick={onBack} />
+
         <h1 className="text-[28px] font-bold leading-none text-black">
           회원가입
         </h1>
@@ -248,7 +259,7 @@ function SignupForm() {
             label="이름"
             error={errors.name?.message}
           >
-              <input
+              <ClearableInput
                 {...register('name')}
                 id="signup-name"
                 type="text"
@@ -264,7 +275,7 @@ function SignupForm() {
           >
             <div className="space-y-2">
               <div className="flex gap-2">
-                <input
+                <ClearableInput
                   // emailCheckRequestIdRef는 handleEmailChange/handleEmailBlur
                   // 안에서만 읽고 쓴다 — 둘 다 실제 이벤트(change/blur)가
                   // 발생해야 실행되는 콜백이라 렌더링 중엔 절대 접근되지
@@ -277,7 +288,8 @@ function SignupForm() {
                   id="signup-email"
                   type="email"
                   placeholder="이메일"
-                  className="block h-12 min-w-0 flex-1 rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
+                  wrapperClassName="min-w-0 flex-1"
+                  className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 focus:border-main-5"
                 />
 
                 <button
@@ -310,14 +322,15 @@ function SignupForm() {
                 >
                   인증번호
                 </label>
-                <input
+                <ClearableInput
                   id="signup-code"
                   type="text"
                   placeholder="인증번호"
                   value={authCode}
                   onChange={(event) => setAuthCode(event.target.value)}
                   disabled={!canEnterCode}
-                  className="block h-12 min-w-0 flex-1 rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 disabled:bg-gray-2 disabled:text-gray-4 focus:border-main-5"
+                  wrapperClassName="min-w-0 flex-1"
+                  className="block h-12 w-full rounded-[12px] border border-gray-2 bg-white px-4 text-sm outline-none placeholder:text-gray-3 disabled:bg-gray-2 disabled:text-gray-4 focus:border-main-5"
                 />
 
                 <button
