@@ -45,6 +45,28 @@ export const courseRegionSearchTargets: Record<
   },
 };
 
+const nationwideSearchPaths: Record<CourseRegionSearchTarget, string> = {
+  course: '/yeogido-course',
+  'local-course': '/local-course/search',
+  festival: '/festival/search',
+  home: '/yeogido-course',
+};
+
+const nationwideSearchPagePaths: Record<CourseRegionSearchTarget, string> = {
+  course: '/yeogido-course/search',
+  'local-course': '/local-course/search',
+  festival: '/festival/search',
+  home: '/yeogido-course/search',
+};
+
+export const getNationwideSearchPath = (
+  target: CourseRegionSearchTarget
+) => nationwideSearchPaths[target];
+
+export const getNationwideSearchPagePath = (
+  target: CourseRegionSearchTarget
+) => nationwideSearchPagePaths[target];
+
 export const getCourseRegionSearchTarget = (
   target: string | null
 ): CourseRegionSearchTarget => {

@@ -27,14 +27,15 @@ function CourseRegionSearchPage() {
     recentSearches,
     searchSuggestions,
     selectedCity,
+    selectedCityId,
     selectedDistrict,
-    selectedParentDistrict,
     visibleDistricts,
     searchLabel,
     searchPlaceholder,
     clearRecentSearches,
     removeRecentSearch,
     selectCity,
+    selectNationwideSearch,
     selectDistrict,
     selectRecentSearch,
     submitSearch,
@@ -57,6 +58,10 @@ function CourseRegionSearchPage() {
             placeholder={searchPlaceholder}
             label={searchLabel}
             suggestions={searchSuggestions}
+            pinnedSuggestion={{
+              label: '전국 확인하기',
+              onSelect: selectNationwideSearch,
+            }}
             onSearch={submitSearch}
             onQueryChange={updateSearchQuery}
           />
@@ -87,20 +92,22 @@ function CourseRegionSearchPage() {
         </p>
       ) : null}
 
-      {!isRegionLoading && !isRegionError && selectedCity ? (
+      {!isRegionLoading && !isRegionError ? (
         <>
           <CitySelectionSection
             cities={cities}
-            selectedCityId={selectedCity.id}
+            hasRecentSearches={recentSearches.length > 0}
+            selectedCityId={selectedCityId}
             onSelect={selectCity}
           />
 
-          <DistrictSelectionSection
-            districts={visibleDistricts}
-            selectedDistrict={selectedDistrict}
-            parentDistrictName={selectedParentDistrict?.name}
-            onSelect={selectDistrict}
-          />
+          {selectedCity ? (
+            <DistrictSelectionSection
+              districts={visibleDistricts}
+              selectedDistrict={selectedDistrict}
+              onSelect={selectDistrict}
+            />
+          ) : null}
         </>
       ) : null}
     </section>

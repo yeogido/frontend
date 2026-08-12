@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { NormalizedApiError } from '../../../../apis/common';
 import { completeSocialSignup } from '../../../../apis/auth.api';
+import { BackButton, ClearableInput } from '../../../../components/auth';
 import { Logo } from '../../../../components/common';
 import { BIRTH_YEARS } from '../../../../constants/birthYears';
 import { useRegions } from '../../../../hooks/useRegions';
@@ -122,6 +123,8 @@ function SocialProfileForm({
     <main className="min-h-dvh bg-white">
       <section className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 pb-10 pt-[56px]">
         <form className="flex-1" onSubmit={handleSubmit}>
+          <BackButton onClick={() => navigate('/signup')} />
+
           <div className="mb-8 flex justify-start">
             <Logo />
           </div>
@@ -137,7 +140,7 @@ function SocialProfileForm({
           </p>
 
           <div
-            className={`mt-8 w-full rounded-[12px] pt-4.5 pr-21.25 pb-4.25 pl-8 ${badgeClassName}`}
+            className={`mt-8 w-full rounded-[12px] pt-4.5 pr-8 pb-4.25 pl-8 ${badgeClassName}`}
           >
             <div className="flex items-center gap-5">
               <Icon
@@ -160,7 +163,7 @@ function SocialProfileForm({
 
           <div className="mt-8 space-y-4">
             <Field label="이름" htmlFor="social-signup-name">
-              <input
+              <ClearableInput
                 id="social-signup-name"
                 type="text"
                 placeholder="이름"

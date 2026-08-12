@@ -11,6 +11,7 @@ export { default as EditableCourseCard } from './EditableCourseCard';
 export { default as FestivalContentCard } from './FestivalContentCard';
 export { default as FestivalDeleteDialog } from './FestivalDeleteDialog';
 export { default as FloatingActionButton } from './FloatingActionButton';
+export { default as HorizontalFadeScroll } from './HorizontalFadeScroll';
 export { default as CourseCard } from './CourseCard';
 export { default as CourseCardSkeleton } from './CourseCardSkeleton';
 export { default as CourseReviewCard } from './CourseReviewCard';
