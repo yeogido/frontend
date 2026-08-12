@@ -40,9 +40,7 @@ function ProfilePage() {
   // 인증 사업장이 없으면 빈 배열이 정상 응답이다(404가 아니다).
   // 목록은 businessInfoId 최신순이라 첫 항목이 가장 최근 인증 사업장이다.
   const businesses = data ?? [];
-  const primaryBusiness = businesses[0] ?? null;
   const name =
-    primaryBusiness?.representativeName ??
     profile?.name ??
     (userId ? `회원 #${userId}` : '회원');
   // profile.region은 축약형("서울")으로 내려온다 — 화면에는 정식 명칭으로

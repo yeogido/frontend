@@ -1,5 +1,5 @@
 import type { Course, CourseType } from '../types/course.type';
-import { useAuthStore } from '../store/auth.store';
+import { useAuthStore } from '../store/auth.store.ts';
 
 export const RECENT_COURSES_STORAGE_KEY = 'recent-courses';
 export const MAX_RECENT_COURSES = 10;

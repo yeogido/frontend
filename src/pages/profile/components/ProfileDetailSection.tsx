@@ -30,7 +30,6 @@ export function ProfileDetailSection({
           email={email}
           region={region}
           birthYear={birthYear}
-          isBusinessProfile={isBusinessProfile}
         />
       </div>
       <div className="w-full" style={{ marginTop: 24 * scale }}>

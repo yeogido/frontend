@@ -217,7 +217,7 @@ function CourseReviewCard({
 
         <div className="flex items-center justify-between px-4 pt-3">
           <div className="flex min-w-0 items-center gap-2">
-            <ReviewerAvatar src={profileImage} size={28} />
+            <ReviewerAvatar src={profileImage} size={28} isMine={isMine} />
 
             <div className="min-w-0">
               <p className="truncate text-[12px] leading-none">

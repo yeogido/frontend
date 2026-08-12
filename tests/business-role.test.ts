@@ -2,12 +2,22 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { BUSINESS_ROLE, isBusinessRole } from '../src/utils/role.ts';
+import {
+  BUSINESS_ROLE,
+  getRoleLabel,
+  isBusinessRole,
+} from '../src/utils/role.ts';
 
 test('recognizes the business role regardless of casing', () => {
   assert.equal(BUSINESS_ROLE, 'BUSINESS');
   assert.equal(isBusinessRole('BUSINESS'), true);
   assert.equal(isBusinessRole('business'), true);
+});
+
+test('returns a sidebar label regardless of role casing', () => {
+  assert.equal(getRoleLabel('business'), '소상공인');
+  assert.equal(getRoleLabel('admin'), '관리자');
+  assert.equal(getRoleLabel('USER'), undefined);
 });
 
 test('does not open business screens for other roles', () => {

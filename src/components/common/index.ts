@@ -31,6 +31,7 @@ export { default as ReviewDeleteDialog } from './ReviewDeleteDialog';
 export { default as ReviewDetailModal } from './ReviewDetailModal';
 export { default as ReviewEditModal } from './ReviewEditModal';
 export { default as ReviewerAvatar } from './ReviewerAvatar';
+export { default as ProfileAvatar } from './ProfileAvatar';
 export { default as ReviewTextCard } from './ReviewTextCard';
 export { default as SearchBar } from './SearchBar';
 export { default as SearchTriggerButton } from './SearchTriggerButton';

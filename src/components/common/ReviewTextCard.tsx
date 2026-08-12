@@ -121,7 +121,11 @@ function ReviewTextCard({
           className="flex shrink-0 items-center"
           style={{ gap: PROFILE_GAP }}
         >
-          <ReviewerAvatar src={profileImage} size={AVATAR_SIZE} />
+          <ReviewerAvatar
+            src={profileImage}
+            size={AVATAR_SIZE}
+            isMine={isMine}
+          />
 
           <div
             className="flex min-w-0 flex-col"

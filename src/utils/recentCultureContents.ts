@@ -1,5 +1,5 @@
 import type { RecentCultureContent } from '../types/content.type';
-import { useAuthStore } from '../store/auth.store';
+import { useAuthStore } from '../store/auth.store.ts';
 
 export const RECENT_CULTURE_CONTENTS_STORAGE_KEY = 'recent-culture-contents';
 export const MAX_RECENT_CULTURE_CONTENTS = 10;

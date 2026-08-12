@@ -57,8 +57,10 @@ function AdminCourseRegionSelectionPage() {
   // 검색창에 입력하는 즉시(타이핑마다) 백엔드에 물어 연관 검색어를 채운다.
   // 백엔드가 이름 LIKE(부분 문자열) 매칭이라 SearchBar의 로컬 재필터를
   // 그대로 통과하므로, 이 목록을 suggestions로 넘기기만 하면 된다.
+  // Neighborhood[]를 캐싱하므로 RegionSearchResult[]를 쓰는 지역 검색창과
+  // 키를 갈라 둔다. 자세한 이유는 local-recommendation/region-selection 참고.
   const searchResultsQuery = useQuery({
-    queryKey: ['regions', 'search', trimmedSearchQuery],
+    queryKey: ['regions', 'search', 'neighborhoods', trimmedSearchQuery],
     queryFn: () => searchNeighborhoods(trimmedSearchQuery),
     enabled: trimmedSearchQuery.length > 0,
     staleTime: 30_000,
@@ -115,7 +117,7 @@ function AdminCourseRegionSelectionPage() {
       trimmed === trimmedSearchQuery && searchResultsQuery.data
         ? searchResultsQuery.data
         : await queryClient.fetchQuery({
-            queryKey: ['regions', 'search', trimmed],
+            queryKey: ['regions', 'search', 'neighborhoods', trimmed],
             queryFn: () => searchNeighborhoods(trimmed),
             staleTime: 30_000,
           });
