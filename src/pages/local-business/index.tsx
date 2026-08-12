@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { addPlaceLike, removePlaceLike } from '../../apis/courses';
+import { getApiErrorMessage, normalizeApiError } from '../../apis/common';
 import {
   ConfirmDialog,
   FloatingActionButton,
   PromotionCardSkeleton,
   RegionImageCarousel,
 } from '../../components/common';
+import { useToast } from '../../components/toast';
 import { DEFAULT_REGION_CITY_ID, REGION_CITY_IDS } from '../../constants/regions';
 import type { RegionCityId } from '../../constants/regions';
 import { useBusinessPromotionDelete } from '../../hooks/useBusinessPromotions';
@@ -54,15 +57,16 @@ function LocalBusinessPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
   const isBusinessUser = useIsBusinessUser();
   const { openLoginModal } = useLoginModal();
+  const { showToast } = useToast();
   // 지역/카테고리/정렬/보기모드를 전부 별도 state로 복제해두면(예전 방식),
   // 값을 바꿔도 URL은 그대로라 상세 페이지로 갔다가 뒤로가기로
   // 돌아왔을 때(컴포넌트가 통째로 리마운트됨) 다시 기본값으로 되돌아가는
   // 버그가 있었다. URL을 단일 진실 공급원으로 두고 매 렌더 파생시키면,
   // 변경도 브라우저 히스토리에 남아 뒤로가기로 돌아와도 그대로 유지된다.
   const [searchParams, setSearchParams] = useSearchParams();
-
   const regionParam = searchParams.get('region');
   const selectedRegionId = REGION_CITY_IDS.includes(regionParam as RegionCityId)
     ? (regionParam as RegionCityId)
@@ -110,8 +114,8 @@ function LocalBusinessPage() {
   const { requestDelete: requestPromotionDelete, dialogProps: promotionDeleteDialogProps } =
     useBusinessPromotionDelete();
 
-  // 소상공인 홍보 좋아요는 아직 백엔드 API가 없어, 상세페이지와 동일하게
-  // 로컬 상태로만 토글한다(새로고침하면 초기화됨).
+  // 상세페이지(handleFavoriteToggle)와 동일한 낙관적 업데이트 패턴 —
+  // 서버 응답을 기다리지 않고 먼저 하트를 바꾸고, 실패하면 되돌린다.
   const [likedOverrides, setLikedOverrides] = useState<
     Record<string, boolean>
   >({});
@@ -119,6 +123,11 @@ function LocalBusinessPage() {
     ...business,
     liked: likedOverrides[business.id] ?? business.liked,
   }));
+
+  // 카드가 여러 장이라 상세페이지처럼 boolean 하나로는 안 되고, 카드별로
+  // 이미 요청 중인지 따로 추적해야 한다 — 같은 카드 연타만 막고, 다른
+  // 카드는 동시에 눌러도 되게 businessId 단위 Set을 쓴다.
+  const likeRequestInFlightRef = useRef<Set<string>>(new Set());
 
   const handleCardClick = (businessId: string) => {
     navigate(buildLocalBusinessDetailPath(businessId));
@@ -132,20 +141,47 @@ function LocalBusinessPage() {
     requestPromotionDelete(Number(businessId));
   };
 
-  const handleLikeClick = (businessId: string) => {
+  const handleLikeClick = async (businessId: string) => {
     if (!isAuthenticated) {
       openLoginModal();
       return;
     }
 
-    const current = businessesWithLikeOverrides.find(
-      (business) => business.id === businessId
-    )?.liked;
+    if (likeRequestInFlightRef.current.has(businessId)) return;
 
-    setLikedOverrides((previous) => ({
-      ...previous,
-      [businessId]: !(current ?? false),
-    }));
+    const business = businessesWithLikeOverrides.find(
+      (item) => item.id === businessId
+    );
+    if (!business) return;
+
+    const nextLiked = !business.liked;
+    likeRequestInFlightRef.current.add(businessId);
+    setLikedOverrides((previous) => ({ ...previous, [businessId]: nextLiked }));
+
+    try {
+      if (nextLiked) {
+        await addPlaceLike(business.placeId, 'PROMOTION', Number(businessId));
+      } else {
+        await removePlaceLike(business.placeId);
+      }
+    } catch (error) {
+      setLikedOverrides((previous) => ({
+        ...previous,
+        [businessId]: !nextLiked,
+      }));
+
+      if (normalizeApiError(error).code === 'AUTH4011') {
+        clearAuth();
+        openLoginModal();
+        return;
+      }
+
+      showToast(
+        getApiErrorMessage(error, '좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      );
+    } finally {
+      likeRequestInFlightRef.current.delete(businessId);
+    }
   };
 
   const handleSelectRegion = (region: { id: string }) => {
@@ -239,7 +275,7 @@ function LocalBusinessPage() {
           <BusinessGrid
             businesses={businessesWithLikeOverrides}
             onCardClick={handleCardClick}
-            onLikeClick={handleLikeClick}
+            onLikeClick={(businessId) => void handleLikeClick(businessId)}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
             gapX={GRID_GAP_X * scale}
@@ -249,7 +285,7 @@ function LocalBusinessPage() {
           <BusinessList
             businesses={businessesWithLikeOverrides}
             onCardClick={handleCardClick}
-            onLikeClick={handleLikeClick}
+            onLikeClick={(businessId) => void handleLikeClick(businessId)}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
             gap={LIST_GAP * scale}

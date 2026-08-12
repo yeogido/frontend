@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { addPlaceLike, removePlaceLike } from '../../../apis/courses';
+import { getApiErrorMessage } from '../../../apis/common';
 import type { NormalizedApiError } from '../../../apis/common';
 import { ConfirmDialog, ReviewActionMenu } from '../../../components/common';
 import {
@@ -118,7 +119,9 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
         return;
       }
 
-      showToast('좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      showToast(
+        getApiErrorMessage(error, '좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      );
     } finally {
       placeLikeRequestInFlightRef.current = false;
     }
