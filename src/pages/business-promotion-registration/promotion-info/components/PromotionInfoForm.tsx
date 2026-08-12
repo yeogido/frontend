@@ -114,8 +114,7 @@ function PromotionInfoForm({
       hour?.openTime &&
       hour?.closeTime &&
       TIME_PATTERN.test(hour.openTime) &&
-      TIME_PATTERN.test(hour.closeTime) &&
-      hour.openTime < hour.closeTime
+      TIME_PATTERN.test(hour.closeTime)
     );
   });
 
