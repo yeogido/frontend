@@ -39,8 +39,8 @@ const COMPANION_TYPE_MAP: Record<
   pet: 'PET',
 };
 
-function toNullableAddress(address: string): string | null {
-  const trimmedAddress = address.trim();
+function toNullableAddress(address: string | null | undefined): string | null {
+  const trimmedAddress = address?.trim() ?? '';
 
   return trimmedAddress || null;
 }
@@ -127,8 +127,8 @@ export function getCourseRequestValidationError(
     visitEvents.some(
       (event) =>
         event.kind === 'PLACE' &&
-        !event.roadAddress.trim() &&
-        !event.lotAddress.trim()
+        !event.roadAddress?.trim() &&
+        !event.lotAddress?.trim()
     )
   ) {
     return '장소의 도로명 주소 또는 지번 주소를 입력해 주세요.';
