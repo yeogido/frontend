@@ -189,6 +189,7 @@ export function useCourseDelete() {
       void queryClient.invalidateQueries({ queryKey: ['popularLocalCourses'] });
       void queryClient.invalidateQueries({ queryKey: ['recommendedCourses'] });
       queryClient.removeQueries({ queryKey: ['courseDetail', courseId] });
+      queryClient.removeQueries({ queryKey: ['courseSummary', courseId] });
       removeRecentCourse(courseId);
     },
     onSettled: () => {

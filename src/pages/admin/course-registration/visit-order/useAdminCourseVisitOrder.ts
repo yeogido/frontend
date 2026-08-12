@@ -243,6 +243,9 @@ export function useAdminCourseVisitOrder() {
         queryClient.invalidateQueries({
           queryKey: ['courseDetail', editingCourseId],
         });
+        queryClient.invalidateQueries({
+          queryKey: ['courseSummary', editingCourseId],
+        });
         // invalidateQueries는 그 시점에 마운트돼서 보고 있는(active) 쿼리만
         // 즉시 다시 불러온다 — 지금은 아직 상세 화면으로 이동하기 전이라
         // 비활성 상태라 무효화만 되고 실제 재요청은 다음 마운트로 미뤄진다.
