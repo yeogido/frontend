@@ -211,7 +211,7 @@ function FestivalRelatedCoursesPage() {
           : courses.map((course) => (
               <ContentCard
                 key={course.courseId}
-                image={course.thumbnailUrl}
+                image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                 title={course.title}
                 firstInfo={toDurationLabel(course.durationType)}
                 secondInfo={toTransportLabel(course.transportType)}

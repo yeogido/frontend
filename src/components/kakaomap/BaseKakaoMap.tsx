@@ -18,6 +18,8 @@ const OVERLAY_FONT_SIZE = 14;
 const IMAGE_MARKER_SIZE = 36;
 const IMAGE_MARKER_BORDER_WIDTH = 2;
 const IMAGE_MARKER_FOCUS_SCALE = 1.15;
+const IMAGE_MARKER_DEFAULT_Z_INDEX = 1;
+const IMAGE_MARKER_FOCUS_Z_INDEX = 100;
 // theme.css의 --color-main-5. Kakao Polyline strokeColor는 SVG 속성으로
 // 직접 적용되어 CSS 변수(var())를 해석하지 못하므로 값을 그대로 옮겨온다.
 const ROUTE_LINE_COLOR = '#ff6f41';
@@ -195,7 +197,7 @@ export function BaseKakaoMap({
     });
 
     // 새로 생성된 마커 요소에 현재 focusedLocation 스타일 즉시 적용
-    newImageMarkerElements.forEach(({ location, element }) => {
+    newImageMarkerElements.forEach(({ location, element }, index) => {
       const currentFocused = focusedLocationRef.current;
       const isFocused =
         !!currentFocused &&
@@ -205,6 +207,9 @@ export function BaseKakaoMap({
       element.style.transform = isFocused
         ? `scale(${IMAGE_MARKER_FOCUS_SCALE})`
         : 'scale(1)';
+      newImageMarkers[index]?.setZIndex(
+        isFocused ? IMAGE_MARKER_FOCUS_Z_INDEX : IMAGE_MARKER_DEFAULT_Z_INDEX
+      );
     });
 
     markersRef.current = newMarkers;
@@ -214,7 +219,7 @@ export function BaseKakaoMap({
 
   // 2b. focusedLocation과 일치하는 이미지 마커를 확대해 강조 표시.
   useEffect(() => {
-    imageMarkerElementsRef.current.forEach(({ location, element }) => {
+    imageMarkerElementsRef.current.forEach(({ location, element }, index) => {
       const isFocused =
         !!focusedLocation &&
         location.latitude === focusedLocation.latitude &&
@@ -223,6 +228,9 @@ export function BaseKakaoMap({
       element.style.transform = isFocused
         ? `scale(${IMAGE_MARKER_FOCUS_SCALE})`
         : 'scale(1)';
+      imageMarkersRef.current[index]?.setZIndex(
+        isFocused ? IMAGE_MARKER_FOCUS_Z_INDEX : IMAGE_MARKER_DEFAULT_Z_INDEX
+      );
     });
   }, [focusedLocation, imageMarkers]);
 

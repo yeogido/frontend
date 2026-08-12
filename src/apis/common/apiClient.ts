@@ -47,7 +47,53 @@ function isAuthExemptPath(url?: string): boolean {
   return AUTH_EXEMPT_PATHS.includes(url);
 }
 
+function normalizeCourseOperatingDaysForRequest(data: unknown): unknown {
+  if (!data || typeof data !== 'object') return data;
+
+  const payload = data as { courseItems?: unknown };
+  if (!Array.isArray(payload.courseItems)) return data;
+
+  return {
+    ...payload,
+    courseItems: payload.courseItems.map((courseItem) => {
+      if (!courseItem || typeof courseItem !== 'object') return courseItem;
+
+      const placeItem = courseItem as { type?: unknown; operatingDays?: unknown };
+      if (placeItem.type !== 'PLACE' || !Array.isArray(placeItem.operatingDays)) {
+        return courseItem;
+      }
+
+      return {
+        ...placeItem,
+        operatingDays: placeItem.operatingDays.map((operatingDay) => {
+          if (!operatingDay || typeof operatingDay !== 'object') {
+            return operatingDay;
+          }
+
+          const day = operatingDay as { closeTime?: unknown };
+          return {
+            ...day,
+            closeTime: day.closeTime === '24:00' ? '23:59' : day.closeTime,
+          };
+        }),
+      };
+    }),
+  };
+}
+
+function isCourseWriteRequest(config: InternalAxiosRequestConfig): boolean {
+  return (
+    config.method !== undefined &&
+    ['post', 'patch'].includes(config.method.toLowerCase()) &&
+    /^\/courses(?:\/\d+)?$/.test(config.url ?? '')
+  );
+}
+
 apiClient.interceptors.request.use((config) => {
+  if (isCourseWriteRequest(config)) {
+    config.data = normalizeCourseOperatingDaysForRequest(config.data);
+  }
+
   if (isAuthExemptPath(config.url)) {
     config.headers.delete('Authorization');
     return config;

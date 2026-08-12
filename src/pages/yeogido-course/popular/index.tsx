@@ -205,7 +205,7 @@ function YeogidoCoursePopularPage() {
                 isAdmin ? (
                   <EditableContentCard
                     key={course.courseId}
-                    image={course.thumbnailUrl}
+                    image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={durationLabelByType[course.durationType]}
                     secondInfo={course.region}
@@ -218,7 +218,7 @@ function YeogidoCoursePopularPage() {
                 ) : (
                   <ContentCard
                     key={course.courseId}
-                    image={course.thumbnailUrl}
+                    image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={durationLabelByType[course.durationType]}
                     secondInfo={course.region}

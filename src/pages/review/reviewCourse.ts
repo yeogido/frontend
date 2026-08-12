@@ -26,7 +26,7 @@ export function mapCourseDetailToReviewCourse(
   return {
     id: course.courseId,
     title: course.title,
-    thumbnailUrl: course.thumbnailUrl || undefined,
+    thumbnailUrl: (course.routeImageUrl ?? course.thumbnailUrl) || undefined,
     duration: toDurationLabel(course.durationType),
     transport: toTransportCourseLabel(course.transportType),
     companion: toCompanionLabel(course.companionType),
