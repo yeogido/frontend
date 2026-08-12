@@ -109,7 +109,14 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
         />
 
         {/* Drawer */}
+        {/* inert: 닫혀 있을 때(translate-x-full로 화면 밖) 안의 버튼들이
+            여전히 DOM에 남아 있어 포커스를 받을 수 있었다 — 사이드바 메뉴를
+            눌러 페이지를 이동하면 그 버튼이 포커스를 계속 쥔 채로 남고,
+            나중에(예: 온보딩 모달이 닫히며 "이전 포커스로 복원") 그 포커스가
+            다시 불려나오는 문제가 있었다. 닫혀 있을 때는 inert로 포커스/
+            상호작용 자체를 완전히 차단한다. */}
         <aside
+          inert={!isOpen}
           className={`absolute top-0 right-0 flex h-full w-[72%] flex-col overflow-y-auto bg-white transition-transform duration-300 ease-in-out ${
             isOpen ? 'pointer-events-auto translate-x-0' : 'translate-x-full'
           } `}
