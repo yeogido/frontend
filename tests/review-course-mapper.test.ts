@@ -1,23 +1,16 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { mapCourseDetailToReviewCourse } from '../src/pages/review/reviewCourse.ts';
+import { mapCourseSummaryToReviewCourse } from '../src/pages/review/mappers/reviewCourse.ts';
 
-test('maps a course detail response into review-course card data', () => {
-  const course = mapCourseDetailToReviewCourse({
+test('maps a course summary response into review-course card data', () => {
+  const course = mapCourseSummaryToReviewCourse({
     courseId: 3,
-    courseType: 'OFFICIAL',
     title: '강릉 혼자 여행 코스',
     thumbnailUrl: 'https://example.com/course.png',
-    description: '',
-    tags: [],
     durationType: 'TWO_NIGHTS_THREE_DAYS',
     transportType: 'WALK',
-    startMonth: 6,
-    endMonth: 8,
     companionType: 'SOLO',
-    isLiked: false,
-    courseItems: [],
   });
 
   assert.deepEqual(course, {
@@ -28,4 +21,17 @@ test('maps a course detail response into review-course card data', () => {
     transport: '뚜벅이 코스',
     companion: '혼자',
   });
+});
+
+test('drops an empty thumbnail so the card can fall back to a placeholder', () => {
+  const course = mapCourseSummaryToReviewCourse({
+    courseId: 4,
+    title: '부산 바다 코스',
+    thumbnailUrl: '',
+    durationType: 'DAY_TRIP',
+    transportType: 'CAR',
+    companionType: 'FRIEND',
+  });
+
+  assert.equal(course.thumbnailUrl, undefined);
 });

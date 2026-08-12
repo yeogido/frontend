@@ -16,7 +16,7 @@ import {
   MAX_REVIEW_PHOTOS,
   REVIEW_CONTENT_MAX_LENGTH,
   REVIEW_CONTENT_PLACEHOLDER,
-} from '../../pages/review/reviewForm';
+} from '../../utils/reviewForm';
 
 /**
  * 화면에 놓인 사진 한 장.
