@@ -58,7 +58,7 @@ function CourseRegionSearchPage() {
             placeholder={searchPlaceholder}
             label={searchLabel}
             suggestions={searchSuggestions}
-            noResultsText="최근 검색기록이 없습니다."
+            noRecentSearchText="최근 검색기록이 없습니다."
             pinnedSuggestion={{
               label: '전국 확인하기',
               onSelect: selectNationwideSearch,
