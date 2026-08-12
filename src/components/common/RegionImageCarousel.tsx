@@ -1,5 +1,7 @@
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 
+import HorizontalFadeScroll from './HorizontalFadeScroll';
+
 const CAROUSEL_DESIGN_WIDTH = 342;
 const ITEM_SIZE = 64;
 const ITEM_GAP = 8;
@@ -27,15 +29,18 @@ function RegionImageCarousel<T extends RegionImageOption>({
   const scale = useGlobalScale();
 
   return (
-    <div
-      className="flex touch-pan-x [scrollbar-width:none] items-center overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-      role="list"
+    <HorizontalFadeScroll
       aria-label={ariaLabel}
-      style={{
+      role="list"
+      className="w-fit max-w-full"
+      contentClassName="flex touch-pan-x [scrollbar-width:none] items-center overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      contentStyle={{
         width: CAROUSEL_DESIGN_WIDTH * scale,
         height: ITEM_SIZE * scale,
         gap: ITEM_GAP * scale,
       }}
+      fadeWidth={8 * scale}
+      fadeMode="mask"
     >
       {options.map((option) => {
         const isSelected = selectedId === option.id;
@@ -91,7 +96,7 @@ function RegionImageCarousel<T extends RegionImageOption>({
           </div>
         );
       })}
-    </div>
+    </HorizontalFadeScroll>
   );
 }
 
