@@ -14,9 +14,9 @@ test('keeps up to three name characters without an ellipsis', () => {
   });
 });
 
-test('shows only three name characters before a compact ellipsis', () => {
+test('reserves room for a compact ellipsis in the 36px name slot', () => {
   assert.deepEqual(getReviewerNameLabel('긴이름작성자'), {
-    text: '긴이름',
+    text: '긴이',
     isTruncated: true,
   });
 });

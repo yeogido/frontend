@@ -10,7 +10,8 @@ interface ReviewerNameProps {
 
 /**
  * 작성자 메타 줄에서 이름이 길어져도 나이·성별 시작 위치를 유지한다.
- * 이름은 세 글자까지 노출하고, 이후 문자는 작은 말줄임표로 표시한다.
+ * 세 글자 이하는 그대로 보이고, 긴 이름은 36px 슬롯 안에서
+ * 두 글자와 작은 말줄임표를 함께 표시한다.
  */
 function ReviewerName({ nickname, className }: ReviewerNameProps) {
   const { text, isTruncated } = getReviewerNameLabel(nickname);
