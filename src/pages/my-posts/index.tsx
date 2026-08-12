@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   CourseCard,
@@ -17,12 +18,16 @@ import {
   getMyPostFilterColumnClassName,
   MY_POST_FILTER_GRID_CLASS_NAME,
 } from '../../constants/courseFilterLayout';
-import { useAuth } from '../../hooks/useAuth';
+import { getApiErrorMessage } from '../../apis/common';
+import { getCourseDetail } from '../../apis/courses';
+import { useToast } from '../../components/toast';
 import { useBusinessPromotionDelete } from '../../hooks/useBusinessPromotions';
 import {
   useCourseDelete,
   useNavigateToCourseDetail,
 } from '../../hooks/useCourses';
+import { useEditCourse } from '../../hooks/useEditCourse';
+import { useEditLocalCourse } from '../../hooks/useEditLocalCourse';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import { getMyPostsFromPages, useMyPosts } from '../../hooks/useMyPosts';
@@ -33,7 +38,6 @@ import {
   useReviewEdit,
 } from '../../hooks/useReviews';
 import { toCourseDetailState } from '../../utils/reviewNavigation';
-import { formatBusinessPromotionDate } from '../local-business/mappers/businessPromotionMapper';
 import { toContentTagIds } from '../../utils/contentTags';
 import {
   toCompanionLabel,
@@ -77,12 +81,15 @@ const SKELETON_COUNT = 3;
 function MyPostsPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
-  const { userId } = useAuth();
+  const queryClient = useQueryClient();
 
+  const { showToast } = useToast();
   const { goToCourseDetail, prefetchCourseDetail } =
     useNavigateToCourseDetail();
   const isBusinessUser = useIsBusinessUser();
-  
+  const { editCourse } = useEditCourse();
+  const { editLocalCourse } = useEditLocalCourse();
+
   const [keyword, setKeyword] = useState('');
 
   const {
@@ -151,6 +158,32 @@ function MyPostsPage() {
     await goToCourseDetail(review.courseId, toCourseDetailState(review));
   };
 
+  /**
+   * 코스 카드 "수정" — 이 목록은 여기도(OFFICIAL)/우리동네(LOCAL) 코스가
+   * 섞여 나오는데 목록 응답엔 구분 필드가 없다(courseType 없음). 상세
+   * 조회 응답에는 courseType이 있어서, 먼저 상세를 받아 그 값으로
+   * useEditCourse(관리자·여기도)와 useEditLocalCourse(우리동네) 중 맞는
+   * 쪽으로 분기한다. goToCourseDetail과 같은 쿼리 키를 써서, 방금 그
+   * 카드를 눌러봤다면 캐시를 그대로 재사용한다.
+   */
+  const handleEditCourse = async (courseId: number) => {
+    try {
+      const course = await queryClient.fetchQuery({
+        queryKey: ['courseDetail', courseId],
+        queryFn: () => getCourseDetail(courseId),
+        staleTime: 60_000,
+      });
+
+      if (course.courseType === 'OFFICIAL') {
+        await editCourse(courseId);
+      } else {
+        await editLocalCourse(courseId);
+      }
+    } catch (error) {
+      showToast(getApiErrorMessage(error, '코스 정보를 불러오지 못했어요.'));
+    }
+  };
+
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage();
@@ -175,8 +208,6 @@ function MyPostsPage() {
     key: MyPostFilterKey;
     options: readonly string[];
   }[];
-
-  const authorDisplayName = userId ? `회원 #${userId}` : '나';
 
   const renderMessage = (message: string) => (
     <p
@@ -331,6 +362,7 @@ function MyPostsPage() {
                   canManage
                   onClick={() => void goToCourseDetail(course.id)}
                   showEdit
+                  onEditClick={() => void handleEditCourse(course.id)}
                   onDeleteClick={() => requestCourseDelete(course.id)}
                 />
               );
@@ -342,13 +374,11 @@ function MyPostsPage() {
               return (
                 <PromotionCard
                   key={`promotion-${promotion.promotionId}`}
-                  avatarUrl={promotion.thumbnailImageUrl}
-                  profileName={authorDisplayName}
-                  date={formatBusinessPromotionDate(promotion.createdAt)}
+                  variant="compact"
                   imageUrl={promotion.thumbnailImageUrl}
                   title={promotion.placeName}
                   description={promotion.shortDescription}
-                  location={promotion.roadAddress}
+                  tags={toContentTagIds(promotion.hashtags)}
                   isMine
                   onClick={() =>
                     navigate(

@@ -43,17 +43,40 @@ const TAGS_MARGIN_TOP = 12;
 const TAGS_GAP = 12;
 const TAG_HEIGHT = 25;
 
+// compact 변형: Figma Course_Card2(node 3239:48247, property1="홍보글") 기준.
+// CourseCard와 같은 342px 카드 폭·136x100 썸네일·42px 우측 여백(더보기 버튼
+// 자리) 규격을 그대로 쓴다 — 내 게시물 화면에서 코스·후기 카드와 통일된
+// 카드 UI를 쓰기 위한 변형이라, 실제로 같은 수치를 공유한다.
+const COMPACT_CARD_MIN_HEIGHT = 100;
+const COMPACT_IMAGE_WIDTH = 136;
+const COMPACT_IMAGE_RADIUS = 8;
+const COMPACT_CONTENT_PADDING_LEFT = 16;
+const COMPACT_CONTENT_PADDING_RIGHT = 42; // 더보기(20) + 간격(10) + 카드 우측 여백(12)
+const COMPACT_TITLE_SIZE = 16;
+const COMPACT_TITLE_DESCRIPTION_GAP = 4;
+const COMPACT_DESCRIPTION_SIZE = 12;
+const COMPACT_CONTENT_GAP = 15; // 제목/설명 묶음 -> 태그 줄
+const COMPACT_TAG_HEIGHT = 20;
+const COMPACT_TAG_GAP = 4;
+
 export interface PromotionCardProps {
-  avatarUrl: string;
-  profileName: string;
-  date: string;
+  avatarUrl?: string;
+  profileName?: string;
+  date?: string;
   imageUrl: string;
   title: string;
   description: string;
-  location: string;
+  location?: string;
   tags?: TagType[];
   isMine?: boolean;
   liked?: boolean;
+  /**
+   * 'default': 프로필(아바타·이름·날짜) 헤더가 있는 기존 카드(우리동네 목록,
+   * 지역 추천). 'compact': 헤더 없이 코스 카드와 같은 가로형 레이아웃을
+   * 쓰는 변형(내가 등록한 게시물의 홍보글 카드) — 이 화면은 항상 본인 글만
+   * 보여줘서 작성자 표시가 필요 없다.
+   */
+  variant?: 'default' | 'compact';
   onClick?: () => void;
   onEditClick?: () => void;
   onDeleteClick?: () => void;
@@ -72,6 +95,7 @@ function PromotionCard({
   tags,
   isMine = false,
   liked = false,
+  variant = 'default',
   onClick,
   onEditClick,
   onDeleteClick,
@@ -80,6 +104,107 @@ function PromotionCard({
 }: PromotionCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
+
+  if (variant === 'compact') {
+    return (
+      <div
+        ref={outerRef}
+        className={`w-full overflow-hidden ${className}`}
+        style={{ height: scaledHeight }}
+      >
+        <div
+          ref={innerRef}
+          onClick={onClick}
+          onKeyDown={(event) => {
+            if (
+              !event.repeat &&
+              (event.key === 'Enter' || event.key === ' ')
+            ) {
+              event.preventDefault();
+              onClick?.();
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          className="relative flex cursor-pointer overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+          style={{
+            width: CARD_DESIGN_WIDTH,
+            minHeight: COMPACT_CARD_MIN_HEIGHT,
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          <div
+            className="relative shrink-0 self-stretch overflow-hidden bg-[#EAEAEA]"
+            style={{
+              width: COMPACT_IMAGE_WIDTH,
+              borderRadius: COMPACT_IMAGE_RADIUS,
+            }}
+          >
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt={title}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            )}
+          </div>
+
+          <div
+            className="flex min-w-0 flex-1 flex-col py-4"
+            style={{
+              paddingLeft: COMPACT_CONTENT_PADDING_LEFT,
+              paddingRight: COMPACT_CONTENT_PADDING_RIGHT,
+              gap: COMPACT_CONTENT_GAP,
+            }}
+          >
+            <div className="min-w-0">
+              <h3
+                className="truncate leading-none font-medium text-[#1C1C1C]"
+                style={{ fontSize: COMPACT_TITLE_SIZE }}
+              >
+                {title}
+              </h3>
+              <p
+                className="truncate leading-none font-medium text-[#7F7F7F]"
+                style={{
+                  fontSize: COMPACT_DESCRIPTION_SIZE,
+                  marginTop: COMPACT_TITLE_DESCRIPTION_GAP,
+                }}
+              >
+                {description}
+              </p>
+            </div>
+
+            {tags && tags.length > 0 ? (
+              <div
+                className="flex flex-nowrap items-center overflow-hidden"
+                style={{ gap: COMPACT_TAG_GAP }}
+              >
+                {tags.map((tag, index) => (
+                  <TagChip
+                    key={`${tag}-${index}`}
+                    type={tag}
+                    className="w-auto"
+                    style={{ height: COMPACT_TAG_HEIGHT }}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          {isMine && (onEditClick || onDeleteClick) ? (
+            <ReviewActionMenu
+              onEditClick={onEditClick}
+              onDeleteClick={onDeleteClick}
+              triggerClassName="absolute top-[12px] right-[12px]"
+              ariaLabel="홍보글 메뉴"
+            />
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
