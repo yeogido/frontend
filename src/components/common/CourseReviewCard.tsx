@@ -220,9 +220,15 @@ function CourseReviewCard({
             <ReviewerAvatar src={profileImage} size={28} isMine={isMine} />
 
             <div className="min-w-0">
-              <p className="truncate text-[12px] leading-none">
-                <span className="font-semibold text-[#1C1C1C]">{nickname}</span>
-                <span className="font-normal text-[#7F7F7F]"> · {meta}</span>
+              {/* 닉네임만 줄이고 메타('20대 여')는 지킨다. 한 줄에 묶어
+                  truncate하면 뒤에 오는 메타부터 잘려 성별이 사라진다. */}
+              <p className="flex min-w-0 items-baseline text-[12px] leading-none">
+                <span className="truncate font-semibold text-[#1C1C1C]">
+                  {nickname}
+                </span>
+                <span className="ml-1 shrink-0 font-normal text-[#7F7F7F]">
+                  · {meta}
+                </span>
               </p>
               <div className="mt-[2px] flex items-center">
                 {Array.from({ length: 5 }).map((_, index) => (
