@@ -56,8 +56,12 @@ function LocalRecommendationPage() {
       (await searchRegions(query)).map(fromSearchResult),
       query,
     );
+  // 키에 'neighborhoods'를 넣어 RegionSearchResult[]를 캐싱하는 지역 검색창과
+  // 갈라 둔다. 같은 키를 쓰면 서로의 캐시를 읽어 모양이 다른 객체가 오고
+  // (Neighborhood에는 fullName이, RegionSearchResult에는 id가 없다) 필드가
+  // undefined가 되어 터지거나 엉뚱한 항목이 선택된다.
   const searchResultsQuery = useQuery({
-    queryKey: ['regions', 'search', trimmedSearchQuery],
+    queryKey: ['regions', 'search', 'neighborhoods', trimmedSearchQuery],
     queryFn: () => searchNeighborhoods(trimmedSearchQuery),
     enabled: trimmedSearchQuery.length > 0,
     staleTime: 30_000,
@@ -101,7 +105,7 @@ function LocalRecommendationPage() {
       trimmedQuery === trimmedSearchQuery && searchResultsQuery.data
         ? searchResultsQuery.data
         : await queryClient.fetchQuery({
-            queryKey: ['regions', 'search', trimmedQuery],
+            queryKey: ['regions', 'search', 'neighborhoods', trimmedQuery],
             queryFn: () => searchNeighborhoods(trimmedQuery),
             staleTime: 30_000,
           });
@@ -121,9 +125,13 @@ function LocalRecommendationPage() {
     const selectedSuggestion = searchSuggestions.find(
       (item) => item.label === suggestion,
     );
-    const candidate = searchResultsQuery.data?.find(
-      (item) => item.id === selectedSuggestion?.regionId,
-    );
+    // selectedSuggestion을 못 찾았을 때 옵셔널 체이닝 결과가 undefined면
+    // id가 undefined인 항목과 맞아떨어져 첫 결과가 잡힌다. 먼저 걸러낸다.
+    const candidate =
+      selectedSuggestion &&
+      searchResultsQuery.data?.find(
+        (item) => item.id === selectedSuggestion.regionId,
+      );
 
     if (candidate) {
       handleSelectNeighborhood(candidate);
