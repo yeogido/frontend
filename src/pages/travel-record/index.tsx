@@ -16,11 +16,13 @@ import {
 
 import {
   TravelFolderGrid,
+  TravelFolderGridSkeleton,
   TravelMapPanel,
   TravelRecordPageFrame,
   TravelYearDropdown,
+  TravelYearDropdownSkeleton,
 } from './components';
-import type { TravelRecordFolder, TravelRecordView } from './types';
+import type { TravelRecordFolder } from './types';
 import { getValidTravelRecordYear } from './utils/sessionFolders';
 import { getSavedTravelRecordState } from './utils/savedTravelRecord';
 
@@ -33,7 +35,12 @@ function TravelRecordPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
-  const [activeView, setActiveView] = useState<TravelRecordView>('folder');
+  // 상세·작성 화면에 다녀오면 이 페이지가 다시 마운트되므로, 보고 있던 탭은
+  // 컴포넌트 상태가 아니라 세션에 남겨 둔다.
+  const activeView = useTravelRecordSessionStore((state) => state.listView);
+  const setActiveView = useTravelRecordSessionStore(
+    (state) => state.setListView,
+  );
   const [savedTravelRecord] = useState(() =>
     getSavedTravelRecordState(location.state),
   );
@@ -150,13 +157,16 @@ function TravelRecordPage() {
         </button>
       </div>
 
-      {/* 기록이 하나도 없으면 고를 연도가 없어 빈 목록만 열린다. */}
+      {/* 기록이 하나도 없으면 고를 연도가 없어 빈 목록만 열린다. 연도가 아직
+          안 왔더라도 조회 중이면 자리를 잡아 둬야 목록이 밀리지 않는다. */}
       {years.length > 0 ? (
         <TravelYearDropdown
           value={validSelectedYear}
           years={years}
           onChange={setSelectedYear}
         />
+      ) : isPending ? (
+        <TravelYearDropdownSkeleton />
       ) : null}
 
       {isTravelRecordsError ? (
@@ -179,11 +189,17 @@ function TravelRecordPage() {
           </button>
         </section>
       ) : activeView === 'folder' ? (
-        <TravelFolderGrid
-          folders={visibleFolders}
-          onFolderClick={handleFolderClick}
-          recentlySavedFolderId={recentlySavedFolderId}
-        />
+        // 첫 조회가 끝나기 전에는 목록이 비어 있어 '기록이 없어요' 안내가
+        // 잠깐 스쳐 지나간다. 그동안은 폴더 자리 표시를 대신 보여 준다.
+        isPending ? (
+          <TravelFolderGridSkeleton />
+        ) : (
+          <TravelFolderGrid
+            folders={visibleFolders}
+            onFolderClick={handleFolderClick}
+            recentlySavedFolderId={recentlySavedFolderId}
+          />
+        )
       ) : (
         <TravelMapPanel folders={visibleFolders} />
       )}

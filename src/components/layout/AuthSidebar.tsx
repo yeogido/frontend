@@ -11,6 +11,7 @@ import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useLogout } from '../../hooks/useLogout';
 import { useIsAdmin, useMyProfile } from '../../hooks/useMyProfile';
 import { APP_MAX_WIDTH } from '../../constants/layout';
+import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
 
 /**
  * 관리자로 로그인했을 때, 사이드바 메뉴 이름은 그대로 두고 실제 이동
@@ -46,9 +47,19 @@ const LOGOUT_GAP = 12;
 /**
  * 로그인 전용 메뉴. path가 없는 항목은 아직 연결된 화면이 없어
  * 클릭 시 사이드바만 닫는다. 화면이 만들어지면 path를 채워 넣는다.
+ *
+ * onNavigate는 이동하기 직전에 화면 쪽 상태를 맞춰야 할 때만 쓴다.
  */
-const MY_MENU: { label: string; path?: string }[] = [
-  { label: '여행기록', path: '/travel-record' },
+const MY_MENU: { label: string; path?: string; onNavigate?: () => void }[] = [
+  {
+    label: '여행기록',
+    // 여행 기록 화면은 마지막에 보던 탭(폴더/지도)을 기억한다. 사이드바로
+    // 들어오는 건 이어 보기가 아니라 새로 들어오는 것이라 폴더 목록부터
+    // 보여 준다.
+    onNavigate: () =>
+      useTravelRecordSessionStore.getState().setListView('folder'),
+    path: '/travel-record',
+  },
   { label: '좋아요', path: '/likes' },
   { label: '내가 등록한 게시물', path: '/my-posts' },
 ];
@@ -243,6 +254,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 type="button"
                 onClick={() => {
                   if (menu.path) {
+                    menu.onNavigate?.();
                     navigate(menu.path);
                   }
                   onClose();

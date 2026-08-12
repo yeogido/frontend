@@ -13,11 +13,11 @@ import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
 import { mapBusinessCategoryToApiParam } from '../../../local-business/mappers/businessPromotionMapper';
 import { mapTagIdsToHashtagIds } from '../hashtagMapping';
-import {
-  type PhotoTagSelectionPhoto,
-  type PhotoTagSelectionResult,
-  type PromotionCategoryLabel,
-  type TagId,
+import type {
+  PhotoTagSelectionPhoto,
+  PhotoTagSelectionResult,
+  PromotionCategoryLabel,
+  TagId,
 } from '../types';
 import { toggleTag } from '../utils';
 
@@ -39,6 +39,8 @@ const SUBMIT_ERROR_MARGIN_TOP = 8;
 const SUBMIT_ERROR_FONT_SIZE = 12;
 
 const SUBMIT_ERROR_MESSAGE = '사진/키워드 등록에 실패했어요. 다시 시도해 주세요.';
+const EDIT_SUBMIT_ERROR_MESSAGE =
+  '사진/키워드 수정에 실패했어요. 다시 시도해 주세요.';
 const HASHTAG_MAPPING_ERROR_MESSAGE =
   '선택한 키워드 중 일부를 등록하지 못했어요. 다시 선택해 주세요.';
 
@@ -56,6 +58,8 @@ interface PhotoTagSelectionScreenProps {
   onCategoryChange: (category: PromotionCategoryLabel | null) => void;
   onNext: (result: PhotoTagSelectionResult) => void | Promise<void>;
   onBack: () => void;
+  /** 수정 화면에서는 버튼 문구·에러 문구만 다르다(제출 로직은 동일). */
+  mode?: 'create' | 'edit';
 }
 
 function PhotoTagSelectionScreen({
@@ -67,6 +71,7 @@ function PhotoTagSelectionScreen({
   onCategoryChange,
   onNext,
   onBack,
+  mode = 'create',
 }: PhotoTagSelectionScreenProps) {
   const scale = useGlobalScale();
   const [limitMessage, setLimitMessage] = useState('');
@@ -74,8 +79,9 @@ function PhotoTagSelectionScreen({
   const [submitError, setSubmitError] = useState('');
 
   const handleAddPhotos = (files: File[]) => {
-    const nextPhotos = files.map((file) => ({
+    const nextPhotos: PhotoTagSelectionPhoto[] = files.map((file) => ({
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      kind: 'new',
       file,
       previewUrl: URL.createObjectURL(file),
     }));
@@ -84,7 +90,7 @@ function PhotoTagSelectionScreen({
 
   const handleRemovePhoto = (id: string) => {
     const target = photos.find((photo) => photo.id === id);
-    if (target) URL.revokeObjectURL(target.previewUrl);
+    if (target?.kind === 'new') URL.revokeObjectURL(target.previewUrl);
     onPhotosChange(photos.filter((photo) => photo.id !== id));
   };
 
@@ -106,10 +112,16 @@ function PhotoTagSelectionScreen({
     setSubmitError('');
 
     try {
-      // sortOrder는 요구사항대로 "업로드 순서"를 그대로 쓴다 — 사용자가
-      // 사진을 추가한 배열 순서가 곧 sortOrder(1부터)가 된다.
+      // sortOrder는 요구사항대로 "화면에 보이는 순서"를 그대로 쓴다 — 새로
+      // 고른 사진만 업로드하고, 수정 화면에서 프리필된 기존 사진은 이미
+      // 갖고 있는 imageKey를 그대로 되돌려 보낸다(ReviewEditModal과 같은
+      // 처리, 재업로드하지 않는다).
       const images = await Promise.all(
         photos.map(async (photo, index) => {
+          if (photo.kind === 'existing') {
+            return { imageKey: photo.imageKey, sortOrder: index + 1 };
+          }
+
           const { uploadUrl, objectKey } = await createPresignedUrl({
             fileName: photo.file.name,
             contentType: photo.file.type,
@@ -140,7 +152,12 @@ function PhotoTagSelectionScreen({
         promotionCategory: mapBusinessCategoryToApiParam(category),
       });
     } catch (error) {
-      setSubmitError(getApiErrorMessage(error, SUBMIT_ERROR_MESSAGE));
+      setSubmitError(
+        getApiErrorMessage(
+          error,
+          mode === 'edit' ? EDIT_SUBMIT_ERROR_MESSAGE : SUBMIT_ERROR_MESSAGE
+        )
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -201,7 +218,13 @@ function PhotoTagSelectionScreen({
           borderRadius: BUTTON_RADIUS * scale,
         }}
       >
-        {isSubmitting ? '등록 중...' : '홍보글 등록하기'}
+        {isSubmitting
+          ? mode === 'edit'
+            ? '저장 중...'
+            : '등록 중...'
+          : mode === 'edit'
+            ? '수정 내용 저장하기'
+            : '홍보글 등록하기'}
       </button>
 
       {submitError ? (

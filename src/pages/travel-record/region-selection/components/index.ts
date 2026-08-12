@@ -1,3 +1,4 @@
+export { default as EmptyFolderPreview } from './EmptyFolderPreview';
 export { default as PopularRegionGrid } from './PopularRegionGrid';
 export { default as RecentSearchSection } from './RecentSearchSection';
 export { default as RegionSearchInput } from './RegionSearchInput';

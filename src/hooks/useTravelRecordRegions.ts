@@ -4,11 +4,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 
-import {
-  getPopularRegions,
-  getRegion,
-  searchRegions,
-} from '../apis/regions.api';
+import { getRegion, searchRegions } from '../apis/regions.api';
 import type { RegionDetailResponse } from '../types/region.type';
 
 const trimmedKeyword = (keyword: string) => keyword.trim();
@@ -28,13 +24,6 @@ const combineRegionDetails = (
 
   return regionInfoByRegionId;
 };
-
-export function usePopularTravelRecordRegions() {
-  return useQuery({
-    queryKey: ['travelRecordRegions', 'popular'],
-    queryFn: getPopularRegions,
-  });
-}
 
 export function useTravelRecordRegionSearch(keyword: string) {
   const query = trimmedKeyword(keyword);

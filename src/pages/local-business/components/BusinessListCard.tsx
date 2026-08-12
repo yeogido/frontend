@@ -6,12 +6,16 @@ interface BusinessListCardProps {
   business: BusinessItem;
   onClick: () => void;
   onLikeClick?: () => void;
+  onEditClick?: () => void;
+  onDeleteClick?: () => void;
 }
 
 function BusinessListCard({
   business,
   onClick,
   onLikeClick,
+  onEditClick,
+  onDeleteClick,
 }: BusinessListCardProps) {
   return (
     <PromotionCard
@@ -22,9 +26,13 @@ function BusinessListCard({
       title={business.title}
       description={business.description}
       location={business.location}
+      tags={business.tags}
+      isMine={business.isMine}
       liked={business.liked}
       onClick={onClick}
       onLikeClick={onLikeClick}
+      onEditClick={onEditClick}
+      onDeleteClick={onDeleteClick}
     />
   );
 }

@@ -63,7 +63,14 @@ export function mapCultureContentDetailToFestivalDetail(
     address: content.place.roadAddress,
     period: `${content.startDate.replace(/-/g, '.')} ~ ${content.endDate.replace(/-/g, '.')}`,
     phone: content.phone,
-    homepageUrl: content.officialUrl,
+    // 관광공사 동기화 콘텐츠는 홈페이지가 아니라 인스타그램 등 다른 타입
+    // 링크만 있을 수 있다 — 그 경우도 "공식 홈페이지" 자리에 그대로 보여준다
+    // (수정 화면도 타입 상관없이 첫 링크를 "공식 홈페이지"로 다룬다).
+    homepageUrl:
+      content.officialLinks.find((link) => link.type === 'OFFICIAL_WEBSITE')
+        ?.url ??
+      content.officialLinks[0]?.url ??
+      '',
     homepageLabel: '공식 홈페이지',
     place: {
       id: content.place.placeId,

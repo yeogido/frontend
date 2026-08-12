@@ -54,6 +54,9 @@ function AdminEventPhotoTagPage() {
   const placeSource = useAdminEventRegistrationStore(
     (state) => state.placeSource
   );
+  const originalPlaceKey = useAdminEventRegistrationStore(
+    (state) => state.originalPlaceKey
+  );
   const basicInfo = useAdminEventRegistrationStore((state) => state.basicInfo);
   const editingContentId = useAdminEventRegistrationStore(
     (state) => state.editingContentId
@@ -120,7 +123,9 @@ function AdminEventPhotoTagPage() {
     if (!file) {
       setExistingThumbnailKey(null);
     }
-    setPhotoInStore(file ? { file, previewUrl: URL.createObjectURL(file) } : null);
+    setPhotoInStore(
+      file ? { file, previewUrl: URL.createObjectURL(file) } : null
+    );
   };
 
   const handleTagToggle = (tagId: TagId) => {
@@ -149,8 +154,13 @@ function AdminEventPhotoTagPage() {
     setSubmitError('');
 
     try {
-      // 새로 고른 경우에만 업로드하고, 수정 중 그대로 둔 경우 상세 조회로
-      // 알아낸 기존 key를 재사용한다(대표 사진 재업로드 강제 없음).
+      // 새로 고른 경우에만 업로드한다. 수정 중 사진을 안 바꿨으면 필드
+      // 자체를 아예 안 보낸다(undefined) — "생략하면 기존 이미지 유지"라
+      // 그래야 원본이 남는다. deriveImageKeyFromUrl로 기존 key를 재구성해
+      // 다시 보내던 방식은 관광공사 동기화 콘텐츠처럼 썸네일이 우리 S3가
+      // 아니라 외부 URL(tong.visitkorea.or.kr 등)일 때 실제로는 존재하지
+      // 않는 key를 만들어 보내게 되어, 서버가 그 key를 못 찾아 수정 자체가
+      // 실패하는 원인이었다.
       const thumbnailImageKey = photo?.file
         ? await (async () => {
             const file = photo.file as File;
@@ -161,7 +171,9 @@ function AdminEventPhotoTagPage() {
             await uploadFileToPresignedUrl(uploadUrl, file, file.type);
             return objectKey;
           })()
-        : (existingThumbnailKey as string);
+        : editingContentId
+          ? undefined
+          : (existingThumbnailKey ?? undefined);
 
       const hashtags = await fetchHashtags();
       const hashtagIds = mapTagIdsToHashtagIds(
@@ -170,23 +182,38 @@ function AdminEventPhotoTagPage() {
         (tagId) => tagDefinitionMap[tagId]?.label
       );
 
+      // 수정 중 place-selection에서 다른 장소를 고르지 않았으면(원래 상세
+      // 조회로 채워둔 장소 그대로) place 필드 자체를 아예 안 보낸다 —
+      // "생략하면 기존 장소를 유지합니다"라 그래야 한다. 관광공사 동기화로
+      // 이미 존재하는 장소를 그대로 다시 보내면(officialLinks/
+      // thumbnailImageKey와 같은 이유로) 서버가 수정 자체를 500으로
+      // 실패시키는 문제가 있었다.
+      const isPlaceUnchanged =
+        Boolean(editingContentId) &&
+        originalPlaceKey === `${placeSource}:${place.externalPlaceId}`;
+
       const payload: ContentCreateRequest = {
-        place: {
-          externalPlaceId: place.externalPlaceId,
-          source: placeSource,
-          name: place.title,
-          roadAddress: place.roadAddress,
-          lotAddress: place.lotAddress,
-          latitude: place.latitude,
-          longitude: place.longitude,
-        },
+        place: isPlaceUnchanged
+          ? undefined
+          : {
+              externalPlaceId: place.externalPlaceId,
+              source: placeSource,
+              name: place.title,
+              roadAddress: place.roadAddress,
+              lotAddress: place.lotAddress,
+              latitude: place.latitude,
+              longitude: place.longitude,
+            },
         title: basicInfo.placeName,
         description: basicInfo.placeIntro,
         category: toContentCategory(category),
         startDate: basicInfo.startDate,
         endDate: basicInfo.endDate,
         contactPhone: basicInfo.phone,
-        officialUrl: basicInfo.homepage,
+        // basic-info 화면이 기존 링크(인스타그램 등 포함)를 전부 보여주고
+        // 편집하게 하므로, 여기서는 그 결과를 그대로 보낸다 — basic-info의
+        // handleSubmit이 이미 빈 URL은 걸러냈다.
+        officialLinks: basicInfo.officialLinks,
         thumbnailImageKey,
         hashtagIds,
       };

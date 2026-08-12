@@ -1,6 +1,7 @@
 import heart from '../../../assets/icons/heart.svg';
 import location from '../../../assets/icons/location.svg';
 import oheart from '../../../assets/icons/oheart.svg';
+import ReviewActionMenu from '../../../components/common/ReviewActionMenu';
 import TagChip from '../../../components/common/TagChip';
 
 import { useScaleFrame } from '../../../hooks/useScaleFrame';
@@ -40,12 +41,16 @@ interface BusinessGridCardProps {
   business: BusinessItem;
   onClick: () => void;
   onLikeClick?: () => void;
+  onEditClick?: () => void;
+  onDeleteClick?: () => void;
 }
 
 function BusinessGridCard({
   business,
   onClick,
   onLikeClick,
+  onEditClick,
+  onDeleteClick,
 }: BusinessGridCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
@@ -158,19 +163,33 @@ function BusinessGridCard({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onLikeClick?.()}
-          aria-pressed={business.liked}
-          className="absolute"
-          style={{ right: HEART_RIGHT, top: HEART_TOP }}
-        >
-          <img
-            src={business.liked ? oheart : heart}
-            alt="좋아요"
-            style={{ height: HEART_SIZE, width: HEART_SIZE }}
-          />
-        </button>
+        {business.isMine ? (
+          <div
+            className="absolute"
+            style={{ right: HEART_RIGHT, top: HEART_TOP }}
+          >
+            <ReviewActionMenu
+              onEditClick={onEditClick}
+              onDeleteClick={onDeleteClick}
+              triggerClassName=""
+              ariaLabel="홍보글 메뉴"
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onLikeClick?.()}
+            aria-pressed={business.liked}
+            className="absolute"
+            style={{ right: HEART_RIGHT, top: HEART_TOP }}
+          >
+            <img
+              src={business.liked ? oheart : heart}
+              alt="좋아요"
+              style={{ height: HEART_SIZE, width: HEART_SIZE }}
+            />
+          </button>
+        )}
       </div>
     </div>
   );

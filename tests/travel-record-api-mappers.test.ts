@@ -15,6 +15,7 @@ import {
   isTravelMapSelectableRegion,
   normalizeTravelMapSelectedRegion,
 } from '../src/pages/travel-record/constants/travelRecordRegionCodes.ts';
+import { resolveTravelRecordRegionFromSearch } from '../src/pages/travel-record/region-selection/recentSearchRegion.ts';
 import { getTravelRecordRegionSuggestions } from '../src/pages/travel-record/region-selection/regionSuggestions.ts';
 import { getInitialTravelRecordRegion } from '../src/pages/travel-record/region-selection/initialSelectedRegion.ts';
 import { getTravelRecordRegionPhotoRecords } from '../src/pages/travel-record/utils/regionPhotoRecords.ts';
@@ -77,17 +78,7 @@ test('maps Region API responses to travel record selectable regions', () => {
   });
 });
 
-test('keeps popular regions fixed while search results feed suggestions only', () => {
-  const popularRegions = [
-    {
-      id: '26',
-      regionId: 26,
-      name: 'Busan',
-      province: 'Busan Metropolitan City',
-      selectionName: 'Busan',
-      imageSrc: 'busan.jpg',
-    },
-  ];
+test('offers one suggestion per name even when regions share it', () => {
   const searchedRegions = [
     {
       id: '1114',
@@ -110,13 +101,11 @@ test('keeps popular regions fixed while search results feed suggestions only', (
   assert.deepEqual(
     getTravelRecordRegionSuggestions({
       query: 'Jung',
-      popularRegions,
       searchedRegions,
       selectedRegion: null,
     }),
     ['Jung-gu'],
   );
-  assert.deepEqual(popularRegions.map((region) => region.id), ['26']);
 });
 
 test('excludes special and metropolitan city districts from travel map selection', () => {
@@ -841,4 +830,52 @@ test('draws metro district photos on the parent metro city shape', () => {
       folderId: 'yeosu',
     },
   ]);
+});
+
+test('resolves a recent search keyword to a searched region', () => {
+  // 최근 검색 칩('전주')은 인기 지역 목록에 없어 검색 결과로 지역을 찾는다.
+  const searchResults: RegionSearchResponse[] = [
+    { regionId: 179, name: '전주시', fullName: '전북특별자치도 전주시' },
+  ];
+
+  assert.deepEqual(
+    resolveTravelRecordRegionFromSearch(searchResults, '전주'),
+    {
+      id: '179',
+      regionId: 179,
+      name: '전주시',
+      province: '전북특별자치도 전주시',
+      selectionName: '전주시',
+      imageSrc: '',
+    },
+  );
+});
+
+test('prefers the exactly matching region over the first search result', () => {
+  const searchResults: RegionSearchResponse[] = [
+    { regionId: 258, name: '제주시', fullName: '제주특별자치도 제주시' },
+    { regionId: 88, name: '제주', fullName: '제주특별자치도' },
+  ];
+
+  assert.equal(
+    resolveTravelRecordRegionFromSearch(searchResults, '제주')?.regionId,
+    88,
+  );
+});
+
+test('skips metropolitan sub-districts when resolving a recent search', () => {
+  // 지도에서 광역시 산하 구는 선택할 수 없으므로 상위 광역시가 남아야 한다.
+  const searchResults: RegionSearchResponse[] = [
+    { regionId: 41, name: '부산진구', fullName: '부산광역시 부산진구' },
+    { regionId: 27, name: '부산', fullName: '부산광역시' },
+  ];
+
+  assert.equal(
+    resolveTravelRecordRegionFromSearch(searchResults, '부산')?.regionId,
+    27,
+  );
+});
+
+test('resolves nothing when the keyword has no searchable region', () => {
+  assert.equal(resolveTravelRecordRegionFromSearch([], '제주도'), undefined);
 });

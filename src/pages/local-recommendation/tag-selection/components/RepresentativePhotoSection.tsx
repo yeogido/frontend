@@ -25,6 +25,17 @@ const SUBTEXT_SIZE = 12;
 const ERROR_MARGIN_TOP = 8;
 const ERROR_TEXT_SIZE = 12;
 
+// 백엔드 presigned-url 발급이 실제로 받아주는 이미지 타입만 허용한다
+// (pages/travel-record/photo-selection/photoValidation.ts와 동일한 목록).
+// 예전엔 "image/*"만 확인해서 HEIC 등 다른 이미지 형식도 통과시켰는데,
+// 그런 파일은 presigned-url 요청 자체가 "허용되지 않은 Content-Type"으로
+// 거부돼 폼을 다 채운 뒤 등록 마지막 단계에서야 실패로 드러났다.
+const SUPPORTED_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+]);
+
 interface RepresentativePhotoSectionProps {
   /**
    * file은 새로 고른 실제 File일 때만 있다. 수정 화면에서 기존 사진을
@@ -47,8 +58,8 @@ function RepresentativePhotoSection({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
 
-    if (file && !file.type.startsWith('image/')) {
-      setErrorMessage('이미지 파일만 등록할 수 있어요.');
+    if (file && !SUPPORTED_IMAGE_TYPES.has(file.type)) {
+      setErrorMessage('JPG, PNG, WebP 형식의 이미지만 등록할 수 있어요.');
       event.target.value = '';
       return;
     }
@@ -81,7 +92,7 @@ function RepresentativePhotoSection({
         ref={inputRef}
         id={inputId}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         onChange={handleFileChange}
         className="sr-only"
       />

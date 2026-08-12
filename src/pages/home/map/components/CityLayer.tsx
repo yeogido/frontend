@@ -20,9 +20,16 @@ interface CityLayerProps {
   /** 줌과 무관하게 선 굵기를 유지하기 위해 나눌 배율 */
   renderScale: number;
   regionPhotos: RegionPhotoMap;
+  /** 여행 기록이 없는 지역을 눌렀을 때. 없으면 지역 정보 페이지로 이동한다. */
+  onRegionWithoutRecordSelect?: (regionName: string) => void;
 }
 
-function CityLayer({ zoomLevel, renderScale, regionPhotos }: CityLayerProps) {
+function CityLayer({
+  zoomLevel,
+  renderScale,
+  regionPhotos,
+  onRegionWithoutRecordSelect,
+}: CityLayerProps) {
   const navigate = useNavigate();
 
   const projection = useMemo(
@@ -52,6 +59,11 @@ function CityLayer({ zoomLevel, renderScale, regionPhotos }: CityLayerProps) {
 
     if (record) {
       navigate(buildRecordPath(record.folderId));
+      return;
+    }
+
+    if (onRegionWithoutRecordSelect) {
+      onRegionWithoutRecordSelect(name);
       return;
     }
 

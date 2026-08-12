@@ -2,11 +2,10 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
-import { usePopularTravelRecordRegions } from '../../../hooks/useTravelRecordRegions';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 
 import {
-  PopularRegionGrid,
+  EmptyFolderPreview,
   RecentSearchSection,
   RegionSearchInput,
   RegionSuggestionList,
@@ -18,7 +17,6 @@ import {
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
 import { getTravelRecordDraftRegion } from '../utils/draftStorage';
-import { mapPopularRegionToTravelRecordRegion } from '../mappers/travelRecordApiMapper';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
 import { getInitialTravelRecordRegion } from './initialSelectedRegion';
 import backIcon from '../../../assets/icons/back.svg';
@@ -27,13 +25,9 @@ function TravelRecordRegionSelectionPage() {
   const navigate = useNavigate();
   const { travelRecordId } = useParams<{ travelRecordId: string }>();
   const storedDraftRegion = getTravelRecordDraftRegion();
-  const popularRegionsQuery = usePopularTravelRecordRegions();
-  const popularRegions =
-    popularRegionsQuery.data?.map(mapPopularRegionToTravelRecordRegion) ?? [];
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   const isEditing = Boolean(travelRecordId);
   const {
-    filteredRegions,
     isSuggestionOpen,
     query,
     recentSearches,
@@ -43,12 +37,10 @@ function TravelRecordRegionSelectionPage() {
     clearSelectedRegion,
     openSuggestions,
     removeRecentSearch,
-    selectRegion,
     selectRegionName,
     submitSearch,
     updateQuery,
   } = useTravelRecordRegionSelection(
-    popularRegions,
     getInitialTravelRecordRegion(isEditing, storedDraftRegion),
   );
 
@@ -114,11 +106,11 @@ function TravelRecordRegionSelectionPage() {
         onSelect={selectRegionName}
       />
 
-      <PopularRegionGrid
-        regions={filteredRegions}
-        selectedRegionId={selectedRegion?.id}
-        onSelect={selectRegion}
+      {/* 지역을 고르기 전에는 검색창에 입력한 글자를 그대로 따라 보여 준다. */}
+      <EmptyFolderPreview
+        regionName={selectedRegion?.selectionName ?? query}
       />
+
       <button
         type="button"
         disabled={!selectedRegion}
