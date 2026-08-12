@@ -6,6 +6,7 @@ import darkStar from '../../assets/icons/dark star.svg';
 import star from '../../assets/icons/star.svg';
 
 import ReviewerAvatar from './ReviewerAvatar';
+import ReviewerName from './ReviewerName';
 
 const PHOTO_SIZE = 129;
 const PHOTO_GAP = 12;
@@ -192,10 +193,13 @@ function ReviewDetailModal({
           <ReviewerAvatar src={profileImage} size={28} isMine={isMine} />
 
           <div className="min-w-0">
-            <p className="truncate text-[12px] leading-none">
-              <span className="font-medium text-[#1c1c1c]">{nickname}</span>
+            <p className="flex items-baseline text-[12px] leading-none">
+              <ReviewerName
+                nickname={nickname}
+                className="text-[12px] font-medium text-[#1c1c1c]"
+              />
               {meta && (
-                <span className="font-normal text-[#7f7f7f]"> · {meta}</span>
+                <span className="shrink-0 font-normal text-[#7f7f7f]"> · {meta}</span>
               )}
             </p>
             <div className="mt-[2px] flex items-center">
