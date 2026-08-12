@@ -54,7 +54,6 @@ const SKELETON_ITEMS = [0, 1, 2, 3, 4, 5, 6, 7];
 // 관례도 동일하게 따른다).
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  대중교통: 'PUBLIC',
   자차: 'CAR',
 };
 

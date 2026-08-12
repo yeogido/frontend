@@ -6,7 +6,7 @@ export const festivalCoursesFilterGroups = [
   {
     key: 'transport',
     defaultLabel: '전체',
-    options: ['전체', '도보', '대중교통', '자차'],
+    options: ['전체', '도보', '자차'],
   },
   {
     key: 'duration',
