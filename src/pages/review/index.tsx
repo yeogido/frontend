@@ -6,11 +6,11 @@ import { getApiErrorMessage } from '../../apis/common';
 import backIcon from '../../assets/icons/vector.svg';
 import { ResponsivePageShell } from '../../components/layout';
 import { useToast } from '../../components/toast';
-import { useCourseDetail } from '../../hooks/useCourses';
+import { useCourseSummary } from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useCreateCourseReview } from '../../hooks/useReviews';
 
-import { mapCourseDetailToReviewCourse } from './reviewCourse';
+import { mapCourseSummaryToReviewCourse } from './reviewCourse';
 import {
   PhotoUploader,
   ReviewCourseCard,
@@ -75,14 +75,14 @@ function ReviewPage() {
       : null;
 
   const {
-    data: courseDetail,
+    data: courseSummary,
     isPending,
     isError: isCourseError,
-  } = useCourseDetail(courseId);
+  } = useCourseSummary(courseId);
   // courseId가 없으면 쿼리가 비활성이라 isPending이 계속 true로 남는다.
   const isLoadingCourse = courseId !== null && isPending;
-  const course = courseDetail
-    ? mapCourseDetailToReviewCourse(courseDetail)
+  const course = courseSummary
+    ? mapCourseSummaryToReviewCourse(courseSummary)
     : null;
 
   // 수정 모달과 마찬가지로 5점에서 시작한다. 0개로 두면 별점을 안 건드린
