@@ -35,7 +35,10 @@ export async function getSubRegions(regionId: number): Promise<SubRegion[]> {
 
     return data.subRegions;
   } catch (error) {
-    // A leaf region has no sub-regions; the backend represents that as 404.
+    // 이 엔드포인트는 GET /regions가 돌려주는 최상위 17개 지역만 받는다.
+    // 시·군·구 ID를 넣으면 (그 지역이 GET /regions/{id}로는 조회되더라도)
+    // REGION4041 404가 온다. 호출부가 목록을 못 그리고 멈추지 않도록
+    // 빈 목록으로 낮춘다.
     if (
       error &&
       typeof error === 'object' &&

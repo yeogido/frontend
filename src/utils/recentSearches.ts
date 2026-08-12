@@ -97,3 +97,16 @@ export const addStoredRecentSearch = (
 
   return nextSearches;
 };
+
+export const removeStoredRecentSearch = (
+  keyword: string,
+  options: AddRecentSearchOptions
+) => {
+  const currentSearches =
+    options.currentSearches ?? getStoredRecentSearches(options);
+  const nextSearches = currentSearches.filter((search) => search !== keyword);
+
+  saveRecentSearches(nextSearches, options);
+
+  return nextSearches;
+};

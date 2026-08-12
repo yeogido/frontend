@@ -83,6 +83,27 @@ export async function getCourseDetail(
   return withRouteImage(data);
 }
 
+// 리뷰 작성 화면 전용 — 코스 상세 전체(courseItems 등)를 받을 필요 없이
+// 카드에 필요한 필드만 오는 가벼운 엔드포인트.
+export interface CourseSummaryResult {
+  courseId: number;
+  title: string;
+  thumbnailUrl: string;
+  durationType: string;
+  transportType: string;
+  companionType: string;
+}
+
+export async function getCourseSummary(
+  courseId: number
+): Promise<CourseSummaryResult> {
+  const { data } = await apiClient.get<CourseSummaryResult>(
+    `/courses/${courseId}/summary`
+  );
+
+  return data;
+}
+
 export async function deleteCourse(courseId: number): Promise<void> {
   try {
     await apiClient.delete(`/courses/${courseId}`);

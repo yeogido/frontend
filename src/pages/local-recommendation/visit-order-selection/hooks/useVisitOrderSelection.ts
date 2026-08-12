@@ -206,6 +206,9 @@ export function useVisitOrderSelection() {
         // 수정 자체는 이미 성공했으니, 아래 상세 재조회가 실패해도(네트워크
         // 오류 등) 캐시 무효화는 건너뛰지 않도록 먼저 처리한다.
         invalidateCourseListCaches(queryClient);
+        void queryClient.invalidateQueries({
+          queryKey: ['courseSummary', currentDraft.editingCourseId],
+        });
         // 상세 페이지(local-course/detail)는 이 훅과 별도로 자기 캐시 키를
         // 쓴다. invalidateQueries만 하면 지금은 비활성 상태라(아직 상세로
         // 이동 전) 무효화만 되고 실제 재요청은 다음 마운트로 미뤄지는데,

@@ -5,6 +5,8 @@ interface BusinessGridProps {
   businesses: BusinessItem[];
   onCardClick: (businessId: string) => void;
   onLikeClick?: (businessId: string) => void;
+  onEditClick?: (businessId: string) => void;
+  onDeleteClick?: (businessId: string) => void;
   gapX?: number;
   gapY?: number;
 }
@@ -13,6 +15,8 @@ function BusinessGrid({
   businesses,
   onCardClick,
   onLikeClick,
+  onEditClick,
+  onDeleteClick,
   gapX = 16,
   gapY = 18,
 }: BusinessGridProps) {
@@ -28,6 +32,12 @@ function BusinessGrid({
           onClick={() => onCardClick(business.id)}
           onLikeClick={
             onLikeClick ? () => onLikeClick(business.id) : undefined
+          }
+          onEditClick={
+            onEditClick ? () => onEditClick(business.id) : undefined
+          }
+          onDeleteClick={
+            onDeleteClick ? () => onDeleteClick(business.id) : undefined
           }
         />
       ))}

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -8,6 +8,7 @@ import {
   FestivalDeleteDialog,
   SearchBar,
 } from '../../../components/common';
+import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useCultureContents } from '../../../hooks/useCultureContents';
@@ -15,17 +16,21 @@ import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditFestival } from '../../../hooks/useEditFestival';
 import { useIsAdmin } from '../../../hooks/useMyProfile';
+import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { buildFestivalDetailPath } from '../../../utils/routes';
-import { addStoredRecentSearch } from '../../../utils/recentSearches';
+import {
+  addStoredRecentSearch,
+  getStoredRecentSearches,
+  getUniqueSearches,
+  removeStoredRecentSearch,
+} from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
 
 import { FestivalFilterBar } from '../components';
 import {
   FESTIVAL_RECENT_SEARCH_STORAGE_KEY,
-  festivalRecentSearchKeywords,
-  festivalSearchSuggestions,
 } from '../constants/search';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
 import useFestivalFilters from '../hooks/useFestivalFilters';
@@ -39,6 +44,12 @@ const EMPTY_MARGIN_TOP = 40;
 const ERROR_MARGIN_TOP = 24;
 const MESSAGE_TEXT_SIZE = 13;
 const LOAD_MORE_HEIGHT = 40;
+const recentSearchStorageOptions = {
+  storageKey: COURSE_REGION_RECENT_SEARCH_STORAGE_KEY,
+};
+const festivalRecentSearchStorageOptions = {
+  storageKey: FESTIVAL_RECENT_SEARCH_STORAGE_KEY,
+};
 
 const categoryByFilterValue: Record<string, ContentCategory | undefined> = {
   ALL: undefined,
@@ -63,12 +74,27 @@ function FestivalSearchPage() {
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const [searchParams, setSearchParams] = useSearchParams();
+  // 행사 검색 기록과 지역 검색 기록은 의도적으로 한 목록으로 합쳐 쓴다.
+  // 읽을 때만 두 키를 합치고, 새로 입력한 키워드는 지역 키 한 곳에 모은다.
+  const [recentSearchSuggestions, setRecentSearchSuggestions] = useState(() =>
+    getUniqueSearches([
+      ...getStoredRecentSearches(recentSearchStorageOptions),
+      ...getStoredRecentSearches(festivalRecentSearchStorageOptions),
+    ])
+  );
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
   const subRegion = searchParams.get('subRegion') ?? '';
   const regionLabel =
     region && subRegion ? `${region} ${subRegion}` : subRegion || region;
   const displaySearchQuery = keyword || regionLabel;
+  const {
+    regionId,
+    isPending: isRegionPending,
+    isError: isRegionError,
+  } = useResolvedRegion(regionLabel || undefined);
+  const isRegionSearchReady =
+    !regionLabel || (!isRegionPending && !isRegionError);
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
     useFestivalFilters();
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
@@ -81,18 +107,33 @@ function FestivalSearchPage() {
     hasNextPage,
     isError,
     isFetchingNextPage,
-    isPending,
+    isPending: isCultureContentsPending,
   } = useCultureContents({
-    keyword: displaySearchQuery.trim() || undefined,
+    keyword: keyword.trim() || undefined,
+    regionId,
     category: categoryByFilterValue[selectedFilters.category],
     sort: sortByFilterValue[selectedFilters.sort],
     latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
     longitude: isDistanceSort ? distanceSortCoordinates?.longitude : undefined,
     size: 20,
-  }, { enabled: !isDistanceSort || status === 'ready' || status === 'failed' });
+  }, {
+    enabled:
+      isRegionSearchReady &&
+      (!isDistanceSort || status === 'ready' || status === 'failed'),
+  });
+
+  // 지역 해석이 실패하면 useCultureContents는 enabled:false로 남는데, 비활성
+  // 쿼리는 status가 'pending'에서 갱신되지 않는다. 그대로 두면 에러 문구
+  // 아래로 스켈레톤이 영원히 돌므로 여기서 덮어쓴다.
+  const isPending = !isRegionError && isCultureContentsPending;
 
   const festivals = data?.pages.flatMap((page) => page.items) ?? [];
-  const hasEmptyResult = !isPending && !isError && festivals.length === 0;
+  const hasEmptyResult =
+    !isRegionPending &&
+    !isPending &&
+    !isError &&
+    !isRegionError &&
+    festivals.length === 0;
 
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -113,10 +154,12 @@ function FestivalSearchPage() {
       nextSearchParams.set('keyword', trimmedQuery);
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
-      addStoredRecentSearch(trimmedQuery, {
-        storageKey: FESTIVAL_RECENT_SEARCH_STORAGE_KEY,
-        fallbackSearches: festivalRecentSearchKeywords,
-      });
+      setRecentSearchSuggestions(
+        addStoredRecentSearch(trimmedQuery, {
+          ...recentSearchStorageOptions,
+          currentSearches: recentSearchSuggestions,
+        })
+      );
     } else {
       nextSearchParams.delete('keyword');
       nextSearchParams.delete('region');
@@ -124,6 +167,20 @@ function FestivalSearchPage() {
     }
 
     setSearchParams(nextSearchParams);
+  };
+
+  // 합쳐서 보여주는 목록이라 어느 쪽에 들어 있는지 알 수 없어 양쪽에서 지운다.
+  const handleRemoveRecentSearchSuggestion = (suggestion: string) => {
+    setRecentSearchSuggestions(
+      removeStoredRecentSearch(suggestion, {
+        ...recentSearchStorageOptions,
+        currentSearches: recentSearchSuggestions,
+      })
+    );
+    removeStoredRecentSearch(suggestion, {
+      ...festivalRecentSearchStorageOptions,
+      currentSearches: getStoredRecentSearches(festivalRecentSearchStorageOptions),
+    });
   };
 
   return (
@@ -142,7 +199,12 @@ function FestivalSearchPage() {
           initialQuery={displaySearchQuery}
           placeholder="행사명 또는 지역명을 검색해 주세요"
           label="행사명 또는 지역명 검색"
-          suggestions={festivalSearchSuggestions}
+          suggestions={recentSearchSuggestions}
+          onRemoveSuggestion={handleRemoveRecentSearchSuggestion}
+          pinnedSuggestion={{
+            label: '전국 확인하기',
+            onSelect: () => navigate('/festival/search'),
+          }}
           onSearch={handleSearch}
         />
 
@@ -236,7 +298,7 @@ function FestivalSearchPage() {
           </p>
         ) : null}
 
-        {isError ? (
+        {isError || isRegionError ? (
           <p
             className="text-main-5 text-center font-medium"
             style={{

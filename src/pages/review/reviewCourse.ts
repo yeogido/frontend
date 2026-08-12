@@ -1,4 +1,4 @@
-import type { CourseDetailResult } from '../../apis/courses';
+import type { CourseSummaryResult } from '../../apis/courses';
 import {
   findTransportLabel,
   toCompanionLabel,
@@ -20,13 +20,13 @@ function toTransportCourseLabel(transportType: string): string {
   return label ? `${label} 코스` : transportType;
 }
 
-export function mapCourseDetailToReviewCourse(
-  course: CourseDetailResult
+export function mapCourseSummaryToReviewCourse(
+  course: CourseSummaryResult
 ): ReviewCourseCardData {
   return {
     id: course.courseId,
     title: course.title,
-    thumbnailUrl: (course.routeImageUrl ?? course.thumbnailUrl) || undefined,
+    thumbnailUrl: course.thumbnailUrl || undefined,
     duration: toDurationLabel(course.durationType),
     transport: toTransportCourseLabel(course.transportType),
     companion: toCompanionLabel(course.companionType),

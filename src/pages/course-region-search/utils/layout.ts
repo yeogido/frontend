@@ -1,0 +1,7 @@
+const CITY_SELECTION_WITH_RECENT_MARGIN_TOP = 32;
+const CITY_SELECTION_WITHOUT_RECENT_MARGIN_TOP = 24;
+
+export const getCitySelectionMarginTop = (hasRecentSearches: boolean) =>
+  hasRecentSearches
+    ? CITY_SELECTION_WITH_RECENT_MARGIN_TOP
+    : CITY_SELECTION_WITHOUT_RECENT_MARGIN_TOP;

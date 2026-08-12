@@ -1,4 +1,4 @@
-export const getVisibleFolderPhotos = (photos: string[]) =>
+export const getVisibleFolderPhotos = (photos: readonly string[]) =>
   photos.filter((photo) => photo.trim().length > 0).slice(0, 2);
 
 /**

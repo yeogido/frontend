@@ -76,3 +76,14 @@
     opacity: 0.2;
   }
 }
+
+/*
+ * type="search"는 searchbox 시맨틱과 모바일 키보드의 '검색' 키를 위해 유지하되,
+ * 브라우저 기본 취소 버튼은 감춘다. 우리 검색창은 44px 터치 영역을 가진
+ * 자체 지우기 버튼을 렌더링하므로 둘이 겹치면 안 된다.
+ */
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
