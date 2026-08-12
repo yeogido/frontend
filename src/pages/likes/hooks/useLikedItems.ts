@@ -7,6 +7,9 @@ interface UseLikedItemsParams {
   category: LikedItemQueryCategory;
   keyword?: string;
   sort: 'LATEST' | 'OLDEST';
+  latitude?: number;
+  longitude?: number;
+  enabled?: boolean;
 }
 
 interface LikedItemsPageParam {
@@ -18,9 +21,12 @@ export function useLikedItems({
   category,
   keyword,
   sort,
+  latitude,
+  longitude,
+  enabled = true,
 }: UseLikedItemsParams) {
   return useInfiniteQuery({
-    queryKey: ['likedItems', { category, keyword, sort }],
+    queryKey: ['likedItems', { category, keyword, sort, latitude, longitude }],
     queryFn: ({ pageParam, signal }) =>
       getLikedItems(
         {
@@ -30,6 +36,8 @@ export function useLikedItems({
           cursorCreatedAt: pageParam.cursorCreatedAt,
           cursorId: pageParam.cursorId,
           size: 10,
+          latitude,
+          longitude,
         },
         signal
       ),
@@ -41,5 +49,6 @@ export function useLikedItems({
             cursorId: lastPage.cursorId,
           }
         : undefined,
+    enabled,
   });
 }

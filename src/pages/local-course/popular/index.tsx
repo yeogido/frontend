@@ -107,7 +107,8 @@ function LocalCoursePopularPage() {
   } = useLocalCourseFilters();
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const distanceSortCoordinates = useDistanceSortCoordinates(isDistanceSort);
+  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
+    useDistanceSortCoordinates();
 
   const {
     data,
@@ -129,7 +130,7 @@ function LocalCoursePopularPage() {
         : undefined,
       size: 20,
     },
-    { enabled: !isDistanceSort || distanceSortCoordinates !== null }
+    { enabled: !isDistanceSort || status === 'ready' || status === 'failed' }
   );
 
   const courses = data?.pages.flatMap((page) => page.items) ?? [];
@@ -187,7 +188,12 @@ function LocalCoursePopularPage() {
           )}
           marginTop={FILTER_MARGIN_TOP}
           onToggle={handleFilterToggle}
-          onSelect={handleFilterSelect}
+          onSelect={(filterKey, option) => {
+            handleFilterSelect(filterKey, option);
+            if (filterKey === 'sort' && sortByLabel[option] === 'DISTANCE') {
+              void requestCoordinates();
+            }
+          }}
         />
         <div
           className="grid grid-cols-2"
