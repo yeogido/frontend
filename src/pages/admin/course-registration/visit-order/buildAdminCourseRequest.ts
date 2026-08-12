@@ -92,6 +92,7 @@ export function buildAdminCourseRequest(
     thumbnailKey: string;
     hashtagIds: number[];
     travelData?: VisitEventTravelData;
+    routeImageKey: string;
   }
 ): CreateLocalRecommendationRequest | null {
   const {
@@ -101,6 +102,7 @@ export function buildAdminCourseRequest(
     hashtagIds,
     visitEvents,
     travelData,
+    routeImageKey,
   } = params;
 
   if (getAdminCourseRequestValidationError(params)) {
@@ -131,6 +133,7 @@ export function buildAdminCourseRequest(
     thumbnailKey,
     hashtagIds,
     courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
+    routeImageKey,
   };
 }
 
