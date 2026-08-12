@@ -134,7 +134,7 @@ function YeogidoCourseSearchPage() {
     hasNextPage,
     isError,
     isFetchingNextPage,
-    isPending,
+    isPending: isCoursesPending,
   } = useCourses(
     {
       courseType: 'OFFICIAL',
@@ -156,6 +156,11 @@ function YeogidoCourseSearchPage() {
         (!isDistanceSort || status === 'ready' || status === 'failed'),
     }
   );
+
+  // 지역 해석이 실패하면 useCourses는 enabled:false로 남는데, 비활성 쿼리는
+  // status가 'pending'에서 갱신되지 않는다. 그대로 두면 에러 문구 아래로
+  // 스켈레톤이 영원히 돌고 '검색 결과 없음'도 뜨지 못하므로 여기서 덮어쓴다.
+  const isPending = !isRegionError && isCoursesPending;
 
   const yeogidoCourses = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult =

@@ -74,6 +74,8 @@ function FestivalSearchPage() {
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const [searchParams, setSearchParams] = useSearchParams();
+  // 행사 검색 기록과 지역 검색 기록은 의도적으로 한 목록으로 합쳐 쓴다.
+  // 읽을 때만 두 키를 합치고, 새로 입력한 키워드는 지역 키 한 곳에 모은다.
   const [recentSearchSuggestions, setRecentSearchSuggestions] = useState(() =>
     getUniqueSearches([
       ...getStoredRecentSearches(recentSearchStorageOptions),
@@ -105,7 +107,7 @@ function FestivalSearchPage() {
     hasNextPage,
     isError,
     isFetchingNextPage,
-    isPending,
+    isPending: isCultureContentsPending,
   } = useCultureContents({
     keyword: keyword.trim() || undefined,
     regionId,
@@ -119,6 +121,11 @@ function FestivalSearchPage() {
       isRegionSearchReady &&
       (!isDistanceSort || status === 'ready' || status === 'failed'),
   });
+
+  // 지역 해석이 실패하면 useCultureContents는 enabled:false로 남는데, 비활성
+  // 쿼리는 status가 'pending'에서 갱신되지 않는다. 그대로 두면 에러 문구
+  // 아래로 스켈레톤이 영원히 돌므로 여기서 덮어쓴다.
+  const isPending = !isRegionError && isCultureContentsPending;
 
   const festivals = data?.pages.flatMap((page) => page.items) ?? [];
   const hasEmptyResult =
@@ -162,6 +169,7 @@ function FestivalSearchPage() {
     setSearchParams(nextSearchParams);
   };
 
+  // 합쳐서 보여주는 목록이라 어느 쪽에 들어 있는지 알 수 없어 양쪽에서 지운다.
   const handleRemoveRecentSearchSuggestion = (suggestion: string) => {
     setRecentSearchSuggestions(
       removeStoredRecentSearch(suggestion, {
