@@ -74,7 +74,13 @@ function AdminCourseEventSelectionPage() {
     if (isError) return '행사를 불러오지 못했어요. 다시 시도해 주세요.';
     if (searchResults.length === 0) return '검색 결과가 없어요.';
     return null;
-  }, [trimmedQuery, isDebouncePending, isFetching, isError, searchResults.length]);
+  }, [
+    trimmedQuery,
+    isDebouncePending,
+    isFetching,
+    isError,
+    searchResults.length,
+  ]);
 
   const selectedEventIds = useMemo(
     () => new Set(selectedEvents.map((event) => event.id)),
@@ -155,8 +161,8 @@ function AdminCourseEventSelectionPage() {
         onItemRemove={handleRemoveEvent}
         onRemoveAll={() => setSelectedEventsInStore([])}
         onSubmit={() => navigate('/admin/course-registration/place-selection')}
-        skipButtonLabel="건너뛰기"
-        onSkip={handleSkip}
+        skipButtonLabel={selectedEvents.length === 0 ? '건너뛰기' : undefined}
+        onSkip={selectedEvents.length === 0 ? handleSkip : undefined}
         renderItem={(event, onItemRemove) => (
           <SelectionResultCard
             key={event.id}
