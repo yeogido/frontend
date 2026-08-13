@@ -1,9 +1,6 @@
 import { useState } from 'react';
 
-import {
-  RegionHero,
-  RegionHeroSkeleton,
-} from '../../../components/common';
+import { RegionHero, RegionHeroSkeleton } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 import type { RegionInfo } from '../constants/types';
@@ -67,7 +64,7 @@ function RegionHeroSection({
             lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
           }}
         >
-          {regionInfo.name}의 코스와 장소
+          {regionInfo.displayName}의 코스와 장소
         </h1>
 
         <p
@@ -120,9 +117,9 @@ function RegionHeroSection({
         ) : (
           <RegionHero
             image={heroImageUrl}
-            title={regionInfo.name}
+            title={regionInfo.displayName}
             description={heroDescription ?? ''}
-            alt={`${regionInfo.name} 대표 이미지`}
+            alt={`${regionInfo.displayName} 대표 이미지`}
             onImageError={() => setFailedImageUrl(heroImageUrl)}
           />
         )}

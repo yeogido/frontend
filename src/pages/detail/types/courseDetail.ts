@@ -75,6 +75,7 @@ export interface CourseDetailDto {
   readonly overview: string;
   readonly stops: readonly CourseStopDto[];
   readonly reviews: readonly CourseReview[];
+  readonly canManage?: boolean;
 }
 
 export interface CourseDetail {
@@ -87,4 +88,5 @@ export interface CourseDetail {
   readonly overview: string;
   readonly stops: readonly CourseStop[];
   readonly reviews: readonly CourseReview[];
+  readonly canManage: boolean;
 }

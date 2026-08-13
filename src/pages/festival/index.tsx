@@ -14,8 +14,8 @@ import { useCultureContentBanners } from '../../hooks/useCultureContentBanners';
 import { useCultureContents } from '../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../hooks/useContentLikeToggle';
 import { useEditFestival } from '../../hooks/useEditFestival';
-import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
+import { useRecentCultureContentPermissions } from '../../hooks/useRecentCultureContentPermissions';
 import { toContentTagIds } from '../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../utils/routes';
 
@@ -45,11 +45,13 @@ function FestivalPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useContentLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const { featuredFestival } = useFestivalPreviews();
   const recentFestivals = useRecentCultureContents().slice(0, 2);
+  const canManageByContentId = useRecentCultureContentPermissions(
+    recentFestivals.map((festival) => festival.contentId)
+  );
   const { data: ongoingContentsData, isPending: isOngoingContentsPending } =
     useCultureContents({
       statuses: ['ONGOING'],
@@ -184,7 +186,7 @@ function FestivalPage() {
                   regionName={festival.regionName}
                   tags={toContentTagIds(festival.hashtags)}
                   className="w-full"
-                  isAdmin={isAdmin}
+                  isAdmin={festival.canManage}
                   liked={getLiked(festival.contentId, festival.isLiked)}
                   onClick={() =>
                     navigate(buildFestivalDetailPath(festival.contentId))
@@ -228,7 +230,7 @@ function FestivalPage() {
                   regionName={festival.regionName}
                   tags={toContentTagIds(festival.hashtags)}
                   className="w-full"
-                  isAdmin={isAdmin}
+                  isAdmin={canManageByContentId.get(festival.contentId) ?? false}
                   liked={getLiked(festival.contentId, festival.liked)}
                   onClick={() =>
                     navigate(buildFestivalDetailPath(festival.contentId))

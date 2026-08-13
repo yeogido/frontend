@@ -15,6 +15,10 @@ import type {
 // 계정별로 캐시를 분리한다. 이유는 useMyBusinesses의 주석 참고.
 export const MY_PROFILE_QUERY_PREFIX = ['myProfile'];
 
+// role 변경은 updateMyProfile의 invalidateQueries가 이미 처리하므로, 이 값은
+// "아무 변경 없이 페이지만 이동/재포커스했을 때" 불필요한 재호출만 막는다.
+const MY_PROFILE_STALE_TIME = 1000 * 60;
+
 export const getMyProfileQueryKey = (userId: number | null) => [
   ...MY_PROFILE_QUERY_PREFIX,
   userId,
@@ -27,6 +31,7 @@ export function useMyProfile() {
     queryKey: getMyProfileQueryKey(userId),
     queryFn: getMyProfile,
     enabled: userId !== null,
+    staleTime: MY_PROFILE_STALE_TIME,
   });
 }
 

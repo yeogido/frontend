@@ -1,30 +1,25 @@
-interface MetropolitanCity {
-  /**
-   * Region API의 상위 지역 id.
-   *
-   * null이면 Region API에 아직 해당 지역이 등록되지 않아 상위 지역으로
-   * 변환할 수 없다는 뜻이다. 하위 구는 그래도 검색 결과에서 제외되므로,
-   * 백엔드에 지역이 추가되면 여기에 id만 채우면 된다.
-   */
-  regionId: number | null;
-  name: string;
-}
+import { normalizeRegionName } from '../../../constants/regions.ts';
+
+import type { Region } from '../../../types/region.type';
 
 /**
- * 특별시·광역시 목록과 Region API 상위 지역 매핑을 한곳에서 관리한다.
- * 목록을 따로 두면 한쪽에만 지역이 추가되어 조용히 어긋날 수 있다.
+ * 특별시·광역시 목록. 여행 지도는 광역시 산하 구를 따로 그리지 않아,
+ * 구가 선택되면 상위 광역시로 올려서 저장한다.
+ *
+ * 여기에 상위 지역의 regionId를 적어 두면 안 된다. 백엔드가 지역 ID를
+ * 재부여하면 조용히 어긋나고(2026-08-13에 실제로 발생: 광주가 옛 ID 54로
+ * 저장돼 부산 수영구로 기록됐다), 화면에는 올바른 지역이 보여서 알아채기도
+ * 어렵다. ID는 항상 GET /regions 응답에서 이름으로 찾는다.
  */
-const METROPOLITAN_CITIES: Record<string, MetropolitanCity> = {
-  서울특별시: { regionId: 1, name: '서울' },
-  부산광역시: { regionId: 27, name: '부산' },
-  대구광역시: { regionId: 44, name: '대구' },
-  광주광역시: { regionId: 54, name: '광주' },
-  인천광역시: { regionId: 60, name: '인천' },
-  대전광역시: { regionId: 72, name: '대전' },
-  울산광역시: { regionId: null, name: '울산' },
-};
-
-const METROPOLITAN_CITY_NAMES = Object.keys(METROPOLITAN_CITIES);
+const METROPOLITAN_CITY_NAMES = [
+  '서울특별시',
+  '부산광역시',
+  '대구광역시',
+  '광주광역시',
+  '인천광역시',
+  '대전광역시',
+  '울산광역시',
+] as const;
 
 interface TravelMapRegionCandidate {
   fullName: string;
@@ -43,23 +38,19 @@ export const filterTravelMapSelectableRegions = <
   regions: readonly T[],
 ) => regions.filter(isTravelMapSelectableRegion);
 
-const getMetropolitanCityParent = (fullName: string) => {
-  for (const [cityName, city] of Object.entries(METROPOLITAN_CITIES)) {
-    if (fullName !== cityName && !fullName.startsWith(`${cityName} `)) {
-      continue;
-    }
+/** 선택된 지역이 속한 특별시·광역시의 정식 명칭. 아니면 undefined. */
+const getMetropolitanCityName = (province: string) =>
+  METROPOLITAN_CITY_NAMES.find(
+    (cityName) => province === cityName || province.startsWith(`${cityName} `),
+  );
 
-    // Region API에 상위 지역이 없으면 변환하지 않고 선택값을 그대로 둔다.
-    if (city.regionId === null) {
-      return null;
-    }
-
-    return { regionId: city.regionId, name: city.name, fullName: cityName };
-  }
-
-  return null;
-};
-
+/**
+ * 광역시 산하 구 선택을 상위 광역시로 바꾼다.
+ *
+ * 상위 지역의 id는 GET /regions 목록에서 이름으로 찾는다. 목록이 아직
+ * 없거나(로딩·조회 실패) 이름이 없으면 선택값을 그대로 둔다 — 추측한 id로
+ * 저장하면 엉뚱한 지역에 기록이 남는다.
+ */
 export const normalizeTravelMapSelectedRegion = <
   T extends {
     id: string;
@@ -70,8 +61,19 @@ export const normalizeTravelMapSelectedRegion = <
   },
 >(
   region: T,
+  topLevelRegions: readonly Region[] = [],
 ) => {
-  const parentRegion = getMetropolitanCityParent(region.province);
+  const cityName = getMetropolitanCityName(region.province);
+
+  if (!cityName || region.province === cityName) {
+    return region;
+  }
+
+  // GET /regions의 name은 축약형('부산')이고 province는 정식 명칭이다.
+  const shortName = normalizeRegionName(cityName);
+  const parentRegion = topLevelRegions.find(
+    (topLevelRegion) => topLevelRegion.name === shortName,
+  );
 
   if (!parentRegion) {
     return region;
@@ -82,7 +84,7 @@ export const normalizeTravelMapSelectedRegion = <
     id: String(parentRegion.regionId),
     regionId: parentRegion.regionId,
     name: parentRegion.name,
-    province: parentRegion.fullName,
+    province: cityName,
     selectionName: parentRegion.name,
   };
 };

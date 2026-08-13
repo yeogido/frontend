@@ -2,10 +2,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { CourseCard, CourseDeleteDialog } from '../../../components/common';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import { useCourseDelete, useMyCourseIds } from '../../../hooks/useCourses';
+import { useCourseDelete } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
-import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useRecentCourses } from '../../../hooks/useRecentCourses';
 import { toCourseCardProps } from '../../../utils/courseCard';
 
@@ -24,9 +22,6 @@ function LocalCourseRecentPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const { courseIds: myCourseIds } = useMyCourseIds();
-  const isAdmin = useIsAdmin();
-  const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
   const handleCourseClick = (courseId: number | string) => {
@@ -79,13 +74,11 @@ function LocalCourseRecentPage() {
                 key={course.id}
                 {...course}
                 liked={getLiked(course.id, course.liked)}
-                canManage={isAdmin || myCourseIds.has(course.id)}
-                showEdit
+                canManage={course.canManage}
                 onClick={() => handleCourseClick(course.id)}
                 onLikeClick={() =>
                   toggleLike(course.id, getLiked(course.id, course.liked))
                 }
-                onEditClick={() => void editLocalCourse(course.id)}
                 onDeleteClick={() => requestDelete(course.id)}
               />
             ))}

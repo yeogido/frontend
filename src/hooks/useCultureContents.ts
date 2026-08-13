@@ -4,6 +4,7 @@ import {
 } from '@tanstack/react-query';
 
 import { getCultureContents } from '../apis/contents.api';
+import { useAuthStore } from '../store/auth.store';
 import type { GetCultureContentsParams } from '../types/content.type';
 import type { GetCultureContentsResponse } from '../types/content.type';
 
@@ -16,14 +17,16 @@ export function useCultureContents(
   params: GetCultureContentsParams = {},
   options?: { enabled?: boolean },
 ) {
+  const authGeneration = useAuthStore((state) => state.authGeneration);
+
   return useInfiniteQuery<
     GetCultureContentsResponse,
     Error,
     InfiniteData<GetCultureContentsResponse, CultureContentsPageParam>,
-    [string, GetCultureContentsParams],
+    [string, number, GetCultureContentsParams],
     CultureContentsPageParam
   >({
-    queryKey: ['cultureContents', params],
+    queryKey: ['cultureContents', authGeneration, params],
     queryFn: ({ pageParam }) =>
       getCultureContents({
         ...params,

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 
-import addIcon from '../../../assets/icons/material-symbols_add-2-rounded.svg';
+import addIcon from '../../../assets/icons/profile-add.svg';
+import locationIcon from '../../../assets/icons/business-location.svg';
 import type { BusinessInfoResponse } from '../../../types/business.type';
 
 export function BusinessPlaceList({
@@ -28,13 +29,16 @@ export function BusinessPlaceList({
           <div
             key={business.businessInfoId}
             className="flex items-center"
-            style={{ gap: 12 * scale, padding: `${8 * scale}px` }}
+            style={{ gap: 12 * scale, padding: `${12 * scale}px` }}
           >
-            <span
-              className="flex shrink-0 items-center justify-center rounded-xl bg-[#f1f1f1]"
-              style={{ width: 56 * scale, height: 56 * scale }}
+            <img
+              src={locationIcon}
+              alt=""
+              aria-hidden="true"
+              className="shrink-0"
+              style={{ width: 24 * scale, height: 24 * scale }}
             />
-            <div className="min-w-0">
+            <div className="min-w-0" style={{ marginTop: 3 * scale }}>
               <p
                 className="truncate font-semibold text-[#1c1c1c]"
                 style={{ fontSize: 16 * scale, lineHeight: `${19 * scale}px` }}
@@ -62,7 +66,7 @@ export function BusinessPlaceList({
         >
           <span
             className="font-semibold"
-            style={{ fontSize: 14 * scale, lineHeight: `${17 * scale}px` }}
+            style={{ fontSize: 14 * scale, lineHeight: `${20 * scale}px` }}
           >
             사업장 추가인증하기
           </span>

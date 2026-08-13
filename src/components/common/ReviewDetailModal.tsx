@@ -6,6 +6,7 @@ import darkStar from '../../assets/icons/dark star.svg';
 import star from '../../assets/icons/star.svg';
 
 import ReviewerAvatar from './ReviewerAvatar';
+import ReviewerName from './ReviewerName';
 
 const PHOTO_SIZE = 129;
 const PHOTO_GAP = 12;
@@ -18,6 +19,7 @@ export interface ReviewDetailModalReview {
   nickname: string;
   meta: string;
   rating?: number;
+  isMine?: boolean;
 }
 
 export interface ReviewDetailModalProps {
@@ -104,8 +106,15 @@ function ReviewDetailModal({
     return null;
   }
 
-  const { images = [], content, profileImage, nickname, meta, rating = 5 } =
-    review;
+  const {
+    images = [],
+    content,
+    profileImage,
+    nickname,
+    meta,
+    rating = 5,
+    isMine = false,
+  } = review;
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
   const title = courseTitle ? `${courseTitle}의 후기예요!` : '여행자의 후기예요!';
 
@@ -181,13 +190,16 @@ function ReviewDetailModal({
         </p>
 
         <div className="mt-3 flex min-h-[30px] items-center gap-2">
-          <ReviewerAvatar src={profileImage} size={28} />
+          <ReviewerAvatar src={profileImage} size={28} isMine={isMine} />
 
           <div className="min-w-0">
-            <p className="truncate text-[12px] leading-none">
-              <span className="font-medium text-[#1c1c1c]">{nickname}</span>
+            <p className="flex items-baseline text-[12px] leading-none">
+              <ReviewerName
+                nickname={nickname}
+                className="text-[12px] font-medium text-[#1c1c1c]"
+              />
               {meta && (
-                <span className="font-normal text-[#7f7f7f]"> · {meta}</span>
+                <span className="shrink-0 font-normal text-[#7f7f7f]"> · {meta}</span>
               )}
             </p>
             <div className="mt-[2px] flex items-center">

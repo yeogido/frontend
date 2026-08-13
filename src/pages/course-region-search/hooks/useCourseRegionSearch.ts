@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { getSubRegions, searchRegions } from '../../../apis/regions.api';
 import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { REGION_INFO_ID_STATE_KEY } from '../../../constants/regions';
+import { toShortRegionPath } from '../../../utils/regionSearch';
 import {
   addStoredRecentSearch,
   getStoredRecentSearches,
@@ -38,6 +39,7 @@ function createSearchResultLocation(params: {
   keyword?: string;
   city?: string;
   district?: string;
+  regionId?: number;
 }) {
   const searchParams = new URLSearchParams();
 
@@ -51,6 +53,10 @@ function createSearchResultLocation(params: {
 
   if (params.district && params.district !== '전체') {
     searchParams.set('subRegion', params.district);
+  }
+
+  if (params.regionId !== undefined) {
+    searchParams.set('regionId', String(params.regionId));
   }
 
   const search = searchParams.toString();
@@ -102,10 +108,7 @@ function useCourseRegionSearch() {
       ? ['전체', ...(subRegionsQuery.data ?? []).map((region) => region.name)]
       : [];
 
-  const defaultSearchSuggestions = useMemo(
-    () => getUniqueSearches([...recentSearches, ...cities.map((city) => city.name)]),
-    [cities, recentSearches]
-  );
+  const defaultSearchSuggestions = recentSearches;
 
   // 검색창에 입력하는 즉시(타이핑마다) 백엔드에 물어 연관 검색어를 채운다.
   // 백엔드가 이름 LIKE(부분 문자열) 매칭이라 SearchBar의 로컬 재필터를
@@ -122,14 +125,13 @@ function useCourseRegionSearch() {
   // 드롭다운을 닫아버린다. 응답이 아직 없을 때는(로딩 중) 기본 목록을,
   // 응답이 왔지만 결과가 없을 때는([]) 그대로 빈 목록을 보여준다.
   const liveSearchSuggestions = searchResultsQuery.data?.map(
-    (region) => region.name
+    (region) => region.fullName
   );
 
   const searchSuggestions =
     trimmedSearchQuery.length > 0
       ? getUniqueSearches(liveSearchSuggestions ?? defaultSearchSuggestions)
       : defaultSearchSuggestions;
-
   const updateSearchQuery = (query: string) => {
     setSearchQuery(query);
   };
@@ -214,7 +216,9 @@ function useCourseRegionSearch() {
   };
 
   const submitSearch = (query: string) => {
-    const keyword = query.trim();
+    // 제안 목록은 fullName("대전광역시 동구")을 보여주므로, 저장·이동에는
+    // 시·군·구 목록과 같은 짧은 표기("대전 동구")로 맞춘다.
+    const keyword = toShortRegionPath(query);
 
     if (!keyword) {
       return;
@@ -299,9 +303,10 @@ function useCourseRegionSearch() {
     navigate(
       createSearchResultLocation({
         targetPathname: searchTargetPathname,
-        city: selectedCity.name,
-        district: clicked.name,
-      })
+          city: selectedCity.name,
+          district: clicked.name,
+          regionId: clicked.subRegionId,
+        })
     );
   };
 

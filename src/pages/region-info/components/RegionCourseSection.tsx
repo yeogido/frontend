@@ -9,17 +9,16 @@ import {
 } from '../../../components/common';
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import {
-  useCourseDelete,
-  useCourses,
-  useMyCourseIds,
-} from '../../../hooks/useCourses';
+import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useEditCourse } from '../../../hooks/useEditCourse';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toContentTagIds } from '../../../utils/contentTags';
-import { toDurationLabel } from '../../../utils/courseEnumLabels';
+import {
+  toCompanionLabel,
+  toDurationLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
 import { buildCourseDetailPath } from '../../../utils/routes';
 import type { CourseSort, CourseType } from '../../../types/course.type';
 
@@ -63,21 +62,13 @@ function RegionCourseSection({
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editCourse } = useEditCourse();
   const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
-  const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
-    useMyCourseIds();
   const handleEditCourse = (courseId: number) =>
     void (courseType === 'OFFICIAL'
       ? editCourse(courseId)
       : editLocalCourse(courseId));
-  // OFFICIAL 코스는 관리자만 만들 수 있어 소유자 개념이 없다. LOCAL 코스는
-  // 일반 사용자도 본인이 쓴 것을 여기서 바로 수정할 수 있어야 한다 —
-  // /local-course/search·/local-course/popular와 동일한 조건.
-  const canManageCourse = (courseId: number) =>
-    isAdmin || (courseType === 'LOCAL' && myCourseIds.has(courseId));
 
   // regionId를 찾지 못한 지역(예: /regions 목록에 없는 지역)은 regionId 필터
   // 대신 지역명을 키워드로 검색해 대체한다. 지역 목록이 아직 로딩 중일 때는
@@ -128,19 +119,22 @@ function RegionCourseSection({
             style={{ paddingBottom: LIST_SCROLL_PADDING_BOTTOM * scale }}
           >
             <div className="flex min-w-max" style={{ gap: CARD_GAP * scale }}>
-              {isPending || isMyCourseIdsPending
+              {isPending
                 ? Array.from(
                     { length: REGION_COURSE_PREVIEW_COUNT },
                     (_, index) => <ContentCardSkeleton key={index} />
                   )
                 : courses.map((course) =>
-                    canManageCourse(course.courseId) ? (
+                    course.canManage ? (
                       <EditableContentCard
                         key={course.courseId}
-                        image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                        image={
+                          course.routeImageUrl?.trim() || course.thumbnailUrl
+                        }
                         title={course.title}
                         firstInfo={toDurationLabel(course.durationType)}
-                        secondInfo={course.region}
+                        secondInfo={toTransportLabel(course.transportType)}
+                        thirdInfo={toCompanionLabel(course.companionType)}
                         tags={toContentTagIds(course.tags)}
                         onClick={() =>
                           navigate(
@@ -153,10 +147,13 @@ function RegionCourseSection({
                     ) : (
                       <ContentCard
                         key={course.courseId}
-                        image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                        image={
+                          course.routeImageUrl?.trim() || course.thumbnailUrl
+                        }
                         title={course.title}
                         firstInfo={toDurationLabel(course.durationType)}
-                        secondInfo={course.region}
+                        secondInfo={toTransportLabel(course.transportType)}
+                        thirdInfo={toCompanionLabel(course.companionType)}
                         tags={toContentTagIds(course.tags)}
                         liked={getLiked(course.courseId, course.isLiked)}
                         onClick={() =>

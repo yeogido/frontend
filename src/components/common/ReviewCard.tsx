@@ -8,6 +8,7 @@ import { useCardTap } from '../../hooks/useCardTap';
 
 import ReviewActionMenu from './ReviewActionMenu';
 import ReviewerAvatar from './ReviewerAvatar';
+import ReviewerName from './ReviewerName';
 
 // Figma 390 디자인 기준 리터럴 px (카드 자체 폭 290 기준)
 const CARD_DESIGN_WIDTH = 342;
@@ -203,29 +204,31 @@ function ReviewCard({
                 marginTop: isCourseReviewList ? 8 : 0,
               }}
             >
-              <ReviewerAvatar src={profileImage} size={AVATAR_SIZE} />
+              <ReviewerAvatar
+                src={profileImage}
+                size={AVATAR_SIZE}
+                isMine={isMine}
+              />
 
               <div
                 className="flex min-w-0 flex-col"
                 style={{ gap: NAME_META_GAP }}
               >
                 <div className="flex min-w-0 items-center">
-                  <span
-                    className="truncate font-medium leading-none text-[#1C1C1C]"
-                    style={{ fontSize: NAME_META_SIZE }}
-                  >
-                    {nickname}
-                  </span>
+                  <ReviewerName
+                    nickname={nickname}
+                    className="text-[12px] font-medium leading-none text-[#1C1C1C]"
+                  />
 
                   <span
-                    className="mx-[4px] shrink-0 font-normal leading-none text-[#7F7F7F]"
+                    className="shrink-0 font-normal leading-none text-[#7F7F7F]"
                     style={{ fontSize: NAME_META_SIZE }}
                   >
                     ·
                   </span>
 
                   <span
-                    className="truncate font-normal leading-none text-[#7F7F7F]"
+                    className="shrink-0 font-normal leading-none text-[#7F7F7F]"
                     style={{ fontSize: NAME_META_SIZE }}
                   >
                     {meta}

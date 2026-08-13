@@ -8,10 +8,12 @@ import { Divider } from '../ui';
 
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import ProfileAvatar from '../common/ProfileAvatar';
 import { useLogout } from '../../hooks/useLogout';
 import { useIsAdmin, useMyProfile } from '../../hooks/useMyProfile';
 import { APP_MAX_WIDTH } from '../../constants/layout';
 import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
+import { getRoleLabel } from '../../utils/role';
 
 /**
  * 관리자로 로그인했을 때, 사이드바 메뉴 이름은 그대로 두고 실제 이동
@@ -79,6 +81,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
   // 프로필 조회가 끝나기 전에는 실제로 존재하는 userId 기반의 안전한
   // 표시값으로 대체한다.
   const displayName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
+  const roleLabel = getRoleLabel(profile?.role);
 
   return (
     // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
@@ -106,7 +109,14 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
         />
 
         {/* Drawer */}
+        {/* inert: 닫혀 있을 때(translate-x-full로 화면 밖) 안의 버튼들이
+            여전히 DOM에 남아 있어 포커스를 받을 수 있었다 — 사이드바 메뉴를
+            눌러 페이지를 이동하면 그 버튼이 포커스를 계속 쥔 채로 남고,
+            나중에(예: 온보딩 모달이 닫히며 "이전 포커스로 복원") 그 포커스가
+            다시 불려나오는 문제가 있었다. 닫혀 있을 때는 inert로 포커스/
+            상호작용 자체를 완전히 차단한다. */}
         <aside
+          inert={!isOpen}
           className={`absolute top-0 right-0 flex h-full w-[72%] flex-col overflow-y-auto bg-white transition-transform duration-300 ease-in-out ${
             isOpen ? 'pointer-events-auto translate-x-0' : 'translate-x-full'
           } `}
@@ -133,36 +143,38 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 top: PROFILE_TOP * scale,
                 left: PROFILE_LEFT * scale,
                 gap: PROFILE_GAP * scale,
+                // left만 지정하면 이름이 길 때 버튼이 드로어 오른쪽 끝까지
+                // 늘어나 왼쪽(24px)과 달리 오른쪽 여백이 0이 된다. right를
+                // 함께 주면 버튼이 가로 전체를 차지해 이름 옆 빈 공간을
+                // 눌러도 프로필로 이동하므로, maxWidth로 경계만 만든다.
+                maxWidth: `calc(100% - ${PROFILE_LEFT * 2 * scale}px)`,
               }}
             >
-              {profile?.profileImageUrl ? (
-                <img
-                  src={profile.profileImageUrl}
-                  alt=""
-                  aria-hidden="true"
-                  className="shrink-0 rounded-full object-cover"
-                  style={{
-                    width: AVATAR_SIZE * scale,
-                    height: AVATAR_SIZE * scale,
-                  }}
-                />
-              ) : (
-                <div
-                  className="shrink-0 rounded-full bg-[#E4E4E4]"
-                  style={{
-                    width: AVATAR_SIZE * scale,
-                    height: AVATAR_SIZE * scale,
-                  }}
-                />
-              )}
+              <ProfileAvatar
+                src={profile?.profileImageUrl}
+                size={AVATAR_SIZE * scale}
+              />
 
               <div className="flex min-w-0 flex-col items-start text-left">
-                <span
-                  className="truncate leading-none font-semibold text-[#1C1C1C]"
-                  style={{ fontSize: NAME_TEXT_SIZE * scale }}
+                <div
+                  className="flex min-w-0 items-center"
+                  style={{ gap: 4 * scale }}
                 >
-                  {displayName}
-                </span>
+                  <span
+                    className="truncate leading-none font-semibold text-[#1C1C1C]"
+                    style={{ fontSize: NAME_TEXT_SIZE * scale }}
+                  >
+                    {displayName}
+                  </span>
+                  {roleLabel ? (
+                    <span
+                      className="shrink-0 leading-none font-normal text-[#7f7f7f]"
+                      style={{ fontSize: EMAIL_TEXT_SIZE * scale }}
+                    >
+                      {roleLabel}
+                    </span>
+                  ) : null}
+                </div>
                 {profile?.email && (
                   <span
                     className="truncate leading-none font-medium text-[#7f7f7f]"
@@ -201,7 +213,8 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                   // 조회가 끝나기 전이면 이동을 미룬다 — 여기서 그냥
                   // isAdmin(로딩 중엔 false)을 쓰면 실제 관리자가 일반
                   // 경로로 잘못 이동해버린다.
-                  const hasAdminOverride = menu.path in ADMIN_MENU_PATH_OVERRIDE;
+                  const hasAdminOverride =
+                    menu.path in ADMIN_MENU_PATH_OVERRIDE;
                   if (hasAdminOverride && isProfilePending) {
                     return;
                   }
@@ -230,51 +243,59 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
 
           <Divider />
 
-          {/* MY: 마이페이지 메뉴 */}
-          <div
-            className="shrink-0"
-            style={{
-              paddingLeft: MENU_PADDING_X * scale,
-              paddingTop: MY_LABEL_PADDING_TOP * scale,
-              paddingBottom: MY_LABEL_PADDING_BOTTOM * scale,
-            }}
-          >
-            <span
-              className="leading-none font-semibold text-[#FF6F41]"
-              style={{ fontSize: MY_LABEL_SIZE * scale }}
-            >
-              MY
-            </span>
-          </div>
-
-          <nav className="flex shrink-0 flex-col">
-            {MY_MENU.map((menu) => (
-              <button
-                key={menu.label}
-                type="button"
-                onClick={() => {
-                  if (menu.path) {
-                    menu.onNavigate?.();
-                    navigate(menu.path);
-                  }
-                  onClose();
-                }}
-                className="flex items-center justify-between text-left"
+          {/* MY: 마이페이지 메뉴 — 관리자 계정은 여행기록/좋아요/내가 등록한
+              게시물이 의미가 없어(관리자 전용 콘텐츠는 별도 API가 없다)
+              이 섹션 자체를 안 보여준다. isAdmin은 role 조회 중엔 false라,
+              isProfilePending도 같이 확인해야 관리자가 로딩 중 잠깐이라도
+              MY 섹션을 보는 깜빡임이 없다. */}
+          {!isProfilePending && !isAdmin && (
+            <>
+              <div
+                className="shrink-0"
                 style={{
-                  height: MENU_ITEM_HEIGHT * scale,
                   paddingLeft: MENU_PADDING_X * scale,
-                  paddingRight: MENU_PADDING_X * scale,
+                  paddingTop: MY_LABEL_PADDING_TOP * scale,
+                  paddingBottom: MY_LABEL_PADDING_BOTTOM * scale,
                 }}
               >
                 <span
-                  className="leading-none font-medium"
-                  style={{ fontSize: TEXT_BASE * scale }}
+                  className="leading-none font-semibold text-[#FF6F41]"
+                  style={{ fontSize: MY_LABEL_SIZE * scale }}
                 >
-                  {menu.label}
+                  MY
                 </span>
-              </button>
-            ))}
-          </nav>
+              </div>
+
+              <nav className="flex shrink-0 flex-col">
+                {MY_MENU.map((menu) => (
+                  <button
+                    key={menu.label}
+                    type="button"
+                    onClick={() => {
+                      if (menu.path) {
+                        menu.onNavigate?.();
+                        navigate(menu.path);
+                      }
+                      onClose();
+                    }}
+                    className="flex items-center justify-between text-left"
+                    style={{
+                      height: MENU_ITEM_HEIGHT * scale,
+                      paddingLeft: MENU_PADDING_X * scale,
+                      paddingRight: MENU_PADDING_X * scale,
+                    }}
+                  >
+                    <span
+                      className="leading-none font-medium"
+                      style={{ fontSize: TEXT_BASE * scale }}
+                    >
+                      {menu.label}
+                    </span>
+                  </button>
+                ))}
+              </nav>
+            </>
+          )}
 
           {/* 로그아웃: 메뉴가 짧아도 항상 사이드바 하단에 붙도록 mt-auto로 민다 */}
           <div className="mt-auto shrink-0">

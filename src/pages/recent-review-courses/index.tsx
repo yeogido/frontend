@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import {
   CourseReviewCard,
   CourseReviewCardSkeleton,
@@ -6,15 +5,8 @@ import {
   ReviewEditModal,
 } from '../../components/common';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import useInfiniteScroll from '../../hooks/useInfiniteScroll';
-import {
-  getReviewsFromPages,
-  useReviewDelete,
-  useReviewEdit,
-  useReviews,
-} from '../../hooks/useReviews';
-import { useOpenReviewInCourseDetail } from '../../hooks/useOpenReviewInCourseDetail';
-import { toReviewCourseCardProps } from '../../utils/reviewCard';
+
+import { useRecentReviewCourses } from './hooks/useRecentReviewCourses';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -32,29 +24,17 @@ const MESSAGE_TEXT_SIZE = 13;
 function RecentReviewCoursesPage() {
   const scale = useGlobalScale();
   const {
-    data,
+    reviews,
     isPending,
     isError,
-    fetchNextPage,
-    hasNextPage,
     isFetchingNextPage,
-  } = useReviews('LATEST');
-  const { requestDelete, dialogProps } = useReviewDelete();
-  const { requestEdit, editorProps } = useReviewEdit();
-  const goToCourseDetail = useOpenReviewInCourseDetail();
-
-  const reviews = getReviewsFromPages(data?.pages).map(toReviewCourseCardProps);
-
-  const handleIntersect = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const loadMoreRef = useInfiniteScroll({
-    enabled: Boolean(hasNextPage) && !isFetchingNextPage,
-    onIntersect: handleIntersect,
-  });
+    loadMoreRef,
+    requestDelete,
+    dialogProps,
+    requestEdit,
+    editorProps,
+    goToCourseDetail,
+  } = useRecentReviewCourses();
 
   const renderMessage = (message: string) => (
     <p

@@ -38,7 +38,7 @@ test('blocks profile save while a selected photo is still processing or uploadin
 });
 
 test('uses the saved profile photo background color when exporting a transparent image', () => {
-  assert.equal(PROFILE_PHOTO_BACKGROUND_COLOR, '#000000');
+  assert.equal(PROFILE_PHOTO_BACKGROUND_COLOR, '#E4E4E4');
 });
 
 test('hides the default profile icon while a newly selected photo is processing', () => {

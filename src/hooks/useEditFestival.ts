@@ -61,7 +61,7 @@ export function useEditFestival() {
           imageSrc: null,
           externalPlaceId: detail.place.externalPlaceId,
           categoryGroupCode: '',
-          roadAddress: detail.place.roadAddress,
+          roadAddress: detail.place.roadAddress ?? '',
           lotAddress: detail.place.lotAddress ?? '',
           latitude: detail.place.latitude,
           longitude: detail.place.longitude,

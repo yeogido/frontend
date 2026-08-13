@@ -57,21 +57,23 @@ function RegionInfoPage() {
   const isHeroImageError = !isRegionLoading && isRegionDetailError;
 
   const regionName = regionDetail?.name ?? region ?? '';
+  // 화면 표기는 정식 명칭(예: "충청남도")으로 보여주되, regionName(예: "충남")은
+  // 다른 화면의 검색 키워드·쿼리 파라미터로 계속 쓰이므로 그대로 둔다.
+  const provinceOfficialName = regionDetail?.fullName.split(' ')[0];
+  const regionDisplayName = provinceOfficialName ?? regionName;
   const regionInfo = {
     name: regionName,
-    description: `${regionName}의 코스와 장소를 한번에 확인해보세요.`,
+    displayName: regionDisplayName,
+    description: `${regionDisplayName}의 코스와 장소를 한번에 확인해보세요.`,
   };
-
   // 소상공인 추천 페이지의 지역 필터는 아직 시/도 단위 정적 id만 지원한다.
-  // 상세 응답의 fullName(예: "서울특별시 강남구")에서 소속 시/도를 뽑아
-  // 매칭하고, 못 찾으면(예: 처음 로딩 중) 기존 기본값(부산)으로 둔다.
-  const provinceOfficialName = regionDetail?.fullName.split(' ')[0];
+  // provinceOfficialName을 축약형으로 되돌려 매칭하고, 못 찾으면(예: 처음
+  // 로딩 중) 기존 기본값(부산)으로 둔다.
   const provinceShortName = provinceOfficialName
     ? normalizeRegionName(provinceOfficialName)
     : undefined;
   const regionSlug =
-    regionCities.find((city) => city.name === provinceShortName)?.id ??
-    'busan';
+    regionCities.find((city) => city.name === provinceShortName)?.id ?? 'busan';
 
   if (!isRegionLoading && isRegionNotFound) {
     return (
@@ -110,7 +112,7 @@ function RegionInfoPage() {
         regionId={regionId}
         isRegionLoading={isRegionLoading}
         courseType="OFFICIAL"
-        title={`${regionInfo.name}, 여기도 가볼까?`}
+        title={`${regionInfo.displayName}, 여기도 가볼까?`}
         searchPath={COURSE_SEARCH_PATH.OFFICIAL}
       />
 
@@ -119,18 +121,19 @@ function RegionInfoPage() {
         regionId={regionId}
         isRegionLoading={isRegionLoading}
         courseType="LOCAL"
-        title={`${regionInfo.name}, 우리 동네 어때?`}
+        title={`${regionInfo.displayName}, 우리 동네 어때?`}
         searchPath={COURSE_SEARCH_PATH.LOCAL}
       />
 
       <RegionFestivalSection
         regionName={regionInfo.name}
+        regionDisplayName={regionInfo.displayName}
         regionId={regionId}
         isRegionLoading={isRegionLoading}
       />
 
       <RegionReviewSection
-        regionName={regionInfo.name}
+        regionName={regionInfo.displayName}
         regionSlug={regionSlug}
         regionId={regionId}
         isRegionLoading={isRegionLoading}

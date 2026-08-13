@@ -64,6 +64,7 @@ export interface CourseDetailResult {
   endMonth: number;
   companionType: string;
   isLiked: boolean;
+  canManage: boolean;
   courseItems: CourseDetailItem[];
   author?: CourseDetailAuthor;
 }
@@ -129,6 +130,7 @@ export interface UpdateCourseRequest {
   monthStart: number;
   monthEnd: number;
   thumbnailKey: string;
+  routeImageKey?: string;
   hashtagIds: number[];
   courseItems: UpdateCourseItem[];
 }

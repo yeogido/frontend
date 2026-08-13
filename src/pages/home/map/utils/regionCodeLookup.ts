@@ -174,6 +174,61 @@ export interface MapRegionMatch {
   code: string;
 }
 
+/** 이름 하나로 도형을 찾는다. 못 찾으면 null. */
+const findShapeByName = (
+  candidate: string,
+  fullName: string | undefined,
+): MapRegionMatch | null => {
+  // 도/광역시를 시/군/구보다 먼저 본다. '세종특별자치시'는 도 목록(36)과
+  // 시 목록(4473, 충남 접두사) 양쪽에 있는데, 시를 먼저 잡으면 세종 기록이
+  // 충남 소속 도형에 붙는다. 도 목록에는 17개 정식 명칭만 있어 시/군/구
+  // 이름과 겹칠 일이 없으므로 먼저 봐도 안전하다.
+  const provinceCode = findProvinceCode(candidate);
+
+  if (provinceCode) {
+    return { name: candidate, code: provinceCode };
+  }
+
+  const cityCodes = findCityCodes(candidate);
+
+  if (cityCodes?.length === 1) {
+    return { name: candidate, code: cityCodes[0] };
+  }
+
+  if (cityCodes && cityCodes.length > 1) {
+    const resolvedCityCode = resolveCityCodeByProvince(cityCodes, fullName);
+
+    if (resolvedCityCode) {
+      return { name: candidate, code: resolvedCityCode };
+    }
+  }
+
+  return null;
+};
+
+/**
+ * 자기 도형이 없는 지역을 상위 행정구역 도형으로 올린다.
+ *
+ * 지도 데이터에는 읍·면·동이 없고, 최근 신설된 구(인천 검단구 등)도 아직
+ * 없다. 그대로 두면 regionCode가 비어 사진이 지도에서 통째로 사라지므로,
+ * fullName을 뒤에서부터 거슬러 올라가며 그릴 수 있는 도형을 찾는다.
+ * (예: '제주특별자치도 제주시 구좌읍' → 제주시, '인천광역시 검단구' → 인천)
+ */
+const findAncestorShape = (fullName: string | undefined) => {
+  const tokens = fullName?.trim().split(/\s+/).filter(Boolean) ?? [];
+
+  // 마지막 토큰은 자기 자신이라 이미 실패했다.
+  for (let index = tokens.length - 2; index >= 0; index -= 1) {
+    const match = findShapeByName(tokens[index], fullName);
+
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+};
+
 /**
  * Region API의 지역명으로 지도 geojson에서 대응하는 시/군/구 또는
  * 광역시/도 도형을 찾는다.
@@ -194,28 +249,12 @@ export function findMapRegion({
   for (const candidate of [name, fullName]) {
     if (!candidate) continue;
 
-    const cityCodes = findCityCodes(candidate);
+    const match = findShapeByName(candidate, fullName);
 
-    if (cityCodes?.length === 1) {
-      return { name: candidate, code: cityCodes[0] };
-    }
-
-    if (cityCodes && cityCodes.length > 1) {
-      const resolvedCityCode = resolveCityCodeByProvince(cityCodes, fullName);
-
-      if (resolvedCityCode) {
-        return { name: candidate, code: resolvedCityCode };
-      }
-
-      continue;
-    }
-
-    const provinceCode = findProvinceCode(candidate);
-
-    if (provinceCode) {
-      return { name: candidate, code: provinceCode };
+    if (match) {
+      return match;
     }
   }
 
-  return null;
+  return findAncestorShape(fullName);
 }

@@ -10,12 +10,12 @@ import {
 } from '../../../components/common';
 import { COURSE_REGION_RECENT_SEARCH_STORAGE_KEY } from '../../../constants/recentSearches';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useContentDelete } from '../../../hooks/useContentDelete';
 import { useCultureContents } from '../../../hooks/useCultureContents';
 import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditFestival } from '../../../hooks/useEditFestival';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { buildFestivalDetailPath } from '../../../utils/routes';
@@ -26,12 +26,11 @@ import {
   removeStoredRecentSearch,
 } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
+import { getExplicitRegionId } from '../../../utils/regionSearch';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
 
 import { FestivalFilterBar } from '../components';
-import {
-  FESTIVAL_RECENT_SEARCH_STORAGE_KEY,
-} from '../constants/search';
+import { FESTIVAL_RECENT_SEARCH_STORAGE_KEY } from '../constants/search';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
 import useFestivalFilters from '../hooks/useFestivalFilters';
 
@@ -69,8 +68,8 @@ const sortByFilterValue: Record<string, ContentSort> = {
 function FestivalSearchPage() {
   const scale = useGlobalScale();
   const navigate = useNavigate();
-  const { getLiked, toggleLike } = useContentLikeToggle();
   const isAdmin = useIsAdmin();
+  const { getLiked, toggleLike } = useContentLikeToggle();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -85,6 +84,7 @@ function FestivalSearchPage() {
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
   const subRegion = searchParams.get('subRegion') ?? '';
+  const explicitRegionId = getExplicitRegionId(searchParams.get('regionId'));
   const regionLabel =
     region && subRegion ? `${region} ${subRegion}` : subRegion || region;
   const displaySearchQuery = keyword || regionLabel;
@@ -92,14 +92,17 @@ function FestivalSearchPage() {
     regionId,
     isPending: isRegionPending,
     isError: isRegionError,
-  } = useResolvedRegion(regionLabel || undefined);
+  } = useResolvedRegion(regionLabel || undefined, explicitRegionId);
   const isRegionSearchReady =
     !regionLabel || (!isRegionPending && !isRegionError);
   const { selectedFilters, handleSortSelect, handleCategorySelect } =
     useFestivalFilters();
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
-  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
-    useDistanceSortCoordinates();
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
 
   const {
     data,
@@ -108,19 +111,24 @@ function FestivalSearchPage() {
     isError,
     isFetchingNextPage,
     isPending: isCultureContentsPending,
-  } = useCultureContents({
-    keyword: keyword.trim() || undefined,
-    regionId,
-    category: categoryByFilterValue[selectedFilters.category],
-    sort: sortByFilterValue[selectedFilters.sort],
-    latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
-    longitude: isDistanceSort ? distanceSortCoordinates?.longitude : undefined,
-    size: 20,
-  }, {
-    enabled:
-      isRegionSearchReady &&
-      (!isDistanceSort || status === 'ready' || status === 'failed'),
-  });
+  } = useCultureContents(
+    {
+      keyword: keyword.trim() || undefined,
+      regionId,
+      category: categoryByFilterValue[selectedFilters.category],
+      sort: sortByFilterValue[selectedFilters.sort],
+      latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
+      longitude: isDistanceSort
+        ? distanceSortCoordinates?.longitude
+        : undefined,
+      size: 20,
+    },
+    {
+      enabled:
+        isRegionSearchReady &&
+        (!isDistanceSort || status === 'ready' || status === 'failed'),
+    }
+  );
 
   // 지역 해석이 실패하면 useCultureContents는 enabled:false로 남는데, 비활성
   // 쿼리는 status가 'pending'에서 갱신되지 않는다. 그대로 두면 에러 문구
@@ -154,6 +162,7 @@ function FestivalSearchPage() {
       nextSearchParams.set('keyword', trimmedQuery);
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
       setRecentSearchSuggestions(
         addStoredRecentSearch(trimmedQuery, {
           ...recentSearchStorageOptions,
@@ -164,6 +173,7 @@ function FestivalSearchPage() {
       nextSearchParams.delete('keyword');
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
     }
 
     setSearchParams(nextSearchParams);
@@ -179,7 +189,9 @@ function FestivalSearchPage() {
     );
     removeStoredRecentSearch(suggestion, {
       ...festivalRecentSearchStorageOptions,
-      currentSearches: getStoredRecentSearches(festivalRecentSearchStorageOptions),
+      currentSearches: getStoredRecentSearches(
+        festivalRecentSearchStorageOptions
+      ),
     });
   };
 
@@ -237,7 +249,7 @@ function FestivalSearchPage() {
                 />
               ))
             : festivals.map((festival) =>
-                isAdmin ? (
+                festival.canManage || isAdmin ? (
                   <EditableContentCard
                     key={festival.contentId}
                     image={festival.thumbnailImageUrl}

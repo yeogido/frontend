@@ -1,9 +1,9 @@
-import type { CourseSummaryResult } from '../../apis/courses';
+import type { CourseSummaryResult } from '../../../apis/courses';
 import {
   findTransportLabel,
   toCompanionLabel,
   toDurationLabel,
-} from '../../utils/courseEnumLabels.ts';
+} from '../../../utils/courseEnumLabels.ts';
 
 export interface ReviewCourseCardData {
   readonly id: number | string;

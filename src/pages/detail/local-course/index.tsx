@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import type { CourseDetailResult } from '../../../apis/courses';
 import type { NormalizedApiError } from '../../../apis/common';
@@ -50,8 +50,10 @@ function removePendingId(
 function LocalCourseDetailPage() {
   const { courseId: courseIdParam } = useParams<{ courseId?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { openLoginModal } = useLoginModal();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const parsedCourseId = Number(courseIdParam);
@@ -98,6 +100,19 @@ function LocalCourseDetailPage() {
   }
 
   const handleBack = () => {
+    // 코스 등록·수정 플로우(방문 순서 정하기)를 마치고 넘어온 상세 페이지라면,
+    // 뒤로가기로 그 플로우(장소 선택 등)로 되돌아가지 않고 인기 코스
+    // 목록으로 보낸다.
+    const cameFromCourseCreationFlow = Boolean(
+      (location.state as { fromCourseCreationFlow?: boolean } | null)
+        ?.fromCourseCreationFlow
+    );
+
+    if (cameFromCourseCreationFlow) {
+      navigate('/local-course/popular', { replace: true });
+      return;
+    }
+
     // history.state.idx는 react-router의 브라우저 히스토리 항목 인덱스라,
     // 0이면 이 탭에서 처음 들어온 화면(직접 링크로 진입 등)이라 뒤로 갈
     // 곳이 없다 — 그때만 우리동네 코스 목록으로 대체 이동한다. 그 외에는
@@ -115,7 +130,7 @@ function LocalCourseDetailPage() {
     updater: (courseDetail: CourseDetailResult) => CourseDetailResult
   ) => {
     queryClient.setQueryData<CourseDetailResult>(
-      ['localCourseDetail', courseId],
+      ['localCourseDetail', authGeneration, courseId],
       (current) => (current ? updater(current) : current)
     );
   };

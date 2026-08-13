@@ -12,15 +12,25 @@ export const getRecentSearchLocation = <T extends CityNameOption>(
   keyword: string,
   cities: readonly T[]
 ) => {
+  const [firstToken] = keyword.trim().split(/\s+/);
+  const normalizedCityName = firstToken
+    ? normalizeRegionName(firstToken)
+    : undefined;
   const city = cities.find(
-    (option) => keyword === option.name || keyword.startsWith(`${option.name} `)
+    (option) =>
+      keyword === option.name ||
+      keyword.startsWith(`${option.name} `) ||
+      option.name === normalizedCityName
   );
 
   if (!city) {
     return undefined;
   }
 
-  const district = keyword.slice(city.name.length).trim();
+  const district =
+    keyword === city.name || keyword.startsWith(`${city.name} `)
+      ? keyword.slice(city.name.length).trim()
+      : keyword.trim().split(/\s+/).slice(1).join(' ');
 
   return {
     city,
@@ -38,3 +48,4 @@ export const isKnownRegionPath = (
   district: string | undefined,
   subRegionNames: readonly string[]
 ) => district === undefined || subRegionNames.includes(district);
+import { normalizeRegionName } from '../../../constants/regions.ts';

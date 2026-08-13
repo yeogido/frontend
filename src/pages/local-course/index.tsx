@@ -13,12 +13,9 @@ import { useLoginModal } from '../../hooks/useLoginModal';
 import { useAuthStore } from '../../store/auth.store';
 import {
   useCourseDelete,
-  useMyCourseIds,
   usePopularLocalCourses,
 } from '../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
-import { useEditLocalCourse } from '../../hooks/useEditLocalCourse';
-import { useIsAdmin } from '../../hooks/useMyProfile';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
@@ -34,10 +31,8 @@ import {
 } from './components';
 
 const PAGE_PADDING_X = 24;
-// 버튼(하단 162)~검색창 간격이 눈에 띄게 넓어 보인다는 피드백으로 더
-// 당김 — 히어로 높이(223) 기준으로 이 값만큼 검색창을 곡선 아래쪽에
-// 겹쳐 올린다.
-const PAGE_PADDING_TOP = -30;
+// Figma 검색바 시작점(y=246)에 맞춰 277px 히어로와 31px 겹친다.
+const PAGE_PADDING_TOP = -31;
 const PAGE_PADDING_BOTTOM = 40;
 const SECTION_MARGIN_TOP = 24;
 const LIST_MARGIN_TOP = 12;
@@ -61,10 +56,6 @@ function LocalCoursePage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { openLoginModal } = useLoginModal();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
-    useMyCourseIds();
-  const isAdmin = useIsAdmin();
-  const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
   const {
@@ -195,7 +186,7 @@ function LocalCoursePage() {
               gap: LIST_GAP * scale,
             }}
           >
-            {isPopularCoursesPending || isMyCourseIdsPending
+            {isPopularCoursesPending
               ? Array.from({ length: 1 }, (_, index) => (
                   <div
                     key={index}
@@ -205,7 +196,7 @@ function LocalCoursePage() {
                   </div>
                 ))
               : popularCoursePreviews.map((course) => {
-                  const isMine = isAdmin || myCourseIds.has(course.courseId);
+                  const isMine = course.canManage;
 
                   return (
                     <div
@@ -216,7 +207,9 @@ function LocalCoursePage() {
                         authorAvatarUrl={course.author.profileImageUrl}
                         authorName={course.author.nickname}
                         date={formatCourseCreatedAt(course.createdAt)}
-                        image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                        image={
+                          course.routeImageUrl?.trim() || course.thumbnailUrl
+                        }
                         title={course.title}
                         duration={toDurationLabel(course.durationType)}
                         companion={toCompanionLabel(course.companionType)}
@@ -229,9 +222,6 @@ function LocalCoursePage() {
                             course.courseId,
                             getLiked(course.courseId, course.isLiked)
                           )
-                        }
-                        onEditClick={() =>
-                          void editLocalCourse(course.courseId)
                         }
                         onDeleteClick={() => requestDelete(course.courseId)}
                       />
@@ -317,13 +307,11 @@ function LocalCoursePage() {
                   <CourseCard
                     {...course}
                     liked={getLiked(course.id, course.liked)}
-                    canManage={isAdmin || myCourseIds.has(course.id)}
-                    showEdit
+                    canManage={course.canManage}
                     onClick={() => goToCourseDetail(course.id)}
                     onLikeClick={() =>
                       toggleLike(course.id, getLiked(course.id, course.liked))
                     }
-                    onEditClick={() => void editLocalCourse(course.id)}
                     onDeleteClick={() => requestDelete(course.id)}
                   />
                 </div>

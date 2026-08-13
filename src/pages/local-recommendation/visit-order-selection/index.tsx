@@ -36,7 +36,10 @@ function VisitOrderSelectionPage() {
     const result = await handleRegister();
 
     if (result) {
-      navigate(`/local-course/detail/${result.courseId}`);
+      const detailPath = `/local-course/detail/${result.courseId}`;
+      navigate(detailPath, {
+        state: { fromCourseCreationFlow: true },
+      });
     }
   };
 

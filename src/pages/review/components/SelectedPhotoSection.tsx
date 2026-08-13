@@ -1,7 +1,7 @@
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 
 import PhotoSlot from './PhotoSlot';
-import { MAX_REVIEW_PHOTOS } from '../reviewForm';
+import { MAX_REVIEW_PHOTOS } from '../../../utils/reviewForm';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 34;

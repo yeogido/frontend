@@ -100,6 +100,7 @@ export function mapFestivalDetailDtoToViewModel(
     title: dto.title,
     heroImageUrl: dto.heroImageUrl,
     liked: Boolean(dto.liked),
+    canManage: false,
     tags: dto.tags ?? [],
     overview: dto.overview ?? '',
     address: dto.address,

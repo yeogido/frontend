@@ -8,6 +8,17 @@ const splitRegionPath = (regionPath: string) =>
 export const getRegionSearchKeyword = (regionPath: string) =>
   splitRegionPath(regionPath).at(-1) ?? regionPath;
 
+/** URL에 전달된 지역 ID는 양의 정수일 때만 신뢰한다. */
+export const getExplicitRegionId = (value: string | null) => {
+  if (!value || !/^\d+$/.test(value)) {
+    return undefined;
+  }
+
+  const regionId = Number(value);
+
+  return Number.isSafeInteger(regionId) && regionId > 0 ? regionId : undefined;
+};
+
 /**
  * 검색 응답의 fullName은 정식 행정구역명("부산광역시 중구")인데 URL로 들어오는
  * 지역 경로는 짧은 이름("부산 중구")이라 두 문자열은 그대로 비교되지 않는다.
@@ -19,6 +30,22 @@ const getProvinceName = (fullName: string) => {
   return provinceOfficialName
     ? normalizeRegionName(provinceOfficialName)
     : undefined;
+};
+
+/**
+ * 검색 제안은 동명 지역을 구분하려고 fullName("대전광역시 동구")을 보여주지만,
+ * 최근 검색어와 URL(region=)은 짧은 이름("대전 동구")을 쓴다. 첫 토큰만 짧은
+ * 이름으로 바꿔 표기를 한 형태로 모은다. 그러지 않으면 같은 지역이 두 형태로
+ * 쌓이고, 시/도 이름이 안 맞아 지역 필터로도 해석되지 않는다.
+ */
+export const toShortRegionPath = (regionPath: string) => {
+  const [provinceOfficialName, ...rest] = splitRegionPath(regionPath);
+
+  if (!provinceOfficialName) {
+    return regionPath.trim();
+  }
+
+  return [normalizeRegionName(provinceOfficialName), ...rest].join(' ');
 };
 
 /**

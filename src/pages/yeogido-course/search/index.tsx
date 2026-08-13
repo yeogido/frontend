@@ -16,7 +16,6 @@ import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditCourse } from '../../../hooks/useEditCourse';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useResolvedRegion } from '../../region-info/hooks/useResolvedRegion';
 import {
   addStoredRecentSearch,
@@ -24,6 +23,11 @@ import {
   removeStoredRecentSearch,
 } from '../../../utils/recentSearches';
 import { toContentTagIds } from '../../../utils/contentTags';
+import { getExplicitRegionId } from '../../../utils/regionSearch';
+import {
+  toCompanionLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
 
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
@@ -52,7 +56,6 @@ const recentSearchStorageOptions = {
 
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  대중교통: 'PUBLIC',
   자차: 'CAR',
 };
 
@@ -91,7 +94,6 @@ function YeogidoCourseSearchPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -105,6 +107,7 @@ function YeogidoCourseSearchPage() {
   const keyword = searchParams.get('keyword') ?? '';
   const region = searchParams.get('region') ?? '';
   const subRegion = searchParams.get('subRegion') ?? '';
+  const explicitRegionId = getExplicitRegionId(searchParams.get('regionId'));
   const regionSearchQuery =
     region && subRegion ? `${region} ${subRegion}` : subRegion || region;
   const displaySearchQuery = keyword || regionSearchQuery;
@@ -112,7 +115,7 @@ function YeogidoCourseSearchPage() {
     regionId,
     isPending: isRegionPending,
     isError: isRegionError,
-  } = useResolvedRegion(regionSearchQuery || undefined);
+  } = useResolvedRegion(regionSearchQuery || undefined, explicitRegionId);
   const isRegionSearchReady =
     !regionSearchQuery || (!isRegionPending && !isRegionError);
 
@@ -125,8 +128,11 @@ function YeogidoCourseSearchPage() {
   } = useYeogidoCourseFilters();
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
-    useDistanceSortCoordinates();
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
 
   const {
     data,
@@ -189,6 +195,7 @@ function YeogidoCourseSearchPage() {
       nextSearchParams.set('keyword', trimmedQuery);
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
       setRecentSearchSuggestions(
         addStoredRecentSearch(trimmedQuery, {
           ...recentSearchStorageOptions,
@@ -199,6 +206,7 @@ function YeogidoCourseSearchPage() {
       nextSearchParams.delete('keyword');
       nextSearchParams.delete('region');
       nextSearchParams.delete('subRegion');
+      nextSearchParams.delete('regionId');
     }
 
     setSearchParams(nextSearchParams);
@@ -271,13 +279,16 @@ function YeogidoCourseSearchPage() {
                   />
                 ))
               : yeogidoCourses.map((course) =>
-                  isAdmin ? (
+                  course.canManage ? (
                     <EditableContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={course.region}
+                      secondInfo={toTransportLabel(course.transportType)}
+                      thirdInfo={toCompanionLabel(course.companionType)}
                       tags={toContentTagIds(course.tags)}
                       className="w-full"
                       onClick={() => handleCourseClick(course.courseId)}
@@ -287,10 +298,13 @@ function YeogidoCourseSearchPage() {
                   ) : (
                     <ContentCard
                       key={course.courseId}
-                      image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+                      image={
+                        course.routeImageUrl?.trim() || course.thumbnailUrl
+                      }
                       title={course.title}
                       firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={course.region}
+                      secondInfo={toTransportLabel(course.transportType)}
+                      thirdInfo={toCompanionLabel(course.companionType)}
                       tags={toContentTagIds(course.tags)}
                       liked={getLiked(course.courseId, course.isLiked)}
                       className="w-full"

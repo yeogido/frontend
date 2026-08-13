@@ -76,9 +76,9 @@ export function useEditLocalCourse() {
             imageKey: item.imageKey ?? null,
             imageUrl: item.imageUrl ?? null,
             externalPlaceId: item.externalPlaceId,
-            categoryGroupCode: '',
-            roadAddress: item.roadAddress,
-            lotAddress: item.lotAddress,
+            categoryGroupCode: item.categoryGroupCode,
+            roadAddress: item.roadAddress ?? '',
+            lotAddress: item.lotAddress ?? '',
             latitude: item.latitude,
             longitude: item.longitude,
           });

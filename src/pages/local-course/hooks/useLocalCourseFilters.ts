@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import {
   initialLocalCourseSelectedFilters,
+  localCourseFilterGroups,
   type LocalCourseFilterKey,
   type LocalCourseSelectedFilters,
 } from '../constants/filters';
@@ -10,8 +12,21 @@ function useLocalCourseFilters() {
   const filterContainerRef = useRef<HTMLDivElement | null>(null);
   const [openFilterKey, setOpenFilterKey] =
     useState<LocalCourseFilterKey | null>(null);
-  const [selectedFilters, setSelectedFilters] =
-    useState<LocalCourseSelectedFilters>(initialLocalCourseSelectedFilters);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // 필터를 URL 쿼리 파라미터에 반영해, 상세 페이지에서 뒤로가기로
+  // 돌아왔을 때(컴포넌트가 다시 마운트돼도) 선택값이 유지되게 한다.
+  const selectedFilters = localCourseFilterGroups.reduce(
+    (filters, group) => {
+      const paramValue = searchParams.get(group.key);
+      filters[group.key] =
+        paramValue && (group.options as readonly string[]).includes(paramValue)
+          ? paramValue
+          : initialLocalCourseSelectedFilters[group.key];
+      return filters;
+    },
+    {} as LocalCourseSelectedFilters
+  );
 
   useEffect(() => {
     if (!openFilterKey) {
@@ -43,10 +58,15 @@ function useLocalCourseFilters() {
     filterKey: LocalCourseFilterKey,
     option: string
   ) => {
-    setSelectedFilters((currentFilters) => ({
-      ...currentFilters,
-      [filterKey]: option,
-    }));
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    if (option === initialLocalCourseSelectedFilters[filterKey]) {
+      nextSearchParams.delete(filterKey);
+    } else {
+      nextSearchParams.set(filterKey, option);
+    }
+
+    setSearchParams(nextSearchParams);
     setOpenFilterKey(null);
   };
 

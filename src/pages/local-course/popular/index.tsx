@@ -10,16 +10,16 @@ import {
 } from '../../../components/common';
 import { isExtendedTransportFilterLabel } from '../../../constants/courseFilterLayout';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
-import {
-  useCourseDelete,
-  useCourses,
-  useMyCourseIds,
-} from '../../../hooks/useCourses';
+import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { toContentTagIds } from '../../../utils/contentTags';
+import {
+  toCompanionLabel,
+  toTransportLabel,
+} from '../../../utils/courseEnumLabels';
 
 import { localCourseFilterGroups } from '../constants/filters';
 import { LOCAL_COURSE_SKELETON_ITEMS } from '../constants/ui';
@@ -49,7 +49,6 @@ const LOAD_MORE_HEIGHT = 40;
 
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  대중교통: 'PUBLIC',
   자차: 'CAR',
 };
 
@@ -89,11 +88,9 @@ function LocalCoursePopularPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const { courseIds: myCourseIds, isPending: isMyCourseIdsPending } =
-    useMyCourseIds();
-  const isAdmin = useIsAdmin();
-  const { editLocalCourse } = useEditLocalCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
+  const { editLocalCourse } = useEditLocalCourse();
+  const isAdmin = useIsAdmin();
 
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/local-course/detail/${courseId}`);
@@ -107,8 +104,11 @@ function LocalCoursePopularPage() {
   } = useLocalCourseFilters();
 
   const isDistanceSort = selectedFilters.sort === '거리순';
-  const { coordinates: distanceSortCoordinates, status, requestCoordinates } =
-    useDistanceSortCoordinates();
+  const {
+    coordinates: distanceSortCoordinates,
+    status,
+    requestCoordinates,
+  } = useDistanceSortCoordinates();
 
   const {
     data,
@@ -203,7 +203,7 @@ function LocalCoursePopularPage() {
             rowGap: LIST_GAP * scale,
           }}
         >
-          {isPending || isMyCourseIdsPending
+          {isPending
             ? LOCAL_COURSE_SKELETON_ITEMS.map((item) => (
                 <ContentCardSkeleton
                   key={item}
@@ -212,17 +212,22 @@ function LocalCoursePopularPage() {
                 />
               ))
             : courses.map((course) =>
-                isAdmin || myCourseIds.has(course.courseId) ? (
+                course.canManage ? (
                   <EditableContentCard
                     key={course.courseId}
                     image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={durationLabelByType[course.durationType]}
-                    secondInfo={course.region}
+                    secondInfo={toTransportLabel(course.transportType)}
+                    thirdInfo={toCompanionLabel(course.companionType)}
                     tags={toContentTagIds(course.tags)}
                     className="w-full"
                     onClick={() => handleCourseClick(course.courseId)}
-                    onEdit={() => void editLocalCourse(course.courseId)}
+                    onEdit={
+                      isAdmin
+                        ? undefined
+                        : () => void editLocalCourse(course.courseId)
+                    }
                     onDelete={() => requestDelete(course.courseId)}
                   />
                 ) : (
@@ -231,7 +236,8 @@ function LocalCoursePopularPage() {
                     image={course.routeImageUrl?.trim() || course.thumbnailUrl}
                     title={course.title}
                     firstInfo={durationLabelByType[course.durationType]}
-                    secondInfo={course.region}
+                    secondInfo={toTransportLabel(course.transportType)}
+                    thirdInfo={toCompanionLabel(course.companionType)}
                     tags={toContentTagIds(course.tags)}
                     liked={getLiked(course.courseId, course.isLiked)}
                     className="w-full"

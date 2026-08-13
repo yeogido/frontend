@@ -12,8 +12,8 @@ import {
   useMyProfile,
   useUpdateMyProfile,
 } from '../../hooks/useMyProfile';
-import { useRegion } from '../../hooks/useRegions';
 import { useAuthStore } from '../../store/auth.store';
+import { getFullRegionName } from '../../utils/regionName';
 import {
   ProfileDetailSection,
   ProfilePhotoEditor,
@@ -40,16 +40,14 @@ function ProfilePage() {
   // 인증 사업장이 없으면 빈 배열이 정상 응답이다(404가 아니다).
   // 목록은 businessInfoId 최신순이라 첫 항목이 가장 최근 인증 사업장이다.
   const businesses = data ?? [];
-  const primaryBusiness = businesses[0] ?? null;
   const name =
-    primaryBusiness?.representativeName ??
     profile?.name ??
     (userId ? `회원 #${userId}` : '회원');
-  // GET /regions 목록의 name은 축약형("서울")이라, 풀네임("서울특별시")이
-  // 있는 단건 상세(GET /regions/{id})를 regionId로 조회해서 우선 쓴다.
-  // 아직 로딩 중이거나 목록에 없으면 서버가 준 region 문자열로 대체한다.
-  const { data: selectedRegionDetail } = useRegion(profile?.regionId);
-  const regionName = selectedRegionDetail?.fullName ?? profile?.region;
+  // profile.region은 축약형("서울")으로 내려온다 — 화면에는 정식 명칭으로
+  // 바꿔서 보여준다.
+  const regionName = profile?.region
+    ? getFullRegionName(profile.region)
+    : undefined;
 
   const handleWithdrawalConfirm = async () => {
     try {

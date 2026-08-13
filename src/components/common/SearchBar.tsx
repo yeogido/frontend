@@ -23,12 +23,15 @@ export interface SearchBarProps {
   label?: string;
   suggestions?: readonly string[];
   noResultsText?: string;
+  /** 입력이 비어 있어 최근 검색어만 보여줄 때의 빈 상태 문구. */
+  noRecentSearchText?: string;
   hideEmptySuggestions?: boolean;
   pinnedSuggestion?: {
     label: string;
     onSelect: () => void;
   };
   onRemoveSuggestion?: (suggestion: string) => void;
+  removableSuggestions?: readonly string[];
   className?: string;
   onSearch?: (query: string) => void;
   onQueryChange?: (query: string) => void;
@@ -40,9 +43,11 @@ function SearchBar({
   label = '검색어 입력',
   suggestions = [],
   noResultsText = '검색 결과가 없습니다',
+  noRecentSearchText,
   hideEmptySuggestions = false,
   pinnedSuggestion,
   onRemoveSuggestion,
+  removableSuggestions,
   className = '',
   onSearch,
   onQueryChange,
@@ -288,7 +293,9 @@ function SearchBar({
                       >
                         {suggestion}
                       </button>
-                      {onRemoveSuggestion ? (
+                      {onRemoveSuggestion &&
+                      (!removableSuggestions ||
+                        removableSuggestions.includes(suggestion)) ? (
                         <button
                           type="button"
                           aria-label={`${suggestion} 최근 검색어 삭제`}
@@ -315,7 +322,11 @@ function SearchBar({
                     pinnedSuggestion ? 'rounded-b-xl -mt-px' : 'rounded-xl'
                   }`}
                 >
-                  {noResultsText}
+                  {/* 입력 전에는 최근 검색어 목록이라 '검색 결과 없음'과
+                      다른 문구가 필요하다. */}
+                  {query.trim().length === 0
+                    ? (noRecentSearchText ?? noResultsText)
+                    : noResultsText}
                 </div>
               ) : null}
             </div>

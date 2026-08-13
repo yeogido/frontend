@@ -5,7 +5,6 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useCourseDelete } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useEditCourse } from '../../../hooks/useEditCourse';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
 import { useRecentCourses } from '../../../hooks/useRecentCourses';
 
 import { toRecentCourseCardProps } from './constants/recentCourses';
@@ -25,7 +24,6 @@ function YeogidoCourseRecentPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const { getLiked, toggleLike } = useCourseLikeToggle();
-  const isAdmin = useIsAdmin();
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
@@ -79,7 +77,7 @@ function YeogidoCourseRecentPage() {
                 key={course.id}
                 {...course}
                 liked={getLiked(course.id, course.liked)}
-                canManage={isAdmin}
+                canManage={course.canManage}
                 showEdit
                 onClick={() => handleCourseClick(course.id)}
                 onLikeClick={() =>
