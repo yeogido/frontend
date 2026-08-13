@@ -1,7 +1,9 @@
-// ponytail: the store never persists blob/object URLs (see
-// localRecommendation.store.ts), so a real per-item photo isn't available on
-// this page — every card uses the shared fallback thumbnail. Upgrade path:
-// cache uploaded previews (e.g. keyed by imageKey) if per-item photos matter.
+// ponytail: PLACE images depend on pendingImages/place.imageUrl set at
+// place-selection — a freshly picked place without an uploaded photo yet
+// falls back to the shared thumbnail (store never persists blob/object
+// URLs, see localRecommendation.store.ts). CONTENT (festival) images are
+// persisted as imageSrc from event-selection and only fall back when the
+// API didn't return a thumbnail.
 export type VisitEvent =
   | {
       id: string;

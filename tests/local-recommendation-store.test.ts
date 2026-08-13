@@ -66,7 +66,7 @@ test('persists stable draft data without retaining setter input references', () 
       tag: 'summer',
       title: 'Fireworks',
       address: 'Gwangalli',
-      imageSrc: 'blob:festival-preview',
+      imageSrc: 'https://tong.visitkorea.or.kr/cms/resource/festival.jpg',
     },
   ];
   const places = [
@@ -136,6 +136,7 @@ test('persists stable draft data without retaining setter input references', () 
         tag: 'summer',
         title: 'Fireworks',
         address: 'Gwangalli',
+        imageSrc: 'https://tong.visitkorea.or.kr/cms/resource/festival.jpg',
       },
     ],
     places: [
@@ -144,6 +145,7 @@ test('persists stable draft data without retaining setter input references', () 
         title: 'Beach',
         address: 'Gwangalli',
         imageKey: 'place-image-1',
+        imageUrl: null,
         externalPlaceId: 'kakao-1',
         categoryGroupCode: 'AT4',
         roadAddress: 'Gwangalli Road 1',
@@ -153,7 +155,9 @@ test('persists stable draft data without retaining setter input references', () 
       },
     ],
     visitOrder: ['place-1'],
+    editingCourseId: null,
+    existingThumbnailUrl: null,
   });
   assert.deepEqual(persistedDraft, draft);
-  assert.doesNotMatch(JSON.stringify(persistedDraft), /blob:|imageSrc/);
+  assert.doesNotMatch(JSON.stringify(persistedDraft), /blob:/);
 });

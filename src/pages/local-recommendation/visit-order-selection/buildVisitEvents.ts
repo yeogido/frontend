@@ -31,7 +31,7 @@ export function buildVisitEvents(
     kind: 'CONTENT',
     name: festival.title,
     address: festival.address,
-    imageSrc: fallbackImageSrc,
+    imageSrc: festival.imageSrc ?? fallbackImageSrc,
     contentId: festival.contentId,
   }));
 

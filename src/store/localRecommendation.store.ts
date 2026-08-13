@@ -29,6 +29,7 @@ export interface PersistedSelectedFestival {
   tag: string;
   title: string;
   address: string;
+  imageSrc: string | null;
 }
 
 type PersistedSelectedPlaceInput = PersistedSelectedPlace;
@@ -144,12 +145,13 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
           draft: {
             ...state.draft,
             festivals: festivals.map(
-              ({ id, contentId, tag, title, address }) => ({
+              ({ id, contentId, tag, title, address, imageSrc }) => ({
                 id,
                 contentId,
                 tag,
                 title,
                 address,
+                imageSrc,
               })
             ),
           },

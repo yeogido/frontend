@@ -29,6 +29,10 @@
       "destination": "/api/google-places/image"
     },
     {
+      "source": "/contents/image",
+      "destination": "/api/contents/image"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
