@@ -40,6 +40,7 @@ export async function fetchContentImage(
   try {
     upstream = await fetch(url.toString(), {
       signal: AbortSignal.timeout(IMAGE_PROXY_TIMEOUT_MS),
+      redirect: 'error',
     });
   } catch {
     return { status: 502, contentType: 'text/plain', body: null };
