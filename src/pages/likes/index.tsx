@@ -36,6 +36,7 @@ import {
 } from '../../utils/geolocation';
 
 import {
+  ALL_FILTER_OPTION,
   LIKED_CATEGORY_OPTIONS,
   LIKED_SORT_LATEST,
   LIKED_SORT_OPTIONS,
@@ -43,7 +44,6 @@ import {
   type LikedItemFilterKey,
 } from './constants/filters';
 import useLikedItemFilters from './hooks/useLikedItemFilters';
-import { useLikedEventCategories } from './hooks/useLikedEventCategories';
 import { useLikedItems } from './hooks/useLikedItems';
 import {
   filterLikedItems,
@@ -134,55 +134,42 @@ function LikesPage() {
     [data, unlikedIds]
   );
 
-  const eventIds = useMemo(
-    () =>
-      activeLikedItems.flatMap((item) =>
-        item.category === 'EVENT' ? [item.id] : []
-      ),
-    [activeLikedItems]
-  );
-  const eventCategoryByItemId = useLikedEventCategories(eventIds);
-  const enrichedLikedItems = useMemo(
-    () =>
-      activeLikedItems.map((item) =>
-        item.category === 'EVENT'
-          ? { ...item, detailType: eventCategoryByItemId.get(item.id) ?? null }
-          : item
-      ),
-    [activeLikedItems, eventCategoryByItemId]
-  );
+  const showDetailFilter =
+    selectedFilters.category === ALL_FILTER_OPTION ||
+    selectedFilters.category === '코스';
 
-  const filterGroups = useMemo(
-    () =>
-      [
-        { key: 'category', options: LIKED_CATEGORY_OPTIONS },
-        {
-          key: 'detail',
-          options: getDetailFilterOptions(
-            selectedFilters.category,
-            enrichedLikedItems
-          ),
-        },
-        { key: 'sort', options: LIKED_SORT_OPTIONS },
-      ] as const satisfies readonly {
-        key: LikedItemFilterKey;
-        options: readonly string[];
-      }[],
-    [selectedFilters.category, enrichedLikedItems]
-  );
+  const filterGroups = useMemo(() => {
+    const groups: { key: LikedItemFilterKey; options: readonly string[] }[] = [
+      { key: 'category', options: LIKED_CATEGORY_OPTIONS },
+    ];
+
+    if (showDetailFilter) {
+      groups.push({
+        key: 'detail',
+        options: getDetailFilterOptions(
+          selectedFilters.category,
+          activeLikedItems
+        ),
+      });
+    }
+
+    groups.push({ key: 'sort', options: LIKED_SORT_OPTIONS });
+
+    return groups;
+  }, [selectedFilters.category, activeLikedItems, showDetailFilter]);
 
   const likedItems = useMemo(
     () =>
       sortLikedItems(
         filterLikedItems({
-          items: enrichedLikedItems,
+          items: activeLikedItems,
           categoryLabel: selectedFilters.category,
           detailLabel: selectedFilters.detail,
           keyword,
         }),
         selectedFilters.sort
       ),
-    [enrichedLikedItems, keyword, selectedFilters]
+    [activeLikedItems, keyword, selectedFilters]
   );
   const openingHoursByItemId = usePlaceOpeningHours(
     likedItems.flatMap((item) =>
