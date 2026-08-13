@@ -151,8 +151,10 @@ function EventSelectionPage() {
         onItemRemove={handleRemoveFestival}
         onRemoveAll={handleRemoveAllFestivals}
         onSubmit={() => navigate('/local-recommendation/place-selection')}
-        skipButtonLabel="건너뛰기"
-        onSkip={handleSkip}
+        skipButtonLabel={
+          selectedFestivals.length === 0 ? '건너뛰기' : undefined
+        }
+        onSkip={selectedFestivals.length === 0 ? handleSkip : undefined}
         renderItem={(festival, onItemRemove) => (
           <SelectionResultCard
             key={festival.id}
