@@ -185,10 +185,17 @@ function LikesPage() {
         void goToCourseDetail(item.id);
       } else if (item.category === 'EVENT') {
         navigate(buildFestivalDetailPath(item.id));
-      } else if (item.externalPlaceId) {
-        openKakaoMapPlace(item.externalPlaceId);
+    (item: LikedItem) => {
+      const placeId = item.externalPlaceId?.trim();
+      if (item.category === 'COURSE') {
+        void goToCourseDetail(item.id);
+      } else if (item.category === 'EVENT') {
+        navigate(buildFestivalDetailPath(item.id));
+      } else if (placeId) {
+        openKakaoMapPlace(placeId);
       } else {
         openKakaoMapSearch(`${item.title} ${item.location}`);
+      }
       }
     },
     [goToCourseDetail, navigate]
