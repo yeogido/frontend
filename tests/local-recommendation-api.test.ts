@@ -81,7 +81,14 @@ test('requires at least one place and an address for every place', () => {
 
   assert.match(
     getCourseRequestValidationError(draft, [
-      { id: 'content-1', kind: 'CONTENT', name: 'Festival', address: '', imageSrc: '', contentId: 1 },
+      {
+        id: 'content-1',
+        kind: 'CONTENT',
+        name: 'Festival',
+        address: '',
+        imageSrc: '',
+        contentId: 1,
+      },
     ]) ?? '',
     /장소/
   );
@@ -149,7 +156,12 @@ test('posts the supplied course payload unchanged to /courses', async () => {
 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].path, '/courses');
-  assert.strictEqual(calls[0].body, payload);
+  // createLocalRecommendationWithClient normalizes courseItems(영업 종료
+  // 시각 24:00 -> 23:59 등)를 위해 항상 새 객체를 만들어 보낸다 — 주입된
+  // client가 apiClient가 아니어도(테스트의 fake client처럼) 동작해야 해서
+  // axios 인터셉터에 기대지 않는다. 그래서 참조는 달라지지만 내용은 그대로
+  // 유지되는지를 확인한다.
+  assert.deepStrictEqual(calls[0].body, payload);
   assert.deepEqual(result, { courseId: 123 });
 });
 
