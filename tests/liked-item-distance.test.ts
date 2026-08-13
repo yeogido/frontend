@@ -21,6 +21,7 @@ const place: LikedItem = {
   location: '서울특별시 서초구',
   companion: null,
   distance: 10.53,
+  externalPlaceId: null,
   region: null,
   detailType: null,
   hashtags: [],
