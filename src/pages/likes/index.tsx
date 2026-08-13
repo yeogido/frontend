@@ -181,12 +181,8 @@ function LikesPage() {
 
   const handleCardClick = useCallback(
     (item: LikedItem) => {
-      if (item.category === 'COURSE') {
-        void goToCourseDetail(item.id);
-      } else if (item.category === 'EVENT') {
-        navigate(buildFestivalDetailPath(item.id));
-    (item: LikedItem) => {
       const placeId = item.externalPlaceId?.trim();
+
       if (item.category === 'COURSE') {
         void goToCourseDetail(item.id);
       } else if (item.category === 'EVENT') {
@@ -195,7 +191,6 @@ function LikesPage() {
         openKakaoMapPlace(placeId);
       } else {
         openKakaoMapSearch(`${item.title} ${item.location}`);
-      }
       }
     },
     [goToCourseDetail, navigate]
