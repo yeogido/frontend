@@ -9,6 +9,7 @@ import { useLoginModal } from '../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../store/auth.store';
 import { NotFoundPage } from '../../not-found';
 import { saveRecentCourse } from '../../../utils/recentCourses';
+import { useRemoveDeletedRecentCourse } from '../../../hooks/useRecentCourses';
 import { CourseDetailLayout, DetailStateGuard } from '../components';
 import {
   mapCourseApiDetailToCourseSummary,
@@ -63,7 +64,11 @@ function LocalCourseDetailPage() {
     parsedCourseId > 0
       ? parsedCourseId
       : null;
-  const { data, isError } = useLocalCourseDetail(courseId);
+  const { data, isError, error } = useLocalCourseDetail(courseId);
+
+  // 삭제된 코스로 들어왔다면 최근 본 목록에서도 걷어낸다.
+  useRemoveDeletedRecentCourse(courseId, error);
+
   const likeMutation = useLocalCourseLikeMutation();
   const placeLikeMutation = usePlaceLikeMutation();
   const contentLikeMutation = useContentLikeMutation();
@@ -96,7 +101,12 @@ function LocalCourseDetailPage() {
   }, [data]);
 
   if (courseId === null || isError || (data && !course)) {
-    return <NotFoundPage />;
+    return (
+      <NotFoundPage
+        title="삭제된 코스예요"
+        description="작성자가 삭제했거나 주소가 잘못되었어요."
+      />
+    );
   }
 
   const handleBack = () => {

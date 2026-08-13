@@ -44,6 +44,7 @@ import {
 } from '../../../utils/courseEnumLabels';
 import { buildFestivalCoursesPath } from '../../../utils/routes';
 import { saveRecentCultureContent } from '../../../utils/recentCultureContents';
+import { useRemoveDeletedRecentCultureContent } from '../../../hooks/useRecentCultureContents';
 
 import {
   DetailDescriptionCard,
@@ -119,6 +120,13 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const contentError = isValidContentId
     ? queryError
     : new Error('Invalid content ID');
+
+  // 삭제된 행사로 들어왔다면 최근 본 목록에서도 걷어낸다.
+  useRemoveDeletedRecentCultureContent(
+    isValidContentId ? contentId : null,
+    queryError
+  );
+
   const { getLiked, toggleLike } = useContentLikeToggle();
   const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
     useCourseLikeToggle();
