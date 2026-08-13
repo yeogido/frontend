@@ -1,14 +1,17 @@
 import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-import { useAuthStore } from '../../store/auth.store';
+import { useAuthStore } from '../../store/auth.store.ts';
 import type { LoginResult } from '../../types/auth.type';
 
-import { normalizeApiError } from './apiError';
+import { normalizeApiError } from './apiError.ts';
 import type { ApiResponse } from './apiTypes';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  // import.meta.env는 Vite가 주입한다 — node --test로 이 파일을 거쳐가는
+  // 테스트를 돌릴 땐 그 자체가 undefined라 옵셔널 체이닝 없이는 모듈
+  // 평가 시점(위 axios.create 호출)에 바로 TypeError가 난다.
+  baseURL: import.meta.env?.VITE_API_BASE_URL,
   timeout: 10_000,
   withCredentials: true,
   headers: {
@@ -58,8 +61,14 @@ function normalizeCourseOperatingDaysForRequest(data: unknown): unknown {
     courseItems: payload.courseItems.map((courseItem) => {
       if (!courseItem || typeof courseItem !== 'object') return courseItem;
 
-      const placeItem = courseItem as { type?: unknown; operatingDays?: unknown };
-      if (placeItem.type !== 'PLACE' || !Array.isArray(placeItem.operatingDays)) {
+      const placeItem = courseItem as {
+        type?: unknown;
+        operatingDays?: unknown;
+      };
+      if (
+        placeItem.type !== 'PLACE' ||
+        !Array.isArray(placeItem.operatingDays)
+      ) {
         return courseItem;
       }
 
