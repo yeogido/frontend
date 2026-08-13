@@ -59,8 +59,7 @@ function SelectedItemsSheet<T>({
   renderItem,
 }: SelectedItemsSheetProps<T>) {
   const scale = useGlobalScale();
-  const actionHeight = 
-    SUBMIT_BUTTON_HEIGHT * scale;
+  const actionHeight = SUBMIT_BUTTON_HEIGHT * scale;
   const sheetRef = useRef<SheetRef>(null);
   const fallbackSheetY = useMotionValue(0);
   const [sheetY, setSheetY] = useState(fallbackSheetY);
@@ -187,6 +186,13 @@ function SelectedItemsSheet<T>({
           </Sheet.Scroller>
         </Sheet.Content>
 
+        {/* footer는 sheet가 접혀 있어도 항상 화면에 붙어 있도록
+            footerY(-sheetY)로 컨테이너의 이동을 상쇄한다. 그런데 바로 위
+            Sheet.Content(선택 목록)는 이 상쇄를 받지 않고 원래 자리에 그대로
+            있어서, 접힌 상태에서는 목록의 남은 부분이 이 footer 영역과 같은
+            화면 위치에 겹친다. footer 자체는 배경이 없어(버튼 바깥 여백,
+            건너뛰기 텍스트 주변) 그 겹친 목록이 그대로 비쳐 보였다 — bg로
+            막아서 뒤에 있는 목록을 가린다. */}
         <motion.div
           style={{
             y: footerY,
@@ -197,7 +203,7 @@ function SelectedItemsSheet<T>({
               FOOTER_PADDING_BOTTOM * scale
             }px, env(safe-area-inset-bottom, 0px))`,
           }}
-          className="shrink-0"
+          className="bg-background shrink-0"
         >
           <button
             type="button"
