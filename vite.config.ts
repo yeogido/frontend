@@ -156,32 +156,29 @@ function contentsDevPlugin(): Plugin {
   return {
     name: 'contents-image-dev-api',
     configureServer(server) {
-      server.middlewares.use(
-        '/contents/image',
-        async (request, response) => {
-          if (request.method !== 'GET') {
-            response.statusCode = 405;
-            response.end();
-            return;
-          }
-
-          const targetUrl = new URL(
-            request.url ?? '',
-            'http://localhost'
-          ).searchParams.get('url');
-
-          if (!targetUrl) {
-            response.statusCode = 400;
-            response.end();
-            return;
-          }
-
-          const result = await fetchContentImage(targetUrl);
-          response.statusCode = result.status;
-          response.setHeader('content-type', result.contentType);
-          response.end(result.body ? Buffer.from(result.body) : undefined);
+      server.middlewares.use('/contents/image', async (request, response) => {
+        if (request.method !== 'GET') {
+          response.statusCode = 405;
+          response.end();
+          return;
         }
-      );
+
+        const targetUrl = new URL(
+          request.url ?? '',
+          'http://localhost'
+        ).searchParams.get('url');
+
+        if (!targetUrl) {
+          response.statusCode = 400;
+          response.end();
+          return;
+        }
+
+        const result = await fetchContentImage(targetUrl);
+        response.statusCode = result.status;
+        response.setHeader('content-type', result.contentType);
+        response.end(result.body ? Buffer.from(result.body) : undefined);
+      });
     },
   };
 }
@@ -209,10 +206,7 @@ export default defineConfig(({ mode }) => {
             Authorization: `KakaoAK ${env.KAKAO_REST_API_KEY}`,
           },
           rewrite: (path) =>
-            path.replace(
-              /^\/kakao-maps\/static-map/,
-              '/v2/maps/staticmap'
-            ),
+            path.replace(/^\/kakao-maps\/static-map/, '/v2/maps/staticmap'),
         },
         '/kakao-routing/car': {
           target: 'https://apis-navi.kakaomobility.com',

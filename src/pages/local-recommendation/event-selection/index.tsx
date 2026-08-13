@@ -22,9 +22,8 @@ function EventSelectionPage() {
     (state) => state.setFestivals
   );
   const [query, setQuery] = useState('');
-  const [selectedFestivals, setSelectedFestivals] = useState<FestivalItem[]>(
-    () => draftFestivals.map((festival) => ({ ...festival, imageSrc: null }))
-  );
+  const [selectedFestivals, setSelectedFestivals] =
+    useState<FestivalItem[]>(draftFestivals);
 
   const trimmedQuery = query.trim();
   const [debouncedQuery, setDebouncedQuery] = useState(trimmedQuery);
