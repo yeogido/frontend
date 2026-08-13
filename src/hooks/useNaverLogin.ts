@@ -23,22 +23,17 @@ export function useNaverLogin() {
 
       await loadNaverAuthSdk();
 
-      // authorize()는 이미 동의한 사용자에겐 네이버 동의 화면을 건너뛰고
-      // 곧장 콜백으로 리다이렉트해버려서, 매번 동의 화면을 다시 띄우려면
-      // reprompt()를 써야 한다. reprompt()는 내부적으로 로그인 상태를
-      // 초기화하는 loginStatus를 참조하는데, 이건 init()에서만
-      // 만들어지므로 반드시 init()을 먼저 호출해야 한다(SDK 소스 확인함:
-      // init()은 로그인 버튼 DOM을 찾아 붙이는 코드도 같이 돌지만,
-      // loginButton 옵션을 안 넘겨서 그 경로는 전부 null 가드로 스킵된다).
-      // 둘 다 페이지를 이동시키는 리다이렉트라 Promise/팝업 반환은 없다.
+      // authorize()는 페이지를 이동시키는 리다이렉트라 Promise/팝업
+      // 반환은 없다. 이미 동의한 사용자는 네이버 동의 화면을 건너뛰고
+      // 곧장 콜백으로 리다이렉트된다(카카오 authorize()와 동일한 기본
+      // 동작).
       const naverLogin = new window.naver!.LoginWithNaverId({
         clientId: NAVER_CLIENT_ID,
         callbackUrl: getNaverCallbackUrl(),
         isPopup: false,
       });
 
-      naverLogin.init();
-      naverLogin.reprompt();
+      naverLogin.authorize();
     } catch (error) {
       setIsLoading(false);
       throw error;
