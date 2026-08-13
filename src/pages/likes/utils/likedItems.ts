@@ -3,6 +3,7 @@ import {
   LIKED_SORT_LATEST,
   likedCategoryByLabel,
 } from '../constants/filters.ts';
+import { festivalCategoryOptions } from '../../festival/constants/filters';
 import {
   toCompanionLabel,
   toDurationLabel,
@@ -57,8 +58,8 @@ const normalizeSearchText = (text: string) => text.replace(/\s/g, '');
 
 /**
  * 2번째 필터 옵션. '코스'는 좋아요한 코스의 지역을 동적으로 채운다.
- * '행사'/'장소'는 좋아요 목록 응답에 분류 값(detailType)이 없어 고를 수 있는 게
- * '전체'뿐이다. 서버가 분류를 내려주면 그때 옵션을 되살린다.
+ * '행사'는 체험/전시/공연/축제 고정 분류(festivalCategoryOptions)를 쓴다.
+ * '장소'는 좋아요 목록 응답에 분류 값(detailType)이 없어 '전체'뿐이다.
  */
 export function getDetailFilterOptions(
   categoryLabel: string,
@@ -72,6 +73,10 @@ export function getDetailFilterOptions(
     );
 
     return [ALL_FILTER_OPTION, ...new Set(likedRegions)];
+  }
+
+  if (category === 'EVENT') {
+    return festivalCategoryOptions.map((option) => option.label);
   }
 
   return [ALL_FILTER_OPTION];

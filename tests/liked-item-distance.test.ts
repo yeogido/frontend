@@ -56,9 +56,18 @@ test('코스 카드에는 거리 줄이 없다', () => {
   assert.equal(toLikedItemInfoLines(course).distanceInfo, undefined);
 });
 
-test('행사/장소는 서버가 분류를 안 주므로 2번째 필터에 "전체"만 남는다', () => {
-  assert.deepEqual(getDetailFilterOptions('행사', [place]), ['전체']);
+test('장소는 서버가 분류를 안 주므로 2번째 필터에 "전체"만 남는다', () => {
   assert.deepEqual(getDetailFilterOptions('장소', [place]), ['전체']);
+});
+
+test('행사는 체험/전시/공연/축제 고정 분류를 2번째 필터로 보여준다', () => {
+  assert.deepEqual(getDetailFilterOptions('행사', [place]), [
+    '전체',
+    '체험',
+    '전시',
+    '공연',
+    '축제',
+  ]);
 });
 
 test('코스는 좋아요한 코스의 지역으로 2번째 필터를 채운다', () => {
