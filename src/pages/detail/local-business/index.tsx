@@ -281,6 +281,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                 address={businessDetail.address}
                 hours={businessDetail.hours}
                 liked={likedOverride ?? businessDetail.liked}
+                relaxedSpacing
                 onLikeClick={() => void handleFavoriteToggle()}
                 onClick={
                   isValidGeoPoint(businessDetail.location)
