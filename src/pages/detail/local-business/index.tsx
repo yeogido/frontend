@@ -258,6 +258,22 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                 <BaseKakaoMap
                   center={businessDetail.location}
                   markers={[businessDetail.location]}
+                  imageMarkers={
+                    businessDetail.heroImageUrl
+                      ? [
+                          {
+                            location: businessDetail.location,
+                            imageUrl: businessDetail.heroImageUrl,
+                          },
+                        ]
+                      : []
+                  }
+                  onMarkerClick={() =>
+                    openKakaoMapRoute(
+                      businessDetail.title,
+                      businessDetail.location
+                    )
+                  }
                 />
               ) : (
                 <div

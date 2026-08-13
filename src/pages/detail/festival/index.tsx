@@ -365,7 +365,23 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
 
               <div style={{ marginTop: MAP_MARGIN_TOP * scale }}>
                 {mapCenter ? (
-                  <BaseKakaoMap center={mapCenter} markers={[mapCenter]} />
+                  <BaseKakaoMap
+                    center={mapCenter}
+                    markers={[mapCenter]}
+                    imageMarkers={
+                      festivalDetail.place.image
+                        ? [
+                            {
+                              location: mapCenter,
+                              imageUrl: festivalDetail.place.image,
+                            },
+                          ]
+                        : []
+                    }
+                    onMarkerClick={() =>
+                      openKakaoMapRoute(festivalDetail.place.name, mapCenter)
+                    }
+                  />
                 ) : (
                   <div
                     role="status"
