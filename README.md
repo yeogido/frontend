@@ -2,18 +2,70 @@
 
 ## 프로젝트 소개
 
-**여기도**는 사용자가 지역별 장소와 코스를 탐색하고, 추천 코스와 방문 기록을 작성할 수 있는 웹 서비스입니다.
+**여기도**는 전국의 추천 코스와 지역 축제·문화행사, 동네 소상공인 정보를 한곳에서 탐색하고, 직접 다녀온 곳을 기록으로 남길 수 있는 여행 서비스입니다.
 
-주요 기능:
+"어디로 여행 갈지 정하기부터, 다녀와서 기록을 남기기까지"의 흐름을 하나의 앱에서 해결하는 것을 목표로 합니다.
 
-- 장소 탐색 및 검색
-- 지역/카테고리 필터
-- 지도 기반 장소 확인
-- 장소 및 코스 상세 조회
-- 코스 등록
-- 방문 기록 작성
-- 로그인/회원가입
-- 마이페이지
+- **어떤 서비스인가** — 관리자가 큐레이션한 전국 단위 추천 코스("여기도 추천 코스")와, 실제 그 동네에 사는 사용자가 직접 등록한 코스("우리동네 추천 코스")를 함께 보여주고, 지역 축제·문화행사 및 동네 소상공인 홍보 정보까지 지도 기반으로 탐색할 수 있는 서비스입니다.
+- **어떤 문제를 해결하는가** — 여행 정보가 코스/행사/맛집 등 여러 채널에 흩어져 있는 문제를, 한 코스 안에 방문 장소·인근 행사·이동 시간까지 묶어서 보여주는 방식으로 해결합니다. 또한 공공데이터(한국관광공사 문화콘텐츠)를 관리자가 수동으로 하나씩 등록하지 않고 동기화 후 검수·게시하는 파이프라인으로 콘텐츠 최신성을 유지합니다.
+- **핵심 기능**
+  - 여기도 추천 코스(공식) / 우리동네 추천 코스(사용자 등록) 탐색·등록·후기
+  - 지역 축제·문화행사 탐색 및 한국관광공사 콘텐츠 동기화·관리자 게시
+  - 동네 소상공인 홍보 게시물 탐색 및 등록(사업자 인증 필요)
+  - 여행 기록(방문 지역·날짜·사진·스티커 꾸미기)과 대한민국 지도 위 시각화
+  - 카카오/네이버 소셜 로그인, 코스·행사·소상공인 통합 마이페이지(내가 쓴 글, 좋아요, 리뷰)
+  - 관리자 전용 콘텐츠 관리(코스·행사 등록/수정/삭제, 관광공사 콘텐츠 동기화·검수)
+
+---
+
+## 주요 기능
+
+실제 코드(`src/pages`, `src/hooks`, `src/apis`)에 구현되어 있는 기능만 정리했습니다.
+
+### 사용자 기능
+
+- **회원가입 / 로그인**: 이메일(이메일 인증코드 확인 후 가입) / 카카오 OAuth / 네이버 OAuth 3가지 방식 지원. 소셜 로그인은 신규 사용자면 프로필 완성 화면(`/signup/kakao`, `/signup/naver`)으로 이동합니다. 비밀번호 찾기(이메일 인증 → 재설정)도 지원합니다.
+- **로그인 유도 모달**: 비로그인 상태로 좋아요·리뷰 작성 등 인증이 필요한 동작을 하면 즉시 로그인 페이지로 보내는 대신 로그인 유도 모달을 띄웁니다.
+- **마이페이지**: 프로필 조회/수정(닉네임·지역·출생연도·프로필 사진), 인증된 소상공인 목록 확인, 회원 탈퇴.
+- **내가 등록한 게시물(`/my-posts`)**: 내가 쓴 코스·리뷰·(사업자라면) 홍보 게시물을 한 화면에서 검색·정렬해서 보고 수정/삭제.
+- **좋아요(`/likes`)**: 코스·행사·장소(소상공인) 좋아요 목록을 카테고리별로 모아보고, 거리순 정렬(현재 위치 기반) 및 해제.
+- **리뷰**: 코스에 별점+사진+텍스트 리뷰 작성(`/review`), 코스 상세의 리뷰 미리보기/전체보기(`/yeogido-course/detail/:id/reviews` 등), 사이트 전체 최근 리뷰 피드(`/recent-review-courses`), 리뷰 수정/삭제.
+- **검색**: 코스·행사 각각의 검색 페이지, 지역 검색(`/course-region-search`)에서 최근 검색어·인기 지역 제안.
+- **지역 탐색(`/region-info/:region`)**: 지역별 추천 코스(공식/우리동네), 진행 중인 행사, 리뷰를 모아 보여주는 지역 허브 페이지.
+- **온보딩**: 첫 방문 시 4장짜리 슬라이드 모달로 추천 코스/우리동네 코스/여행 기록/지도 기능을 소개("다시 보지 않기" 지원).
+
+### 코스 (여기도 추천 코스 / 우리동네 추천 코스)
+
+- **탐색**: `/yeogido-course`(공식)와 `/local-course`(사용자 등록) 각각 홈·인기·최신·검색 화면 제공. 이동수단(도보/자차)·기간(당일치기~3박 이상)·동행(혼자/친구/연인/가족/반려동물)·정렬(추천순·인기순·최신순·저장순·후기순·거리순) 필터를 URL 쿼리에 유지하며 무한 스크롤로 조회.
+- **상세**: 코스 대표 이미지, 코스 정보 배지(기간/이동수단/동행), 코스 소개, 방문 순서대로 이어진 카카오맵 경로, 정류지 목록(장소+행사 혼합, 각 정류지 영업시간과 이전 정류지로부터의 이동 시간 자동차/대중교통 표시), 리뷰 미리보기, 좋아요/공유/수정(작성자·관리자).
+- **등록**: 우리동네 코스는 일반 로그인 사용자가 지역 선택 → 기본정보 → 대표사진/키워드 → 행사 추가(선택) → 장소 추가(사진 필수) → 방문 순서 드래그 정렬(dnd-kit) 순으로 등록하며, 방문 순서를 기준으로 카카오 정적 지도 위에 경로선+장소 사진 마커를 합성한 코스 대표 이미지를 자동 생성합니다. 여기도(공식) 코스는 관리자가 동일한 흐름을 `/admin/course-registration/**`에서 진행합니다.
+- **수정/삭제/좋아요**: 작성자 본인(우리동네) 또는 관리자(여기도)가 등록 마법사로 재진입해 수정, 확인 다이얼로그를 거쳐 삭제, 목록 어디서든 좋아요 토글 가능.
+
+### 문화콘텐츠 / 행사
+
+- **탐색**: `/festival` 홈(배너, 진행 중 행사·최근 본 행사 미리보기), `/festival/ongoing`(진행 중), `/festival/recent`(최근 본), `/festival/search`(키워드/지역 검색). 카테고리(체험/전시/공연/축제)·정렬(추천순/저장순/거리순/종료임박순) 필터.
+- **상세**: 행사 소개, 주소·기간·연락처·홈페이지, 카카오맵, 행사 장소 카드(영업시간·좋아요·길찾기), 이 행사가 포함된 코스 미리보기 및 전체보기(`/festival/detail/:id/courses`), 공유·좋아요·관리자 수정/삭제.
+- **관리자 행사 등록**: `/admin/event-registration/**`에서 장소 선택 → 기본정보(기간·연락처·홈페이지) → 대표사진/키워드/카테고리 순으로 등록·수정.
+- **한국관광공사 콘텐츠 동기화 및 승인·게시**: 관리자 홈(`/admin`)에서 "지금 동기화" 버튼으로 관광공사 문화콘텐츠를 동기화하면 신규 콘텐츠가 `PENDING` 상태로 저장되고, "검토 대기 콘텐츠" 목록에서 제목·설명·카테고리·해시태그·추천 우선순위를 검수/수정해 게시(`PUBLISHED`)할 수 있습니다.
+
+### 소상공인
+
+- **탐색(`/local-business`)**: 전국/지역별 소상공인 홍보 게시물을 지역 캐러셀·카테고리 칩·정렬·그리드/리스트 보기로 탐색, 좋아요 및 작성자 본인 수정/삭제.
+- **상세(`/local-business/detail/:id`)**: 사진 캐러셀, 소개글, 주소·영업시간·연락처·SNS, 카카오맵, 좋아요/공유.
+- **홍보 게시물 등록/수정**: 사업자 인증(`/business-verification`, 사업자등록증 업로드 + 국세청 진위 확인으로 `BUSINESS` 권한 획득)을 마친 사용자만 `/business-promotion-registration`에서 보유 사업장 선택 → 소개·영업시간·연락처 입력 → 사진/키워드/카테고리 등록 순으로 게시물을 만들고 수정할 수 있습니다.
+
+### 지도 / 여행 기록
+
+- **대한민국 지역 지도**: D3(d3-geo/d3-selection/d3-zoom) 기반 커스텀 SVG 지도로 시/도·시/군/구 경계와 독도를 그리고 확대/축소·클릭 상호작용을 제공하며(`src/pages/home/map`), 홈 화면과 여행 기록의 "여행 지도" 탭에서 재사용됩니다.
+- **여행 기록**: `/travel-record`에서 "여행 폴더"(연도 필터 그리드)와 "여행 지도"(지역별 방문 사진 마커) 두 보기 전환. 기록 작성은 지역 선택 → 날짜 선택 → 사진 업로드 → 스티커로 폴더 커버 꾸미기(최대 10개, 카테고리별 스티커 + 커스텀 스티커 업로드) 순의 4단계이며, 동일한 화면으로 수정도 가능합니다. 상세 화면은 사진을 스와이프로 넘겨보고 수정/삭제할 수 있습니다.
+- **길찾기/이동시간**: 코스·행사·장소 상세에서 카카오맵 길찾기 딥링크 연결, 코스 정류지 간 자동차(카카오모빌리티)·대중교통(ODsay) 이동 시간을 함께 표시합니다.
+
+### 관리자
+
+- **관리자 로그인/권한**: 일반 로그인 후 서버가 내려주는 역할(`role: ADMIN`)로 관리자 전용 라우트(`AdminRoute`)에 접근할 수 있고, 관리자 전용 사이드바 메뉴가 노출됩니다.
+- **콘텐츠 관리**: 진행 중/최근 행사 및 인기/최근 코스를 관리자 화면(`/admin`, `/admin/festivals/*`, `/admin/courses/*`)에서 그리드로 보고 바로 수정/삭제.
+- **추천코스·추천행사 등록**: `/admin/course-registration/**`, `/admin/event-registration/**` 다단계 마법사로 공식 코스·행사를 신규 등록/수정(코스는 방문 순서 기반 지도 경로 이미지 자동 생성 포함).
+- **한국관광공사 콘텐츠 동기화 및 승인/게시**: 위 "문화콘텐츠 / 행사" 항목 참고 — 동기화·검토 대기 목록·게시가 모두 관리자 홈에서 이뤄집니다.
 
 ---
 
@@ -32,24 +84,21 @@
 
 담당 업무:
 
-- 프로젝트 기본 구조 관리
-- 라우팅 설정
-- 공통 레이아웃 구현
-- 공통 UI 컴포넌트 구현
-- 홈 화면 구현
-- 전역 UI 상태 관리
+- 프로젝트 기본 구조 관리, 라우팅 설정
+- 공통 레이아웃 및 공통 UI 컴포넌트 구현
+- 홈 화면(지도/행사/코스/리뷰/광고 섹션, 온보딩) 구현
+- 전역 UI 상태(토스트 등) 관리
 
 담당 파일:
 
 ```txt
+pages/home
 components/common
 components/layout
 components/ui
-components/home
-pages/HomePage
+components/toast
 router
 styles
-store/ui.store.ts
 ```
 
 ### B. 인증 + 유저 + 기록
@@ -58,25 +107,24 @@ store/ui.store.ts
 
 담당 업무:
 
-- 로그인
-- 회원가입
-- 프로필 설정
-- 마이페이지
-- 방문 기록 목록
-- 방문 기록 작성
+- 로그인(이메일/카카오/네이버), 회원가입, 비밀번호 찾기
+- 프로필 조회/수정, 마이페이지
+- 여행 기록(폴더 생성·수정, 스티커 꾸미기) 목록/상세
 
 담당 파일:
 
 ```txt
-components/auth
-components/record
 pages/auth
-pages/mypage
-pages/records
+pages/profile
+pages/travel-record
+components/auth
+components/sticker
 store/auth.store.ts
+store/travelRecordSession.store.ts
 apis/auth.api.ts
-apis/user.api.ts
-apis/record.api.ts
+apis/users.api.ts
+apis/travelRecords.api.ts
+apis/stickers.api.ts
 ```
 
 ### C. 장소 탐색 + 검색 + 필터 + 지도
@@ -85,22 +133,26 @@ apis/record.api.ts
 
 담당 업무:
 
-- 장소 목록
-- 장소 검색
-- 지역 필터
-- 카테고리 필터
-- 지도 화면
-- 장소 좋아요
+- 소상공인 탐색/상세/홍보 게시물 등록, 사업자 인증
+- 지역 검색, 지역 정보(지역 허브) 페이지
+- 카카오맵 연동, 지오코딩·이동시간(카카오모빌리티/ODsay) 조회
 
 담당 파일:
 
 ```txt
-components/place
-pages/places
-store/placeFilter.store.ts
-apis/place.api.ts
-hooks/usePlaces.ts
-types/place.type.ts
+pages/local-business
+pages/business-promotion-registration
+pages/business-verification
+pages/course-region-search
+pages/region-info
+components/kakaomap
+apis/business-promotions.api.ts
+apis/regions.api.ts
+apis/kakaoGeocode.ts
+apis/kakaoRouteDuration.ts
+apis/odsayTransitDuration.ts
+apis/googlePlacesHours.ts
+apis/googlePlacesPhoto.ts
 ```
 
 ### D. 코스/장소 상세 + 코스 등록
@@ -109,109 +161,136 @@ types/place.type.ts
 
 담당 업무:
 
-- 장소 상세
-- 코스 목록
-- 코스 상세
-- 코스 생성
-- 코스에 장소 추가
-- 사진 및 해시태그 등록
+- 코스(여기도/우리동네)·행사 목록, 상세, 등록/수정/삭제
+- 리뷰 작성/조회, 좋아요, 내가 등록한 게시물
+- 관리자 전용 콘텐츠 관리 및 한국관광공사 콘텐츠 동기화·게시
 
 담당 파일:
 
 ```txt
-components/course
-pages/courses
-pages/places/PlaceDetailPage
-store/courseCreate.store.ts
-apis/course.api.ts
-apis/image.api.ts
-hooks/useCourses.ts
-types/course.type.ts
+pages/yeogido-course
+pages/local-course
+pages/local-recommendation
+pages/festival
+pages/detail
+pages/review
+pages/likes
+pages/my-posts
+pages/admin
+apis/courses.api.ts
+apis/localRecommendations.ts
+apis/contents.api.ts
+apis/tourContents.api.ts
+apis/reviews.api.ts
+apis/likes.api.ts
 ```
 
 ---
 
 ## 기술 스택
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Router DOM
-- TanStack React Query
-- Zustand
-- React Hook Form
-- Zod
-- Axios
-- ESLint
-- Prettier
+**코어**
+
+- React 19 / TypeScript / Vite
+- React Router DOM v7 (라우팅)
+- Tailwind CSS v4 (스타일링, `@tailwindcss/vite` 플러그인)
+
+**상태/데이터**
+
+- Zustand (클라이언트 전역 상태)
+- TanStack React Query (서버 상태·캐싱)
+- Axios (HTTP 클라이언트, 인증 인터셉터 포함)
+- React Hook Form + Zod (폼 상태/유효성 검증)
+
+**UI/인터랙션**
+
+- react-icons (아이콘)
+- motion (애니메이션)
+- react-modal-sheet (바텀 시트)
+- @dnd-kit/core, @dnd-kit/sortable (드래그앤드롭 — 코스 방문 순서 정렬, 스티커 배치)
+- d3-geo, d3-selection, d3-zoom (대한민국 지도 시각화)
+- immer (불변 상태 업데이트 보조)
+
+**지도/외부 API 연동**
+
+- Kakao Maps JavaScript SDK, Kakao 로컬/모빌리티 REST API (지도, 지오코딩, 길찾기)
+- Google Places API (영업시간·사진 조회)
+- ODsay 대중교통 API (대중교통 소요시간)
+- Vercel Serverless Functions (`api/`) — 위 REST API 키를 서버에서만 보관하고 프록시
+
+**인증**
+
+- 카카오/네이버 OAuth SDK, jwt-decode
+
+**품질/도구**
+
+- ESLint, Prettier(+ prettier-plugin-tailwindcss), Stylelint
+- Node.js 내장 테스트 러너(`node --test`)
 - pnpm
+- Vercel (배포)
 
 ---
 
-## 폴더 구조
+## 프로젝트 구조
+
+실제 `src` 디렉토리 구성을 기준으로 작성했습니다. 각 `pages/*` 하위는 대부분 `index.tsx`(진입점) + `components/`(페이지 전용 컴포넌트) + `hooks/`(페이지 전용 훅) 구조를 따릅니다.
 
 ```text
-
-📂 폴더 구조 (Directory Structure)
-📦 src
-┣ 📂 apis                          # API 통신 관련 설정 및 도메인별 API 함수
-┃ ┣ 📜 axios.ts                    # Axios 인스턴스 및 인터셉터 설정
-┃ ┣ 📜 auth.api.ts                 # 인증 관련 API
-┃ ┣ 📜 user.api.ts                 # 사용자 정보 관련 API
-┃ ┣ 📜 place.api.ts                # 장소 관련 API
-┃ ┣ 📜 course.api.ts               # 로컬 코스 관련 API
-┃ ┣ 📜 record.api.ts               # 방문 기록 관련 API
-┃ ┗ 📜 image.api.ts                # 이미지 업로드 및 처리 API
-┃
-┣ 📂 pages                         # 페이지 단위 (라우트 기준)
-┃ ┣ 📂 home                        # 메인(Home) 페이지
-┃ ┃ ┣ 📜 index.tsx                 # 메인 페이지 진입점
-┃ ┃ ┣ 📂 components                # 메인 페이지에서만 사용하는 컴포넌트
-┃ ┃ ┗ 📂 hooks                     # 메인 페이지 전용 커스텀 훅
-┃ ┃
-┃ ┣ 📂 auth                        # 인증(로그인, 회원가입) 페이지
-┃ ┃ ┣ 📜 index.tsx                 # 인증 페이지 진입점
-┃ ┃ ┣ 📂 components                # 로그인/회원가입 UI 컴포넌트
-┃ ┃ ┗ 📂 hooks                     # 인증 관련 커스텀 훅
-┃ ┃
-┃ ┣ 📂 local-course                # 로컬 코스 탐색 및 생성 페이지
-┃ ┃ ┣ 📜 index.tsx                 # 로컬 코스 페이지 진입점
-┃ ┃ ┣ 📂 components                # 로컬 코스 전용 컴포넌트
-┃ ┃ ┗ 📂 hooks                     # 로컬 코스 관련 커스텀 훅
-┃ ┃
-┃ ┗ 📂 not-found                   # 404(Not Found) 페이지
-┃   ┗ 📜 index.tsx                 # 존재하지 않는 경로 접근 시 표시되는 페이지
-┃
-┣ 📂 components                    # 여러 페이지에서 공통으로 사용하는 UI 컴포넌트
-┃ ┣ 📂 common                      # Button, Input, Card 등 범용 컴포넌트
-┃ ┣ 📂 layout                      # Header, Footer, Navigation 등 레이아웃 컴포넌트
-┃ ┣ 📂 ui                          # Modal, Toast, Spinner 등 기본 UI 요소
-┃ ┗ 📂 icons                       # SVG 및 아이콘 컴포넌트
-┃
-┣ 📂 hooks                         # 여러 페이지에서 재사용되는 공통 커스텀 훅
-┃ ┣ 📜 useAuth.ts                  # 인증 관련 로직
-┃ ┣ 📜 useLocalStorage.ts          # LocalStorage 관리
-┃ ┣ 📜 useModal.ts                 # 모달 상태 관리
-┃ ┗ 📜 useDebounce.ts              # 디바운싱 처리
-┃
-┣ 📂 store                         # 전역 상태 관리 (Zustand)
-┃ ┣ 📜 auth.store.ts               # 로그인 및 사용자 상태 관리
-┃ ┣ 📜 course.store.ts             # 로컬 코스 관련 상태 관리
-┃ ┗ 📜 ui.store.ts                 # 모달, 토스트 등 UI 상태 관리
-┃
-┣ 📂 types                         # 공통 TypeScript 타입 및 인터페이스 정의
-┃ ┣ 📜 auth.type.ts
-┃ ┣ 📜 user.type.ts
-┃ ┣ 📜 course.type.ts
-┃ ┣ 📜 place.type.ts
-┃ ┣ 📜 record.type.ts
-┃ ┗ 📜 api.type.ts                 # 공통 API 응답 및 에러 타입
-┃
-┗ 📂 utils                         # 공통 유틸리티 함수
-  ┣ 📜 constants.ts                # 상수 정의
-  ┣ 📜 formatDate.ts               # 날짜 포맷 함수
-  ┗ 📜 validation.ts               # 입력값 검증 함수
+📦 (repo root)
+┣ 📂 api                           # Vercel 서버리스 함수 — 카카오맵/카카오모빌리티/카카오로컬/구글플레이스/ODsay 프록시(REST 키를 서버에서만 보관)
+┣ 📂 tests                         # node:test 기반 유닛 테스트 (60여 개, utils/mapper/hook 로직 중심)
+┗ 📂 src
+  ┣ 📂 apis                        # 도메인별 API 함수
+  ┃ ┣ 📂 common                    # 공용 axios 인스턴스, 응답 언랩/에러 정규화, 토큰 재발급 인터셉터
+  ┃ ┣ 📜 auth.api.ts / users.api.ts
+  ┃ ┣ 📜 courses.api.ts / localRecommendations.ts   # 코스 조회/등록/수정/삭제
+  ┃ ┣ 📜 contents.api.ts / tourContents.api.ts       # 행사(문화콘텐츠) 조회/등록/게시, 관광공사 동기화
+  ┃ ┣ 📜 business-promotions.api.ts                  # 소상공인 홍보 게시물
+  ┃ ┣ 📜 travelRecords.api.ts / stickers.api.ts       # 여행 기록, 스티커
+  ┃ ┣ 📜 reviews.api.ts / likes.api.ts / regions.api.ts / hashtags.ts / files.api.ts
+  ┃ ┗ 📜 kakaoGeocode.ts / kakaoRouteDuration.ts / googlePlacesHours.ts / googlePlacesPhoto.ts / odsayTransitDuration.ts
+  ┃
+  ┣ 📂 pages                       # 라우트 단위 페이지
+  ┃ ┣ 📂 home                      # 홈(지도/행사/코스/리뷰/광고 섹션, 온보딩), 대한민국 D3 지도(home/map)
+  ┃ ┣ 📂 auth                      # 로그인/회원가입(이메일·카카오·네이버)/비밀번호 찾기
+  ┃ ┣ 📂 yeogido-course            # 여기도(공식) 추천 코스 목록/인기/최신/검색
+  ┃ ┣ 📂 local-course              # 우리동네(사용자 등록) 추천 코스 목록/인기/최신/검색
+  ┃ ┣ 📂 local-recommendation      # 우리동네 코스 등록 마법사(지역→기본정보→사진/키워드→행사→장소→방문순서)
+  ┃ ┣ 📂 festival                  # 행사 목록/진행중/최근/검색
+  ┃ ┣ 📂 detail                    # 코스·행사·소상공인 상세 화면 및 공용 상세 컴포넌트(CourseDetailLayout 등)
+  ┃ ┣ 📂 local-business            # 소상공인 목록
+  ┃ ┣ 📂 business-promotion-registration  # 소상공인 홍보 게시물 등록/수정 마법사
+  ┃ ┣ 📂 business-verification     # 사업자 인증
+  ┃ ┣ 📂 travel-record             # 여행 기록 목록/작성(지역→날짜→사진→스티커 꾸미기)/상세/수정
+  ┃ ┣ 📂 review                    # 리뷰 작성
+  ┃ ┣ 📂 course-reviews            # 코스별 리뷰 전체 목록
+  ┃ ┣ 📂 recent-review-courses     # 사이트 전체 최근 리뷰 피드
+  ┃ ┣ 📂 likes                     # 좋아요한 코스/행사/장소 목록
+  ┃ ┣ 📂 my-posts                  # 내가 등록한 게시물(코스/리뷰/홍보글)
+  ┃ ┣ 📂 profile                   # 마이페이지(조회/수정)
+  ┃ ┣ 📂 region-info                # 지역 허브(지역별 코스/행사/리뷰)
+  ┃ ┣ 📂 course-region-search      # 지역 검색
+  ┃ ┣ 📂 admin                     # 관리자 홈(관광공사 동기화·검수), 코스/행사 등록 마법사, 관리용 목록
+  ┃ ┗ 📂 not-found                 # 404 페이지
+  ┃
+  ┣ 📂 components                  # 여러 페이지에서 공통으로 쓰는 컴포넌트
+  ┃ ┣ 📂 common                    # 카드/스켈레톤/모달/필터바/검색바 등 범용 UI
+  ┃ ┣ 📂 layout                    # MainLayout, AuthLayout, Header, Sidebar/AuthSidebar, ResponsivePageShell
+  ┃ ┣ 📂 ui                        # 최소 공통 요소(Divider 등)
+  ┃ ┣ 📂 kakaomap                  # 카카오맵 SDK 래퍼(BaseKakaoMap), 지도 링크/유틸
+  ┃ ┣ 📂 auth                      # ProtectedRoute/AdminRoute/BusinessRoute, 로그인 폼 입력 요소
+  ┃ ┣ 📂 toast                     # 전역 토스트
+  ┃ ┣ 📂 sticker                   # 여행 기록 스티커 렌더링
+  ┃ ┗ 📂 region-selection          # 지역 선택 공용 레이아웃
+  ┃
+  ┣ 📂 hooks                       # 도메인별 React Query 훅, 좋아요 토글, 지도 스케일 등 공통 훅
+  ┣ 📂 store                       # Zustand 전역 상태(auth, 코스/행사 등록 드래프트, 여행기록 세션)
+  ┣ 📂 contexts                    # 로그인 유도 모달 Context
+  ┣ 📂 types                       # 도메인별 TypeScript 타입
+  ┣ 📂 constants                   # 지역/태그/뱃지/필터 옵션 등 정적 데이터
+  ┣ 📂 utils                       # 인증/이미지/날짜/포맷팅 등 공통 유틸
+  ┣ 📂 styles                      # 전역 스타일, Tailwind 테마
+  ┗ 📂 router                      # AppRouter(전체 라우트 정의)
 ```
 
 ---
@@ -276,10 +355,10 @@ docs/readme
 
 규칙:
 
-- `main` 직접 push 금지
+- `main`, `develop` 직접 push 금지
 - 개인 이름 브랜치 사용 금지
 - 기능 단위로 브랜치 생성
-- PR 전 `main` 최신 반영
+- PR 전 `develop` 최신 반영
 
 ---
 
@@ -403,6 +482,23 @@ PR 규칙:
 
 ## 실행 방법
 
+Node.js 24.x 버전이 필요합니다(`package.json`의 `engines.node` 기준).
+
+환경 변수 설정(`.env.example`을 참고해 `.env` 생성):
+
+```bash
+cp .env.example .env
+```
+
+```txt
+VITE_API_BASE_URL        백엔드 API 베이스 URL
+VITE_KAKAO_MAP_API_KEY    카카오맵 JavaScript SDK 키(클라이언트에 노출됨)
+KAKAO_REST_API_KEY        카카오 REST API 키(지오코딩/길찾기/정적지도, 서버 프록시 전용)
+VITE_NAVER_CLIENT_ID      네이버 로그인 클라이언트 ID
+GOOGLE_MAPS_API_KEY       구글 플레이스 API 키(영업시간/사진 조회, 서버 프록시 전용)
+ODSAY_API_KEY             ODsay 대중교통 API 키(서버 프록시 전용)
+```
+
 패키지 설치:
 
 ```bash
@@ -427,6 +523,12 @@ pnpm build
 pnpm lint
 ```
 
+테스트:
+
+```bash
+pnpm test
+```
+
 프리뷰:
 
 ```bash
@@ -437,45 +539,76 @@ pnpm preview
 
 ## 화면 목록 및 플로우
 
-라우트:
+주요 라우트(`src/router/AppRouter.tsx` 기준):
 
 ```txt
-/                  홈
-/login             로그인
-/signup            회원가입
-/profile           프로필 설정
-/places            장소 목록
-/places/search     장소 검색
-/places/map        지도 탐색
-/places/:placeId   장소 상세
-/courses           코스 목록
-/courses/:courseId 코스 상세
-/courses/new       코스 등록
-/records           방문 기록 목록
-/records/new       방문 기록 작성
-/mypage            마이페이지
+/                                       홈
+/login, /signup, /forgot-password       로그인/회원가입/비밀번호 찾기
+/signup/kakao, /signup/naver            소셜 로그인 프로필 완성
+/auth/kakao/callback, /auth/naver/callback  소셜 로그인 콜백
+
+/yeogido-course(/popular|/recent|/search)   여기도(공식) 추천 코스
+/local-course(/popular|/recent|/search)     우리동네(사용자 등록) 추천 코스
+/yeogido-course/detail/:courseId            여기도 코스 상세
+/local-course/detail/:courseId              우리동네 코스 상세
+/yeogido-course/detail/:courseId/reviews,
+/local-course/detail/:courseId/reviews      코스 리뷰 전체 목록
+
+/festival(/ongoing|/recent|/search)         행사 목록
+/festival/detail/:festivalId                행사 상세
+/festival/detail/:festivalId/courses        이 행사가 포함된 코스 전체 목록
+
+/local-business                             소상공인 목록
+/local-business/detail/:id                  소상공인 상세
+/business-promotion-registration[/:id/edit] 홍보 게시물 등록/수정 (사업자 전용)
+/business-verification                      사업자 인증
+
+/local-recommendation/**                    우리동네 코스 등록 마법사
+/travel-record, /travel-record/:folderId    여행 기록 목록/상세
+/travel-record/new, /travel-record/date-selection,
+/travel-record/photo-selection, /travel-record/folder-decoration           여행 기록 작성 단계(각 단계에 대응하는 /travel-record/:id/edit/* 수정 라우트도 있음)
+/review                                     리뷰 작성
+/recent-review-courses                      사이트 전체 최근 리뷰
+/likes                                      좋아요 목록
+/my-posts                                   내가 등록한 게시물
+/profile, /profile/edit                     마이페이지 조회/수정
+/region-info/:region                        지역 허브
+/course-region-search                       지역 검색
+
+/admin                                      관리자 홈(관광공사 동기화/검수)
+/admin/courses, /admin/courses/popular,
+/admin/courses/recent, /admin/courses/detail/:courseId                     관리자 코스 관리
+/admin/festivals/ongoing, /admin/festivals/recent                          관리자 행사 관리
+/admin/course-registration/**               관리자 코스 등록 마법사
+/admin/event-registration/**                관리자 행사 등록 마법사
 ```
 
 플로우:
 
 ```txt
 인증:
-홈 -> 로그인 -> 회원가입/소셜 로그인 -> 프로필 설정 -> 홈
-
-장소 탐색:
-홈 -> 장소 목록 -> 검색/필터 -> 장소 상세
-
-지도 탐색:
-홈 -> 지도 화면 -> 주변 장소 확인 -> 장소 상세
+홈 -> 로그인 -> (이메일/카카오/네이버) -> 신규 사용자면 프로필 완성 -> 홈
 
 코스 조회:
-홈 -> 코스 목록 -> 코스 상세
+홈/코스 목록 -> 필터·검색 -> 코스 상세(경로 지도·정류지·리뷰) -> 좋아요/리뷰 작성/공유
 
-코스 등록:
-코스 등록 -> 장소 검색 -> 장소 선택 -> 코스 정보 입력 -> 사진/해시태그 추가 -> 등록 완료
+우리동네 코스 등록:
+코스 등록 -> 지역 선택 -> 기본정보 입력 -> 대표사진/키워드 -> 행사 추가(선택) -> 장소 추가(사진 포함)
+          -> 방문 순서 드래그 정렬(경로 이미지 자동 생성) -> 등록 완료 -> 코스 상세로 이동
 
-방문 기록:
-마이페이지 -> 방문 기록 -> 기록 작성 -> 장소 선택 -> 날짜 선택 -> 사진 추가 -> 기록 완료
+행사 탐색:
+홈/행사 목록 -> 필터·검색 -> 행사 상세(지도·장소카드) -> 포함된 코스 보기 -> 좋아요/공유
+
+소상공인:
+소상공인 목록 -> 지역/카테고리 탐색 -> 상세(지도·영업시간) -> (사업자 인증 완료 시) 홍보 게시물 등록/수정
+
+여행 기록:
+마이페이지/홈 -> 여행 기록 -> 지역 선택 -> 날짜 선택 -> 사진 업로드 -> 스티커로 폴더 꾸미기 -> 기록 완료
+                          -> 여행 지도 탭에서 지역별 방문 기록 확인
+
+관리자 콘텐츠 관리:
+관리자 홈 -> 관광공사 콘텐츠 동기화 -> 검토 대기 콘텐츠 확인/수정 -> 게시
+관리자 홈 -> 코스/행사 등록 마법사 -> 등록 -> 목록에서 수정/삭제
 ```
 
 ---
@@ -484,23 +617,24 @@ pnpm preview
 
 ```txt
 Zustand
-  클라이언트 전역 상태 관리
-  auth.store.ts
-  placeFilter.store.ts
-  courseCreate.store.ts
-  ui.store.ts
+  클라이언트 전역/세션 상태 관리
+  auth.store.ts                 로그인 토큰, 사용자 정보, 인증 세대(auth generation)
+  localRecommendation.store.ts  우리동네 코스 등록 마법사 드래프트
+  adminCourseRegistration.store.ts  관리자 코스 등록 마법사 드래프트
+  adminEventRegistration.store.ts   관리자 행사 등록 마법사 드래프트
+  travelRecordSession.store.ts      여행 기록 작성/수정 세션, 목록 탭 상태
 
 React Query
-  서버 상태 관리
-  장소 목록
-  장소 상세
-  코스 목록
-  코스 상세
-  방문 기록
-  사용자 정보
+  서버 상태 관리(도메인별 훅으로 캡슐화)
+  코스 목록/상세/좋아요 (useCourses, useCourseLikeToggle 등)
+  행사(문화콘텐츠) 목록/상세/좋아요, 관광공사 동기화·게시 (useCultureContents, useTourContentSync, useContentPublish 등)
+  소상공인 목록/상세 (useBusinessPromotions, useBusinessPromotionDetail)
+  여행 기록, 스티커 (useTravelRecords, useStickers)
+  리뷰, 좋아요 목록 (useReviews, 좋아요 관련 훅)
+  지역 정보, 사용자 프로필 (useRegions, useMyProfile)
 ```
 
 ```txt
-Zustand = 클라이언트 UI 상태
-React Query = 서버에서 받아오는 데이터
+Zustand = 여러 화면(주로 다단계 마법사)에 걸쳐 유지해야 하는 클라이언트 전용 상태
+React Query = 서버에서 받아오는 데이터와 그 캐싱/재검증
 ```
