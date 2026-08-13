@@ -207,7 +207,10 @@ function OnboardingModal({ onClose }: OnboardingModalProps) {
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+    // 사이드바(z-[60])보다 낮으면, 홈으로 뒤로가기 등으로 이 모달이 다시
+    // 뜨는 시점에 사이드바가 아직 닫히는 애니메이션 중이면 사이드바가 이
+    // 위에 겹쳐 그려진다 — 온보딩은 항상 최상단에 떠야 하므로 더 높게 둔다.
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-6">
       <section
         role="dialog"
         aria-modal="true"

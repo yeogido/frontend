@@ -47,32 +47,24 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Overlay */}
         <div
           onClick={onClose}
-          className={`
-            absolute inset-0
-            bg-black/40
-            transition-opacity duration-300
-            ${
-              isOpen
-                ? 'visible opacity-100'
-                : 'invisible pointer-events-none opacity-0'
-            }
-          `}
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+            isOpen
+              ? 'visible opacity-100'
+              : 'pointer-events-none invisible opacity-0'
+          } `}
         />
 
         {/* Drawer */}
+        {/* inert: 닫혀 있을 때(translate-x-full로 화면 밖) 안의 버튼들이
+            여전히 DOM에 남아 있어 포커스를 받을 수 있었다 — 메뉴를 눌러
+            페이지를 이동하면 그 버튼이 포커스를 계속 쥔 채로 남고, 나중에
+            그 포커스가 다시 불려나오는 문제가 있었다(AuthSidebar와 동일한
+            이유). 닫혀 있을 때는 inert로 포커스/상호작용 자체를 차단한다. */}
         <aside
-          className={`
-            absolute top-0 right-0
-            flex h-full w-[72%] flex-col
-            overflow-y-auto
-            bg-white
-            transition-transform duration-300 ease-in-out
-            ${
-              isOpen
-                ? 'translate-x-0 pointer-events-auto'
-                : 'translate-x-full'
-            }
-          `}
+          inert={!isOpen}
+          className={`absolute top-0 right-0 flex h-full w-[72%] flex-col overflow-y-auto bg-white transition-transform duration-300 ease-in-out ${
+            isOpen ? 'pointer-events-auto translate-x-0' : 'translate-x-full'
+          } `}
           style={{ maxWidth: DRAWER_MAX_WIDTH * scale }}
         >
           {/* Header */}
@@ -112,17 +104,13 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
             }}
           >
             <span
-              className="font-semibold leading-none"
+              className="leading-none font-semibold"
               style={{ fontSize: TEXT_BASE * scale }}
             >
               로그인
             </span>
 
-            <img
-              src={chevronRight}
-              alt=""
-              aria-hidden="true"
-            />
+            <img src={chevronRight} alt="" aria-hidden="true" />
           </button>
 
           <Divider />
@@ -145,7 +133,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
                 }}
               >
                 <span
-                  className="font-medium leading-none"
+                  className="leading-none font-medium"
                   style={{ fontSize: TEXT_BASE * scale }}
                 >
                   {menu.label}
