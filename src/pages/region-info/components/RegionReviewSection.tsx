@@ -8,7 +8,10 @@ import {
 
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useBusinessPromotions } from '../../../hooks/useBusinessPromotions';
-import { formatBusinessPromotionDate } from '../../local-business/mappers/businessPromotionMapper';
+import {
+  formatBusinessPromotionDate,
+  toRegionDisplayName,
+} from '../../local-business/mappers/businessPromotionMapper';
 import { buildLocalBusinessDetailPath } from '../../../utils/routes';
 
 const SECTION_MARGIN_TOP = 32;
@@ -91,7 +94,10 @@ function RegionReviewSection({
               imageUrl={promotion.thumbnailImageUrl}
               title={promotion.placeName}
               description={promotion.shortDescription}
-              location={promotion.regionName}
+              location={toRegionDisplayName(
+                promotion.regionName,
+                promotion.roadAddress
+              )}
               onClick={() =>
                 navigate(buildLocalBusinessDetailPath(promotion.promotionId))
               }

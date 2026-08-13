@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ContentCard, CourseFilterBar, SearchBar } from '../../components/common';
+import {
+  ContentCard,
+  CourseFilterBar,
+  SearchBar,
+} from '../../components/common';
+import {
+  openKakaoMapPlace,
+  openKakaoMapSearch,
+} from '../../components/kakaomap/utils/kakaoMapLink';
 import { useToast } from '../../components/toast';
 import {
   LIKED_ITEM_FILTER_GRID_CLASS_NAME,
@@ -28,6 +36,7 @@ import {
 } from '../../utils/geolocation';
 
 import {
+  ALL_FILTER_OPTION,
   LIKED_CATEGORY_OPTIONS,
   LIKED_SORT_LATEST,
   LIKED_SORT_OPTIONS,
@@ -72,8 +81,9 @@ function LikesPage() {
   const [initialUserLocation] = useState<UserLocation | null>(() =>
     readStoredUserLocation()
   );
-  const [userLocation, setUserLocation] =
-    useState<UserLocation | null>(initialUserLocation);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(
+    initialUserLocation
+  );
 
   useEffect(() => {
     if (initialUserLocation) return;
@@ -124,24 +134,29 @@ function LikesPage() {
     [data, unlikedIds]
   );
 
-  const filterGroups = useMemo(
-    () =>
-      [
-        { key: 'category', options: LIKED_CATEGORY_OPTIONS },
-        {
-          key: 'detail',
-          options: getDetailFilterOptions(
-            selectedFilters.category,
-            activeLikedItems
-          ),
-        },
-        { key: 'sort', options: LIKED_SORT_OPTIONS },
-      ] as const satisfies readonly {
-        key: LikedItemFilterKey;
-        options: readonly string[];
-      }[],
-    [selectedFilters.category, activeLikedItems]
-  );
+  const showDetailFilter =
+    selectedFilters.category === ALL_FILTER_OPTION ||
+    selectedFilters.category === '코스';
+
+  const filterGroups = useMemo(() => {
+    const groups: { key: LikedItemFilterKey; options: readonly string[] }[] = [
+      { key: 'category', options: LIKED_CATEGORY_OPTIONS },
+    ];
+
+    if (showDetailFilter) {
+      groups.push({
+        key: 'detail',
+        options: getDetailFilterOptions(
+          selectedFilters.category,
+          activeLikedItems
+        ),
+      });
+    }
+
+    groups.push({ key: 'sort', options: LIKED_SORT_OPTIONS });
+
+    return groups;
+  }, [selectedFilters.category, activeLikedItems, showDetailFilter]);
 
   const likedItems = useMemo(
     () =>
@@ -166,10 +181,16 @@ function LikesPage() {
 
   const handleCardClick = useCallback(
     (item: LikedItem) => {
+      const placeId = item.externalPlaceId?.trim();
+
       if (item.category === 'COURSE') {
         void goToCourseDetail(item.id);
       } else if (item.category === 'EVENT') {
         navigate(buildFestivalDetailPath(item.id));
+      } else if (placeId) {
+        openKakaoMapPlace(placeId);
+      } else {
+        openKakaoMapSearch(`${item.title} ${item.location}`);
       }
     },
     [goToCourseDetail, navigate]
@@ -295,11 +316,7 @@ function LikesPage() {
                 tags={toContentTagIds(item.hashtags)}
                 liked
                 className="w-full"
-                onClick={
-                  item.category === 'PLACE'
-                    ? undefined
-                    : () => handleCardClick(item)
-                }
+                onClick={() => handleCardClick(item)}
                 onLikeClick={() => void handleUnlike(item)}
               />
             );
@@ -336,7 +353,6 @@ function LikesPage() {
         style={{ height: LOAD_MORE_HEIGHT * scale }}
         aria-hidden="true"
       />
-
     </section>
   );
 }

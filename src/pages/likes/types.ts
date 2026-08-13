@@ -28,6 +28,8 @@ export interface LikedItem {
   companionType?: string | null;
   /** 현 위치 기준 거리(km). 장소만 내려온다 */
   distance: number | null;
+  /** 카카오 장소 id. 있으면 카카오맵 장소 상세로 바로 연결한다 */
+  externalPlaceId: string | null;
   /** 코스를 선택했을 때 2번째 필터에 동적으로 채워지는 지역명 */
   region: string | null;
   /** 행사/장소를 선택했을 때 2번째 필터에서 비교할 분류값 */
