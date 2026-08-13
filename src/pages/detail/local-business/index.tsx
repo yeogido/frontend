@@ -10,7 +10,7 @@ import {
   ResponsivePageShell,
 } from '../../../components/layout/ResponsivePageShell';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
-import { isValidGeoPoint } from '../../../components/kakaomap/types';
+import { isValidGeoPoint, type GeoPoint } from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import { useToast } from '../../../components/toast';
 import { useBusinessPromotionDelete } from '../../../hooks/useBusinessPromotions';
@@ -74,9 +74,13 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
   const [likedOverride, setLikedOverride] = useState<boolean | null>(null);
   // local-course 상세(CourseDetailLayout의 focusedStopId)와 같은 방식 —
   // 장소 카드를 누르면 지도를 그 자리로 되돌리고 핀을 강조한다. 핀이
-  // 하나뿐이라 "포커스됐는지" 여부만 있으면 되고, 한 번 누른 뒤로는 계속
-  // 강조 상태로 둔다(코스 상세도 focusedStopId를 따로 해제하지 않는다).
-  const [isPlaceFocused, setIsPlaceFocused] = useState(false);
+  // 하나뿐이라 매번 같은 좌표를 다시 포커스하게 되는데, BaseKakaoMap의
+  // panTo 이펙트는 focusedLocation "레퍼런스"가 바뀔 때만 다시 실행된다
+  // — 값(위도/경도)이 아니라 객체 참조를 본다. 그래서 클릭할 때마다
+  // 새 객체로 갈아끼워야, 지도를 옆으로 옮긴 뒤 같은 카드를 다시 눌러도
+  // 포커스가 매번 다시 걸린다.
+  const [focusedPlaceLocation, setFocusedPlaceLocation] =
+    useState<GeoPoint | null>(null);
   const placeLikeRequestInFlightRef = useRef(false);
   const { copied, isToastVisible, handleShare } = useShareToast();
   const {
@@ -273,9 +277,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                         ]
                       : []
                   }
-                  focusedLocation={
-                    isPlaceFocused ? businessDetail.location : null
-                  }
+                  focusedLocation={focusedPlaceLocation}
                   onMarkerClick={() =>
                     openKakaoMapRoute(
                       businessDetail.title,
@@ -309,7 +311,12 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                 onLikeClick={() => void handleFavoriteToggle()}
                 onClick={
                   isValidGeoPoint(businessDetail.location)
-                    ? () => setIsPlaceFocused(true)
+                    ? () => {
+                        const location = businessDetail.location;
+                        if (isValidGeoPoint(location)) {
+                          setFocusedPlaceLocation({ ...location });
+                        }
+                      }
                     : undefined
                 }
               />
