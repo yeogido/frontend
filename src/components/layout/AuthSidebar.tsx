@@ -1,0 +1,340 @@
+import close from '../../assets/icons/close.svg';
+import logout from '../../assets/icons/out.svg';
+import { useNavigate } from 'react-router-dom';
+
+import { guestSidebarMenu } from '../../constants/sidebarMenu';
+
+import { Divider } from '../ui';
+
+import { useAuth } from '../../hooks/useAuth';
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+import ProfileAvatar from '../common/ProfileAvatar';
+import { useLogout } from '../../hooks/useLogout';
+import { useIsAdmin, useMyProfile } from '../../hooks/useMyProfile';
+import { APP_MAX_WIDTH } from '../../constants/layout';
+import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
+import { getRoleLabel } from '../../utils/role';
+
+/**
+ * 관리자로 로그인했을 때, 사이드바 메뉴 이름은 그대로 두고 실제 이동
+ * 경로만 관리자 페이지로 바꾼다. 나머지 메뉴는 guestSidebarMenu의 path를
+ * 그대로 쓴다.
+ */
+const ADMIN_MENU_PATH_OVERRIDE: Record<string, string> = {
+  '/yeogido-course': '/admin/courses',
+  '/festival': '/admin',
+};
+
+const DRAWER_MAX_WIDTH = 280;
+const DRAWER_HEADER_HEIGHT = 111;
+const CLOSE_TOP = 20;
+const CLOSE_RIGHT = 24;
+const PROFILE_TOP = 59;
+const PROFILE_LEFT = 24;
+const AVATAR_SIZE = 40;
+const PROFILE_GAP = 12;
+const NAME_TEXT_SIZE = 16;
+const EMAIL_TEXT_SIZE = 12;
+const EMAIL_MARGIN_TOP = 2;
+const MENU_ITEM_HEIGHT = 51;
+const MENU_PADDING_X = 24;
+const TEXT_BASE = 16;
+const MY_LABEL_SIZE = 13;
+const MY_LABEL_PADDING_TOP = 16;
+const MY_LABEL_PADDING_BOTTOM = 4;
+const LOGOUT_PADDING_Y = 16;
+const LOGOUT_ICON_SIZE = 20;
+const LOGOUT_GAP = 12;
+
+/**
+ * 로그인 전용 메뉴. path가 없는 항목은 아직 연결된 화면이 없어
+ * 클릭 시 사이드바만 닫는다. 화면이 만들어지면 path를 채워 넣는다.
+ *
+ * onNavigate는 이동하기 직전에 화면 쪽 상태를 맞춰야 할 때만 쓴다.
+ */
+const MY_MENU: { label: string; path?: string; onNavigate?: () => void }[] = [
+  {
+    label: '여행기록',
+    // 여행 기록 화면은 마지막에 보던 탭(폴더/지도)을 기억한다. 사이드바로
+    // 들어오는 건 이어 보기가 아니라 새로 들어오는 것이라 폴더 목록부터
+    // 보여 준다.
+    onNavigate: () =>
+      useTravelRecordSessionStore.getState().setListView('folder'),
+    path: '/travel-record',
+  },
+  { label: '좋아요', path: '/likes' },
+  { label: '내가 등록한 게시물', path: '/my-posts' },
+];
+
+interface AuthSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
+  const navigate = useNavigate();
+  const scale = useGlobalScale();
+  const handleLogout = useLogout();
+  const { userId } = useAuth();
+  const { data: profile, isPending: isProfilePending } = useMyProfile();
+  const isAdmin = useIsAdmin();
+  // 프로필 조회가 끝나기 전에는 실제로 존재하는 userId 기반의 안전한
+  // 표시값으로 대체한다.
+  const displayName = profile?.name ?? (userId ? `회원 #${userId}` : '회원');
+  const roleLabel = getRoleLabel(profile?.role);
+
+  return (
+    // 뷰포트 고정 레이어: 스크롤 위치와 무관하게 항상 현재 화면을 덮는다.
+    // 이 레이어 자체는 뷰포트 전체 폭(fixed inset-0)이므로 여기에
+    // overflow-x-hidden을 걸어도 소용없다 — 실제로 잘라야 할 경계는
+    // 안쪽 500px 컬럼이다.
+    <div
+      className={`fixed inset-0 z-[60] ${isOpen ? '' : 'pointer-events-none'}`}
+    >
+      {/* App.tsx의 500px 중앙 정렬 컬럼과 동일한 폭/정렬을 재현.
+          overflow-x-hidden을 반드시 이 500px 컬럼에 걸어야, 드로어가
+          translate-x-full로 컬럼 밖으로 나갔을 때 실제로 잘려서 안 보인다. */}
+      <div
+        className="relative mx-auto h-full w-full overflow-x-hidden"
+        style={{ maxWidth: APP_MAX_WIDTH }}
+      >
+        {/* Overlay */}
+        <div
+          onClick={onClose}
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+            isOpen
+              ? 'visible opacity-100'
+              : 'pointer-events-none invisible opacity-0'
+          } `}
+        />
+
+        {/* Drawer */}
+        {/* inert: 닫혀 있을 때(translate-x-full로 화면 밖) 안의 버튼들이
+            여전히 DOM에 남아 있어 포커스를 받을 수 있었다 — 사이드바 메뉴를
+            눌러 페이지를 이동하면 그 버튼이 포커스를 계속 쥔 채로 남고,
+            나중에(예: 온보딩 모달이 닫히며 "이전 포커스로 복원") 그 포커스가
+            다시 불려나오는 문제가 있었다. 닫혀 있을 때는 inert로 포커스/
+            상호작용 자체를 완전히 차단한다. */}
+        <aside
+          inert={!isOpen}
+          className={`absolute top-0 right-0 flex h-full w-[72%] flex-col overflow-y-auto bg-white transition-transform duration-300 ease-in-out ${
+            isOpen ? 'pointer-events-auto translate-x-0' : 'translate-x-full'
+          } `}
+          style={{ maxWidth: DRAWER_MAX_WIDTH * scale }}
+        >
+          {/* Header: 프로필 요약 + 닫기 버튼 */}
+          {/* shrink-0: 내용이 뷰포트보다 길어지면 overflow-y-auto로
+              스크롤되어야 하는데, flex 자식은 기본적으로 shrink 가능해서
+              (특히 이 div는 자식이 전부 absolute라 min-height:auto가 0으로
+              계산됨) 공간이 부족하면 찌그러들며 프로필이 메뉴와 겹쳐
+              보였다. shrink-0로 항상 지정한 높이를 유지하고 스크롤에 맡긴다. */}
+          <div
+            className="relative shrink-0"
+            style={{ height: DRAWER_HEADER_HEIGHT * scale }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                navigate('/profile');
+                onClose();
+              }}
+              className="absolute flex min-w-0 items-center"
+              style={{
+                top: PROFILE_TOP * scale,
+                left: PROFILE_LEFT * scale,
+                gap: PROFILE_GAP * scale,
+                // left만 지정하면 이름이 길 때 버튼이 드로어 오른쪽 끝까지
+                // 늘어나 왼쪽(24px)과 달리 오른쪽 여백이 0이 된다. right를
+                // 함께 주면 버튼이 가로 전체를 차지해 이름 옆 빈 공간을
+                // 눌러도 프로필로 이동하므로, maxWidth로 경계만 만든다.
+                maxWidth: `calc(100% - ${PROFILE_LEFT * 2 * scale}px)`,
+              }}
+            >
+              <ProfileAvatar
+                src={profile?.profileImageUrl}
+                size={AVATAR_SIZE * scale}
+              />
+
+              <div className="flex min-w-0 flex-col items-start text-left">
+                <div
+                  className="flex min-w-0 items-center"
+                  style={{ gap: 4 * scale }}
+                >
+                  <span
+                    className="truncate leading-none font-semibold text-[#1C1C1C]"
+                    style={{ fontSize: NAME_TEXT_SIZE * scale }}
+                  >
+                    {displayName}
+                  </span>
+                  {roleLabel ? (
+                    <span
+                      className="shrink-0 leading-none font-normal text-[#7f7f7f]"
+                      style={{ fontSize: EMAIL_TEXT_SIZE * scale }}
+                    >
+                      {roleLabel}
+                    </span>
+                  ) : null}
+                </div>
+                {profile?.email && (
+                  <span
+                    className="truncate leading-none font-medium text-[#7f7f7f]"
+                    style={{
+                      fontSize: EMAIL_TEXT_SIZE * scale,
+                      marginTop: EMAIL_MARGIN_TOP * scale,
+                    }}
+                  >
+                    {profile.email}
+                  </span>
+                )}
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="사이드바 닫기"
+              className="absolute"
+              style={{ right: CLOSE_RIGHT * scale, top: CLOSE_TOP * scale }}
+            >
+              <img src={close} alt="닫기" />
+            </button>
+          </div>
+
+          <Divider />
+
+          {/* Menu */}
+          <nav className="flex shrink-0 flex-col">
+            {guestSidebarMenu.map((menu) => (
+              <button
+                key={menu.path}
+                type="button"
+                onClick={() => {
+                  // 관리자 여부에 따라 목적지가 갈리는 메뉴는, 아직 role
+                  // 조회가 끝나기 전이면 이동을 미룬다 — 여기서 그냥
+                  // isAdmin(로딩 중엔 false)을 쓰면 실제 관리자가 일반
+                  // 경로로 잘못 이동해버린다.
+                  const hasAdminOverride =
+                    menu.path in ADMIN_MENU_PATH_OVERRIDE;
+                  if (hasAdminOverride && isProfilePending) {
+                    return;
+                  }
+                  const targetPath = isAdmin
+                    ? (ADMIN_MENU_PATH_OVERRIDE[menu.path] ?? menu.path)
+                    : menu.path;
+                  navigate(targetPath);
+                  onClose();
+                }}
+                className="flex items-center justify-between text-left"
+                style={{
+                  height: MENU_ITEM_HEIGHT * scale,
+                  paddingLeft: MENU_PADDING_X * scale,
+                  paddingRight: MENU_PADDING_X * scale,
+                }}
+              >
+                <span
+                  className="leading-none font-medium"
+                  style={{ fontSize: TEXT_BASE * scale }}
+                >
+                  {menu.label}
+                </span>
+              </button>
+            ))}
+          </nav>
+
+          <Divider />
+
+          {/* MY: 마이페이지 메뉴 — 관리자 계정은 여행기록/좋아요/내가 등록한
+              게시물이 의미가 없어(관리자 전용 콘텐츠는 별도 API가 없다)
+              이 섹션 자체를 안 보여준다. isAdmin은 role 조회 중엔 false라,
+              isProfilePending도 같이 확인해야 관리자가 로딩 중 잠깐이라도
+              MY 섹션을 보는 깜빡임이 없다. */}
+          {!isProfilePending && !isAdmin && (
+            <>
+              <div
+                className="shrink-0"
+                style={{
+                  paddingLeft: MENU_PADDING_X * scale,
+                  paddingTop: MY_LABEL_PADDING_TOP * scale,
+                  paddingBottom: MY_LABEL_PADDING_BOTTOM * scale,
+                }}
+              >
+                <span
+                  className="leading-none font-semibold text-[#FF6F41]"
+                  style={{ fontSize: MY_LABEL_SIZE * scale }}
+                >
+                  MY
+                </span>
+              </div>
+
+              <nav className="flex shrink-0 flex-col">
+                {MY_MENU.map((menu) => (
+                  <button
+                    key={menu.label}
+                    type="button"
+                    onClick={() => {
+                      if (menu.path) {
+                        menu.onNavigate?.();
+                        navigate(menu.path);
+                      }
+                      onClose();
+                    }}
+                    className="flex items-center justify-between text-left"
+                    style={{
+                      height: MENU_ITEM_HEIGHT * scale,
+                      paddingLeft: MENU_PADDING_X * scale,
+                      paddingRight: MENU_PADDING_X * scale,
+                    }}
+                  >
+                    <span
+                      className="leading-none font-medium"
+                      style={{ fontSize: TEXT_BASE * scale }}
+                    >
+                      {menu.label}
+                    </span>
+                  </button>
+                ))}
+              </nav>
+            </>
+          )}
+
+          {/* 로그아웃: 메뉴가 짧아도 항상 사이드바 하단에 붙도록 mt-auto로 민다 */}
+          <div className="mt-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                void handleLogout();
+                onClose();
+              }}
+              className="flex items-center text-left"
+              style={{
+                gap: LOGOUT_GAP * scale,
+                paddingLeft: MENU_PADDING_X * scale,
+                paddingRight: MENU_PADDING_X * scale,
+                paddingTop: LOGOUT_PADDING_Y * scale,
+                paddingBottom: LOGOUT_PADDING_Y * scale,
+              }}
+            >
+              <img
+                src={logout}
+                alt=""
+                aria-hidden="true"
+                style={{
+                  width: LOGOUT_ICON_SIZE * scale,
+                  height: LOGOUT_ICON_SIZE * scale,
+                }}
+              />
+              <span
+                className="leading-none font-medium text-[#1C1C1C]"
+                style={{ fontSize: TEXT_BASE * scale }}
+              >
+                로그아웃
+              </span>
+            </button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+export default AuthSidebar;

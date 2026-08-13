@@ -1,0 +1,230 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import {
+  AdvertisementCard,
+  AdvertisementCardSkeleton,
+} from '../../../components/common';
+
+import ad1 from '../../../assets/images/ad1.svg';
+import ad2 from '../../../assets/images/ad2.svg';
+import ad3 from '../../../assets/images/ad3.svg';
+import ad4 from '../../../assets/images/ad4.svg';
+import ad5 from '../../../assets/images/ad5.svg';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import {
+  getHomeCarouselIndex,
+  HOME_CAROUSEL_CARD_GAP,
+} from '../utils/homeCarouselLayout';
+
+// Figma 390 디자인 기준 리터럴 px
+const SECTION_MARGIN_TOP = 32;
+const SECTION_MARGIN_BOTTOM = 24;
+const SECTION_PADDING_X = 24;
+
+const DOT_BOTTOM = 6;
+const DOT_GAP = 4;
+const DOT_SIZE = 4;
+const DOT_ACTIVE_WIDTH = 20;
+const DOT_RADIUS = 100;
+
+const BANNER_ROTATE_INTERVAL_MS = 2000;
+
+const banners = [
+  {
+    id: 1,
+    image: ad1,
+    titleWhite: '2026 섬 방문의 해',
+    titleOrangeBold: '전국 섬 여행지원금',
+    titleOrangeRegular: '',
+    link: 'https://www.visitisland.kr/promotion',
+  },
+  {
+    id: 2,
+    image: ad2,
+    titleWhite: '지역사랑 농어촌',
+    titleOrangeBold: '인구감소 지역 휴가지원',
+    titleOrangeRegular: '',
+    link: 'https://korean.visitkorea.or.kr/dgtourcard/tour50.do',
+  },
+  {
+    id: 3,
+    image: ad3,
+    titleWhite: '2026 여름맞이',
+    titleOrangeBold: '숙박 세일 페스타',
+    titleOrangeRegular: '',
+    link: 'https://ktostay.visitkorea.or.kr/',
+  },
+  {
+    id: 4,
+    image: ad4,
+    titleWhite: '숲이 주는 즐거움',
+    titleOrangeBold: '산림복지서비스이용권',
+    titleOrangeRegular: '',
+    link: 'https://www.fowi.or.kr/user/contents/contentsView.do?cntntsId=106',
+  },
+  {
+    id: 5,
+    image: ad5,
+    titleWhite: '2026',
+    titleOrangeBold: '근로자 휴가지원사업',
+    titleOrangeRegular: '',
+    link: 'https://vacation.visitkorea.or.kr/travel/worker/renewal/workerMain.do',
+  },
+];
+
+function AdvertisementSection() {
+  const isLoading = false;
+  // const isLoading = true; // 스켈레톤 확인용
+
+  const scale = useGlobalScale();
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    let rafId: number;
+
+    const updateActiveIndex = () => {
+      cancelAnimationFrame(rafId);
+
+      rafId = requestAnimationFrame(() => {
+        const itemWidth = container.clientWidth;
+
+        if (itemWidth === 0) {
+          return;
+        }
+
+        setActiveIndex(
+          getHomeCarouselIndex(
+            container.scrollLeft,
+            itemWidth,
+            scale,
+            banners.length
+          )
+        );
+      });
+    };
+
+    updateActiveIndex();
+    container.addEventListener('scroll', updateActiveIndex);
+
+    return () => {
+      container.removeEventListener('scroll', updateActiveIndex);
+      cancelAnimationFrame(rafId);
+    };
+  }, [scale]);
+
+  const scrollToIndex = useCallback(
+    (index: number) => {
+      const container = scrollRef.current;
+
+      if (!container) {
+        return;
+      }
+
+      container.scrollTo({
+        left: (container.clientWidth + HOME_CAROUSEL_CARD_GAP * scale) * index,
+        behavior: 'smooth',
+      });
+    },
+    [scale]
+  );
+
+  // activeIndex는 스크롤 위치로부터 파생되므로, 이걸 의존성에 두면 사용자가
+  // 직접 스와이프했을 때도 타이머가 그 시점부터 다시 2초를 세게 되어
+  // 자동 전환과 수동 스와이프가 서로 어긋나지 않는다.
+  useEffect(() => {
+    if (isLoading || banners.length <= 1) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      scrollToIndex((activeIndex + 1) % banners.length);
+    }, BANNER_ROTATE_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [activeIndex, isLoading, scrollToIndex]);
+
+  return (
+    <section
+      style={{
+        marginTop: SECTION_MARGIN_TOP * scale,
+        marginBottom: SECTION_MARGIN_BOTTOM * scale,
+        paddingLeft: SECTION_PADDING_X * scale,
+        paddingRight: SECTION_PADDING_X * scale,
+      }}
+    >
+      {/* 스크롤 컨테이너와 점을 같은 relative 기준 안에 두어,
+          점이 카드 위에 겹쳐 보이면서도 스와이프와 무관하게 고정되게 한다. */}
+      <div className="relative">
+        {/* Carousel: 카드 1개가 화면을 꽉 채우며 스와이프로 다음 카드로 스냅 이동 */}
+        <div
+          ref={scrollRef}
+          className="scrollbar-hide flex snap-x snap-mandatory overflow-x-auto"
+          style={{ gap: HOME_CAROUSEL_CARD_GAP * scale }}
+        >
+          {isLoading ? (
+            <div className="w-full shrink-0 snap-start snap-always">
+              <AdvertisementCardSkeleton />
+            </div>
+          ) : (
+            banners.map((banner) => (
+              <div
+                key={banner.id}
+                className="w-full shrink-0 snap-start snap-always"
+              >
+                <AdvertisementCard
+                  image={banner.image}
+                  titleWhite={banner.titleWhite}
+                  titleOrangeBold={banner.titleOrangeBold}
+                  titleOrangeRegular={banner.titleOrangeRegular}
+                  onClick={() =>
+                    window.open(banner.link, '_blank', 'noopener,noreferrer')
+                  }
+                />
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Pagination dots: 카드 위에 겹쳐지는 별도 레이어라
+            스와이프 중에도 화면상 같은 자리에 고정되어 보인다. */}
+        {!isLoading && banners.length > 1 && (
+          <div
+            className="pointer-events-none absolute left-1/2 flex -translate-x-1/2 items-center"
+            style={{ bottom: DOT_BOTTOM * scale, gap: DOT_GAP * scale }}
+          >
+            {banners.map((banner, index) => (
+              <button
+                key={banner.id}
+                type="button"
+                aria-label={`${index + 1}번째 광고로 이동`}
+                aria-current={index === activeIndex}
+                onClick={() => scrollToIndex(index)}
+                className="pointer-events-auto shrink-0"
+                style={{
+                  width:
+                    (index === activeIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE) *
+                    scale,
+                  height: DOT_SIZE * scale,
+                  borderRadius: DOT_RADIUS,
+                  backgroundColor:
+                    index === activeIndex ? '#FF6F41' : '#A1A1A1',
+                  transition: 'width 0.2s ease, background-color 0.2s ease',
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export default AdvertisementSection;

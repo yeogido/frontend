@@ -1,0 +1,213 @@
+import { useEffect, useRef, useState } from 'react';
+
+import {
+  ReviewCard,
+  ReviewCardSkeleton,
+  ReviewDeleteDialog,
+  ReviewEditModal,
+  SectionHeader,
+} from '../../../components/common';
+import { getReviewCarouselIndicatorSize } from '../../../components/common/reviewCarouselIndicator';
+import { useNavigate } from 'react-router-dom';
+
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import {
+  useRecentReviews,
+  useReviewDelete,
+  useReviewEdit,
+} from '../../../hooks/useReviews';
+import { useOpenReviewInCourseDetail } from '../../../hooks/useOpenReviewInCourseDetail';
+import { toReviewCardProps } from '../../../utils/reviewCard';
+import {
+  getHomeCarouselIndex,
+  HOME_CAROUSEL_CARD_GAP,
+} from '../utils/homeCarouselLayout';
+
+// Figma 390 디자인 기준 리터럴 px
+const SECTION_MARGIN_TOP = 32;
+const SECTION_GAP = 12;
+const SECTION_PADDING_X = 24;
+
+const DOT_GAP = 4;
+const DOT_RADIUS = 100;
+const ERROR_TEXT_SIZE = 13;
+/** 캐러셀에 그리는 후기 수. */
+const HOME_REVIEW_COUNT = 4;
+
+function ReviewSection() {
+  const { data, isPending, isError } = useRecentReviews();
+  // 홈은 사진이 있는 후기만 보여준다. 사진 없는 후기는 코스 상세·후기
+  // 전체보기에서 본문만 그리는 카드로 나온다.
+  const reviews = (data?.items ?? [])
+    .map(toReviewCardProps)
+    .filter((review) => review.images.length > 0)
+    .slice(0, HOME_REVIEW_COUNT);
+  const { requestDelete, dialogProps } = useReviewDelete();
+  const { requestEdit, editorProps } = useReviewEdit();
+  const navigate = useNavigate();
+  const scale = useGlobalScale();
+
+  const goToCourseDetail = useOpenReviewInCourseDetail();
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    let rafId: number;
+
+    const updateActiveIndex = () => {
+      cancelAnimationFrame(rafId);
+
+      rafId = requestAnimationFrame(() => {
+        const itemWidth = container.clientWidth;
+
+        if (itemWidth === 0) {
+          return;
+        }
+
+        setActiveIndex(
+          getHomeCarouselIndex(
+            container.scrollLeft,
+            itemWidth,
+            scale,
+            reviews.length,
+          ),
+        );
+      });
+    };
+
+    updateActiveIndex();
+    container.addEventListener('scroll', updateActiveIndex);
+
+    return () => {
+      container.removeEventListener('scroll', updateActiveIndex);
+      cancelAnimationFrame(rafId);
+    };
+  }, [reviews.length, scale]);
+
+  const scrollToIndex = (index: number) => {
+    const container = scrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    container.scrollTo({
+      left: (container.clientWidth + HOME_CAROUSEL_CARD_GAP * scale) * index,
+      behavior: 'smooth',
+    });
+  };
+
+  // 후기가 아직 없는 건 정상 상태라 섹션을 통째로 감춘다. 제목만 남고 캐러셀이
+  // 비어 있으면 아직 로딩 중인 것처럼 보이기 때문이다. 반면 조회 실패는
+  // 감추면 원인을 알 수 없으므로 안내를 남긴다.
+  if (!isPending && !isError && reviews.length === 0) {
+    return null;
+  }
+
+  return (
+    <section
+      className="flex flex-col"
+      style={{
+        marginTop: SECTION_MARGIN_TOP * scale,
+        gap: SECTION_GAP * scale,
+        paddingLeft: SECTION_PADDING_X * scale,
+        paddingRight: SECTION_PADDING_X * scale,
+      }}
+    >
+      <SectionHeader
+        title="최근 여행자들의 후기"
+        actionText="전체보기"
+        onActionClick={() => navigate('/recent-review-courses')}
+      />
+
+      {isError && !isPending && (
+        <p
+          className="text-gray-4 text-center font-medium"
+          style={{ fontSize: ERROR_TEXT_SIZE * scale }}
+        >
+          후기를 불러오지 못했습니다.
+        </p>
+      )}
+
+      {/* Carousel: 카드 1개가 화면을 꽉 채우며 스와이프로 다음 카드로 스냅 이동 */}
+      <div
+        ref={scrollRef}
+        className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide"
+        style={{ gap: HOME_CAROUSEL_CARD_GAP * scale }}
+      >
+        {isPending
+          ? Array.from({ length: 1 }).map((_, index) => (
+              <div
+                key={index}
+                className="w-full shrink-0 snap-start snap-always"
+              >
+                <ReviewCardSkeleton />
+              </div>
+            ))
+          : reviews.map((review) => (
+              <div
+                key={review.id}
+                className="w-full shrink-0 snap-start snap-always"
+              >
+                <ReviewCard
+                  images={review.images}
+                  courseTitle={review.courseTitle}
+                  profileImage={review.profileImage}
+                  nickname={review.nickname}
+                  meta={review.meta}
+                  content={review.content}
+                  rating={review.rating}
+                  isMine={review.isMine}
+                  onDeleteClick={() => requestDelete(review.id)}
+                  onEditClick={() => requestEdit(review)}
+                  onClick={() => goToCourseDetail(review)}
+                />
+              </div>
+            ))}
+      </div>
+
+      {/* Pagination dots */}
+      {!isPending && reviews.length > 1 && (
+        <div
+          className="flex items-center justify-center"
+          style={{ gap: DOT_GAP * scale }}
+        >
+          {reviews.map((review, index) => (
+            <button
+              key={review.id}
+              type="button"
+              aria-label={`${index + 1}번째 후기로 이동`}
+              aria-current={index === activeIndex}
+              onClick={() => scrollToIndex(index)}
+              className="shrink-0"
+              style={{
+                ...getReviewCarouselIndicatorSize(index === activeIndex, scale),
+                borderRadius: DOT_RADIUS,
+                backgroundColor:
+                  index === activeIndex ? '#FF6F41' : '#A1A1A1',
+                transition: 'width 0.2s ease, background-color 0.2s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/*
+        홈 후기는 좌우 스와이프 캐러셀이라 useCardTap이 10px 넘는 이동을
+        탭에서 제외한다(스와이프 중에는 코스 상세로 넘어가지 않는다).
+      */}
+      <ReviewEditModal key={editorProps.review?.id} {...editorProps} />
+
+      <ReviewDeleteDialog {...dialogProps} />
+    </section>
+  );
+}
+
+export default ReviewSection;

@@ -1,0 +1,151 @@
+import calendar from '../../../assets/icons/calendar.svg';
+import location from '../../../assets/icons/location.svg';
+import people from '../../../assets/icons/people.svg';
+import upload from '../../../assets/icons/upload.svg';
+import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import type { ReviewCourseCardData } from '../mappers/reviewCourse';
+
+// Figma 390 디자인 기준 리터럴 px
+const CARD_MARGIN_TOP = 29;
+const CARD_MIN_HEIGHT = 100;
+const CARD_PADDING = 12;
+const CARD_RADIUS = 12;
+const THUMBNAIL_WIDTH = 103;
+const THUMBNAIL_HEIGHT = 76;
+const THUMBNAIL_RADIUS = 8;
+const NO_IMAGE_ICON_SIZE = 20;
+const NO_IMAGE_TEXT_SIZE = 10;
+const CONTENT_MARGIN_LEFT = 12;
+const TITLE_FONT_SIZE = 16;
+const TITLE_LINE_HEIGHT = 20;
+const META_MARGIN_TOP = 16;
+const META_FONT_SIZE = 12;
+const META_LINE_HEIGHT = 14;
+const META_ICON_SIZE = 14;
+
+export interface ReviewCourseCardProps {
+  readonly course: ReviewCourseCardData;
+}
+
+function ReviewCourseCard({ course }: ReviewCourseCardProps) {
+  const { title, thumbnailUrl: thumbnail, duration, transport, companion } =
+    course;
+  const scale = useGlobalScale();
+
+  return (
+    <section
+      aria-label="리뷰할 코스"
+      className="bg-background flex items-center"
+      style={{
+        marginTop: CARD_MARGIN_TOP * scale,
+        minHeight: CARD_MIN_HEIGHT * scale,
+        borderRadius: CARD_RADIUS * scale,
+        padding: CARD_PADDING * scale,
+      }}
+    >
+      {thumbnail ? (
+        <img
+          src={thumbnail}
+          alt={title}
+          className="shrink-0 object-cover"
+          style={{
+            width: THUMBNAIL_WIDTH * scale,
+            height: THUMBNAIL_HEIGHT * scale,
+            borderRadius: THUMBNAIL_RADIUS * scale,
+          }}
+        />
+      ) : (
+        <div
+          className="bg-gray-2 text-gray-4 flex shrink-0 flex-col items-center justify-center gap-1"
+          style={{
+            width: THUMBNAIL_WIDTH * scale,
+            height: THUMBNAIL_HEIGHT * scale,
+            borderRadius: THUMBNAIL_RADIUS * scale,
+          }}
+        >
+          <img
+            src={upload}
+            alt=""
+            aria-hidden="true"
+            style={{ width: NO_IMAGE_ICON_SIZE * scale, height: NO_IMAGE_ICON_SIZE * scale }}
+          />
+          <span
+            className="font-medium"
+            style={{ fontSize: NO_IMAGE_TEXT_SIZE * scale }}
+          >
+            이미지 없음
+          </span>
+        </div>
+      )}
+      <div
+        className="min-w-0 flex-1"
+        style={{ marginLeft: CONTENT_MARGIN_LEFT * scale }}
+      >
+        <h2
+          className="truncate font-semibold tracking-[-0.02em]"
+          style={{
+            fontSize: TITLE_FONT_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+          }}
+        >
+          {title}
+        </h2>
+        <div
+          className="text-gray-4 flex flex-wrap items-center"
+          style={{
+            marginTop: META_MARGIN_TOP * scale,
+            columnGap: 9 * scale,
+            rowGap: 4 * scale,
+            fontSize: META_FONT_SIZE * scale,
+            lineHeight: `${META_LINE_HEIGHT * scale}px`,
+          }}
+        >
+          {duration && (
+            <span
+              className="flex items-center whitespace-nowrap"
+              style={{ gap: 3 * scale }}
+            >
+              <img
+                src={calendar}
+                alt=""
+                aria-hidden="true"
+                style={{ width: META_ICON_SIZE * scale, height: META_ICON_SIZE * scale }}
+              />
+              {duration}
+            </span>
+          )}
+          {transport && (
+            <span
+              className="flex items-center whitespace-nowrap"
+              style={{ gap: 2 * scale }}
+            >
+              <img
+                src={location}
+                alt=""
+                aria-hidden="true"
+                style={{ width: META_ICON_SIZE * scale, height: META_ICON_SIZE * scale }}
+              />
+              {transport}
+            </span>
+          )}
+          {companion && (
+            <span
+              className="flex items-center whitespace-nowrap"
+              style={{ gap: 3 * scale }}
+            >
+              <img
+                src={people}
+                alt=""
+                aria-hidden="true"
+                style={{ width: META_ICON_SIZE * scale, height: META_ICON_SIZE * scale }}
+              />
+              {companion}
+            </span>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default ReviewCourseCard;

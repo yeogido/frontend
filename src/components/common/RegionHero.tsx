@@ -1,0 +1,76 @@
+import { useGlobalScale } from '../../hooks/useGlobalScale';
+
+const TITLE_TOP = 53;
+const TITLE_LEFT = 20;
+const TITLE_WIDTH = 192;
+const TITLE_SIZE = 20;
+const TITLE_LINE_HEIGHT = 20;
+const DESCRIPTION_MARGIN_TOP = 4;
+const DESCRIPTION_SIZE = 12;
+const DESCRIPTION_LINE_HEIGHT = 12;
+
+interface RegionHeroProps {
+  image: string;
+  title: string;
+  description: string;
+  alt: string;
+  onImageError?: () => void;
+}
+
+function RegionHero({
+  image,
+  title,
+  description,
+  alt,
+  onImageError,
+}: RegionHeroProps) {
+  const scale = useGlobalScale();
+
+  return (
+    <section
+      className="relative aspect-[342/129] w-full overflow-hidden rounded-xl"
+      aria-label={alt}
+    >
+      <img
+        src={image}
+        alt=""
+        aria-hidden="true"
+        onError={onImageError}
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+
+      <div className="absolute inset-0 bg-black/30" />
+
+      <div
+        className="absolute text-white"
+        style={{
+          top: TITLE_TOP * scale,
+          left: TITLE_LEFT * scale,
+          width: TITLE_WIDTH * scale,
+        }}
+      >
+        <p
+          className="font-semibold"
+          style={{
+            fontSize: TITLE_SIZE * scale,
+            lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+          }}
+        >
+          {title}
+        </p>
+        <p
+          className="line-clamp-2 font-medium"
+          style={{
+            marginTop: DESCRIPTION_MARGIN_TOP * scale,
+            fontSize: DESCRIPTION_SIZE * scale,
+            lineHeight: `${DESCRIPTION_LINE_HEIGHT * scale}px`,
+          }}
+        >
+          {description}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+export default RegionHero;

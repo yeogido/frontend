@@ -1,0 +1,223 @@
+import type { Course, CourseType } from '../types/course.type';
+import { useAuthStore } from '../store/auth.store.ts';
+
+export const RECENT_COURSES_STORAGE_KEY = 'recent-courses';
+export const MAX_RECENT_COURSES = 10;
+// useRecentCourses는 마운트 시 한 번만 localStorage를 읽어(리액트 state),
+// 다른 곳에서 목록을 바꿔도 이미 그려진 화면에는 반영되지 않는다. 같은 탭
+// 안에서 즉시 갱신되도록 변경할 때마다 이 이벤트를 쏘고, 훅이 구독해서
+// 다시 읽는다.
+export const RECENT_COURSES_UPDATED_EVENT = 'recent-courses-updated';
+
+function notifyRecentCoursesUpdated(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(RECENT_COURSES_UPDATED_EVENT));
+}
+
+function getStorageKey(): string {
+  const userId = useAuthStore.getState().userId;
+
+  return userId === null
+    ? RECENT_COURSES_STORAGE_KEY
+    : `${RECENT_COURSES_STORAGE_KEY}:${userId}`;
+}
+
+// 여기도(OFFICIAL)/우리동네(LOCAL) 코스를 같은 저장소에 함께 기록하되,
+// 화면별로 자신의 courseType만 걸러 보여줄 수 있도록 태그를 붙여 저장한다.
+export interface RecentCourse extends Course {
+  courseType: CourseType;
+}
+
+export function upsertRecentCourse(
+  courses: readonly RecentCourse[],
+  course: RecentCourse
+): RecentCourse[] {
+  return [
+    course,
+    ...courses.filter((item) => item.courseId !== course.courseId),
+  ].slice(0, MAX_RECENT_COURSES);
+}
+
+export function getStoredRecentCourses(): RecentCourse[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const storageKey = getStorageKey();
+    const currentUserStoredCourses = window.localStorage.getItem(storageKey);
+    const isLegacyStorage =
+      currentUserStoredCourses === null &&
+      storageKey !== RECENT_COURSES_STORAGE_KEY;
+    const storedCourses =
+      currentUserStoredCourses ??
+      (isLegacyStorage
+        ? window.localStorage.getItem(RECENT_COURSES_STORAGE_KEY)
+        : null);
+
+    if (!storedCourses) return [];
+
+    const parsedCourses: unknown = JSON.parse(storedCourses);
+
+    const courses = Array.isArray(parsedCourses)
+      ? parsedCourses
+          .filter(isRecentCourse)
+          .map((course) =>
+            isLegacyStorage ? { ...course, canManage: false } : course
+          )
+          .slice(0, MAX_RECENT_COURSES)
+      : [];
+
+    if (courses.length > 0) {
+      window.localStorage.setItem(storageKey, JSON.stringify(courses));
+    }
+
+    return courses;
+  } catch {
+    return [];
+  }
+}
+
+export function saveRecentCourse(course: RecentCourse): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const courses = upsertRecentCourse(getStoredRecentCourses(), course);
+
+    window.localStorage.setItem(
+      getStorageKey(),
+      JSON.stringify(courses)
+    );
+    notifyRecentCoursesUpdated();
+  } catch {
+    return;
+  }
+}
+
+/** `recent-courses`와 `recent-courses:{userId}` 형태의 키를 모두 모은다. */
+function getAllRecentCourseStorageKeys(): string[] {
+  const keys: string[] = [];
+
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+
+    if (
+      key === RECENT_COURSES_STORAGE_KEY ||
+      key?.startsWith(`${RECENT_COURSES_STORAGE_KEY}:`)
+    ) {
+      keys.push(key);
+    }
+  }
+
+  return keys;
+}
+
+/**
+ * 삭제된 코스는 계정을 가리지 않고 목록에서 빠져야 한다.
+ *
+ * 저장소 키가 로그인 여부와 계정별로 갈리는데(`recent-courses`,
+ * `recent-courses:{userId}`) 현재 키만 지우면 다른 키에는 그대로 남는다.
+ * 그 상태로 로그인/로그아웃하거나 계정을 바꾸면 이미 삭제한 코스가 다시
+ * 나타난다(2026-08-13 확인). 그래서 모든 키를 훑어 지운다.
+ */
+export function removeRecentCourse(courseId: number): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    let hasRemoved = false;
+
+    for (const key of getAllRecentCourseStorageKeys()) {
+      const storedCourses = window.localStorage.getItem(key);
+
+      if (!storedCourses) continue;
+
+      const parsedCourses: unknown = JSON.parse(storedCourses);
+
+      if (!Array.isArray(parsedCourses)) continue;
+
+      const remainingCourses = parsedCourses.filter(
+        (course) =>
+          (course as { courseId?: unknown } | null)?.courseId !== courseId
+      );
+
+      if (remainingCourses.length === parsedCourses.length) continue;
+
+      window.localStorage.setItem(key, JSON.stringify(remainingCourses));
+      hasRemoved = true;
+    }
+
+    if (hasRemoved) {
+      notifyRecentCoursesUpdated();
+    }
+  } catch {
+    return;
+  }
+}
+
+export function updateRecentCourseLikeState(
+  courseId: number,
+  isLiked: boolean
+): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const courses = getStoredRecentCourses();
+
+    if (!courses.some((course) => course.courseId === courseId)) return;
+
+    const updatedCourses = courses.map((course) =>
+      course.courseId === courseId ? { ...course, isLiked } : course
+    );
+
+    window.localStorage.setItem(
+      getStorageKey(),
+      JSON.stringify(updatedCourses)
+    );
+    notifyRecentCoursesUpdated();
+  } catch {
+    return;
+  }
+}
+
+// 비로그인 상태에서는 좋아요를 가질 수 없으므로, 로그아웃 시 "최근 본
+// 코스" 목록은 그대로 두고 각 항목의 좋아요 표시만 지운다.
+export function clearRecentCoursesLikedState(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const courses = getStoredRecentCourses();
+
+    if (!courses.some((course) => course.isLiked)) return;
+
+    const updatedCourses = courses.map((course) => ({
+      ...course,
+      isLiked: false,
+    }));
+
+    window.localStorage.setItem(
+      getStorageKey(),
+      JSON.stringify(updatedCourses)
+    );
+    notifyRecentCoursesUpdated();
+  } catch {
+    return;
+  }
+}
+
+function isRecentCourse(value: unknown): value is RecentCourse {
+  if (typeof value !== 'object' || value === null) return false;
+
+  const course = value as Record<string, unknown>;
+
+  return (
+    typeof course.courseId === 'number' &&
+    typeof course.title === 'string' &&
+    typeof course.thumbnailUrl === 'string' &&
+    typeof course.region === 'string' &&
+    typeof course.durationType === 'string' &&
+    typeof course.transportType === 'string' &&
+    typeof course.companionType === 'string' &&
+    Array.isArray(course.tags) &&
+    course.tags.every((tag) => typeof tag === 'string') &&
+    typeof course.isLiked === 'boolean' &&
+    (course.courseType === 'OFFICIAL' || course.courseType === 'LOCAL')
+  );
+}

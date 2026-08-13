@@ -1,0 +1,78 @@
+/* src/styles/theme.css */
+
+@theme {
+  /* ========================================
+   * Font
+   * ======================================== */
+
+  --font-sans:
+    'Pretendard Variable', pretendard, -apple-system, blinkmacsystemfont,
+    system-ui, roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo',
+    'Noto Sans KR', 'Malgun Gothic', sans-serif;
+
+  /* ========================================
+   * Main / Orange
+   * ======================================== */
+
+  --color-main-1: #fff7f5;
+  --color-main-2: #ffebe5;
+  --color-main-3: #fbd0c2;
+  --color-main-4: #ff9a79;
+  --color-main-5: #ff6f41;
+
+  /* Filled-star color from src/assets/icons/star.svg */
+  --color-rating-star: #ffdc69;
+
+  /* ========================================
+   * Green
+   * ======================================== */
+
+  --color-green-1: #c1f4c8;
+  --color-green-2: #7dd789;
+  --color-green-3: #3bb44b;
+  --color-green-4: #20812d;
+  --color-green-5: #0d4e16;
+
+  /* ========================================
+   * Blue
+   * ======================================== */
+
+  --color-blue-1: #ccd5ff;
+  --color-blue-2: #869cff;
+  --color-blue-3: #4164fe;
+  --color-blue-4: #102998;
+  --color-blue-5: #031565;
+
+  /* ========================================
+   * Sky
+   * ======================================== */
+
+  --color-sky-1: #badfff;
+  --color-sky-2: #7dc3ff;
+  --color-sky-3: #5a97cc;
+  --color-sky-4: #3b6e99;
+  --color-sky-5: #224766;
+
+  /* ========================================
+   * Neutral
+   * ======================================== */
+
+  --color-black: #1c1c1c;
+
+  --color-gray-2: #e4e4e4;
+  --color-gray-3: #a1a1a1;
+  --color-gray-4: #7f7f7f;
+  --color-gray-5: #505050;
+
+  /*
+   * 디자이너가 지정한 White
+   * Tailwind의 bg-white, text-white에 적용됩니다.
+   */
+  --color-white: #f9f9f9;
+
+  /* 실제 순백색 */
+  --color-pure-white: #ffffff;
+
+  /* 앱 전체 기본 배경 */
+  --color-background: #f1f1f1;
+}
