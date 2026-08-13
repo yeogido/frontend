@@ -1,4 +1,4 @@
-import { apiClient } from './common';
+import { apiClient } from './common/index.ts';
 import type { DayOfWeek } from '../utils/operatingHours';
 
 export interface OperatingDay {
@@ -77,9 +77,7 @@ function normalizeCourseItemsForStorage(
       operatingDays: courseItem.operatingDays.map((operatingDay) => ({
         ...operatingDay,
         closeTime:
-          operatingDay.closeTime === '24:00'
-            ? '23:59'
-            : operatingDay.closeTime,
+          operatingDay.closeTime === '24:00' ? '23:59' : operatingDay.closeTime,
       })),
     };
   });
