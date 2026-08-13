@@ -20,7 +20,12 @@ export default async function handler(request: Request): Promise<Response> {
   try {
     const response = await fetch(
       `https://api.odsay.com/v1/api/searchPubTransPathT?${params}`,
-      { signal: controller.signal }
+      {
+        signal: controller.signal,
+        headers: {
+          referer: request.headers.get('referer') ?? '',
+        },
+      }
     );
 
     return new Response(response.body, {
