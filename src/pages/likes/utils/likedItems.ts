@@ -45,6 +45,7 @@ export function mapLikedItemResponse(item: LikedItemResponse): LikedItem {
     transportType: item.transportType ?? null,
     companionType: item.companionType ?? null,
     distance: item.category === 'PLACE' ? item.distance : null,
+    externalPlaceId: item.externalPlaceId ?? null,
     region: isCourse ? item.location : null,
     detailType: null,
     hashtags: item.hashtags,

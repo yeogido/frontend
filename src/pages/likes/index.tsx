@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ContentCard, CourseFilterBar, SearchBar } from '../../components/common';
+import {
+  ContentCard,
+  CourseFilterBar,
+  SearchBar,
+} from '../../components/common';
+import {
+  openKakaoMapPlace,
+  openKakaoMapSearch,
+} from '../../components/kakaomap/utils/kakaoMapLink';
 import { useToast } from '../../components/toast';
 import {
   LIKED_ITEM_FILTER_GRID_CLASS_NAME,
@@ -72,8 +80,9 @@ function LikesPage() {
   const [initialUserLocation] = useState<UserLocation | null>(() =>
     readStoredUserLocation()
   );
-  const [userLocation, setUserLocation] =
-    useState<UserLocation | null>(initialUserLocation);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(
+    initialUserLocation
+  );
 
   useEffect(() => {
     if (initialUserLocation) return;
@@ -170,6 +179,10 @@ function LikesPage() {
         void goToCourseDetail(item.id);
       } else if (item.category === 'EVENT') {
         navigate(buildFestivalDetailPath(item.id));
+      } else if (item.externalPlaceId) {
+        openKakaoMapPlace(item.externalPlaceId);
+      } else {
+        openKakaoMapSearch(`${item.title} ${item.location}`);
       }
     },
     [goToCourseDetail, navigate]
@@ -295,11 +308,7 @@ function LikesPage() {
                 tags={toContentTagIds(item.hashtags)}
                 liked
                 className="w-full"
-                onClick={
-                  item.category === 'PLACE'
-                    ? undefined
-                    : () => handleCardClick(item)
-                }
+                onClick={() => handleCardClick(item)}
                 onLikeClick={() => void handleUnlike(item)}
               />
             );
@@ -336,7 +345,6 @@ function LikesPage() {
         style={{ height: LOAD_MORE_HEIGHT * scale }}
         aria-hidden="true"
       />
-
     </section>
   );
 }
