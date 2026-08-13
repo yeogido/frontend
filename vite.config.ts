@@ -13,6 +13,7 @@ import {
   type PlacePhotoRequest,
 } from './api/google-places/placePhoto.ts';
 import { fetchGoogleImage } from './api/google-places/imageProxy.ts';
+import { fetchContentImage } from './api/contents/imageProxy.ts';
 
 function sendJson(
   response: import('node:http').ServerResponse,
@@ -151,6 +152,37 @@ function googlePlacesDevPlugin(apiKey: string | undefined): Plugin {
   };
 }
 
+function contentsDevPlugin(): Plugin {
+  return {
+    name: 'contents-image-dev-api',
+    configureServer(server) {
+      server.middlewares.use('/contents/image', async (request, response) => {
+        if (request.method !== 'GET') {
+          response.statusCode = 405;
+          response.end();
+          return;
+        }
+
+        const targetUrl = new URL(
+          request.url ?? '',
+          'http://localhost'
+        ).searchParams.get('url');
+
+        if (!targetUrl) {
+          response.statusCode = 400;
+          response.end();
+          return;
+        }
+
+        const result = await fetchContentImage(targetUrl);
+        response.statusCode = result.status;
+        response.setHeader('content-type', result.contentType);
+        response.end(result.body ? Buffer.from(result.body) : undefined);
+      });
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
@@ -163,6 +195,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       googlePlacesDevPlugin(env.GOOGLE_MAPS_API_KEY),
+      contentsDevPlugin(),
     ],
     server: {
       proxy: {
@@ -173,10 +206,7 @@ export default defineConfig(({ mode }) => {
             Authorization: `KakaoAK ${env.KAKAO_REST_API_KEY}`,
           },
           rewrite: (path) =>
-            path.replace(
-              /^\/kakao-maps\/static-map/,
-              '/v2/maps/staticmap'
-            ),
+            path.replace(/^\/kakao-maps\/static-map/, '/v2/maps/staticmap'),
         },
         '/kakao-routing/car': {
           target: 'https://apis-navi.kakaomobility.com',

@@ -145,6 +145,19 @@ async function drawImageMarker(
   }
 }
 
+// CONTENT(행사) 썸네일은 관광공사 동기화 콘텐츠라 tong.visitkorea.or.kr 같은
+// 외부 호스트에서 직접 내려오는데, 그 호스트가 CORS 헤더를 안 내려주면
+// crossOrigin='anonymous'로 로드하는 drawImageMarker가 실패해 핀 이미지가
+// 항상 단색 박스로 대체된다(반면 PLACE의 구글 사진은 CORS를 지원해 그대로
+// 잘 로드된다). 같은 오리진의 /contents/image 프록시(api/contents/imageProxy.ts)를
+// 거쳐 내려받아 이 문제를 피한다.
+function toDrawableImageSrc(event: VisitEvent): string {
+  const isExternalUrl = /^https?:\/\//.test(event.imageSrc);
+  if (event.kind !== 'CONTENT' || !isExternalUrl) return event.imageSrc;
+
+  return `/contents/image?url=${encodeURIComponent(event.imageSrc)}`;
+}
+
 async function fetchStaticMap(
   center: string,
   level: number,
@@ -257,7 +270,7 @@ export async function createRouteImage(
             context,
             canvasPoints[index].x,
             canvasPoints[index].y,
-            event.imageSrc
+            toDrawableImageSrc(event)
           )
         )
       );

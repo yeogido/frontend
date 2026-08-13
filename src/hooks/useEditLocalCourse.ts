@@ -91,6 +91,7 @@ export function useEditLocalCourse() {
             tag: '',
             title: item.name,
             address: item.roadAddress || item.lotAddress,
+            imageSrc: item.imageUrl ?? null,
           });
           visitOrder.push(festivalId);
         }
