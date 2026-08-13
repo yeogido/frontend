@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 
 import { getCourseDetail } from '../apis/courses';
+import type { CourseType } from '../types/course.type';
 import {
   RECENT_COURSES_UPDATED_EVENT,
   getStoredRecentCourses,
@@ -14,6 +15,14 @@ import { useAuthStore } from '../store/auth.store';
 // 다시 묻지 않는다. 코스 상세 조회(DETAIL_STALE_TIME)와 같은 쿼리 키를
 // 쓰므로 값도 같은 1분으로 맞춘다.
 const VALIDATION_STALE_TIME = 60_000;
+
+// 공식(OFFICIAL)·동네(LOCAL) 상세 화면이 쿼리 키를 따로 쓴다
+// (useYeogidoCourseDetail / useLocalCourseDetail). 검증 결과를 그 캐시에
+// 그대로 태우려면 카드의 courseType에 맞는 키를 골라야 한다.
+const DETAIL_QUERY_KEY_PREFIX: Record<CourseType, string> = {
+  OFFICIAL: 'yeogidoCourseDetail',
+  LOCAL: 'localCourseDetail',
+};
 
 function useStoredRecentCourses() {
   const authGeneration = useAuthStore((state) => state.authGeneration);
@@ -53,6 +62,7 @@ function useStoredRecentCourses() {
  */
 export function useRecentCourses() {
   const recentCourses = useStoredRecentCourses();
+  const authGeneration = useAuthStore((state) => state.authGeneration);
 
   // /courses/{id}/summary가 아니라 상세를 쓴다. summary는 인증이 필요해
   // 비로그인 사용자에게는 전부 AUTH4011로 떨어져 검증이 무력화된다(확인함).
@@ -60,7 +70,11 @@ export function useRecentCourses() {
   // 쿼리 키라, 최근 카드를 눌렀을 때 이미 받아 둔 값이 그대로 쓰인다.
   const validations = useQueries({
     queries: recentCourses.map((course) => ({
-      queryKey: ['courseDetail', course.courseId],
+      queryKey: [
+        DETAIL_QUERY_KEY_PREFIX[course.courseType],
+        authGeneration,
+        course.courseId,
+      ],
       queryFn: () => getCourseDetail(course.courseId),
       staleTime: VALIDATION_STALE_TIME,
       retry: false,

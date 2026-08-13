@@ -10,6 +10,7 @@ import { useAuthStore } from '../../../store/auth.store';
 import { NotFoundPage } from '../../not-found';
 import { saveRecentCourse } from '../../../utils/recentCourses';
 import { useRemoveDeletedRecentCourse } from '../../../hooks/useRecentCourses';
+import { isCourseNotFoundError } from '../../../hooks/useReviews';
 import { CourseDetailLayout, DetailStateGuard } from '../components';
 import {
   mapCourseApiDetailToCourseSummary,
@@ -108,11 +109,17 @@ function YeogidoCourseDetailPage() {
   }, [data]);
 
   if (courseId === null || isLoadingError || (data && !course)) {
-    return (
+    // 조회 실패를 전부 삭제로 안내하면 네트워크 장애나 잘못된 주소까지
+    // "작성자가 삭제했다"고 단정하게 된다. 삭제 판정은 코스 코드
+    // (COURSE4041)만 보는 isCourseNotFoundError에 맡기고, 그 외에는
+    // 원인을 특정하지 않는 기본 문구를 쓴다.
+    return isCourseNotFoundError(error) ? (
       <NotFoundPage
         title="삭제된 코스예요"
         description="작성자가 삭제했거나 주소가 잘못되었어요."
       />
+    ) : (
+      <NotFoundPage />
     );
   }
 

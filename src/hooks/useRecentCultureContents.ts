@@ -58,10 +58,14 @@ function useStoredRecentCultureContents() {
  */
 export function useRecentCultureContents() {
   const recentCultureContents = useStoredRecentCultureContents();
+  const authGeneration = useAuthStore((state) => state.authGeneration);
 
+  // 행사 상세 화면(useCultureContentDetail)과 같은 키를 써야 검증 결과가
+  // 상세 캐시에 그대로 실린다. authGeneration을 빼면 별개 쿼리가 되어,
+  // 같은 화면의 useRecentCultureContentPermissions와도 요청이 겹친다.
   const validations = useQueries({
     queries: recentCultureContents.map((content) => ({
-      queryKey: ['cultureContent', content.contentId],
+      queryKey: ['cultureContent', authGeneration, content.contentId],
       queryFn: () => getCultureContentDetail(content.contentId),
       staleTime: VALIDATION_STALE_TIME,
       retry: false,
