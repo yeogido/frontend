@@ -1,4 +1,4 @@
-import { regionCities } from '../../../constants/regions';
+import { regionCities } from '../../../constants/regions.ts';
 import type { RegionCityId } from '../../../constants/regions';
 import type {
   BusinessPromotionCategoryParam,
@@ -6,8 +6,8 @@ import type {
   BusinessPromotionSortParam,
 } from '../../../types/businessPromotion.type';
 import type { Region } from '../../../types/region.type';
-import { toContentTagIds } from '../../../utils/contentTags';
-import { getFullRegionName } from '../../../utils/regionName';
+import { toContentTagIds } from '../../../utils/contentTags.ts';
+import { getFullRegionName } from '../../../utils/regionName.ts';
 import type { BusinessCategory, BusinessItem, BusinessSort } from '../types';
 
 const CATEGORY_PARAM_BY_LABEL: Record<
@@ -56,8 +56,9 @@ export function mapApiCategoryToLabel(
   promotionCategory: string
 ): Exclude<BusinessCategory, '전체'> {
   return (
-    CATEGORY_LABEL_BY_PARAM[promotionCategory as BusinessPromotionCategoryParam] ??
-    (promotionCategory as Exclude<BusinessCategory, '전체'>)
+    CATEGORY_LABEL_BY_PARAM[
+      promotionCategory as BusinessPromotionCategoryParam
+    ] ?? (promotionCategory as Exclude<BusinessCategory, '전체'>)
   );
 }
 
