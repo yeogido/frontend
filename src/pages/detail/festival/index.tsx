@@ -12,7 +12,7 @@ import CourseCardSkeleton from '../../../components/common/CourseCardSkeleton';
 import SectionHeader from '../../../components/common/SectionHeader';
 import BackButton from '../../local-recommendation/components/BackButton';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
-import { isValidGeoPoint } from '../../../components/kakaomap/types';
+import { isValidGeoPoint, type GeoPoint } from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import {
   ResponsiveFullBleed,
@@ -139,6 +139,15 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null
   );
+  // local-course 상세(CourseDetailLayout의 focusedStopId)와 같은 방식 —
+  // 장소 카드를 누르면 지도를 그 자리로 되돌리고 핀을 강조한다. 핀이
+  // 하나뿐이라 매번 같은 좌표를 다시 포커스하게 되는데, BaseKakaoMap의
+  // panTo 이펙트는 focusedLocation "레퍼런스"가 바뀔 때만 다시 실행된다
+  // — 값(위도/경도)이 아니라 객체 참조를 본다. 그래서 클릭할 때마다
+  // 새 객체로 갈아끼워야, 지도를 옆으로 옮긴 뒤 같은 카드를 다시 눌러도
+  // 포커스가 매번 다시 걸린다.
+  const [focusedPlaceLocation, setFocusedPlaceLocation] =
+    useState<GeoPoint | null>(null);
   const placeLikeRequestInFlightRef = useRef(false);
   const { copied, isToastVisible, handleShare } = useShareToast();
   const [wasAuthenticated, setWasAuthenticated] = useState(isAuthenticated);
@@ -373,7 +382,24 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
 
               <div style={{ marginTop: MAP_MARGIN_TOP * scale }}>
                 {mapCenter ? (
-                  <BaseKakaoMap center={mapCenter} markers={[mapCenter]} />
+                  <BaseKakaoMap
+                    center={mapCenter}
+                    markers={[mapCenter]}
+                    imageMarkers={
+                      festivalDetail.place.image
+                        ? [
+                            {
+                              location: mapCenter,
+                              imageUrl: festivalDetail.place.image,
+                            },
+                          ]
+                        : []
+                    }
+                    focusedLocation={focusedPlaceLocation}
+                    onMarkerClick={() =>
+                      openKakaoMapRoute(festivalDetail.place.name, mapCenter)
+                    }
+                  />
                 ) : (
                   <div
                     role="status"
@@ -400,11 +426,12 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                   onLikeClick={() => void handlePlaceLikeToggle()}
                   onClick={
                     isValidGeoPoint(festivalDetail.place.location)
-                      ? () =>
-                          openKakaoMapRoute(
-                            festivalDetail.place.name,
-                            festivalDetail.place.location
-                          )
+                      ? () => {
+                          const location = festivalDetail.place.location;
+                          if (isValidGeoPoint(location)) {
+                            setFocusedPlaceLocation({ ...location });
+                          }
+                        }
                       : undefined
                   }
                 />
