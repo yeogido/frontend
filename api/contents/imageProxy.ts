@@ -3,8 +3,11 @@
 // 브라우저가 크로스오리진으로 캔버스에 그리면(routeImage 생성 시 핀 이미지)
 // 이미지 로드 자체가 실패한다. google-places/imageProxy.ts와 동일하게 우리
 // 서버가 대신 내려받아 같은 오리진으로 돌려준다. 임의 URL을 그대로 fetch하면
-// SSRF가 되므로 관광공사 이미지 호스트만 허용한다.
-const ALLOWED_HOSTNAME_SUFFIXES = ['.visitkorea.or.kr'];
+// SSRF가 되므로 관광공사와 여기도 자체 이미지의 정확한 호스트만 허용한다.
+const ALLOWED_HOSTNAMES = new Set([
+  'tong.visitkorea.or.kr',
+  'd2vdji7rc2q3wv.cloudfront.net',
+]);
 const IMAGE_PROXY_TIMEOUT_MS = 8000;
 
 function isAllowedContentImageUrl(rawUrl: string): URL | null {
@@ -17,7 +20,7 @@ function isAllowedContentImageUrl(rawUrl: string): URL | null {
 
   const isAllowed =
     url.protocol === 'https:' &&
-    ALLOWED_HOSTNAME_SUFFIXES.some((suffix) => url.hostname.endsWith(suffix));
+    ALLOWED_HOSTNAMES.has(url.hostname);
 
   return isAllowed ? url : null;
 }
@@ -41,6 +44,10 @@ export async function fetchContentImage(
     upstream = await fetch(url.toString(), {
       signal: AbortSignal.timeout(IMAGE_PROXY_TIMEOUT_MS),
       redirect: 'error',
+      headers: {
+        accept: 'image/avif,image/webp,image/png,image/jpeg,image/*',
+        'user-agent': 'Yeogido-Image-Proxy/1.0',
+      },
     });
   } catch {
     return { status: 502, contentType: 'text/plain', body: null };
@@ -50,9 +57,14 @@ export async function fetchContentImage(
     return { status: 502, contentType: 'text/plain', body: null };
   }
 
+  const contentType = upstream.headers.get('content-type') ?? '';
+  if (!contentType.toLowerCase().startsWith('image/')) {
+    return { status: 502, contentType: 'text/plain', body: null };
+  }
+
   return {
     status: 200,
-    contentType: upstream.headers.get('content-type') ?? 'image/jpeg',
+    contentType,
     body: await upstream.arrayBuffer(),
   };
 }
