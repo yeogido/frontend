@@ -131,6 +131,9 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
   const [placeLikedOverride, setPlaceLikedOverride] = useState<boolean | null>(
     null
   );
+  // local-course 상세(CourseDetailLayout의 focusedStopId)와 같은 방식 —
+  // 장소 카드를 누르면 지도를 그 자리로 되돌리고 핀을 강조한다.
+  const [isPlaceFocused, setIsPlaceFocused] = useState(false);
   const placeLikeRequestInFlightRef = useRef(false);
   const { copied, isToastVisible, handleShare } = useShareToast();
   const [wasAuthenticated, setWasAuthenticated] = useState(isAuthenticated);
@@ -378,6 +381,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                           ]
                         : []
                     }
+                    focusedLocation={isPlaceFocused ? mapCenter : null}
                     onMarkerClick={() =>
                       openKakaoMapRoute(festivalDetail.place.name, mapCenter)
                     }
@@ -408,11 +412,7 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
                   onLikeClick={() => void handlePlaceLikeToggle()}
                   onClick={
                     isValidGeoPoint(festivalDetail.place.location)
-                      ? () =>
-                          openKakaoMapRoute(
-                            festivalDetail.place.name,
-                            festivalDetail.place.location
-                          )
+                      ? () => setIsPlaceFocused(true)
                       : undefined
                   }
                 />

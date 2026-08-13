@@ -72,6 +72,11 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
   const { data: detailResponse, error: queryError } =
     useBusinessPromotionDetail(promotionId);
   const [likedOverride, setLikedOverride] = useState<boolean | null>(null);
+  // local-course 상세(CourseDetailLayout의 focusedStopId)와 같은 방식 —
+  // 장소 카드를 누르면 지도를 그 자리로 되돌리고 핀을 강조한다. 핀이
+  // 하나뿐이라 "포커스됐는지" 여부만 있으면 되고, 한 번 누른 뒤로는 계속
+  // 강조 상태로 둔다(코스 상세도 focusedStopId를 따로 해제하지 않는다).
+  const [isPlaceFocused, setIsPlaceFocused] = useState(false);
   const placeLikeRequestInFlightRef = useRef(false);
   const { copied, isToastVisible, handleShare } = useShareToast();
   const {
@@ -268,6 +273,9 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                         ]
                       : []
                   }
+                  focusedLocation={
+                    isPlaceFocused ? businessDetail.location : null
+                  }
                   onMarkerClick={() =>
                     openKakaoMapRoute(
                       businessDetail.title,
@@ -301,11 +309,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                 onLikeClick={() => void handleFavoriteToggle()}
                 onClick={
                   isValidGeoPoint(businessDetail.location)
-                    ? () =>
-                        openKakaoMapRoute(
-                          businessDetail.title,
-                          businessDetail.location
-                        )
+                    ? () => setIsPlaceFocused(true)
                     : undefined
                 }
               />
