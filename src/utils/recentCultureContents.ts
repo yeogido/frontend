@@ -104,23 +104,60 @@ export function saveRecentCultureContent(content: RecentCultureContent): void {
   }
 }
 
+/**
+ * `recent-culture-contents`와 `recent-culture-contents:{userId}` 형태의 키를
+ * 모두 모은다.
+ */
+function getAllRecentCultureContentStorageKeys(): string[] {
+  const keys: string[] = [];
+
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+
+    if (
+      key === RECENT_CULTURE_CONTENTS_STORAGE_KEY ||
+      key?.startsWith(`${RECENT_CULTURE_CONTENTS_STORAGE_KEY}:`)
+    ) {
+      keys.push(key);
+    }
+  }
+
+  return keys;
+}
+
+/**
+ * 삭제된 행사는 계정을 가리지 않고 목록에서 빠져야 한다. 이유는
+ * recentCourses.ts의 removeRecentCourse 주석 참고.
+ */
 export function removeRecentCultureContent(contentId: number): void {
   if (typeof window === 'undefined') return;
 
   try {
-    const contents = getStoredRecentCultureContentsRaw();
+    let hasRemoved = false;
 
-    if (!contents.some((content) => content.contentId === contentId)) return;
+    for (const key of getAllRecentCultureContentStorageKeys()) {
+      const storedContents = window.localStorage.getItem(key);
 
-    const updatedContents = contents.filter(
-      (content) => content.contentId !== contentId
-    );
+      if (!storedContents) continue;
 
-    window.localStorage.setItem(
-      getStorageKey(),
-      JSON.stringify(updatedContents)
-    );
-    notifyRecentCultureContentsUpdated();
+      const parsedContents: unknown = JSON.parse(storedContents);
+
+      if (!Array.isArray(parsedContents)) continue;
+
+      const remainingContents = parsedContents.filter(
+        (content) =>
+          (content as { contentId?: unknown } | null)?.contentId !== contentId
+      );
+
+      if (remainingContents.length === parsedContents.length) continue;
+
+      window.localStorage.setItem(key, JSON.stringify(remainingContents));
+      hasRemoved = true;
+    }
+
+    if (hasRemoved) {
+      notifyRecentCultureContentsUpdated();
+    }
   } catch {
     return;
   }

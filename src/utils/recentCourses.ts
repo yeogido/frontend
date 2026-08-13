@@ -92,23 +92,61 @@ export function saveRecentCourse(course: RecentCourse): void {
   }
 }
 
+/** `recent-courses`와 `recent-courses:{userId}` 형태의 키를 모두 모은다. */
+function getAllRecentCourseStorageKeys(): string[] {
+  const keys: string[] = [];
+
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+
+    if (
+      key === RECENT_COURSES_STORAGE_KEY ||
+      key?.startsWith(`${RECENT_COURSES_STORAGE_KEY}:`)
+    ) {
+      keys.push(key);
+    }
+  }
+
+  return keys;
+}
+
+/**
+ * 삭제된 코스는 계정을 가리지 않고 목록에서 빠져야 한다.
+ *
+ * 저장소 키가 로그인 여부와 계정별로 갈리는데(`recent-courses`,
+ * `recent-courses:{userId}`) 현재 키만 지우면 다른 키에는 그대로 남는다.
+ * 그 상태로 로그인/로그아웃하거나 계정을 바꾸면 이미 삭제한 코스가 다시
+ * 나타난다(2026-08-13 확인). 그래서 모든 키를 훑어 지운다.
+ */
 export function removeRecentCourse(courseId: number): void {
   if (typeof window === 'undefined') return;
 
   try {
-    const courses = getStoredRecentCourses();
+    let hasRemoved = false;
 
-    if (!courses.some((course) => course.courseId === courseId)) return;
+    for (const key of getAllRecentCourseStorageKeys()) {
+      const storedCourses = window.localStorage.getItem(key);
 
-    const updatedCourses = courses.filter(
-      (course) => course.courseId !== courseId
-    );
+      if (!storedCourses) continue;
 
-    window.localStorage.setItem(
-      getStorageKey(),
-      JSON.stringify(updatedCourses)
-    );
-    notifyRecentCoursesUpdated();
+      const parsedCourses: unknown = JSON.parse(storedCourses);
+
+      if (!Array.isArray(parsedCourses)) continue;
+
+      const remainingCourses = parsedCourses.filter(
+        (course) =>
+          (course as { courseId?: unknown } | null)?.courseId !== courseId
+      );
+
+      if (remainingCourses.length === parsedCourses.length) continue;
+
+      window.localStorage.setItem(key, JSON.stringify(remainingCourses));
+      hasRemoved = true;
+    }
+
+    if (hasRemoved) {
+      notifyRecentCoursesUpdated();
+    }
   } catch {
     return;
   }
