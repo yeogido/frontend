@@ -7,6 +7,7 @@ import type {
 } from '../../../types/businessPromotion.type';
 import type { Region } from '../../../types/region.type';
 import { toContentTagIds } from '../../../utils/contentTags';
+import { getFullRegionName } from '../../../utils/regionName';
 import type { BusinessCategory, BusinessItem, BusinessSort } from '../types';
 
 const CATEGORY_PARAM_BY_LABEL: Record<
@@ -64,6 +65,20 @@ export function formatBusinessPromotionDate(createdAt: string): string {
   return createdAt.slice(0, 10).replace(/-/g, '.');
 }
 
+// regionName은 구/군 단위만 내려온다(예: "계양구") — roadAddress 첫 토큰
+// (예: "인천")을 정식 시/도 명칭으로 바꿔 앞에 붙여 "인천광역시 계양구"
+// 형태로 만든다. roadAddress가 비어 있으면 regionName만 그대로 쓴다.
+export function toRegionDisplayName(
+  regionName: string,
+  roadAddress: string
+): string {
+  const provinceToken = roadAddress.trim().split(/\s+/)[0];
+
+  return provinceToken
+    ? `${getFullRegionName(provinceToken)} ${regionName}`
+    : regionName;
+}
+
 // regionCities(캐러셀이 쓰는 정적 문자열 슬러그)와 getRegions()(백엔드 실제
 // 지역 목록, 숫자 regionId)를 지역명으로 매칭한다. 두 데이터 소스의 표기가
 // 어긋나 매칭에 실패하면(존재하지 않는 이름 등) undefined를 반환해 전체
@@ -92,7 +107,7 @@ export function mapBusinessPromotionItemToBusinessItem(
     placeId: item.placeId,
     title: item.placeName,
     description: item.shortDescription,
-    location: item.regionName,
+    location: toRegionDisplayName(item.regionName, item.roadAddress),
     category: mapApiCategoryToLabel(item.promotionCategory),
     author: item.author.nickname,
     authorAvatarUrl: item.author.profileImageUrl,
