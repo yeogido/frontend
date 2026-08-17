@@ -2,7 +2,7 @@ import {
   InvalidPlacePhotoRequestError,
   lookupPlacePhoto,
   type PlacePhotoRequest,
-} from './placePhoto';
+} from './placePhoto.js';
 import { toOptionalCoordinate, toOptionalString } from './parseRequest.js';
 
 export const config = { runtime: 'edge' };
