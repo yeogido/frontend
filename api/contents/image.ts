@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-import { fetchContentImage } from './imageProxy.ts';
+import { fetchContentImage } from './imageProxy.js';
 
 const SUCCESS_CACHE_CONTROL =
   'public, s-maxage=86400, stale-while-revalidate=604800';
