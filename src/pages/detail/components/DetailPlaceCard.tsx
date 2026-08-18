@@ -1,50 +1,65 @@
+import { useState } from 'react';
+import { IoChevronDown } from 'react-icons/io5';
+
 import heart from '../../../assets/icons/heart.svg';
+import locationOn from '../../../assets/icons/location-on.svg';
 import oheart from '../../../assets/icons/oheart.svg';
 import { useScaleFrame } from '../../../hooks/useScaleFrame';
+import {
+  formatOperatingDay,
+  getTodayOperatingDay,
+  hasSameOperatingHoursEveryDay,
+  type OperatingDay,
+} from '../../../utils/operatingHours';
 
 const CARD_DESIGN_WIDTH = 342;
 const CARD_HEIGHT = 97;
 const CARD_PADDING = 12; // 추정값, 실측 필요
-const THUMBNAIL_SIZE = 67; // 추정값, 실측 필요 (97 - 12*2)
+const LOCATION_ICON_SIZE = 24;
 const CONTENT_GAP = 12; // 추정값, 실측 필요
 const TITLE_SIZE = 14;
+const TITLE_LINE_HEIGHT = 20;
 const META_SIZE = 12;
-const META_GAP = 2; // 추정값, 실측 필요
-// relaxedSpacing일 때만 쓰는, 제목-주소-영업시간 사이 간격. 기본값(2px)이
-// 거의 붙어 보여서(행사 상세 페이지 피드백) 그 자리에서만 더 넓게 쓴다.
-const META_GAP_RELAXED = 8;
+const META_LINE_HEIGHT = 12;
+const META_GAP = 4;
 const HEART_SIZE = 20;
+const HOURS_CHEVRON_SIZE = 14;
+const HOURS_CHEVRON_GAP = 2;
 
 export interface DetailPlaceCardProps {
-  imageUrl: string;
   title: string;
   address: string;
   hours: string;
+  operatingDays?: readonly OperatingDay[];
   liked?: boolean;
   onClick?: () => void;
   onLikeClick?: () => void;
-  /**
-   * true면 제목-주소-영업시간 사이 간격을 넓히고, 그만큼 카드 높이도
-   * 늘어나게 둔다(고정 높이 대신 최소 높이만 유지). 기본값은 false라
-   * 다른 화면(소상공인 상세 등)은 기존 모습 그대로다.
-   */
-  relaxedSpacing?: boolean;
 }
 
 function DetailPlaceCard({
-  imageUrl,
   title,
   address,
   hours,
+  operatingDays = [],
   liked = false,
   onClick,
   onLikeClick,
-  relaxedSpacing = false,
 }: DetailPlaceCardProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(CARD_DESIGN_WIDTH);
 
   const isClickable = Boolean(onClick);
+  const [isHoursOpen, setIsHoursOpen] = useState(false);
+  const todayOperatingDay = getTodayOperatingDay(operatingDays);
+  const remainingOperatingDays = todayOperatingDay
+    ? operatingDays.filter((day) => day !== todayOperatingDay)
+    : operatingDays;
+  const canExpandHours =
+    !hasSameOperatingHoursEveryDay(operatingDays) &&
+    remainingOperatingDays.length > 0;
+  const displayedHours = todayOperatingDay
+    ? formatOperatingDay(todayOperatingDay)
+    : hours;
 
   return (
     <div
@@ -57,14 +72,12 @@ function DetailPlaceCard({
         onClick={onClick}
         role={isClickable ? 'button' : undefined}
         tabIndex={isClickable ? 0 : undefined}
-        className={`relative flex items-center rounded-xl bg-white ${
+        className={`relative flex items-start rounded-xl bg-white ${
           isClickable ? 'cursor-pointer' : ''
         }`}
         style={{
           width: CARD_DESIGN_WIDTH,
-          ...(relaxedSpacing
-            ? { minHeight: CARD_HEIGHT }
-            : { height: CARD_HEIGHT }),
+          ...(isHoursOpen ? { minHeight: CARD_HEIGHT } : { height: CARD_HEIGHT }),
           padding: CARD_PADDING,
           gap: CONTENT_GAP,
           transform: `scale(${scale})`,
@@ -72,37 +85,98 @@ function DetailPlaceCard({
         }}
       >
         <img
-          src={imageUrl}
+          src={locationOn}
           alt=""
           aria-hidden="true"
-          className="shrink-0 rounded-lg object-cover"
-          style={{ width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE }}
+          className="shrink-0"
+          style={{ width: LOCATION_ICON_SIZE, height: LOCATION_ICON_SIZE }}
         />
 
         <div
           className="flex min-w-0 flex-1 flex-col"
-          style={{ gap: relaxedSpacing ? META_GAP_RELAXED : META_GAP }}
+          style={{ gap: META_GAP }}
         >
           <h3
-            className="truncate leading-none font-semibold text-black"
-            style={{ fontSize: TITLE_SIZE }}
+            className="truncate font-semibold text-black"
+            style={{
+              fontSize: TITLE_SIZE,
+              lineHeight: `${TITLE_LINE_HEIGHT}px`,
+            }}
           >
             {title}
           </h3>
 
           <p
-            className="font-regular text-gray-4 truncate leading-none"
-            style={{ fontSize: META_SIZE }}
+            className="font-regular text-gray-4 truncate"
+            style={{
+              fontSize: META_SIZE,
+              lineHeight: `${META_LINE_HEIGHT}px`,
+            }}
           >
             {address}
           </p>
 
-          <p
-            className="font-regular text-gray-3 truncate"
-            style={{ fontSize: META_SIZE }}
-          >
-            {hours}
-          </p>
+          {canExpandHours ? (
+            <div>
+              <button
+                type="button"
+                aria-expanded={isHoursOpen}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsHoursOpen((open) => !open);
+                }}
+                className="text-gray-3 flex max-w-full items-center tabular-nums"
+                style={{ gap: HOURS_CHEVRON_GAP }}
+              >
+                <span
+                  className="truncate"
+                  style={{
+                    fontSize: META_SIZE,
+                    lineHeight: `${META_LINE_HEIGHT}px`,
+                  }}
+                >
+                  {displayedHours}
+                </span>
+                <IoChevronDown
+                  aria-hidden="true"
+                  className={`shrink-0 transition-transform ${
+                    isHoursOpen ? 'rotate-180' : ''
+                  }`}
+                  style={{ fontSize: HOURS_CHEVRON_SIZE }}
+                />
+              </button>
+
+              {isHoursOpen ? (
+                  <ul
+                    className="tabular-nums"
+                    style={{ marginTop: META_GAP }}
+                  >
+                  {remainingOperatingDays.map((day) => (
+                    <li
+                      key={day.dayOfWeek}
+                      className="text-gray-3"
+                      style={{
+                        fontSize: META_SIZE,
+                        lineHeight: `${META_LINE_HEIGHT}px`,
+                      }}
+                    >
+                      {formatOperatingDay(day)}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : (
+            <p
+              className="font-regular text-gray-3 truncate"
+              style={{
+                fontSize: META_SIZE,
+                lineHeight: `${META_LINE_HEIGHT}px`,
+              }}
+            >
+              {hours}
+            </p>
+          )}
         </div>
 
         <button

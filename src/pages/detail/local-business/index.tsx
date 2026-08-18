@@ -255,6 +255,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
               <DetailInfoCard
                 address={businessDetail.address}
                 hours={businessDetail.hours}
+                operatingDays={businessDetail.operatingDays}
                 phone={businessDetail.phone}
                 website={businessDetail.snsAccount}
                 phoneHref={toTelHref(businessDetail.phone)}
@@ -302,12 +303,11 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
 
             <div style={{ marginTop: PLACE_CARD_MARGIN_TOP * scale }}>
               <DetailPlaceCard
-                imageUrl={businessDetail.heroImageUrl}
                 title={businessDetail.title}
                 address={businessDetail.address}
                 hours={businessDetail.hours}
+                operatingDays={businessDetail.operatingDays}
                 liked={likedOverride ?? businessDetail.liked}
-                relaxedSpacing
                 onLikeClick={() => void handleFavoriteToggle()}
                 onClick={
                   isValidGeoPoint(businessDetail.location)
