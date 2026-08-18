@@ -2,7 +2,7 @@ import {
   InvalidPlaceHoursRequestError,
   lookupPlaceHours,
   type PlaceHoursRequest,
-} from './placeHours';
+} from './placeHours.js';
 
 export const config = { runtime: 'edge' };
 
@@ -12,7 +12,10 @@ const RATE_LIMIT_MAX_REQUESTS = 30;
 
 const responseCache = new Map<
   string,
-  { readonly expiresAt: number; readonly body: Awaited<ReturnType<typeof lookupPlaceHours>> }
+  {
+    readonly expiresAt: number;
+    readonly body: Awaited<ReturnType<typeof lookupPlaceHours>>;
+  }
 >();
 const rateLimitEntries = new Map<string, { count: number; resetAt: number }>();
 

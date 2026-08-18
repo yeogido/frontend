@@ -1,4 +1,4 @@
-import { fetchGoogleImage } from './imageProxy';
+import { fetchGoogleImage } from './imageProxy.js';
 
 export const config = { runtime: 'edge' };
 
