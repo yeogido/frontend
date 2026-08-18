@@ -32,7 +32,7 @@ function SectionHeader({
         <button
           type="button"
           onClick={onActionClick}
-          className="flex items-center"
+          className="flex items-center gap-[4px]"
         >
           <span
             className="font-normal leading-none text-[#7F7F7F]"
