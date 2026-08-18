@@ -302,12 +302,10 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
 
             <div style={{ marginTop: PLACE_CARD_MARGIN_TOP * scale }}>
               <DetailPlaceCard
-                imageUrl={businessDetail.heroImageUrl}
                 title={businessDetail.title}
                 address={businessDetail.address}
                 hours={businessDetail.hours}
                 liked={likedOverride ?? businessDetail.liked}
-                relaxedSpacing
                 onLikeClick={() => void handleFavoriteToggle()}
                 onClick={
                   isValidGeoPoint(businessDetail.location)
