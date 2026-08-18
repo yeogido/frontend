@@ -1,5 +1,6 @@
 import type { GeoPoint } from '../../../components/kakaomap/types';
 import type { DetailTag } from '../../../types/detail';
+import type { OperatingDay } from '../../../utils/operatingHours';
 
 export interface BusinessPromotionDetail {
   readonly id: number;
@@ -14,6 +15,7 @@ export interface BusinessPromotionDetail {
   readonly overview: string;
   readonly address: string;
   readonly hours: string;
+  readonly operatingDays: readonly OperatingDay[];
   readonly phone: string;
   readonly snsAccount: string;
   readonly location?: GeoPoint;

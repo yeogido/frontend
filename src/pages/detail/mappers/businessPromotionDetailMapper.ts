@@ -1,4 +1,5 @@
 import { toContentTagId } from '../../../utils/contentTags';
+import type { OperatingDay } from '../../../utils/operatingHours';
 import type {
   BusinessPromotionBusinessHour,
   BusinessPromotionDetailResponse,
@@ -74,6 +75,24 @@ function formatBusinessHours(
     .join(', ');
 }
 
+function toOperatingDays(
+  businessHours: readonly BusinessPromotionBusinessHour[]
+): OperatingDay[] {
+  return businessHours.flatMap((hour) =>
+    DAY_OF_WEEK_ORDER.includes(
+      hour.dayOfWeek as (typeof DAY_OF_WEEK_ORDER)[number]
+    )
+      ? [
+          {
+            dayOfWeek: hour.dayOfWeek as OperatingDay['dayOfWeek'],
+            openTime: hour.openTime,
+            closeTime: hour.closeTime,
+          },
+        ]
+      : []
+  );
+}
+
 function mapHashtagsToTags(hashtags: string[]): DetailTag[] {
   return hashtags.map((hashtag, index) => {
     const tagId = toContentTagId(hashtag);
@@ -99,6 +118,7 @@ export function mapBusinessPromotionDetail(
     overview: detail.shortDescription,
     address: detail.place.roadAddress,
     hours: formatBusinessHours(detail.businessHours),
+    operatingDays: toOperatingDays(detail.businessHours),
     phone: detail.phoneNumber,
     snsAccount: detail.snsAccount,
     location:

@@ -417,12 +417,10 @@ function FestivalDetailContent({ contentId }: { contentId: number }) {
 
               <div style={{ marginTop: PLACE_CARD_MARGIN_TOP * scale }}>
                 <DetailPlaceCard
-                  imageUrl={festivalDetail.place.image}
                   title={festivalDetail.place.name}
                   address={festivalDetail.place.address}
                   hours={festivalPlaceHours ?? '영업시간 정보 없음'}
                   liked={placeLikedOverride ?? festivalDetail.place.liked}
-                  relaxedSpacing
                   onLikeClick={() => void handlePlaceLikeToggle()}
                   onClick={
                     isValidGeoPoint(festivalDetail.place.location)
