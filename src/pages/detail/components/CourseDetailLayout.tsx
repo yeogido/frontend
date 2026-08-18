@@ -48,7 +48,7 @@ import {
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_BOTTOM = 25;
-const TITLE_SECTION_PADDING_TOP = 15;
+const TITLE_SECTION_PADDING_TOP = 24;
 const SECTION_MARGIN_TOP = 16;
 const MAP_MARGIN_TOP = 24;
 const STOP_LIST_MARGIN_TOP = 0;
