@@ -34,7 +34,7 @@ import useLocalBusinesses from './hooks/useLocalBusinesses';
 
 const DEFAULT_CATEGORY: BusinessCategory = '전체';
 const DEFAULT_SORT: BusinessSort = '추천순';
-const DEFAULT_VIEW_MODE: BusinessViewMode = 'grid';
+const DEFAULT_VIEW_MODE: BusinessViewMode = 'card';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
