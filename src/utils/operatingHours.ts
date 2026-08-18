@@ -152,6 +152,21 @@ const ALL_DAYS_OF_WEEK: readonly DayOfWeek[] = [
   'SUNDAY',
 ];
 
+export function hasSameOperatingHoursEveryDay(
+  operatingDays: readonly OperatingDay[]
+): boolean {
+  if (operatingDays.length < ALL_DAYS_OF_WEEK.length) return false;
+
+  const coveredDays = new Set(operatingDays.map((day) => day.dayOfWeek));
+  if (coveredDays.size !== ALL_DAYS_OF_WEEK.length) return false;
+
+  return operatingDays.every(
+    (day) =>
+      day.openTime === operatingDays[0]?.openTime &&
+      day.closeTime === operatingDays[0]?.closeTime
+  );
+}
+
 function toHourMinute(time: string): string {
   return time.slice(0, 5);
 }
@@ -189,6 +204,15 @@ export function formatTodayOperatingHours(
   return today
     ? `${toHourMinute(today.openTime)} - ${formatClosingTimeForDisplay(today.closeTime)}`
     : undefined;
+}
+
+export function getTodayOperatingDay(
+  operatingDays: readonly OperatingDay[],
+  now: Date = new Date()
+): OperatingDay | undefined {
+  const { dayOfWeek } = getSeoulNow(now);
+
+  return operatingDays.find((day) => day.dayOfWeek === dayOfWeek);
 }
 
 /**

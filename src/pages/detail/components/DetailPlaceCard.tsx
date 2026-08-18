@@ -1,7 +1,16 @@
+import { useState } from 'react';
+import { IoChevronDown } from 'react-icons/io5';
+
 import heart from '../../../assets/icons/heart.svg';
 import locationOn from '../../../assets/icons/location-on.svg';
 import oheart from '../../../assets/icons/oheart.svg';
 import { useScaleFrame } from '../../../hooks/useScaleFrame';
+import {
+  formatOperatingDay,
+  getTodayOperatingDay,
+  hasSameOperatingHoursEveryDay,
+  type OperatingDay,
+} from '../../../utils/operatingHours';
 
 const CARD_DESIGN_WIDTH = 342;
 const CARD_HEIGHT = 97;
@@ -14,11 +23,14 @@ const META_SIZE = 12;
 const META_LINE_HEIGHT = 12;
 const META_GAP = 4;
 const HEART_SIZE = 20;
+const HOURS_CHEVRON_SIZE = 14;
+const HOURS_CHEVRON_GAP = 2;
 
 export interface DetailPlaceCardProps {
   title: string;
   address: string;
   hours: string;
+  operatingDays?: readonly OperatingDay[];
   liked?: boolean;
   onClick?: () => void;
   onLikeClick?: () => void;
@@ -28,6 +40,7 @@ function DetailPlaceCard({
   title,
   address,
   hours,
+  operatingDays = [],
   liked = false,
   onClick,
   onLikeClick,
@@ -36,6 +49,17 @@ function DetailPlaceCard({
     useScaleFrame(CARD_DESIGN_WIDTH);
 
   const isClickable = Boolean(onClick);
+  const [isHoursOpen, setIsHoursOpen] = useState(false);
+  const todayOperatingDay = getTodayOperatingDay(operatingDays);
+  const remainingOperatingDays = todayOperatingDay
+    ? operatingDays.filter((day) => day !== todayOperatingDay)
+    : operatingDays;
+  const canExpandHours =
+    !hasSameOperatingHoursEveryDay(operatingDays) &&
+    remainingOperatingDays.length > 0;
+  const displayedHours = todayOperatingDay
+    ? formatOperatingDay(todayOperatingDay)
+    : hours;
 
   return (
     <div
@@ -53,7 +77,7 @@ function DetailPlaceCard({
         }`}
         style={{
           width: CARD_DESIGN_WIDTH,
-          height: CARD_HEIGHT,
+          ...(isHoursOpen ? { minHeight: CARD_HEIGHT } : { height: CARD_HEIGHT }),
           padding: CARD_PADDING,
           gap: CONTENT_GAP,
           transform: `scale(${scale})`,
@@ -92,15 +116,67 @@ function DetailPlaceCard({
             {address}
           </p>
 
-          <p
-            className="font-regular text-gray-3 truncate"
-            style={{
-              fontSize: META_SIZE,
-              lineHeight: `${META_LINE_HEIGHT}px`,
-            }}
-          >
-            {hours}
-          </p>
+          {canExpandHours ? (
+            <div>
+              <button
+                type="button"
+                aria-expanded={isHoursOpen}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsHoursOpen((open) => !open);
+                }}
+                className="text-gray-3 flex max-w-full items-center tabular-nums"
+                style={{ gap: HOURS_CHEVRON_GAP }}
+              >
+                <span
+                  className="truncate"
+                  style={{
+                    fontSize: META_SIZE,
+                    lineHeight: `${META_LINE_HEIGHT}px`,
+                  }}
+                >
+                  {displayedHours}
+                </span>
+                <IoChevronDown
+                  aria-hidden="true"
+                  className={`shrink-0 transition-transform ${
+                    isHoursOpen ? 'rotate-180' : ''
+                  }`}
+                  style={{ fontSize: HOURS_CHEVRON_SIZE }}
+                />
+              </button>
+
+              {isHoursOpen ? (
+                  <ul
+                    className="tabular-nums"
+                    style={{ marginTop: META_GAP }}
+                  >
+                  {remainingOperatingDays.map((day) => (
+                    <li
+                      key={day.dayOfWeek}
+                      className="text-gray-3"
+                      style={{
+                        fontSize: META_SIZE,
+                        lineHeight: `${META_LINE_HEIGHT}px`,
+                      }}
+                    >
+                      {formatOperatingDay(day)}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : (
+            <p
+              className="font-regular text-gray-3 truncate"
+              style={{
+                fontSize: META_SIZE,
+                lineHeight: `${META_LINE_HEIGHT}px`,
+              }}
+            >
+              {hours}
+            </p>
+          )}
         </div>
 
         <button

@@ -255,6 +255,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
               <DetailInfoCard
                 address={businessDetail.address}
                 hours={businessDetail.hours}
+                operatingDays={businessDetail.operatingDays}
                 phone={businessDetail.phone}
                 website={businessDetail.snsAccount}
                 phoneHref={toTelHref(businessDetail.phone)}
@@ -305,6 +306,7 @@ function LocalBusinessDetailContent({ promotionId }: { promotionId: number }) {
                 title={businessDetail.title}
                 address={businessDetail.address}
                 hours={businessDetail.hours}
+                operatingDays={businessDetail.operatingDays}
                 liked={likedOverride ?? businessDetail.liked}
                 onLikeClick={() => void handleFavoriteToggle()}
                 onClick={
