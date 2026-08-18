@@ -11,8 +11,8 @@ import { useKakaoLogin } from '../../../../hooks/useKakaoLogin';
 import { useNaverLogin } from '../../../../hooks/useNaverLogin';
 
 const PAGE_PADDING_X = 24;
-const PAGE_PADDING_TOP = 56;
-const PAGE_PADDING_BOTTOM = 40;
+const PAGE_PADDING_TOP = 12;
+const PAGE_PADDING_BOTTOM = 24;
 
 const LOGO_MARGIN_TOP = 0;
 
@@ -22,7 +22,7 @@ const YEOGIDO_HEIGHT = 49;
 
 const LOGO_GAP = 12;
 
-const TITLE_MARGIN_TOP = 32;
+const TITLE_MARGIN_TOP = 24;
 const DESCRIPTION_MARGIN_TOP = 12;
 
 const TITLE_WIDTH = 237;
@@ -31,11 +31,11 @@ const DESCRIPTION_WIDTH = 271;
 const TITLE_FONT_SIZE = 32;
 const DESCRIPTION_FONT_SIZE = 18;
 
-const BUTTON_SECTION_MARGIN_TOP = 80;
+const BUTTON_SECTION_MARGIN_TOP = 48;
 const BUTTON_HEIGHT = 53;
 const BUTTON_GAP = 16;
 
-const LOGIN_SECTION_MARGIN_TOP = 48;
+const LOGIN_SECTION_MARGIN_TOP = 32;
 const LOGIN_LINK_MARGIN_TOP = 4;
 
 const KAKAO_ICON_SIZE = 18;
