@@ -1,6 +1,9 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
-import { countFittingItems } from '../utils/visibleItemCount';
+import {
+  countFittingItems,
+  selectFittingItemsWithRequiredIndex,
+} from '../utils/visibleItemCount';
 
 /**
  * 한 줄에 다 못 들어가는 항목(메타 문구·태그 칩)을 잘린 채로 보여주지 않고
@@ -13,11 +16,17 @@ import { countFittingItems } from '../utils/visibleItemCount';
  *
  * itemsKey는 항목 내용이 바뀌었을 때 다시 재도록 하는 키다.
  */
-export function useVisibleItemCount(itemsKey: string, itemCount: number) {
+export function useVisibleItemCount(
+  itemsKey: string,
+  itemCount: number,
+  requiredItemIndexes?: readonly number[]
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const hiddenRef = useRef<HTMLDivElement>(null);
 
   const [visibleCount, setVisibleCount] = useState(0);
+  const [visibleIndexes, setVisibleIndexes] = useState<number[]>([]);
+  const requiredItemIndexesKey = requiredItemIndexes?.join(',');
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -25,6 +34,7 @@ export function useVisibleItemCount(itemsKey: string, itemCount: number) {
 
     if (!container || !hidden || itemCount === 0) {
       setVisibleCount(0);
+      setVisibleIndexes([]);
       return;
     }
 
@@ -37,7 +47,21 @@ export function useVisibleItemCount(itemsKey: string, itemCount: number) {
 
       const containerWidth = container.getBoundingClientRect().width;
 
-      setVisibleCount(countFittingItems(widths, gap, containerWidth));
+      const count = countFittingItems(widths, gap, containerWidth);
+      const requiredIndexes = requiredItemIndexesKey
+        ? requiredItemIndexesKey.split(',').map(Number)
+        : undefined;
+      setVisibleCount(count);
+      setVisibleIndexes(
+        requiredIndexes === undefined
+          ? Array.from({ length: count }, (_, index) => index)
+          : selectFittingItemsWithRequiredIndex(
+              widths,
+              gap,
+              containerWidth,
+              requiredIndexes
+            )
+      );
     };
 
     recalculate();
@@ -47,7 +71,7 @@ export function useVisibleItemCount(itemsKey: string, itemCount: number) {
     observer.observe(hidden);
 
     return () => observer.disconnect();
-  }, [itemsKey, itemCount]);
+  }, [itemsKey, itemCount, requiredItemIndexesKey]);
 
-  return { containerRef, hiddenRef, visibleCount };
+  return { containerRef, hiddenRef, visibleCount, visibleIndexes };
 }

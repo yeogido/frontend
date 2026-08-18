@@ -38,6 +38,7 @@ const INFO_GAP = 4;
 const ICON_SIZE = 14;
 const ICON_GAP = 2;
 const INFO_SIZE = 12;
+const TAG_DIVIDER_MARGIN_TOP = 12;
 const TAG_MARGIN_TOP = 12;
 const TAG_HEIGHT = 20;
 const TAG_GAP = 4;
@@ -252,6 +253,10 @@ function PopularCourseCard({
 
             {tags.length > 0 ? (
               <>
+                <div
+                  className="border-t border-[#E4E4E4]"
+                  style={{ marginTop: TAG_DIVIDER_MARGIN_TOP }}
+                />
                 <div
                   ref={hiddenTagRef}
                   className="invisible absolute flex"

@@ -18,7 +18,7 @@ export function getCompanionIcon(label?: string | null): IconType | null {
 
   const key = label.trim().toUpperCase();
 
-  if (key === 'SOLO' || key === 'ALONE' || label.includes('혼자')) {
+  if (key === 'SOLO' || label.includes('혼자')) {
     return FaUser;
   }
   if (key === 'FRIEND' || label.includes('친구')) {

@@ -145,15 +145,17 @@ async function drawImageMarker(
   }
 }
 
-// CONTENT(행사) 썸네일은 관광공사 동기화 콘텐츠라 tong.visitkorea.or.kr 같은
-// 외부 호스트에서 직접 내려오는데, 그 호스트가 CORS 헤더를 안 내려주면
-// crossOrigin='anonymous'로 로드하는 drawImageMarker가 실패해 핀 이미지가
-// 항상 단색 박스로 대체된다(반면 PLACE의 구글 사진은 CORS를 지원해 그대로
-// 잘 로드된다). 같은 오리진의 /contents/image 프록시(api/contents/imageProxy.ts)를
-// 거쳐 내려받아 이 문제를 피한다.
+// 마커 이미지는 CORS 헤더를 내려주지 않는 외부 호스트에서 오는 경우가 많다
+// — CONTENT(행사) 썸네일은 관광공사 동기화 콘텐츠라 tong.visitkorea.or.kr에서
+// 오고, PLACE는 수정 화면에서 기존 장소 사진(우리 CloudFront 호스트)을 그대로
+// 쓴다. crossOrigin='anonymous'로 로드하는 drawImageMarker는 CORS 헤더가
+// 없으면 실패해 핀 이미지가 단색 박스로 대체되므로, kind와 무관하게 같은
+// 오리진의 /contents/image 프록시(api/contents/imageProxy.ts)를 거쳐
+// 내려받는다 — 프록시가 호스트 허용목록으로 걸러내므로 목록에 없는 호스트는
+// 그대로 400을 받고 기존과 동일하게 단색 박스로 대체된다.
 function toDrawableImageSrc(event: VisitEvent): string {
   const isExternalUrl = /^https?:\/\//.test(event.imageSrc);
-  if (event.kind !== 'CONTENT' || !isExternalUrl) return event.imageSrc;
+  if (!isExternalUrl) return event.imageSrc;
 
   return `/contents/image?url=${encodeURIComponent(event.imageSrc)}`;
 }
