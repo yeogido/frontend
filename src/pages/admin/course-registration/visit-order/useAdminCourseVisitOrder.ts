@@ -203,6 +203,17 @@ export function useAdminCourseVisitOrder() {
       );
 
       if (editingCourseId) {
+        // 방문 순서/장소가 바뀌었을 수 있으니 지도 경로 이미지도 새로
+        // 만들어 올린다. 다만 지도 렌더링(카카오맵 SDK, 마커 이미지 CORS
+        // 등)은 실패할 수 있는 부수적인 작업이라, 실패해도 본문 수정
+        // 자체는 막지 않고 기존 경로 이미지를 그대로 둔다(best-effort).
+        let editRouteImageKey: string | undefined;
+        try {
+          const editRouteImage = await createRouteImage(eventsWithImageKeys);
+          editRouteImageKey = await uploadCourseImage(editRouteImage);
+        } catch {
+          editRouteImageKey = undefined;
+        }
         const updatePayload = buildAdminCourseUpdateRequest({
           region,
           basicInfo,
@@ -212,6 +223,7 @@ export function useAdminCourseVisitOrder() {
           thumbnailKey,
           hashtagIds,
           travelData,
+          routeImageKey: editRouteImageKey,
         });
 
         if (!updatePayload) {
@@ -221,9 +233,6 @@ export function useAdminCourseVisitOrder() {
         return updateCourse(editingCourseId, updatePayload);
       }
 
-      // 우리동네 추천 코스 등록과 동일하게, 신규 등록일 때만 방문 순서로
-      // 지도 경로 이미지를 만들어 올린다(수정 요청에는 routeImageKey 필드
-      // 자체가 없어 못 바꾼다).
       const routeImage = await createRouteImage(eventsWithImageKeys);
       const routeImageKey = await uploadCourseImage(routeImage);
 
