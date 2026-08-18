@@ -184,10 +184,22 @@ export function useVisitOrderSelection() {
       let result: { courseId: number };
 
       if (currentDraft.editingCourseId) {
+        // 방문 순서/장소가 바뀌었을 수 있으니 지도 경로 이미지도 새로
+        // 만들어 올린다. 다만 지도 렌더링(카카오맵 SDK, 마커 이미지 CORS
+        // 등)은 실패할 수 있는 부수적인 작업이라, 실패해도 본문 수정
+        // 자체는 막지 않고 기존 경로 이미지를 그대로 둔다(best-effort).
+        let routeImageKey: string | undefined;
+        try {
+          const routeImage = await createRouteImage(eventsWithImageKeys);
+          routeImageKey = await uploadCourseImage(routeImage);
+        } catch {
+          routeImageKey = undefined;
+        }
         const updatePayload = buildLocalCourseUpdateRequest(
           draftWithCoverKey,
           eventsWithImageKeys,
-          travelData
+          travelData,
+          routeImageKey
         );
         if (!updatePayload) {
           throw new Error('코스 정보가 모두 입력되어야 수정할 수 있습니다.');
