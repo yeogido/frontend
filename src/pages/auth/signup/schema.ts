@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import {
+  NICKNAME_LENGTH_ERROR_MESSAGE,
+  NICKNAME_MAX_LENGTH,
+  NICKNAME_MIN_LENGTH,
+} from '../../../utils/nickname.ts';
+
 export const SIGNUP_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // 백엔드 검증 규칙과 동일: 영문 + 숫자 + 특수문자를 모두 포함한 8~20자.
@@ -9,7 +15,11 @@ export const SIGNUP_PASSWORD_PATTERN =
 
 export const signupSchema = z
   .object({
-    name: z.string().trim().min(1, '이름을 입력해 주세요.'),
+    name: z
+      .string()
+      .trim()
+      .min(NICKNAME_MIN_LENGTH, NICKNAME_LENGTH_ERROR_MESSAGE)
+      .max(NICKNAME_MAX_LENGTH, NICKNAME_LENGTH_ERROR_MESSAGE),
     email: z
       .string()
       .trim()

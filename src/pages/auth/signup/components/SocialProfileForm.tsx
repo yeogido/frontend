@@ -11,6 +11,7 @@ import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useRegions } from '../../../../hooks/useRegions';
 import { useAuthStore } from '../../../../store/auth.store';
 import type { SocialGender } from '../../../../types/auth.type';
+import { getNicknameError } from '../../../../utils/nickname';
 import { getFullRegionName } from '../../../../utils/regionName';
 
 import SelectField from './SelectField';
@@ -120,9 +121,10 @@ function SocialProfileForm({
   const [birthYear, setBirthYear] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const nicknameError = getNicknameError(name);
 
   const isFormComplete =
-    name.trim().length > 0 &&
+    !nicknameError &&
     regionId.trim().length > 0 &&
     gender.trim().length > 0 &&
     birthYear.trim().length > 0;
@@ -289,7 +291,11 @@ function SocialProfileForm({
             className="flex flex-col"
             style={{ marginTop: s(FIELDS_MARGIN_TOP), gap: s(FIELDS_GAP) }}
           >
-            <Field label="이름" htmlFor="social-signup-name">
+            <Field
+              label="이름"
+              htmlFor="social-signup-name"
+              error={nicknameError ?? undefined}
+            >
               <ClearableInput
                 id="social-signup-name"
                 type="text"
@@ -382,10 +388,12 @@ function SocialProfileForm({
 function Field({
   label,
   htmlFor,
+  error,
   children,
 }: {
   label: string;
   htmlFor: string;
+  error?: string;
   children: ReactNode;
 }) {
   const scale = useGlobalScale();
@@ -404,6 +412,19 @@ function Field({
         {label}
       </label>
       {children}
+      {error && (
+        <p
+          role="alert"
+          className="font-medium text-main-5"
+          style={{
+            marginTop: s(4),
+            fontSize: s(12),
+            lineHeight: `${s(16)}px`,
+          }}
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }
