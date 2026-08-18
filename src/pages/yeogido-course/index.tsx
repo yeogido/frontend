@@ -86,7 +86,8 @@ const PAGE_PADDING_BOTTOM = 40;
 const TITLE_SIZE = 18;
 const TITLE_LINE_HEIGHT = 22;
 const DESCRIPTION_MARGIN_TOP = 6;
-const DESCRIPTION_SIZE = 12;
+// 행사/소상공인 페이지 부제목과 동일한 폰트 스타일(크기·색상)로 맞춘다.
+const DESCRIPTION_SIZE = 14;
 const DESCRIPTION_LINE_HEIGHT = 17;
 
 const SEARCH_MARGIN_TOP = 11;
@@ -219,7 +220,7 @@ function YeogidoCoursePage() {
             여기도 가볼까?
           </h1>
           <p
-            className="text-gray-4 font-normal"
+            className="text-gray-5 font-normal"
             style={{
               marginTop: DESCRIPTION_MARGIN_TOP * scale,
               fontSize: DESCRIPTION_SIZE * scale,
