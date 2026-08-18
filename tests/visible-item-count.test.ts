@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   countFittingItems,
   ITEM_FIT_EPSILON,
+  selectFittingItemsWithRequiredIndex,
 } from '../src/utils/visibleItemCount.ts';
 
 test('counts nothing when there are no items', () => {
@@ -41,4 +42,25 @@ test('stops at an unmeasured item but keeps the ones before it', () => {
   // 통째로 숨기지 않는다.
   assert.equal(countFittingItems([30, 0, 30], 4, 200), 1);
   assert.equal(countFittingItems([0, 30], 4, 200), 0);
+});
+
+test('keeps a required item visible when the metadata row is too narrow', () => {
+  assert.deepEqual(
+    selectFittingItemsWithRequiredIndex([30, 30, 30], 4, 68, 2),
+    [0, 2]
+  );
+});
+
+test('keeps multiple required metadata items visible when the row is too narrow', () => {
+  assert.deepEqual(
+    selectFittingItemsWithRequiredIndex([30, 30, 30], 4, 68, [1, 2]),
+    [1, 2]
+  );
+});
+
+test('keeps every metadata item visible when all items are required', () => {
+  assert.deepEqual(
+    selectFittingItemsWithRequiredIndex([30, 30, 30], 4, 68, [0, 1, 2]),
+    [0, 1, 2]
+  );
 });

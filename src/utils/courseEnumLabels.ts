@@ -26,11 +26,9 @@ const transportLabels: Record<string, string> = {
 
 const companionLabels: Record<string, string> = {
   SOLO: '혼자',
-  ALONE: '혼자',
   FRIEND: '친구와',
   COUPLE: '연인과',
   FAMILY: '가족과',
-  CHILDREN: '아이와',
   PET: '반려동물과',
 };
 

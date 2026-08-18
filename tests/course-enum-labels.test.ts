@@ -17,11 +17,15 @@ test('maps course enums to display labels', () => {
   assert.equal(toCompanionLabel('COUPLE'), '연인과');
 });
 
-test('accepts the alternate enum spellings the backend also returns', () => {
+test('maps the supported course enum values', () => {
   assert.equal(toDurationLabel('TWO_NIGHTS_THREE_DAYS'), '2박 3일');
-  // Swagger enum에는 없지만 실제 응답에 존재한다.
   assert.equal(toTransportLabel('PUBLIC'), '대중교통');
-  assert.equal(toCompanionLabel('ALONE'), '혼자');
+  assert.equal(toCompanionLabel('SOLO'), '혼자');
+});
+
+test('leaves removed companion enum values unmapped', () => {
+  assert.equal(toCompanionLabel('ALONE'), 'ALONE');
+  assert.equal(toCompanionLabel('CHILDREN'), 'CHILDREN');
 });
 
 test('falls back to the raw value for unknown course enums', () => {

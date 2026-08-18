@@ -68,12 +68,13 @@ function CourseCard({
 
   const metaKey = metaItems.map((item) => item.label).join('|');
   const tagsKey = tags.join('|');
+  const requiredMetaIndexes = metaItems.map((_, index) => index);
 
   const {
     containerRef: metaContainerRef,
     hiddenRef: hiddenMetaRef,
-    visibleCount: visibleMetaCount,
-  } = useVisibleItemCount(metaKey, metaItems.length);
+    visibleIndexes: visibleMetaIndexes,
+  } = useVisibleItemCount(metaKey, metaItems.length, requiredMetaIndexes);
 
   const {
     containerRef: tagContainerRef,
@@ -156,39 +157,44 @@ function CourseCard({
           {/* Meta: 실제로 보여지는 부분 */}
           <div
             ref={metaContainerRef}
-            className="mt-2 flex flex-nowrap items-center gap-1 overflow-hidden"
+            className="mt-2 flex flex-nowrap items-center gap-1"
+            style={{ marginRight: -CONTENT_PADDING_RIGHT }}
           >
-            {metaItems.slice(0, visibleMetaCount).map((item) => {
-              const CompanionIcon =
-                item.key === 'companion' ? getCompanionIcon(item.label) : null;
+            {metaItems
+              .filter((_, index) => visibleMetaIndexes.includes(index))
+              .map((item) => {
+                const CompanionIcon =
+                  item.key === 'companion'
+                    ? getCompanionIcon(item.label)
+                    : null;
 
-              return (
-                <div
-                  key={item.key}
-                  className="flex shrink-0 items-center gap-[2px]"
-                >
-                  {CompanionIcon ? (
-                    <span
-                      className="flex h-[14px] w-[14px] shrink-0 items-center justify-center text-[#7F7F7F]"
-                      aria-hidden="true"
-                    >
-                      <CompanionIcon style={{ fontSize: 11 }} />
+                return (
+                  <div
+                    key={item.key}
+                    className="flex shrink-0 items-center gap-[2px]"
+                  >
+                    {CompanionIcon ? (
+                      <span
+                        className="flex h-[14px] w-[14px] shrink-0 items-center justify-center text-[#7F7F7F]"
+                        aria-hidden="true"
+                      >
+                        <CompanionIcon style={{ fontSize: 11 }} />
+                      </span>
+                    ) : (
+                      <img
+                        src={item.icon}
+                        alt=""
+                        aria-hidden="true"
+                        className="h-[14px] w-[14px] shrink-0"
+                      />
+                    )}
+
+                    <span className="text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]">
+                      {item.label}
                     </span>
-                  ) : (
-                    <img
-                      src={item.icon}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-[14px] w-[14px] shrink-0"
-                    />
-                  )}
-
-                  <span className="text-[12px] leading-none font-medium whitespace-nowrap text-[#7F7F7F]">
-                    {item.label}
-                  </span>
-                </div>
-              );
-            })}
+                  </div>
+                );
+              })}
           </div>
 
           {/* Tags: 측정 전용 hidden 영역 */}

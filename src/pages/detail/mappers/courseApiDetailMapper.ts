@@ -10,6 +10,7 @@ import type {
   CourseTransportType,
 } from '../../../types/course.type';
 import type { CourseDetailDto, CourseStopDto } from '../types/courseDetail';
+import { getDetailCompanionBadge } from './detailCompanionBadge';
 
 const durationLabels: Record<string, string> = {
   DAY_TRIP: '당일치기',
@@ -28,16 +29,6 @@ const transportLabels: Record<string, { label: string; icon: BadgeId }> = {
   CAR: { label: '자차', icon: 'car' },
   PUBLIC_TRANSPORT: { label: '대중교통', icon: 'people' },
   PUBLIC: { label: '대중교통', icon: 'people' },
-};
-
-const companionLabels: Record<string, { label: string; icon: BadgeId }> = {
-  ALONE: { label: '혼자', icon: 'solo' },
-  SOLO: { label: '혼자', icon: 'solo' },
-  FRIEND: { label: '친구와', icon: 'group' },
-  COUPLE: { label: '연인과', icon: 'group' },
-  FAMILY: { label: '가족과', icon: 'group' },
-  CHILDREN: { label: '아이와', icon: 'child' },
-  PET: { label: '반려동물과', icon: 'group' },
 };
 
 function toTagId(tag: string): TagId | undefined {
@@ -89,10 +80,7 @@ export function mapCourseApiDetailToDto(
     label: course.transportType,
     icon: 'people' as const,
   };
-  const companion = companionLabels[course.companionType] ?? {
-    label: course.companionType,
-    icon: 'group' as const,
-  };
+  const companion = getDetailCompanionBadge(course.companionType);
 
   return {
     id: course.courseId,
@@ -183,7 +171,6 @@ function toCanonicalCompanionType(companionType: string): CourseCompanionType {
       return 'COUPLE';
     case 'FAMILY':
       return 'FAMILY';
-    case 'CHILDREN':
     case 'PET':
       return 'PET';
     case 'SOLO':

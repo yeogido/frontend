@@ -44,3 +44,42 @@ export function countFittingItems(
 
   return count;
 }
+
+export function selectFittingItemsWithRequiredIndex(
+  widths: readonly number[],
+  gap: number,
+  containerWidth: number,
+  requiredIndex: number | readonly number[]
+): number[] {
+  const requiredIndexes = Array.from(
+    new Set(Array.isArray(requiredIndex) ? requiredIndex : [requiredIndex])
+  ).sort((a, b) => a - b);
+
+  if (
+    requiredIndexes.length === 0 ||
+    requiredIndexes.some((index) => index < 0 || index >= widths.length)
+  ) {
+    return Array.from(
+      { length: countFittingItems(widths, gap, containerWidth) },
+      (_, index) => index
+    );
+  }
+
+  if (requiredIndexes.some((index) => !(widths[index] > 0))) return [];
+
+  const selectedIndexes = new Set(requiredIndexes);
+  let total = requiredIndexes.reduce((sum, index) => sum + widths[index], 0);
+  total += gap * (requiredIndexes.length - 1);
+
+  for (let index = 0; index < widths.length; index += 1) {
+    if (selectedIndexes.has(index) || !(widths[index] > 0)) continue;
+
+    const next = total + gap + widths[index];
+    if (next <= containerWidth + ITEM_FIT_EPSILON) {
+      total = next;
+      selectedIndexes.add(index);
+    }
+  }
+
+  return Array.from(selectedIndexes).sort((a, b) => a - b);
+}
