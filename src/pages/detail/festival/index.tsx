@@ -12,7 +12,10 @@ import CourseCardSkeleton from '../../../components/common/CourseCardSkeleton';
 import SectionHeader from '../../../components/common/SectionHeader';
 import BackButton from '../../local-recommendation/components/BackButton';
 import BaseKakaoMap from '../../../components/kakaomap/BaseKakaoMap';
-import { isValidGeoPoint, type GeoPoint } from '../../../components/kakaomap/types';
+import {
+  isValidGeoPoint,
+  type GeoPoint,
+} from '../../../components/kakaomap/types';
 import { openKakaoMapRoute } from '../../../components/kakaomap/utils/kakaoMapLink';
 import {
   ResponsiveFullBleed,
@@ -64,7 +67,7 @@ import { useShareToast } from '../hooks/useShareToast';
 const PAGE_PADDING_BOTTOM = 32;
 const BACK_BUTTON_TOP = 12;
 const BACK_BUTTON_LEFT = 24;
-const TITLE_SECTION_PADDING_TOP = 15;
+const TITLE_SECTION_PADDING_TOP = 24;
 const SECTION_MARGIN_TOP = 16;
 const INFO_CARD_MARGIN_TOP = 24;
 const MAP_MARGIN_TOP = 24;
