@@ -5,7 +5,6 @@ import type {
   CourseStopDto,
 } from '../../../detail/types/courseDetail';
 import {
-  companionOptions,
   durationOptions,
   transportOptions,
 } from '../../../local-recommendation/course-basic-info/constants/options';
@@ -16,6 +15,7 @@ import { tagDefinitionMap } from '../../../../constants/tags';
 import type { DetailTag } from '../../../../types/detail';
 import type { TagId } from '../../../../types/tag.type';
 import type { AdminCoursePhoto } from '../types';
+import { getDetailCompanionBadge } from '../../../detail/mappers/detailCompanionBadge';
 
 const TRANSPORT_BADGE_ICON: Record<
   CourseBasicInfoValues['transport'],
@@ -25,16 +25,17 @@ const TRANSPORT_BADGE_ICON: Record<
   car: 'car',
 };
 
-const COMPANION_BADGE_ICON: Record<
-  CourseBasicInfoValues['companion'],
-  BadgeId
-> = {
-  solo: 'solo',
-  friends: 'group',
-  couple: 'favorite',
-  family: 'people',
-  pet: 'child',
-};
+// getDetailCompanionBadge는 코스 상세(실제 등록된 코스)가 쓰는 API enum
+// 값(SOLO·FRIEND…)을 받는데, 미리보기 폼의 값은 소문자(solo·friends…)라
+// 여기서 변환한다 — 상세 화면과 같은 아이콘 매핑(companion-*)을 쓰기 위함.
+const COMPANION_TYPE_TO_API: Record<CourseBasicInfoValues['companion'], string> =
+  {
+    solo: 'SOLO',
+    friends: 'FRIEND',
+    couple: 'COUPLE',
+    family: 'FAMILY',
+    pet: 'PET',
+  };
 
 function findLabel(
   options: readonly { value: string; label: string }[],
@@ -73,11 +74,17 @@ export function buildPreviewCourseDetail(params: {
       label: `${basicInfo.visitStartMonth}월 - ${basicInfo.visitEndMonth}월`,
       icon: 'calendar',
     },
-    {
-      id: 'companion',
-      label: findLabel(companionOptions, basicInfo.companion),
-      icon: COMPANION_BADGE_ICON[basicInfo.companion],
-    },
+    (() => {
+      const companion = getDetailCompanionBadge(
+        COMPANION_TYPE_TO_API[basicInfo.companion]
+      );
+
+      return {
+        id: 'companion' as const,
+        label: companion.label,
+        icon: companion.icon,
+      };
+    })(),
   ];
 
   const stops: CourseStopDto[] = visitEvents.map((event, index) => ({
