@@ -19,6 +19,11 @@ export { default as CourseReviewCardSkeleton } from './CourseReviewCardSkeleton'
 export { default as CourseFilterBar } from './CourseFilterBar';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as Logo } from './Logo';
+export { default as NicknameAvatar } from './NicknameAvatar';
+export type {
+  NicknameAvatarColor,
+  NicknameAvatarProps,
+} from './NicknameAvatar';
 export { default as PromotionCard } from './PromotionCard';
 export { default as PromotionCardSkeleton } from './PromotionCardSkeleton';
 export { default as RegionHero } from './RegionHero';

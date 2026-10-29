@@ -11,6 +11,7 @@ import {
 } from 'motion/react';
 import { IoEllipsisVertical } from 'react-icons/io5';
 
+import uploadIcon from '../../../assets/icons/upload.svg';
 import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import {
@@ -26,6 +27,8 @@ import {
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { mockTravelRecordMembers } from '../../../mocks/travelRecordMembers';
+import TravelRecordMembers from './components/TravelRecordMembers';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
@@ -74,7 +77,7 @@ function TravelRecordDetailPage() {
   const travelRecordId =
     folderId && /^\d+$/.test(folderId) ? Number(folderId) : null;
   const serverTravelRecordQuery = useTravelRecordDetail(
-    isDeleted ? null : travelRecordId,
+    isDeleted ? null : travelRecordId
   );
   const deleteTravelRecordMutation = useDeleteTravelRecord();
   // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
@@ -131,7 +134,10 @@ function TravelRecordDetailPage() {
     document.addEventListener('pointerdown', closeActionMenuOnOutsideClick);
 
     return () => {
-      document.removeEventListener('pointerdown', closeActionMenuOnOutsideClick);
+      document.removeEventListener(
+        'pointerdown',
+        closeActionMenuOnOutsideClick
+      );
     };
   }, [isActionMenuOpen]);
 
@@ -163,7 +169,7 @@ function TravelRecordDetailPage() {
             {serverTravelRecordQuery.isError
               ? getApiErrorMessage(
                   serverTravelRecordQuery.error,
-                  missingRecordLabel,
+                  missingRecordLabel
                 )
               : missingRecordLabel}
           </p>
@@ -305,7 +311,9 @@ function TravelRecordDetailPage() {
     }));
 
     const startDate = new Date(`${editableFolder.startDate}T00:00:00`);
-    const endDate = new Date(`${editableFolder.endDate ?? editableFolder.startDate}T00:00:00`);
+    const endDate = new Date(
+      `${editableFolder.endDate ?? editableFolder.startDate}T00:00:00`
+    );
     saveTravelRecordDraftRegion({
       id: String(editableFolder.regionId ?? editableFolder.regionCode),
       regionId: editableFolder.regionId,
@@ -364,52 +372,71 @@ function TravelRecordDetailPage() {
             decorations={folder.decorations}
           />
         </div>
-        <div className="absolute top-[76px] right-[17px] flex w-[110px] flex-col items-center gap-1.5">
-          <h1 className="text-center text-[20px] leading-none font-semibold text-[#1c1c1c]">
+        <div className="absolute top-[39px] left-[198px] flex w-[110px] flex-col items-start gap-1.5">
+          <h1 className="w-full text-[20px] leading-6 font-semibold break-words text-black">
             {folder.title}
           </h1>
-          <time className="shrink-0 whitespace-nowrap rounded-full bg-[#e4e4e4] px-2 py-1 text-[16px] leading-none text-[#7f7f7f]">
+          <time className="bg-gray-2 text-gray-4 shrink-0 rounded-full px-2 py-1 text-[16px] leading-[normal] whitespace-nowrap">
             {folder.period}
           </time>
         </div>
-        <div ref={actionMenuRef} className="absolute top-0 right-0 z-20">
+        <div className="absolute top-[112px] left-[198px]">
+          <TravelRecordMembers members={mockTravelRecordMembers} />
+        </div>
+        <div className="absolute -top-1 -right-1 z-20 flex items-center">
           <button
             type="button"
-            aria-label="여행 기록 메뉴"
-            aria-controls="travel-record-action-menu"
-            aria-expanded={isActionMenuOpen}
-            onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
-            className="flex size-8 items-center justify-center text-[#1c1c1c]"
+            aria-label="여행 폴더 공유하기"
+            onClick={() => showToast('공유 기능은 준비 중이에요.')}
+            className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
           >
-            <IoEllipsisVertical aria-hidden="true" className="text-[24px]" />
+            <img
+              src={uploadIcon}
+              alt=""
+              aria-hidden="true"
+              width={24}
+              height={24}
+            />
           </button>
-
-          {isActionMenuOpen && (
-            <div
-              id="travel-record-action-menu"
-              role="menu"
-              aria-label="여행 기록 작업"
-              className="absolute top-9 right-0 w-[104px] overflow-hidden rounded-2xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+          <div ref={actionMenuRef} className="relative">
+            <button
+              type="button"
+              aria-label="여행 기록 메뉴"
+              aria-controls="travel-record-action-menu"
+              aria-expanded={isActionMenuOpen}
+              onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
+              className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded text-black focus-visible:outline-2 focus-visible:outline-offset-2"
             >
-              {[
-                { label: '수정', onClick: () => void handleEdit() },
-                { label: '삭제', onClick: () => setIsDeleteDialogOpen(true) },
-              ].map(({ label, onClick }) => (
-                <button
-                  key={label}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setIsActionMenuOpen(false);
-                    onClick();
-                  }}
-                  className="flex h-[42px] w-full items-center border-b border-[#e4e4e4] px-4 text-left text-sm font-medium text-[#7f7f7f] last:border-b-0 hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
+              <IoEllipsisVertical aria-hidden="true" className="text-[24px]" />
+            </button>
+
+            {isActionMenuOpen && (
+              <div
+                id="travel-record-action-menu"
+                role="menu"
+                aria-label="여행 기록 작업"
+                className="absolute top-9 right-0 w-[104px] overflow-hidden rounded-2xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+              >
+                {[
+                  { label: '수정', onClick: () => void handleEdit() },
+                  { label: '삭제', onClick: () => setIsDeleteDialogOpen(true) },
+                ].map(({ label, onClick }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsActionMenuOpen(false);
+                      onClick();
+                    }}
+                    className="flex h-[42px] w-full items-center border-b border-[#e4e4e4] px-4 text-left text-sm font-medium text-[#7f7f7f] last:border-b-0 hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -421,12 +448,23 @@ function TravelRecordDetailPage() {
             aria-labelledby="travel-record-delete-title"
             className="w-full max-w-[342px] rounded-2xl bg-[#f9f9f9] p-6"
           >
-            <h2 id="travel-record-delete-title" className="text-xl font-semibold text-[#1c1c1c]">
+            <h2
+              id="travel-record-delete-title"
+              className="text-xl font-semibold text-[#1c1c1c]"
+            >
               여행 기록을 삭제할까요?
             </h2>
-            <p className="mt-3 text-sm text-[#7f7f7f]">삭제한 기록은 되돌릴 수 없어요.</p>
+            <p className="mt-3 text-sm text-[#7f7f7f]">
+              삭제한 기록은 되돌릴 수 없어요.
+            </p>
             <div className="mt-6 flex gap-2">
-              <button type="button" onClick={() => setIsDeleteDialogOpen(false)} className="h-11 flex-1 rounded-xl bg-[#e4e4e4] text-sm font-semibold text-[#505050]">취소</button>
+              <button
+                type="button"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="h-11 flex-1 rounded-xl bg-[#e4e4e4] text-sm font-semibold text-[#505050]"
+              >
+                취소
+              </button>
               <button
                 type="button"
                 onClick={() => void handleDelete()}
@@ -444,7 +482,7 @@ function TravelRecordDetailPage() {
         ref={photoStackRef}
         role="region"
         aria-label={`${folder.title} 여행 사진`}
-        className="relative mt-6 h-[456px] w-full overflow-hidden"
+        className="relative mt-6 h-[456px] w-full overflow-hidden rounded-xl shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
       >
         <AnimatePresence initial={false}>
           {visiblePhotoIndexes.map((index) => {
@@ -467,7 +505,7 @@ function TravelRecordDetailPage() {
                 dragMomentum={false}
                 onDragEnd={handlePhotoDragEnd}
                 style={getPhotoCardStyle(index)}
-                className="absolute inset-0 overflow-hidden rounded-[24px] bg-[#e4e4e4]"
+                className="bg-gray-2 absolute inset-0 overflow-hidden rounded-xl"
               >
                 {photo && (
                   <img
@@ -482,7 +520,7 @@ function TravelRecordDetailPage() {
         </AnimatePresence>
       </div>
 
-      <div className="mt-8 flex justify-center gap-[15px] overflow-hidden">
+      <div className="mt-8 flex justify-center gap-4 overflow-hidden">
         {folderPhotos.map((photo, index) => (
           <button
             key={`${photo}-${index}`}
@@ -494,11 +532,15 @@ function TravelRecordDetailPage() {
             className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-[#e4e4e4] disabled:cursor-default"
           >
             {photo && (
-              <img src={photo} alt="" className="block size-full object-cover" />
+              <img
+                src={photo}
+                alt=""
+                className="block size-full object-cover"
+              />
             )}
             {selectedThumbnailIndex !== index && (
               <span
-                className="pointer-events-none absolute inset-0 bg-black/45"
+                className="pointer-events-none absolute inset-0 bg-black/43"
                 aria-hidden="true"
               />
             )}
