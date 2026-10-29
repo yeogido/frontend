@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AnimatePresence,
@@ -29,6 +29,9 @@ import {
 import { getTravelRecordEditRoute } from '../utils/editRoute';
 import { mockTravelRecordMembers } from '../../../mocks/travelRecordMembers';
 import TravelRecordMembers from './components/TravelRecordMembers';
+import TravelRecordShareModal from './components/TravelRecordShareModal';
+import { mockTravelRecordShareFriends } from '../../../mocks/travelRecordShareFriends';
+import { useMyProfile } from '../../../hooks/useMyProfile';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
@@ -66,6 +69,9 @@ function TravelRecordDetailPage() {
   const [isPhotoTransitioning, setIsPhotoTransitioning] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const closeShareModal = useCallback(() => setIsShareModalOpen(false), []);
+  const { data: profile } = useMyProfile();
   const [isDeleted, setIsDeleted] = useState(false);
   const { showToast } = useToast();
   const beginEdit = useTravelRecordSessionStore((state) => state.beginEdit);
@@ -387,7 +393,10 @@ function TravelRecordDetailPage() {
           <button
             type="button"
             aria-label="여행 폴더 공유하기"
-            onClick={() => showToast('공유 기능은 준비 중이에요.')}
+            onClick={() => {
+              setIsActionMenuOpen(false);
+              setIsShareModalOpen(true);
+            }}
             className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             <img
@@ -439,6 +448,15 @@ function TravelRecordDetailPage() {
           </div>
         </div>
       </header>
+
+      {isShareModalOpen && (
+        <TravelRecordShareModal
+          folder={folder}
+          sharerName={profile?.name ?? ''}
+          friends={mockTravelRecordShareFriends}
+          onClose={closeShareModal}
+        />
+      )}
 
       {isDeleteDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
