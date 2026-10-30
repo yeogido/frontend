@@ -386,9 +386,11 @@ function TravelRecordDetailPage() {
             {folder.period}
           </time>
         </div>
-        <div className="absolute top-[112px] left-[198px]">
-          <TravelRecordMembers members={mockTravelRecordMembers} />
-        </div>
+        {folder.visibility === 'friends' && (
+          <div className="absolute top-[112px] left-[198px]">
+            <TravelRecordMembers members={mockTravelRecordMembers} />
+          </div>
+        )}
         <div className="absolute -top-1 -right-1 z-20 flex items-center">
           <button
             type="button"
