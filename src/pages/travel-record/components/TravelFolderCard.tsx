@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { motion } from 'motion/react';
 
 import folderShadowLayerImage from '../assets/travel-folder-shadow-layer.svg';
+import sharedFolderGroupIcon from '../assets/shared-folder-group.svg';
 import type { TravelRecordFolder } from '../types';
 import {
   FOLDER_PHOTO_FRAMES,
@@ -102,7 +103,9 @@ function FolderPhoto({
     <motion.div
       layout={animate}
       initial={
-        isEntering ? { opacity: 0, scale: 0.68, x: 16, y: 24, rotate: 5 } : false
+        isEntering
+          ? { opacity: 0, scale: 0.68, x: 16, y: 24, rotate: 5 }
+          : false
       }
       animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
       transition={{ type: 'spring', stiffness: 320, damping: 26 }}
@@ -152,7 +155,8 @@ export function TravelFolderArtwork({
       <img
         src={folderShadowLayerImage}
         alt=""
-        className="pointer-events-none absolute top-[38px] left-[-10px] z-0 h-[160px] w-[179px]"
+        className="pointer-events-none absolute left-[-10px] z-0 h-[160px] w-[179px] max-w-none"
+        style={{ top: FOLDER_FRONT_TOP - 18 }}
         aria-hidden="true"
       />
 
@@ -230,7 +234,14 @@ function TravelFolderCard({
         />
       </button>
       <div className="flex flex-col items-center">
-        <h2 className="mt-3 text-center text-[16px] leading-none font-medium text-black">
+        <h2 className="mt-3 flex items-center justify-center gap-1 text-center text-[16px] leading-none font-medium text-black">
+          {folder.visibility === 'friends' && (
+            <img
+              src={sharedFolderGroupIcon}
+              alt="친구공유 앨범"
+              className="block max-w-none shrink-0"
+            />
+          )}
           {folder.title}
         </h2>
         <time className="bg-gray-2 text-gray-4 mt-1.5 rounded-full px-2 py-1 text-[14px] leading-none font-normal">
