@@ -3,10 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../apis/common';
 import { FloatingActionButton } from '../../components/common';
-import {
-  mockSharedTravelRecordFolders,
-  mockTravelRecordInvitations,
-} from '../../mocks/travelRecordInvitations';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import { useTravelRecordRegionDetails } from '../../hooks/useTravelRecordRegions';
 import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
@@ -81,15 +77,15 @@ function TravelRecordPage() {
       [
         ...new Set([
           ...(travelRecordYearsQuery.data?.years ?? []),
-          ...mockSharedTravelRecordFolders.map((folder) =>
+          ...previewSharedFolders.map((folder) =>
             Number(folder.startDate.slice(0, 4))
           ),
-          ...mockTravelRecordInvitations.map(({ folder }) =>
+          ...invitations.map(({ folder }) =>
             Number(folder.startDate.slice(0, 4))
           ),
         ]),
       ].sort((a, b) => b - a),
-    [travelRecordYearsQuery.data?.years]
+    [travelRecordYearsQuery.data?.years, previewSharedFolders, invitations]
   );
 
   useEffect(() => {

@@ -13,6 +13,9 @@ import type {
   TravelRecordView,
 } from '../pages/travel-record/types';
 
+const isTravelRecordPreviewEnabled =
+  import.meta.env.VITE_TRAVEL_RECORD_PREVIEW === 'true';
+
 interface TravelRecordEditSession {
   id: string;
   decorations: TravelRecordFolder['decorations'];
@@ -47,8 +50,10 @@ export const useTravelRecordSessionStore = create<TravelRecordSessionState>()(
     editSession: null,
     listView: 'folder',
     // Preview data survives route remounts, but is excluded from persistence.
-    invitations: mockTravelRecordInvitations,
-    previewSharedFolders: mockSharedTravelRecordFolders,
+    invitations: isTravelRecordPreviewEnabled ? mockTravelRecordInvitations : [],
+    previewSharedFolders: isTravelRecordPreviewEnabled
+      ? mockSharedTravelRecordFolders
+      : [],
     acceptInvitation: (invitation) => set((state) => ({
       invitations: state.invitations.filter((item) => item.id !== invitation.id),
       previewSharedFolders: [
