@@ -1,8 +1,14 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import {
+  mockSharedTravelRecordFolders,
+  mockTravelRecordInvitations,
+} from '../mocks/travelRecordInvitations';
+
 import type {
   TravelRecordFolder,
+  TravelRecordInvitation,
   TravelRecordServerPhoto,
   TravelRecordView,
 } from '../pages/travel-record/types';
@@ -27,6 +33,10 @@ interface TravelRecordSessionState {
    * 다시 눌러야 한다.
    */
   listView: TravelRecordView;
+  invitations: TravelRecordInvitation[];
+  previewSharedFolders: TravelRecordFolder[];
+  acceptInvitation: (invitation: TravelRecordInvitation) => void;
+  declineInvitation: (invitationId: string) => void;
   beginEdit: (session: TravelRecordEditSession) => void;
   clearEdit: () => void;
   setListView: (view: TravelRecordView) => void;
@@ -36,6 +46,21 @@ export const useTravelRecordSessionStore = create<TravelRecordSessionState>()(
   persist((set) => ({
     editSession: null,
     listView: 'folder',
+    // Preview data survives route remounts, but is excluded from persistence.
+    invitations: mockTravelRecordInvitations,
+    previewSharedFolders: mockSharedTravelRecordFolders,
+    acceptInvitation: (invitation) => set((state) => ({
+      invitations: state.invitations.filter((item) => item.id !== invitation.id),
+      previewSharedFolders: [
+        invitation.folder,
+        ...state.previewSharedFolders.filter(
+          (folder) => folder.id !== invitation.folder.id
+        ),
+      ],
+    })),
+    declineInvitation: (invitationId) => set((state) => ({
+      invitations: state.invitations.filter((item) => item.id !== invitationId),
+    })),
     beginEdit: (session) => set({ editSession: session }),
     clearEdit: () => set({ editSession: null }),
     setListView: (view) => set({ listView: view }),

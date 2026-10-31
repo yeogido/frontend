@@ -28,7 +28,6 @@ import {
 } from './components';
 import type {
   TravelRecordFolder,
-  TravelRecordInvitation,
   TravelRecordVisibilityFilter,
 } from './types';
 import TravelRecordVisibilityFilters from './components/TravelRecordVisibilityFilters';
@@ -45,9 +44,15 @@ function TravelRecordPage() {
   const location = useLocation();
   const [visibilityFilter, setVisibilityFilter] =
     useState<TravelRecordVisibilityFilter>('all');
-  const [invitations, setInvitations] = useState(mockTravelRecordInvitations);
-  const [previewSharedFolders, setPreviewSharedFolders] = useState(
-    mockSharedTravelRecordFolders
+  const invitations = useTravelRecordSessionStore((state) => state.invitations);
+  const previewSharedFolders = useTravelRecordSessionStore(
+    (state) => state.previewSharedFolders
+  );
+  const handleAcceptInvitation = useTravelRecordSessionStore(
+    (state) => state.acceptInvitation
+  );
+  const handleDeclineInvitation = useTravelRecordSessionStore(
+    (state) => state.declineInvitation
   );
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   // 상세·작성 화면에 다녀오면 이 페이지가 다시 마운트되므로, 보고 있던 탭은
@@ -89,16 +94,16 @@ function TravelRecordPage() {
 
   useEffect(() => {
     // The available years only settle once the server years finish loading.
-    if (years.length > 0) {
+    if (!travelRecordYearsQuery.isPending && years.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedYear((year) =>
         getValidTravelRecordYear(years, year, new Date().getFullYear())
       );
     }
-  }, [years]);
+  }, [travelRecordYearsQuery.isPending, years]);
 
   const validSelectedYear =
-    years.length > 0
+    !travelRecordYearsQuery.isPending && years.length > 0
       ? getValidTravelRecordYear(years, selectedYear, new Date().getFullYear())
       : selectedYear;
 
@@ -151,22 +156,6 @@ function TravelRecordPage() {
   const hasPreviewContent =
     visibleInvitations.length > 0 ||
     visibleFolders.some((folder) => folder.id.startsWith('preview-'));
-
-  const handleAcceptInvitation = (invitation: TravelRecordInvitation) => {
-    setInvitations((current) =>
-      current.filter((item) => item.id !== invitation.id)
-    );
-    setPreviewSharedFolders((current) => [
-      invitation.folder,
-      ...current.filter((folder) => folder.id !== invitation.folder.id),
-    ]);
-  };
-
-  const handleDeclineInvitation = (invitationId: string) => {
-    setInvitations((current) =>
-      current.filter((item) => item.id !== invitationId)
-    );
-  };
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {

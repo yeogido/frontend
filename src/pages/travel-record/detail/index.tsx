@@ -370,7 +370,7 @@ function TravelRecordDetailPage() {
 
   return (
     <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
-      <header className="relative h-[146px]">
+      <header className="relative min-h-[146px] pb-2">
         <div className="absolute top-0 left-6 h-[152px] w-[132px] origin-top-left scale-[0.83]">
           <TravelFolderArtwork
             photos={folderPhotos}
@@ -378,19 +378,17 @@ function TravelRecordDetailPage() {
             decorations={folder.decorations}
           />
         </div>
-        <div className="absolute top-[39px] left-[198px] flex w-[110px] flex-col items-start gap-1.5">
+        <div className="ml-[198px] flex w-[110px] flex-col items-start gap-1.5 pt-[39px]">
           <h1 className="w-full text-[20px] leading-6 font-semibold break-words text-black">
             {folder.title}
           </h1>
           <time className="bg-gray-2 text-gray-4 shrink-0 rounded-full px-2 py-1 text-[16px] leading-[normal] whitespace-nowrap">
             {folder.period}
           </time>
-        </div>
-        {folder.visibility === 'friends' && (
-          <div className="absolute top-[112px] left-[198px]">
+          {folder.visibility === 'friends' && (
             <TravelRecordMembers members={mockTravelRecordMembers} />
-          </div>
-        )}
+          )}
+        </div>
         <div className="absolute -top-1 -right-1 z-20 flex items-center">
           <button
             type="button"
