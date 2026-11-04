@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { handleWalkingRoute } from '../api/tmap/walkingRoute.ts';
+import { handleWalkingRoute } from '../api/tmap/_walkingRoute.ts';
 import { fetchTmapWalkingDurationMinutes } from '../src/apis/tmapWalkingDuration.ts';
 import { fetchCourseTravelTimes } from '../src/apis/courseTravelTimes.ts';
 
