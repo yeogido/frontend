@@ -1,4 +1,4 @@
-import { handleWalkingRoute } from './_walkingRoute.ts';
+import { handleWalkingRoute } from './_walkingRoute.js';
 
 export const config = { runtime: 'edge' };
 
