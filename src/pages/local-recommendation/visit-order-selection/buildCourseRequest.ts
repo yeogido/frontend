@@ -141,7 +141,11 @@ export function getCourseRequestValidationError(
   if (!draft.basicInfo)
     return '기본 정보 입력 단계에서 코스 정보를 입력해 주세요.';
   if (!draft.coverImageKey) return '대표 사진을 등록해 주세요.';
-  if (draft.hashtagIds.length === 0) return '키워드를 하나 이상 선택해 주세요.';
+  // 생성은 해시태그가 1개 이상 필요하다. 수정은 PATCH라 비워 두면 필드를
+  // 빼고 보내 기존 해시태그를 그대로 둘 수 있어, 막지 않는다.
+  if (!draft.editingCourseId && draft.hashtagIds.length === 0) {
+    return '키워드를 하나 이상 선택해 주세요.';
+  }
 
   const { duration, transport, companion } = draft.basicInfo;
   const durationType = FORM_DURATION_TO_DURATION_TYPE[duration];
@@ -259,10 +263,17 @@ export function buildLocalCourseUpdateRequest(
 ): UpdateCourseRequest | null {
   const common = buildCommonCourseFields(draft, visitEventsByDay, travelData);
 
-  return common
-    ? {
-        ...common,
-        ...(routeImageKey ? { routeImageKey } : {}),
-      }
-    : null;
+  if (!common) {
+    return null;
+  }
+
+  const { hashtagIds, ...rest } = common;
+
+  return {
+    ...rest,
+    // 전달하면 전체 교체라, 복원하지 못한 경우엔 아예 보내지 않아 서버의
+    // 기존 해시태그를 유지한다.
+    ...(hashtagIds.length > 0 ? { hashtagIds } : {}),
+    ...(routeImageKey ? { routeImageKey } : {}),
+  };
 }

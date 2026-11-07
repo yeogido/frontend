@@ -201,7 +201,9 @@ export function buildAdminCourseUpdateRequest(
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey,
     ...(routeImageKey ? { routeImageKey } : {}),
-    hashtagIds,
+    // 전달하면 전체 교체라, 매핑이 하나도 안 된 경우엔 보내지 않아 서버의
+    // 기존 해시태그를 유지한다.
+    ...(hashtagIds.length > 0 ? { hashtagIds } : {}),
     courseItems: buildCourseItemsFromVisitEvents(visitEventsByDay, travelData),
   };
 }

@@ -7,6 +7,7 @@ import {
 } from '../src/apis/localRecommendations.ts';
 import {
   buildCourseRequest,
+  buildLocalCourseUpdateRequest,
   getCourseRequestValidationError,
 } from '../src/pages/local-recommendation/visit-order-selection/buildCourseRequest.ts';
 import { buildVisitEvents } from '../src/pages/local-recommendation/visit-order-selection/buildVisitEvents.ts';
@@ -219,5 +220,67 @@ test('throws the server message when course creation fails', async () => {
       typeof error === 'object' &&
       error !== null &&
       (error as { message?: string }).message === '코스 생성에 실패했습니다.'
+  );
+});
+
+const createPlaceEvent = () =>
+  ({
+    id: 'place-1',
+    kind: 'PLACE',
+    name: 'Cafe',
+    address: '1 Road',
+    imageSrc: '',
+    externalPlaceId: 'place-1',
+    categoryGroupCode: 'CE7',
+    roadAddress: '1 Road',
+    lotAddress: '',
+    latitude: 37.5,
+    longitude: 127,
+    imageKey: 'places/cafe.jpg',
+  }) as const;
+
+test('keeps the server hashtags when an edit could not restore them', () => {
+  // 상세의 태그를 해시태그 id로 매핑하지 못한 수정 진입 — 저장을 막지 않고,
+  // hashtagIds를 아예 빼서 서버의 기존 값을 그대로 둔다(PATCH는 전체 교체).
+  const draft = {
+    ...createDraft(),
+    neighborhood: null,
+    hashtagIds: [],
+    editingCourseId: 42,
+  };
+  const visitEventsByDay = [[createPlaceEvent()]];
+
+  assert.equal(getCourseRequestValidationError(draft, visitEventsByDay), null);
+
+  const payload = buildLocalCourseUpdateRequest(
+    draft,
+    visitEventsByDay,
+    undefined
+  );
+
+  assert.ok(payload);
+  assert.equal('hashtagIds' in payload, false);
+  assert.equal(payload.totalDays, 1);
+});
+
+test('still requires a keyword when creating a new course', () => {
+  const draft = { ...createDraft(), hashtagIds: [] };
+
+  assert.match(
+    getCourseRequestValidationError(draft, [[createPlaceEvent()]]) ?? '',
+    /키워드/
+  );
+});
+
+test('rejects a day that has no place', () => {
+  const draft = {
+    ...createDraft(),
+    totalDays: 2,
+    basicInfo: { ...createDraft().basicInfo, duration: '1-night-2-days' },
+  };
+
+  assert.match(
+    getCourseRequestValidationError(draft, [[createPlaceEvent()], []]) ?? '',
+    /2일차/
   );
 });

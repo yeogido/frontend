@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../../../apis/common';
@@ -89,6 +89,20 @@ export function useAdminCourseVisitOrder() {
       totalDays
     )
   );
+  // 드래그 중에는 리렌더가 끝나기 전에 다음 포인터 이벤트가 올 수 있다.
+  // 클로저 값으로 되써 넣으면 직전 일차 이동이 지워지므로, 항상 최신 목록을
+  // ref에서 읽어 계산한다.
+  const visitEventsByDayRef = useRef(visitEventsByDay);
+  const applyVisitEventsByDay = (
+    compute: (previous: VisitEvent[][]) => VisitEvent[][]
+  ) => {
+    const next = compute(visitEventsByDayRef.current);
+    visitEventsByDayRef.current = next;
+    setVisitEventsByDay(next);
+
+    return next;
+  };
+
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -107,7 +121,7 @@ export function useAdminCourseVisitOrder() {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    setVisitEventsByDay((previous) => {
+    applyVisitEventsByDay((previous) => {
       const fromDay = findVisitEventDayIndex(previous, activeId);
       const overDay = parseDayDroppableId(overId);
       const toDay = overDay ?? findVisitEventDayIndex(previous, overId);
@@ -138,25 +152,25 @@ export function useAdminCourseVisitOrder() {
     setActiveEventId(null);
 
     const activeId = String(active.id);
-    const dayIndex = findVisitEventDayIndex(visitEventsByDay, activeId);
-    if (dayIndex < 0) return;
+    const overId = over ? String(over.id) : null;
+    const next = applyVisitEventsByDay((previous) => {
+      const dayIndex = findVisitEventDayIndex(previous, activeId);
+      if (dayIndex < 0) return previous;
 
-    const dayEvents = visitEventsByDay[dayIndex];
-    const activeIndex = dayEvents.findIndex((event) => event.id === activeId);
-    const overIndex = over
-      ? dayEvents.findIndex((event) => event.id === String(over.id))
-      : -1;
+      const dayEvents = previous[dayIndex];
+      const activeIndex = dayEvents.findIndex((event) => event.id === activeId);
+      const overIndex = overId
+        ? dayEvents.findIndex((event) => event.id === overId)
+        : -1;
+      if (overIndex < 0 || activeIndex === overIndex) return previous;
 
-    const next =
-      overIndex >= 0 && activeIndex !== overIndex
-        ? visitEventsByDay.map((events, index) =>
-            index === dayIndex
-              ? arrayMove(events, activeIndex, overIndex)
-              : events
-          )
-        : visitEventsByDay;
+      return previous.map((events, index) =>
+        index === dayIndex ? arrayMove(events, activeIndex, overIndex) : events
+      );
+    });
 
-    setVisitEventsByDay(next);
+    // 일차를 넘나든 이동은 handleDragOver가 이미 반영했으니, 순서가 그대로여도
+    // 스토어에는 항상 최종 상태를 저장한다.
     setVisitOrderInStore(next);
   };
 
@@ -254,19 +268,21 @@ export function useAdminCourseVisitOrder() {
       let travelData: VisitEventTravelData | undefined;
       try {
         // 서버는 일차를 넘는 이동 시간을 받지 않는다 — 일차별로 계산한다.
-        const travelDataByDay = await Promise.all(
+        // 한 일차가 타임아웃돼도 나머지 일차에서 받아온 값은 살린다.
+        const travelDataByDay = await Promise.allSettled(
           eventsByDayWithImageKeys.map((dayEvents) =>
             fetchVisitEventTravelData(dayEvents)
           )
         );
+        const settledDays = travelDataByDay.flatMap((result) =>
+          result.status === 'fulfilled' ? [result.value] : []
+        );
         travelData = {
           timesFromPreviousByEventId: new Map(
-            travelDataByDay.flatMap((day) => [
-              ...day.timesFromPreviousByEventId,
-            ])
+            settledDays.flatMap((day) => [...day.timesFromPreviousByEventId])
           ),
           operatingDaysByEventId: new Map(
-            travelDataByDay.flatMap((day) => [...day.operatingDaysByEventId])
+            settledDays.flatMap((day) => [...day.operatingDaysByEventId])
           ),
         };
       } catch {

@@ -145,9 +145,12 @@ export function useEditLocalCourse() {
       // 해시태그는 PATCH에서 "전달 시 전체 교체"다. 복원하지 않으면 수정
       // 저장만으로 기존 태그가 전부 지워진다.
       const tagIds = toContentTagIds(detail.tags);
+      // 해시태그 조회는 수정 진입의 전제가 아니다 — 실패해도 수정 화면에는
+      // 들어갈 수 있어야 한다. 비면 PATCH에서 hashtagIds를 빼 기존 값을 둔다.
+      const hashtags = await fetchHashtags().catch(() => []);
       const hashtagIds = mapTagIdsToHashtagIds(
         tagIds,
-        await fetchHashtags(),
+        hashtags,
         (tagId) => tagDefinitionMap[tagId]?.label
       );
 
