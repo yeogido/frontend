@@ -1,10 +1,9 @@
 import { fetchKakaoAddressGeocode } from '../../../apis/kakaoGeocode';
-import { fetchKakaoCarRouteDuration } from '../../../apis/kakaoRouteDuration';
+import { fetchCourseTravelTimes } from '../../../apis/courseTravelTimes';
 import type {
   OperatingDay,
   TimeFromPrevious,
 } from '../../../apis/localRecommendations';
-import { fetchOdsayTransitDurationMinutes } from '../../../apis/odsayTransitDuration';
 import { getPlaceHours } from '../../../apis/googlePlacesHours';
 import {
   isValidGeoPoint,
@@ -13,7 +12,6 @@ import {
 import { parseWeekdayDescriptionsToOperatingDays } from '../../../utils/operatingHours';
 import type { VisitEvent } from './constants';
 
-const SECONDS_PER_MINUTE = 60;
 export const TRAVEL_DATA_TIMEOUT_MS = 10_000;
 
 export interface VisitEventTravelData {
@@ -25,12 +23,6 @@ interface EventPair {
   readonly toId: string;
   readonly start: GeoPoint;
   readonly end: GeoPoint;
-}
-
-function toMinutes(seconds: number | null): number | undefined {
-  return seconds === null
-    ? undefined
-    : Math.round(seconds / SECONDS_PER_MINUTE);
 }
 
 export async function resolveVisitEventGeoPoints(
@@ -128,29 +120,7 @@ async function getTimesFromPreviousByEventId(
 ): Promise<ReadonlyMap<string, TimeFromPrevious[]>> {
   const entries = await Promise.all(
     pairs.map(async (pair) => {
-      const [transitResult, carResult] = await Promise.allSettled([
-        fetchOdsayTransitDurationMinutes(pair.start, pair.end, signal),
-        fetchKakaoCarRouteDuration(pair.start, pair.end, signal),
-      ]);
-      const transitMinutes =
-        transitResult.status === 'fulfilled' ? transitResult.value : undefined;
-      const carMinutes =
-        carResult.status === 'fulfilled'
-          ? toMinutes(carResult.value)
-          : undefined;
-      const times: TimeFromPrevious[] = [
-        ...(transitMinutes === undefined || transitMinutes === null
-          ? []
-          : [
-              {
-                transportMode: 'PUBLIC' as const,
-                durationMinutes: transitMinutes,
-              },
-            ]),
-        ...(carMinutes === undefined
-          ? []
-          : [{ transportMode: 'CAR' as const, durationMinutes: carMinutes }]),
-      ];
+      const times = await fetchCourseTravelTimes(pair.start, pair.end, signal);
 
       return [pair.toId, times] as const;
     })

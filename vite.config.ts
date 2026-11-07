@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { handleWalkingRoute } from './api/tmap/_walkingRoute.ts';
 
 import {
   InvalidPlaceHoursRequestError,
@@ -183,6 +184,28 @@ function contentsDevPlugin(): Plugin {
   };
 }
 
+function tmapWalkingDevPlugin(apiKey: string | undefined): Plugin {
+  return {
+    name: 'tmap-walking-dev-api',
+    configureServer(server) {
+      server.middlewares.use(
+        '/tmap-routing/walk',
+        async (request, response) => {
+          const result = await handleWalkingRoute(
+            new Request(new URL(request.url ?? '/', 'http://localhost'), {
+              method: request.method,
+            }),
+            apiKey
+          );
+          response.statusCode = result.status;
+          response.setHeader('content-type', 'application/json; charset=utf-8');
+          response.end(await result.text());
+        }
+      );
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
@@ -196,6 +219,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       googlePlacesDevPlugin(env.GOOGLE_MAPS_API_KEY),
       contentsDevPlugin(),
+      tmapWalkingDevPlugin(env.TMAP_API_KEY),
     ],
     server: {
       proxy: {

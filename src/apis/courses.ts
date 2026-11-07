@@ -8,6 +8,8 @@ import type {
 
 export type CourseDetailItem =
   | {
+      /** 일차 API 확장 필드. 없으면 상세 화면에서 1일차로 표시한다. */
+      day?: number;
       order: number;
       type: 'PLACE';
       courseItemId: number;
@@ -27,6 +29,7 @@ export type CourseDetailItem =
       timesFromPrevious: TimeFromPrevious[];
     }
   | {
+      day?: number;
       order: number;
       type: 'CONTENT';
       courseItemId: number;
