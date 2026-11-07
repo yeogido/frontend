@@ -25,12 +25,14 @@ function AdminCourseVisitOrderPage() {
     (state) => state.editingCourseId
   );
   const {
+    visitEventsByDay,
     visitEvents,
     activeEvent,
     activeEventOrder,
     sensors,
     handleDragStart,
     handleDragCancel,
+    handleDragOver,
     handleDragEnd,
     handleSubmit,
     isSubmitting,
@@ -64,11 +66,12 @@ function AdminCourseVisitOrderPage() {
         />
 
         <SortableVisitEventList
-          visitEvents={visitEvents}
+          visitEventsByDay={visitEventsByDay}
           activeEvent={activeEvent}
           activeEventOrder={activeEventOrder}
           sensors={sensors}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragCancel={handleDragCancel}
           onDragEnd={handleDragEnd}
         />

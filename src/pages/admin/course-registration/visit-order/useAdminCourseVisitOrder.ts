@@ -4,6 +4,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -21,7 +22,11 @@ import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import { useAuthStore } from '../../../../store/auth.store';
 import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
-import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
+import {
+  findVisitEventDayIndex,
+  parseDayDroppableId,
+  type VisitEvent,
+} from '../../../local-recommendation/visit-order-selection/constants';
 import { createRouteImage } from '../../../local-recommendation/visit-order-selection/createRouteImage';
 import {
   fetchVisitEventTravelData,
@@ -61,6 +66,7 @@ export function useAdminCourseVisitOrder() {
   const storedVisitOrder = useAdminCourseRegistrationStore(
     (state) => state.visitOrder
   );
+  const totalDays = useAdminCourseRegistrationStore((state) => state.totalDays);
   const setVisitOrderInStore = useAdminCourseRegistrationStore(
     (state) => state.setVisitOrder
   );
@@ -74,12 +80,13 @@ export function useAdminCourseVisitOrder() {
   // storedVisitOrder는 순서를 매기는 힌트로만 쓰고, 실제 항목은 항상 현재
   // selectedPlaces/selectedEvents로 새로 만든다 — 그대로 쓰면 뒤로 가서
   // 장소/행사를 빼거나 추가한 뒤 다시 들어왔을 때 반영되지 않는다.
-  const [visitEvents, setVisitEvents] = useState<VisitEvent[]>(() =>
+  const [visitEventsByDay, setVisitEventsByDay] = useState<VisitEvent[][]>(() =>
     buildAdminVisitEvents(
       selectedPlaces,
       selectedEvents,
       eventThumbnail,
-      storedVisitOrder.map((event) => event.id)
+      storedVisitOrder.map((dayEvents) => dayEvents.map((event) => event.id)),
+      totalDays
     )
   );
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
@@ -93,26 +100,78 @@ export function useAdminCourseVisitOrder() {
   const handleDragStart = ({ active }: DragStartEvent) =>
     setActiveEventId(String(active.id));
   const handleDragCancel = () => setActiveEventId(null);
+  /** 끄는 중 다른 일차로 넘어가면 그 자리에서 옮긴다(dnd-kit 멀티 컨테이너). */
+  const handleDragOver = ({ active, over }: DragOverEvent) => {
+    if (!over) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    setVisitEventsByDay((previous) => {
+      const fromDay = findVisitEventDayIndex(previous, activeId);
+      const overDay = parseDayDroppableId(overId);
+      const toDay = overDay ?? findVisitEventDayIndex(previous, overId);
+      if (fromDay < 0 || toDay < 0 || fromDay === toDay) return previous;
+
+      const movedEvent = previous[fromDay].find(
+        (event) => event.id === activeId
+      );
+      if (!movedEvent) return previous;
+
+      const next = previous.map((dayEvents) => [...dayEvents]);
+      next[fromDay] = next[fromDay].filter((event) => event.id !== activeId);
+      const overIndex =
+        overDay !== null
+          ? next[toDay].length
+          : next[toDay].findIndex((event) => event.id === overId);
+      next[toDay].splice(
+        overIndex < 0 ? next[toDay].length : overIndex,
+        0,
+        movedEvent
+      );
+
+      return next;
+    });
+  };
+
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setActiveEventId(null);
-    if (!over || active.id === over.id) return;
 
-    const activeIndex = visitEvents.findIndex(
-      (event) => event.id === active.id
-    );
-    const overIndex = visitEvents.findIndex((event) => event.id === over.id);
-    if (activeIndex < 0 || overIndex < 0) return;
+    const activeId = String(active.id);
+    const dayIndex = findVisitEventDayIndex(visitEventsByDay, activeId);
+    if (dayIndex < 0) return;
 
-    const next = arrayMove(visitEvents, activeIndex, overIndex);
-    setVisitEvents(next);
+    const dayEvents = visitEventsByDay[dayIndex];
+    const activeIndex = dayEvents.findIndex((event) => event.id === activeId);
+    const overIndex = over
+      ? dayEvents.findIndex((event) => event.id === String(over.id))
+      : -1;
+
+    const next =
+      overIndex >= 0 && activeIndex !== overIndex
+        ? visitEventsByDay.map((events, index) =>
+            index === dayIndex
+              ? arrayMove(events, activeIndex, overIndex)
+              : events
+          )
+        : visitEventsByDay;
+
+    setVisitEventsByDay(next);
     setVisitOrderInStore(next);
   };
 
+  const visitEvents = visitEventsByDay.flat();
   const activeEvent =
     visitEvents.find((event) => event.id === activeEventId) ?? null;
-  const activeEventOrder = activeEvent
-    ? visitEvents.findIndex((event) => event.id === activeEvent.id) + 1
-    : 0;
+  const activeEventDay = activeEvent
+    ? findVisitEventDayIndex(visitEventsByDay, activeEvent.id)
+    : -1;
+  const activeEventOrder =
+    activeEvent && activeEventDay >= 0
+      ? visitEventsByDay[activeEventDay].findIndex(
+          (event) => event.id === activeEvent.id
+        ) + 1
+      : 0;
 
   const registerMutation = useMutation({
     mutationFn: async () => {
@@ -121,7 +180,8 @@ export function useAdminCourseVisitOrder() {
         basicInfo,
         photo,
         existingThumbnailKey,
-        visitEvents,
+        visitEventsByDay,
+        totalDays,
       });
 
       if (validationError) {
@@ -177,20 +237,38 @@ export function useAdminCourseVisitOrder() {
         ])
       );
 
-      const eventsWithImageKeys = visitEvents.map((event) =>
-        event.kind === 'PLACE'
-          ? {
-              ...event,
-              imageKey:
-                imageKeyByPlaceId.get(
-                  event.id.slice(VISIT_EVENT_PLACE_ID_PREFIX.length)
-                ) ?? event.imageKey,
-            }
-          : event
+      const eventsByDayWithImageKeys = visitEventsByDay.map((dayEvents) =>
+        dayEvents.map((event) =>
+          event.kind === 'PLACE'
+            ? {
+                ...event,
+                imageKey:
+                  imageKeyByPlaceId.get(
+                    event.id.slice(VISIT_EVENT_PLACE_ID_PREFIX.length)
+                  ) ?? event.imageKey,
+              }
+            : event
+        )
       );
+      const routeEvents = eventsByDayWithImageKeys.flat();
       let travelData: VisitEventTravelData | undefined;
       try {
-        travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
+        // 서버는 일차를 넘는 이동 시간을 받지 않는다 — 일차별로 계산한다.
+        const travelDataByDay = await Promise.all(
+          eventsByDayWithImageKeys.map((dayEvents) =>
+            fetchVisitEventTravelData(dayEvents)
+          )
+        );
+        travelData = {
+          timesFromPreviousByEventId: new Map(
+            travelDataByDay.flatMap((day) => [
+              ...day.timesFromPreviousByEventId,
+            ])
+          ),
+          operatingDaysByEventId: new Map(
+            travelDataByDay.flatMap((day) => [...day.operatingDaysByEventId])
+          ),
+        };
       } catch {
         travelData = undefined;
       }
@@ -209,7 +287,7 @@ export function useAdminCourseVisitOrder() {
         // 자체는 막지 않고 기존 경로 이미지를 그대로 둔다(best-effort).
         let editRouteImageKey: string | undefined;
         try {
-          const editRouteImage = await createRouteImage(eventsWithImageKeys);
+          const editRouteImage = await createRouteImage(routeEvents);
           editRouteImageKey = await uploadCourseImage(editRouteImage);
         } catch {
           editRouteImageKey = undefined;
@@ -219,7 +297,8 @@ export function useAdminCourseVisitOrder() {
           basicInfo,
           photo,
           existingThumbnailKey,
-          visitEvents: eventsWithImageKeys,
+          visitEventsByDay: eventsByDayWithImageKeys,
+          totalDays,
           thumbnailKey,
           hashtagIds,
           travelData,
@@ -233,7 +312,7 @@ export function useAdminCourseVisitOrder() {
         return updateCourse(editingCourseId, updatePayload);
       }
 
-      const routeImage = await createRouteImage(eventsWithImageKeys);
+      const routeImage = await createRouteImage(routeEvents);
       const routeImageKey = await uploadCourseImage(routeImage);
 
       const payload = buildAdminCourseRequest({
@@ -241,7 +320,8 @@ export function useAdminCourseVisitOrder() {
         basicInfo,
         photo,
         existingThumbnailKey,
-        visitEvents: eventsWithImageKeys,
+        visitEventsByDay: eventsByDayWithImageKeys,
+        totalDays,
         thumbnailKey,
         routeImageKey,
         hashtagIds,
@@ -305,12 +385,14 @@ export function useAdminCourseVisitOrder() {
   };
 
   return {
+    visitEventsByDay,
     visitEvents,
     activeEvent,
     activeEventOrder,
     sensors,
     handleDragStart,
     handleDragCancel,
+    handleDragOver,
     handleDragEnd,
     handleSubmit,
     isSubmitting: registerMutation.isPending,

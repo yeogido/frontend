@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../apis/common';
 import { getCourseDetail } from '../apis/courses';
+import { fetchHashtags } from '../apis/hashtags';
+import { tagDefinitionMap } from '../constants/tags';
 import type { CourseDetailItem } from '../apis/courses';
 import { useToast } from '../components/toast';
 import type { CourseBasicInfoValues } from '../pages/local-recommendation/course-basic-info/schema';
@@ -12,7 +14,15 @@ import {
   type PersistedSelectedFestival,
   type PersistedSelectedPlace,
 } from '../store/localRecommendation.store';
+import { mapTagIdsToHashtagIds } from '../pages/local-recommendation/tag-selection/hashtagMapping';
 import { toContentTagIds } from '../utils/contentTags';
+import { FORM_DURATION_TO_DURATION_TYPE } from '../pages/local-recommendation/course-basic-info/constants/options';
+import {
+  getTotalDaysForDuration,
+  normalizeCourseDay,
+  padVisitOrderToDays,
+  resolveCourseTotalDays,
+} from '../utils/courseDetail';
 import { deriveImageKeyFromUrl } from '../utils/deriveImageKeyFromUrl';
 
 const DURATION_TYPE_TO_FORM: Record<string, CourseBasicInfoValues['duration']> =
@@ -65,7 +75,16 @@ export function useEditLocalCourse() {
 
       const places: PersistedSelectedPlace[] = [];
       const festivals: PersistedSelectedFestival[] = [];
-      const visitOrder: string[] = [];
+      const totalDays = resolveCourseTotalDays(detail);
+      // 일차 확장 이전 코스는 day가 없어 전부 1일차로 모인다(normalizeCourseDay).
+      const visitOrder: string[][] = Array.from(
+        { length: totalDays },
+        () => []
+      );
+      const pushToDay = (day: number | undefined, id: string) => {
+        const dayIndex = Math.min(normalizeCourseDay(day), totalDays) - 1;
+        visitOrder[dayIndex].push(id);
+      };
 
       detail.courseItems.forEach((item: CourseDetailItem) => {
         if (item.type === 'PLACE') {
@@ -82,7 +101,7 @@ export function useEditLocalCourse() {
             latitude: item.latitude,
             longitude: item.longitude,
           });
-          visitOrder.push(item.externalPlaceId);
+          pushToDay(item.day, item.externalPlaceId);
         } else {
           const festivalId = String(item.contentId);
           festivals.push({
@@ -93,7 +112,7 @@ export function useEditLocalCourse() {
             address: item.roadAddress || item.lotAddress,
             imageSrc: item.imageUrl ?? null,
           });
-          visitOrder.push(festivalId);
+          pushToDay(item.day, festivalId);
         }
       });
 
@@ -123,15 +142,34 @@ export function useEditLocalCourse() {
         companion,
       };
 
+      // 해시태그는 PATCH에서 "전달 시 전체 교체"다. 복원하지 않으면 수정
+      // 저장만으로 기존 태그가 전부 지워진다.
+      const tagIds = toContentTagIds(detail.tags);
+      const hashtagIds = mapTagIdsToHashtagIds(
+        tagIds,
+        await fetchHashtags(),
+        (tagId) => tagDefinitionMap[tagId]?.label
+      );
+
+      // 기간과 일수가 어긋나면 서버가 거절한다. 일차 확장 이전 코스는 모든
+      // 항목이 1일차라 기간이 요구하는 일수만큼 빈 일차가 생기고, 사용자가
+      // 수정 화면에서 채우게 된다.
+      const draftTotalDays = getTotalDaysForDuration(
+        FORM_DURATION_TO_DURATION_TYPE[duration],
+        totalDays
+      );
+
       const draft: LocalRecommendationDraft = {
         ...createEmptyLocalRecommendationDraft(),
         basicInfo,
-        tagIds: toContentTagIds(detail.tags),
+        tagIds,
+        hashtagIds,
+        totalDays: draftTotalDays,
         coverImageKey: deriveImageKeyFromUrl(detail.thumbnailUrl),
         existingThumbnailUrl: detail.thumbnailUrl || null,
         festivals,
         places,
-        visitOrder,
+        visitOrder: padVisitOrderToDays(visitOrder, draftTotalDays),
         editingCourseId: courseId,
       };
 

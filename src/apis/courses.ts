@@ -62,6 +62,11 @@ export interface CourseDetailResult {
   description: string;
   tags: string[];
   durationType: string;
+  /**
+   * 코스의 실제 여행 일수. 일차 확장 이전 응답에는 없을 수 있어 optional이다 —
+   * 읽을 때는 resolveCourseTotalDays(utils/courseDetail)로 보정한다.
+   */
+  totalDays?: number;
   transportType: string;
   startMonth: number;
   endMonth: number;
@@ -120,22 +125,35 @@ export async function deleteCourse(courseId: number): Promise<void> {
 // 그대로 재사용한다(operatingDays/timesFromPrevious 포함).
 export type { UpdateCourseItem };
 
-// regionId는 여기 없다 — 라이브 스펙(CourseUpdateRequest)에 아예 필드가
-// 없어 지역은 수정 대상이 아니다.
+/**
+ * PATCH는 전달한 필드만 수정한다 — 모든 필드가 선택이다. 보내지 않은 필드는
+ * 서버가 기존 값을 유지하므로, 바꾸지 않을 값은 아예 빼는 쪽이 안전하다.
+ * (특히 hashtagIds는 전달 시 전체 교체, courseItems는 전달 시 일정 전체 교체다.)
+ *
+ * regionId는 여기 없다 — 라이브 스펙(CourseUpdateRequest)에 아예 필드가 없어
+ * 지역은 수정 대상이 아니다.
+ */
 export interface UpdateCourseRequest {
-  title: string;
-  description: string;
-  durationType: 'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
+  title?: string;
+  description?: string;
+  durationType?: 'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
+  /**
+   * 실제 여행 일수. durationType을 바꿀 때는 필수이며, 일수가 달라지면
+   * courseItems 전체를 함께 보내야 한다(빈 배열 불가).
+   */
+  totalDays?: number;
   // 라이브 스펙(CourseUpdateRequest) 기준 이동수단은 WALK/CAR만 받는다 —
   // PUBLIC은 더 이상 유효한 요청 값이 아니다.
-  transportType: 'WALK' | 'CAR';
-  companionType: 'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
-  monthStart: number;
-  monthEnd: number;
-  thumbnailKey: string;
+  transportType?: 'WALK' | 'CAR';
+  companionType?: 'SOLO' | 'FRIEND' | 'COUPLE' | 'FAMILY' | 'PET';
+  monthStart?: number;
+  monthEnd?: number;
+  thumbnailKey?: string;
   routeImageKey?: string;
-  hashtagIds: number[];
-  courseItems: UpdateCourseItem[];
+  /** 전달 시 기존 해시태그를 모두 지우고 교체한다. 최대 5개. */
+  hashtagIds?: number[];
+  /** 전달 시 모든 일차의 기존 일정을 지우고 교체한다. 빈 배열은 허용되지 않는다. */
+  courseItems?: UpdateCourseItem[];
 }
 
 export interface UpdateCourseResult {

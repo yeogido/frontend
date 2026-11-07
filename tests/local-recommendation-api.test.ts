@@ -30,10 +30,11 @@ test('uses the selected place image preview in visit-order cards', () => {
     [],
     [],
     'fallback.png',
-    new Map([['place-1', 'blob:place-preview']])
+    new Map([['place-1', 'blob:place-preview']]),
+    1
   );
 
-  assert.equal(events[0]?.imageSrc, 'blob:place-preview');
+  assert.equal(events[0][0]?.imageSrc, 'blob:place-preview');
 });
 
 const createDraft = () => ({
@@ -48,32 +49,47 @@ const createDraft = () => ({
     companion: 'solo',
   },
   tagIds: [],
-  hashtagIds: [],
+  hashtagIds: [3],
   coverImageKey: 'thumbnails/seoul.jpg',
   festivals: [],
   places: [],
   visitOrder: [],
+  totalDays: 1,
+  editingCourseId: null,
+  existingThumbnailUrl: null,
 });
 
 test('maps basic information to Swagger course enums', () => {
-  const payload = buildCourseRequest(createDraft(), [
-    {
-      id: 'place-1',
-      kind: 'PLACE',
-      name: 'Cafe',
-      address: '1 Road',
-      imageSrc: '',
-      externalPlaceId: 'place-1',
-      categoryGroupCode: 'CE7',
-      roadAddress: '1 Road',
-      lotAddress: '',
-      latitude: 37.5,
-      longitude: 127,
-      imageKey: '',
-    },
-  ]);
+  const payload = buildCourseRequest(
+    createDraft(),
+    [
+      [
+        {
+          id: 'place-1',
+          kind: 'PLACE',
+          name: 'Cafe',
+          address: '1 Road',
+          imageSrc: '',
+          externalPlaceId: 'place-1',
+          categoryGroupCode: 'CE7',
+          roadAddress: '1 Road',
+          lotAddress: '',
+          latitude: 37.5,
+          longitude: 127,
+          imageKey: 'places/cafe.jpg',
+        },
+      ],
+    ],
+    undefined,
+    'routes/seoul.png'
+  );
 
   assert.equal(payload?.durationType, 'DAY_TRIP');
+  assert.equal(payload?.totalDays, 1);
+  assert.deepEqual(
+    payload?.courseItems.map((item) => [item.day, item.order]),
+    [[1, 1]]
+  );
 });
 
 test('requires at least one place and an address for every place', () => {
@@ -81,33 +97,37 @@ test('requires at least one place and an address for every place', () => {
 
   assert.match(
     getCourseRequestValidationError(draft, [
-      {
-        id: 'content-1',
-        kind: 'CONTENT',
-        name: 'Festival',
-        address: '',
-        imageSrc: '',
-        contentId: 1,
-      },
+      [
+        {
+          id: 'content-1',
+          kind: 'CONTENT',
+          name: 'Festival',
+          address: '',
+          imageSrc: '',
+          contentId: 1,
+        },
+      ],
     ]) ?? '',
     /장소/
   );
   assert.match(
     getCourseRequestValidationError(draft, [
-      {
-        id: 'place-1',
-        kind: 'PLACE',
-        name: 'Cafe',
-        address: '',
-        imageSrc: '',
-        externalPlaceId: 'place-1',
-        categoryGroupCode: 'CE7',
-        roadAddress: '',
-        lotAddress: '',
-        latitude: 37.5,
-        longitude: 127,
-        imageKey: '',
-      },
+      [
+        {
+          id: 'place-1',
+          kind: 'PLACE',
+          name: 'Cafe',
+          address: '',
+          imageSrc: '',
+          externalPlaceId: 'place-1',
+          categoryGroupCode: 'CE7',
+          roadAddress: '',
+          lotAddress: '',
+          latitude: 37.5,
+          longitude: 127,
+          imageKey: 'places/cafe.jpg',
+        },
+      ],
     ]) ?? '',
     /주소/
   );
@@ -119,6 +139,7 @@ test('posts the supplied course payload unchanged to /courses', async () => {
     regionId: 1,
     description: 'A walk through Seoul.',
     durationType: 'DAY_TRIP',
+    totalDays: 1,
     transportType: 'WALK',
     companionType: 'FRIEND',
     monthStart: 4,
@@ -127,6 +148,7 @@ test('posts the supplied course payload unchanged to /courses', async () => {
     hashtagIds: [3, 7],
     courseItems: [
       {
+        day: 1,
         order: 1,
         type: 'PLACE',
         externalPlaceId: 'place-1',
@@ -138,7 +160,7 @@ test('posts the supplied course payload unchanged to /courses', async () => {
         longitude: 127,
         imageKey: 'places/cafe.jpg',
       },
-      { order: 2, type: 'CONTENT', contentId: 99 },
+      { day: 1, order: 2, type: 'CONTENT', contentId: 99 },
     ],
   };
   const calls: Array<{ path: string; body: CreateLocalRecommendationRequest }> =
@@ -171,13 +193,14 @@ test('throws the server message when course creation fails', async () => {
     regionId: 1,
     description: 'A walk through Seoul.',
     durationType: 'DAY_TRIP',
+    totalDays: 1,
     transportType: 'WALK',
     companionType: 'FRIEND',
     monthStart: 4,
     monthEnd: 5,
     thumbnailKey: 'thumbnails/seoul.jpg',
     hashtagIds: [3, 7],
-    courseItems: [{ order: 1, type: 'CONTENT', contentId: 99 }],
+    courseItems: [{ day: 1, order: 1, type: 'CONTENT', contentId: 99 }],
   };
   const client = {
     // apiClient's response interceptor rejects with a NormalizedApiError on

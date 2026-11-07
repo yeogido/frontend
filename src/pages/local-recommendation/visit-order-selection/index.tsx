@@ -17,12 +17,14 @@ const PAGE_PADDING_BOTTOM = 30;
 function VisitOrderSelectionPage() {
   const navigate = useNavigate();
   const {
+    visitEventsByDay,
     visitEvents,
     activeEvent,
     activeEventOrder,
     sensors,
     handleDragStart,
     handleDragCancel,
+    handleDragOver,
     handleDragEnd,
     handleRegister,
     isSubmitting,
@@ -58,11 +60,12 @@ function VisitOrderSelectionPage() {
         />
 
         <SortableVisitEventList
-          visitEvents={visitEvents}
+          visitEventsByDay={visitEventsByDay}
           activeEvent={activeEvent}
           activeEventOrder={activeEventOrder}
           sensors={sensors}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragCancel={handleDragCancel}
           onDragEnd={handleDragEnd}
         />

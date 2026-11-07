@@ -84,7 +84,7 @@ test('persists stable draft data without retaining setter input references', () 
       longitude: 129.11,
     },
   ];
-  const visitOrder = ['place-1'];
+  const visitOrder = [['place-1']];
   const store = useLocalRecommendationStore.getState();
 
   store.setNeighborhood(neighborhood);
@@ -104,7 +104,7 @@ test('persists stable draft data without retaining setter input references', () 
   hashtagIds.push(99);
   festivals[0].title = 'Changed festival';
   places[0].title = 'Changed place';
-  visitOrder.push('place-2');
+  visitOrder[0].push('place-2');
 
   const draft = useLocalRecommendationStore.getState().draft;
   const persistedDraft = JSON.parse(
@@ -154,7 +154,9 @@ test('persists stable draft data without retaining setter input references', () 
         longitude: 129.11,
       },
     ],
-    visitOrder: ['place-1'],
+    visitOrder: [['place-1']],
+    // day-trip이라 1일차뿐이다.
+    totalDays: 1,
     editingCourseId: null,
     existingThumbnailUrl: null,
   });
