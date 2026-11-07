@@ -6,6 +6,8 @@ import SelectionPageLayout from '../components/SelectionPageLayout';
 import SelectionResultCard from '../components/SelectionResultCard';
 import SelectedItemsSheet from '../components/SelectedItemsSheet';
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
+import { getCourseDayLabel } from '../../../utils/courseDetail';
+import { useSelectionDay } from '../useSelectionDay';
 import { getCultureContents } from '../../../apis/contents.api';
 import { festivalSearchSuggestions } from './constants/festivalSearchSuggestions';
 import { searchFestivals } from './festivalSearch';
@@ -21,9 +23,23 @@ function EventSelectionPage() {
   const setFestivalsInStore = useLocalRecommendationStore(
     (state) => state.setFestivals
   );
+  const assignToDay = useLocalRecommendationStore((state) => state.assignToDay);
+  const visitOrder = useLocalRecommendationStore(
+    (state) => state.draft.visitOrder
+  );
+  const { day, dayIndex } = useSelectionDay();
   const [query, setQuery] = useState('');
-  const [selectedFestivals, setSelectedFestivals] =
-    useState<FestivalItem[]>(draftFestivals);
+
+  // 이 일차에 담긴 행사만 보여준다. 행사 자체는 draft.festivals에 한 벌로
+  // 모여 있고, 어느 일차인지는 visitOrder가 들고 있다.
+  const dayFestivalIds = useMemo(
+    () => new Set(visitOrder[dayIndex] ?? []),
+    [visitOrder, dayIndex]
+  );
+  const selectedFestivals = useMemo(
+    () => draftFestivals.filter((festival) => dayFestivalIds.has(festival.id)),
+    [draftFestivals, dayFestivalIds]
+  );
 
   const trimmedQuery = query.trim();
   const [debouncedQuery, setDebouncedQuery] = useState(trimmedQuery);
@@ -69,32 +85,38 @@ function EventSelectionPage() {
     return null;
   }, [trimmedQuery, isFetching, isError, searchResults.length]);
 
+  // 검색 결과의 "추가됨" 표시는 일차와 무관하다 — 같은 행사를 두 일차에
+  // 넣을 수는 없다.
   const selectedFestivalIds = useMemo(
-    () => new Set(selectedFestivals.map((festival) => festival.id)),
-    [selectedFestivals]
+    () => new Set(draftFestivals.map((festival) => festival.id)),
+    [draftFestivals]
   );
 
   const handleAddFestival = (festival: FestivalItem) => {
-    if (selectedFestivals.some((item) => item.id === festival.id)) return;
-    const next = [...selectedFestivals, festival];
-    setSelectedFestivals(next);
-    setFestivalsInStore(next);
+    if (draftFestivals.some((item) => item.id === festival.id)) return;
+    setFestivalsInStore([...draftFestivals, festival]);
+    assignToDay(dayIndex, festival.id);
   };
 
   const handleRemoveFestival = (festival: FestivalItem) => {
-    const next = selectedFestivals.filter((item) => item.id !== festival.id);
-    setSelectedFestivals(next);
-    setFestivalsInStore(next);
+    setFestivalsInStore(
+      draftFestivals.filter((item) => item.id !== festival.id)
+    );
   };
 
+  /** 이 일차의 행사만 비운다 — 다른 일차는 건드리지 않는다. */
   const handleRemoveAllFestivals = () => {
-    setSelectedFestivals([]);
-    setFestivalsInStore([]);
+    setFestivalsInStore(
+      draftFestivals.filter((festival) => !dayFestivalIds.has(festival.id))
+    );
   };
+
+  const goToPlaceSelection = () =>
+    navigate(`/local-recommendation/place-selection?day=${day}`);
 
   const handleSkip = () => {
     handleRemoveAllFestivals();
-    navigate('/local-recommendation/place-selection');
+    goToPlaceSelection();
   };
 
   return (
@@ -102,7 +124,7 @@ function EventSelectionPage() {
       <SelectionPageLayout
         title={
           <>
-            코스에
+            {getCourseDayLabel(day)}에 방문할
             <br />
             행사를 등록해 주세요
           </>
@@ -118,7 +140,12 @@ function EventSelectionPage() {
         onSearchChange={setQuery}
         onItemAdd={handleAddFestival}
         onBack={() =>
-          navigate('/local-recommendation/tag-selection', { replace: true })
+          navigate(
+            day > 1
+              ? `/local-recommendation/place-selection?day=${day - 1}`
+              : '/local-recommendation/tag-selection',
+            { replace: true }
+          )
         }
         statusMessage={
           statusMessage ? (
@@ -149,7 +176,7 @@ function EventSelectionPage() {
         isSubmitDisabled={selectedFestivals.length === 0}
         onItemRemove={handleRemoveFestival}
         onRemoveAll={handleRemoveAllFestivals}
-        onSubmit={() => navigate('/local-recommendation/place-selection')}
+        onSubmit={goToPlaceSelection}
         skipButtonLabel={
           selectedFestivals.length === 0 ? '건너뛰기' : undefined
         }

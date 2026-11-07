@@ -31,6 +31,110 @@ export function getCourseDayLabel(day: number): string {
   return `${day}일차`;
 }
 
+export type CourseDurationType =
+  'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
+
+/** 일수가 고정인 기간들. THREE_PLUS만 사용자가 일차를 더 늘릴 수 있다. */
+const FIXED_TOTAL_DAYS: Record<
+  Exclude<CourseDurationType, 'THREE_PLUS'>,
+  number
+> = {
+  DAY_TRIP: 1,
+  ONE_NIGHT: 2,
+  TWO_NIGHT: 3,
+};
+
+export const THREE_PLUS_MIN_TOTAL_DAYS = 4;
+
+/**
+ * 기간에 해당하는 여행 일수. THREE_PLUS는 실제 일수가 가변이라, 이미 알고 있는
+ * 일수(currentTotalDays)가 4 이상이면 그 값을 유지하고 아니면 최소값으로 맞춘다.
+ */
+export function getTotalDaysForDuration(
+  durationType: CourseDurationType,
+  currentTotalDays?: number
+): number {
+  if (durationType !== 'THREE_PLUS') {
+    return FIXED_TOTAL_DAYS[durationType];
+  }
+
+  return currentTotalDays !== undefined &&
+    currentTotalDays >= THREE_PLUS_MIN_TOTAL_DAYS
+    ? currentTotalDays
+    : THREE_PLUS_MIN_TOTAL_DAYS;
+}
+
+/** 일차를 추가/삭제해 일수가 바뀌었을 때 따라가야 할 기간 값. */
+export function getDurationTypeForTotalDays(
+  totalDays: number
+): CourseDurationType {
+  if (totalDays <= 1) return 'DAY_TRIP';
+  if (totalDays === 2) return 'ONE_NIGHT';
+  if (totalDays === 3) return 'TWO_NIGHT';
+
+  return 'THREE_PLUS';
+}
+
+export function isTotalDaysValidForDuration(
+  durationType: CourseDurationType,
+  totalDays: number
+): boolean {
+  if (!Number.isSafeInteger(totalDays)) return false;
+
+  return durationType === 'THREE_PLUS'
+    ? totalDays >= THREE_PLUS_MIN_TOTAL_DAYS
+    : totalDays === FIXED_TOTAL_DAYS[durationType];
+}
+
+/**
+ * 일차별 배열의 길이를 totalDays에 맞춘다. 일차가 줄어들 때 잘려나갈 항목은
+ * 버리지 않고 마지막 일차로 모은다 — 사용자가 고른 걸 말없이 날리지 않는다.
+ */
+export function padVisitOrderToDays<T>(
+  visitOrder: readonly (readonly T[])[],
+  totalDays: number
+): T[][] {
+  const dayCount = Math.max(totalDays, 1);
+
+  if (visitOrder.length <= dayCount) {
+    return Array.from({ length: dayCount }, (_, day) => [
+      ...(visitOrder[day] ?? []),
+    ]);
+  }
+
+  const dropped = visitOrder.slice(dayCount).flat();
+
+  return visitOrder
+    .slice(0, dayCount)
+    .map((dayItems, index) =>
+      index === dayCount - 1 ? [...dayItems, ...dropped] : [...dayItems]
+    );
+}
+
+/**
+ * 상세 응답의 여행 일수. 일차 확장 이전에 만들어진 응답에는 totalDays가 없어,
+ * 그런 경우 항목들의 가장 큰 일차로(그것도 없으면 1일로) 보정한다.
+ */
+export function resolveCourseTotalDays(detail: {
+  totalDays?: number;
+  courseItems?: readonly { day?: number }[];
+}): number {
+  const { totalDays, courseItems = [] } = detail;
+
+  if (
+    typeof totalDays === 'number' &&
+    Number.isSafeInteger(totalDays) &&
+    totalDays > 0
+  ) {
+    return totalDays;
+  }
+
+  return courseItems.reduce(
+    (max, item) => Math.max(max, normalizeCourseDay(item.day)),
+    1
+  );
+}
+
 const TRANSPORT_LABELS = {
   WALK: '도보',
   CAR: '차량',

@@ -17,12 +17,14 @@ const PAGE_PADDING_BOTTOM = 30;
 function VisitOrderSelectionPage() {
   const navigate = useNavigate();
   const {
+    visitEventsByDay,
     visitEvents,
     activeEvent,
     activeEventOrder,
     sensors,
     handleDragStart,
     handleDragCancel,
+    handleDragOver,
     handleDragEnd,
     handleRegister,
     isSubmitting,
@@ -30,6 +32,9 @@ function VisitOrderSelectionPage() {
   } = useVisitOrderSelection();
   const isEditing = useLocalRecommendationStore(
     (state) => state.draft.editingCourseId !== null
+  );
+  const totalDays = useLocalRecommendationStore(
+    (state) => state.draft.totalDays
   );
 
   const handleSubmit = async () => {
@@ -53,16 +58,20 @@ function VisitOrderSelectionPage() {
       <main className="flex min-w-0 flex-1 flex-col">
         <VisitOrderHeader
           onBack={() =>
-            navigate('/local-recommendation/place-selection', { replace: true })
+            navigate(
+              `/local-recommendation/place-selection?day=${Math.max(totalDays, 1)}`,
+              { replace: true }
+            )
           }
         />
 
         <SortableVisitEventList
-          visitEvents={visitEvents}
+          visitEventsByDay={visitEventsByDay}
           activeEvent={activeEvent}
           activeEventOrder={activeEventOrder}
           sensors={sensors}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragCancel={handleDragCancel}
           onDragEnd={handleDragEnd}
         />

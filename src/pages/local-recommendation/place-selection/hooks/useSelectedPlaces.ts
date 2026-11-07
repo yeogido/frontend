@@ -38,9 +38,16 @@ function toSelectedPlace(
   };
 }
 
-export function useSelectedPlaces() {
+/**
+ * 일차 하나에 담긴 장소만 다룬다. 장소 자체는 draft.places에 한 벌로 모여
+ * 있고, 어느 일차인지는 draft.visitOrder가 들고 있다.
+ */
+export function useSelectedPlaces(dayIndex: number) {
   const draftPlaces = useLocalRecommendationStore(
     (state) => state.draft.places
+  );
+  const visitOrder = useLocalRecommendationStore(
+    (state) => state.draft.visitOrder
   );
   const pendingImages = useLocalRecommendationStore(
     (state) => state.pendingImages
@@ -48,23 +55,32 @@ export function useSelectedPlaces() {
   const setPlacesInStore = useLocalRecommendationStore(
     (state) => state.setPlaces
   );
+  const assignToDay = useLocalRecommendationStore((state) => state.assignToDay);
   const setPendingImage = useLocalRecommendationStore(
     (state) => state.setPendingImage
   );
   const removePendingImage = useLocalRecommendationStore(
     (state) => state.removePendingImage
   );
-  const selectedPlaces = useMemo(
-    () =>
-      draftPlaces.map((place) =>
-        toSelectedPlace(place, pendingImages[place.id])
-      ),
-    [draftPlaces, pendingImages]
+
+  const dayPlaceIds = useMemo(
+    () => new Set(visitOrder[dayIndex] ?? []),
+    [visitOrder, dayIndex]
   );
 
+  const selectedPlaces = useMemo(
+    () =>
+      draftPlaces
+        .filter((place) => dayPlaceIds.has(place.id))
+        .map((place) => toSelectedPlace(place, pendingImages[place.id])),
+    [draftPlaces, dayPlaceIds, pendingImages]
+  );
+
+  // 검색 결과의 "추가됨" 표시는 일차와 무관하다 — 같은 장소를 두 일차에
+  // 넣을 수는 없다(장소 목록이 id 한 벌로 관리된다).
   const selectedPlaceIds = useMemo(
-    () => new Set(selectedPlaces.map((place) => place.id)),
-    [selectedPlaces]
+    () => new Set(draftPlaces.map((place) => place.id)),
+    [draftPlaces]
   );
 
   const addSelectedPlace = (
@@ -72,35 +88,39 @@ export function useSelectedPlaces() {
     imageFile: File | null,
     imagePreviewUrl: string | null
   ) => {
-    if (selectedPlaces.some((item) => item.id === place.id)) {
+    if (draftPlaces.some((item) => item.id === place.id)) {
       if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
       return;
     }
 
-    const next = [
-      ...selectedPlaces,
-      { ...place, imageFile, imagePreviewUrl, imageKey: null, imageUrl: null },
-    ];
     if (imageFile && imagePreviewUrl) {
       setPendingImage(place.id, {
         file: imageFile,
         previewUrl: imagePreviewUrl,
       });
     }
-    setPlacesInStore(next.map(toPersistedPlace));
+    setPlacesInStore([
+      ...draftPlaces,
+      toPersistedPlace({
+        ...place,
+        imageFile,
+        imagePreviewUrl,
+        imageKey: null,
+        imageUrl: null,
+      }),
+    ]);
+    assignToDay(dayIndex, place.id);
   };
 
   const removeSelectedPlace = (place: SelectedPlace) => {
-    const next = selectedPlaces.filter((item) => item.id !== place.id);
     removePendingImage(place.id);
-    setPlacesInStore(next.map(toPersistedPlace));
+    setPlacesInStore(draftPlaces.filter((item) => item.id !== place.id));
   };
 
+  /** 이 일차의 장소만 비운다 — 다른 일차는 건드리지 않는다. */
   const removeAllSelectedPlaces = () => {
-    selectedPlaces.forEach((place) => {
-      removePendingImage(place.id);
-    });
-    setPlacesInStore([]);
+    selectedPlaces.forEach((place) => removePendingImage(place.id));
+    setPlacesInStore(draftPlaces.filter((place) => !dayPlaceIds.has(place.id)));
   };
 
   return {

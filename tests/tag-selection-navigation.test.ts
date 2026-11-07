@@ -41,7 +41,8 @@ test('태그 선택 완료 결과를 전달하고 행사 선택 페이지로 이
       hashtagIds: [7],
     },
   ]);
-  assert.deepEqual(navigatedPaths, [EVENT_SELECTION_PATH]);
+  // 등록 흐름은 1일차 행사 선택부터 시작한다.
+  assert.deepEqual(navigatedPaths, [`${EVENT_SELECTION_PATH}?day=1`]);
 });
 
 test('선택된 TagId를 라벨이 일치하는 서버 해시태그 id로 매핑한다', () => {

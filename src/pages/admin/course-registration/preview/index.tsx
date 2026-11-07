@@ -14,7 +14,9 @@ function AdminCourseRegistrationPreviewPage() {
   const keywordTagIds = useAdminCourseRegistrationStore(
     (state) => state.keywordTagIds
   );
-  const visitOrder = useAdminCourseRegistrationStore((state) => state.visitOrder);
+  const visitOrder = useAdminCourseRegistrationStore(
+    (state) => state.visitOrder
+  );
 
   useEffect(() => {
     if (!region || !basicInfo) {
@@ -24,7 +26,7 @@ function AdminCourseRegistrationPreviewPage() {
       return;
     }
 
-    if (visitOrder.length === 0) {
+    if (visitOrder.flat().length === 0) {
       navigate('/admin/course-registration/visit-order', { replace: true });
     }
   }, [region, basicInfo, visitOrder, navigate]);
@@ -36,13 +38,18 @@ function AdminCourseRegistrationPreviewPage() {
       basicInfo,
       photo,
       keywordTagIds,
-      visitEvents: visitOrder,
+      visitEvents: visitOrder.flat(),
     });
 
     return mapCourseDetailDtoToViewModel(dto);
   }, [basicInfo, photo, keywordTagIds, visitOrder]);
 
-  if (!region || !basicInfo || visitOrder.length === 0 || !courseDetail) {
+  if (
+    !region ||
+    !basicInfo ||
+    visitOrder.flat().length === 0 ||
+    !courseDetail
+  ) {
     return null;
   }
 

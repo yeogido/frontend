@@ -4,11 +4,12 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../../../apis/common';
@@ -28,7 +29,12 @@ import {
 } from '../buildCourseRequest';
 import { buildVisitEvents } from '../buildVisitEvents';
 import { createRouteImage } from '../createRouteImage';
-import type { VisitEvent } from '../constants';
+import {
+  findVisitEventDayIndex,
+  parseDayDroppableId,
+  toVisitOrder,
+  type VisitEvent,
+} from '../constants';
 import {
   fetchVisitEventTravelData,
   type VisitEventTravelData,
@@ -58,7 +64,7 @@ export function useVisitOrderSelection() {
     (state) => state.setVisitOrder
   );
   const resetDraft = useLocalRecommendationStore((state) => state.resetDraft);
-  const [visitEvents, setVisitEvents] = useState<VisitEvent[]>(() =>
+  const [visitEventsByDay, setVisitEventsByDay] = useState<VisitEvent[][]>(() =>
     buildVisitEvents(
       draft.places,
       draft.festivals,
@@ -72,9 +78,24 @@ export function useVisitOrderSelection() {
             pendingImages[place.id]?.previewUrl ?? place.imageUrl;
           return previewUrl ? [[place.id, previewUrl] as const] : [];
         })
-      )
+      ),
+      draft.totalDays
     )
   );
+  // 드래그 중에는 리렌더가 끝나기 전에 다음 포인터 이벤트가 올 수 있다.
+  // 클로저 값으로 되써 넣으면 직전 일차 이동이 지워지므로, 항상 최신 목록을
+  // ref에서 읽어 계산한다.
+  const visitEventsByDayRef = useRef(visitEventsByDay);
+  const applyVisitEventsByDay = (
+    compute: (previous: VisitEvent[][]) => VisitEvent[][]
+  ) => {
+    const next = compute(visitEventsByDayRef.current);
+    visitEventsByDayRef.current = next;
+    setVisitEventsByDay(next);
+
+    return next;
+  };
+
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -91,26 +112,83 @@ export function useVisitOrderSelection() {
   const handleDragStart = ({ active }: DragStartEvent) =>
     setActiveEventId(String(active.id));
   const handleDragCancel = () => setActiveEventId(null);
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    setActiveEventId(null);
-    if (!over || active.id === over.id) return;
 
-    const activeIndex = visitEvents.findIndex(
-      (event) => event.id === active.id
-    );
-    const overIndex = visitEvents.findIndex((event) => event.id === over.id);
-    if (activeIndex < 0 || overIndex < 0) return;
+  /**
+   * 끄는 중에 다른 일차 위로 넘어가면 그 자리에서 바로 옮겨 둔다
+   * (dnd-kit 멀티 컨테이너 방식). 최종 순서는 handleDragEnd가 확정한다.
+   */
+  const handleDragOver = ({ active, over }: DragOverEvent) => {
+    if (!over) return;
 
-    const next = arrayMove(visitEvents, activeIndex, overIndex);
-    setVisitEvents(next);
-    setVisitOrder(next.map((event) => event.id));
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    applyVisitEventsByDay((previous) => {
+      const fromDay = findVisitEventDayIndex(previous, activeId);
+      const overDay = parseDayDroppableId(overId);
+      const toDay = overDay ?? findVisitEventDayIndex(previous, overId);
+      if (fromDay < 0 || toDay < 0 || fromDay === toDay) return previous;
+
+      const movedEvent = previous[fromDay].find(
+        (event) => event.id === activeId
+      );
+      if (!movedEvent) return previous;
+
+      const next = previous.map((dayEvents) => [...dayEvents]);
+      next[fromDay] = next[fromDay].filter((event) => event.id !== activeId);
+      // 일차 섹션 자체에 놓았으면 그 일차의 맨 뒤로 보낸다.
+      const overIndex =
+        overDay !== null
+          ? next[toDay].length
+          : next[toDay].findIndex((event) => event.id === overId);
+      next[toDay].splice(
+        overIndex < 0 ? next[toDay].length : overIndex,
+        0,
+        movedEvent
+      );
+
+      return next;
+    });
   };
 
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setActiveEventId(null);
+
+    const activeId = String(active.id);
+    const overId = over ? String(over.id) : null;
+    const next = applyVisitEventsByDay((previous) => {
+      const dayIndex = findVisitEventDayIndex(previous, activeId);
+      if (dayIndex < 0) return previous;
+
+      const dayEvents = previous[dayIndex];
+      const activeIndex = dayEvents.findIndex((event) => event.id === activeId);
+      const overIndex = overId
+        ? dayEvents.findIndex((event) => event.id === overId)
+        : -1;
+      if (overIndex < 0 || activeIndex === overIndex) return previous;
+
+      return previous.map((events, index) =>
+        index === dayIndex ? arrayMove(events, activeIndex, overIndex) : events
+      );
+    });
+
+    // 일차를 넘나든 이동은 handleDragOver가 이미 반영했으니, 같은 일차 안에서
+    // 순서가 그대로여도 스토어에는 항상 최종 상태를 저장한다.
+    setVisitOrder(toVisitOrder(next));
+  };
+
+  const visitEvents = visitEventsByDay.flat();
   const activeEvent =
     visitEvents.find((event) => event.id === activeEventId) ?? null;
-  const activeEventOrder = activeEvent
-    ? visitEvents.findIndex((event) => event.id === activeEvent.id) + 1
-    : 0;
+  const activeEventDay = activeEvent
+    ? findVisitEventDayIndex(visitEventsByDay, activeEvent.id)
+    : -1;
+  const activeEventOrder =
+    activeEvent && activeEventDay >= 0
+      ? visitEventsByDay[activeEventDay].findIndex(
+          (event) => event.id === activeEvent.id
+        ) + 1
+      : 0;
 
   const handleRegister = async (): Promise<{ courseId: number } | null> => {
     if (isSubmitting) return null;
@@ -160,23 +238,44 @@ export function useVisitOrderSelection() {
           placeImageKeys[index],
         ])
       );
-      const eventsWithImageKeys = visitEvents.map((event) =>
-        event.kind === 'PLACE'
-          ? {
-              ...event,
-              imageKey: imageKeyByPlaceId.get(event.id) ?? event.imageKey,
-            }
-          : event
+      const eventsByDayWithImageKeys = visitEventsByDay.map((dayEvents) =>
+        dayEvents.map((event) =>
+          event.kind === 'PLACE'
+            ? {
+                ...event,
+                imageKey: imageKeyByPlaceId.get(event.id) ?? event.imageKey,
+              }
+            : event
+        )
       );
+      const routeEvents = eventsByDayWithImageKeys.flat();
       const draftWithCoverKey = { ...currentDraft, coverImageKey };
       const validationError = getCourseRequestValidationError(
         draftWithCoverKey,
-        eventsWithImageKeys
+        eventsByDayWithImageKeys
       );
       if (validationError) throw new Error(validationError);
       let travelData: VisitEventTravelData | undefined;
       try {
-        travelData = await fetchVisitEventTravelData(eventsWithImageKeys);
+        // 이동 시간은 같은 일차 안에서만 의미가 있다 — 서버도 일차를 넘는
+        // 구간은 받지 않으므로 일차별로 따로 계산한다.
+        // 한 일차가 타임아웃돼도 나머지 일차에서 받아온 값은 살린다.
+        const travelDataByDay = await Promise.allSettled(
+          eventsByDayWithImageKeys.map((dayEvents) =>
+            fetchVisitEventTravelData(dayEvents)
+          )
+        );
+        const settledDays = travelDataByDay.flatMap((result) =>
+          result.status === 'fulfilled' ? [result.value] : []
+        );
+        travelData = {
+          timesFromPreviousByEventId: new Map(
+            settledDays.flatMap((day) => [...day.timesFromPreviousByEventId])
+          ),
+          operatingDaysByEventId: new Map(
+            settledDays.flatMap((day) => [...day.operatingDaysByEventId])
+          ),
+        };
       } catch {
         travelData = undefined;
       }
@@ -190,14 +289,14 @@ export function useVisitOrderSelection() {
         // 자체는 막지 않고 기존 경로 이미지를 그대로 둔다(best-effort).
         let routeImageKey: string | undefined;
         try {
-          const routeImage = await createRouteImage(eventsWithImageKeys);
+          const routeImage = await createRouteImage(routeEvents);
           routeImageKey = await uploadCourseImage(routeImage);
         } catch {
           routeImageKey = undefined;
         }
         const updatePayload = buildLocalCourseUpdateRequest(
           draftWithCoverKey,
-          eventsWithImageKeys,
+          eventsByDayWithImageKeys,
           travelData,
           routeImageKey
         );
@@ -229,11 +328,11 @@ export function useVisitOrderSelection() {
             getCourseDetail(currentDraft.editingCourseId as number),
         });
       } else {
-        const routeImage = await createRouteImage(eventsWithImageKeys);
+        const routeImage = await createRouteImage(routeEvents);
         const routeImageKey = await uploadCourseImage(routeImage);
         const payload = buildCourseRequest(
           draftWithCoverKey,
-          eventsWithImageKeys,
+          eventsByDayWithImageKeys,
           travelData,
           routeImageKey
         );
@@ -267,12 +366,14 @@ export function useVisitOrderSelection() {
   };
 
   return {
+    visitEventsByDay,
     visitEvents,
     activeEvent,
     activeEventOrder,
     sensors,
     handleDragStart,
     handleDragCancel,
+    handleDragOver,
     handleDragEnd,
     handleRegister,
     isSubmitting,
