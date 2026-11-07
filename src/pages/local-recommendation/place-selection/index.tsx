@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
+import { useSelectionDay } from '../useSelectionDay';
 import PlacePhotoModal from './components/PlacePhotoModal';
 import PlaceSearchSection from './components/PlaceSearchSection';
 import SelectedPlaceSection from './components/SelectedPlaceSection';
@@ -14,6 +15,7 @@ function PlaceSelectionPage() {
   const imageRecoveryRequired = useLocalRecommendationStore(
     (state) => state.imageRecoveryRequired
   );
+  const { day, dayIndex, totalDays } = useSelectionDay();
   const { setQuery, searchResults } = usePlaceSearch();
   const {
     selectedPlaces,
@@ -21,7 +23,7 @@ function PlaceSelectionPage() {
     addSelectedPlace,
     removeSelectedPlace,
     removeAllSelectedPlaces,
-  } = useSelectedPlaces();
+  } = useSelectedPlaces(dayIndex);
   const {
     pendingPlace,
     pendingImageFile,
@@ -46,7 +48,12 @@ function PlaceSelectionPage() {
   };
 
   const handleSubmitPlaces = () => {
-    navigate('/local-recommendation/visit-order-selection');
+    // 마지막 일차까지 채웠으면 방문 순서로, 아니면 다음 일차의 행사 선택으로.
+    navigate(
+      day < totalDays
+        ? `/local-recommendation/event-selection?day=${day + 1}`
+        : '/local-recommendation/visit-order-selection'
+    );
   };
 
   return (
@@ -54,10 +61,13 @@ function PlaceSelectionPage() {
       <PlaceSearchSection
         searchResults={searchResults}
         selectedPlaceIds={selectedPlaceIds}
+        day={day}
         onSearchChange={setQuery}
         onItemAdd={handlePlaceAdd}
         onBack={() =>
-          navigate('/local-recommendation/event-selection', { replace: true })
+          navigate(`/local-recommendation/event-selection?day=${day}`, {
+            replace: true,
+          })
         }
       />
       <SelectedPlaceSection

@@ -33,6 +33,9 @@ function VisitOrderSelectionPage() {
   const isEditing = useLocalRecommendationStore(
     (state) => state.draft.editingCourseId !== null
   );
+  const totalDays = useLocalRecommendationStore(
+    (state) => state.draft.totalDays
+  );
 
   const handleSubmit = async () => {
     const result = await handleRegister();
@@ -55,7 +58,10 @@ function VisitOrderSelectionPage() {
       <main className="flex min-w-0 flex-1 flex-col">
         <VisitOrderHeader
           onBack={() =>
-            navigate('/local-recommendation/place-selection', { replace: true })
+            navigate(
+              `/local-recommendation/place-selection?day=${Math.max(totalDays, 1)}`,
+              { replace: true }
+            )
           }
         />
 

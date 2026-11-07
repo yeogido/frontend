@@ -80,6 +80,8 @@ export interface LocalRecommendationState {
   setFestivals: (festivals: readonly FestivalItem[]) => void;
   setPlaces: (places: readonly PersistedSelectedPlaceInput[]) => void;
   setVisitOrder: (visitOrder: readonly (readonly string[])[]) => void;
+  /** 선택 화면에서 고른 항목을 해당 일차의 끝에 붙인다(이미 배치됐으면 무시). */
+  assignToDay: (dayIndex: number, id: string) => void;
   /** 3박 이상에서 일차를 늘리거나 줄일 때 쓴다. */
   setTotalDays: (totalDays: number) => void;
   /** 수정 진입 시 상세 조회 결과로 draft 전체를 채운다. */
@@ -109,6 +111,14 @@ export const createEmptyLocalRecommendationDraft =
     editingCourseId: null,
     existingThumbnailUrl: null,
   });
+
+/** 장소/행사 목록에서 빠진 항목의 id가 방문 순서에 유령으로 남지 않게 한다. */
+function pruneVisitOrder(
+  visitOrder: readonly (readonly string[])[],
+  keepIds: ReadonlySet<string>
+): string[][] {
+  return visitOrder.map((dayOrder) => dayOrder.filter((id) => keepIds.has(id)));
+}
 
 function clearImageDependentDraft(
   draft: LocalRecommendationDraft
@@ -172,6 +182,13 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
         set((state) => ({
           draft: {
             ...state.draft,
+            visitOrder: pruneVisitOrder(
+              state.draft.visitOrder,
+              new Set([
+                ...festivals.map((festival) => festival.id),
+                ...state.draft.places.map((place) => place.id),
+              ])
+            ),
             festivals: festivals.map(
               ({ id, contentId, tag, title, address, imageSrc }) => ({
                 id,
@@ -188,6 +205,13 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
         set((state) => ({
           draft: {
             ...state.draft,
+            visitOrder: pruneVisitOrder(
+              state.draft.visitOrder,
+              new Set([
+                ...places.map((place) => place.id),
+                ...state.draft.festivals.map((festival) => festival.id),
+              ])
+            ),
             places: places.map(
               ({
                 id,
@@ -224,6 +248,21 @@ export const useLocalRecommendationStore = create<LocalRecommendationState>()(
             visitOrder: visitOrder.map((dayOrder) => [...dayOrder]),
           },
         })),
+      assignToDay: (dayIndex, id) =>
+        set((state) => {
+          const visitOrder = padVisitOrderToDays(
+            state.draft.visitOrder,
+            state.draft.totalDays
+          );
+          if (visitOrder.some((dayOrder) => dayOrder.includes(id))) {
+            return state;
+          }
+
+          const index = Math.min(Math.max(dayIndex, 0), visitOrder.length - 1);
+          visitOrder[index] = [...visitOrder[index], id];
+
+          return { draft: { ...state.draft, visitOrder } };
+        }),
       setTotalDays: (totalDays) =>
         set((state) => ({
           draft: {

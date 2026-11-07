@@ -11,7 +11,7 @@ interface CompleteTagSelectionOptions {
   /** tagIds를 서버 해시태그 목록에 매핑한 결과 (mapTagIdsToHashtagIds 참고) */
   hashtagIds: number[];
   onComplete?: (result: TagSelectionResult) => void;
-  navigate: (path: typeof EVENT_SELECTION_PATH) => void;
+  navigate: (path: string) => void;
 }
 
 export const completeTagSelection = ({
@@ -28,6 +28,7 @@ export const completeTagSelection = ({
     photoKey,
     hashtagIds,
   });
-  navigate(EVENT_SELECTION_PATH);
+  // 등록 흐름은 1일차 행사 선택부터 시작한다.
+  navigate(`${EVENT_SELECTION_PATH}?day=1`);
   return true;
 };

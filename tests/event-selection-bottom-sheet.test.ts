@@ -44,8 +44,9 @@ test('event selection uses the shared selection UI and submits to place selectio
   assert.ok(existsSync(sheetPath));
   assert.match(eventPageSource, /<SelectionPageLayout/);
   assert.match(eventPageSource, /<SelectedItemsSheet/);
+  // 일차 스코프가 붙어 ?day=N을 달고 장소 선택으로 넘어간다.
   assert.match(
     eventPageSource,
-    /navigate\('\/local-recommendation\/place-selection'\)/
+    /navigate\(`\/local-recommendation\/place-selection\?day=\$\{day\}`\)/
   );
 });
