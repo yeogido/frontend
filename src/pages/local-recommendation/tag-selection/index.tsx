@@ -53,6 +53,9 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
   const savedCoverImageKey = useLocalRecommendationStore(
     (state) => state.draft.coverImageKey
   );
+  const isEditingCourse = useLocalRecommendationStore(
+    (state) => state.draft.editingCourseId !== null
+  );
   const savedCoverImage = useLocalRecommendationStore(
     (state) => state.pendingImages[LOCAL_RECOMMENDATION_COVER_IMAGE_ID]
   );
@@ -180,6 +183,7 @@ function TagSelectionPage({ onComplete }: TagSelectionPageProps) {
         photoKey: '',
         hashtagIds,
         onComplete,
+        isEditingCourse,
         navigate,
       });
     } catch {

@@ -159,7 +159,71 @@ test('persists stable draft data without retaining setter input references', () 
     totalDays: 1,
     editingCourseId: null,
     existingThumbnailUrl: null,
+    dirtyFields: { basicInfo: true, tags: true, courseItems: true },
   });
   assert.deepEqual(persistedDraft, draft);
   assert.doesNotMatch(JSON.stringify(persistedDraft), /blob:/);
+});
+
+const basicInfo = {
+  courseName: 'Jeju trip',
+  summary: 'Two easy days.',
+  duration: '1-night-2-days' as const,
+  visitStartMonth: '4' as const,
+  visitEndMonth: '5' as const,
+  transport: 'walking' as const,
+  companion: 'solo' as const,
+};
+
+test('keeps the duration in step when a day is added', () => {
+  const store = useLocalRecommendationStore.getState();
+  store.updateBasicInfo(basicInfo);
+  store.setVisitOrder([['place-1'], ['place-2']]);
+
+  useLocalRecommendationStore.getState().setTotalDays(3);
+
+  const draft = useLocalRecommendationStore.getState().draft;
+  assert.equal(draft.totalDays, 3);
+  // 3일 = 2박 3일. 일수와 기간이 어긋나면 서버가 거절한다.
+  assert.equal(draft.basicInfo?.duration, '2-nights-3-days');
+  // 늘어난 일차는 빈 자리로 생긴다.
+  assert.deepEqual(draft.visitOrder, [['place-1'], ['place-2'], []]);
+  assert.equal(draft.dirtyFields.courseItems, true);
+  assert.equal(draft.dirtyFields.basicInfo, true);
+});
+
+test('drops a removed schedule from both the pool and the day order', () => {
+  const store = useLocalRecommendationStore.getState();
+  store.setPlaces([
+    {
+      id: 'place-1',
+      title: 'Cafe',
+      address: '1 Road',
+      imageKey: null,
+      imageUrl: null,
+      externalPlaceId: 'place-1',
+      categoryGroupCode: 'CE7',
+      roadAddress: '1 Road',
+      lotAddress: '',
+      latitude: 37.5,
+      longitude: 127,
+    },
+  ]);
+  useLocalRecommendationStore
+    .getState()
+    .setVisitOrder([['place-1', 'festival-1']]);
+
+  useLocalRecommendationStore.getState().removeVisitEvent('place-1');
+
+  const draft = useLocalRecommendationStore.getState().draft;
+  assert.deepEqual(draft.places, []);
+  assert.deepEqual(draft.visitOrder, [['festival-1']]);
+});
+
+test('ignores a removal for a schedule the draft does not hold', () => {
+  const before = useLocalRecommendationStore.getState().draft;
+
+  useLocalRecommendationStore.getState().removeVisitEvent('unknown');
+
+  assert.equal(useLocalRecommendationStore.getState().draft, before);
 });

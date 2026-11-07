@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   completeTagSelection,
   EVENT_SELECTION_PATH,
+  VISIT_ORDER_SELECTION_PATH,
 } from '../src/pages/local-recommendation/tag-selection/navigation.ts';
 import { mapTagIdsToHashtagIds } from '../src/pages/local-recommendation/tag-selection/hashtagMapping.ts';
 import type { TagId } from '../src/pages/local-recommendation/tag-selection/types.ts';
@@ -73,4 +74,22 @@ test('해시태그 목록이 비어 있으면 빈 배열을 반환한다', () =>
   const hashtagIds = mapTagIdsToHashtagIds(['spring', 'sea'], [], getLabel);
 
   assert.deepEqual(hashtagIds, []);
+});
+
+test('수정 흐름에서는 선택 단계를 다시 밟지 않고 수정 화면으로 돌아간다', () => {
+  const navigatedPaths: string[] = [];
+
+  completeTagSelection({
+    photo: {
+      file: new File(['image'], 'course.png', { type: 'image/png' }),
+      previewUrl: 'blob:course',
+    },
+    selectedTagIds: new Set<TagId>(['sea']),
+    photoKey: 'courses/thumbnail/abcd1234.jpg',
+    hashtagIds: [3],
+    isEditingCourse: true,
+    navigate: (path) => navigatedPaths.push(path),
+  });
+
+  assert.deepEqual(navigatedPaths, [VISIT_ORDER_SELECTION_PATH]);
 });

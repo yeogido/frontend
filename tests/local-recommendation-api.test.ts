@@ -9,6 +9,7 @@ import {
   buildCourseRequest,
   buildLocalCourseUpdateRequest,
   getCourseRequestValidationError,
+  hasCourseUpdates,
 } from '../src/pages/local-recommendation/visit-order-selection/buildCourseRequest.ts';
 import { buildVisitEvents } from '../src/pages/local-recommendation/visit-order-selection/buildVisitEvents.ts';
 
@@ -58,6 +59,8 @@ const createDraft = () => ({
   totalDays: 1,
   editingCourseId: null,
   existingThumbnailUrl: null,
+  // 기본값은 "전부 손댔다" — 수정 payload 테스트가 따로 좁혀서 쓴다.
+  dirtyFields: { basicInfo: true, tags: true, courseItems: true },
 });
 
 test('maps basic information to Swagger course enums', () => {
@@ -282,5 +285,76 @@ test('rejects a day that has no place', () => {
   assert.match(
     getCourseRequestValidationError(draft, [[createPlaceEvent()], []]) ?? '',
     /2일차/
+  );
+});
+
+const createEditDraft = (dirtyFields: {
+  basicInfo: boolean;
+  tags: boolean;
+  courseItems: boolean;
+}) => ({
+  ...createDraft(),
+  neighborhood: null,
+  editingCourseId: 42,
+  dirtyFields,
+});
+
+test('sends only the basic information fields when the schedule did not change', () => {
+  const payload = buildLocalCourseUpdateRequest(
+    createEditDraft({ basicInfo: true, tags: false, courseItems: false }),
+    [[createPlaceEvent()]],
+    undefined
+  );
+
+  assert.ok(payload);
+  assert.equal(payload.title, 'Seoul day trip');
+  // 기간을 바꿀 때 서버가 일수를 함께 요구한다.
+  assert.equal(payload.totalDays, 1);
+  // 일정은 손대지 않았으니 전체 교체하지 않는다 — 서버가 들고 있는 이동
+  // 시간과 영업시간을 그대로 둔다.
+  assert.equal('courseItems' in payload, false);
+  assert.equal('hashtagIds' in payload, false);
+  assert.equal('thumbnailKey' in payload, false);
+});
+
+test('sends only the schedule when the basic information did not change', () => {
+  const payload = buildLocalCourseUpdateRequest(
+    createEditDraft({ basicInfo: false, tags: false, courseItems: true }),
+    [[createPlaceEvent()]],
+    undefined,
+    'routes/new.png'
+  );
+
+  assert.ok(payload);
+  assert.equal(payload.courseItems?.length, 1);
+  assert.equal(payload.totalDays, 1);
+  assert.equal(payload.routeImageKey, 'routes/new.png');
+  assert.equal('title' in payload, false);
+  assert.equal('durationType' in payload, false);
+});
+
+test('sends only the photo and keywords when just the tag step changed', () => {
+  const payload = buildLocalCourseUpdateRequest(
+    createEditDraft({ basicInfo: false, tags: true, courseItems: false }),
+    [[createPlaceEvent()]],
+    undefined
+  );
+
+  assert.ok(payload);
+  assert.deepEqual(payload.hashtagIds, [3]);
+  assert.equal(payload.thumbnailKey, 'thumbnails/seoul.jpg');
+  // 일수는 기간이나 일정이 바뀔 때만 보낸다.
+  assert.equal('totalDays' in payload, false);
+  assert.equal('courseItems' in payload, false);
+});
+
+test('reports no updates to send when nothing was touched', () => {
+  assert.equal(
+    hasCourseUpdates({ basicInfo: false, tags: false, courseItems: false }),
+    false
+  );
+  assert.equal(
+    hasCourseUpdates({ basicInfo: false, tags: false, courseItems: true }),
+    true
   );
 });

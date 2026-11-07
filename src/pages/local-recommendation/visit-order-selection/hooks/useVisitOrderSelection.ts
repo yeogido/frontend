@@ -26,7 +26,12 @@ import {
   buildCourseRequest,
   buildLocalCourseUpdateRequest,
   getCourseRequestValidationError,
+  hasCourseUpdates,
 } from '../buildCourseRequest';
+import {
+  COURSE_MAX_TOTAL_DAYS,
+  getCourseDurationLabel,
+} from '../../../../utils/courseDetail';
 import { buildVisitEvents } from '../buildVisitEvents';
 import { createRouteImage } from '../createRouteImage';
 import {
@@ -64,6 +69,15 @@ export function useVisitOrderSelection() {
     (state) => state.setVisitOrder
   );
   const resetDraft = useLocalRecommendationStore((state) => state.resetDraft);
+  const removeVisitEventFromStore = useLocalRecommendationStore(
+    (state) => state.removeVisitEvent
+  );
+  const setTotalDays = useLocalRecommendationStore(
+    (state) => state.setTotalDays
+  );
+  const removePendingImage = useLocalRecommendationStore(
+    (state) => state.removePendingImage
+  );
   const [visitEventsByDay, setVisitEventsByDay] = useState<VisitEvent[][]>(() =>
     buildVisitEvents(
       draft.places,
@@ -95,6 +109,12 @@ export function useVisitOrderSelection() {
 
     return next;
   };
+
+  // 수정 흐름은 보기 모드로 들어온다 — '수정하기'를 눌러야 순서 변경과
+  // 삭제가 열린다. 신규 등록은 처음부터 순서를 잡는 화면이라 토글이 없다.
+  const isEditingCourse = draft.editingCourseId !== null;
+  const [isEditMode, setIsEditMode] = useState(false);
+  const canReorder = !isEditingCourse || isEditMode;
 
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -177,6 +197,28 @@ export function useVisitOrderSelection() {
     setVisitOrder(toVisitOrder(next));
   };
 
+  /** 일정 하나를 코스에서 뺀다 — 스토어와 화면 목록을 함께 맞춘다. */
+  const handleRemoveEvent = (eventId: string) => {
+    removeVisitEventFromStore(eventId);
+    // 장소와 함께 고른 사진도 버린다(미리보기 object URL 정리 포함).
+    removePendingImage(eventId);
+    applyVisitEventsByDay((previous) =>
+      previous.map((dayEvents) =>
+        dayEvents.filter((event) => event.id !== eventId)
+      )
+    );
+  };
+
+  const handleAddDay = () => {
+    const nextTotalDays = visitEventsByDayRef.current.length + 1;
+    if (nextTotalDays > COURSE_MAX_TOTAL_DAYS) return;
+
+    // 기간(durationType)도 스토어가 함께 맞춘다 — 일수와 기간이 어긋나면
+    // 서버가 거절한다(COMMON4001).
+    setTotalDays(nextTotalDays);
+    applyVisitEventsByDay((previous) => [...previous, []]);
+  };
+
   const visitEvents = visitEventsByDay.flat();
   const activeEvent =
     visitEvents.find((event) => event.id === activeEventId) ?? null;
@@ -199,6 +241,19 @@ export function useVisitOrderSelection() {
     try {
       const store = useLocalRecommendationStore.getState();
       const { draft: currentDraft, pendingImages } = store;
+
+      // 수정 흐름에서 아무것도 손대지 않았다면 요청을 보낼 필요가 없다 —
+      // 사진 업로드도, 경로 이미지 생성도, PATCH도 모두 건너뛴다.
+      if (
+        currentDraft.editingCourseId &&
+        !hasCourseUpdates(currentDraft.dirtyFields)
+      ) {
+        const courseId = currentDraft.editingCourseId;
+        resetDraft();
+
+        return { courseId };
+      }
+
       const coverImage = pendingImages[LOCAL_RECOMMENDATION_COVER_IMAGE_ID];
 
       // 수정 중 대표 사진을 새로 안 골랐다면 상세 조회로 알아낸 기존 key를
@@ -287,12 +342,15 @@ export function useVisitOrderSelection() {
         // 만들어 올린다. 다만 지도 렌더링(카카오맵 SDK, 마커 이미지 CORS
         // 등)은 실패할 수 있는 부수적인 작업이라, 실패해도 본문 수정
         // 자체는 막지 않고 기존 경로 이미지를 그대로 둔다(best-effort).
+        // 일정이 그대로면 경로도 그대로라, 지도 이미지를 다시 만들지 않는다.
         let routeImageKey: string | undefined;
-        try {
-          const routeImage = await createRouteImage(routeEvents);
-          routeImageKey = await uploadCourseImage(routeImage);
-        } catch {
-          routeImageKey = undefined;
+        if (currentDraft.dirtyFields.courseItems) {
+          try {
+            const routeImage = await createRouteImage(routeEvents);
+            routeImageKey = await uploadCourseImage(routeImage);
+          } catch {
+            routeImageKey = undefined;
+          }
         }
         const updatePayload = buildLocalCourseUpdateRequest(
           draftWithCoverKey,
@@ -371,6 +429,14 @@ export function useVisitOrderSelection() {
     activeEvent,
     activeEventOrder,
     sensors,
+    isEditingCourse,
+    isEditMode,
+    canReorder,
+    durationLabel: getCourseDurationLabel(visitEventsByDay.length),
+    isAddDayDisabled: visitEventsByDay.length >= COURSE_MAX_TOTAL_DAYS,
+    toggleEditMode: () => setIsEditMode((previous) => !previous),
+    handleRemoveEvent,
+    handleAddDay,
     handleDragStart,
     handleDragCancel,
     handleDragOver,

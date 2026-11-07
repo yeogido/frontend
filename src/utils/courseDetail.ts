@@ -47,6 +47,19 @@ const FIXED_TOTAL_DAYS: Record<
 export const THREE_PLUS_MIN_TOTAL_DAYS = 4;
 
 /**
+ * 일차 추가 버튼의 상한. 서버 규칙이 아니라 화면 쪽 안전장치다 —
+ * THREE_PLUS는 일수 상한이 없어, 실수로 수십 일차가 만들어지는 걸 막는다.
+ */
+export const COURSE_MAX_TOTAL_DAYS = 10;
+
+/** 기간 칩에 쓰는 라벨. 1일은 '당일치기', 그 외에는 'N박 M일'. */
+export function getCourseDurationLabel(totalDays: number): string {
+  const days = Math.max(totalDays, 1);
+
+  return days <= 1 ? '당일치기' : `${days - 1}박 ${days}일`;
+}
+
+/**
  * 기간에 해당하는 여행 일수. THREE_PLUS는 실제 일수가 가변이라, 이미 알고 있는
  * 일수(currentTotalDays)가 4 이상이면 그 값을 유지하고 아니면 최소값으로 맞춘다.
  */

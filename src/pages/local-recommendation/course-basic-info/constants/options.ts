@@ -53,3 +53,17 @@ export const FORM_DURATION_TO_DURATION_TYPE: Record<
   '2-nights-3-days': 'TWO_NIGHT',
   '3-nights-or-more': 'THREE_PLUS',
 };
+
+/**
+ * API enum → 폼의 여행 기간 값. 수정 화면에서 일차를 늘리거나 줄이면 기간
+ * 선택도 따라가야 해서(THREE_PLUS ↔ TWO_NIGHT 등) 역매핑이 필요하다.
+ */
+export const DURATION_TYPE_TO_FORM_DURATION: Record<
+  CourseDurationType,
+  CourseBasicInfoValues['duration']
+> = {
+  DAY_TRIP: 'day-trip',
+  ONE_NIGHT: '1-night-2-days',
+  TWO_NIGHT: '2-nights-3-days',
+  THREE_PLUS: '3-nights-or-more',
+};

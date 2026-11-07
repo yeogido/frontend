@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  getCourseDurationLabel,
   getDurationTypeForTotalDays,
   getTotalDaysForDuration,
   isTotalDaysValidForDuration,
@@ -56,4 +57,12 @@ test('falls back to the highest day when the response has no totalDays', () => {
   // 일차 확장 이전 데이터 — day가 아예 없으면 1일차 코스로 본다.
   assert.equal(resolveCourseTotalDays({ courseItems: [{}, {}] }), 1);
   assert.equal(resolveCourseTotalDays({}), 1);
+});
+
+test('labels the duration chip from the day count', () => {
+  assert.equal(getCourseDurationLabel(1), '당일치기');
+  assert.equal(getCourseDurationLabel(2), '1박 2일');
+  assert.equal(getCourseDurationLabel(5), '4박 5일');
+  // 0이나 음수는 1일 코스로 본다.
+  assert.equal(getCourseDurationLabel(0), '당일치기');
 });

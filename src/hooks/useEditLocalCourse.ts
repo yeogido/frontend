@@ -177,7 +177,9 @@ export function useEditLocalCourse() {
       };
 
       loadCourseForEditing(draft);
-      navigate('/local-recommendation/course-info');
+      // 수정은 방문 순서 화면이 허브다 — 기본 정보/키워드는 거기서 뒤로
+      // 가 손보고, 손댄 영역만 PATCH에 담긴다(draft.dirtyFields).
+      navigate('/local-recommendation/visit-order-selection');
     } catch (error) {
       showToast(getApiErrorMessage(error, '코스 정보를 불러오지 못했어요.'));
     }
