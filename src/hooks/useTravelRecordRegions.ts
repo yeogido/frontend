@@ -12,7 +12,7 @@ const trimmedKeyword = (keyword: string) => keyword.trim();
 // 모듈 스코프에 두어 참조가 고정되게 한다. combine이 렌더마다 새
 // 함수면 react-query가 결과를 재사용하지 못한다.
 const combineRegionDetails = (
-  results: UseQueryResult<RegionDetailResponse, Error>[],
+  results: UseQueryResult<RegionDetailResponse, Error>[]
 ) => {
   const regionInfoByRegionId = new Map<number, RegionDetailResponse>();
 
@@ -24,6 +24,19 @@ const combineRegionDetails = (
 
   return regionInfoByRegionId;
 };
+
+const combineRegionDetailsState = (
+  results: UseQueryResult<RegionDetailResponse, Error>[]
+) => ({
+  data: combineRegionDetails(results),
+  isPending: results.some((query) => query.isPending),
+  isError: results.some((query) => query.isError),
+  retry: () => {
+    results
+      .filter((query) => query.isError)
+      .forEach((query) => void query.refetch());
+  },
+});
 
 export function useTravelRecordRegionSearch(keyword: string) {
   const query = trimmedKeyword(keyword);
@@ -40,6 +53,12 @@ export function useTravelRecordRegionSearch(keyword: string) {
  * 매칭에 쓴다. 지역 이름은 사실상 불변이라 무기한 캐시한다.
  */
 export function useTravelRecordRegionDetails(regionIds: readonly number[]) {
+  return useTravelRecordRegionDetailsState(regionIds).data;
+}
+
+export function useTravelRecordRegionDetailsState(
+  regionIds: readonly number[]
+) {
   const uniqueRegionIds = Array.from(new Set(regionIds));
 
   return useQueries({
@@ -48,6 +67,6 @@ export function useTravelRecordRegionDetails(regionIds: readonly number[]) {
       queryFn: () => getRegion(regionId),
       staleTime: Infinity,
     })),
-    combine: combineRegionDetails,
+    combine: combineRegionDetailsState,
   });
 }

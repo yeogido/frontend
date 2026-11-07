@@ -6,25 +6,31 @@ import uploadIcon from '../../../assets/icons/upload.svg';
 import Map from '../../home/map/components/Map';
 import { toRegionPhotoMap } from '../../home/map/types/regionPhoto';
 
-import type { TravelRecordFolder } from '../types';
+import type { TravelMapViewer, TravelRecordFolder } from '../types';
 import { getTravelRecordRegionPhotoRecords } from '../utils/regionPhotoRecords';
 import TravelMapShareModal from './TravelMapShareModal';
 
 interface TravelMapPanelProps {
   folders: readonly TravelRecordFolder[];
+  viewer?: TravelMapViewer;
+  ownerName?: string;
 }
 
 const mapPanelLabel = '여행 지도';
 const mapTitle = '전국 지도';
 const mapDescription = '다녀온 지역을 한눈에 확인해 보세요';
 
-function TravelMapPanel({ folders }: TravelMapPanelProps) {
+function TravelMapPanel({
+  folders,
+  viewer = 'owner',
+  ownerName = '사용자',
+}: TravelMapPanelProps) {
   const navigate = useNavigate();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const closeShareModal = useCallback(() => setIsShareModalOpen(false), []);
   const [emptyRegionName, setEmptyRegionName] = useState<string | null>(null);
   const regionPhotos = toRegionPhotoMap(
-    getTravelRecordRegionPhotoRecords(folders)
+    getTravelRecordRegionPhotoRecords(folders, viewer)
   );
 
   return (
@@ -34,29 +40,33 @@ function TravelMapPanel({ folders }: TravelMapPanelProps) {
     >
       <div className="absolute top-4 left-4 z-10">
         <h2 className="text-[18px] leading-none font-semibold text-black">
-          {mapTitle}
+          {viewer === 'shared' ? `${ownerName}의 ${mapTitle}` : mapTitle}
         </h2>
         <p className="text-gray-3 mt-2 text-[10px] leading-none font-normal">
-          {mapDescription}
+          {viewer === 'shared'
+            ? `${ownerName}님이 다녀온 지역을 확인해 보세요`
+            : mapDescription}
         </p>
       </div>
 
-      <button
-        type="button"
-        aria-label="여행 지도 공유하기"
-        onClick={() => setIsShareModalOpen(true)}
-        className="focus-visible:outline-main-5 absolute top-[11px] right-3 z-10 flex size-8 cursor-pointer items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
-      >
-        <span
-          aria-hidden="true"
-          className="size-6 bg-[#7f7f7f]"
-          style={{
-            maskImage: `url("${uploadIcon}")`,
-            maskSize: 'contain',
-            maskRepeat: 'no-repeat',
-          }}
-        />
-      </button>
+      {viewer === 'owner' && (
+        <button
+          type="button"
+          aria-label="여행 지도 공유하기"
+          onClick={() => setIsShareModalOpen(true)}
+          className="focus-visible:outline-main-5 absolute top-[11px] right-3 z-10 flex size-8 cursor-pointer items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          <span
+            aria-hidden="true"
+            className="size-6 bg-[#7f7f7f]"
+            style={{
+              maskImage: `url("${uploadIcon}")`,
+              maskSize: 'contain',
+              maskRepeat: 'no-repeat',
+            }}
+          />
+        </button>
+      )}
 
       <div className="absolute inset-0 pt-[55px]">
         {/* 이 지도는 다녀온 곳을 모아 보는 자리라, 기록이 없는 지역을 눌렀을
@@ -67,13 +77,17 @@ function TravelMapPanel({ folders }: TravelMapPanelProps) {
           minZoom={0.8}
           initialZoom={0.9}
           regionPhotos={regionPhotos}
-          onRegionWithoutRecordSelect={setEmptyRegionName}
+          onRegionWithoutRecordSelect={
+            viewer === 'owner' ? setEmptyRegionName : () => {}
+          }
         />
       </div>
 
       {isShareModalOpen && (
         <TravelMapShareModal
-          regionPhotos={regionPhotos}
+          regionPhotos={toRegionPhotoMap(
+            getTravelRecordRegionPhotoRecords(folders, 'shared')
+          )}
           onClose={closeShareModal}
         />
       )}

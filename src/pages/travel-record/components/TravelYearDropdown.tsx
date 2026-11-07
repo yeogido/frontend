@@ -2,15 +2,17 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import yearChevron from '../assets/year-chevron.svg';
 
 interface TravelYearDropdownProps {
-  value: number;
+  value: number | null;
   years: readonly number[];
   onChange: (year: number) => void;
+  onSelectAll?: () => void;
 }
 
 function TravelYearDropdown({
   value,
   years,
   onChange,
+  onSelectAll,
 }: TravelYearDropdownProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -32,23 +34,26 @@ function TravelYearDropdown({
     setIsOpen(false);
   };
 
-  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
       setIsOpen(false);
     }
   };
 
   return (
-    <div ref={rootRef} className="relative h-[30px] w-[75px] shrink-0">
+    <div
+      ref={rootRef}
+      onKeyDown={handleTriggerKeyDown}
+      className="relative h-[30px] w-[75px] shrink-0"
+    >
       <button
         type="button"
         aria-expanded={isOpen}
-        aria-label={`여행 기록 연도 선택, 현재 ${value}년`}
+        aria-label={`여행 기록 연도 선택, 현재 ${value === null ? '전체' : `${value}년`}`}
         onClick={() => setIsOpen((current) => !current)}
-        onKeyDown={handleTriggerKeyDown}
         className="border-gray-2 text-gray-4 flex h-[30px] w-full items-center justify-between rounded-full border bg-white px-2.5 py-1.5 text-sm leading-[17px]"
       >
-        <span>{value}</span>
+        <span>{value ?? '전체'}</span>
         <img
           src={yearChevron}
           alt=""
@@ -60,14 +65,27 @@ function TravelYearDropdown({
       </button>
 
       {isOpen ? (
-        <div className="border-gray-2 absolute top-9 left-0 z-50 flex w-[75px] flex-col items-start overflow-hidden rounded-xl border bg-white shadow-sm">
+        <div className="border-gray-2 absolute top-9 left-0 z-50 flex max-h-60 w-[75px] flex-col items-start overflow-y-auto rounded-xl border bg-white shadow-sm">
+          {onSelectAll && (
+            <button
+              type="button"
+              aria-current={value === null ? 'true' : undefined}
+              onClick={() => {
+                onSelectAll();
+                setIsOpen(false);
+              }}
+              className="text-gray-4 hover:bg-main-2 h-8 w-full shrink-0 px-2.5 text-left text-sm whitespace-nowrap"
+            >
+              전체
+            </button>
+          )}
           {years.map((year) => (
             <button
               key={year}
               type="button"
               aria-current={year === value ? 'true' : undefined}
               onClick={() => handleSelect(year)}
-              className="text-gray-4 hover:bg-main-2 h-8 w-full px-2.5 text-left text-sm whitespace-nowrap"
+              className="text-gray-4 hover:bg-main-2 h-8 w-full shrink-0 px-2.5 text-left text-sm whitespace-nowrap"
             >
               {year}
             </button>

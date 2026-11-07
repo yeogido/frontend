@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { getApiErrorMessage } from '../../apis/common';
-import { FloatingActionButton } from '../../components/common';
+import { FloatingActionButton, LoadingSpinner } from '../../components/common';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
-import { useTravelRecordRegionDetails } from '../../hooks/useTravelRecordRegions';
+import { useTravelRecordRegionDetailsState } from '../../hooks/useTravelRecordRegions';
 import { useTravelRecordSessionStore } from '../../store/travelRecordSession.store';
 import {
   getTravelRecordFolders,
@@ -12,23 +12,21 @@ import {
   useTravelRecordDetails,
   useTravelRecordYears,
   useTravelRecords,
+  useTravelRecordsForMap,
 } from '../../hooks/useTravelRecords';
 
 import {
   TravelFolderGrid,
   TravelFolderGridSkeleton,
-  TravelMapPanel,
   TravelRecordPageFrame,
   TravelYearDropdown,
   TravelYearDropdownSkeleton,
 } from './components';
-import type {
-  TravelRecordFolder,
-  TravelRecordVisibilityFilter,
-} from './types';
+import type { TravelRecordFolder, TravelRecordVisibilityFilter } from './types';
 import TravelRecordVisibilityFilters from './components/TravelRecordVisibilityFilters';
 import { getValidTravelRecordYear } from './utils/sessionFolders';
 import { getSavedTravelRecordState } from './utils/savedTravelRecord';
+import TravelMapView from './components/TravelMapView';
 
 const folderViewLabel = '\uC5EC\uD589 \uD3F4\uB354';
 const mapViewLabel = '\uC5EC\uD589 \uC9C0\uB3C4';
@@ -121,18 +119,39 @@ function TravelRecordPage() {
     () => getTravelRecordSummariesFromPages(travelRecordsData?.pages),
     [travelRecordsData?.pages]
   );
-  const travelRecordDetails = useTravelRecordDetails(apiRecordSummaries);
-  const regionInfoByRegionId = useTravelRecordRegionDetails(
-    apiRecordSummaries.map((record) => record.regionId)
+  const mapRecordsQuery = useTravelRecordsForMap({
+    enabled: activeView === 'map',
+  });
+  const displayedRecordSummaries =
+    activeView === 'map' ? mapRecordsQuery.records : apiRecordSummaries;
+  const travelRecordDetails = useTravelRecordDetails(displayedRecordSummaries);
+  const regionDetailsQuery = useTravelRecordRegionDetailsState(
+    displayedRecordSummaries.map((record) => record.regionId)
   );
+  const regionInfoByRegionId = regionDetailsQuery.data;
+  const isMapPending =
+    mapRecordsQuery.isPending ||
+    regionDetailsQuery.isPending ||
+    travelRecordDetails.some((query) => query.isPending);
+  const isMapError =
+    mapRecordsQuery.isError ||
+    regionDetailsQuery.isError ||
+    travelRecordDetails.some((query) => query.isError);
+  const retryMap = () => {
+    mapRecordsQuery.retry();
+    regionDetailsQuery.retry();
+    travelRecordDetails
+      .filter((query) => query.isError)
+      .forEach((query) => void query.refetch());
+  };
   const apiFolders = useMemo(
     () =>
       getTravelRecordFolders(
-        apiRecordSummaries,
+        displayedRecordSummaries,
         travelRecordDetails.map((query) => query.data),
         regionInfoByRegionId
       ),
-    [apiRecordSummaries, travelRecordDetails, regionInfoByRegionId]
+    [displayedRecordSummaries, travelRecordDetails, regionInfoByRegionId]
   );
 
   // 서버가 travelRecordId 내림차순으로 잘라 주므로 그 순서를 그대로 쓴다.
@@ -160,7 +179,7 @@ function TravelRecordPage() {
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const loadMoreRef = useInfiniteScroll({
-    enabled: Boolean(hasNextPage) && !isPending,
+    enabled: activeView === 'folder' && Boolean(hasNextPage) && !isPending,
     onIntersect: handleLoadMore,
   });
 
@@ -195,23 +214,25 @@ function TravelRecordPage() {
 
       {/* 기록이 하나도 없으면 고를 연도가 없어 빈 목록만 열린다. 연도가 아직
           안 왔더라도 조회 중이면 자리를 잡아 둬야 목록이 밀리지 않는다. */}
-      <div className="mt-4 flex items-center gap-2">
-        {years.length > 0 ? (
-          <TravelYearDropdown
-            value={validSelectedYear}
-            years={years}
-            onChange={setSelectedYear}
-          />
-        ) : isPending ? (
-          <TravelYearDropdownSkeleton />
-        ) : null}
-        {activeView === 'folder' && (
-          <TravelRecordVisibilityFilters
-            value={visibilityFilter}
-            onChange={setVisibilityFilter}
-          />
-        )}
-      </div>
+      {activeView === 'folder' && (
+        <div className="mt-4 flex items-center gap-2">
+          {years.length > 0 ? (
+            <TravelYearDropdown
+              value={validSelectedYear}
+              years={years}
+              onChange={setSelectedYear}
+            />
+          ) : isPending ? (
+            <TravelYearDropdownSkeleton />
+          ) : null}
+          {activeView === 'folder' && (
+            <TravelRecordVisibilityFilters
+              value={visibilityFilter}
+              onChange={setVisibilityFilter}
+            />
+          )}
+        </div>
+      )}
 
       {activeView === 'folder' && (!isPending || hasPreviewContent) && (
         <TravelFolderGrid
@@ -225,20 +246,22 @@ function TravelRecordPage() {
         />
       )}
 
-      {isTravelRecordsError ? (
+      {(activeView === 'map' ? isMapError : isTravelRecordsError) ? (
         <section
           role="alert"
           className="mt-[142px] flex flex-col items-center gap-4 text-center"
         >
           <p className="text-gray-4 text-[16px] leading-[22px] font-medium">
             {getApiErrorMessage(
-              travelRecordsError,
+              activeView === 'map' ? undefined : travelRecordsError,
               '여행 기록을 불러오지 못했어요'
             )}
           </p>
           <button
             type="button"
-            onClick={() => void refetchTravelRecords()}
+            onClick={() =>
+              activeView === 'map' ? retryMap() : void refetchTravelRecords()
+            }
             className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
           >
             다시 시도
@@ -250,8 +273,19 @@ function TravelRecordPage() {
         isPending ? (
           <TravelFolderGridSkeleton />
         ) : null
+      ) : isMapPending ? (
+        <section
+          aria-label="여행 지도 불러오는 중"
+          aria-busy="true"
+          className="mt-4 flex h-[596px] flex-col items-center justify-center gap-3 rounded-xl bg-white"
+        >
+          <LoadingSpinner label="전체 연도 여행 기록을 불러오는 중" />
+          <p className="text-gray-4 text-sm">
+            전체 연도 기록을 불러오고 있어요
+          </p>
+        </section>
       ) : (
-        <TravelMapPanel folders={apiFolders} />
+        <TravelMapView folders={[...previewSharedFolders, ...apiFolders]} />
       )}
 
       <div ref={loadMoreRef} aria-hidden="true" />

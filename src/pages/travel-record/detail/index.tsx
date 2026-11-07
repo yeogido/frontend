@@ -453,6 +453,7 @@ function TravelRecordDetailPage() {
         <TravelRecordShareModal
           folder={folder}
           sharerName={profile?.name ?? ''}
+          sharerProfileImageUrl={profile?.profileImageUrl}
           friends={mockTravelRecordShareFriends}
           onClose={closeShareModal}
         />

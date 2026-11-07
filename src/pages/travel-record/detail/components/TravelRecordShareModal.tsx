@@ -1,4 +1,5 @@
 import NicknameAvatar from '../../../../components/common/NicknameAvatar';
+import ProfileAvatar from '../../../../components/common/ProfileAvatar';
 import TravelRecordShareDialog from '../../components/TravelRecordShareDialog';
 import { TravelFolderArtwork } from '../../components/TravelFolderCard';
 import {
@@ -13,6 +14,7 @@ import type { TravelRecordMember } from './TravelRecordMembers';
 interface TravelRecordShareModalProps {
   folder: TravelRecordFolder;
   sharerName: string;
+  sharerProfileImageUrl?: string | null;
   friends: readonly TravelRecordMember[];
   onClose: () => void;
 }
@@ -20,6 +22,7 @@ interface TravelRecordShareModalProps {
 function TravelRecordShareModal({
   folder,
   sharerName,
+  sharerProfileImageUrl,
   friends,
   onClose,
 }: TravelRecordShareModalProps) {
@@ -54,12 +57,20 @@ function TravelRecordShareModal({
             />
           </div>
         </div>
-        <NicknameAvatar
-          name={sharerName}
-          color="orange"
-          size={49}
-          className="relative z-10 -mt-7 shadow-[0_-2px_10px_rgba(0,0,0,0.25)]"
-        />
+        {sharerProfileImageUrl ? (
+          <ProfileAvatar
+            src={sharerProfileImageUrl}
+            size={49}
+            className="relative z-10 -mt-7 shadow-[0_-2px_10px_rgba(0,0,0,0.25)]"
+          />
+        ) : (
+          <NicknameAvatar
+            name={sharerName}
+            color="orange"
+            size={49}
+            className="relative z-10 -mt-7 shadow-[0_-2px_10px_rgba(0,0,0,0.25)]"
+          />
+        )}
         <p className="mt-2 max-w-full truncate text-center text-sm leading-[17px] font-semibold">
           {sharerName || '사용자'}
         </p>
