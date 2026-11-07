@@ -24,7 +24,7 @@ function TravelFolderGridSkeleton() {
       aria-label={loadingLabel}
       aria-busy="true"
       // 실제 목록과 같은 격자를 써야 로딩이 끝날 때 자리가 흔들리지 않는다.
-      className="mt-7 grid grid-cols-2 gap-x-6 gap-y-[52px]"
+      className="mt-7 grid grid-cols-2 gap-x-6 gap-y-[30px]"
     >
       {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
         <TravelFolderCardSkeleton key={index} />

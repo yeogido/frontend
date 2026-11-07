@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { IoChevronDown } from 'react-icons/io5';
+import yearChevron from '../assets/year-chevron.svg';
 
 interface TravelYearDropdownProps {
   value: number;
@@ -39,46 +39,39 @@ function TravelYearDropdown({
   };
 
   return (
-    <div ref={rootRef} className="relative mt-4 h-8 w-[86px]">
+    <div ref={rootRef} className="relative h-[30px] w-[75px] shrink-0">
       <button
         type="button"
         aria-expanded={isOpen}
         aria-label={`여행 기록 연도 선택, 현재 ${value}년`}
         onClick={() => setIsOpen((current) => !current)}
         onKeyDown={handleTriggerKeyDown}
-        className="flex h-8 w-[86px] items-center justify-center gap-0.5 rounded-full bg-gray-2 px-2 py-1 text-[18px] leading-none font-medium text-gray-4"
+        className="border-gray-2 text-gray-4 flex h-[30px] w-full items-center justify-between rounded-full border bg-white px-2.5 py-1.5 text-sm leading-[17px]"
       >
         <span>{value}</span>
-        <IoChevronDown
+        <img
+          src={yearChevron}
+          alt=""
           aria-hidden="true"
-          className={`size-6 shrink-0 transition-transform ${
+          className={`block max-w-none shrink-0 transition-transform ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
       </button>
 
       {isOpen ? (
-        <div
-          className="absolute top-9 left-0 z-50 flex w-[86px] flex-col items-start"
-        >
-          {years.map((year, index) => {
-            const isFirst = index === 0;
-            const isLast = index === years.length - 1;
-
-            return (
-              <button
-                key={year}
-                type="button"
-                aria-current={year === value ? 'true' : undefined}
-                onClick={() => handleSelect(year)}
-                className={`h-8 w-full bg-gray-2 px-2 text-left text-[18px] leading-none font-medium whitespace-nowrap text-gray-4 ${
-                  isFirst ? 'rounded-t-xl' : ''
-                } ${isLast ? 'rounded-b-xl' : ''}`}
-              >
-                {year}
-              </button>
-            );
-          })}
+        <div className="border-gray-2 absolute top-9 left-0 z-50 flex w-[75px] flex-col items-start overflow-hidden rounded-xl border bg-white shadow-sm">
+          {years.map((year) => (
+            <button
+              key={year}
+              type="button"
+              aria-current={year === value ? 'true' : undefined}
+              onClick={() => handleSelect(year)}
+              className="text-gray-4 hover:bg-main-2 h-8 w-full px-2.5 text-left text-sm whitespace-nowrap"
+            >
+              {year}
+            </button>
+          ))}
         </div>
       ) : null}
     </div>

@@ -22,7 +22,11 @@ import {
   TravelYearDropdown,
   TravelYearDropdownSkeleton,
 } from './components';
-import type { TravelRecordFolder } from './types';
+import type {
+  TravelRecordFolder,
+  TravelRecordVisibilityFilter,
+} from './types';
+import TravelRecordVisibilityFilters from './components/TravelRecordVisibilityFilters';
 import { getValidTravelRecordYear } from './utils/sessionFolders';
 import { getSavedTravelRecordState } from './utils/savedTravelRecord';
 
@@ -34,18 +38,30 @@ const TRAVEL_RECORD_PAGE_SIZE = 20;
 function TravelRecordPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [visibilityFilter, setVisibilityFilter] =
+    useState<TravelRecordVisibilityFilter>('all');
+  const invitations = useTravelRecordSessionStore((state) => state.invitations);
+  const previewSharedFolders = useTravelRecordSessionStore(
+    (state) => state.previewSharedFolders
+  );
+  const handleAcceptInvitation = useTravelRecordSessionStore(
+    (state) => state.acceptInvitation
+  );
+  const handleDeclineInvitation = useTravelRecordSessionStore(
+    (state) => state.declineInvitation
+  );
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   // 상세·작성 화면에 다녀오면 이 페이지가 다시 마운트되므로, 보고 있던 탭은
   // 컴포넌트 상태가 아니라 세션에 남겨 둔다.
   const activeView = useTravelRecordSessionStore((state) => state.listView);
   const setActiveView = useTravelRecordSessionStore(
-    (state) => state.setListView,
+    (state) => state.setListView
   );
   const [savedTravelRecord] = useState(() =>
-    getSavedTravelRecordState(location.state),
+    getSavedTravelRecordState(location.state)
   );
   const [selectedYear, setSelectedYear] = useState(
-    () => savedTravelRecord?.year ?? new Date().getFullYear(),
+    () => savedTravelRecord?.year ?? new Date().getFullYear()
   );
   const recentlySavedFolderId = savedTravelRecord?.id ?? null;
 
@@ -57,27 +73,34 @@ function TravelRecordPage() {
 
   const travelRecordYearsQuery = useTravelRecordYears();
   const years = useMemo(
-    () => travelRecordYearsQuery.data?.years ?? [],
-    [travelRecordYearsQuery.data?.years],
+    () =>
+      [
+        ...new Set([
+          ...(travelRecordYearsQuery.data?.years ?? []),
+          ...previewSharedFolders.map((folder) =>
+            Number(folder.startDate.slice(0, 4))
+          ),
+          ...invitations.map(({ folder }) =>
+            Number(folder.startDate.slice(0, 4))
+          ),
+        ]),
+      ].sort((a, b) => b - a),
+    [travelRecordYearsQuery.data?.years, previewSharedFolders, invitations]
   );
 
   useEffect(() => {
     // The available years only settle once the server years finish loading.
-    if (years.length > 0) {
+    if (!travelRecordYearsQuery.isPending && years.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedYear((year) =>
-        getValidTravelRecordYear(years, year, new Date().getFullYear()),
+        getValidTravelRecordYear(years, year, new Date().getFullYear())
       );
     }
-  }, [years]);
+  }, [travelRecordYearsQuery.isPending, years]);
 
   const validSelectedYear =
-    years.length > 0
-      ? getValidTravelRecordYear(
-          years,
-          selectedYear,
-          new Date().getFullYear(),
-        )
+    !travelRecordYearsQuery.isPending && years.length > 0
+      ? getValidTravelRecordYear(years, selectedYear, new Date().getFullYear())
       : selectedYear;
 
   const {
@@ -96,26 +119,39 @@ function TravelRecordPage() {
 
   const apiRecordSummaries = useMemo(
     () => getTravelRecordSummariesFromPages(travelRecordsData?.pages),
-    [travelRecordsData?.pages],
+    [travelRecordsData?.pages]
   );
   const travelRecordDetails = useTravelRecordDetails(apiRecordSummaries);
   const regionInfoByRegionId = useTravelRecordRegionDetails(
-    apiRecordSummaries.map((record) => record.regionId),
+    apiRecordSummaries.map((record) => record.regionId)
   );
   const apiFolders = useMemo(
     () =>
       getTravelRecordFolders(
         apiRecordSummaries,
         travelRecordDetails.map((query) => query.data),
-        regionInfoByRegionId,
+        regionInfoByRegionId
       ),
-    [apiRecordSummaries, travelRecordDetails, regionInfoByRegionId],
+    [apiRecordSummaries, travelRecordDetails, regionInfoByRegionId]
   );
 
   // 서버가 travelRecordId 내림차순으로 잘라 주므로 그 순서를 그대로 쓴다.
   // 받은 페이지만 다시 정렬하면 다음 페이지를 불러올 때 뒤에 붙은 기록이
   // 위로 끼어들어 목록이 튄다.
-  const visibleFolders = apiFolders;
+  // 공개범위가 제공되지 않는 기존 API 데이터는 '전체'에만 표시한다.
+  const visibleFolders = [...previewSharedFolders, ...apiFolders].filter(
+    (folder) =>
+      Number(folder.startDate.slice(0, 4)) === validSelectedYear &&
+      (visibilityFilter === 'all' || folder.visibility === visibilityFilter)
+  );
+  const visibleInvitations = invitations.filter(
+    ({ folder }) =>
+      Number(folder.startDate.slice(0, 4)) === validSelectedYear &&
+      (visibilityFilter === 'all' || visibilityFilter === 'friends')
+  );
+  const hasPreviewContent =
+    visibleInvitations.length > 0 ||
+    visibleFolders.some((folder) => folder.id.startsWith('preview-'));
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -159,15 +195,35 @@ function TravelRecordPage() {
 
       {/* 기록이 하나도 없으면 고를 연도가 없어 빈 목록만 열린다. 연도가 아직
           안 왔더라도 조회 중이면 자리를 잡아 둬야 목록이 밀리지 않는다. */}
-      {years.length > 0 ? (
-        <TravelYearDropdown
-          value={validSelectedYear}
-          years={years}
-          onChange={setSelectedYear}
+      <div className="mt-4 flex items-center gap-2">
+        {years.length > 0 ? (
+          <TravelYearDropdown
+            value={validSelectedYear}
+            years={years}
+            onChange={setSelectedYear}
+          />
+        ) : isPending ? (
+          <TravelYearDropdownSkeleton />
+        ) : null}
+        {activeView === 'folder' && (
+          <TravelRecordVisibilityFilters
+            value={visibilityFilter}
+            onChange={setVisibilityFilter}
+          />
+        )}
+      </div>
+
+      {activeView === 'folder' && (!isPending || hasPreviewContent) && (
+        <TravelFolderGrid
+          folders={visibleFolders}
+          invitations={visibleInvitations}
+          onAcceptInvitation={handleAcceptInvitation}
+          onDeclineInvitation={handleDeclineInvitation}
+          onFolderClick={handleFolderClick}
+          recentlySavedFolderId={recentlySavedFolderId}
+          isFiltered={visibilityFilter !== 'all'}
         />
-      ) : isPending ? (
-        <TravelYearDropdownSkeleton />
-      ) : null}
+      )}
 
       {isTravelRecordsError ? (
         <section
@@ -177,7 +233,7 @@ function TravelRecordPage() {
           <p className="text-gray-4 text-[16px] leading-[22px] font-medium">
             {getApiErrorMessage(
               travelRecordsError,
-              '여행 기록을 불러오지 못했어요',
+              '여행 기록을 불러오지 못했어요'
             )}
           </p>
           <button
@@ -193,15 +249,9 @@ function TravelRecordPage() {
         // 잠깐 스쳐 지나간다. 그동안은 폴더 자리 표시를 대신 보여 준다.
         isPending ? (
           <TravelFolderGridSkeleton />
-        ) : (
-          <TravelFolderGrid
-            folders={visibleFolders}
-            onFolderClick={handleFolderClick}
-            recentlySavedFolderId={recentlySavedFolderId}
-          />
-        )
+        ) : null
       ) : (
-        <TravelMapPanel folders={visibleFolders} />
+        <TravelMapPanel folders={apiFolders} />
       )}
 
       <div ref={loadMoreRef} aria-hidden="true" />
