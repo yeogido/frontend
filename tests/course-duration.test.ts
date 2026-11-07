@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  getCourseDayOrdinal,
   getCourseDurationLabel,
   getDurationTypeForTotalDays,
   getTotalDaysForDuration,
@@ -61,8 +62,16 @@ test('falls back to the highest day when the response has no totalDays', () => {
 
 test('labels the duration chip from the day count', () => {
   assert.equal(getCourseDurationLabel(1), '당일치기');
-  assert.equal(getCourseDurationLabel(2), '1박 2일');
-  assert.equal(getCourseDurationLabel(5), '4박 5일');
+  assert.equal(getCourseDurationLabel(2), '1박2일');
+  assert.equal(getCourseDurationLabel(5), '4박5일');
   // 0이나 음수는 1일 코스로 본다.
   assert.equal(getCourseDurationLabel(0), '당일치기');
+});
+
+test('names each day for the add-schedule row', () => {
+  assert.equal(getCourseDayOrdinal(1), '첫째날');
+  assert.equal(getCourseDayOrdinal(3), '셋째날');
+  assert.equal(getCourseDayOrdinal(10), '열째날');
+  // 서수를 붙여 둔 범위(일차 상한)를 넘으면 숫자 표기로 떨어진다.
+  assert.equal(getCourseDayOrdinal(11), '11일차');
 });

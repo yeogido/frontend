@@ -15,12 +15,6 @@ import type { VisitEvent } from '../constants';
 import { VisitEventCard } from './VisitEventItem';
 import VisitOrderDaySection from './VisitOrderDaySection';
 
-// Figma 390 디자인 기준 리터럴 px
-const ADD_DAY_MARGIN_TOP = 20;
-const ADD_DAY_HEIGHT = 48;
-const ADD_DAY_RADIUS = 12;
-const ADD_DAY_TEXT_SIZE = 14;
-
 interface SortableVisitEventListProps {
   visitEventsByDay: readonly (readonly VisitEvent[])[];
   activeEvent: VisitEvent | null;
@@ -32,6 +26,7 @@ interface SortableVisitEventListProps {
   isEditMode?: boolean;
   onRemoveEvent?: (eventId: string) => void;
   onAddSchedule?: (dayIndex: number) => void;
+  /** 마지막 일차 제목 옆의 + 버튼. */
   onAddDay?: () => void;
   /** 일차 상한에 닿으면 추가 버튼을 비활성화한다. */
   isAddDayDisabled?: boolean;
@@ -78,25 +73,13 @@ function SortableVisitEventList({
           canReorder={canReorder}
           onRemoveEvent={onRemoveEvent}
           onAddSchedule={onAddSchedule}
+          // 일차 추가는 마지막 일차 제목 옆에만 붙는다.
+          onAddDay={
+            dayIndex === visitEventsByDay.length - 1 ? onAddDay : undefined
+          }
+          isAddDayDisabled={isAddDayDisabled}
         />
       ))}
-
-      {isEditMode && onAddDay ? (
-        <button
-          type="button"
-          onClick={onAddDay}
-          disabled={isAddDayDisabled}
-          className="bg-background text-main-5 disabled:text-gray-3 w-full font-semibold"
-          style={{
-            marginTop: ADD_DAY_MARGIN_TOP * scale,
-            height: Math.max(ADD_DAY_HEIGHT * scale, 44),
-            borderRadius: ADD_DAY_RADIUS * scale,
-            fontSize: Math.max(ADD_DAY_TEXT_SIZE * scale, 13),
-          }}
-        >
-          일차 +
-        </button>
-      ) : null}
 
       <DragOverlay adjustScale={false} dropAnimation={null}>
         {activeEvent ? (

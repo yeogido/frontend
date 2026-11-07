@@ -52,11 +52,29 @@ export const THREE_PLUS_MIN_TOTAL_DAYS = 4;
  */
 export const COURSE_MAX_TOTAL_DAYS = 10;
 
-/** 기간 칩에 쓰는 라벨. 1일은 '당일치기', 그 외에는 'N박 M일'. */
+/** 기간 칩에 쓰는 라벨. 1일은 '당일치기', 그 외에는 'N박M일'(디자인 표기). */
 export function getCourseDurationLabel(totalDays: number): string {
   const days = Math.max(totalDays, 1);
 
-  return days <= 1 ? '당일치기' : `${days - 1}박 ${days}일`;
+  return days <= 1 ? '당일치기' : `${days - 1}박${days}일`;
+}
+
+const DAY_ORDINALS = [
+  '첫째날',
+  '둘째날',
+  '셋째날',
+  '넷째날',
+  '다섯째날',
+  '여섯째날',
+  '일곱째날',
+  '여덟째날',
+  '아홉째날',
+  '열째날',
+] as const;
+
+/** '첫째날의 일정을 추가해보세요'처럼 일차를 순우리말 서수로 부를 때 쓴다. */
+export function getCourseDayOrdinal(day: number): string {
+  return DAY_ORDINALS[Math.max(day, 1) - 1] ?? `${day}일차`;
 }
 
 /**

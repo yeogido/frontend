@@ -26,8 +26,9 @@ const ADDRESS_SIZE = 12;
 const ADDRESS_LINE_HEIGHT = 16;
 const CARD_RADIUS = 12;
 const DRAG_HANDLE_SIZE = 44;
+// 삭제 버튼은 순서 배지와 같은 자리·같은 크기다(Figma 5998:28948).
 const REMOVE_BUTTON_SIZE = 28;
-const REMOVE_ICON_SIZE = 20;
+const REMOVE_ICON_SIZE = 18;
 
 interface VisitEventCardProps {
   event: VisitEvent;
@@ -47,7 +48,7 @@ interface SortableVisitEventItemProps {
   isDragDisabled?: boolean;
 }
 
-/** 편집 모드에서 일정을 코스에서 빼는 ⊖ 버튼. */
+/** 편집 모드에서 일정을 코스에서 빼는 ⊖ 버튼 — 주황 원에 흰 빼기 기호. */
 function RemoveEventButton({
   eventName,
   onClick,
@@ -62,23 +63,22 @@ function RemoveEventButton({
       type="button"
       aria-label={`${eventName} 일정에서 삭제`}
       onClick={onClick}
-      className="text-main-5 flex shrink-0 items-center justify-center"
+      className="bg-main-5 flex shrink-0 items-center justify-center rounded-full text-white"
       style={{
         height: REMOVE_BUTTON_SIZE * scale,
         width: REMOVE_BUTTON_SIZE * scale,
       }}
     >
       <svg
-        viewBox="0 0 20 20"
+        viewBox="0 0 18 18"
         aria-hidden="true"
-        className="fill-none stroke-current stroke-[1.8]"
+        className="fill-none stroke-current stroke-[2]"
         style={{
           height: REMOVE_ICON_SIZE * scale,
           width: REMOVE_ICON_SIZE * scale,
         }}
       >
-        <circle cx="10" cy="10" r="8.5" />
-        <path d="M6.5 10h7" strokeLinecap="round" />
+        <path d="M4 9h10" strokeLinecap="round" />
       </svg>
     </button>
   );

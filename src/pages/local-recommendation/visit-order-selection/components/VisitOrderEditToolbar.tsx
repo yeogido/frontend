@@ -1,23 +1,21 @@
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
-// Figma 390 디자인 기준 리터럴 px
-const TOOLBAR_MARGIN_TOP = 20;
-const CHIP_HEIGHT = 30;
-const CHIP_PADDING_X = 12;
-const CHIP_RADIUS = 15;
-const CHIP_TEXT_SIZE = 13;
+// Figma 390 디자인 기준 리터럴 px (코스 수정 5998:29002)
+const TOOLBAR_MARGIN_TOP = 24;
+const DURATION_TEXT_SIZE = 20;
+const TOGGLE_PADDING_X = 10;
+const TOGGLE_PADDING_Y = 6;
 const TOGGLE_TEXT_SIZE = 14;
-const TOGGLE_TOUCH_HEIGHT = 44;
 
 interface VisitOrderEditToolbarProps {
-  /** '1박 2일 코스'처럼 보여줄 기간 라벨. */
+  /** '1박2일'처럼 보여줄 기간 라벨. */
   durationLabel: string;
   /** 편집 모드 여부 — 켜져 있으면 버튼이 '완료'가 된다. */
   isEditMode: boolean;
   onToggleEditMode: () => void;
 }
 
-/** 수정 흐름에서만 보이는 줄 — 기간 칩과 편집 모드 토글. */
+/** 수정 흐름에서만 보이는 줄 — 기간 표시와 편집 모드 토글. */
 function VisitOrderEditToolbar({
   durationLabel,
   isEditMode,
@@ -30,25 +28,22 @@ function VisitOrderEditToolbar({
       className="flex items-center justify-between"
       style={{ marginTop: TOOLBAR_MARGIN_TOP * scale }}
     >
-      <span
-        className="bg-background text-gray-5 inline-flex items-center font-medium"
-        style={{
-          height: CHIP_HEIGHT * scale,
-          paddingLeft: CHIP_PADDING_X * scale,
-          paddingRight: CHIP_PADDING_X * scale,
-          borderRadius: CHIP_RADIUS * scale,
-          fontSize: Math.max(CHIP_TEXT_SIZE * scale, 12),
-        }}
+      <p
+        className="text-main-5 font-semibold"
+        style={{ fontSize: Math.max(DURATION_TEXT_SIZE * scale, 16) }}
       >
         {durationLabel} 코스
-      </span>
+      </p>
       <button
         type="button"
         onClick={onToggleEditMode}
-        className="text-main-5 font-semibold"
+        className="border-gray-3 text-gray-4 rounded-full border font-medium"
         style={{
-          height: TOGGLE_TOUCH_HEIGHT,
-          fontSize: Math.max(TOGGLE_TEXT_SIZE * scale, 13),
+          paddingLeft: TOGGLE_PADDING_X * scale,
+          paddingRight: TOGGLE_PADDING_X * scale,
+          paddingTop: TOGGLE_PADDING_Y * scale,
+          paddingBottom: TOGGLE_PADDING_Y * scale,
+          fontSize: Math.max(TOGGLE_TEXT_SIZE * scale, 12),
         }}
       >
         {isEditMode ? '완료' : '수정하기'}
