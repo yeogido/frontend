@@ -8,8 +8,9 @@ export interface FriendSummary {
   friendCode: string;
 }
 
-// 스웨거 기준: GET /api/v1/friends 쿼리 파라미터.
-// keyword는 이름(부분 일치) 또는 친구코드(앞부분 일치)로 내 친구 안에서 찾는다.
+// GET /api/v1/friends 쿼리 파라미터 (스웨거와 팀 Notion '친구 목록 조회' 기준).
+// keyword는 이름(부분 일치) 또는 친구코드로 내 친구 안에서만 찾는다.
+// size는 기본값 10이고 양수여야 한다.
 export interface GetFriendsParams {
   keyword?: string;
   cursorNickname?: string;
@@ -17,6 +18,7 @@ export interface GetFriendsParams {
   size?: number;
 }
 
-// 백엔드 확인 필요: 스웨거에 cursorValue 타입이 비어 있다. 다음 요청의
-// cursorNickname으로 되돌려 보내는 값이라 닉네임 문자열로 가정한다.
+// cursorValue는 마지막 항목의 닉네임이고, 다음 페이지를 받을 때
+// cursorNickname으로 되돌려 보낸다 (팀 Notion '친구 목록 조회' 기준.
+// 스웨거에는 cursorValue 타입이 비어 있다).
 export type GetFriendsResponse = CursorResponse<FriendSummary, string>;

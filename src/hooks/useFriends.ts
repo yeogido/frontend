@@ -7,13 +7,14 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 
-import { deleteMockFriend, getMockFriends } from '../mocks/friends';
+import { deleteFriend, getFriends } from '../apis/friends.api';
 import { toFriendKeyword } from '../pages/friends/utils/friendKeyword';
 import { useAuthStore } from '../store/auth.store';
 import type { GetFriendsResponse } from '../types/friend.type';
 import { getFriendsFromPages } from './utils/friendPages';
+import { shouldRetryFriendsQuery } from './utils/friendRetry';
 
-const FRIENDS_PAGE_SIZE = 20;
+const FRIENDS_PAGE_SIZE = 10;
 
 // 계정별로 캐시를 분리한다. 이유는 useMyBusinesses의 주석 참고.
 export const FRIENDS_QUERY_PREFIX = 'friends';
@@ -41,7 +42,7 @@ export function useFriends(keyword: string) {
   >({
     queryKey: getFriendsQueryKey(userId, normalizedKeyword),
     queryFn: ({ pageParam }) =>
-      getMockFriends({
+      getFriends({
         keyword: normalizedKeyword,
         size: FRIENDS_PAGE_SIZE,
         ...pageParam,
@@ -58,6 +59,7 @@ export function useFriends(keyword: string) {
         : undefined,
     enabled: userId !== null,
     placeholderData: keepPreviousData,
+    retry: shouldRetryFriendsQuery,
   });
 
   const friends = useMemo(
@@ -82,7 +84,7 @@ export function useDeleteFriend() {
   const userId = useAuthStore((state) => state.userId);
 
   return useMutation<void, Error, number>({
-    mutationFn: (friendUserId) => deleteMockFriend(friendUserId),
+    mutationFn: (friendUserId) => deleteFriend(friendUserId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: [FRIENDS_QUERY_PREFIX, userId],
