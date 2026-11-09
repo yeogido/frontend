@@ -113,7 +113,6 @@ function VisitOrderSelectionPage() {
             (isEditingCourse && isEditMode)
           }
           isSubmitting={isSubmitting}
-          isEditing={isEditingCourse}
         />
         {submitError ? (
           <p role="alert" className="text-main-5 mt-2 text-center text-sm">
