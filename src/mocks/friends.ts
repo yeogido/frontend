@@ -8,7 +8,9 @@ import type {
  * 친구 API 연동 전 목록·검색·삭제 UI 확인용. 새로고침하면 초기화된다.
  * 연동할 때는 useFriends 안의 호출만 API 함수로 바꾸고 이 파일을 지운다.
  *
- * 주소에 ?friendsMock=empty | error | slow를 붙이면 상태별 화면을 볼 수 있다.
+ * 주소에 ?friendsMock=empty | error | slow | delete-error | gone을 붙이면
+ * 상태별 화면을 볼 수 있다. delete-error는 목록은 정상이고 삭제만 실패하며,
+ * gone은 삭제하려는 친구가 이미 친구가 아닌 경우(FRIEND4043)를 흉내 낸다.
  */
 const MOCK_SCENARIO_PARAM = 'friendsMock';
 const MOCK_DELAY_MS = 400;
@@ -16,7 +18,15 @@ const MOCK_SLOW_DELAY_MS = 1500;
 // 실제 요청보다 작게 잘라 목데이터 9명으로도 다음 페이지 불러오기를 볼 수 있다.
 const MOCK_MAX_PAGE_SIZE = 6;
 
-type MockScenario = 'empty' | 'error' | 'slow';
+const MOCK_SCENARIOS = [
+  'empty',
+  'error',
+  'slow',
+  'delete-error',
+  'gone',
+] as const;
+
+type MockScenario = (typeof MOCK_SCENARIOS)[number];
 
 let mockFriends: FriendSummary[] = [
   {
@@ -86,9 +96,7 @@ function getScenario(): MockScenario | null {
     MOCK_SCENARIO_PARAM
   );
 
-  return value === 'empty' || value === 'error' || value === 'slow'
-    ? value
-    : null;
+  return MOCK_SCENARIOS.find((scenario) => scenario === value) ?? null;
 }
 
 function wait(scenario: MockScenario | null) {
@@ -173,11 +181,18 @@ export async function deleteMockFriend(friendUserId: number): Promise<void> {
 
   await wait(scenario);
 
-  if (scenario === 'error') {
+  if (scenario === 'error' || scenario === 'delete-error') {
     throw createMockError('MOCK_FRIENDS_ERROR', '친구 삭제에 실패했어요.');
   }
 
-  if (!mockFriends.some((friend) => friend.userId === friendUserId)) {
+  if (
+    scenario === 'gone' ||
+    !mockFriends.some((friend) => friend.userId === friendUserId)
+  ) {
+    mockFriends = mockFriends.filter(
+      (friend) => friend.userId !== friendUserId
+    );
+
     throw createMockError('FRIEND4043', '친구 관계가 아니에요.');
   }
 

@@ -16,7 +16,7 @@ const BUTTON_TEXT_SIZE = 12;
 interface FriendListItemProps {
   friend: FriendSummary;
   scale: number;
-  onDeleteClick?: (friend: FriendSummary) => void;
+  onDeleteClick?: (friend: FriendSummary, trigger: HTMLButtonElement) => void;
 }
 
 function FriendListItem({ friend, scale, onDeleteClick }: FriendListItemProps) {
@@ -55,7 +55,7 @@ function FriendListItem({ friend, scale, onDeleteClick }: FriendListItemProps) {
       <button
         type="button"
         aria-label={`${friend.nickname} 친구 삭제`}
-        onClick={() => onDeleteClick?.(friend)}
+        onClick={(event) => onDeleteClick?.(friend, event.currentTarget)}
         className="border-gray-2 text-gray-4 relative shrink-0 rounded-full border bg-white font-medium before:absolute before:-inset-x-1 before:-inset-y-1.5 before:content-['']"
         style={{
           padding: `${BUTTON_PADDING_Y * scale}px ${BUTTON_PADDING_X * scale}px`,
