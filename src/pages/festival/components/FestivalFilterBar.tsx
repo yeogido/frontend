@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
+import calendarIcon from '../../../assets/icons/calendar.svg';
 import vector from '../../../assets/icons/vector.svg';
+import gridViewFilterChip from '../../../assets/category-tag-chip/gridview.svg';
 import { HorizontalFadeScroll } from '../../../components/common';
 import { useScaleFrame } from '../../../hooks/useScaleFrame';
 import {
@@ -9,6 +11,7 @@ import {
   getFestivalSortLabel,
   type FestivalCategoryValue,
   type FestivalSortValue,
+  type FestivalViewMode,
 } from '../constants/filters';
 
 const FILTER_DESIGN_WIDTH = 342;
@@ -20,6 +23,9 @@ interface FestivalFilterBarProps {
   selectedCategory: FestivalCategoryValue;
   onSortSelect: (sort: FestivalSortValue) => void;
   onCategorySelect: (category: FestivalCategoryValue) => void;
+  /** 넘기면 정렬 옆에 행사 일정 ↔ 그리드 보기 전환 칩을 보여준다. */
+  viewMode?: FestivalViewMode;
+  onViewModeToggle?: () => void;
 }
 
 function FestivalFilterBar({
@@ -27,6 +33,8 @@ function FestivalFilterBar({
   selectedCategory,
   onSortSelect,
   onCategorySelect,
+  viewMode,
+  onViewModeToggle,
 }: FestivalFilterBarProps) {
   const { outerRef, innerRef, scale, scaledHeight } =
     useScaleFrame(FILTER_DESIGN_WIDTH);
@@ -139,6 +147,13 @@ function FestivalFilterBar({
           ) : null}
         </div>
 
+        {viewMode && onViewModeToggle ? (
+          <FestivalViewModeChip
+            viewMode={viewMode}
+            onToggle={onViewModeToggle}
+          />
+        ) : null}
+
         <HorizontalFadeScroll
           className="min-w-0 flex-1"
           contentClassName="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
@@ -166,6 +181,47 @@ function FestivalFilterBar({
         </HorizontalFadeScroll>
       </div>
     </div>
+  );
+}
+
+interface FestivalViewModeChipProps {
+  viewMode: FestivalViewMode;
+  onToggle: () => void;
+}
+
+/** 지금 보기와 반대 보기로 가는 칩이다. 그리드에선 행사 일정, 달력에선 그리드 보기. */
+function FestivalViewModeChip({
+  viewMode,
+  onToggle,
+}: FestivalViewModeChipProps) {
+  const isCalendarMode = viewMode === 'calendar';
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={
+        isCalendarMode ? '그리드 보기로 전환' : '행사 일정 보기로 전환'
+      }
+      className="border-gray-2 bg-pure-white text-gray-4 flex h-[29px] shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-[14px] leading-none font-normal whitespace-nowrap"
+    >
+      <span
+        aria-hidden="true"
+        className="relative flex size-4 shrink-0 items-center justify-center overflow-hidden"
+      >
+        {isCalendarMode ? (
+          // 그리드 아이콘은 소상공인 보기 전환 칩 이미지에서 아이콘 부분만 잘라 쓴다.
+          <img
+            src={gridViewFilterChip}
+            alt=""
+            className="absolute top-1/2 left-0 h-[29px] w-[109px] max-w-none -translate-x-[12px] -translate-y-1/2"
+          />
+        ) : (
+          <img src={calendarIcon} alt="" className="h-[13px] w-3" />
+        )}
+      </span>
+      <span>{isCalendarMode ? '그리드 보기' : '행사 일정'}</span>
+    </button>
   );
 }
 

@@ -17,9 +17,17 @@ import { toContentTagIds } from '../../../utils/contentTags';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
 
-import { FestivalFilterBar } from '../components';
+import {
+  FestivalCalendar,
+  FestivalFilterBar,
+  FestivalListCard,
+  FestivalListCardSkeleton,
+} from '../components';
+import type { FestivalViewMode } from '../constants/filters';
 import { FESTIVAL_SKELETON_ITEMS } from '../constants/ui';
 import useFestivalFilters from '../hooks/useFestivalFilters';
+import type { FestivalDateRange } from '../utils/festivalCalendar';
+import { getFestivalListQuery } from '../utils/festivalListQuery';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -31,6 +39,10 @@ const DESCRIPTION_SIZE = 14;
 const DESCRIPTION_LINE_HEIGHT = 17;
 const LIST_MARGIN_TOP = 24;
 const LIST_GAP = 16;
+const TOTAL_COUNT_MARGIN_TOP = 16;
+const TOTAL_COUNT_SIZE = 12;
+const CALENDAR_LIST_MARGIN_TOP = 12;
+const CALENDAR_LIST_GAP = 12;
 const EMPTY_MARGIN_TOP = 40;
 const ERROR_MARGIN_TOP = 24;
 const MESSAGE_TEXT_SIZE = 13;
@@ -54,6 +66,17 @@ const sortByFilterValue: Record<string, ContentSort> = {
   ENDING_SOON: 'DEADLINE',
 };
 
+function getEmptyMessage(
+  viewMode: FestivalViewMode,
+  dateRange: FestivalDateRange | null
+) {
+  if (viewMode === 'grid') return '진행 중인 행사가 없습니다.';
+
+  return dateRange
+    ? '선택한 기간에 열리는 행사가 없습니다.'
+    : '올라와 있는 행사가 없습니다.';
+}
+
 function FestivalOngoingPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
@@ -66,8 +89,18 @@ function FestivalOngoingPage() {
   const { getLiked, toggleLike } = useContentLikeToggle();
   const { editFestival } = useEditFestival();
   const { requestDelete, dialogProps } = useContentDelete();
-  const { selectedFilters, handleSortSelect, handleCategorySelect } =
-    useFestivalFilters();
+  const {
+    selectedFilters,
+    viewMode,
+    selectedDateRange,
+    calendarMonth,
+    handleSortSelect,
+    handleCategorySelect,
+    handleViewModeToggle,
+    handleDateSelect,
+    handleCalendarMonthChange,
+  } = useFestivalFilters();
+  const isCalendarMode = viewMode === 'calendar';
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
   const {
     coordinates: distanceSortCoordinates,
@@ -83,7 +116,7 @@ function FestivalOngoingPage() {
     isPending,
   } = useCultureContents(
     {
-      statuses: ['ONGOING'],
+      ...getFestivalListQuery(viewMode, selectedDateRange),
       keyword: region || undefined,
       category: categoryByFilterValue[selectedFilters.category],
       sort: sortByFilterValue[selectedFilters.sort],
@@ -97,6 +130,7 @@ function FestivalOngoingPage() {
   );
 
   const festivals = data?.pages.flatMap((page) => page.items) ?? [];
+  const totalCount = data?.pages[0]?.totalCount;
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
 
   const handleIntersect = useCallback(() => {
@@ -153,60 +187,130 @@ function FestivalOngoingPage() {
             }
           }}
           onCategorySelect={handleCategorySelect}
+          viewMode={viewMode}
+          onViewModeToggle={handleViewModeToggle}
         />
 
-        <div
-          className="grid grid-cols-2"
-          style={{
-            marginTop: LIST_MARGIN_TOP * scale,
-            columnGap: LIST_GAP * scale,
-            rowGap: LIST_GAP * scale,
-          }}
-        >
-          {isPending
-            ? FESTIVAL_SKELETON_ITEMS.map((item) => (
-                <ContentCardSkeleton
-                  key={item}
-                  className="w-full"
-                  imageClassName="aspect-[163/115] h-auto"
-                />
-              ))
-            : festivals.map((festival) => (
-                <FestivalContentCard
-                  key={festival.contentId}
-                  image={festival.thumbnailImageUrl}
-                  title={festival.title}
-                  startDate={festival.startDate}
-                  endDate={festival.endDate}
-                  regionName={festival.regionName}
-                  tags={toContentTagIds(festival.hashtags)}
-                  className="w-full"
-                  isAdmin={festival.canManage}
-                  liked={getLiked(festival.contentId, festival.isLiked)}
-                  onClick={() =>
-                    navigate(buildFestivalDetailPath(festival.contentId))
-                  }
-                  onLikeClick={() =>
-                    toggleLike(
-                      festival.contentId,
-                      getLiked(festival.contentId, festival.isLiked)
-                    )
-                  }
-                  onEdit={() => void editFestival(festival.contentId)}
-                  onDelete={() => requestDelete(festival.contentId)}
-                />
-              ))}
+        {isCalendarMode ? (
+          <>
+            <div style={{ marginTop: LIST_MARGIN_TOP * scale }}>
+              <FestivalCalendar
+                month={calendarMonth}
+                selectedRange={selectedDateRange}
+                onMonthChange={handleCalendarMonthChange}
+                onDateSelect={handleDateSelect}
+              />
+            </div>
 
-          {isFetchingNextPage
-            ? FESTIVAL_SKELETON_ITEMS.slice(0, 2).map((item) => (
-                <ContentCardSkeleton
-                  key={`next-page-${item}`}
-                  className="w-full"
-                  imageClassName="aspect-[163/115] h-auto"
-                />
-              ))
-            : null}
-        </div>
+            <p
+              aria-live="polite"
+              className="text-gray-4 font-medium"
+              style={{
+                marginTop: TOTAL_COUNT_MARGIN_TOP * scale,
+                fontSize: TOTAL_COUNT_SIZE * scale,
+                lineHeight: 1,
+                minHeight: TOTAL_COUNT_SIZE * scale,
+              }}
+            >
+              {!isPending && !isError && totalCount !== undefined
+                ? `총 ${totalCount.toLocaleString()}개`
+                : null}
+            </p>
+
+            <div
+              className="flex flex-col"
+              style={{
+                marginTop: CALENDAR_LIST_MARGIN_TOP * scale,
+                gap: CALENDAR_LIST_GAP * scale,
+              }}
+            >
+              {isPending
+                ? FESTIVAL_SKELETON_ITEMS.slice(0, 4).map((item) => (
+                    <FestivalListCardSkeleton key={item} />
+                  ))
+                : festivals.map((festival) => (
+                    <FestivalListCard
+                      key={festival.contentId}
+                      image={festival.thumbnailImageUrl}
+                      title={festival.title}
+                      startDate={festival.startDate}
+                      endDate={festival.endDate}
+                      tags={toContentTagIds(festival.hashtags)}
+                      isAdmin={festival.canManage}
+                      liked={getLiked(festival.contentId, festival.isLiked)}
+                      onClick={() =>
+                        navigate(buildFestivalDetailPath(festival.contentId))
+                      }
+                      onLikeClick={() =>
+                        toggleLike(
+                          festival.contentId,
+                          getLiked(festival.contentId, festival.isLiked)
+                        )
+                      }
+                      onEdit={() => void editFestival(festival.contentId)}
+                      onDelete={() => requestDelete(festival.contentId)}
+                    />
+                  ))}
+
+              {isFetchingNextPage ? (
+                <FestivalListCardSkeleton key="next-page" />
+              ) : null}
+            </div>
+          </>
+        ) : (
+          <div
+            className="grid grid-cols-2"
+            style={{
+              marginTop: LIST_MARGIN_TOP * scale,
+              columnGap: LIST_GAP * scale,
+              rowGap: LIST_GAP * scale,
+            }}
+          >
+            {isPending
+              ? FESTIVAL_SKELETON_ITEMS.map((item) => (
+                  <ContentCardSkeleton
+                    key={item}
+                    className="w-full"
+                    imageClassName="aspect-[163/115] h-auto"
+                  />
+                ))
+              : festivals.map((festival) => (
+                  <FestivalContentCard
+                    key={festival.contentId}
+                    image={festival.thumbnailImageUrl}
+                    title={festival.title}
+                    startDate={festival.startDate}
+                    endDate={festival.endDate}
+                    regionName={festival.regionName}
+                    tags={toContentTagIds(festival.hashtags)}
+                    className="w-full"
+                    isAdmin={festival.canManage}
+                    liked={getLiked(festival.contentId, festival.isLiked)}
+                    onClick={() =>
+                      navigate(buildFestivalDetailPath(festival.contentId))
+                    }
+                    onLikeClick={() =>
+                      toggleLike(
+                        festival.contentId,
+                        getLiked(festival.contentId, festival.isLiked)
+                      )
+                    }
+                    onEdit={() => void editFestival(festival.contentId)}
+                    onDelete={() => requestDelete(festival.contentId)}
+                  />
+                ))}
+
+            {isFetchingNextPage
+              ? FESTIVAL_SKELETON_ITEMS.slice(0, 2).map((item) => (
+                  <ContentCardSkeleton
+                    key={`next-page-${item}`}
+                    className="w-full"
+                    imageClassName="aspect-[163/115] h-auto"
+                  />
+                ))
+              : null}
+          </div>
+        )}
 
         {hasEmptyResult ? (
           <p
@@ -216,7 +320,7 @@ function FestivalOngoingPage() {
               fontSize: MESSAGE_TEXT_SIZE * scale,
             }}
           >
-            진행 중인 행사가 없습니다.
+            {getEmptyMessage(viewMode, selectedDateRange)}
           </p>
         ) : null}
 
