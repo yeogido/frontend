@@ -163,6 +163,8 @@ export interface GetCultureContentsResponse {
   cursorValue: string;
   cursorId: number;
   hasNext: boolean;
+  /** 조건에 맞는 전체 행사 수. 페이지마다 같은 값이 내려온다. */
+  totalCount?: number;
 }
 
 export interface GetCultureContentsParams {
@@ -178,4 +180,11 @@ export interface GetCultureContentsParams {
   cursorValue?: string;
   cursorId?: number;
   size?: number;
+  /**
+   * 조회 기간(YYYY-MM-DD, 양 끝 포함). endDate와 함께 보낸다. 행사 기간이
+   * 이 기간과 하루라도 겹치면 조회되고, statuses를 생략하면 예정·진행 중·
+   * 종료 행사가 모두 포함된다.
+   */
+  startDate?: string;
+  endDate?: string;
 }
