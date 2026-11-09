@@ -63,6 +63,9 @@ function FestivalListCard({
         tabIndex={0}
         onClick={onClick}
         onKeyDown={(event) => {
+          // 좋아요 버튼이나 (포털로 띄워도 React 트리로는 버블링되는) 수정/삭제
+          // 메뉴에서 누른 키까지 받으면 그 동작 대신 상세로 이동해 버린다.
+          if (event.target !== event.currentTarget) return;
           if (event.key !== 'Enter' && event.key !== ' ') return;
 
           event.preventDefault();
