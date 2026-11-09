@@ -39,15 +39,12 @@ function CityLayer({
           [MAP_PADDING, MAP_PADDING],
           [MAP_WIDTH - MAP_PADDING, MAP_HEIGHT - MAP_PADDING],
         ],
-        koreaCity,
+        koreaCity
       ),
-    [],
+    []
   );
 
-  const pathGenerator = useMemo(
-    () => geoPath(projection),
-    [projection],
-  );
+  const pathGenerator = useMemo(() => geoPath(projection), [projection]);
 
   const isVisible = zoomLevel >= CITY_LAYER_ZOOM;
   const strokeWidth = Math.max(CITY_STROKE_WIDTH / renderScale, 0.06);
@@ -58,6 +55,7 @@ function CityLayer({
     const record = regionPhotos?.[name];
 
     if (record) {
+      if (record.isBlurred || !record.folderId) return;
       navigate(buildRecordPath(record.folderId));
       return;
     }

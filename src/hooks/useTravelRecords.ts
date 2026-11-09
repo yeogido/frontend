@@ -9,7 +9,10 @@ import {
 
 import { normalizeApiError } from '../apis/common';
 import { useAuth } from './useAuth';
-import { createPresignedUrl, uploadFileToPresignedUrl } from '../apis/files.api';
+import {
+  createPresignedUrl,
+  uploadFileToPresignedUrl,
+} from '../apis/files.api';
 import { getRegion } from '../apis/regions.api';
 import {
   createTravelRecord,
@@ -96,7 +99,7 @@ const uploadTravelRecordImages = async (selectedPhotos: File[]) => {
 };
 
 const uploadTravelRecordDraftImages = async (
-  selectedPhotos: TravelRecordPhotoDraft[],
+  selectedPhotos: TravelRecordPhotoDraft[]
 ) => {
   const uploadedImages: UploadedTravelRecordImage[] = [];
 
@@ -151,7 +154,7 @@ const MAP_RECORDS_PAGE_SIZE = 50;
 
 const getAllTravelRecordsInYear = (year: number) =>
   collectTravelRecords((cursor) =>
-    getTravelRecords({ year, size: MAP_RECORDS_PAGE_SIZE, cursor }),
+    getTravelRecords({ year, size: MAP_RECORDS_PAGE_SIZE, cursor })
   );
 
 /**
@@ -163,8 +166,9 @@ const getAllTravelRecordsInYear = (year: number) =>
  * 홈은 로그인 없이 열리는 화면인데 여행 기록 API는 인증이 필요하다. 로그인
  * 전에는 조회를 시작하지 않는다.
  */
-export function useTravelRecordsForMap() {
-  const { isAuthenticated } = useAuth();
+export function useTravelRecordsForMap({ enabled = true } = {}) {
+  const { isAuthenticated: hasSession } = useAuth();
+  const isAuthenticated = hasSession && enabled;
   const travelRecordYearsQuery = useTravelRecordYears({
     enabled: isAuthenticated,
   });
@@ -174,10 +178,10 @@ export function useTravelRecordsForMap() {
   const yearQueries = useQueries({
     queries: getTravelRecordMapYearQueries(isAuthenticated, years).map(
       ({ year, enabled }) => ({
-      queryKey: ['travelRecordsByYear', year],
-      queryFn: () => getAllTravelRecordsInYear(year),
-      enabled,
-      }),
+        queryKey: ['travelRecordsByYear', year],
+        queryFn: () => getAllTravelRecordsInYear(year),
+        enabled,
+      })
     ),
   });
 
@@ -197,7 +201,7 @@ export function useTravelRecordsForMap() {
     // 그 지역에 다녀온 적이 없는 것처럼 보여서 실패보다 더 오해를 준다.
     records: getTravelRecordMapRecords(
       isAuthenticated && !isError,
-      yearQueries.map((query) => query.data ?? []),
+      yearQueries.map((query) => query.data ?? [])
     ),
     isPending,
     isError,
@@ -206,11 +210,10 @@ export function useTravelRecordsForMap() {
         return;
       }
 
-      if (travelRecordYearsQuery.isError) {
-        void travelRecordYearsQuery.refetch();
-      }
-
-      failedYearQueries.forEach((query) => void query.refetch());
+      // 상세 조회 전에 다른 기기에서 기록이 삭제될 수 있다. 성공했던
+      // 원본 목록도 갱신해야 오래된 ID의 상세 요청을 계속 반복하지 않는다.
+      void travelRecordYearsQuery.refetch();
+      yearQueries.forEach((query) => void query.refetch());
     },
   };
 }
@@ -267,7 +270,7 @@ export function useCreateTravelRecord() {
           selectedDateRange,
           uploadedImages,
           decorations,
-        }),
+        })
       );
     },
     onSuccess: () => {
@@ -306,7 +309,7 @@ export function useUpdateTravelRecord() {
           isStickerStateRestored,
           originalTitle,
           originalRegionId,
-        }),
+        })
       ),
     onSuccess: (_, { travelRecordId }) => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
@@ -353,7 +356,7 @@ export function useDeleteTravelRecord() {
           pages: data.pages.map((page) => ({
             ...page,
             items: page.items.filter(
-              (item) => item.travelRecordId !== travelRecordId,
+              (item) => item.travelRecordId !== travelRecordId
             ),
           })),
         };
@@ -370,41 +373,41 @@ export function useDeleteTravelRecord() {
 
 export const getTravelRecordFoldersFromPages = (
   pages: TravelRecordListResponse[] | undefined,
-  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map()
 ) =>
   pages?.flatMap((page) =>
     page.items.map((record) =>
       mapTravelRecordSummaryToFolder(
         record,
-        regionInfoByRegionId.get(record.regionId),
-      ),
-    ),
+        regionInfoByRegionId.get(record.regionId)
+      )
+    )
   ) ?? [];
 
 export const getTravelRecordSummariesFromPages = (
-  pages: TravelRecordListResponse[] | undefined,
+  pages: TravelRecordListResponse[] | undefined
 ) => pages?.flatMap((page) => page.items) ?? [];
 
 export const getTravelRecordFoldersFromSummaries = (
   records: TravelRecordSummary[],
-  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map()
 ) =>
   records.map((record) =>
     mapTravelRecordSummaryToFolder(
       record,
-      regionInfoByRegionId.get(record.regionId),
-    ),
+      regionInfoByRegionId.get(record.regionId)
+    )
   );
 
 export const getTravelRecordFolders = (
   records: TravelRecordSummary[],
   details: Array<TravelRecordDetailResponse | undefined>,
-  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map()
 ) =>
   records.map((record, index) =>
     mapTravelRecordFolder(
       record,
       details[index],
-      regionInfoByRegionId.get(record.regionId),
-    ),
+      regionInfoByRegionId.get(record.regionId)
+    )
   );

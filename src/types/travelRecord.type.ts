@@ -46,6 +46,7 @@ export interface TravelRecordUpdateResponse {
 }
 
 export interface TravelRecordSummary {
+  visibility?: 'public' | 'friends' | 'private';
   travelRecordId: number;
   title: string;
   regionId: number;
@@ -75,6 +76,7 @@ export interface TravelRecordStickerResponse {
 }
 
 export interface TravelRecordDetailResponse {
+  visibility?: 'public' | 'friends' | 'private';
   travelRecordId: number;
   title: string;
   regionId: number;
