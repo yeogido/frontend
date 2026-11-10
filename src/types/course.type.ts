@@ -30,6 +30,11 @@ export interface GetCoursesResponse {
   cursorValue: string;
   cursorId: number;
   hasNext: boolean;
+  /**
+   * keyword를 자연어로 해석해 뽑은 지역·기간·교통·동행·검색어
+   * (예: ["부산", "1박2일", "혼자"]). 해석하지 못하면 빈 배열이다.
+   */
+  extractedKeywords?: string[];
 }
 
 export interface GetCoursesParams {
