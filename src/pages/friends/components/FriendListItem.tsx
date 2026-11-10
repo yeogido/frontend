@@ -1,6 +1,5 @@
-import NicknameAvatar from '../../../components/common/NicknameAvatar';
 import type { FriendSummary } from '../../../types/friend.type';
-import { getFriendAvatarColor } from '../utils/friendAvatarColor';
+import FriendAvatar from './FriendAvatar';
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px. scale은 useGlobalScale 값이다.
 const ROW_PADDING_Y = 12;
@@ -29,9 +28,10 @@ function FriendListItem({ friend, scale, onDeleteClick }: FriendListItemProps) {
         className="flex min-w-0 items-center"
         style={{ gap: ROW_GAP * scale }}
       >
-        <NicknameAvatar
-          name={friend.nickname}
-          color={getFriendAvatarColor(friend.userId)}
+        <FriendAvatar
+          userId={friend.userId}
+          nickname={friend.nickname}
+          profileImageUrl={friend.profileImageUrl}
           size={AVATAR_SIZE * scale}
         />
         <div
