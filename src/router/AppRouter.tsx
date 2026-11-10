@@ -72,6 +72,7 @@ import RecentReviewCoursesPage from '../pages/recent-review-courses';
 import CourseReviewsPage from '../pages/course-reviews';
 import ProfilePage from '../pages/profile';
 import ProfileEditPage from '../pages/profile/edit';
+import FriendsPage from '../pages/friends';
 import BusinessVerificationPage from '../pages/business-verification';
 import BusinessPromotionRegistrationPage from '../pages/business-promotion-registration';
 
@@ -186,6 +187,7 @@ function AppRouter() {
           />
           <Route path="/likes" element={<LikesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/friends" element={<FriendsPage />} />
           <Route path="/my-posts" element={<MyPostsPage />} />
         </Route>
       </Route>
