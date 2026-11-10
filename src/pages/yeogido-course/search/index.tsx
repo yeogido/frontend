@@ -96,6 +96,11 @@ const durationLabelByType: Record<CourseDurationType, string> = {
   THREE_PLUS: '3박 이상',
 };
 
+/**
+ * 여기도 코스 검색 결과 페이지. URL의 keyword(문장 검색) 또는 region·subRegion
+ * (지역 검색)과 필터로 코스를 찾아 무한 스크롤로 보여준다. 문장으로 검색하면
+ * 문장을 제목으로 띄우고, 서버가 문장에서 뽑은 조건을 하단 칩으로 보여준다.
+ */
 function YeogidoCourseSearchPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
@@ -103,6 +108,7 @@ function YeogidoCourseSearchPage() {
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
 
+  /** 코스 카드를 누르면 해당 코스 상세로 이동한다. */
   const handleCourseClick = (courseId: number | string) => {
     navigate(`/yeogido-course/detail/${courseId}`);
   };
@@ -195,6 +201,7 @@ function YeogidoCourseSearchPage() {
     !isRegionError &&
     yeogidoCourses.length === 0;
 
+  /** 목록 끝이 보이면 다음 페이지를 불러온다(이미 불러오는 중이면 건너뛴다). */
   const handleIntersect = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -206,6 +213,10 @@ function YeogidoCourseSearchPage() {
     onIntersect: handleIntersect,
   });
 
+  /**
+   * 검색어로 다시 검색한다. 지역 검색 파라미터는 지우고 필터는 그대로 두며,
+   * 검색어를 최근 검색어에 추가한다. 빈 검색어면 검색 조건만 비운다.
+   */
   const handleSearch = (query: string) => {
     const trimmedQuery = query.trim();
     const nextSearchParams = new URLSearchParams(searchParams);
@@ -231,6 +242,7 @@ function YeogidoCourseSearchPage() {
     setSearchParams(nextSearchParams);
   };
 
+  /** 최근 검색어 목록에서 하나를 지운다. */
   const handleRemoveRecentSearchSuggestion = (suggestion: string) => {
     setRecentSearchSuggestions(
       removeStoredRecentSearch(suggestion, {
