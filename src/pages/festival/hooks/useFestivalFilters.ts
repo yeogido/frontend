@@ -7,7 +7,15 @@ import {
   type FestivalCategoryValue,
   type FestivalSelectedFilters,
   type FestivalSortValue,
+  type FestivalViewMode,
 } from '../constants/filters';
+import {
+  formatFestivalMonthValue,
+  getNextFestivalDateRange,
+  parseFestivalDateRange,
+  resolveFestivalCalendarMonth,
+  type FestivalCalendarMonth,
+} from '../utils/festivalCalendar';
 
 function isFestivalCategoryValue(
   value: string | null
@@ -15,9 +23,7 @@ function isFestivalCategoryValue(
   return festivalCategoryOptions.some((option) => option.value === value);
 }
 
-function isFestivalSortValue(
-  value: string | null
-): value is FestivalSortValue {
+function isFestivalSortValue(value: string | null): value is FestivalSortValue {
   return festivalSortOptions.some((option) => option.value === value);
 }
 
@@ -36,6 +42,17 @@ function useFestivalFilters() {
       ? sortParam
       : initialFestivalSelectedFilters.sort,
   };
+  // 행사 일정(달력) 보기의 상태도 같은 이유로 URL에 둔다.
+  const viewMode: FestivalViewMode =
+    searchParams.get('view') === 'calendar' ? 'calendar' : 'grid';
+  const selectedDateRange = parseFestivalDateRange(
+    searchParams.get('start'),
+    searchParams.get('end')
+  );
+  const calendarMonth = resolveFestivalCalendarMonth(
+    searchParams.get('month'),
+    selectedDateRange
+  );
 
   const handleSortSelect = (sort: FestivalSortValue) => {
     const nextSearchParams = new URLSearchParams(searchParams);
@@ -61,10 +78,51 @@ function useFestivalFilters() {
     setSearchParams(nextSearchParams);
   };
 
+  const handleViewModeToggle = () => {
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    if (viewMode === 'calendar') {
+      nextSearchParams.delete('view');
+    } else {
+      nextSearchParams.set('view', 'calendar');
+    }
+
+    setSearchParams(nextSearchParams);
+  };
+
+  // 날짜를 누를 때마다 기록이 쌓이면 뒤로가기가 날짜 선택을 한 단계씩
+  // 되돌리게 된다. 날짜·달 이동은 현재 기록을 바꿔치기한다.
+  const handleDateSelect = (date: string) => {
+    const nextRange = getNextFestivalDateRange(selectedDateRange, date);
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    nextSearchParams.set('start', nextRange.startDate);
+    if (nextRange.endDate === null) {
+      nextSearchParams.delete('end');
+    } else {
+      nextSearchParams.set('end', nextRange.endDate);
+    }
+
+    setSearchParams(nextSearchParams, { replace: true });
+  };
+
+  const handleCalendarMonthChange = (month: FestivalCalendarMonth) => {
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    nextSearchParams.set('month', formatFestivalMonthValue(month));
+    setSearchParams(nextSearchParams, { replace: true });
+  };
+
   return {
     selectedFilters,
+    viewMode,
+    selectedDateRange,
+    calendarMonth,
     handleSortSelect,
     handleCategorySelect,
+    handleViewModeToggle,
+    handleDateSelect,
+    handleCalendarMonthChange,
   };
 }
 
