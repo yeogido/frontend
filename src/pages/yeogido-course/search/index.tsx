@@ -29,10 +29,12 @@ import {
   toTransportLabel,
 } from '../../../utils/courseEnumLabels';
 
+import SearchConditionChips from '../components/SearchConditionChips';
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
+import { getCourseSearchConditions } from '../utils/searchConditions';
 import type {
   CourseCompanionType,
   CourseDurationType,
@@ -43,7 +45,11 @@ import type {
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
 const PAGE_PADDING_BOTTOM = 40;
+const TITLE_SIZE = 18;
+const TITLE_LINE_HEIGHT = 21;
+const SEARCH_BAR_MARGIN_TOP = 12;
 const FILTER_MARGIN_TOP = 12;
+const SEARCH_CONDITIONS_MARGIN_TOP = 32;
 const LIST_MARGIN_TOP = 24;
 const LIST_GAP = 16;
 const EMPTY_MARGIN_TOP = 40;
@@ -169,6 +175,19 @@ function YeogidoCourseSearchPage() {
   const isPending = !isRegionError && isCoursesPending;
 
   const yeogidoCourses = data?.pages.flatMap((page) => page.items) ?? [];
+  // 검색어(문장)로 찾았을 때는 그 문장을 제목으로 보여준다. 서버는 문장에서
+  // 지역·기간·동행 등을 직접 해석해 결과에 적용하고, 해석한 조건을
+  // extractedKeywords로 돌려준다 — 하단 칩은 그중 하나로 다시 검색한다.
+  const searchTitle = keyword.trim();
+  const searchConditions = getCourseSearchConditions(data?.pages, searchTitle);
+  // 다음 페이지를 다 받은 뒤(목록 끝)에만 띄워야 무한 스크롤 중에 목록
+  // 사이에 끼었다가 밀려나지 않는다.
+  const shouldShowSearchConditions =
+    Boolean(searchTitle) &&
+    !isPending &&
+    !isError &&
+    !hasNextPage &&
+    searchConditions.length > 0;
   const hasEmptyResult =
     !isRegionPending &&
     !isPending &&
@@ -233,6 +252,18 @@ function YeogidoCourseSearchPage() {
         }}
       >
         <div className="w-full">
+          {searchTitle ? (
+            <h1
+              className="font-semibold break-keep text-black"
+              style={{
+                fontSize: TITLE_SIZE * scale,
+                lineHeight: `${TITLE_LINE_HEIGHT * scale}px`,
+                marginBottom: SEARCH_BAR_MARGIN_TOP * scale,
+              }}
+            >
+              {searchTitle}
+            </h1>
+          ) : null}
           <SearchBar
             initialQuery={displaySearchQuery}
             placeholder="코스명 또는 지역명을 검색해 주세요"
@@ -352,6 +383,15 @@ function YeogidoCourseSearchPage() {
             >
               코스 목록을 불러오지 못했어요.
             </p>
+          ) : null}
+
+          {shouldShowSearchConditions ? (
+            <div style={{ marginTop: SEARCH_CONDITIONS_MARGIN_TOP * scale }}>
+              <SearchConditionChips
+                conditions={searchConditions}
+                onSelect={handleSearch}
+              />
+            </div>
           ) : null}
 
           <div
