@@ -18,8 +18,13 @@ import {
 import { useDebouncedValue } from './hooks/useDebouncedValue';
 import { isFriendAlreadyDeletedError } from './utils/friendDeleteError';
 import { toFriendKeyword } from './utils/friendKeyword';
+import {
+  canLoadMoreAutomatically,
+  shouldShowLoadMoreError,
+} from './utils/friendListStatus';
 
 const SEARCH_DEBOUNCE_MS = 300;
+const LOAD_MORE_ERROR_MESSAGE = '친구를 더 불러오지 못했어요.';
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
 const PAGE_TOP_PADDING = 12;
@@ -45,6 +50,7 @@ function FriendsPage() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    isFetchNextPageError,
   } = useFriends(keyword);
   const { showToast } = useToast();
   const deleteFriend = useDeleteFriend();
@@ -96,8 +102,14 @@ function FriendsPage() {
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const loadMoreRef = useInfiniteScroll({
-    enabled: Boolean(hasNextPage) && !isPending && !isError,
+    enabled: canLoadMoreAutomatically({ hasNextPage, isPending, isError }),
     onIntersect: handleLoadMore,
+  });
+
+  const showLoadMoreError = shouldShowLoadMoreError({
+    isFetchNextPageError,
+    isFetchingNextPage,
+    friendCount: friends.length,
   });
 
   const handleClear = () => {
@@ -180,6 +192,15 @@ function FriendsPage() {
         />
         {content}
       </div>
+
+      {showLoadMoreError ? (
+        <FriendListMessage
+          variant="load-more-error"
+          scale={scale}
+          errorMessage={getApiErrorMessage(error, LOAD_MORE_ERROR_MESSAGE)}
+          onRetry={() => void fetchNextPage()}
+        />
+      ) : null}
 
       <div ref={loadMoreRef} aria-hidden="true" />
       {isFetchingNextPage ? (

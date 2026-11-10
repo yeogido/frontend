@@ -76,6 +76,7 @@ export function useFriends(keyword: string) {
     hasNextPage: query.hasNextPage,
     fetchNextPage: query.fetchNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
+    isFetchNextPageError: query.isFetchNextPageError,
   };
 }
 

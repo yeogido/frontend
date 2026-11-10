@@ -1,4 +1,5 @@
 const MESSAGE_TOP_SPACE = 110;
+const LOAD_MORE_ERROR_TOP_SPACE = 16;
 const MESSAGE_SIZE = 16;
 const MESSAGE_LINE_HEIGHT = 22;
 const RETRY_GAP = 16;
@@ -14,26 +15,35 @@ const EMPTY_MESSAGES = {
 } as const;
 
 interface FriendListMessageProps {
-  variant: 'empty' | 'search-empty' | 'error';
+  variant: 'empty' | 'search-empty' | 'error' | 'load-more-error';
   scale: number;
   errorMessage?: string;
   onRetry?: () => void;
 }
 
-/** 친구가 없거나, 검색 결과가 없거나, 불러오지 못했을 때 목록 자리에 놓인다. */
+/**
+ * 친구가 없거나, 검색 결과가 없거나, 불러오지 못했을 때 목록 자리에 놓인다.
+ * load-more-error는 이미 받은 목록 아래에 붙어서, 목록 자리를 차지하는 나머지
+ * 변형과 달리 위쪽 여백이 작다.
+ */
 function FriendListMessage({
   variant,
   scale,
   errorMessage = DEFAULT_ERROR_MESSAGE,
   onRetry,
 }: FriendListMessageProps) {
-  const isError = variant === 'error';
+  const isLoadMoreError = variant === 'load-more-error';
+  const isError = variant === 'error' || isLoadMoreError;
 
   return (
     <section
       role={isError ? 'alert' : 'status'}
       className="flex flex-col items-center text-center"
-      style={{ paddingTop: MESSAGE_TOP_SPACE * scale }}
+      style={{
+        paddingTop:
+          (isLoadMoreError ? LOAD_MORE_ERROR_TOP_SPACE : MESSAGE_TOP_SPACE) *
+          scale,
+      }}
     >
       <p
         className="text-gray-4 font-medium"
