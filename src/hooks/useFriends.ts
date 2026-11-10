@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import {
   type InfiniteData,
-  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQueryClient,
@@ -12,6 +11,7 @@ import { toFriendKeyword } from '../pages/friends/utils/friendKeyword';
 import { useAuthStore } from '../store/auth.store';
 import type { GetFriendsResponse } from '../types/friend.type';
 import { getFriendsFromPages } from './utils/friendPages';
+import { keepFriendsPlaceholderData } from './utils/friendPlaceholder';
 import { shouldRetryFriendsQuery } from './utils/friendRetry';
 
 const FRIENDS_PAGE_SIZE = 10;
@@ -58,7 +58,8 @@ export function useFriends(keyword: string) {
           }
         : undefined,
     enabled: userId !== null,
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData, previousQuery) =>
+      keepFriendsPlaceholderData(previousData, previousQuery, userId),
     retry: shouldRetryFriendsQuery,
   });
 
