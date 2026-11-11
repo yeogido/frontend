@@ -10,4 +10,5 @@ export {
   type ResponsivePageShellMode,
   type ResponsivePageShellProps,
 } from './ResponsivePageShell';
+export { default as Responsive, type ResponsiveProps } from './Responsive';
 export { default as Sidebar } from './Sidebar';

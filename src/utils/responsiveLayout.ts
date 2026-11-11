@@ -1,6 +1,7 @@
 import {
   APP_MAX_WIDTH,
   APP_MIN_WIDTH,
+  DESKTOP_MIN_WIDTH,
   GLOBAL_CONTENT_WIDTH,
   GLOBAL_DESIGN_WIDTH,
   GLOBAL_GUTTER,
@@ -25,3 +26,10 @@ export function getContentWidth(scale: number) {
 export function getGutter(scale: number) {
   return GLOBAL_GUTTER * scale;
 }
+
+export function isDesktopWidth(viewportWidth: number) {
+  return viewportWidth >= DESKTOP_MIN_WIDTH;
+}
+
+/** useIsDesktop이 matchMedia에 넘기는 질의. isDesktopWidth와 같은 경계다. */
+export const DESKTOP_MEDIA_QUERY = `(min-width: ${DESKTOP_MIN_WIDTH}px)`;
