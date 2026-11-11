@@ -22,3 +22,35 @@ export interface GetFriendsParams {
 // cursorNickname으로 되돌려 보낸다 (팀 Notion '친구 목록 조회' 기준.
 // 스웨거에는 cursorValue 타입이 비어 있다).
 export type GetFriendsResponse = CursorResponse<FriendSummary, string>;
+
+// 스웨거 기준: 친구 요청 API. 요청 목록은 cursorId만으로 다음 페이지를 받는다.
+export interface GetFriendRequestsParams {
+  cursorId?: number;
+  size?: number;
+}
+
+// GET /api/v1/friends/requests/received
+export interface ReceivedFriendRequest {
+  requestId: number;
+  requester: FriendSummary;
+  createdAt: string;
+}
+
+// GET /api/v1/friends/requests/sent
+export interface SentFriendRequest {
+  requestId: number;
+  receiver: FriendSummary;
+  createdAt: string;
+}
+
+export type GetReceivedFriendRequestsResponse =
+  CursorResponse<ReceivedFriendRequest>;
+
+export type GetSentFriendRequestsResponse = CursorResponse<SentFriendRequest>;
+
+// PATCH /api/v1/friends/requests/{requestId}/accept
+export interface AcceptFriendRequestResult {
+  requestId: number;
+  status: 'PENDING' | 'ACCEPTED';
+  friend: FriendSummary;
+}
