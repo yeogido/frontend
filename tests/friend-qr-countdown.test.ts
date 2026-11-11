@@ -6,6 +6,7 @@ import {
   formatCountdown,
   getQrExpiresAt,
   getRemainingSeconds,
+  getValidQrToken,
   isQrExpired,
   QR_VALID_SECONDS,
 } from '../src/pages/friends/utils/friendQrCountdown.ts';
@@ -60,4 +61,28 @@ test('builds the QR URL with the token encoded', () => {
     buildFriendQrUrl('http://localhost:5173', 'a+b/c=d&e'),
     'http://localhost:5173/friends/add?qr=a%2Bb%2Fc%3Dd%26e'
   );
+});
+
+test('accepts a non-blank string as the QR token', () => {
+  assert.equal(getValidQrToken('abc123'), 'abc123');
+});
+
+test('rejects a missing, null, empty or blank QR token', () => {
+  assert.equal(getValidQrToken(undefined), null);
+  assert.equal(getValidQrToken(null), null);
+  assert.equal(getValidQrToken(''), null);
+  assert.equal(getValidQrToken('   '), null);
+  assert.equal(getValidQrToken('\n\t'), null);
+});
+
+test('rejects a QR token that is not a string', () => {
+  assert.equal(getValidQrToken(123), null);
+  assert.equal(getValidQrToken({}), null);
+});
+
+test('does not build a QR URL without a valid token', () => {
+  assert.equal(buildFriendQrUrl('https://yeogido.kr', undefined), null);
+  assert.equal(buildFriendQrUrl('https://yeogido.kr', null), null);
+  assert.equal(buildFriendQrUrl('https://yeogido.kr', ''), null);
+  assert.equal(buildFriendQrUrl('https://yeogido.kr', '  '), null);
 });

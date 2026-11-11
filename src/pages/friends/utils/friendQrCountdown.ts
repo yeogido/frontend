@@ -26,6 +26,19 @@ export function formatCountdown(totalSeconds: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-export function buildFriendQrUrl(origin: string, qrToken: string): string {
-  return `${origin}/friends/add?qr=${encodeURIComponent(qrToken)}`;
+// 서버가 아직 qrToken을 주지 않을 수 있다. 문자열이고 공백이 아닌 값만 쓴다.
+export function getValidQrToken(qrToken: unknown): string | null {
+  return typeof qrToken === 'string' && qrToken.trim() !== '' ? qrToken : null;
+}
+
+// 토큰이 없으면 빈 값이 들어간 URL을 만들지 않고 null을 돌려준다.
+export function buildFriendQrUrl(
+  origin: string,
+  qrToken: unknown
+): string | null {
+  const validToken = getValidQrToken(qrToken);
+
+  return validToken
+    ? `${origin}/friends/add?qr=${encodeURIComponent(validToken)}`
+    : null;
 }

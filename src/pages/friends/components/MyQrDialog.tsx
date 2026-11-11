@@ -149,10 +149,13 @@ function MyQrDialog({ userId, name, scale, onClose }: MyQrDialogProps) {
   // 응답보다 이전 시각으로 계산하지 않도록 받은 시각 아래로 내려가지 않게 한다.
   const currentTime = Math.max(now, receivedAt);
   const isLoading = isFetching;
-  const hasFailed = !isLoading && (isError || !data);
+  const qrUrl = data
+    ? buildFriendQrUrl(window.location.origin, data.qrToken)
+    : null;
+  const hasFailed = !isLoading && (isError || !qrUrl);
   const isExpired =
     !isLoading && !hasFailed && isQrExpired(expiresAt, currentTime);
-  const readyData = !isLoading && !hasFailed && !isExpired ? data : undefined;
+  const readyUrl = !isLoading && !hasFailed && !isExpired ? qrUrl : null;
 
   const actionButtonStyle = {
     marginTop: STATUS_GAP * scale,
@@ -303,12 +306,9 @@ function MyQrDialog({ userId, name, scale, onClose }: MyQrDialogProps) {
               </button>
             </div>
           ) : null}
-          {readyData ? (
+          {readyUrl ? (
             <QRCodeSVG
-              value={buildFriendQrUrl(
-                window.location.origin,
-                readyData.qrToken
-              )}
+              value={readyUrl}
               size={QR_SIZE * scale}
               level="M"
               marginSize={0}
@@ -322,7 +322,7 @@ function MyQrDialog({ userId, name, scale, onClose }: MyQrDialogProps) {
           className="flex items-center justify-center"
           style={{ marginTop: TIMER_GAP * scale, height: TIMER_HEIGHT * scale }}
         >
-          {readyData ? (
+          {readyUrl ? (
             <p
               role="timer"
               aria-label="QR 코드 남은 시간"
