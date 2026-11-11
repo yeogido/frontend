@@ -40,6 +40,7 @@ import {
   type TravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { hasTravelRecordVersion, requireTravelRecordVersion } from '../utils/editVersion';
 import { SAVE_SUCCESS_ANIMATION_MS } from './saveAnimation';
 import {
   clearPhotoDraftAfterTravelRecordSave,
@@ -337,6 +338,11 @@ function TravelRecordFolderDecorationPage() {
       return;
     }
 
+    if (travelRecordId && !hasTravelRecordVersion(restoredEditSession?.version)) {
+      showToast('수정 버전을 확인할 수 없어요. 상세 화면에서 다시 수정해 주세요.');
+      return;
+    }
+
     isSavingRef.current = true;
     setIsSaving(true);
 
@@ -352,6 +358,7 @@ function TravelRecordFolderDecorationPage() {
               (
                 await updateTravelRecordMutation.mutateAsync({
                   travelRecordId: Number(travelRecordId),
+                  version: requireTravelRecordVersion(restoredEditSession?.version),
                   selectedRegion,
                   selectedDateRange,
                   selectedPhotos,

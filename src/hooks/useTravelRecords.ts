@@ -9,6 +9,7 @@ import {
 
 import { normalizeApiError } from '../apis/common';
 import { useAuthStore } from '../store/auth.store';
+import { requireTravelRecordVersion } from '../pages/travel-record/utils/editVersion';
 import {
   createPresignedUrl,
   uploadFileToPresignedUrl,
@@ -69,6 +70,7 @@ interface CreateTravelRecordFromDraftParams {
 
 interface UpdateTravelRecordFromDraftParams {
   travelRecordId: number;
+  version: number;
   selectedRegion: TravelRecordDraftRegion;
   selectedDateRange: TravelDateRange;
   selectedPhotos: TravelRecordPhotoDraft[];
@@ -224,6 +226,7 @@ export function useUpdateTravelRecord() {
   >({
     mutationFn: async ({
       travelRecordId,
+      version,
       selectedRegion,
       selectedDateRange,
       selectedPhotos,
@@ -231,10 +234,13 @@ export function useUpdateTravelRecord() {
       isStickerStateRestored,
       originalTitle,
       originalRegionId,
-    }) =>
-      updateTravelRecord(
+    }) => {
+      // 사진 업로드 전에 검사한다. 오래된 세션에 임의의 버전을 채우지 않는다.
+      const editVersion = requireTravelRecordVersion(version);
+      return updateTravelRecord(
         travelRecordId,
         createTravelRecordUpdateRequest({
+          version: editVersion,
           selectedRegion,
           selectedDateRange,
           uploadedImages: await uploadTravelRecordDraftImages(selectedPhotos),
@@ -243,7 +249,8 @@ export function useUpdateTravelRecord() {
           originalTitle,
           originalRegionId,
         })
-      ),
+      );
+    },
     onSuccess: (_, { travelRecordId }) => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
       void queryClient.invalidateQueries({ queryKey: TRAVEL_RECORD_MAP_QUERY_KEY });

@@ -18,6 +18,7 @@ import type { TravelDateRange } from '../date-selection/types';
 import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
 import type { TravelRecordDraftRegion, TravelRecordFolder } from '../types';
 import { formatTravelRecordLocalDate } from '../utils/sessionFolders.ts';
+import { requireTravelRecordVersion } from '../utils/editVersion.ts';
 
 type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
 
@@ -142,6 +143,7 @@ export const mapTravelRecordDetailToFolder = (
     period: formatPeriod(record.startDate, record.endDate),
     photos: getRenderablePhotos(images, record.coverImageUrl),
     serverPhotos,
+    ...(record.version !== undefined ? { version: record.version } : {}),
     decorations: stickers.map((sticker) => ({
       id: String(sticker.recordStickerId),
       stickerId: sticker.stickerId,
@@ -213,6 +215,7 @@ export const createTravelRecordCreateRequest = ({
 });
 
 interface CreateTravelRecordUpdateRequestParams extends CreateTravelRecordCreateRequestParams {
+  version: number;
   /** 서버에 저장돼 있던 스티커를 실제로 복원한 상태인지. */
   isStickerStateRestored: boolean;
   /** 서버에 저장돼 있던 제목. */
@@ -222,6 +225,7 @@ interface CreateTravelRecordUpdateRequestParams extends CreateTravelRecordCreate
 }
 
 export const createTravelRecordUpdateRequest = ({
+  version,
   selectedRegion,
   selectedDateRange,
   uploadedImages,
@@ -237,6 +241,7 @@ export const createTravelRecordUpdateRequest = ({
   const keepsServerStickers = !isStickerStateRestored;
 
   return {
+    version: requireTravelRecordVersion(version),
     // 제목 입력 화면이 없어 생성 시에는 지역명을 제목으로 쓴다. 수정하면서
     // 지역을 바꾸지 않았다면 서버에 저장된 제목을 그대로 되돌려 보낸다.
     title:

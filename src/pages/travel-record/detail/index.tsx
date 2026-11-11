@@ -27,6 +27,7 @@ import {
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { hasTravelRecordVersion } from '../utils/editVersion';
 import { mockTravelRecordMembers } from '../../../mocks/travelRecordMembers';
 import TravelRecordMembers from './components/TravelRecordMembers';
 import TravelRecordShareModal from './components/TravelRecordShareModal';
@@ -305,6 +306,11 @@ function TravelRecordDetailPage() {
       return;
     }
 
+    if (!hasTravelRecordVersion(editableFolder.version)) {
+      showToast('수정 버전을 확인할 수 없어요. 상세 화면을 새로고침해 주세요.');
+      return;
+    }
+
     if (!editableFolder.serverPhotos?.length) {
       showToast('사진 정보가 없어 수정할 수 없어요.');
       return;
@@ -340,6 +346,7 @@ function TravelRecordDetailPage() {
 
     beginEdit({
       id: editableFolder.id,
+      version: editableFolder.version,
       decorations: editableFolder.decorations,
       title: editableFolder.title,
       regionId: editableFolder.regionId,

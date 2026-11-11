@@ -60,7 +60,9 @@ export interface TravelRecordCreateResponse {
   createdAt: string;
 }
 
-export type TravelRecordUpdateRequest = TravelRecordCreateRequest;
+export interface TravelRecordUpdateRequest extends TravelRecordCreateRequest {
+  version: number;
+}
 
 export interface TravelRecordUpdateResponse {
   travelRecordId: number;
@@ -97,6 +99,8 @@ export interface TravelRecordStickerResponse {
 }
 
 export interface TravelRecordDetailResponse {
+  /** 편집 시 읽은 버전. 누락된 이전 응답으로는 수정 요청을 만들지 않는다. */
+  version?: number;
   visibility?: 'public' | 'friends' | 'private';
   travelRecordId: number;
   title: string;

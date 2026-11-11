@@ -12,6 +12,7 @@ export interface TravelRecordServerPhoto {
 }
 
 export interface TravelRecordFolder {
+  version?: number;
   id: string;
   regionId?: number;
   regionCode: string;
