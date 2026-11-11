@@ -6,9 +6,12 @@
  * 쓰기 때문이다. 데스크톱 화면을 추가할 때 두 곳을 함께 고친다.
  */
 export const DESKTOP_VIEW_PATHS = [
+  '/local-recommendation',
   '/local-recommendation/course-info',
   '/local-recommendation/tag-selection',
   '/local-recommendation/visit-order-selection',
+  '/local-recommendation/event-selection',
+  '/local-recommendation/place-selection',
 ] as const;
 
 export function hasDesktopView(pathname: string) {

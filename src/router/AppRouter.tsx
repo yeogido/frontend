@@ -33,6 +33,7 @@ import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
 import LocalBusinessDetailPage from '../pages/detail/local-business';
 import LocalRecommendationPage from '../pages/local-recommendation';
+import RegionSelectionDesktopPage from '../pages/local-recommendation/region-selection/desktop';
 import AdminPage from '../pages/admin';
 import AdminFestivalsOngoingPage from '../pages/admin/festivals/ongoing';
 import AdminFestivalsRecentPage from '../pages/admin/festivals/recent';
@@ -53,7 +54,9 @@ import AdminCourseRegistrationPreviewPage from '../pages/admin/course-registrati
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
 import CourseBasicInfoDesktopPage from '../pages/local-recommendation/course-basic-info/desktop';
 import EventSelectionPage from '../pages/local-recommendation/event-selection';
+import EventSelectionDesktopPage from '../pages/local-recommendation/event-selection/desktop';
 import PlaceSelectionPage from '../pages/local-recommendation/place-selection';
+import PlaceSelectionDesktopPage from '../pages/local-recommendation/place-selection/desktop';
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TagSelectionDesktopPage from '../pages/local-recommendation/tag-selection/desktop';
 import TravelRecordPage from '../pages/travel-record';
@@ -215,7 +218,12 @@ function AppRouter() {
         <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route
           path="/local-recommendation"
-          element={<LocalRecommendationPage />}
+          element={
+            <Responsive
+              desktop={<RegionSelectionDesktopPage />}
+              mobile={<LocalRecommendationPage />}
+            />
+          }
         />
         <Route
           path="/local-recommendation/course-info"
@@ -358,12 +366,22 @@ function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route
           path="/local-recommendation/event-selection"
-          element={<EventSelectionPage />}
+          element={
+            <Responsive
+              desktop={<EventSelectionDesktopPage />}
+              mobile={<EventSelectionPage />}
+            />
+          }
         />
 
         <Route
           path="/local-recommendation/place-selection"
-          element={<PlaceSelectionPage />}
+          element={
+            <Responsive
+              desktop={<PlaceSelectionDesktopPage />}
+              mobile={<PlaceSelectionPage />}
+            />
+          }
         />
       </Route>
 
