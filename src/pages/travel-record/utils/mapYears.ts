@@ -20,5 +20,8 @@ export function filterTravelMapFoldersByYear(
 ) {
   return year === null
     ? folders
-    : folders.filter((folder) => Number(folder.startDate.slice(0, 4)) === year);
+    : folders.filter(
+        (folder) =>
+          Number((folder.endDate ?? folder.startDate).slice(0, 4)) === year
+      );
 }

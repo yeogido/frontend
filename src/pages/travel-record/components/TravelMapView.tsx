@@ -21,7 +21,9 @@ function TravelMapView({
 }: TravelMapViewProps) {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const years = getTravelMapYears(
-    folders.map((folder) => Number(folder.startDate.slice(0, 4))),
+    folders.map((folder) =>
+      Number((folder.endDate ?? folder.startDate).slice(0, 4))
+    ),
     new Date().getFullYear()
   );
 

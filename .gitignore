@@ -26,3 +26,7 @@ dist-ssr
 .claude/
 
 .vercel
+
+# Browser test artifacts
+test-results/
+playwright-report/

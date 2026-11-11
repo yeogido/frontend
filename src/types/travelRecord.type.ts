@@ -6,6 +6,27 @@ export interface TravelRecordListParams {
   year?: number;
 }
 
+export type TravelRecordApiVisibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
+
+export interface TravelRecordMapParams extends TravelRecordListParams {
+  visibility?: TravelRecordApiVisibility;
+}
+
+export interface TravelRecordMapItem {
+  travelRecordId: number;
+  title: string;
+  regionId: number;
+  regionName: string;
+  latitude: number | null;
+  longitude: number | null;
+  startDate: string;
+  endDate: string;
+  visibility: TravelRecordApiVisibility;
+  images: TravelRecordImageResponse[];
+}
+
+export type TravelRecordMapResponse = CursorResponse<TravelRecordMapItem, null>;
+
 export interface TravelRecordImageRequest {
   imageKey: string;
   imageOrder: number;
@@ -39,7 +60,9 @@ export interface TravelRecordCreateResponse {
   createdAt: string;
 }
 
-export type TravelRecordUpdateRequest = TravelRecordCreateRequest;
+export interface TravelRecordUpdateRequest extends TravelRecordCreateRequest {
+  version: number;
+}
 
 export interface TravelRecordUpdateResponse {
   travelRecordId: number;
@@ -76,6 +99,8 @@ export interface TravelRecordStickerResponse {
 }
 
 export interface TravelRecordDetailResponse {
+  /** 편집 시 읽은 버전. 누락된 이전 응답으로는 수정 요청을 만들지 않는다. */
+  version?: number;
   visibility?: 'public' | 'friends' | 'private';
   travelRecordId: number;
   title: string;
@@ -95,8 +120,10 @@ export interface TravelRecordYearListResponse {
   years: number[];
 }
 
-export type TravelRecordListResponse =
-  CursorResponse<TravelRecordSummary, unknown>;
+export type TravelRecordListResponse = CursorResponse<
+  TravelRecordSummary,
+  unknown
+>;
 
 export interface UploadedTravelRecordImage {
   objectKey: string;

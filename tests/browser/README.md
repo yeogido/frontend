@@ -1,0 +1,22 @@
+# 여행지도 브라우저 회귀 테스트
+
+처음 실행할 때:
+
+```sh
+pnpm install
+pnpm exec playwright install chromium
+```
+
+실행:
+
+```sh
+pnpm test:browser
+```
+
+테스트 러너가 `127.0.0.1:5181`에 개발 서버를 시작한다.
+모바일(390px)과 데스크탑(1280px)에서 지도 페이지 수집, 종료일 기준 연도 선택,
+계정 변경, 조회 실패·재시도, 비로그인 상태를 검증한다.
+API 응답과 로그인 상태는 테스트용 데이터이며 실제 계정이나 서버 데이터를 변경하지 않는다.
+
+설치된 Chromium을 사용할 경우 `PLAYWRIGHT_EXECUTABLE_PATH` 환경변수에 실행 파일을 지정할 수 있다.
+실패 시 `test-results/`에 스크린샷과 trace가 생성된다.

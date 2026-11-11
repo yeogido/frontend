@@ -1,23 +1,20 @@
-import type {
-  TravelRecordListResponse,
-  TravelRecordSummary,
-} from '../../../types/travelRecord.type';
+import type { CursorResponse } from '../../../apis/common';
 
 // apiClient를 import하지 않는다. 페이지를 이어 받는 반복 로직만 담아 Node
 // 테스트 러너에서 그대로 검증할 수 있게 한다.
-type FetchTravelRecordPage = (
-  cursor: number | undefined,
-) => Promise<TravelRecordListResponse>;
+type FetchTravelRecordPage<T> = (
+  cursor: number | undefined
+) => Promise<CursorResponse<T, unknown>>;
 
 /**
  * 커서를 따라가며 한 연도의 여행 기록을 전부 모은다.
  *
  * 지도는 페이지 단위가 아니라 전체 기록이 필요해서 끝까지 받아 온다.
  */
-export const collectTravelRecords = async (
-  fetchPage: FetchTravelRecordPage,
-): Promise<TravelRecordSummary[]> => {
-  const records: TravelRecordSummary[] = [];
+export const collectTravelRecords = async <T>(
+  fetchPage: FetchTravelRecordPage<T>
+): Promise<T[]> => {
+  const records: T[] = [];
   const requestedCursors = new Set<number>();
   let cursor: number | undefined;
 
