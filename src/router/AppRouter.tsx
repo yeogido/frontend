@@ -63,6 +63,7 @@ import TravelRecordFolderDecorationPage from '../pages/travel-record/folder-deco
 import TravelRecordPhotoSelectionPage from '../pages/travel-record/photo-selection';
 import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
 import VisitOrderSelectionPage from '../pages/local-recommendation/visit-order-selection';
+import VisitOrderSelectionDesktopPage from '../pages/local-recommendation/visit-order-selection/desktop';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
@@ -270,7 +271,12 @@ function AppRouter() {
         />
         <Route
           path="/local-recommendation/visit-order-selection"
-          element={<VisitOrderSelectionPage />}
+          element={
+            <Responsive
+              desktop={<VisitOrderSelectionDesktopPage />}
+              mobile={<VisitOrderSelectionPage />}
+            />
+          }
         />
       </Route>
 

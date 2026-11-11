@@ -8,6 +8,7 @@
 export const DESKTOP_VIEW_PATHS = [
   '/local-recommendation/course-info',
   '/local-recommendation/tag-selection',
+  '/local-recommendation/visit-order-selection',
 ] as const;
 
 export function hasDesktopView(pathname: string) {
