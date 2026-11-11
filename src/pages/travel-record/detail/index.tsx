@@ -28,10 +28,9 @@ import {
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
 import { hasTravelRecordVersion } from '../utils/editVersion';
-import { mockTravelRecordMembers } from '../../../mocks/travelRecordMembers';
 import TravelRecordMembers from './components/TravelRecordMembers';
 import TravelRecordShareModal from './components/TravelRecordShareModal';
-import { mockTravelRecordShareFriends } from '../../../mocks/travelRecordShareFriends';
+import { getFriendAvatarColor } from '../../friends/utils/friendAvatarColor';
 import { useMyProfile } from '../../../hooks/useMyProfile';
 
 interface TravelRecordDetailLocationState {
@@ -87,6 +86,7 @@ function TravelRecordDetailPage() {
     isDeleted ? null : travelRecordId
   );
   const deleteTravelRecordMutation = useDeleteTravelRecord();
+  const inviteFolder = serverTravelRecordQuery.data;
   // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
   // 실패했는데도 그걸 그대로 그리면 남의 기록(403)이나 이미 지워진 기록(404)이
   // 정상 화면처럼 보이므로, 실패했을 때는 캐시 데이터를 쓰지 않는다.
@@ -393,13 +393,17 @@ function TravelRecordDetailPage() {
             {folder.period}
           </time>
           {folder.visibility === 'friends' && (
-            <TravelRecordMembers members={mockTravelRecordMembers} />
+            <TravelRecordMembers members={[
+              ...(folder.owner ? [folder.owner] : []),
+              ...(folder.participants ?? []).filter((member) => member.userId !== folder.owner?.userId),
+            ].map((member) => ({ id: String(member.userId), name: member.nickname, color: getFriendAvatarColor(member.userId) }))} />
           )}
         </div>
         <div className="absolute -top-1 -right-1 z-20 flex items-center">
           <button
             type="button"
             aria-label="여행 폴더 공유하기"
+            disabled={!inviteFolder}
             onClick={() => {
               setIsActionMenuOpen(false);
               setIsShareModalOpen(true);
@@ -456,12 +460,11 @@ function TravelRecordDetailPage() {
         </div>
       </header>
 
-      {isShareModalOpen && (
+      {isShareModalOpen && inviteFolder && (
         <TravelRecordShareModal
-          folder={folder}
+          folder={inviteFolder}
           sharerName={profile?.name ?? ''}
           sharerProfileImageUrl={profile?.profileImageUrl}
-          friends={mockTravelRecordShareFriends}
           onClose={closeShareModal}
         />
       )}

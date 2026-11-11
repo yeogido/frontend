@@ -19,6 +19,8 @@ import type { TravelFolderDecoration } from '../folder-decoration/folderDecorati
 import type { TravelRecordDraftRegion, TravelRecordFolder } from '../types';
 import { formatTravelRecordLocalDate } from '../utils/sessionFolders.ts';
 import { requireTravelRecordVersion } from '../utils/editVersion.ts';
+import { toTravelRecordVisibility } from './travelRecordVisibility.ts';
+import type { TravelRecordApiVisibility } from '../../../types/travelRecord.type';
 
 type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
 
@@ -103,7 +105,7 @@ export const mapTravelRecordSummaryToFolder = (
 ): TravelRecordFolder => ({
   id: String(record.travelRecordId),
   regionId: record.regionId,
-  ...(record.visibility ? { visibility: record.visibility } : {}),
+  ...(record.visibility ? { visibility: toTravelRecordVisibility(record.visibility) } : {}),
   ...resolveTravelRecordMapRegion(record.title, regionInfo),
   title: record.title,
   folderTheme: record.folderTheme,
@@ -134,7 +136,10 @@ export const mapTravelRecordDetailToFolder = (
   return {
     id: String(record.travelRecordId),
     regionId: record.regionId,
-    ...(record.visibility ? { visibility: record.visibility } : {}),
+    ...(record.visibility ? { visibility: toTravelRecordVisibility(record.visibility) } : {}),
+    ...(record.owner ? { owner: record.owner } : {}),
+    ...(record.participants ? { participants: record.participants } : {}),
+    ...(record.permissions ? { permissions: record.permissions } : {}),
     ...resolveTravelRecordMapRegion(record.title, regionInfo),
     title: record.title,
     folderTheme: record.folderTheme,
@@ -170,6 +175,7 @@ export const mapTravelRecordFolder = (
     : mapTravelRecordSummaryToFolder(summary, regionInfo);
 
 interface CreateTravelRecordCreateRequestParams {
+  visibility?: TravelRecordApiVisibility;
   selectedRegion: TravelRecordDraftRegion;
   selectedDateRange: TravelDateRange;
   uploadedImages: UploadedTravelRecordImage[];
@@ -200,11 +206,13 @@ const createTravelRecordStickerRequests = (
   }));
 
 export const createTravelRecordCreateRequest = ({
+  visibility,
   selectedRegion,
   selectedDateRange,
   uploadedImages,
   decorations,
 }: CreateTravelRecordCreateRequestParams): TravelRecordCreateRequest => ({
+  ...(visibility ? { visibility } : {}),
   title: selectedRegion.name,
   regionId: getSelectedRegionId(selectedRegion),
   startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),

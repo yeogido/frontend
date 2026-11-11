@@ -374,6 +374,7 @@ function TravelRecordFolderDecorationPage() {
             id: String(
               (
                 await createTravelRecordMutation.mutateAsync({
+                  visibility: 'PRIVATE',
                   selectedRegion,
                   selectedDateRange,
                   selectedPhotos: uploadedPhotos,
@@ -395,7 +396,7 @@ function TravelRecordFolderDecorationPage() {
       navigate('/travel-record', {
         state: {
           savedTravelRecordId: result.id,
-          savedTravelRecordYear: selectedDateRange.startDate.getFullYear(),
+          savedTravelRecordYear: selectedDateRange.endDate.getFullYear(),
         },
       });
     } catch (error) {
@@ -514,7 +515,7 @@ function TravelRecordFolderDecorationPage() {
           type="button"
           disabled={isSaving || !selectedPhotos?.length}
           aria-busy={isSaving}
-          onClick={handleSaveRecord}
+          onClick={() => void handleSaveRecord()}
           className="absolute bottom-8 left-6 flex h-[53px] w-[342px] items-center justify-center rounded-xl bg-[#ff6f41] text-[18px] leading-none font-semibold text-[#f9f9f9] disabled:cursor-default disabled:bg-[#e4e4e4] disabled:text-[#7f7f7f]"
         >
           {saveRecordLabel}

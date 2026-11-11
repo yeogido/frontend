@@ -15,7 +15,24 @@ import type {
   TravelRecordUpdateRequest,
   TravelRecordUpdateResponse,
   TravelRecordYearListResponse,
+  TravelRecordInvitationCreateResponse,
 } from '../types/travelRecord.type';
+
+/** FRIENDS 앨범 참여 초대만 생성한다. 앨범 생성이나 참여 수락은 수행하지 않는다. */
+export async function inviteTravelRecordFriends(
+  travelRecordId: number,
+  inviteeUserIds: number[],
+): Promise<TravelRecordInvitationCreateResponse> {
+  try {
+    const { data } = await apiClient.post<TravelRecordInvitationCreateResponse>(
+      `/travel-records/${travelRecordId}/invitations`,
+      { inviteeUserIds },
+    );
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function getTravelRecordMap(
   params: TravelRecordMapParams = {}

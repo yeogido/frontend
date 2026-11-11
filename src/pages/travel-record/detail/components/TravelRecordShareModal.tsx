@@ -1,4 +1,7 @@
 import NicknameAvatar from '../../../../components/common/NicknameAvatar';
+import { useState } from 'react';
+import { useAuthStore } from '../../../../store/auth.store';
+import TravelRecordInvitePicker from './TravelRecordInvitePicker';
 import ProfileAvatar from '../../../../components/common/ProfileAvatar';
 import TravelRecordShareDialog from '../../components/TravelRecordShareDialog';
 import { TravelFolderArtwork } from '../../components/TravelFolderCard';
@@ -9,13 +12,11 @@ import {
   folderClipPath,
 } from '../../components/folderArtworkLayout';
 import type { TravelRecordFolder } from '../../types';
-import type { TravelRecordMember } from './TravelRecordMembers';
 
 interface TravelRecordShareModalProps {
   folder: TravelRecordFolder;
   sharerName: string;
   sharerProfileImageUrl?: string | null;
-  friends: readonly TravelRecordMember[];
   onClose: () => void;
 }
 
@@ -23,13 +24,24 @@ function TravelRecordShareModal({
   folder,
   sharerName,
   sharerProfileImageUrl,
-  friends,
   onClose,
 }: TravelRecordShareModalProps) {
+  const [isBusy, setIsBusy] = useState(false);
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   return (
     <TravelRecordShareDialog
       title="여행 폴더 공유"
-      friends={friends}
+      friends={[]}
+      isBusy={isBusy}
+      friendSection={
+        <TravelRecordInvitePicker
+          key={`${folder.id}:${userId}:${authGeneration}`}
+          folder={folder}
+          onSent={onClose}
+          onBusyChange={setIsBusy}
+        />
+      }
       onClose={onClose}
     >
       <>

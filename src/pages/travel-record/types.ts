@@ -1,5 +1,6 @@
 import type { TravelFolderDecoration } from './folder-decoration/folderDecoration';
 import type { NicknameAvatarColor } from '../../components/common/NicknameAvatar';
+import type { TravelRecordPermissions, TravelRecordUserProfile } from '../../types/travelRecord.type';
 
 export type TravelRecordView = 'folder' | 'map';
 export type TravelMapViewer = 'owner' | 'shared';
@@ -12,6 +13,9 @@ export interface TravelRecordServerPhoto {
 }
 
 export interface TravelRecordFolder {
+  owner?: TravelRecordUserProfile;
+  participants?: TravelRecordUserProfile[];
+  permissions?: TravelRecordPermissions;
   version?: number;
   id: string;
   regionId?: number;
