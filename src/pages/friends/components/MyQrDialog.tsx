@@ -3,11 +3,10 @@ import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 
 import closeRounded from '../../../assets/icons/close-rounded.svg';
-import NicknameAvatar from '../../../components/common/NicknameAvatar';
 import { LoadingSpinner } from '../../../components/common';
 import { useToast } from '../../../components/toast';
 import { useMyFriendCode } from '../../../hooks/useMyFriendCode';
-import { getFriendAvatarColor } from '../utils/friendAvatarColor';
+import FriendAvatar from './FriendAvatar';
 import {
   buildFriendQrUrl,
   formatCountdown,
@@ -50,6 +49,8 @@ const COPY_FAILURE_MESSAGE = '친구 코드를 복사하지 못했어요.';
 interface MyQrDialogProps {
   userId: number;
   name: string;
+  /** 없거나 불러오지 못하면 이름 글자 아바타가 나온다. */
+  profileImageUrl?: string | null;
   scale: number;
   onClose: () => void;
 }
@@ -66,7 +67,13 @@ interface MyQrDialogProps {
  * 만료되면 저절로 새로 받지 않고 버튼으로만 새로 받는다.
  * 배경을 눌러서는 닫히지 않고 X와 Esc로 닫힌다.
  */
-function MyQrDialog({ userId, name, scale, onClose }: MyQrDialogProps) {
+function MyQrDialog({
+  userId,
+  name,
+  profileImageUrl = null,
+  scale,
+  onClose,
+}: MyQrDialogProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -241,9 +248,10 @@ function MyQrDialog({ userId, name, scale, onClose }: MyQrDialogProps) {
               height: AVATAR_OUTER_SIZE * scale,
             }}
           >
-            <NicknameAvatar
-              name={name}
-              color={getFriendAvatarColor(userId)}
+            <FriendAvatar
+              userId={userId}
+              nickname={name}
+              profileImageUrl={profileImageUrl}
               size={(AVATAR_OUTER_SIZE - AVATAR_RING * 2) * scale}
             />
           </div>

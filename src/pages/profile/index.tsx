@@ -109,6 +109,7 @@ function ProfilePage() {
         <MyQrDialog
           userId={userId}
           name={name}
+          profileImageUrl={profile?.profileImageUrl}
           scale={scale}
           onClose={() => setIsQrDialogOpen(false)}
         />
