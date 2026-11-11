@@ -11,12 +11,12 @@ import {
   QR_VALID_SECONDS,
 } from '../src/pages/friends/utils/friendQrCountdown.ts';
 
-test('expires 180 seconds after the response was received', () => {
+test('expires 180 seconds after the request started', () => {
   assert.equal(QR_VALID_SECONDS, 180);
   assert.equal(getQrExpiresAt(1_000), 181_000);
 });
 
-test('counts the full 180 seconds right after receiving', () => {
+test('counts the full 180 seconds right after the request started', () => {
   assert.equal(getRemainingSeconds(getQrExpiresAt(1_000), 1_000), 180);
 });
 
@@ -85,4 +85,14 @@ test('does not build a QR URL without a valid token', () => {
   assert.equal(buildFriendQrUrl('https://yeogido.kr', null), null);
   assert.equal(buildFriendQrUrl('https://yeogido.kr', ''), null);
   assert.equal(buildFriendQrUrl('https://yeogido.kr', '  '), null);
+});
+
+test('a slow response shortens the remaining time instead of extending it', () => {
+  const requestedAt = 1_000;
+  const respondedAt = requestedAt + 5_000;
+
+  assert.equal(
+    getRemainingSeconds(getQrExpiresAt(requestedAt), respondedAt),
+    175
+  );
 });

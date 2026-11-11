@@ -17,14 +17,23 @@ const MISSING_QR_TOKEN_ERROR: NormalizedApiError = {
   message: 'QR 코드를 받지 못했어요.',
 };
 
-async function fetchMyFriendCode(): Promise<MyFriendCode> {
+// 만료 시각 계산의 기준이 되는 요청 시작 시각을 응답과 함께 둔다.
+export interface MyFriendCodeResult extends MyFriendCode {
+  requestedAt: number;
+}
+
+async function fetchMyFriendCode(): Promise<MyFriendCodeResult> {
+  // 응답이 늦어도 서버가 발급한 시각보다 오래 남지 않도록, 응답을 받은 시각이
+  // 아니라 API 호출을 시작하기 직전 시각을 기준으로 한다. 재시도하면 성공한
+  // 시도의 시작 시각이 된다.
+  const requestedAt = Date.now();
   const data = await getMyFriendCode();
 
   if (!getValidQrToken(data?.qrToken)) {
     throw MISSING_QR_TOKEN_ERROR;
   }
 
-  return data;
+  return { ...data, requestedAt };
 }
 
 // QR 토큰은 짧게 유효하고 요청할 때마다 새로 발급될 수 있어서, 캐시를 다시
@@ -33,7 +42,7 @@ async function fetchMyFriendCode(): Promise<MyFriendCode> {
 export function useMyFriendCode() {
   const userId = useAuthStore((state) => state.userId);
 
-  const query = useQuery<MyFriendCode, Error>({
+  const query = useQuery<MyFriendCodeResult, Error>({
     queryKey: getMyFriendCodeQueryKey(userId),
     queryFn: fetchMyFriendCode,
     enabled: userId !== null,
@@ -47,8 +56,8 @@ export function useMyFriendCode() {
 
   return {
     data: query.data,
-    // 응답을 받은 시각. 만료 시각 계산의 기준이다.
-    receivedAt: query.dataUpdatedAt,
+    // 요청을 시작한 시각. 만료 시각 계산의 기준이다. 응답이 아직 없으면 없다.
+    requestedAt: query.data?.requestedAt,
     isPending: query.isPending,
     isFetching: query.isFetching,
     isError: query.isError,
