@@ -47,3 +47,36 @@ export function removeRequestFromData<
     })),
   };
 }
+
+interface NextPageState {
+  hasNextPage: boolean;
+  isFetching: boolean;
+  isFetchingNextPage: boolean;
+}
+
+// 다음 페이지는 다른 조회(처음 조회, 재조회)가 진행 중이 아닐 때만 받는다.
+// 진행 중인 조회 위에 겹쳐 요청하면 같은 커서를 두 번 보내거나, 곧 바뀔 목록 뒤에
+// 이어 붙일 수 있다.
+export function canFetchNextRequestPage({
+  hasNextPage,
+  isFetching,
+  isFetchingNextPage,
+}: NextPageState): boolean {
+  return hasNextPage && !isFetching && !isFetchingNextPage;
+}
+
+interface SentCardState {
+  requestCount: number;
+  hasNextPage: boolean;
+  hasError: boolean;
+}
+
+// 보낸 요청 카드는 목록이 비었어도 다음 페이지가 있거나 오류 안내가 있으면 둔다.
+// 목록도 비고 다음 페이지도 없고 오류도 없을 때만 숨긴다.
+export function shouldShowSentRequestsCard({
+  requestCount,
+  hasNextPage,
+  hasError,
+}: SentCardState): boolean {
+  return requestCount > 0 || hasNextPage || hasError;
+}

@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  canFetchNextRequestPage,
   getRequestsFromPages,
   removeRequestFromData,
+  shouldShowSentRequestsCard,
 } from '../src/hooks/utils/friendRequestPages.ts';
 
 const page = (...ids: number[]) => ({
@@ -66,4 +68,48 @@ test('leaves the data as is when the request is not in it', () => {
 
 test('passes undefined data through', () => {
   assert.equal(removeRequestFromData(undefined, 1), undefined);
+});
+
+const idle = {
+  hasNextPage: true,
+  isFetching: false,
+  isFetchingNextPage: false,
+};
+
+test('fetches the next page only when nothing is being fetched', () => {
+  assert.equal(canFetchNextRequestPage(idle), true);
+});
+
+test('does not fetch the next page while any query is fetching', () => {
+  assert.equal(canFetchNextRequestPage({ ...idle, isFetching: true }), false);
+  assert.equal(
+    canFetchNextRequestPage({ ...idle, isFetchingNextPage: true }),
+    false
+  );
+});
+
+test('does not fetch the next page when there is none', () => {
+  assert.equal(canFetchNextRequestPage({ ...idle, hasNextPage: false }), false);
+});
+
+test('shows the sent card for requests, a next page or an error', () => {
+  const empty = { requestCount: 0, hasNextPage: false, hasError: false };
+
+  assert.equal(shouldShowSentRequestsCard({ ...empty, requestCount: 2 }), true);
+  assert.equal(
+    shouldShowSentRequestsCard({ ...empty, hasNextPage: true }),
+    true
+  );
+  assert.equal(shouldShowSentRequestsCard({ ...empty, hasError: true }), true);
+});
+
+test('hides the sent card only when it is empty with no next page or error', () => {
+  assert.equal(
+    shouldShowSentRequestsCard({
+      requestCount: 0,
+      hasNextPage: false,
+      hasError: false,
+    }),
+    false
+  );
 });

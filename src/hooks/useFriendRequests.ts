@@ -85,7 +85,9 @@ function useFriendRequestsQuery<TItem extends { requestId: number }>(
   return {
     requests,
     isPending: query.isPending,
+    isFetching: query.isFetching,
     isError: query.isError,
+    isRefetchError: query.isRefetchError,
     error: query.error,
     refetch: query.refetch,
     hasNextPage: query.hasNextPage,
@@ -110,13 +112,18 @@ export function useSentFriendRequests() {
 }
 
 // 처리에 성공했거나 이미 처리된 요청은 목록을 다시 받지 않고 캐시에서 바로 뺀다.
+// 진행 중인 조회가 있으면 먼저 취소한다. 그대로 두면 처리 전에 시작된 조회의
+// 응답이 뒤늦게 도착해 방금 뺀 행을 다시 채울 수 있다.
 export function useRemoveFriendRequestFromCache() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userId);
 
-  return (kind: FriendRequestKind, requestId: number) => {
+  return async (kind: FriendRequestKind, requestId: number) => {
+    const queryKey = getFriendRequestsQueryKey(kind, userId);
+
+    await queryClient.cancelQueries({ queryKey });
     queryClient.setQueryData<FriendRequestsData<{ requestId: number }>>(
-      getFriendRequestsQueryKey(kind, userId),
+      queryKey,
       (data) => removeRequestFromData(data, requestId)
     );
   };
@@ -129,8 +136,8 @@ export function useAcceptFriendRequest() {
 
   return useMutation<AcceptFriendRequestResult, Error, number>({
     mutationFn: acceptFriendRequest,
-    onSuccess: (_result, requestId) => {
-      removeFromCache('received', requestId);
+    onSuccess: async (_result, requestId) => {
+      await removeFromCache('received', requestId);
       // 새 친구가 목록에 보이고, 받은 요청이 서버 상태와 맞도록 다시 받는다.
       void queryClient.invalidateQueries({
         queryKey: [FRIENDS_QUERY_PREFIX, userId],

@@ -9,6 +9,10 @@ import {
 } from '../../../hooks/useFriendRequests';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import {
+  canFetchNextRequestPage,
+  shouldShowSentRequestsCard,
+} from '../../../hooks/utils/friendRequestPages';
 import FriendListMessage from '../components/FriendListMessage';
 import FriendListSkeleton from '../components/FriendListSkeleton';
 import FriendRequestButton from '../components/FriendRequestButton';
@@ -23,6 +27,8 @@ import {
 const EMPTY_MESSAGE = '받은 친구 요청이 없어요.';
 const LOAD_ERROR_MESSAGE = '친구 요청을 불러오지 못했어요.';
 const LOAD_MORE_ERROR_MESSAGE = '친구 요청을 더 불러오지 못했어요.';
+const SENT_LOAD_ERROR_MESSAGE = '보낸 요청을 불러오지 못했어요.';
+const SENT_LOAD_MORE_ERROR_MESSAGE = '보낸 요청을 더 불러오지 못했어요.';
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
 const PAGE_TOP_PADDING = 12;
@@ -47,14 +53,37 @@ function FriendRequestsPage() {
     refetchSent: sent.refetch,
   });
 
-  const { fetchNextPage, hasNextPage, isFetchingNextPage } = received;
+  const { fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
+    received;
 
+  // 진행 중인 조회(처음 조회, 재조회 포함)가 있으면 다음 페이지를 받지 않는다.
   const handleLoadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
+    if (
+      canFetchNextRequestPage({
+        hasNextPage: Boolean(hasNextPage),
+        isFetching,
+        isFetchingNextPage,
+      })
+    ) {
       void fetchNextPage();
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetching, isFetchingNextPage]);
 
+  const handleSentLoadMore = () => {
+    if (
+      canFetchNextRequestPage({
+        hasNextPage: Boolean(sent.hasNextPage),
+        isFetching: sent.isFetching,
+        isFetchingNextPage: sent.isFetchingNextPage,
+      })
+    ) {
+      void sent.fetchNextPage();
+    }
+  };
+
+  // 자동으로 이어 받기는 오류가 없을 때만 한다. isError는 다음 페이지 실패와
+  // 재조회 실패 모두에서 true라서, 오류가 난 뒤에는 목록 아래의 "다시 시도"로만
+  // 이어 가고 같은 요청을 끝없이 반복하지 않는다.
   const loadMoreRef = useInfiniteScroll({
     enabled: canLoadMoreAutomatically({
       hasNextPage,
@@ -69,7 +98,29 @@ function FriendRequestsPage() {
     isFetchingNextPage,
     friendCount: received.requests.length,
   });
-  const hasSentCard = sent.requests.length > 0;
+  // 캐시된 행이 있는 채로 목록 전체를 다시 받다 실패한 경우(수락 뒤 무효화나
+  // 실패 후 재조회 등). 행은 그대로 두고 목록 아래에서 다시 시도하게 한다.
+  const showRefetchError =
+    received.isRefetchError && !isFetching && received.requests.length > 0;
+  const isRetryingRefetch = received.isRefetchError && isFetching;
+
+  const sentLoadFailed =
+    sent.isError &&
+    !sent.isFetchNextPageError &&
+    !sent.isFetching &&
+    sent.requests.length === 0;
+  const sentLoadMoreFailed =
+    sent.isFetchNextPageError && !sent.isFetching && sent.requests.length > 0;
+  const sentErrorMessage = sentLoadFailed
+    ? getApiErrorMessage(sent.error, SENT_LOAD_ERROR_MESSAGE)
+    : sentLoadMoreFailed
+      ? getApiErrorMessage(sent.error, SENT_LOAD_MORE_ERROR_MESSAGE)
+      : null;
+  const hasSentCard = shouldShowSentRequestsCard({
+    requestCount: sent.requests.length,
+    hasNextPage: Boolean(sent.hasNextPage),
+    hasError: sentErrorMessage !== null,
+  });
 
   let content: ReactNode;
 
@@ -171,9 +222,14 @@ function FriendRequestsPage() {
           scale={scale}
           pendingIds={pendingIds}
           hasNextPage={Boolean(sent.hasNextPage)}
+          isFetching={sent.isFetching}
           isFetchingNextPage={sent.isFetchingNextPage}
+          errorMessage={sentErrorMessage}
+          onRetry={() =>
+            void (sentLoadFailed ? sent.refetch() : sent.fetchNextPage())
+          }
           onCancel={(requestId) => void cancel(requestId)}
-          onLoadMore={() => void sent.fetchNextPage()}
+          onLoadMore={handleSentLoadMore}
         />
         {content}
       </div>
@@ -190,9 +246,21 @@ function FriendRequestsPage() {
         />
       ) : null}
 
+      {showRefetchError ? (
+        <FriendListMessage
+          variant="load-more-error"
+          scale={scale}
+          errorMessage={getApiErrorMessage(received.error, LOAD_ERROR_MESSAGE)}
+          onRetry={() => void received.refetch()}
+        />
+      ) : null}
+
       <div ref={loadMoreRef} aria-hidden="true" />
       {isFetchingNextPage ? (
         <LoadingSpinner label="친구 요청을 더 불러오는 중" />
+      ) : null}
+      {isRetryingRefetch ? (
+        <LoadingSpinner label="친구 요청을 불러오는 중" />
       ) : null}
       <div style={{ height: LOAD_MORE_SPACE * scale }} aria-hidden="true" />
     </ResponsivePageShell>

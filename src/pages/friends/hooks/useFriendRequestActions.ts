@@ -56,7 +56,7 @@ export function useFriendRequestActions({
       showToast(failure.message);
 
       if (failure.isAlreadyHandled) {
-        removeFromCache(kind, requestId);
+        await removeFromCache(kind, requestId);
         void refetchReceived();
         void refetchSent();
       } else {
