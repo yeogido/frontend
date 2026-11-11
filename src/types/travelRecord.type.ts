@@ -22,6 +22,17 @@ export interface TravelRecordPermissions {
   canLinkShare: boolean;
 }
 
+export interface TravelRecordVisibilityUpdateRequest {
+  visibility: 'PRIVATE' | 'PUBLIC';
+  version: number;
+}
+
+export interface TravelRecordVisibilityUpdateResponse {
+  travelRecordId: number;
+  visibility: TravelRecordApiVisibility;
+  version: number;
+}
+
 export interface TravelRecordInvitationCreateResponse {
   travelRecordId: number;
   invitations: Array<{
