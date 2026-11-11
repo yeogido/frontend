@@ -1,3 +1,5 @@
+import { matchPath } from 'react-router-dom';
+
 /**
  * 데스크톱 전용 뷰가 있는 경로.
  *
@@ -15,5 +17,7 @@ export const DESKTOP_VIEW_PATHS = [
 ] as const;
 
 export function hasDesktopView(pathname: string) {
-  return DESKTOP_VIEW_PATHS.some((path) => path === pathname);
+  return DESKTOP_VIEW_PATHS.some(
+    (path) => matchPath({ path, end: true }, pathname) !== null
+  );
 }

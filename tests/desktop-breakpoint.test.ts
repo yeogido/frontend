@@ -41,3 +41,14 @@ test('pins a fixed scale for desktop instead of growing with the viewport', () =
   assert.equal(DESKTOP_SCALE, 20 / 16);
   assert.equal(getAppScale(DESKTOP_MIN_WIDTH), getAppScale(4000));
 });
+
+test('desktop routes use the same trailing slash and exact matching as the router', async () => {
+  const { hasDesktopView } = await import('../src/constants/desktopRoutes.ts');
+  assert.equal(hasDesktopView('/local-recommendation/course-info'), true);
+  assert.equal(hasDesktopView('/local-recommendation/course-info/'), true);
+  assert.equal(
+    hasDesktopView('/local-recommendation/course-info/extra'),
+    false
+  );
+  assert.equal(hasDesktopView('/local-course'), false);
+});

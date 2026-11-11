@@ -1,4 +1,7 @@
-import { useEffect, useId, useRef, type ChangeEvent } from 'react';
+import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
+
+import { compressImage } from '../../../../utils/imageCompression';
+import { isSupportedCoverPhoto } from '../../tag-selection/coverPhotoFile';
 import { IoClose, IoImageOutline } from 'react-icons/io5';
 
 // Figma 1440 데스크톱 시안(6346:91365) 기준 리터럴 px
@@ -28,23 +31,79 @@ function PlacePhotoDesktopModal({
 }: PlacePhotoDesktopModalProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+  const [fileError, setFileError] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const requestRef = useRef(0);
 
   useEffect(() => {
+    const previous =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const dialog = dialogRef.current;
+    dialog?.querySelector<HTMLElement>('button')?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialog) return;
+      const controls = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled)'
+        )
+      );
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (
+        event.shiftKey &&
+        (document.activeElement === first ||
+          !dialog.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        last.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last ||
+          !dialog.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-
     document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      requestRef.current += 1;
+      document.removeEventListener('keydown', handleKeyDown);
+      previous?.focus();
+    };
+  }, []);
 
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-
-    if (file) onFileChange(file);
-
     event.target.value = '';
+    if (!file) return;
+    const request = ++requestRef.current;
+    setFileError('');
+    setIsProcessing(true);
+    const result = isSupportedCoverPhoto(file)
+      ? file
+      : await compressImage(file, { forceJpeg: true });
+    if (request !== requestRef.current) return;
+    setIsProcessing(false);
+    if (!isSupportedCoverPhoto(result)) {
+      setFileError(
+        '사진을 변환하지 못했습니다. JPG, PNG, WebP 파일을 선택해 주세요.'
+      );
+      return;
+    }
+    onFileChange(result);
   };
 
   return (
@@ -56,6 +115,7 @@ function PlacePhotoDesktopModal({
       }}
     >
       <section
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="place-photo-modal-title"
@@ -119,9 +179,10 @@ function PlacePhotoDesktopModal({
           )}
         </label>
 
+        {fileError ? <p role="alert">{fileError}</p> : null}
         <button
           type="button"
-          disabled={!previewUrl}
+          disabled={!previewUrl || isProcessing || !!fileError}
           onClick={onConfirm}
           className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 mt-[24px] w-full rounded-[12px] py-[16px] text-[20px] font-semibold text-white"
         >

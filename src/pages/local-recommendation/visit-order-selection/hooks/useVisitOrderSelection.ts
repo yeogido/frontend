@@ -100,6 +100,7 @@ export function useVisitOrderSelection() {
   // 클로저 값으로 되써 넣으면 직전 일차 이동이 지워지므로, 항상 최신 목록을
   // ref에서 읽어 계산한다.
   const visitEventsByDayRef = useRef(visitEventsByDay);
+  const dragSnapshotRef = useRef<VisitEvent[][] | null>(null);
   const applyVisitEventsByDay = (
     compute: (previous: VisitEvent[][]) => VisitEvent[][]
   ) => {
@@ -129,9 +130,20 @@ export function useVisitOrderSelection() {
     navigate('/local-recommendation/tag-selection', { replace: true });
   }, [imageRecoveryRequired, navigate]);
 
-  const handleDragStart = ({ active }: DragStartEvent) =>
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    dragSnapshotRef.current = visitEventsByDayRef.current.map((day) => [
+      ...day,
+    ]);
     setActiveEventId(String(active.id));
-  const handleDragCancel = () => setActiveEventId(null);
+  };
+  const handleDragCancel = () => {
+    if (dragSnapshotRef.current) {
+      visitEventsByDayRef.current = dragSnapshotRef.current;
+      setVisitEventsByDay(dragSnapshotRef.current);
+      dragSnapshotRef.current = null;
+    }
+    setActiveEventId(null);
+  };
 
   /**
    * 끄는 중에 다른 일차 위로 넘어가면 그 자리에서 바로 옮겨 둔다
@@ -172,6 +184,7 @@ export function useVisitOrderSelection() {
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    dragSnapshotRef.current = null;
     setActiveEventId(null);
 
     const activeId = String(active.id);

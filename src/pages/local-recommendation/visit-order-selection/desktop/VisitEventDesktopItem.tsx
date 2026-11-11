@@ -140,8 +140,8 @@ function VisitEventDesktopItem({
     <button
       ref={setActivatorNodeRef}
       type="button"
-      aria-label="순서 변경"
       {...attributes}
+      aria-label={`${event.name} 순서 변경`}
       {...listeners}
       className="text-gray-3 flex shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
       style={{ height: HANDLE_SIZE, width: HANDLE_SIZE }}

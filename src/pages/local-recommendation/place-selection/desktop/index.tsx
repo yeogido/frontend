@@ -19,6 +19,8 @@ function PlaceSelectionDesktopPage() {
     day,
     setQuery,
     searchResults,
+    isLoading,
+    hasError,
     selectedPlaces,
     selectedPlaceIds,
     removeSelectedPlace,
@@ -53,6 +55,15 @@ function PlaceSelectionDesktopPage() {
             label="장소명 검색"
             onQueryChange={setQuery}
           />
+        }
+        statusMessage={
+          isLoading ? (
+            <p role="status">검색 중입니다.</p>
+          ) : hasError ? (
+            <p role="alert">
+              검색하지 못했습니다. 검색어를 다시 입력해 주세요.
+            </p>
+          ) : null
         }
         results={searchResults.map((place) => (
           <DesktopResultRow

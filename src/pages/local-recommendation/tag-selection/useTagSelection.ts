@@ -81,10 +81,11 @@ export function useTagSelection({ onComplete }: UseTagSelectionOptions = {}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const hashtagLoadPromiseRef = useRef<Promise<Hashtag[]> | null>(null);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
-    const hashtagLoadPromise = fetchHashtags().catch(() => []);
+    const hashtagLoadPromise = fetchHashtags();
     hashtagLoadPromiseRef.current = hashtagLoadPromise;
 
     hashtagLoadPromise
@@ -92,8 +93,8 @@ export function useTagSelection({ onComplete }: UseTagSelectionOptions = {}) {
         if (isMounted) setHashtags(result);
       })
       .catch(() => {
-        // 해시태그 목록 조회에 실패해도 진행은 막지 않는다.
-        // 이 경우 mapTagIdsToHashtagIds 결과가 빈 배열이 되어 hashtagIds 없이 다음 단계로 넘어간다.
+        if (hashtagLoadPromiseRef.current === hashtagLoadPromise)
+          hashtagLoadPromiseRef.current = null;
       });
 
     return () => {
@@ -102,6 +103,7 @@ export function useTagSelection({ onComplete }: UseTagSelectionOptions = {}) {
   }, []);
 
   const handlePhotoChange = (file: File | null) => {
+    if (submittingRef.current) return;
     if (!file) {
       removePendingImage(LOCAL_RECOMMENDATION_COVER_IMAGE_ID);
       // 기존 대표 사진을 보여주고 있었다면 재사용 fallback도 함께 지운다 —
@@ -120,6 +122,7 @@ export function useTagSelection({ onComplete }: UseTagSelectionOptions = {}) {
   };
 
   const handleTagToggle = (tagId: TagId) => {
+    if (submittingRef.current) return;
     const result = toggleTag(selectedTagIds, tagId);
     setSelectedTagIds(result.selectedTagIds);
     setTagSelection({
@@ -139,14 +142,15 @@ export function useTagSelection({ onComplete }: UseTagSelectionOptions = {}) {
     imageRecoveryRequired && !hasPendingImages;
 
   const handleComplete = async () => {
-    if (!photo || !isReady || isSubmitting) return;
+    if (!photo || !isReady || submittingRef.current) return;
 
+    submittingRef.current = true;
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
       const loadedHashtags = await (hashtagLoadPromiseRef.current ??
-        Promise.resolve(hashtags));
+        (hashtags.length ? Promise.resolve(hashtags) : fetchHashtags()));
       const hashtagIds = mapTagIdsToHashtagIds(
         Array.from(selectedTagIds),
         loadedHashtags,
@@ -172,6 +176,7 @@ export function useTagSelection({ onComplete }: UseTagSelectionOptions = {}) {
       });
     } catch {
       setSubmitError('태그 정보를 저장하지 못했습니다. 다시 시도해 주세요.');
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };

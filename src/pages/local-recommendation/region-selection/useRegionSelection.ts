@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -36,6 +36,8 @@ export function useRegionSelection() {
     removeRecentRegion,
   } = useRecentRegions();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchError, setSearchError] = useState(false);
+  const searchVersionRef = useRef(0);
   const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const [selectedNeighborhood, setSelectedNeighborhood] =
     useState<Neighborhood | null>(draftNeighborhood);
@@ -78,6 +80,8 @@ export function useRegionSelection() {
   );
 
   const handleSelectNeighborhood = (candidate: Neighborhood) => {
+    searchVersionRef.current += 1;
+    setSearchError(false);
     setSearchQuery('');
     setIsSuggestionOpen(false);
 
@@ -96,20 +100,29 @@ export function useRegionSelection() {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return;
 
-    const results =
-      trimmedQuery === trimmedSearchQuery && searchResultsQuery.data
-        ? searchResultsQuery.data
-        : await queryClient.fetchQuery({
-            queryKey: ['regions', 'search', 'neighborhoods', trimmedQuery],
-            queryFn: () => searchNeighborhoods(trimmedQuery),
-            staleTime: 30_000,
-          });
-    const firstResult = results[0];
+    const version = ++searchVersionRef.current;
+    setSearchError(false);
+    try {
+      const results =
+        trimmedQuery === trimmedSearchQuery && searchResultsQuery.data
+          ? searchResultsQuery.data
+          : await queryClient.fetchQuery({
+              queryKey: ['regions', 'search', 'neighborhoods', trimmedQuery],
+              queryFn: () => searchNeighborhoods(trimmedQuery),
+              staleTime: 30_000,
+            });
+      const firstResult = results[0];
 
-    if (firstResult) handleSelectNeighborhood(firstResult);
+      if (version === searchVersionRef.current && firstResult)
+        handleSelectNeighborhood(firstResult);
+    } catch {
+      if (version === searchVersionRef.current) setSearchError(true);
+    }
   };
 
   const handleQueryChange = (query: string) => {
+    searchVersionRef.current += 1;
+    setSearchError(false);
     setSearchQuery(query);
     setIsSuggestionOpen(query.trim().length > 0);
   };
@@ -146,6 +159,7 @@ export function useRegionSelection() {
   };
 
   const clearSelectedNeighborhood = () => {
+    searchVersionRef.current += 1;
     setSelectedNeighborhood(null);
     setNeighborhood(null);
   };
@@ -171,6 +185,7 @@ export function useRegionSelection() {
 
   return {
     searchQuery,
+    searchError: searchError || searchResultsQuery.isError,
     isSuggestionOpen,
     selectedNeighborhood,
     selectedRegion,

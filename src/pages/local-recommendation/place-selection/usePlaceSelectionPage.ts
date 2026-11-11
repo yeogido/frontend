@@ -20,7 +20,7 @@ export function usePlaceSelectionPage() {
   const isEditingCourse = useLocalRecommendationStore(
     (state) => state.draft.editingCourseId !== null
   );
-  const { setQuery, searchResults } = usePlaceSearch();
+  const { setQuery, searchResults, isLoading, hasError } = usePlaceSearch();
   const {
     selectedPlaces,
     selectedPlaceIds,
@@ -68,6 +68,8 @@ export function usePlaceSelectionPage() {
     day,
     setQuery,
     searchResults,
+    isLoading,
+    hasError,
     selectedPlaces,
     selectedPlaceIds,
     removeSelectedPlace,

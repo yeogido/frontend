@@ -58,7 +58,7 @@ function DesktopSearchField({
 
   const filteredSuggestions = useMemo(() => {
     if (suggestions.length === 0) return [];
-    if (!filterSuggestions) return suggestions;
+    if (!filterSuggestions) return suggestions.slice(0, SUGGESTION_LIMIT);
 
     const trimmed = query.trim();
     if (!trimmed) return suggestions.slice(0, SUGGESTION_LIMIT);
@@ -78,7 +78,13 @@ function DesktopSearchField({
   };
 
   return (
-    <div className="relative z-20 w-full">
+    <div
+      className="relative z-20 w-full"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget))
+          setIsOpen(false);
+      }}
+    >
       <label htmlFor={inputId} className="sr-only">
         {label}
       </label>
@@ -98,7 +104,6 @@ function DesktopSearchField({
           aria-controls={suggestions.length > 0 ? listboxId : undefined}
           aria-expanded={suggestions.length > 0 ? isListOpen : undefined}
           onFocus={() => setIsOpen(true)}
-          onBlur={() => setIsOpen(false)}
           onChange={(event) => {
             updateQuery(event.target.value);
             setIsOpen(true);

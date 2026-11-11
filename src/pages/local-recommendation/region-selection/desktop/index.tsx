@@ -20,6 +20,7 @@ function RegionSelectionDesktopPage() {
     regionsQuery,
     popularRegions,
     searchSuggestions,
+    searchError,
     recentLabels,
     clearRecentRegions,
     handleQueryChange,
@@ -60,6 +61,13 @@ function RegionSelectionDesktopPage() {
             onEnter={handleEnter}
           />
         )}
+
+        {searchError ? (
+          <p role="alert">
+            지역 검색에 실패했습니다. 검색어를 다시 입력하거나 Enter를 눌러
+            재시도해 주세요.
+          </p>
+        ) : null}
 
         <RecentRegionDesktopSection
           searches={recentLabels}

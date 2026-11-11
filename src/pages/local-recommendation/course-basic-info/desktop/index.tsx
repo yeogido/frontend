@@ -8,10 +8,17 @@ import CourseBasicInfoDesktopForm from './CourseBasicInfoDesktopForm';
  * 모바일 뷰와 스토어 연결·검증은 공유하고 생김새만 다르다.
  */
 function CourseBasicInfoDesktopPage() {
-  const { defaultValues, handleNext } = useCourseBasicInfoPage();
+  const { defaultValues, handleNext, handleBack } = useCourseBasicInfoPage();
 
   return (
     <DesktopPageShell>
+      <button
+        type="button"
+        onClick={handleBack}
+        className="text-gray-5 mb-[24px]"
+      >
+        취소하고 돌아가기
+      </button>
       <header className="mb-[60px] flex flex-col gap-[6px]">
         <h1 className="text-[32px] font-semibold text-black">
           어떤 코스인가요?
