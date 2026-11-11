@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-query';
 
 import { normalizeApiError } from '../apis/common';
-import { useAuth } from './useAuth';
+import { useAuthStore } from '../store/auth.store';
 import {
   createPresignedUrl,
   uploadFileToPresignedUrl,
@@ -33,12 +33,7 @@ import {
 import type { TravelDateRange } from '../pages/travel-record/date-selection/types';
 import type { TravelFolderDecoration } from '../pages/travel-record/folder-decoration/folderDecoration';
 import type { TravelRecordDraftRegion } from '../pages/travel-record/types';
-import { collectTravelRecords } from '../pages/travel-record/utils/collectTravelRecords';
-import {
-  getTravelRecordMapRecords,
-  getTravelRecordMapYearQueries,
-  getTravelRecordMapYears,
-} from '../pages/travel-record/utils/mapAuth';
+import { TRAVEL_RECORD_MAP_QUERY_KEY } from '../pages/travel-record/utils/mapAuth';
 import type { TravelRecordPhotoDraft } from '../pages/travel-record/utils/travelRecordSave';
 import type { RegionDetailResponse } from '../types/region.type';
 import type {
@@ -120,7 +115,10 @@ const uploadTravelRecordDraftImages = async (
   return uploadedImages;
 };
 
-export function useTravelRecords(params: TravelRecordListParams = {}) {
+export function useTravelRecords(
+  params: TravelRecordListParams = {},
+  { enabled = true } = {}
+) {
   return useInfiniteQuery<
     TravelRecordListResponse,
     Error,
@@ -135,6 +133,7 @@ export function useTravelRecords(params: TravelRecordListParams = {}) {
         cursor: pageParam.cursor,
       }),
     initialPageParam: {},
+    enabled,
     getNextPageParam: (lastPage) =>
       lastPage.hasNext && lastPage.cursorId
         ? { cursor: lastPage.cursorId }
@@ -143,79 +142,13 @@ export function useTravelRecords(params: TravelRecordListParams = {}) {
 }
 
 export function useTravelRecordYears({ enabled = true } = {}) {
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   return useQuery({
-    queryKey: ['travelRecordYears'],
+    queryKey: ['travelRecordYears', userId, authGeneration],
     queryFn: getTravelRecordYears,
-    enabled,
+    enabled: enabled && userId !== null,
   });
-}
-
-const MAP_RECORDS_PAGE_SIZE = 50;
-
-const getAllTravelRecordsInYear = (year: number) =>
-  collectTravelRecords((cursor) =>
-    getTravelRecords({ year, size: MAP_RECORDS_PAGE_SIZE, cursor })
-  );
-
-/**
- * 지도에 찍을 여행 기록 전체.
- *
- * 목록 API는 year를 생략하면 현재 연도만 돌려주기 때문에, 연도 목록을 받아
- * 연도별로 조회한 뒤 합친다. 지도 전용 API가 생기면 이 훅만 바꾸면 된다.
- *
- * 홈은 로그인 없이 열리는 화면인데 여행 기록 API는 인증이 필요하다. 로그인
- * 전에는 조회를 시작하지 않는다.
- */
-export function useTravelRecordsForMap({ enabled = true } = {}) {
-  const { isAuthenticated: hasSession } = useAuth();
-  const isAuthenticated = hasSession && enabled;
-  const travelRecordYearsQuery = useTravelRecordYears({
-    enabled: isAuthenticated,
-  });
-  const cachedYears = travelRecordYearsQuery.data?.years;
-  const years = getTravelRecordMapYears(isAuthenticated, cachedYears);
-
-  const yearQueries = useQueries({
-    queries: getTravelRecordMapYearQueries(isAuthenticated, years).map(
-      ({ year, enabled }) => ({
-        queryKey: ['travelRecordsByYear', year],
-        queryFn: () => getAllTravelRecordsInYear(year),
-        enabled,
-      })
-    ),
-  });
-
-  const failedYearQueries = yearQueries.filter((query) => query.isError);
-  // 비활성 쿼리는 계속 pending으로 남는다. 로그인 전 상태가 로딩이나 실패로
-  // 보이지 않도록 인증 여부를 함께 본다.
-  const isError =
-    isAuthenticated &&
-    (travelRecordYearsQuery.isError || failedYearQueries.length > 0);
-  const isPending =
-    isAuthenticated &&
-    (travelRecordYearsQuery.isPending ||
-      yearQueries.some((query) => query.isPending));
-
-  return {
-    // 한 연도라도 실패하면 나머지 연도만 넘기지 않는다. 일부만 빠진 지도는
-    // 그 지역에 다녀온 적이 없는 것처럼 보여서 실패보다 더 오해를 준다.
-    records: getTravelRecordMapRecords(
-      isAuthenticated && !isError,
-      yearQueries.map((query) => query.data ?? [])
-    ),
-    isPending,
-    isError,
-    retry: () => {
-      if (!isAuthenticated) {
-        return;
-      }
-
-      // 상세 조회 전에 다른 기기에서 기록이 삭제될 수 있다. 성공했던
-      // 원본 목록도 갱신해야 오래된 ID의 상세 요청을 계속 반복하지 않는다.
-      void travelRecordYearsQuery.refetch();
-      yearQueries.forEach((query) => void query.refetch());
-    },
-  };
 }
 
 export function useTravelRecordDetail(travelRecordId: number | null) {
@@ -275,7 +208,7 @@ export function useCreateTravelRecord() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
-      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
+      void queryClient.invalidateQueries({ queryKey: TRAVEL_RECORD_MAP_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
     },
   });
@@ -313,7 +246,7 @@ export function useUpdateTravelRecord() {
       ),
     onSuccess: (_, { travelRecordId }) => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
-      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
+      void queryClient.invalidateQueries({ queryKey: TRAVEL_RECORD_MAP_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.invalidateQueries({
         queryKey: ['travelRecord', travelRecordId],
@@ -362,7 +295,7 @@ export function useDeleteTravelRecord() {
         };
       });
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
-      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
+      void queryClient.invalidateQueries({ queryKey: TRAVEL_RECORD_MAP_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.removeQueries({
         queryKey: ['travelRecord', travelRecordId],

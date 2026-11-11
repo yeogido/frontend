@@ -10,10 +10,26 @@ import type {
   TravelRecordDetailResponse,
   TravelRecordListParams,
   TravelRecordListResponse,
+  TravelRecordMapParams,
+  TravelRecordMapResponse,
   TravelRecordUpdateRequest,
   TravelRecordUpdateResponse,
   TravelRecordYearListResponse,
 } from '../types/travelRecord.type';
+
+export async function getTravelRecordMap(
+  params: TravelRecordMapParams = {}
+): Promise<TravelRecordMapResponse> {
+  try {
+    const { data } = await apiClient.get<TravelRecordMapResponse>(
+      '/travel-records/map',
+      { params }
+    );
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function getTravelRecords(
   params: TravelRecordListParams = {},

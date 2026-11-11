@@ -1,3 +1,4 @@
+import { useTravelMap } from '../../hooks/useTravelMap';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -12,7 +13,6 @@ import {
   useTravelRecordDetails,
   useTravelRecordYears,
   useTravelRecords,
-  useTravelRecordsForMap,
 } from '../../hooks/useTravelRecords';
 
 import {
@@ -110,48 +110,36 @@ function TravelRecordPage() {
     isFetchingNextPage,
     isPending,
     refetch: refetchTravelRecords,
-  } = useTravelRecords({
-    size: TRAVEL_RECORD_PAGE_SIZE,
-    year: validSelectedYear,
-  });
+  } = useTravelRecords(
+    { size: TRAVEL_RECORD_PAGE_SIZE, year: validSelectedYear },
+    { enabled: activeView === 'folder' }
+  );
 
   const apiRecordSummaries = useMemo(
-    () => getTravelRecordSummariesFromPages(travelRecordsData?.pages),
-    [travelRecordsData?.pages]
+    () =>
+      activeView === 'folder'
+        ? getTravelRecordSummariesFromPages(travelRecordsData?.pages)
+        : [],
+    [activeView, travelRecordsData?.pages]
   );
-  const mapRecordsQuery = useTravelRecordsForMap({
+  const mapRecordsQuery = useTravelMap({
     enabled: activeView === 'map',
   });
-  const displayedRecordSummaries =
-    activeView === 'map' ? mapRecordsQuery.records : apiRecordSummaries;
-  const travelRecordDetails = useTravelRecordDetails(displayedRecordSummaries);
+  const travelRecordDetails = useTravelRecordDetails(apiRecordSummaries);
   const regionDetailsQuery = useTravelRecordRegionDetailsState(
-    displayedRecordSummaries.map((record) => record.regionId)
+    apiRecordSummaries.map((record) => record.regionId)
   );
   const regionInfoByRegionId = regionDetailsQuery.data;
-  const isMapPending =
-    mapRecordsQuery.isPending ||
-    regionDetailsQuery.isPending ||
-    travelRecordDetails.some((query) => query.isPending);
-  const isMapError =
-    mapRecordsQuery.isError ||
-    regionDetailsQuery.isError ||
-    travelRecordDetails.some((query) => query.isError);
-  const retryMap = () => {
-    mapRecordsQuery.retry();
-    regionDetailsQuery.retry();
-    travelRecordDetails
-      .filter((query) => query.isError)
-      .forEach((query) => void query.refetch());
-  };
+  const isMapPending = mapRecordsQuery.isPending;
+  const isMapError = mapRecordsQuery.isError;
   const apiFolders = useMemo(
     () =>
       getTravelRecordFolders(
-        displayedRecordSummaries,
+        apiRecordSummaries,
         travelRecordDetails.map((query) => query.data),
         regionInfoByRegionId
       ),
-    [displayedRecordSummaries, travelRecordDetails, regionInfoByRegionId]
+    [apiRecordSummaries, travelRecordDetails, regionInfoByRegionId]
   );
 
   // 서버가 travelRecordId 내림차순으로 잘라 주므로 그 순서를 그대로 쓴다.
@@ -260,7 +248,9 @@ function TravelRecordPage() {
           <button
             type="button"
             onClick={() =>
-              activeView === 'map' ? retryMap() : void refetchTravelRecords()
+              activeView === 'map'
+                ? mapRecordsQuery.retry()
+                : void refetchTravelRecords()
             }
             className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
           >
@@ -285,7 +275,9 @@ function TravelRecordPage() {
           </p>
         </section>
       ) : (
-        <TravelMapView folders={[...previewSharedFolders, ...apiFolders]} />
+        <TravelMapView
+          folders={[...previewSharedFolders, ...mapRecordsQuery.folders]}
+        />
       )}
 
       <div ref={loadMoreRef} aria-hidden="true" />

@@ -6,6 +6,27 @@ export interface TravelRecordListParams {
   year?: number;
 }
 
+export type TravelRecordApiVisibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
+
+export interface TravelRecordMapParams extends TravelRecordListParams {
+  visibility?: TravelRecordApiVisibility;
+}
+
+export interface TravelRecordMapItem {
+  travelRecordId: number;
+  title: string;
+  regionId: number;
+  regionName: string;
+  latitude: number | null;
+  longitude: number | null;
+  startDate: string;
+  endDate: string;
+  visibility: TravelRecordApiVisibility;
+  images: TravelRecordImageResponse[];
+}
+
+export type TravelRecordMapResponse = CursorResponse<TravelRecordMapItem, null>;
+
 export interface TravelRecordImageRequest {
   imageKey: string;
   imageOrder: number;
@@ -95,8 +116,10 @@ export interface TravelRecordYearListResponse {
   years: number[];
 }
 
-export type TravelRecordListResponse =
-  CursorResponse<TravelRecordSummary, unknown>;
+export type TravelRecordListResponse = CursorResponse<
+  TravelRecordSummary,
+  unknown
+>;
 
 export interface UploadedTravelRecordImage {
   objectKey: string;
