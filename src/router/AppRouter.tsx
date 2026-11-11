@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import Responsive from '../components/layout/Responsive';
 import AdminRoute from '../components/auth/AdminRoute';
 import BusinessRoute from '../components/auth/BusinessRoute';
 
@@ -50,6 +51,7 @@ import AdminCoursePlaceSelectionPage from '../pages/admin/course-registration/pl
 import AdminCourseVisitOrderPage from '../pages/admin/course-registration/visit-order';
 import AdminCourseRegistrationPreviewPage from '../pages/admin/course-registration/preview';
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
+import CourseBasicInfoDesktopPage from '../pages/local-recommendation/course-basic-info/desktop';
 import EventSelectionPage from '../pages/local-recommendation/event-selection';
 import PlaceSelectionPage from '../pages/local-recommendation/place-selection';
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
@@ -215,7 +217,12 @@ function AppRouter() {
         />
         <Route
           path="/local-recommendation/course-info"
-          element={<CourseBasicInfoPage />}
+          element={
+            <Responsive
+              desktop={<CourseBasicInfoDesktopPage />}
+              mobile={<CourseBasicInfoPage />}
+            />
+          }
         />
         <Route
           path="/local-recommendation/tag-selection"

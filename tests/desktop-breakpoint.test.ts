@@ -35,7 +35,9 @@ test('starts the desktop layout past the width where mobile scaling stops', () =
   assert.equal(getAppScale(DESKTOP_MIN_WIDTH), getAppScale(APP_MAX_WIDTH));
 });
 
-test('draws desktop views at 1:1 instead of scaling them up', () => {
-  assert.equal(DESKTOP_SCALE, 1);
-  assert.ok(getAppScale(DESKTOP_MIN_WIDTH) > DESKTOP_SCALE);
+test('pins a fixed scale for desktop instead of growing with the viewport', () => {
+  // 시안에서 읽은 비율(라벨 16→20 등). 뷰포트가 넓어져도 변하지 않아야
+  // 데스크톱 화면이 모니터 크기에 따라 커지지 않는다.
+  assert.equal(DESKTOP_SCALE, 20 / 16);
+  assert.equal(getAppScale(DESKTOP_MIN_WIDTH), getAppScale(4000));
 });
