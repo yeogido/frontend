@@ -28,6 +28,9 @@ function EventSelectionPage() {
     (state) => state.draft.visitOrder
   );
   const { day, dayIndex } = useSelectionDay();
+  const isEditingCourse = useLocalRecommendationStore(
+    (state) => state.draft.editingCourseId !== null
+  );
   const [query, setQuery] = useState('');
 
   // 이 일차에 담긴 행사만 보여준다. 행사 자체는 draft.festivals에 한 벌로
@@ -141,9 +144,12 @@ function EventSelectionPage() {
         onItemAdd={handleAddFestival}
         onBack={() =>
           navigate(
-            day > 1
-              ? `/local-recommendation/place-selection?day=${day - 1}`
-              : '/local-recommendation/tag-selection',
+            // 수정 흐름은 앞 일차를 되짚지 않고 수정 화면(허브)으로 돌아간다.
+            isEditingCourse
+              ? '/local-recommendation/visit-order-selection'
+              : day > 1
+                ? `/local-recommendation/place-selection?day=${day - 1}`
+                : '/local-recommendation/tag-selection',
             { replace: true }
           )
         }

@@ -26,16 +26,62 @@ const ADDRESS_SIZE = 12;
 const ADDRESS_LINE_HEIGHT = 16;
 const CARD_RADIUS = 12;
 const DRAG_HANDLE_SIZE = 44;
+// 삭제 버튼은 순서 배지와 같은 자리·같은 크기다(Figma 5998:28948).
+const REMOVE_BUTTON_SIZE = 28;
+const REMOVE_ICON_SIZE = 18;
 
 interface VisitEventCardProps {
   event: VisitEvent;
   order: number;
+  /** 빈 조각(<></>)을 주면 기본 손잡이도 그리지 않는다. */
   dragHandle?: ReactNode;
+  /** 편집 모드에서 순서 배지 대신 보여줄 삭제 버튼. */
+  leadingControl?: ReactNode;
 }
 
 interface SortableVisitEventItemProps {
   event: VisitEvent;
   order: number;
+  /** 주면 편집 모드로 본다 — 순서 배지가 삭제 버튼으로 바뀐다. */
+  onRemove?: (eventId: string) => void;
+  /** 수정 화면의 보기 모드처럼 순서를 바꿀 수 없는 상태. */
+  isDragDisabled?: boolean;
+}
+
+/** 편집 모드에서 일정을 코스에서 빼는 ⊖ 버튼 — 주황 원에 흰 빼기 기호. */
+function RemoveEventButton({
+  eventName,
+  onClick,
+}: {
+  eventName: string;
+  onClick: () => void;
+}) {
+  const scale = useGlobalScale();
+
+  return (
+    <button
+      type="button"
+      aria-label={`${eventName} 일정에서 삭제`}
+      onClick={onClick}
+      className="bg-main-5 flex shrink-0 items-center justify-center rounded-full text-white"
+      style={{
+        height: REMOVE_BUTTON_SIZE * scale,
+        width: REMOVE_BUTTON_SIZE * scale,
+      }}
+    >
+      <svg
+        viewBox="0 0 18 18"
+        aria-hidden="true"
+        className="fill-none stroke-current stroke-[2]"
+        style={{
+          height: REMOVE_ICON_SIZE * scale,
+          width: REMOVE_ICON_SIZE * scale,
+        }}
+      >
+        <path d="M4 9h10" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
 }
 
 function DragDots() {
@@ -65,21 +111,24 @@ export function VisitEventCard({
   event,
   order,
   dragHandle,
+  leadingControl,
 }: VisitEventCardProps) {
   const scale = useGlobalScale();
 
   return (
     <div className="flex items-center" style={{ gap: ROW_GAP * scale }}>
-      <span
-        className="bg-main-5 flex shrink-0 items-center justify-center rounded-full font-semibold text-white"
-        style={{
-          height: BADGE_SIZE * scale,
-          width: BADGE_SIZE * scale,
-          fontSize: BADGE_FONT_SIZE * scale,
-        }}
-      >
-        {order}
-      </span>
+      {leadingControl ?? (
+        <span
+          className="bg-main-5 flex shrink-0 items-center justify-center rounded-full font-semibold text-white"
+          style={{
+            height: BADGE_SIZE * scale,
+            width: BADGE_SIZE * scale,
+            fontSize: BADGE_FONT_SIZE * scale,
+          }}
+        >
+          {order}
+        </span>
+      )}
       <article
         className="bg-background flex min-w-0 flex-1 items-center"
         style={{
@@ -148,7 +197,12 @@ export function VisitEventCard({
   );
 }
 
-function VisitEventItem({ event, order }: SortableVisitEventItemProps) {
+function VisitEventItem({
+  event,
+  order,
+  onRemove,
+  isDragDisabled = false,
+}: SortableVisitEventItemProps) {
   const {
     attributes,
     isDragging,
@@ -157,7 +211,7 @@ function VisitEventItem({ event, order }: SortableVisitEventItemProps) {
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: event.id });
+  } = useSortable({ id: event.id, disabled: isDragDisabled });
   // dnd-kit이 주입하는 transform/transition만 담는다. scale() 등을 병합해 덮어쓰지 않는다.
   const dndStyle = {
     transform: CSS.Transform.toString(transform),
@@ -186,7 +240,19 @@ function VisitEventItem({ event, order }: SortableVisitEventItemProps) {
       style={dndStyle}
       className={isDragging ? 'opacity-0' : undefined}
     >
-      <VisitEventCard event={event} order={order} dragHandle={dragHandle} />
+      <VisitEventCard
+        event={event}
+        order={order}
+        dragHandle={isDragDisabled ? <></> : dragHandle}
+        leadingControl={
+          onRemove ? (
+            <RemoveEventButton
+              eventName={event.name}
+              onClick={() => onRemove(event.id)}
+            />
+          ) : undefined
+        }
+      />
     </li>
   );
 }

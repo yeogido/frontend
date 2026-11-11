@@ -11,12 +11,15 @@ import {
   getTotalDaysForDuration,
   isTotalDaysValidForDuration,
 } from '../../../utils/courseDetail.ts';
-import type { LocalRecommendationDraft } from '../../../store/localRecommendation.store';
+import type {
+  CourseDirtyFields,
+  LocalRecommendationDraft,
+} from '../../../store/localRecommendation.store';
 import type { VisitEvent } from './constants';
 import type { VisitEventTravelData } from './useVisitEventTravelData';
 
 /** 생성·수정 요청이 공유하는, 값이 반드시 있어야 하는 필드들. */
-type CourseCommonFields = Required<
+export type CourseCommonFields = Required<
   Pick<
     UpdateCourseRequest,
     | 'title'
@@ -252,8 +255,18 @@ export function buildCourseRequest(
 }
 
 /**
+ * PATCH로 보낼 영역이 하나라도 있는지. 아무것도 손대지 않았다면 요청 자체를
+ * 보내지 않는 쪽이 맞다 — 빈 PATCH는 서버에 아무 의미가 없고, courseItems를
+ * 괜히 전체 교체해 서버가 들고 있는 이동 시간을 날릴 위험만 있다.
+ */
+export function hasCourseUpdates(dirtyFields: CourseDirtyFields): boolean {
+  return dirtyFields.basicInfo || dirtyFields.tags || dirtyFields.courseItems;
+}
+
+/**
  * 수정 요청은 지역을 바꿀 수 없어(라이브 CourseUpdateRequest에 regionId
- * 필드 자체가 없다) neighborhood 없이 페이로드를 만든다.
+ * 필드 자체가 없다) neighborhood 없이 페이로드를 만든다. 또한 PATCH는 전달한
+ * 필드만 바꾸므로, 수정 흐름에서 실제로 손댄 영역(draft.dirtyFields)만 담는다.
  */
 export function buildLocalCourseUpdateRequest(
   draft: LocalRecommendationDraft,
@@ -267,13 +280,44 @@ export function buildLocalCourseUpdateRequest(
     return null;
   }
 
-  const { hashtagIds, ...rest } = common;
+  return buildCourseUpdatePayload(common, draft.dirtyFields, routeImageKey);
+}
 
+/**
+ * 손댄 영역만 골라 담는다. 일수(totalDays)는 기간을 바꿀 때도, 일정을 바꿀
+ * 때도 필요해서 두 경우 모두 함께 보낸다.
+ */
+export function buildCourseUpdatePayload(
+  common: CourseCommonFields,
+  dirtyFields: CourseDirtyFields,
+  routeImageKey?: string
+): UpdateCourseRequest {
   return {
-    ...rest,
-    // 전달하면 전체 교체라, 복원하지 못한 경우엔 아예 보내지 않아 서버의
-    // 기존 해시태그를 유지한다.
-    ...(hashtagIds.length > 0 ? { hashtagIds } : {}),
+    ...(dirtyFields.basicInfo
+      ? {
+          title: common.title,
+          description: common.description,
+          durationType: common.durationType,
+          transportType: common.transportType,
+          companionType: common.companionType,
+          monthStart: common.monthStart,
+          monthEnd: common.monthEnd,
+        }
+      : {}),
+    ...(dirtyFields.basicInfo || dirtyFields.courseItems
+      ? { totalDays: common.totalDays }
+      : {}),
+    ...(dirtyFields.tags
+      ? {
+          thumbnailKey: common.thumbnailKey,
+          // 전달하면 전체 교체라, 복원하지 못한 경우엔 아예 보내지 않아
+          // 서버의 기존 해시태그를 유지한다.
+          ...(common.hashtagIds.length > 0
+            ? { hashtagIds: common.hashtagIds }
+            : {}),
+        }
+      : {}),
+    ...(dirtyFields.courseItems ? { courseItems: common.courseItems } : {}),
     ...(routeImageKey ? { routeImageKey } : {}),
   };
 }

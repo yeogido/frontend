@@ -6,6 +6,7 @@ import { useLocalRecommendationStore } from '../../../store/localRecommendation.
 import {
   SortableVisitEventList,
   SubmitCourseButton,
+  VisitOrderEditToolbar,
   VisitOrderHeader,
 } from './components';
 import { useVisitOrderSelection } from './hooks';
@@ -22,6 +23,14 @@ function VisitOrderSelectionPage() {
     activeEvent,
     activeEventOrder,
     sensors,
+    isEditingCourse,
+    isEditMode,
+    canReorder,
+    durationLabel,
+    isAddDayDisabled,
+    toggleEditMode,
+    handleRemoveEvent,
+    handleAddDay,
     handleDragStart,
     handleDragCancel,
     handleDragOver,
@@ -30,9 +39,6 @@ function VisitOrderSelectionPage() {
     isSubmitting,
     submitError,
   } = useVisitOrderSelection();
-  const isEditing = useLocalRecommendationStore(
-    (state) => state.draft.editingCourseId !== null
-  );
   const totalDays = useLocalRecommendationStore(
     (state) => state.draft.totalDays
   );
@@ -48,6 +54,21 @@ function VisitOrderSelectionPage() {
     }
   };
 
+  // 수정 흐름에서는 이 화면이 허브다 — 일차별 일정 추가는 그 일차의 장소
+  // 선택으로 보냈다가 다시 여기로 돌아온다(선택 화면이 수정 중임을 보고
+  // 다음 일차로 넘어가지 않는다).
+  const handleAddSchedule = (dayIndex: number) =>
+    navigate(`/local-recommendation/event-selection?day=${dayIndex + 1}`);
+
+  // 수정 흐름은 앞 단계를 일차별로 되짚지 않고 키워드 화면으로 돌아간다.
+  const handleBack = () =>
+    navigate(
+      isEditingCourse
+        ? '/local-recommendation/tag-selection'
+        : `/local-recommendation/place-selection?day=${Math.max(totalDays, 1)}`,
+      { replace: true }
+    );
+
   return (
     <ResponsivePageShell
       mode="standalone"
@@ -56,20 +77,27 @@ function VisitOrderSelectionPage() {
       className="bg-white"
     >
       <main className="flex min-w-0 flex-1 flex-col">
-        <VisitOrderHeader
-          onBack={() =>
-            navigate(
-              `/local-recommendation/place-selection?day=${Math.max(totalDays, 1)}`,
-              { replace: true }
-            )
-          }
-        />
+        <VisitOrderHeader onBack={handleBack} />
+
+        {isEditingCourse ? (
+          <VisitOrderEditToolbar
+            durationLabel={durationLabel}
+            isEditMode={isEditMode}
+            onToggleEditMode={toggleEditMode}
+          />
+        ) : null}
 
         <SortableVisitEventList
           visitEventsByDay={visitEventsByDay}
           activeEvent={activeEvent}
           activeEventOrder={activeEventOrder}
           sensors={sensors}
+          canReorder={canReorder}
+          isEditMode={isEditingCourse && isEditMode}
+          onRemoveEvent={handleRemoveEvent}
+          onAddSchedule={handleAddSchedule}
+          onAddDay={handleAddDay}
+          isAddDayDisabled={isAddDayDisabled}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
           onDragCancel={handleDragCancel}
@@ -78,9 +106,13 @@ function VisitOrderSelectionPage() {
 
         <SubmitCourseButton
           onSubmit={handleSubmit}
-          disabled={isSubmitting || visitEvents.length === 0}
+          // 편집 중에는 '완료'로 편집을 닫은 다음 저장하게 한다.
+          disabled={
+            isSubmitting ||
+            visitEvents.length === 0 ||
+            (isEditingCourse && isEditMode)
+          }
           isSubmitting={isSubmitting}
-          isEditing={isEditing}
         />
         {submitError ? (
           <p role="alert" className="text-main-5 mt-2 text-center text-sm">
