@@ -55,6 +55,7 @@ import CourseBasicInfoDesktopPage from '../pages/local-recommendation/course-bas
 import EventSelectionPage from '../pages/local-recommendation/event-selection';
 import PlaceSelectionPage from '../pages/local-recommendation/place-selection';
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
+import TagSelectionDesktopPage from '../pages/local-recommendation/tag-selection/desktop';
 import TravelRecordPage from '../pages/travel-record';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
 import TravelRecordDetailPage from '../pages/travel-record/detail';
@@ -226,7 +227,12 @@ function AppRouter() {
         />
         <Route
           path="/local-recommendation/tag-selection"
-          element={<TagSelectionPage />}
+          element={
+            <Responsive
+              desktop={<TagSelectionDesktopPage />}
+              mobile={<TagSelectionPage />}
+            />
+          }
         />
 
         <Route

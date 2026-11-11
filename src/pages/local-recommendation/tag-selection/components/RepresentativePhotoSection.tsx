@@ -3,6 +3,11 @@ import { IoImage, IoTrashOutline } from 'react-icons/io5';
 
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
+import {
+  COVER_PHOTO_ACCEPT,
+  isSupportedCoverPhoto,
+  UNSUPPORTED_COVER_PHOTO_MESSAGE,
+} from '../coverPhotoFile';
 
 // Figma 390 디자인 기준 리터럴 px
 const SECTION_MARGIN_TOP = 35;
@@ -24,17 +29,6 @@ const SUBTEXT_MARGIN_TOP = 12;
 const SUBTEXT_SIZE = 12;
 const ERROR_MARGIN_TOP = 8;
 const ERROR_TEXT_SIZE = 12;
-
-// 백엔드 presigned-url 발급이 실제로 받아주는 이미지 타입만 허용한다
-// (pages/travel-record/photo-selection/photoValidation.ts와 동일한 목록).
-// 예전엔 "image/*"만 확인해서 HEIC 등 다른 이미지 형식도 통과시켰는데,
-// 그런 파일은 presigned-url 요청 자체가 "허용되지 않은 Content-Type"으로
-// 거부돼 폼을 다 채운 뒤 등록 마지막 단계에서야 실패로 드러났다.
-const SUPPORTED_IMAGE_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
 
 interface RepresentativePhotoSectionProps {
   /**
@@ -58,8 +52,8 @@ function RepresentativePhotoSection({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
 
-    if (file && !SUPPORTED_IMAGE_TYPES.has(file.type)) {
-      setErrorMessage('JPG, PNG, WebP 형식의 이미지만 등록할 수 있어요.');
+    if (file && !isSupportedCoverPhoto(file)) {
+      setErrorMessage(UNSUPPORTED_COVER_PHOTO_MESSAGE);
       event.target.value = '';
       return;
     }
@@ -92,7 +86,7 @@ function RepresentativePhotoSection({
         ref={inputRef}
         id={inputId}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept={COVER_PHOTO_ACCEPT}
         onChange={handleFileChange}
         className="sr-only"
       />
