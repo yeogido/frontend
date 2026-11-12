@@ -7,7 +7,7 @@ import {
 
 import oheart from '../../../assets/icons/oheart.svg';
 import { toContentTagIds } from '../../../utils/contentTags';
-import DesktopFilterDropdown from '../../my-activity/desktop/DesktopFilterDropdown';
+import DesktopFilterDropdown from '../../../components/layout/desktop/DesktopFilterDropdown';
 import MyActivityListCard, {
   type ActivityInfoItem,
 } from '../../my-activity/desktop/MyActivityListCard';

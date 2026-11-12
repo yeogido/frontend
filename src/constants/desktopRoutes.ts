@@ -19,6 +19,9 @@ export const DESKTOP_VIEW_PATHS = [
   '/local-course/detail/:courseId',
   '/likes',
   '/my-posts',
+  '/festival',
+  '/festival/detail/:festivalId',
+  '/festival/detail/:festivalId/courses',
 ] as const;
 
 /** :courseId 같은 경로 파라미터가 있는 패턴도 맞춘다. 끝까지 일치해야 한다. */

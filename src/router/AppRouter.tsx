@@ -22,6 +22,7 @@ import LocalCoursePopularPage from '../pages/local-course/popular';
 import LocalCourseRecentPage from '../pages/local-course/recent';
 import LocalCourseSearchPage from '../pages/local-course/search';
 import FestivalPage from '../pages/festival';
+import FestivalDesktopPage from '../pages/festival/desktop';
 import FestivalOngoingPage from '../pages/festival/ongoing';
 import FestivalRecentPage from '../pages/festival/recent';
 import FestivalSearchPage from '../pages/festival/search';
@@ -72,7 +73,9 @@ import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
+import FestivalDetailDesktopPage from '../pages/detail/festival/desktop';
 import FestivalRelatedCoursesPage from '../pages/detail/festival/courses';
+import FestivalCoursesDesktopPage from '../pages/detail/festival/courses/desktop';
 import RegionInfoPage from '../pages/region-info';
 import LikesPage from '../pages/likes';
 import LikesDesktopPage from '../pages/likes/desktop';
@@ -103,7 +106,15 @@ function AppRouter() {
           element={<LocalCourseSearchPage />}
         />
 
-        <Route path="/festival" element={<FestivalPage />} />
+        <Route
+          path="/festival"
+          element={
+            <Responsive
+              desktop={<FestivalDesktopPage />}
+              mobile={<FestivalPage />}
+            />
+          }
+        />
 
         <Route path="/festival/ongoing" element={<FestivalOngoingPage />} />
 
@@ -113,7 +124,12 @@ function AppRouter() {
 
         <Route
           path="/festival/detail/:festivalId/courses"
-          element={<FestivalRelatedCoursesPage />}
+          element={
+            <Responsive
+              desktop={<FestivalCoursesDesktopPage />}
+              mobile={<FestivalRelatedCoursesPage />}
+            />
+          }
         />
 
         <Route
@@ -344,7 +360,12 @@ function AppRouter() {
       />
       <Route
         path="/festival/detail/:festivalId"
-        element={<FestivalDetailPage />}
+        element={
+          <Responsive
+            desktop={<FestivalDetailDesktopPage />}
+            mobile={<FestivalDetailPage />}
+          />
+        }
       />
       <Route path="/review" element={<ReviewPage />} />
 
