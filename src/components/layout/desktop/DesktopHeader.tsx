@@ -28,12 +28,14 @@ function DesktopHeader() {
 
   return (
     <header className="border-gray-2 w-full border-b bg-white">
-      <div className="mx-auto flex max-w-[1440px] items-center justify-between px-[120px] py-[20px]">
-        <div className="flex items-center gap-[48px]">
-          <Logo />
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-[16px] px-[clamp(24px,8.33vw,120px)] py-[20px]">
+        <div className="flex min-w-0 items-center gap-[clamp(16px,3.33vw,48px)]">
+          <div className="shrink-0">
+            <Logo />
+          </div>
 
           <nav aria-label="주요 메뉴">
-            <ul className="flex items-center gap-[40px]">
+            <ul className="flex items-center gap-[clamp(12px,2.78vw,40px)] whitespace-nowrap">
               {NAV_ITEMS.map((item) => (
                 <li key={item.to}>
                   <NavLink
@@ -52,13 +54,14 @@ function DesktopHeader() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-[24px]">
+        <div className="flex shrink-0 items-center gap-[16px]">
           <button
             type="button"
             onClick={() => navigate('/course-region-search?from=home')}
-            className="border-gray-2 flex w-[282px] items-center justify-between rounded-full border bg-white px-[16px] py-[10px]"
+            aria-label="검색 화면으로 이동"
+            className="border-gray-2 flex w-[clamp(150px,19.58vw,282px)] items-center justify-between rounded-full border bg-white px-[16px] py-[10px] max-[1199px]:w-[44px] max-[1199px]:justify-center max-[1199px]:px-[10px]"
           >
-            <span className="text-gray-4 text-[14px]">
+            <span className="text-gray-4 text-[14px] max-[1199px]:hidden">
               검색어를 입력해 주세요
             </span>
             <img src={searchIcon} alt="" className="size-[18px]" />

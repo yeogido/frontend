@@ -50,5 +50,6 @@ test('desktop routes use the same trailing slash and exact matching as the route
     hasDesktopView('/local-recommendation/course-info/extra'),
     false
   );
-  assert.equal(hasDesktopView('/local-course'), false);
+  assert.equal(hasDesktopView('/local-course'), true);
+  assert.equal(hasDesktopView('/local-course/popular'), true);
 });
