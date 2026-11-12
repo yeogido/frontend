@@ -50,6 +50,7 @@ function LikesDesktopPage() {
     handleUnlike,
     loadMoreRef,
     isError,
+    refetch,
     hasEmptyResult,
   } = useLikesPage();
 
@@ -127,12 +128,21 @@ function LikesDesktopPage() {
         ) : null}
 
         {isError ? (
-          <p
-            role="alert"
-            className="text-main-5 mt-[24px] text-center text-[16px] font-medium"
-          >
-            좋아요 목록을 불러오지 못했어요.
-          </p>
+          <div className="mt-[24px] flex flex-col items-center gap-[16px]">
+            <p
+              role="alert"
+              className="text-main-5 text-center text-[16px] font-medium"
+            >
+              좋아요 목록을 불러오지 못했어요.
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="border-gray-2 text-gray-5 rounded-full border px-[16px] py-[8px] text-[16px] font-medium"
+            >
+              다시 시도
+            </button>
+          </div>
         ) : null}
 
         <div ref={loadMoreRef} className="h-[40px]" aria-hidden="true" />

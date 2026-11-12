@@ -27,9 +27,9 @@ interface MyActivityListCardProps {
 
 function InfoText({ icon: Icon, text }: ActivityInfoItem) {
   return (
-    <span className="text-gray-4 flex items-center gap-[2px] text-[14px] whitespace-nowrap">
-      <Icon aria-hidden="true" className="text-[14px]" />
-      {text}
+    <span className="text-gray-4 flex min-w-0 items-center gap-[2px] text-[14px]">
+      <Icon aria-hidden="true" className="shrink-0 text-[14px]" />
+      <span className="truncate">{text}</span>
     </span>
   );
 }
@@ -80,7 +80,7 @@ function MyActivityListCard({
             <span className="truncate text-[18px] font-medium text-black">
               {title}
             </span>
-            <span className="flex items-center gap-[8px]">
+            <span className="flex min-w-0 items-center gap-[8px]">
               {info.map((item) => (
                 <InfoText key={item.text} {...item} />
               ))}

@@ -12,13 +12,10 @@ function MainLayout() {
   const isDesktop = useIsDesktop();
   const { pathname } = useLocation();
 
-  // 데스크톱 뷰는 자기 헤더(DesktopHeader)를 그리므로 모바일 헤더·사이드바를 뺀다.
+  // 데스크톱 뷰는 자기 헤더(DesktopHeader)와 <main>(DesktopPageShell)을 그리므로
+  // 모바일 헤더·사이드바와 바깥 <main>을 뺀다 — <main>이 중첩되지 않게 한다.
   if (isDesktop && hasDesktopView(pathname)) {
-    return (
-      <main>
-        <Outlet />
-      </main>
-    );
+    return <Outlet />;
   }
 
   return (
