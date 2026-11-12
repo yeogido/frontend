@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import menu from '../../assets/icons/menu.svg';
+import personAdd from '../../assets/icons/person-add-rounded.svg';
 import search from '../../assets/icons/search.svg';
 
 import { Logo } from '../common';
@@ -33,6 +34,8 @@ function Header({ onMenuClick }: HeaderProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isProfilePage = pathname === '/profile';
+  const isFriendsPage =
+    pathname === '/friends' || pathname.startsWith('/friends/');
   const isTransparentHeaderPage = TRANSPARENT_HEADER_PATHS.includes(pathname);
 
   const [isAtTop, setIsAtTop] = useState(true);
@@ -73,6 +76,10 @@ function Header({ onMenuClick }: HeaderProps) {
     navigate('/course-region-search?from=home');
   };
 
+  const handleFriendRequestClick = () => {
+    navigate('/friends/requests');
+  };
+
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-colors duration-200 ${
@@ -105,8 +112,10 @@ function Header({ onMenuClick }: HeaderProps) {
           >
             <button
               type="button"
-              onClick={handleSearchClick}
-              aria-label="검색"
+              onClick={
+                isFriendsPage ? handleFriendRequestClick : handleSearchClick
+              }
+              aria-label={isFriendsPage ? '친구 요청' : '검색'}
               className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
               style={{
                 width: MIN_TOUCH_TARGET,
@@ -115,12 +124,12 @@ function Header({ onMenuClick }: HeaderProps) {
               }}
             >
               <img
-                src={search}
+                src={isFriendsPage ? personAdd : search}
                 alt=""
                 className={`transition-[filter] duration-200 ${transparentIconClassName}`}
                 style={{
-                  width: ICON_SIZE * scale,
-                  height: ICON_SIZE * scale,
+                  width: (isFriendsPage ? ICON_FRAME_SIZE : ICON_SIZE) * scale,
+                  height: (isFriendsPage ? ICON_FRAME_SIZE : ICON_SIZE) * scale,
                   transform: `translateX(${hitTargetOffset}px)`,
                 }}
               />
