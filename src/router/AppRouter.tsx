@@ -75,7 +75,9 @@ import FestivalDetailPage from '../pages/detail/festival';
 import FestivalRelatedCoursesPage from '../pages/detail/festival/courses';
 import RegionInfoPage from '../pages/region-info';
 import LikesPage from '../pages/likes';
+import LikesDesktopPage from '../pages/likes/desktop';
 import MyPostsPage from '../pages/my-posts';
+import MyPostsDesktopPage from '../pages/my-posts/desktop';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
 import CourseReviewsPage from '../pages/course-reviews';
 import ProfilePage from '../pages/profile';
@@ -187,11 +189,27 @@ function AppRouter() {
             path="/travel-record/:folderId"
             element={<TravelRecordDetailPage />}
           />
-          <Route path="/likes" element={<LikesPage />} />
+          <Route
+            path="/likes"
+            element={
+              <Responsive
+                desktop={<LikesDesktopPage />}
+                mobile={<LikesPage />}
+              />
+            }
+          />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/friends/requests" element={<FriendRequestsPage />} />
-          <Route path="/my-posts" element={<MyPostsPage />} />
+          <Route
+            path="/my-posts"
+            element={
+              <Responsive
+                desktop={<MyPostsDesktopPage />}
+                mobile={<MyPostsPage />}
+              />
+            }
+          />
         </Route>
       </Route>
 
