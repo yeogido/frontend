@@ -1,12 +1,23 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useIsFetching } from '@tanstack/react-query';
 
 import { getApiErrorMessage } from '../../apis/common';
 import { LoadingSpinner } from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
 import { useToast } from '../../components/toast';
-import { useDeleteFriend, useFriends } from '../../hooks/useFriends';
+import { useFriendSearch } from '../../hooks/useFriendSearch';
+import {
+  FRIENDS_QUERY_PREFIX,
+  useDeleteFriend,
+  useFriends,
+} from '../../hooks/useFriends';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
+import {
+  mergeFriendSearchResults,
+  selectNextPageSource,
+} from '../../hooks/utils/friendSearchPages';
+import { useAuthStore } from '../../store/auth.store';
 import type { FriendSummary } from '../../types/friend.type';
 import {
   FriendDeleteDialog,
@@ -14,17 +25,17 @@ import {
   FriendListMessage,
   FriendListSkeleton,
   FriendSearchBar,
+  FriendSearchResultRow,
 } from './components';
 import { useDebouncedValue } from './hooks/useDebouncedValue';
+import { useFriendSearchActions } from './hooks/useFriendSearchActions';
 import { isFriendAlreadyDeletedError } from './utils/friendDeleteError';
 import { toFriendKeyword } from './utils/friendKeyword';
-import {
-  canLoadMoreAutomatically,
-  shouldShowLoadMoreError,
-} from './utils/friendListStatus';
+import { shouldShowLoadMoreError } from './utils/friendListStatus';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const LOAD_MORE_ERROR_MESSAGE = '친구를 더 불러오지 못했어요.';
+const SEARCH_ERROR_MESSAGE = '새로운 친구를 불러오지 못했어요.';
 
 // 모든 수치는 Figma 390 디자인 기준 리터럴 px.
 const PAGE_TOP_PADDING = 12;
@@ -52,6 +63,14 @@ function FriendsPage() {
     isFetchingNextPage,
     isFetchNextPageError,
   } = useFriends(keyword);
+  const userId = useAuthStore((state) => state.userId);
+  const hasKeyword = toFriendKeyword(keyword) !== undefined;
+  // 새 친구 검색은 친구 목록과 병렬로 미리 받고, 친구 목록이 소진된 뒤에 이어 보여 준다.
+  const search = useFriendSearch(keyword);
+  const searchActions = useFriendSearchActions();
+  // useFriends는 재조회 여부를 알려 주지 않아, 친구 쪽 조회가 진행 중인지는 캐시에서 본다.
+  const isFriendsFetching =
+    useIsFetching({ queryKey: [FRIENDS_QUERY_PREFIX, userId] }) > 0;
   const { showToast } = useToast();
   const deleteFriend = useDeleteFriend();
   const [deleteTarget, setDeleteTarget] = useState<FriendSummary | null>(null);
@@ -95,14 +114,26 @@ function FriendsPage() {
     }
   };
 
+  const nextPageSource = selectNextPageSource({
+    friends: { isPending, isError, hasNextPage: Boolean(hasNextPage) },
+    search: {
+      isError: search.isError,
+      hasNextPage: hasKeyword && Boolean(search.hasNextPage),
+    },
+    isAnyFetching: isFriendsFetching || (hasKeyword && search.isFetching),
+  });
+  const { fetchNextPage: fetchNextSearchPage } = search;
+
   const handleLoadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
+    if (nextPageSource === 'friends') {
       void fetchNextPage();
+    } else if (nextPageSource === 'search') {
+      void fetchNextSearchPage();
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, fetchNextSearchPage, nextPageSource]);
 
   const loadMoreRef = useInfiniteScroll({
-    enabled: canLoadMoreAutomatically({ hasNextPage, isPending, isError }),
+    enabled: nextPageSource !== null,
     onIntersect: handleLoadMore,
   });
 
@@ -116,6 +147,23 @@ function FriendsPage() {
     setQuery('');
     setKeyword('');
   };
+
+  // 친구 목록이 소진된 뒤에만 새 친구 결과를 이어 붙인다.
+  const showNewFriends = hasKeyword && !isPending && !hasNextPage;
+  const newFriends = useMemo(
+    () =>
+      showNewFriends ? mergeFriendSearchResults(friends, search.items) : [],
+    [friends, search.items, showNewFriends]
+  );
+  // 다시 시도하는 동안(isFetching)은 안내 대신 스피너가 보이게 가린다.
+  const showSearchError =
+    showNewFriends && search.isError && !search.isFetching;
+  const retrySearch = () =>
+    void (search.isFetchNextPageError
+      ? search.fetchNextPage()
+      : search.refetch());
+  const isSearchLoading =
+    showNewFriends && (search.isPending || search.isFetching);
 
   let content: ReactNode;
 
@@ -133,29 +181,69 @@ function FriendsPage() {
         onRetry={() => void refetch()}
       />
     );
-  } else if (friends.length === 0) {
-    content = (
-      <FriendListMessage
-        variant={toFriendKeyword(keyword) ? 'search-empty' : 'empty'}
-        scale={scale}
-      />
-    );
+  } else if (friends.length === 0 && newFriends.length === 0) {
+    if (!hasKeyword) {
+      content = <FriendListMessage variant="empty" scale={scale} />;
+    } else if (showSearchError) {
+      content = (
+        <FriendListMessage
+          variant="error"
+          scale={scale}
+          errorMessage={SEARCH_ERROR_MESSAGE}
+          onRetry={retrySearch}
+        />
+      );
+    } else if (isSearchLoading) {
+      content = <FriendListSkeleton scale={scale} />;
+    } else {
+      content = <FriendListMessage variant="no-result" scale={scale} />;
+    }
   } else {
     content = (
-      <ul
-        aria-label="친구 목록"
-        className="flex flex-col"
-        style={{ gap: LIST_GAP * scale }}
-      >
-        {friends.map((friend) => (
-          <FriendListItem
-            key={friend.userId}
-            friend={friend}
+      <div className="flex flex-col" style={{ gap: LIST_GAP * scale }}>
+        {friends.length > 0 ? (
+          <ul
+            aria-label="친구 목록"
+            className="flex flex-col"
+            style={{ gap: LIST_GAP * scale }}
+          >
+            {friends.map((friend) => (
+              <FriendListItem
+                key={friend.userId}
+                friend={friend}
+                scale={scale}
+                onDeleteClick={handleDeleteClick}
+              />
+            ))}
+          </ul>
+        ) : null}
+        {newFriends.length > 0 ? (
+          <ul
+            aria-label="새로운 친구 검색 결과"
+            className="flex flex-col"
+            style={{ gap: LIST_GAP * scale }}
+          >
+            {newFriends.map((friend) => (
+              <FriendSearchResultRow
+                key={friend.userId}
+                friend={friend}
+                scale={scale}
+                isPending={searchActions.pendingIds.has(friend.userId)}
+                onSendRequest={(target) => void searchActions.send(target)}
+                onAccept={(target) => void searchActions.accept(target)}
+              />
+            ))}
+          </ul>
+        ) : null}
+        {showSearchError ? (
+          <FriendListMessage
+            variant="load-more-error"
             scale={scale}
-            onDeleteClick={handleDeleteClick}
+            errorMessage={SEARCH_ERROR_MESSAGE}
+            onRetry={retrySearch}
           />
-        ))}
-      </ul>
+        ) : null}
+      </div>
     );
   }
 
@@ -203,7 +291,7 @@ function FriendsPage() {
       ) : null}
 
       <div ref={loadMoreRef} aria-hidden="true" />
-      {isFetchingNextPage ? (
+      {isFetchingNextPage || search.isFetchingNextPage ? (
         <LoadingSpinner label="친구 목록을 더 불러오는 중" />
       ) : null}
       <div style={{ height: LOAD_MORE_SPACE * scale }} aria-hidden="true" />
