@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import Responsive from '../components/layout/Responsive';
 import AdminRoute from '../components/auth/AdminRoute';
 import BusinessRoute from '../components/auth/BusinessRoute';
 
@@ -32,6 +33,7 @@ import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
 import LocalBusinessDetailPage from '../pages/detail/local-business';
 import LocalRecommendationPage from '../pages/local-recommendation';
+import RegionSelectionDesktopPage from '../pages/local-recommendation/region-selection/desktop';
 import AdminPage from '../pages/admin';
 import AdminFestivalsOngoingPage from '../pages/admin/festivals/ongoing';
 import AdminFestivalsRecentPage from '../pages/admin/festivals/recent';
@@ -50,9 +52,13 @@ import AdminCoursePlaceSelectionPage from '../pages/admin/course-registration/pl
 import AdminCourseVisitOrderPage from '../pages/admin/course-registration/visit-order';
 import AdminCourseRegistrationPreviewPage from '../pages/admin/course-registration/preview';
 import CourseBasicInfoPage from '../pages/local-recommendation/course-basic-info';
+import CourseBasicInfoDesktopPage from '../pages/local-recommendation/course-basic-info/desktop';
 import EventSelectionPage from '../pages/local-recommendation/event-selection';
+import EventSelectionDesktopPage from '../pages/local-recommendation/event-selection/desktop';
 import PlaceSelectionPage from '../pages/local-recommendation/place-selection';
+import PlaceSelectionDesktopPage from '../pages/local-recommendation/place-selection/desktop';
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
+import TagSelectionDesktopPage from '../pages/local-recommendation/tag-selection/desktop';
 import TravelRecordPage from '../pages/travel-record';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
 import TravelRecordDetailPage from '../pages/travel-record/detail';
@@ -60,6 +66,7 @@ import TravelRecordFolderDecorationPage from '../pages/travel-record/folder-deco
 import TravelRecordPhotoSelectionPage from '../pages/travel-record/photo-selection';
 import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
 import VisitOrderSelectionPage from '../pages/local-recommendation/visit-order-selection';
+import VisitOrderSelectionDesktopPage from '../pages/local-recommendation/visit-order-selection/desktop';
 import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
@@ -211,15 +218,30 @@ function AppRouter() {
         <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route
           path="/local-recommendation"
-          element={<LocalRecommendationPage />}
+          element={
+            <Responsive
+              desktop={<RegionSelectionDesktopPage />}
+              mobile={<LocalRecommendationPage />}
+            />
+          }
         />
         <Route
           path="/local-recommendation/course-info"
-          element={<CourseBasicInfoPage />}
+          element={
+            <Responsive
+              desktop={<CourseBasicInfoDesktopPage />}
+              mobile={<CourseBasicInfoPage />}
+            />
+          }
         />
         <Route
           path="/local-recommendation/tag-selection"
-          element={<TagSelectionPage />}
+          element={
+            <Responsive
+              desktop={<TagSelectionDesktopPage />}
+              mobile={<TagSelectionPage />}
+            />
+          }
         />
 
         <Route
@@ -257,7 +279,12 @@ function AppRouter() {
         />
         <Route
           path="/local-recommendation/visit-order-selection"
-          element={<VisitOrderSelectionPage />}
+          element={
+            <Responsive
+              desktop={<VisitOrderSelectionDesktopPage />}
+              mobile={<VisitOrderSelectionPage />}
+            />
+          }
         />
       </Route>
 
@@ -339,12 +366,22 @@ function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route
           path="/local-recommendation/event-selection"
-          element={<EventSelectionPage />}
+          element={
+            <Responsive
+              desktop={<EventSelectionDesktopPage />}
+              mobile={<EventSelectionPage />}
+            />
+          }
         />
 
         <Route
           path="/local-recommendation/place-selection"
-          element={<PlaceSelectionPage />}
+          element={
+            <Responsive
+              desktop={<PlaceSelectionDesktopPage />}
+              mobile={<PlaceSelectionPage />}
+            />
+          }
         />
       </Route>
 
