@@ -1,7 +1,4 @@
-import {
-  apiClient,
-  normalizeApiError,
-} from './common';
+import { apiClient, normalizeApiError } from './common';
 import { deleteTravelRecordWithClient } from './travelRecordsClient.ts';
 
 import type {
@@ -18,17 +15,53 @@ import type {
   TravelRecordInvitationCreateResponse,
   TravelRecordVisibilityUpdateRequest,
   TravelRecordVisibilityUpdateResponse,
+  TravelRecordInvitationListParams,
+  TravelRecordInvitationListResponse,
+  TravelRecordInvitationRespondRequest,
+  TravelRecordInvitationRespondResponse,
 } from '../types/travelRecord.type';
+
+export async function getTravelRecordInvitations(
+  params: TravelRecordInvitationListParams = {}
+): Promise<TravelRecordInvitationListResponse> {
+  try {
+    const { data } = await apiClient.get<TravelRecordInvitationListResponse>(
+      '/travel-records/invitations',
+      { params }
+    );
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function respondToTravelRecordInvitation(
+  invitationId: number,
+  request: TravelRecordInvitationRespondRequest
+): Promise<TravelRecordInvitationRespondResponse> {
+  try {
+    const { data } =
+      await apiClient.patch<TravelRecordInvitationRespondResponse>(
+        `/travel-records/invitations/${invitationId}`,
+        request
+      );
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 /** 공개범위만 변경한다. 사진·스티커를 다시 저장하거나 FRIENDS 전환을 하지 않는다. */
 export async function updateTravelRecordVisibility(
   travelRecordId: number,
-  request: TravelRecordVisibilityUpdateRequest,
+  request: TravelRecordVisibilityUpdateRequest
 ): Promise<TravelRecordVisibilityUpdateResponse> {
   try {
-    const { data } = await apiClient.patch<TravelRecordVisibilityUpdateResponse>(
-      `/travel-records/${travelRecordId}/visibility`, request,
-    );
+    const { data } =
+      await apiClient.patch<TravelRecordVisibilityUpdateResponse>(
+        `/travel-records/${travelRecordId}/visibility`,
+        request
+      );
     return data;
   } catch (error) {
     throw normalizeApiError(error);
@@ -38,12 +71,12 @@ export async function updateTravelRecordVisibility(
 /** FRIENDS 앨범 참여 초대만 생성한다. 앨범 생성이나 참여 수락은 수행하지 않는다. */
 export async function inviteTravelRecordFriends(
   travelRecordId: number,
-  inviteeUserIds: number[],
+  inviteeUserIds: number[]
 ): Promise<TravelRecordInvitationCreateResponse> {
   try {
     const { data } = await apiClient.post<TravelRecordInvitationCreateResponse>(
       `/travel-records/${travelRecordId}/invitations`,
-      { inviteeUserIds },
+      { inviteeUserIds }
     );
     return data;
   } catch (error) {
@@ -66,12 +99,12 @@ export async function getTravelRecordMap(
 }
 
 export async function getTravelRecords(
-  params: TravelRecordListParams = {},
+  params: TravelRecordListParams = {}
 ): Promise<TravelRecordListResponse> {
   try {
     const { data } = await apiClient.get<TravelRecordListResponse>(
       '/travel-records',
-      { params },
+      { params }
     );
 
     return data;
@@ -83,7 +116,7 @@ export async function getTravelRecords(
 export async function getTravelRecordYears(): Promise<TravelRecordYearListResponse> {
   try {
     const { data } = await apiClient.get<TravelRecordYearListResponse>(
-      '/travel-records/years',
+      '/travel-records/years'
     );
 
     return data;
@@ -93,11 +126,11 @@ export async function getTravelRecordYears(): Promise<TravelRecordYearListRespon
 }
 
 export async function getTravelRecordDetail(
-  travelRecordId: number,
+  travelRecordId: number
 ): Promise<TravelRecordDetailResponse> {
   try {
     const { data } = await apiClient.get<TravelRecordDetailResponse>(
-      `/travel-records/${travelRecordId}`,
+      `/travel-records/${travelRecordId}`
     );
 
     return data;
@@ -107,12 +140,12 @@ export async function getTravelRecordDetail(
 }
 
 export async function createTravelRecord(
-  request: TravelRecordCreateRequest,
+  request: TravelRecordCreateRequest
 ): Promise<TravelRecordCreateResponse> {
   try {
     const { data } = await apiClient.post<TravelRecordCreateResponse>(
       '/travel-records',
-      request,
+      request
     );
 
     return data;
@@ -123,12 +156,12 @@ export async function createTravelRecord(
 
 export async function updateTravelRecord(
   travelRecordId: number,
-  request: TravelRecordUpdateRequest,
+  request: TravelRecordUpdateRequest
 ): Promise<TravelRecordUpdateResponse> {
   try {
     const { data } = await apiClient.patch<TravelRecordUpdateResponse>(
       `/travel-records/${travelRecordId}`,
-      request,
+      request
     );
 
     return data;
@@ -138,7 +171,7 @@ export async function updateTravelRecord(
 }
 
 export async function deleteTravelRecordById(
-  travelRecordId: number,
+  travelRecordId: number
 ): Promise<void> {
   try {
     await deleteTravelRecordWithClient(apiClient, travelRecordId);
