@@ -103,7 +103,9 @@ async function setup(
       visibilityChanges.push(req.postDataJSON());
       if (failVisibility)
         return fail('TRAVEL_RECORD4091', '다른 변경사항이 반영되었습니다.');
-      detail.visibility = 'PUBLIC';
+      detail.visibility = (
+        req.postDataJSON() as { visibility: string }
+      ).visibility;
       detail.version += 1;
       return json({
         travelRecordId: 20,
@@ -143,6 +145,9 @@ async function setup(
     if (url.pathname.endsWith('/travel-records/20')) {
       detailReads += 1;
       return json(detail);
+    }
+    if (url.pathname.endsWith('/travel-records') && req.method() === 'GET') {
+      return json({ ...empty, items: [detail] });
     }
     if (url.pathname.endsWith('/friends')) {
       if (emptyFriends) return json(empty);
@@ -310,43 +315,117 @@ test('생성자는 기존 메뉴에서 상세의 버전으로 전체공개 전�
   expect(app.invites).toHaveLength(0);
 });
 
-test('공개 전환 버전 충돌은 자동 재시도하거나 성공 처리하지 않는다', async ({
+for (const visibility of ['PRIVATE', 'PUBLIC', 'FRIENDS']) {
+  test(`${visibility} 목록 카드에 공개범위에 맞는 아이콘을 표시한다`, async ({
+    page,
+  }, testInfo) => {
+    await setup(page, { visibility });
+    await page.goto('/travel-record', { waitUntil: 'domcontentloaded' });
+    const title = page.getByRole('heading', { name: /부산$/ });
+    await expect(title).toBeVisible();
+    await expect(title.getByRole('img', { name: '나만보기 앨범' })).toHaveCount(
+      visibility === 'PRIVATE' ? 1 : 0
+    );
+    await expect(title.getByRole('img', { name: '친구공유 앨범' })).toHaveCount(
+      visibility === 'FRIENDS' ? 1 : 0
+    );
+    if (visibility === 'PRIVATE') {
+      const icon = title.getByRole('img', { name: '나만보기 앨범' });
+      await expect(icon).toBeVisible();
+      await expect(icon).toHaveJSProperty('naturalWidth', 18);
+      await page.screenshot({
+        path: `C:/yeogido/.tmp-private-folder-${testInfo.project.name}.png`,
+      });
+    }
+  });
+}
+
+test('생성자는 전체공개 폴더를 나만보기로 전환하고 새 버전으로 다시 공개한다', async ({
   page,
 }) => {
-  const app = await setup(page, {
-    visibility: 'PRIVATE',
-    canInvite: false,
-    failVisibility: true,
-  });
-  await page.goto('/travel-record/20', { waitUntil: 'domcontentloaded' });
+  const app = await setup(page, { visibility: 'PUBLIC', canInvite: false });
+  await page.goto('/travel-record', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: '부산 여행 기록 상세 보기' }).click();
   await page.getByRole('button', { name: '여행 기록 메뉴' }).click();
+  await page
+    .getByRole('menuitem', { name: '나만보기로 전환', exact: true })
+    .click();
+  await expect(
+    page.getByText('나만보기로 전환했어요.', { exact: true })
+  ).toBeVisible();
+  expect(app.visibilityChanges).toEqual([
+    { visibility: 'PRIVATE', version: 0 },
+  ]);
+  await page.goBack();
+  await expect(
+    page
+      .getByRole('heading', { name: /부산$/ })
+      .getByRole('img', { name: '나만보기 앨범' })
+  ).toBeVisible();
+  await page.getByRole('button', { name: '부산 여행 기록 상세 보기' }).click();
+  await page.getByRole('button', { name: '여행 기록 메뉴' }).click();
+  await expect(
+    page.getByRole('menuitem', { name: '나만보기로 전환', exact: true })
+  ).toHaveCount(0);
   await page
     .getByRole('menuitem', { name: '전체공개로 전환', exact: true })
     .click();
   await expect(
-    page.getByText('다른 변경사항이 반영되었습니다.', { exact: true })
+    page.getByText('전체공개로 전환했어요.', { exact: true })
   ).toBeVisible();
-  expect(app.visibilityChanges).toHaveLength(1);
-  expect(app.getDetailReads()).toBe(1);
-  await page.getByRole('button', { name: '여행 기록 메뉴' }).click();
-  await expect(
-    page.getByRole('menuitem', { name: '전체공개로 전환', exact: true })
-  ).toBeVisible();
+  expect(app.visibilityChanges).toEqual([
+    { visibility: 'PRIVATE', version: 0 },
+    { visibility: 'PUBLIC', version: 1 },
+  ]);
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: /부산$/ })).toBeVisible();
+  await expect(page.getByRole('img', { name: '나만보기 앨범' })).toHaveCount(0);
+  expect(app.errors).toEqual([]);
 });
 
-test('타인 소유 폴더에는 전체공개 전환을 표시하지 않는다', async ({ page }) => {
-  const app = await setup(page, {
-    visibility: 'PRIVATE',
-    canInvite: false,
-    ownerId: 123,
+for (const visibility of ['PRIVATE', 'PUBLIC']) {
+  test(`${visibility} 전환 버전 충돌은 자동 재시도하거나 성공 처리하지 않는다`, async ({
+    page,
+  }) => {
+    const app = await setup(page, {
+      visibility,
+      canInvite: false,
+      failVisibility: true,
+    });
+    await page.goto('/travel-record/20', { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '여행 기록 메뉴' }).click();
+    const label =
+      visibility === 'PRIVATE' ? '전체공개로 전환' : '나만보기로 전환';
+    await page.getByRole('menuitem', { name: label, exact: true }).click();
+    await expect(
+      page.getByText('다른 변경사항이 반영되었습니다.', { exact: true })
+    ).toBeVisible();
+    expect(app.visibilityChanges).toHaveLength(1);
+    expect(app.getDetailReads()).toBe(1);
+    await page.getByRole('button', { name: '여행 기록 메뉴' }).click();
+    await expect(
+      page.getByRole('menuitem', { name: label, exact: true })
+    ).toBeVisible();
   });
-  await page.goto('/travel-record/20', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: '여행 기록 메뉴' }).click();
-  await expect(
-    page.getByRole('menuitem', { name: '전체공개로 전환', exact: true })
-  ).toHaveCount(0);
-  expect(app.visibilityChanges).toHaveLength(0);
-});
+}
+
+for (const visibility of ['PRIVATE', 'PUBLIC']) {
+  test(`${visibility} 타인 소유 폴더에는 공개범위 전환을 표시하지 않는다`, async ({
+    page,
+  }) => {
+    const app = await setup(page, {
+      visibility,
+      canInvite: false,
+      ownerId: 123,
+    });
+    await page.goto('/travel-record/20', { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '여행 기록 메뉴' }).click();
+    await expect(
+      page.getByRole('menuitem', { name: /^(전체공개|나만보기)로 전환$/ })
+    ).toHaveCount(0);
+    expect(app.visibilityChanges).toHaveLength(0);
+  });
+}
 
 test('권한이 없어도 공유 버튼은 유지하고 팝업 안에서 초대를 제한한다', async ({
   page,

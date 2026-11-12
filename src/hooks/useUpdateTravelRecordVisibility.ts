@@ -5,20 +5,21 @@ import { requireTravelRecordVersion } from '../pages/travel-record/utils/editVer
 import { TRAVEL_RECORD_MAP_QUERY_KEY } from '../pages/travel-record/utils/mapAuth';
 import type { TravelRecordFolder } from '../pages/travel-record/types';
 import { toTravelRecordVisibility } from '../pages/travel-record/mappers/travelRecordVisibility';
+import type { TravelRecordVisibilityUpdateRequest } from '../types/travelRecord.type';
 
-/** 상세에서 읽은 버전으로 전체공개 전환. 충돌 시 버전을 바꿔 자동 재시도하지 않는다. */
-export function usePublishTravelRecord() {
+/** 상세에서 읽은 버전으로 공개범위 전환. 충돌 시 버전을 바꿔 자동 재시도하지 않는다. */
+export function useUpdateTravelRecordVisibility() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       travelRecordId,
       version,
+      visibility,
     }: {
       travelRecordId: number;
-      version: number;
-    }) =>
+    } & TravelRecordVisibilityUpdateRequest) =>
       updateTravelRecordVisibility(travelRecordId, {
-        visibility: 'PUBLIC',
+        visibility,
         version: requireTravelRecordVersion(version),
       }),
     retry: false,

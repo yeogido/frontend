@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 
 import folderShadowLayerImage from '../assets/travel-folder-shadow-layer.svg';
 import sharedFolderGroupIcon from '../assets/shared-folder-group.svg';
+import privateFolderLockIcon from '../assets/private-folder-lock.svg';
 import type { TravelRecordFolder } from '../types';
 import {
   FOLDER_PHOTO_FRAMES,
@@ -235,6 +236,13 @@ function TravelFolderCard({
       </button>
       <div className="flex flex-col items-center">
         <h2 className="mt-3 flex items-center justify-center gap-1 text-center text-[16px] leading-none font-medium text-black">
+          {folder.visibility === 'private' && (
+            <img
+              src={privateFolderLockIcon}
+              alt="나만보기 앨범"
+              className="block max-w-none shrink-0"
+            />
+          )}
           {folder.visibility === 'friends' && (
             <img
               src={sharedFolderGroupIcon}

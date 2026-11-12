@@ -15,7 +15,7 @@ import uploadIcon from '../../../assets/icons/upload.svg';
 import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import { useAuthStore } from '../../../store/auth.store';
-import { usePublishTravelRecord } from '../../../hooks/usePublishTravelRecord';
+import { useUpdateTravelRecordVisibility } from '../../../hooks/useUpdateTravelRecordVisibility';
 import {
   useDeleteTravelRecord,
   useTravelRecordDetail,
@@ -29,7 +29,10 @@ import {
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
-import { hasTravelRecordVersion, requireTravelRecordVersion } from '../utils/editVersion';
+import {
+  hasTravelRecordVersion,
+  requireTravelRecordVersion,
+} from '../utils/editVersion';
 import TravelRecordMembers from './components/TravelRecordMembers';
 import TravelRecordShareModal from './components/TravelRecordShareModal';
 import { getFriendAvatarColor } from '../../friends/utils/friendAvatarColor';
@@ -88,12 +91,17 @@ function TravelRecordDetailPage() {
     isDeleted ? null : travelRecordId
   );
   const deleteTravelRecordMutation = useDeleteTravelRecord();
-  const publishMutation = usePublishTravelRecord();
-  const isPublishingRef = useRef(false);
+  const visibilityMutation = useUpdateTravelRecordVisibility();
+  const isChangingVisibilityRef = useRef(false);
   const userId = useAuthStore((state) => state.userId);
   const inviteFolder = serverTravelRecordQuery.data;
-  const canPublish = inviteFolder?.visibility === 'private' &&
-    inviteFolder.owner?.userId === userId && hasTravelRecordVersion(inviteFolder.version);
+  const canChangeVisibility =
+    (inviteFolder?.visibility === 'private' ||
+      inviteFolder?.visibility === 'public') &&
+    inviteFolder.owner?.userId === userId &&
+    hasTravelRecordVersion(inviteFolder.version);
+  const visibilityTargetLabel =
+    inviteFolder?.visibility === 'public' ? '나만보기' : '전체공개';
   // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
   // 실패했는데도 그걸 그대로 그리면 남의 기록(403)이나 이미 지워진 기록(404)이
   // 정상 화면처럼 보이므로, 실패했을 때는 캐시 데이터를 쓰지 않는다.
@@ -301,19 +309,42 @@ function TravelRecordDetailPage() {
     };
   };
 
-  const handlePublish = async () => {
-    if (!canPublish || !travelRecordId || !inviteFolder || isPublishingRef.current) return;
+  const handleVisibilityChange = async () => {
+    if (
+      !canChangeVisibility ||
+      !travelRecordId ||
+      !inviteFolder ||
+      isChangingVisibilityRef.current
+    )
+      return;
     const session = useAuthStore.getState();
-    isPublishingRef.current = true;
+    isChangingVisibilityRef.current = true;
     try {
-      await publishMutation.mutateAsync({ travelRecordId, version: requireTravelRecordVersion(inviteFolder.version) });
+      await visibilityMutation.mutateAsync({
+        travelRecordId,
+        visibility: inviteFolder.visibility === 'public' ? 'PRIVATE' : 'PUBLIC',
+        version: requireTravelRecordVersion(inviteFolder.version),
+      });
       const current = useAuthStore.getState();
-      if (current.userId === session.userId && current.authGeneration === session.authGeneration) showToast('전체공개로 전환했어요.');
+      if (
+        current.userId === session.userId &&
+        current.authGeneration === session.authGeneration
+      )
+        showToast(`${visibilityTargetLabel}로 전환했어요.`);
     } catch (error) {
       const current = useAuthStore.getState();
-      if (current.userId === session.userId && current.authGeneration === session.authGeneration) showToast(getApiErrorMessage(error, '전체공개로 전환하지 못했어요.'));
+      if (
+        current.userId === session.userId &&
+        current.authGeneration === session.authGeneration
+      )
+        showToast(
+          getApiErrorMessage(
+            error,
+            `${visibilityTargetLabel}로 전환하지 못했어요.`
+          )
+        );
     } finally {
-      isPublishingRef.current = false;
+      isChangingVisibilityRef.current = false;
     }
   };
 
@@ -416,17 +447,25 @@ function TravelRecordDetailPage() {
             {folder.period}
           </time>
           {folder.visibility === 'friends' && (
-            <TravelRecordMembers members={[
-              ...(folder.owner ? [folder.owner] : []),
-              ...(folder.participants ?? []).filter((member) => member.userId !== folder.owner?.userId),
-            ].map((member) => ({ id: String(member.userId), name: member.nickname, color: getFriendAvatarColor(member.userId) }))} />
+            <TravelRecordMembers
+              members={[
+                ...(folder.owner ? [folder.owner] : []),
+                ...(folder.participants ?? []).filter(
+                  (member) => member.userId !== folder.owner?.userId
+                ),
+              ].map((member) => ({
+                id: String(member.userId),
+                name: member.nickname,
+                color: getFriendAvatarColor(member.userId),
+              }))}
+            />
           )}
         </div>
         <div className="absolute -top-1 -right-1 z-20 flex items-center">
           <button
             type="button"
             aria-label="여행 폴더 공유하기"
-            disabled={!inviteFolder || publishMutation.isPending}
+            disabled={!inviteFolder || visibilityMutation.isPending}
             onClick={() => {
               setIsActionMenuOpen(false);
               setIsShareModalOpen(true);
@@ -468,7 +507,7 @@ function TravelRecordDetailPage() {
                     key={label}
                     type="button"
                     role="menuitem"
-                    disabled={publishMutation.isPending}
+                    disabled={visibilityMutation.isPending}
                     onClick={() => {
                       setIsActionMenuOpen(false);
                       onClick();
@@ -478,18 +517,18 @@ function TravelRecordDetailPage() {
                     {label}
                   </button>
                 ))}
-                {canPublish && (
+                {canChangeVisibility && (
                   <button
                     type="button"
                     role="menuitem"
-                    disabled={publishMutation.isPending}
+                    disabled={visibilityMutation.isPending}
                     onClick={() => {
                       setIsActionMenuOpen(false);
-                      void handlePublish();
+                      void handleVisibilityChange();
                     }}
                     className="flex h-[42px] w-full items-center px-4 text-left text-sm font-medium whitespace-nowrap text-[#7f7f7f] hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none disabled:opacity-50"
                   >
-                    전체공개로 전환
+                    {visibilityTargetLabel}로 전환
                   </button>
                 )}
               </div>
