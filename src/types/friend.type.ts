@@ -23,6 +23,16 @@ export interface GetFriendsParams {
 // 스웨거에는 cursorValue 타입이 비어 있다).
 export type GetFriendsResponse = CursorResponse<FriendSummary, string>;
 
+// 스웨거 기준: GET /api/v1/friends/me/code. qrToken은 발급 후 180초 동안 유효하다.
+// 백엔드 배포 전에는 friendCode만 오므로 qrToken과 qrExpiresAt은 없을 수 있다.
+// 남은 시간은 qrExpiresAt이 아니라 요청을 시작한 시각 + 180초로 계산하므로
+// qrExpiresAt은 화면 계산에 쓰지 않는다.
+export interface MyFriendCode {
+  friendCode: string;
+  qrToken?: string | null;
+  qrExpiresAt?: string | null;
+}
+
 // 스웨거 기준: 친구 요청 API. 요청 목록은 cursorId만으로 다음 페이지를 받는다.
 export interface GetFriendRequestsParams {
   cursorId?: number;

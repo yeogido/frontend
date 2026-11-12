@@ -7,6 +7,7 @@ import type {
   GetFriendsResponse,
   GetReceivedFriendRequestsResponse,
   GetSentFriendRequestsResponse,
+  MyFriendCode,
 } from '../types/friend.type';
 
 export async function getFriends(
@@ -26,6 +27,16 @@ export async function getFriends(
 export async function deleteFriend(friendUserId: number): Promise<void> {
   try {
     await apiClient.delete(`/friends/${friendUserId}`);
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function getMyFriendCode(): Promise<MyFriendCode> {
+  try {
+    const { data } = await apiClient.get<MyFriendCode>('/friends/me/code');
+
+    return data;
   } catch (error) {
     throw normalizeApiError(error);
   }
