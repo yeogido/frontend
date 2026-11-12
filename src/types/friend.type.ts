@@ -64,3 +64,36 @@ export interface AcceptFriendRequestResult {
   status: 'PENDING' | 'ACCEPTED';
   friend: FriendSummary;
 }
+
+// GET /api/v1/friends/search의 relationStatus
+export type FriendRelationStatus = 'NONE' | 'REQUESTED' | 'RECEIVED' | 'FRIEND';
+
+// GET /api/v1/friends/search (팀 Notion '친구 검색' 기준). email은 FRIEND일 때만,
+// requestId는 REQUESTED와 RECEIVED일 때만 내려온다.
+export interface SearchedFriend extends FriendSummary {
+  email?: string | null;
+  relationStatus: FriendRelationStatus;
+  requestId?: number | null;
+}
+
+// keyword는 이름 또는 친구 코드와 정확히 일치한 사용자만 찾는다. 다음 페이지는
+// cursorId만으로 받는다.
+export interface SearchFriendsParams {
+  keyword: string;
+  cursorId?: number;
+  size?: number;
+}
+
+export type SearchFriendsResponse = CursorResponse<SearchedFriend>;
+
+// POST /api/v1/friends/requests
+export interface SendFriendRequestBody {
+  friendCode: string;
+}
+
+export interface SendFriendRequestResult {
+  requestId: number;
+  receiver: FriendSummary;
+  status: 'PENDING';
+  createdAt: string;
+}
