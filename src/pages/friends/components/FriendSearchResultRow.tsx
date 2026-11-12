@@ -13,8 +13,8 @@ interface FriendSearchResultRowProps {
 }
 
 const ARIA_LABELS = {
-  send: (nickname: string) => `${nickname}에게 친구 요청 보내기`,
-  requested: (nickname: string) => `${nickname}에게 친구 요청을 보냈어요`,
+  send: (nickname: string) => `${nickname} 친구 맺기`,
+  requested: (nickname: string) => `${nickname} 친구 요청됨`,
   accept: (nickname: string) => `${nickname}의 친구 요청 수락`,
 } as const;
 

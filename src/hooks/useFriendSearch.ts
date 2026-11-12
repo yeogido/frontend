@@ -9,7 +9,6 @@ import { searchFriends } from '../apis/friends.api';
 import { toFriendKeyword } from '../pages/friends/utils/friendKeyword';
 import { useAuthStore } from '../store/auth.store';
 import type { SearchFriendsResponse } from '../types/friend.type';
-import { keepFriendsPlaceholderData } from './utils/friendPlaceholder';
 import { shouldRetryFriendsQuery } from './utils/friendRetry';
 import {
   getSearchItemsFromPages,
@@ -66,8 +65,6 @@ export function useFriendSearch(keyword: string) {
         ? { cursorId: lastPage.cursorId }
         : undefined,
     enabled: userId !== null && normalizedKeyword !== undefined,
-    placeholderData: (previousData, previousQuery) =>
-      keepFriendsPlaceholderData(previousData, previousQuery, userId),
     retry: shouldRetryFriendsQuery,
   });
 
