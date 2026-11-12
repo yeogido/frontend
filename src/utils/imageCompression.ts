@@ -7,6 +7,7 @@ const INITIAL_QUALITY = 0.9;
 interface CompressImageOptions {
   maxSizeBytes?: number;
   maxDimension?: number;
+  forceJpeg?: boolean;
 }
 
 function canvasToBlob(
@@ -34,6 +35,7 @@ export async function compressImage(
   try {
     const bitmap = await createImageBitmap(file);
     if (
+      !options.forceJpeg &&
       file.size <= maxSizeBytes &&
       bitmap.width <= maxDimension &&
       bitmap.height <= maxDimension

@@ -38,7 +38,13 @@ test('event selection uses the shared selection UI and submits to place selectio
     '../src/pages/local-recommendation/components/SelectedItemsSheet.tsx',
     import.meta.url
   );
+  // 이동 로직은 모바일/데스크톱 뷰가 같이 쓰는 훅에 있다.
+  const eventHookPath = new URL(
+    '../src/pages/local-recommendation/event-selection/useEventSelection.ts',
+    import.meta.url
+  );
   const eventPageSource = readFileSync(eventPagePath, 'utf8');
+  const eventHookSource = readFileSync(eventHookPath, 'utf8');
 
   assert.ok(existsSync(layoutPath));
   assert.ok(existsSync(sheetPath));
@@ -46,7 +52,7 @@ test('event selection uses the shared selection UI and submits to place selectio
   assert.match(eventPageSource, /<SelectedItemsSheet/);
   // 일차 스코프가 붙어 ?day=N을 달고 장소 선택으로 넘어간다.
   assert.match(
-    eventPageSource,
+    eventHookSource,
     /navigate\(`\/local-recommendation\/place-selection\?day=\$\{day\}`\)/
   );
 });

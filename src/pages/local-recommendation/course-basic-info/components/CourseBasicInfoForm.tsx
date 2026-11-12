@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller } from 'react-hook-form';
 
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
-import { courseBasicInfoSchema, type CourseBasicInfoValues } from '../schema';
+import type { CourseBasicInfoValues } from '../schema';
+import { useCourseBasicInfoForm } from '../useCourseBasicInfoForm';
 import CompanionSelector from './CompanionSelector';
 import DurationSelect from './DurationSelect';
 import FormField from './FormField';
@@ -33,24 +32,15 @@ function CourseBasicInfoForm({
   defaultValues,
 }: CourseBasicInfoFormProps) {
   const scale = useGlobalScale();
-  const [invalidSubmitCount, setInvalidSubmitCount] = useState(0);
-
   const {
-    register,
-    control,
-    handleSubmit,
-    formState: { isSubmitting, errors },
-  } = useForm<CourseBasicInfoValues>({
-    resolver: zodResolver(courseBasicInfoSchema),
-    mode: 'onChange',
-    defaultValues: {
-      courseName: '',
-      summary: '',
-      transport: 'walking',
-      companion: 'solo',
-      ...defaultValues,
+    form: {
+      register,
+      control,
+      formState: { isSubmitting, errors },
     },
-  });
+    submit,
+    invalidSubmitCount,
+  } = useCourseBasicInfoForm({ onNext, defaultValues });
 
   const inputHeight = Math.max(44, INPUT_HEIGHT * scale);
   const submitHeight = Math.max(44, SUBMIT_HEIGHT * scale);
@@ -64,12 +54,7 @@ function CourseBasicInfoForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onNext, () =>
-        setInvalidSubmitCount((count) => count + 1)
-      )}
-      style={{ marginTop: FORM_MARGIN_TOP * scale }}
-    >
+    <form onSubmit={submit} style={{ marginTop: FORM_MARGIN_TOP * scale }}>
       <div className="flex flex-col" style={{ gap: FIELD_GAP * scale }}>
         <FormField id="course-name" label="코스의 이름을 알려주세요">
           <input
