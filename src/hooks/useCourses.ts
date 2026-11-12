@@ -103,7 +103,9 @@ export function useRecommendedCourses() {
   });
 }
 
-export function useCourseDelete() {
+export function useCourseDelete(options?: {
+  onDeleted?: (courseId: number) => void;
+}) {
   const [targetCourseId, setTargetCourseId] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -162,6 +164,7 @@ export function useCourseDelete() {
     try {
       await deleteCourseMutation.mutateAsync(targetCourseId);
       closeDialog();
+      options?.onDeleted?.(targetCourseId);
       showToast('코스를 삭제했어요.');
     } catch (error) {
       closeDialog();

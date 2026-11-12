@@ -21,6 +21,8 @@ export interface CourseRouteMapProps {
   readonly stops: readonly CourseStop[];
   readonly focusedStopId?: number | null;
   readonly onStopFocus?: (stopId: number) => void;
+  /** false면 코스 지도 제목을 그리지 않는다 - 데스크톱 시안에는 제목이 없다. */
+  readonly showHeader?: boolean;
   readonly className?: string;
 }
 
@@ -28,6 +30,7 @@ function CourseRouteMapComponent({
   stops,
   focusedStopId = null,
   onStopFocus,
+  showHeader = true,
   className = '',
 }: CourseRouteMapProps) {
   const scale = useGlobalScale();
@@ -75,12 +78,14 @@ function CourseRouteMapComponent({
   if (!center) {
     return (
       <section className={className}>
-        <div
-          className="[&_h2]:font-bold"
-          style={{ marginBottom: HEADER_MARGIN_BOTTOM * scale }}
-        >
-          <SectionHeader title="코스 지도" />
-        </div>
+        {showHeader ? (
+          <div
+            className="[&_h2]:font-bold"
+            style={{ marginBottom: HEADER_MARGIN_BOTTOM * scale }}
+          >
+            <SectionHeader title="코스 지도" />
+          </div>
+        ) : null}
         <div
           role="status"
           className="bg-gray-2 text-gray-5 flex w-full items-center justify-center"
@@ -99,12 +104,14 @@ function CourseRouteMapComponent({
   // 3. 첫 좌표를 center로 사용, 전체 좌표를 markers로 전달
   return (
     <section className={className}>
-      <div
-        className="[&_h2]:font-bold"
-        style={{ marginBottom: HEADER_MARGIN_BOTTOM * scale }}
-      >
-        <SectionHeader title="코스 지도" />
-      </div>
+      {showHeader ? (
+        <div
+          className="[&_h2]:font-bold"
+          style={{ marginBottom: HEADER_MARGIN_BOTTOM * scale }}
+        >
+          <SectionHeader title="코스 지도" />
+        </div>
+      ) : null}
       <BaseKakaoMap
         center={center}
         markers={validLocations}
