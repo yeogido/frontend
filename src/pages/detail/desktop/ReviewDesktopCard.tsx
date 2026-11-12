@@ -50,7 +50,11 @@ function ReviewDesktopCard({
               · {review.meta}
             </span>
           </p>
-          <div className="flex items-center gap-[2px]">
+          <div
+            className="flex items-center gap-[2px]"
+            role="img"
+            aria-label={`별점 5점 중 ${rating}점`}
+          >
             {Array.from({ length: 5 }).map((_, index) => (
               <img
                 key={index}

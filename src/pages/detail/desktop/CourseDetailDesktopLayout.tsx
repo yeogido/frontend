@@ -1,6 +1,8 @@
 import { FaHeart } from 'react-icons/fa6';
 import { IoChevronForward } from 'react-icons/io5';
 import { MdEdit } from 'react-icons/md';
+import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 
 import shareIcon from '../../../assets/icons/share.svg';
 import {
@@ -32,11 +34,12 @@ export function CourseDetailDesktopLayout(props: CourseDetailLayoutProps) {
 /**
  * 코스 상세 - 데스크톱 뷰. 좋아요, 후기 모달, 공유, 수정 흐름은
  * useCourseDetailLayout을 모바일 CourseDetailLayout과 같이 쓰고, 삭제는
- * 코스 목록과 같은 useCourseDelete로 연결한다. 모바일의 뒤로가기 버튼은
- * 데스크톱 헤더로 대신해 넣지 않았다.
+ * 코스 목록과 같은 useCourseDelete로 연결한다.
  */
 function CourseDetailDesktopContent(props: CourseDetailLayoutProps) {
   const { course } = props;
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const {
     numericCourseId,
     canEdit,
@@ -64,10 +67,28 @@ function CourseDetailDesktopContent(props: CourseDetailLayoutProps) {
     handleNavigateCourseReviews,
   } = useCourseDetailLayout(props);
   const { requestDelete, dialogProps: courseDeleteDialogProps } =
-    useCourseDelete();
+    useCourseDelete({
+      onDeleted: (courseId) => {
+        navigate('/local-course', { replace: true });
+        queryClient.removeQueries({
+          predicate: (query) =>
+            query.queryKey[0] === 'localCourseDetail' &&
+            query.queryKey[2] === courseId,
+        });
+      },
+    });
 
   return (
     <DesktopPageShell>
+      {props.onBack ? (
+        <button
+          type="button"
+          onClick={props.onBack}
+          className="text-gray-5 mb-[24px] text-[16px]"
+        >
+          이전 화면으로
+        </button>
+      ) : null}
       <div className="flex flex-col gap-[32px]">
         <div
           className="bg-gray-2 overflow-hidden rounded-[24px]"

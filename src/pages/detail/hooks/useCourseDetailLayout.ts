@@ -4,7 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEditCourse } from '../../../hooks/useEditCourse';
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
+import { useMyProfile } from '../../../hooks/useMyProfile';
+import { isAdminRole } from '../../../utils/role';
 import {
   useCourseReviewPreviews,
   useReviewDelete,
@@ -41,7 +42,7 @@ export function useCourseDetailLayout({
   const accessToken = useAuthStore((state) => state.accessToken);
   const { openLoginModal } = useLoginModal();
   const numericCourseId = Number(course.id);
-  const isAdmin = useIsAdmin();
+  const { data: profile, isError: isProfileError } = useMyProfile();
   // 소유권/관리자 판단은 API의 canManage 값을 그대로 따른다 - 서버가
   // local-course는 작성자 여부로, yeogido-course는 관리자 권한으로 이미
   // 판단해 내려준다. 다만 local-course는 어드민도 남의 글의 canManage가
@@ -49,7 +50,8 @@ export function useCourseDetailLayout({
   const canEdit =
     isAuthenticated &&
     course.canManage &&
-    !(reviewType === 'local-course' && isAdmin);
+    (reviewType !== 'local-course' ||
+      (!!profile?.role && !isProfileError && !isAdminRole(profile.role)));
   const { editLocalCourse } = useEditLocalCourse();
   const { editCourse } = useEditCourse();
   const { data: courseReviews } = useCourseReviewPreviews(

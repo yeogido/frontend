@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 export interface ConfirmDialogProps {
@@ -32,6 +32,17 @@ function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement;
+    cancelRef.current?.focus();
+    return () => {
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
+        previousFocus.focus();
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -67,6 +78,7 @@ function ConfirmDialog({
         )}
         <div className="mt-6 flex gap-2">
           <button
+            ref={cancelRef}
             type="button"
             onClick={onCancel}
             className={`h-11 flex-1 rounded-xl text-sm font-semibold ${cancelClassName ?? 'bg-[#e4e4e4] text-[#505050]'}`}

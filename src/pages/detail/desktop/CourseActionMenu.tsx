@@ -15,6 +15,7 @@ interface CourseActionMenuProps {
 function CourseActionMenu({ label, onEdit, onDelete }: CourseActionMenuProps) {
   const menuId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ function CourseActionMenu({ label, onEdit, onDelete }: CourseActionMenuProps) {
   }, [isOpen]);
 
   const handleSelect = (action: () => void) => {
+    triggerRef.current?.focus();
     setIsOpen(false);
     action();
   };
@@ -45,6 +47,7 @@ function CourseActionMenu({ label, onEdit, onDelete }: CourseActionMenuProps) {
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         aria-label={label + ' 메뉴'}
         aria-haspopup="menu"

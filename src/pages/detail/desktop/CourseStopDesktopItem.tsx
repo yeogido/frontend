@@ -61,7 +61,8 @@ function CourseStopDesktopItem({
         : CLOSED_STATUS_LABEL;
   const todayHours = formatTodayOperatingHours(operatingDays);
   const defaultHoursText =
-    todayHours ?? (canExpandHours ? '정기휴무' : '영업시간 정보 없음');
+    todayHours ??
+    (canExpandHours ? '정기휴무' : stop.hours || '영업시간 정보 없음');
   const transportInfo = isFirst
     ? []
     : getCourseTransportInfo(stop.timesFromPrevious);
@@ -157,9 +158,9 @@ function CourseStopDesktopItem({
                   </ul>
                 ) : null}
               </div>
-            ) : (
+            ) : stop.placeId !== undefined || stop.hours ? (
               <p className="text-gray-3 text-[18px]">{defaultHoursText}</p>
-            )}
+            ) : null}
 
             {transportInfo.length > 0 ? (
               <div className="text-gray-4 flex flex-wrap items-center gap-[6px] text-[16px]">

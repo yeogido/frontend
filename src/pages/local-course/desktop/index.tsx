@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import heroImage from '../../../assets/images/hero-neighborhood-desktop.png';
@@ -20,7 +20,7 @@ import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordi
 import { useEditLocalCourse } from '../../../hooks/useEditLocalCourse';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { useLoginModal } from '../../../hooks/useLoginModal';
-import { useIsAdmin } from '../../../hooks/useMyProfile';
+import { useMyProfile } from '../../../hooks/useMyProfile';
 import { useAuthStore } from '../../../store/auth.store';
 import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 import type {
@@ -30,6 +30,7 @@ import type {
   CourseTransportType,
 } from '../../../types/course.type';
 import { toContentTagIds } from '../../../utils/contentTags';
+import { isAdminRole } from '../../../utils/role';
 import {
   toCompanionLabel,
   toDurationLabel,
@@ -81,7 +82,16 @@ function LocalCourseDesktopPage() {
   const { getLiked, toggleLike } = useCourseLikeToggle();
   const { requestDelete, dialogProps } = useCourseDelete();
   const { editLocalCourse } = useEditLocalCourse();
-  const isAdmin = useIsAdmin();
+  const { data: profile, isError: isProfileError } = useMyProfile();
+  const canShowManagement =
+    isAuthenticated && !!profile?.role && !isProfileError;
+  const locationRequested = useRef(false);
+  useEffect(() => {
+    if (isDistanceSort && status === 'idle' && !locationRequested.current) {
+      locationRequested.current = true;
+      void requestCoordinates();
+    }
+  }, [isDistanceSort, status, requestCoordinates]);
   const {
     data,
     isPending,
@@ -108,7 +118,7 @@ function LocalCourseDesktopPage() {
     if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
   const loadMoreRef = useInfiniteScroll({
-    enabled: Boolean(hasNextPage) && !isPending,
+    enabled: Boolean(hasNextPage) && !isPending && !isError,
     onIntersect: handleIntersect,
   });
 
@@ -170,7 +180,11 @@ function LocalCourseDesktopPage() {
                   onChange={(event) => {
                     const value = event.target.value;
                     handleFilterSelect(group.key, value);
-                    if (group.key === 'sort' && value === '거리순')
+                    if (
+                      group.key === 'sort' &&
+                      value === '거리순' &&
+                      status === 'failed'
+                    )
                       void requestCoordinates();
                   }}
                   className="border-gray-2 text-gray-4 rounded-full border bg-white px-[12px] py-[8px] text-[16px]"
@@ -230,10 +244,10 @@ function LocalCourseDesktopPage() {
                         />
                       ) : null}
                     </button>
-                    {course.canManage ? (
+                    {course.canManage && canShowManagement ? (
                       <CardActionMenu
                         onEdit={
-                          isAdmin
+                          isAdminRole(profile?.role)
                             ? undefined
                             : () => void editLocalCourse(course.courseId)
                         }
