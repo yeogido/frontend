@@ -17,6 +17,7 @@ import KakaoCallbackPage from '../pages/auth/kakao-callback';
 import NaverSignupPage from '../pages/auth/signup/naver';
 import NaverCallbackPage from '../pages/auth/naver-callback';
 import LocalCoursePage from '../pages/local-course';
+import LocalCourseDesktopPage from '../pages/local-course/desktop';
 import LocalCoursePopularPage from '../pages/local-course/popular';
 import LocalCourseRecentPage from '../pages/local-course/recent';
 import LocalCourseSearchPage from '../pages/local-course/search';
@@ -89,13 +90,6 @@ function AppRouter() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
-
-        <Route path="/local-course" element={<LocalCoursePage />} />
-
-        <Route
-          path="/local-course/popular"
-          element={<LocalCoursePopularPage />}
-        />
 
         <Route
           path="/local-course/recent"
@@ -199,6 +193,21 @@ function AppRouter() {
           <Route path="/friends/requests" element={<FriendRequestsPage />} />
           <Route path="/my-posts" element={<MyPostsPage />} />
         </Route>
+      </Route>
+
+      <Route
+        element={
+          <Responsive
+            desktop={<LocalCourseDesktopPage />}
+            mobile={<MainLayout />}
+          />
+        }
+      >
+        <Route path="/local-course" element={<LocalCoursePage />} />
+        <Route
+          path="/local-course/popular"
+          element={<LocalCoursePopularPage />}
+        />
       </Route>
 
       <Route element={<BusinessRoute />}>

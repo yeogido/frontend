@@ -8,9 +8,7 @@ import SortableVisitEventDesktopList from './SortableVisitEventDesktopList';
 /**
  * 방문 순서 설정 — 데스크톱 뷰(Figma 6360:38793).
  *
- * 시안에는 보기 모드만 있다. '수정하기'를 누른 뒤의 편집 모드(삭제 버튼,
- * 일정 추가 줄, 일차 추가)는 프레임이 없어 모바일과 같은 동작을 데스크톱
- * 치수로 옮겼다.
+ * 보기 모드와 편집 모드(Figma 6360:39305)는 모바일과 로직을 공유한다.
  */
 function VisitOrderSelectionDesktopPage() {
   const navigate = useNavigate();
@@ -108,7 +106,13 @@ function VisitOrderSelectionDesktopPage() {
             disabled={isSubmitDisabled}
             className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 w-full rounded-[12px] py-[16px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
           >
-            {isSubmitting ? '등록 중...' : '코스 등록하기'}
+            {isSubmitting
+              ? isEditingCourse
+                ? '수정 중...'
+                : '등록 중...'
+              : isEditingCourse
+                ? '코스 수정하기'
+                : '코스 등록하기'}
           </button>
 
           {submitError ? (

@@ -30,6 +30,7 @@ function DesktopPageShell({
         className="mx-auto w-full flex-1"
         style={{
           maxWidth: contentWidth,
+          width: 'calc(100% - 48px)',
           paddingTop: CONTENT_PADDING_TOP,
           paddingBottom: CONTENT_PADDING_BOTTOM,
         }}
