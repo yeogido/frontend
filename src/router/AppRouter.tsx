@@ -8,6 +8,7 @@ import AdminRoute from '../components/auth/AdminRoute';
 import BusinessRoute from '../components/auth/BusinessRoute';
 
 import HomePage from '../pages/home';
+import HomeDesktopPage from '../pages/home/desktop';
 import LoginPage from '../pages/auth/login';
 import ForgotPasswordPage from '../pages/auth/forgot-password';
 import ForgotPasswordResetPage from '../pages/auth/forgot-password/reset';
@@ -96,9 +97,15 @@ import BusinessPromotionRegistrationPage from '../pages/business-promotion-regis
 function AppRouter() {
   return (
     <Routes>
-      <Route element={<MainLayout />}>
+      <Route
+        element={
+          <Responsive desktop={<HomeDesktopPage />} mobile={<MainLayout />} />
+        }
+      >
         <Route path="/" element={<HomePage />} />
+      </Route>
 
+      <Route element={<MainLayout />}>
         <Route
           path="/local-course/recent"
           element={<LocalCourseRecentPage />}
