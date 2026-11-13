@@ -77,7 +77,7 @@ function DesktopHeader() {
           ) : (
             <NavLink
               to="/login"
-              className="text-gray-5 text-[16px] font-medium whitespace-nowrap"
+              className="rounded-[12px] bg-black px-[20px] py-[12px] text-[16px] font-semibold whitespace-nowrap text-white"
             >
               로그인
             </NavLink>

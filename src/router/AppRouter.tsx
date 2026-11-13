@@ -10,9 +10,13 @@ import BusinessRoute from '../components/auth/BusinessRoute';
 import HomePage from '../pages/home';
 import HomeDesktopPage from '../pages/home/desktop';
 import LoginPage from '../pages/auth/login';
+import LoginDesktopPage from '../pages/auth/login/desktop';
 import ForgotPasswordPage from '../pages/auth/forgot-password';
+import ForgotPasswordDesktop from '../pages/auth/forgot-password/desktop/ForgotPasswordDesktop';
+import ResetPasswordDesktop from '../pages/auth/forgot-password/desktop/ResetPasswordDesktop';
 import ForgotPasswordResetPage from '../pages/auth/forgot-password/reset';
 import SignupPage from '../pages/auth/signup';
+import SignUpDesktopPage from '../pages/auth/signup/desktop';
 import KakaoSignupPage from '../pages/auth/signup/kakao';
 import KakaoCallbackPage from '../pages/auth/kakao-callback';
 import NaverSignupPage from '../pages/auth/signup/naver';
@@ -356,13 +360,39 @@ function AppRouter() {
       </Route>
 
       <Route element={<AuthLayout />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route
+          path="/login"
+          element={
+            <Responsive desktop={<LoginDesktopPage />} mobile={<LoginPage />} />
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <Responsive
+              desktop={<ForgotPasswordDesktop />}
+              mobile={<ForgotPasswordPage />}
+            />
+          }
+        />
         <Route
           path="/forgot-password/reset"
-          element={<ForgotPasswordResetPage />}
+          element={
+            <Responsive
+              desktop={<ResetPasswordDesktop />}
+              mobile={<ForgotPasswordResetPage />}
+            />
+          }
         />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route
+          path="/signup"
+          element={
+            <Responsive
+              desktop={<SignUpDesktopPage />}
+              mobile={<SignupPage />}
+            />
+          }
+        />
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />
         <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
