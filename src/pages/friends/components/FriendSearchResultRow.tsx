@@ -32,6 +32,7 @@ function FriendSearchResultRow({
     <FriendUserRow
       friend={friend}
       scale={scale}
+      profileUserId={friend.userId}
       actions={
         action ? (
           <FriendRequestButton

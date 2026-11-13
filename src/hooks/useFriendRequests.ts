@@ -21,6 +21,7 @@ import type {
   ReceivedFriendRequest,
   SentFriendRequest,
 } from '../types/friend.type';
+import { FRIEND_PROFILE_QUERY_PREFIX } from './useFriendProfile';
 import { FRIEND_SEARCH_QUERY_PREFIX } from './useFriendSearch';
 import { FRIENDS_QUERY_PREFIX } from './useFriends';
 import {
@@ -145,6 +146,9 @@ export function useAcceptFriendRequest() {
       });
       void queryClient.invalidateQueries({
         queryKey: [FRIEND_SEARCH_QUERY_PREFIX, userId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [FRIEND_PROFILE_QUERY_PREFIX, userId],
       });
       void queryClient.invalidateQueries({
         queryKey: getFriendRequestsQueryKey('received', userId),
