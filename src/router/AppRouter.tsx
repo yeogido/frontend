@@ -22,6 +22,7 @@ import LocalCoursePopularPage from '../pages/local-course/popular';
 import LocalCourseRecentPage from '../pages/local-course/recent';
 import LocalCourseSearchPage from '../pages/local-course/search';
 import FestivalPage from '../pages/festival';
+import FestivalDesktopPage from '../pages/festival/desktop';
 import FestivalOngoingPage from '../pages/festival/ongoing';
 import FestivalRecentPage from '../pages/festival/recent';
 import FestivalSearchPage from '../pages/festival/search';
@@ -32,7 +33,9 @@ import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
 import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
+import LocalBusinessDesktopPage from '../pages/local-business/desktop';
 import LocalBusinessDetailPage from '../pages/detail/local-business';
+import LocalBusinessDetailDesktopPage from '../pages/detail/local-business/desktop';
 import LocalRecommendationPage from '../pages/local-recommendation';
 import RegionSelectionDesktopPage from '../pages/local-recommendation/region-selection/desktop';
 import AdminPage from '../pages/admin';
@@ -72,7 +75,9 @@ import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
+import FestivalDetailDesktopPage from '../pages/detail/festival/desktop';
 import FestivalRelatedCoursesPage from '../pages/detail/festival/courses';
+import FestivalCoursesDesktopPage from '../pages/detail/festival/courses/desktop';
 import RegionInfoPage from '../pages/region-info';
 import LikesPage from '../pages/likes';
 import LikesDesktopPage from '../pages/likes/desktop';
@@ -104,7 +109,15 @@ function AppRouter() {
           element={<LocalCourseSearchPage />}
         />
 
-        <Route path="/festival" element={<FestivalPage />} />
+        <Route
+          path="/festival"
+          element={
+            <Responsive
+              desktop={<FestivalDesktopPage />}
+              mobile={<FestivalPage />}
+            />
+          }
+        />
 
         <Route path="/festival/ongoing" element={<FestivalOngoingPage />} />
 
@@ -114,7 +127,12 @@ function AppRouter() {
 
         <Route
           path="/festival/detail/:festivalId/courses"
-          element={<FestivalRelatedCoursesPage />}
+          element={
+            <Responsive
+              desktop={<FestivalCoursesDesktopPage />}
+              mobile={<FestivalRelatedCoursesPage />}
+            />
+          }
         />
 
         <Route
@@ -141,7 +159,15 @@ function AppRouter() {
           element={<YeogidoCourseSearchPage />}
         />
 
-        <Route path="/local-business" element={<LocalBusinessPage />} />
+        <Route
+          path="/local-business"
+          element={
+            <Responsive
+              desktop={<LocalBusinessDesktopPage />}
+              mobile={<LocalBusinessPage />}
+            />
+          }
+        />
 
         <Route
           path="/recent-review-courses"
@@ -345,11 +371,21 @@ function AppRouter() {
       />
       <Route
         path="/local-business/detail/:id"
-        element={<LocalBusinessDetailPage />}
+        element={
+          <Responsive
+            desktop={<LocalBusinessDetailDesktopPage />}
+            mobile={<LocalBusinessDetailPage />}
+          />
+        }
       />
       <Route
         path="/festival/detail/:festivalId"
-        element={<FestivalDetailPage />}
+        element={
+          <Responsive
+            desktop={<FestivalDetailDesktopPage />}
+            mobile={<FestivalDetailPage />}
+          />
+        }
       />
       <Route path="/review" element={<ReviewPage />} />
 

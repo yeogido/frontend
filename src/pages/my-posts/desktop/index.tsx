@@ -12,7 +12,7 @@ import {
   toDurationLabel,
   toTransportLabel,
 } from '../../../utils/courseEnumLabels';
-import DesktopFilterDropdown from '../../my-activity/desktop/DesktopFilterDropdown';
+import DesktopFilterDropdown from '../../../components/layout/desktop/DesktopFilterDropdown';
 import MyActivityListCard from '../../my-activity/desktop/MyActivityListCard';
 import MyActivityShell from '../../my-activity/desktop/MyActivityShell';
 import MyPostsDialogs from '../components/MyPostsDialogs';
