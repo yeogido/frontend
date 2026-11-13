@@ -1,4 +1,5 @@
 import type { CursorResponse } from '../apis/common/apiTypes';
+import type { Course } from './course.type';
 
 // 스웨거 기준: GET /api/v1/friends의 UserSummary
 export interface FriendSummary {
@@ -97,3 +98,24 @@ export interface SendFriendRequestResult {
   status: 'PENDING';
   createdAt: string;
 }
+
+// GET /api/v1/friends/{friendUserId} (팀 Notion 기준). 친구가 아니어도 조회할 수
+// 있고, email은 친구일 때만 내려온다. requestId는 REQUESTED와 RECEIVED일 때만 있다.
+export interface FriendProfile {
+  userId: number;
+  nickname: string;
+  profileImageUrl: string | null;
+  friendCode: string;
+  email: string | null;
+  region?: { regionId: number; name: string } | null;
+  relationStatus: FriendRelationStatus;
+  requestId: number | null;
+}
+
+// GET /api/v1/friends/{friendUserId}/courses/local. 다음 페이지는 cursorId만으로 받는다.
+export interface GetFriendLocalCoursesParams {
+  cursorId?: number;
+  size?: number;
+}
+
+export type GetFriendLocalCoursesResponse = CursorResponse<Course>;
