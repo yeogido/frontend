@@ -37,6 +37,7 @@ import YeogidoCoursePage from '../pages/yeogido-course';
 import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
 import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
+import YeogidoCourseSearchDesktopPage from '../pages/yeogido-course/search/desktop';
 import LocalBusinessPage from '../pages/local-business';
 import LocalBusinessDesktopPage from '../pages/local-business/desktop';
 import LocalBusinessDetailPage from '../pages/detail/local-business';
@@ -84,6 +85,7 @@ import FestivalDetailDesktopPage from '../pages/detail/festival/desktop';
 import FestivalRelatedCoursesPage from '../pages/detail/festival/courses';
 import FestivalCoursesDesktopPage from '../pages/detail/festival/courses/desktop';
 import RegionInfoPage from '../pages/region-info';
+import RegionInfoDesktopPage from '../pages/region-info/desktop';
 import LikesPage from '../pages/likes';
 import LikesDesktopPage from '../pages/likes/desktop';
 import MyPostsPage from '../pages/my-posts';
@@ -151,7 +153,15 @@ function AppRouter() {
           element={<CourseRegionSearchPage />}
         />
 
-        <Route path="/region-info/:region" element={<RegionInfoPage />} />
+        <Route
+          path="/region-info/:region"
+          element={
+            <Responsive
+              desktop={<RegionInfoDesktopPage />}
+              mobile={<RegionInfoPage />}
+            />
+          }
+        />
 
         <Route path="/yeogido-course" element={<YeogidoCoursePage />} />
 
@@ -167,7 +177,12 @@ function AppRouter() {
 
         <Route
           path="/yeogido-course/search"
-          element={<YeogidoCourseSearchPage />}
+          element={
+            <Responsive
+              desktop={<YeogidoCourseSearchDesktopPage />}
+              mobile={<YeogidoCourseSearchPage />}
+            />
+          }
         />
 
         <Route

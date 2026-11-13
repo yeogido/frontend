@@ -27,7 +27,6 @@ function SearchBox() {
     selectedCity,
     selectedCityId,
     visibleDistricts,
-    searchPlaceholder,
     clearRecentSearches,
     removeRecentSearch,
     selectCity,
@@ -249,7 +248,6 @@ function SearchBox() {
               ) : null}
             </>
           )}
-          <span className="sr-only">{searchPlaceholder}</span>
         </div>
       ) : null}
     </div>
