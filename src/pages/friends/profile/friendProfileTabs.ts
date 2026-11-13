@@ -11,3 +11,11 @@ export const FRIEND_PROFILE_TABS: readonly {
 ];
 
 export const DEFAULT_FRIEND_PROFILE_TAB: FriendProfileTab = 'courses';
+
+// 탭과 패널을 aria-controls와 aria-labelledby로 잇는 id. 패널은 한 번에 하나만
+// 렌더되므로 탭 키마다 패널 id가 하나씩 있다.
+export const getFriendProfileTabId = (tab: FriendProfileTab) =>
+  `friend-profile-tab-${tab}`;
+
+export const getFriendProfilePanelId = (tab: FriendProfileTab) =>
+  `friend-profile-panel-${tab}`;

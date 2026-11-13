@@ -13,6 +13,8 @@ import { getSearchRowAction } from '../src/pages/friends/utils/friendSearchRow.t
 import {
   DEFAULT_FRIEND_PROFILE_TAB,
   FRIEND_PROFILE_TABS,
+  getFriendProfilePanelId,
+  getFriendProfileTabId,
 } from '../src/pages/friends/profile/friendProfileTabs.ts';
 
 const profile = (
@@ -157,4 +159,18 @@ test('tabs follow the design order and open on the courses tab', () => {
     ['여행 폴더', '여행 지도', '우리동네추천코스']
   );
   assert.equal(DEFAULT_FRIEND_PROFILE_TAB, 'courses');
+});
+
+test('tab and panel ids are unique per tab and never collide', () => {
+  const ids = FRIEND_PROFILE_TABS.flatMap((tab) => [
+    getFriendProfileTabId(tab.key),
+    getFriendProfilePanelId(tab.key),
+  ]);
+
+  assert.equal(new Set(ids).size, ids.length);
+  assert.equal(getFriendProfileTabId('courses'), 'friend-profile-tab-courses');
+  assert.equal(
+    getFriendProfilePanelId('courses'),
+    'friend-profile-panel-courses'
+  );
 });

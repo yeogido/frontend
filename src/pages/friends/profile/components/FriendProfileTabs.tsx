@@ -2,6 +2,8 @@ import { useRef, type KeyboardEvent } from 'react';
 
 import {
   FRIEND_PROFILE_TABS,
+  getFriendProfilePanelId,
+  getFriendProfileTabId,
   type FriendProfileTab,
 } from '../friendProfileTabs';
 
@@ -59,7 +61,12 @@ function FriendProfileTabs({ value, scale, onChange }: FriendProfileTabsProps) {
             }}
             type="button"
             role="tab"
+            id={getFriendProfileTabId(tab.key)}
             aria-selected={isSelected}
+            // 패널은 선택된 탭 것만 렌더되므로, 없는 요소를 가리키지 않게 선택된 탭에만 단다.
+            aria-controls={
+              isSelected ? getFriendProfilePanelId(tab.key) : undefined
+            }
             tabIndex={isSelected ? 0 : -1}
             onClick={() => onChange(tab.key)}
             onKeyDown={(event) => handleKeyDown(event, index)}

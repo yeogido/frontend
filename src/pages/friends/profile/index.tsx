@@ -20,6 +20,8 @@ import FriendProfileMessage from './components/FriendProfileMessage';
 import FriendProfileTabs from './components/FriendProfileTabs';
 import {
   DEFAULT_FRIEND_PROFILE_TAB,
+  getFriendProfilePanelId,
+  getFriendProfileTabId,
   type FriendProfileTab,
 } from './friendProfileTabs';
 
@@ -126,7 +128,11 @@ function ProfileBody({
         scale={scale}
         onChange={onTabChange}
       />
-      <div role="tabpanel">
+      <div
+        role="tabpanel"
+        id={getFriendProfilePanelId(activeTab)}
+        aria-labelledby={getFriendProfileTabId(activeTab)}
+      >
         {activeTab === 'courses' ? (
           <FriendCoursesTab friendUserId={friendUserId} scale={scale} />
         ) : (
