@@ -27,6 +27,9 @@ const externalShareOptions = [
 ] as const;
 
 interface TravelRecordShareDialogProps {
+  friendSection?: ReactNode;
+  isBusy?: boolean;
+  showExternalShare?: boolean;
   title: string;
   children: ReactNode;
   friends: readonly TravelRecordMember[];
@@ -34,6 +37,9 @@ interface TravelRecordShareDialogProps {
 }
 
 function TravelRecordShareDialog({
+  friendSection,
+  isBusy = false,
+  showExternalShare = true,
   title,
   children,
   friends,
@@ -43,8 +49,14 @@ function TravelRecordShareDialog({
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const isBusyRef = useRef(isBusy);
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
   const { showToast } = useToast();
+
+  useEffect(() => {
+    isBusyRef.current = isBusy;
+    if (isBusy) dialogRef.current?.focus();
+  }, [isBusy]);
 
   useEffect(() => {
     const previousFocus = document.activeElement;
@@ -53,7 +65,7 @@ function TravelRecordShareDialog({
     closeButtonRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !isBusyRef.current) {
         event.preventDefault();
         onClose();
       }
@@ -63,12 +75,23 @@ function TravelRecordShareDialog({
       const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
         'button:not(:disabled)'
       );
-      if (!focusable?.length) return;
+      if (!focusable?.length) {
+        event.preventDefault();
+        dialogRef.current?.focus();
+        return;
+      }
 
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
 
-      if (event.shiftKey && document.activeElement === first) {
+      if (!dialogRef.current?.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (
+        event.shiftKey &&
+        (document.activeElement === first ||
+          document.activeElement === dialogRef.current)
+      ) {
         event.preventDefault();
         last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -98,20 +121,28 @@ function TravelRecordShareDialog({
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4"
       onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget && !isBusy) onClose();
       }}
     >
       <section
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
+        tabIndex={-1}
         aria-labelledby={titleId}
         className="relative overflow-y-auto rounded-xl bg-white shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
         style={{ width: 342 * scale, maxHeight: 'calc(100dvh - 32px)' }}
       >
-        <div className="relative" style={{ height: 541 * scale }}>
+        <div
+          className="relative"
+          style={{ height: friendSection ? undefined : 541 * scale }}
+        >
           <div
-            className="absolute top-0 left-0 h-[541px] w-[342px] overflow-hidden p-5"
+            className={
+              friendSection
+                ? 'relative w-[342px] p-5'
+                : 'absolute top-0 left-0 h-[541px] w-[342px] overflow-hidden p-5'
+            }
             style={{ zoom: scale }}
           >
             <h2 id={titleId} className="sr-only">
@@ -121,6 +152,7 @@ function TravelRecordShareDialog({
               ref={closeButtonRef}
               type="button"
               aria-label="공유 창 닫기"
+              disabled={isBusy}
               onClick={onClose}
               className="focus-visible:outline-main-5 absolute top-5 right-5 flex size-6 items-center justify-center rounded focus-visible:outline-2"
             >
@@ -135,73 +167,80 @@ function TravelRecordShareDialog({
 
             <div className="mt-5 flex flex-col items-center">{children}</div>
 
-            <ul
-              aria-label="외부 앱으로 공유"
-              className="scrollbar-hide -mx-5 mt-6 flex w-[calc(100%+40px)] gap-3 overflow-x-auto px-5"
-            >
-              {externalShareOptions.map((option) => (
-                <li key={option.name} className="shrink-0">
-                  <button
-                    type="button"
-                    aria-label={`${option.name}으로 공유`}
-                    onClick={() => showToast('외부 앱 공유는 준비 중이에요.')}
-                    className="focus-visible:outline-main-5 block rounded-full focus-visible:outline-2 focus-visible:-outline-offset-2"
-                  >
-                    <img
-                      src={option.icon}
-                      alt=""
-                      aria-hidden="true"
-                      className="block max-w-none"
-                    />
-                  </button>
-                </li>
-              ))}
-            </ul>
-
-            <fieldset className="mt-5 min-w-0">
-              <legend className="text-sm leading-[17px] font-medium">
-                친구에게 공유
-              </legend>
-              <ul className="scrollbar-hide -mx-5 mt-2 flex w-[calc(100%+40px)] gap-3 overflow-x-auto px-5">
-                {friends.map((friend) => {
-                  const isSelected = selectedFriendIds.includes(friend.id);
-
-                  return (
-                    <li key={friend.id} className="shrink-0">
-                      <button
-                        type="button"
-                        aria-label={`${friend.name} 선택`}
-                        aria-pressed={isSelected}
-                        title={friend.name}
-                        onClick={() => toggleFriend(friend.id)}
-                        className="focus-visible:outline-main-5 relative block rounded-full focus-visible:outline-2 focus-visible:-outline-offset-2"
-                      >
-                        <NicknameAvatar
-                          name={friend.name}
-                          color={friend.color}
-                          size={48}
-                        />
-                        {isSelected && (
-                          <span
-                            aria-hidden="true"
-                            className="border-main-5 bg-main-5/50 pointer-events-none absolute inset-0 rounded-full border-2"
-                          />
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
+            {showExternalShare && (
+              <ul
+                aria-label="외부 앱으로 공유"
+                className="scrollbar-hide -mx-5 mt-6 flex w-[calc(100%+40px)] gap-3 overflow-x-auto px-5"
+              >
+                {externalShareOptions.map((option) => (
+                  <li key={option.name} className="shrink-0">
+                    <button
+                      type="button"
+                      aria-label={`${option.name}으로 공유`}
+                      disabled={isBusy}
+                      onClick={() => showToast('외부 앱 공유는 준비 중이에요.')}
+                      className="focus-visible:outline-main-5 block rounded-full focus-visible:outline-2 focus-visible:-outline-offset-2"
+                    >
+                      <img
+                        src={option.icon}
+                        alt=""
+                        aria-hidden="true"
+                        className="block max-w-none"
+                      />
+                    </button>
+                  </li>
+                ))}
               </ul>
-            </fieldset>
+            )}
 
-            <button
-              type="button"
-              disabled={selectedFriendIds.length === 0}
-              onClick={() => showToast('친구 초대 전송은 준비 중이에요.')}
-              className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 mt-4 flex h-[43px] w-full items-center justify-center rounded-lg text-base font-semibold text-white disabled:cursor-not-allowed"
-            >
-              보내기
-            </button>
+            {friendSection ?? (
+              <>
+                <fieldset className="mt-5 min-w-0">
+                  <legend className="text-sm leading-[17px] font-medium">
+                    친구에게 공유
+                  </legend>
+                  <ul className="scrollbar-hide -mx-5 mt-2 flex w-[calc(100%+40px)] gap-3 overflow-x-auto px-5">
+                    {friends.map((friend) => {
+                      const isSelected = selectedFriendIds.includes(friend.id);
+
+                      return (
+                        <li key={friend.id} className="shrink-0">
+                          <button
+                            type="button"
+                            aria-label={`${friend.name} 선택`}
+                            aria-pressed={isSelected}
+                            title={friend.name}
+                            onClick={() => toggleFriend(friend.id)}
+                            className="focus-visible:outline-main-5 relative block rounded-full focus-visible:outline-2 focus-visible:-outline-offset-2"
+                          >
+                            <NicknameAvatar
+                              name={friend.name}
+                              color={friend.color}
+                              size={48}
+                            />
+                            {isSelected && (
+                              <span
+                                aria-hidden="true"
+                                className="border-main-5 bg-main-5/50 pointer-events-none absolute inset-0 rounded-full border-2"
+                              />
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </fieldset>
+
+                <button
+                  type="button"
+                  disabled={selectedFriendIds.length === 0}
+                  onClick={() => showToast('친구 초대 전송은 준비 중이에요.')}
+                  className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 mt-4 flex h-[43px] w-full items-center justify-center rounded-lg text-base font-semibold text-white disabled:cursor-not-allowed"
+                >
+                  보내기
+                </button>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -211,5 +250,3 @@ function TravelRecordShareDialog({
 }
 
 export default TravelRecordShareDialog;
-
-

@@ -15,7 +15,41 @@ import type {
   TravelRecordUpdateRequest,
   TravelRecordUpdateResponse,
   TravelRecordYearListResponse,
+  TravelRecordInvitationCreateResponse,
+  TravelRecordVisibilityUpdateRequest,
+  TravelRecordVisibilityUpdateResponse,
 } from '../types/travelRecord.type';
+
+/** 공개범위만 변경한다. 사진·스티커를 다시 저장하거나 FRIENDS 전환을 하지 않는다. */
+export async function updateTravelRecordVisibility(
+  travelRecordId: number,
+  request: TravelRecordVisibilityUpdateRequest,
+): Promise<TravelRecordVisibilityUpdateResponse> {
+  try {
+    const { data } = await apiClient.patch<TravelRecordVisibilityUpdateResponse>(
+      `/travel-records/${travelRecordId}/visibility`, request,
+    );
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+/** FRIENDS 앨범 참여 초대만 생성한다. 앨범 생성이나 참여 수락은 수행하지 않는다. */
+export async function inviteTravelRecordFriends(
+  travelRecordId: number,
+  inviteeUserIds: number[],
+): Promise<TravelRecordInvitationCreateResponse> {
+  try {
+    const { data } = await apiClient.post<TravelRecordInvitationCreateResponse>(
+      `/travel-records/${travelRecordId}/invitations`,
+      { inviteeUserIds },
+    );
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function getTravelRecordMap(
   params: TravelRecordMapParams = {}

@@ -8,6 +8,41 @@ export interface TravelRecordListParams {
 
 export type TravelRecordApiVisibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
 
+export interface TravelRecordUserProfile {
+  userId: number;
+  nickname: string;
+  profileImageUrl: string | null;
+}
+
+export interface TravelRecordPermissions {
+  canEdit: boolean;
+  canDelete: boolean;
+  canLeave: boolean;
+  canInvite: boolean;
+  canLinkShare: boolean;
+}
+
+export interface TravelRecordVisibilityUpdateRequest {
+  visibility: 'PRIVATE' | 'PUBLIC';
+  version: number;
+}
+
+export interface TravelRecordVisibilityUpdateResponse {
+  travelRecordId: number;
+  visibility: TravelRecordApiVisibility;
+  version: number;
+}
+
+export interface TravelRecordInvitationCreateResponse {
+  travelRecordId: number;
+  invitations: Array<{
+    invitationId: number;
+    inviteeUserId: number;
+    status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+    createdAt: string;
+  }>;
+}
+
 export interface TravelRecordMapParams extends TravelRecordListParams {
   visibility?: TravelRecordApiVisibility;
 }
@@ -42,6 +77,7 @@ export interface TravelRecordStickerRequest {
 }
 
 export interface TravelRecordCreateRequest {
+  visibility?: TravelRecordApiVisibility;
   title: string;
   regionId: number;
   startDate: string;
@@ -60,7 +96,8 @@ export interface TravelRecordCreateResponse {
   createdAt: string;
 }
 
-export interface TravelRecordUpdateRequest extends TravelRecordCreateRequest {
+export interface TravelRecordUpdateRequest
+  extends Omit<TravelRecordCreateRequest, 'visibility'> {
   version: number;
 }
 
@@ -69,7 +106,7 @@ export interface TravelRecordUpdateResponse {
 }
 
 export interface TravelRecordSummary {
-  visibility?: 'public' | 'friends' | 'private';
+  visibility?: TravelRecordApiVisibility;
   travelRecordId: number;
   title: string;
   regionId: number;
@@ -101,7 +138,10 @@ export interface TravelRecordStickerResponse {
 export interface TravelRecordDetailResponse {
   /** 편집 시 읽은 버전. 누락된 이전 응답으로는 수정 요청을 만들지 않는다. */
   version?: number;
-  visibility?: 'public' | 'friends' | 'private';
+  visibility?: TravelRecordApiVisibility;
+  owner?: TravelRecordUserProfile;
+  participants?: TravelRecordUserProfile[];
+  permissions?: TravelRecordPermissions;
   travelRecordId: number;
   title: string;
   regionId: number;
