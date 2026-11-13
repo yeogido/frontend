@@ -28,9 +28,8 @@ function LoginDesktopPage() {
     submitError,
     handleLogin,
     handleKakaoLogin,
-    isKakaoLoading,
     handleNaverLogin,
-    isNaverLoading,
+    isSocialLoginLoading,
     infoMessage,
     defaultEmail,
   } = useLoginPage();
@@ -146,7 +145,7 @@ function LoginDesktopPage() {
                 type="button"
                 aria-label="카카오로 로그인"
                 onClick={handleKakaoLogin}
-                disabled={isKakaoLoading}
+                disabled={isSocialLoginLoading}
                 style={{ width: SNS_BUTTON_SIZE, height: SNS_BUTTON_SIZE }}
                 className="flex cursor-pointer items-center justify-center rounded-full bg-[#FEE500] disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -161,7 +160,7 @@ function LoginDesktopPage() {
                 type="button"
                 aria-label="네이버로 로그인"
                 onClick={handleNaverLogin}
-                disabled={isNaverLoading}
+                disabled={isSocialLoginLoading}
                 style={{ width: SNS_BUTTON_SIZE, height: SNS_BUTTON_SIZE }}
                 className="flex cursor-pointer items-center justify-center rounded-full bg-[#03C75A] disabled:cursor-not-allowed disabled:opacity-60"
               >

@@ -92,6 +92,7 @@ function SignupStartDesktop({ onEmailStart }: SignupStartDesktopProps) {
             <button
               type="button"
               onClick={onEmailStart}
+              disabled={isSocialLoginLoading}
               className={`${BUTTON_CLASS} border-gray-2 border bg-white text-[#1c1c1c]`}
             >
               이메일로 시작하기

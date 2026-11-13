@@ -42,9 +42,14 @@ export function useForgotPasswordForm() {
     // 인증번호 입력은 계속 노출한다(받은 코드가 아직 유효할 수 있음).
     hasSentOnce: boolean;
   }>({ status: 'idle', message: '', resetToken: null, hasSentOnce: false });
-  // 이메일/인증번호가 바뀔 때마다 올려서, 이미 날아간 이전 요청의 응답이
-  // 늦게 도착해도 현재 입력과 다른 시점의 응답이면 무시하게 만든다.
-  const revisionRef = useRef(0);
+  // 이메일이 바뀌거나 새 전송을 시작할 때 올려서, 이미 날아간 이전 전송
+  // 요청의 응답이 늦게 도착해도 무시하게 만든다. 인증번호 입력은 전송
+  // 응답과 무관하므로 이 값을 건드리지 않는다 — 재전송 중 인증번호를
+  // 고쳐도 sending 상태가 풀리게 하려는 것이다.
+  const sendRevisionRef = useRef(0);
+  // 이메일·인증번호가 바뀌거나 새 전송·검증을 시작할 때 올려서, 오래된
+  // 검증 응답이 현재 입력의 상태를 덮어쓰지 못하게 한다.
+  const verifyRevisionRef = useRef(0);
 
   const isEmailValid = SIGNUP_EMAIL_PATTERN.test(email.trim());
   const isCodeSent = codeAuth.hasSentOnce;
@@ -58,7 +63,8 @@ export function useForgotPasswordForm() {
   const isResetButtonEnabled = codeAuth.status === 'verified';
 
   const handleEmailChange = (value: string) => {
-    revisionRef.current += 1;
+    sendRevisionRef.current += 1;
+    verifyRevisionRef.current += 1;
     setEmail(value);
     setCode('');
     setCodeAuth({
@@ -70,7 +76,7 @@ export function useForgotPasswordForm() {
   };
 
   const handleCodeChange = (value: string) => {
-    revisionRef.current += 1;
+    verifyRevisionRef.current += 1;
     setCode(value);
     setCodeAuth((prev) =>
       prev.status === 'verified' ||
@@ -86,7 +92,9 @@ export function useForgotPasswordForm() {
       return;
     }
 
-    const requestRevision = ++revisionRef.current;
+    const requestRevision = ++sendRevisionRef.current;
+    // 새 인증번호가 나가면 이전 번호의 검증 응답은 더는 유효하지 않다.
+    verifyRevisionRef.current += 1;
     setCode('');
     setCodeAuth((prev) => ({
       ...prev,
@@ -98,7 +106,7 @@ export function useForgotPasswordForm() {
     try {
       await sendPasswordResetCode(email.trim());
 
-      if (revisionRef.current !== requestRevision) return;
+      if (sendRevisionRef.current !== requestRevision) return;
 
       setCodeAuth({
         status: 'sent',
@@ -107,7 +115,7 @@ export function useForgotPasswordForm() {
         hasSentOnce: true,
       });
     } catch (error) {
-      if (revisionRef.current !== requestRevision) return;
+      if (sendRevisionRef.current !== requestRevision) return;
 
       setCodeAuth((prev) => ({
         status: 'sendError',
@@ -123,7 +131,7 @@ export function useForgotPasswordForm() {
       return;
     }
 
-    const requestRevision = ++revisionRef.current;
+    const requestRevision = ++verifyRevisionRef.current;
     setCodeAuth((prev) => ({ ...prev, status: 'verifying', message: '' }));
 
     try {
@@ -132,7 +140,7 @@ export function useForgotPasswordForm() {
         code.trim()
       );
 
-      if (revisionRef.current !== requestRevision) return;
+      if (verifyRevisionRef.current !== requestRevision) return;
 
       setCodeAuth((prev) => ({
         ...prev,
@@ -141,7 +149,7 @@ export function useForgotPasswordForm() {
         resetToken,
       }));
     } catch (error) {
-      if (revisionRef.current !== requestRevision) return;
+      if (verifyRevisionRef.current !== requestRevision) return;
 
       // 인증번호 입력은 그대로 남겨 재입력을 유도한다(입력창을 비우지 않음).
       setCodeAuth((prev) => ({

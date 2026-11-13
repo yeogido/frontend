@@ -60,6 +60,9 @@ export function useSignupForm() {
   // 이메일이 바뀌거나 새 확인 요청이 시작되면 증가시켜, 응답이 늦게 온
   // 이전 요청이 이후 상태를 덮어쓰지 않도록 막는다.
   const emailCheckRequestIdRef = useRef(0);
+  // 이메일이 바뀌거나 인증번호 전송·검증이 새로 시작되면 증가시켜, 늦게 온
+  // 이전 응답이 새 이메일의 인증 상태와 토큰을 덮어쓰지 못하게 한다.
+  const emailAuthRequestIdRef = useRef(0);
 
   const {
     register,
@@ -89,6 +92,7 @@ export function useSignupForm() {
   // 재인증을 요구한다.
   const handleEmailChange = () => {
     emailCheckRequestIdRef.current += 1;
+    emailAuthRequestIdRef.current += 1;
     setEmailCheck({ status: 'idle', message: '' });
     setEmailAuth({ status: 'idle', message: '', token: null });
     setAuthCode('');
@@ -151,10 +155,15 @@ export function useSignupForm() {
     // 재전송 시 이전 인증번호는 서버에서 무효화되므로, 입력창도 함께
     // 비워 사용자가 옛 번호를 다시 입력하지 않게 한다.
     setAuthCode('');
+    const requestId = ++emailAuthRequestIdRef.current;
     setEmailAuth({ status: 'sending', message: '', token: null });
 
     try {
       await sendEmailCode(email.trim());
+
+      if (emailAuthRequestIdRef.current !== requestId) {
+        return;
+      }
 
       setEmailAuth({
         status: 'sent',
@@ -162,6 +171,10 @@ export function useSignupForm() {
         token: null,
       });
     } catch (error) {
+      if (emailAuthRequestIdRef.current !== requestId) {
+        return;
+      }
+
       setEmailAuth({
         status: 'error',
         message: getApiErrorMessage(error, SEND_CODE_ERROR_MESSAGE),
@@ -175,6 +188,7 @@ export function useSignupForm() {
       return;
     }
 
+    const requestId = ++emailAuthRequestIdRef.current;
     setEmailAuth((prev) => ({ ...prev, status: 'verifying', message: '' }));
 
     try {
@@ -183,12 +197,20 @@ export function useSignupForm() {
         authCode.trim()
       );
 
+      if (emailAuthRequestIdRef.current !== requestId) {
+        return;
+      }
+
       setEmailAuth({
         status: 'verified',
         message: VERIFY_CODE_SUCCESS_MESSAGE,
         token: emailVerificationToken,
       });
     } catch (error) {
+      if (emailAuthRequestIdRef.current !== requestId) {
+        return;
+      }
+
       // 인증번호 입력은 그대로 남겨 재입력을 유도한다(입력창을 비우지 않음).
       setEmailAuth({
         status: 'error',

@@ -49,6 +49,9 @@ export function useLoginPage() {
   const setAuth = useAuthStore((state) => state.setAuth);
   const { loginWithKakao, isLoading: isKakaoLoading } = useKakaoLogin();
   const { loginWithNaver, isLoading: isNaverLoading } = useNaverLogin();
+  // 한 SDK가 로딩되는 동안 다른 소셜 버튼을 눌러 authorize()가 동시에
+  // 두 번 시작되지 않도록, 두 버튼을 하나의 로딩 상태로 함께 잠근다.
+  const isSocialLoginLoading = isKakaoLoading || isNaverLoading;
 
   const handleLogin = async (values: LoginFormValues) => {
     setSubmitError('');
@@ -67,6 +70,8 @@ export function useLoginPage() {
   };
 
   const handleKakaoLogin = async () => {
+    if (isSocialLoginLoading) return;
+
     setSubmitError('');
 
     try {
@@ -81,6 +86,8 @@ export function useLoginPage() {
   };
 
   const handleNaverLogin = async () => {
+    if (isSocialLoginLoading) return;
+
     setSubmitError('');
 
     try {
@@ -101,6 +108,7 @@ export function useLoginPage() {
     isKakaoLoading,
     handleNaverLogin,
     isNaverLoading,
+    isSocialLoginLoading,
     infoMessage: locationState?.signupCompleted
       ? SIGNUP_COMPLETED_MESSAGE
       : undefined,
