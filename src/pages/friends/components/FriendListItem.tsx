@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 import type { FriendSummary } from '../../../types/friend.type';
 import FriendAvatar from './FriendAvatar';
 
@@ -24,7 +26,8 @@ function FriendListItem({ friend, scale, onDeleteClick }: FriendListItemProps) {
       className="flex items-center justify-between"
       style={{ gap: ROW_GAP * scale, paddingBlock: ROW_PADDING_Y * scale }}
     >
-      <div
+      <Link
+        to={`/friends/${friend.userId}`}
         className="flex min-w-0 items-center"
         style={{ gap: ROW_GAP * scale }}
       >
@@ -51,7 +54,7 @@ function FriendListItem({ friend, scale, onDeleteClick }: FriendListItemProps) {
             {friend.friendCode}
           </p>
         </div>
-      </div>
+      </Link>
       <button
         type="button"
         aria-label={`${friend.nickname} 친구 삭제`}

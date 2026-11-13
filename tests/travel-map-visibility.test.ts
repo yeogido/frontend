@@ -135,12 +135,12 @@ test('detail hydration preserves summary visibility unless the detail supplies a
     coverImageUrl: 'https://example.test/photo.jpg',
     folderTheme: 'BASIC',
     createdAt: '',
-    visibility: 'public',
+    visibility: 'PUBLIC',
   };
   const detail = { ...summary, visibility: undefined };
   assert.equal(mapTravelRecordFolder(summary, detail).visibility, 'public');
   assert.equal(
-    mapTravelRecordFolder(summary, { ...detail, visibility: 'private' })
+    mapTravelRecordFolder(summary, { ...detail, visibility: 'PRIVATE' })
       .visibility,
     'private'
   );

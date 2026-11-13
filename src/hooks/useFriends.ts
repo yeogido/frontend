@@ -13,6 +13,8 @@ import type { GetFriendsResponse } from '../types/friend.type';
 import { getFriendsFromPages } from './utils/friendPages';
 import { keepFriendsPlaceholderData } from './utils/friendPlaceholder';
 import { shouldRetryFriendsQuery } from './utils/friendRetry';
+import { FRIEND_PROFILE_QUERY_PREFIX } from './useFriendProfile';
+import { FRIEND_SEARCH_QUERY_PREFIX } from './useFriendSearch';
 
 const FRIENDS_PAGE_SIZE = 10;
 
@@ -90,6 +92,12 @@ export function useDeleteFriend() {
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: [FRIENDS_QUERY_PREFIX, userId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [FRIEND_SEARCH_QUERY_PREFIX, userId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [FRIEND_PROFILE_QUERY_PREFIX, userId],
       });
     },
   });

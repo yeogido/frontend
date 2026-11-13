@@ -45,6 +45,7 @@ import type {
   TravelRecordSummary,
   TravelRecordUpdateResponse,
   UploadedTravelRecordImage,
+  TravelRecordApiVisibility,
 } from '../types/travelRecord.type';
 
 type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
@@ -62,6 +63,7 @@ interface TravelRecordsPageParam {
 }
 
 interface CreateTravelRecordFromDraftParams {
+  visibility?: TravelRecordApiVisibility;
   selectedRegion: TravelRecordDraftRegion;
   selectedDateRange: TravelDateRange;
   selectedPhotos: File[];
@@ -121,21 +123,23 @@ export function useTravelRecords(
   params: TravelRecordListParams = {},
   { enabled = true } = {}
 ) {
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   return useInfiniteQuery<
     TravelRecordListResponse,
     Error,
     InfiniteData<TravelRecordListResponse, TravelRecordsPageParam>,
-    [string, TravelRecordListParams],
+    [string, number | null, number, TravelRecordListParams],
     TravelRecordsPageParam
   >({
-    queryKey: ['travelRecords', params],
+    queryKey: ['travelRecords', userId, authGeneration, params],
     queryFn: ({ pageParam }) =>
       getTravelRecords({
         ...params,
         cursor: pageParam.cursor,
       }),
     initialPageParam: {},
-    enabled,
+    enabled: enabled && userId !== null,
     getNextPageParam: (lastPage) =>
       lastPage.hasNext && lastPage.cursorId
         ? { cursor: lastPage.cursorId }
@@ -155,9 +159,17 @@ export function useTravelRecordYears({ enabled = true } = {}) {
 
 export function useTravelRecordDetail(travelRecordId: number | null) {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
 
   return useQuery({
-    queryKey: ['travelRecord', travelRecordId, 'folder'],
+    queryKey: [
+      'travelRecord',
+      travelRecordId,
+      'folder',
+      userId,
+      authGeneration,
+    ],
     queryFn: async (): Promise<TravelRecordFolder> => {
       const detail = await getTravelRecordDetail(travelRecordId as number);
       const regionInfo = await queryClient
@@ -170,15 +182,21 @@ export function useTravelRecordDetail(travelRecordId: number | null) {
 
       return mapTravelRecordDetailToFolder(detail, regionInfo);
     },
-    enabled: typeof travelRecordId === 'number' && travelRecordId > 0,
+    enabled:
+      userId !== null &&
+      typeof travelRecordId === 'number' &&
+      travelRecordId > 0,
   });
 }
 
 export function useTravelRecordDetails(records: TravelRecordSummary[]) {
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   return useQueries({
     queries: records.map((record) => ({
-      queryKey: ['travelRecord', record.travelRecordId],
+      queryKey: ['travelRecord', record.travelRecordId, userId, authGeneration],
       queryFn: () => getTravelRecordDetail(record.travelRecordId),
+      enabled: userId !== null,
     })),
   });
 }
@@ -192,6 +210,7 @@ export function useCreateTravelRecord() {
     CreateTravelRecordFromDraftParams
   >({
     mutationFn: async ({
+      visibility,
       selectedRegion,
       selectedDateRange,
       selectedPhotos,
@@ -201,6 +220,7 @@ export function useCreateTravelRecord() {
 
       return createTravelRecord(
         createTravelRecordCreateRequest({
+          visibility,
           selectedRegion,
           selectedDateRange,
           uploadedImages,
@@ -210,7 +230,9 @@ export function useCreateTravelRecord() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
-      void queryClient.invalidateQueries({ queryKey: TRAVEL_RECORD_MAP_QUERY_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: TRAVEL_RECORD_MAP_QUERY_KEY,
+      });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
     },
   });
@@ -253,7 +275,9 @@ export function useUpdateTravelRecord() {
     },
     onSuccess: (_, { travelRecordId }) => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
-      void queryClient.invalidateQueries({ queryKey: TRAVEL_RECORD_MAP_QUERY_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: TRAVEL_RECORD_MAP_QUERY_KEY,
+      });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.invalidateQueries({
         queryKey: ['travelRecord', travelRecordId],
@@ -302,7 +326,9 @@ export function useDeleteTravelRecord() {
         };
       });
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
-      void queryClient.invalidateQueries({ queryKey: TRAVEL_RECORD_MAP_QUERY_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: TRAVEL_RECORD_MAP_QUERY_KEY,
+      });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.removeQueries({
         queryKey: ['travelRecord', travelRecordId],
