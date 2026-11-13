@@ -8,6 +8,10 @@ import type {
   GetReceivedFriendRequestsResponse,
   GetSentFriendRequestsResponse,
   MyFriendCode,
+  SearchFriendsParams,
+  SearchFriendsResponse,
+  SendFriendRequestBody,
+  SendFriendRequestResult,
 } from '../types/friend.type';
 
 export async function getFriends(
@@ -98,6 +102,37 @@ export async function rejectFriendRequest(requestId: number): Promise<void> {
 export async function cancelFriendRequest(requestId: number): Promise<void> {
   try {
     await apiClient.delete(`/friends/requests/${requestId}`);
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function searchFriends(
+  params: SearchFriendsParams
+): Promise<SearchFriendsResponse> {
+  try {
+    const { data } = await apiClient.get<SearchFriendsResponse>(
+      '/friends/search',
+      { params }
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function sendFriendRequest(
+  friendCode: string
+): Promise<SendFriendRequestResult> {
+  try {
+    const body: SendFriendRequestBody = { friendCode };
+    const { data } = await apiClient.post<SendFriendRequestResult>(
+      '/friends/requests',
+      body
+    );
+
+    return data;
   } catch (error) {
     throw normalizeApiError(error);
   }

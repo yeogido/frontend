@@ -5,11 +5,14 @@ const BUTTON_HEIGHT = 32;
 const BUTTON_PADDING_X = 12;
 const BUTTON_PADDING_Y = 8;
 const BUTTON_RADIUS = 8;
+const PILL_RADIUS = 999;
 const BUTTON_TEXT_SIZE = 12;
 
 const VARIANT_CLASS_NAMES = {
-  accept: 'bg-main-3 text-main-5',
-  neutral: 'border-gray-2 text-gray-4 border bg-white',
+  accept: 'bg-main-3 text-main-5 font-medium',
+  neutral: 'border-gray-2 text-gray-4 border bg-white font-medium',
+  // 검색 결과의 "친구 맺기". 시안은 알약 모양에 SemiBold다.
+  primary: 'bg-main-5 text-white font-semibold',
 } as const;
 
 interface FriendRequestButtonProps {
@@ -21,7 +24,7 @@ interface FriendRequestButtonProps {
   children: ReactNode;
 }
 
-/** 친구 요청 행의 오른쪽에 놓이는 수락·삭제·취소 버튼. */
+/** 친구 요청 행과 검색 결과 행의 오른쪽에 놓이는 수락·삭제·취소·친구 맺기 버튼. */
 function FriendRequestButton({
   variant,
   scale,
@@ -36,11 +39,12 @@ function FriendRequestButton({
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}
-      className={`relative flex shrink-0 items-center justify-center font-medium before:absolute before:-inset-x-1 before:-inset-y-1 before:content-[''] disabled:cursor-not-allowed disabled:opacity-60 ${VARIANT_CLASS_NAMES[variant]}`}
+      className={`relative flex shrink-0 items-center justify-center before:absolute before:-inset-x-1 before:-inset-y-1 before:content-[''] disabled:cursor-not-allowed disabled:opacity-60 ${VARIANT_CLASS_NAMES[variant]}`}
       style={{
         height: BUTTON_HEIGHT * scale,
         padding: `${BUTTON_PADDING_Y * scale}px ${BUTTON_PADDING_X * scale}px`,
-        borderRadius: BUTTON_RADIUS * scale,
+        borderRadius:
+          (variant === 'primary' ? PILL_RADIUS : BUTTON_RADIUS) * scale,
         fontSize: BUTTON_TEXT_SIZE * scale,
         lineHeight: 'normal',
       }}
