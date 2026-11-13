@@ -34,6 +34,7 @@ import FestivalSearchPage from '../pages/festival/search';
 import ReviewPage from '../pages/review';
 import CourseRegionSearchPage from '../pages/course-region-search';
 import YeogidoCoursePage from '../pages/yeogido-course';
+import YeogidoCourseDesktopPage from '../pages/yeogido-course/desktop';
 import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
 import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
@@ -153,11 +154,24 @@ function AppRouter() {
 
         <Route path="/region-info/:region" element={<RegionInfoPage />} />
 
-        <Route path="/yeogido-course" element={<YeogidoCoursePage />} />
+        <Route
+          path="/yeogido-course"
+          element={
+            <Responsive
+              desktop={<YeogidoCourseDesktopPage />}
+              mobile={<YeogidoCoursePage />}
+            />
+          }
+        />
 
         <Route
           path="/yeogido-course/popular"
-          element={<YeogidoCoursePopularPage />}
+          element={
+            <Responsive
+              desktop={<YeogidoCourseDesktopPage defaultSort="인기순" />}
+              mobile={<YeogidoCoursePopularPage />}
+            />
+          }
         />
 
         <Route
