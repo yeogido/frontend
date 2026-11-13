@@ -6,12 +6,15 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { MdPersonAdd } from 'react-icons/md';
+import requestsNotificationIcon from '../../assets/icons/friend-requests-notification.svg';
 import { useIsFetching } from '@tanstack/react-query';
 
 import { getApiErrorMessage } from '../../apis/common';
 import { LoadingSpinner } from '../../components/common';
 import { ResponsivePageShell } from '../../components/layout';
+import DesktopPageShell from '../../components/layout/desktop/DesktopPageShell';
 import { useToast } from '../../components/toast';
 import { useFriendSearch } from '../../hooks/useFriendSearch';
 import {
@@ -20,6 +23,7 @@ import {
   useFriends,
 } from '../../hooks/useFriends';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useReceivedFriendRequests } from '../../hooks/useFriendRequests';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import {
   mergeFriendSearchResults,
@@ -56,8 +60,26 @@ const DESCRIPTION_SIZE = 14;
 const LIST_GAP = 2;
 const LOAD_MORE_SPACE = 16;
 
-function FriendsPage() {
-  const scale = useGlobalScale();
+function DesktopFriendRequestsLink() {
+  const { requests } = useReceivedFriendRequests();
+  return (
+    <Link
+      to="/friends/requests"
+      aria-label="친구 요청 확인"
+      className="p-2 text-[24px] text-black"
+    >
+      {requests.length > 0 ? (
+        <img src={requestsNotificationIcon} alt="" />
+      ) : (
+        <MdPersonAdd aria-hidden="true" />
+      )}
+    </Link>
+  );
+}
+
+function FriendsPage({ desktop = false }: { desktop?: boolean }) {
+  const mobileScale = useGlobalScale();
+  const scale = desktop ? 1 : mobileScale;
   const [searchParams, setSearchParams] = useSearchParams();
   // 프로필에 다녀와도 검색어가 남도록 URL(?keyword=)에 둔다. 읽는 건 마운트할 때뿐이고,
   // 이후 입력창은 이 로컬 상태가 제어한다(한글 조합 중 글자가 URL 갱신에 덮이지 않게).
@@ -225,12 +247,15 @@ function FriendsPage() {
     }
   } else {
     content = (
-      <div className="flex flex-col" style={{ gap: LIST_GAP * scale }}>
+      <div
+        className="flex flex-col"
+        style={{ gap: (desktop ? 8 : LIST_GAP) * scale }}
+      >
         {friends.length > 0 ? (
           <ul
             aria-label="친구 목록"
             className="flex flex-col"
-            style={{ gap: LIST_GAP * scale }}
+            style={{ gap: (desktop ? 8 : LIST_GAP) * scale }}
           >
             {friends.map((friend) => (
               <FriendListItem
@@ -246,7 +271,7 @@ function FriendsPage() {
           <ul
             aria-label="새로운 친구 검색 결과"
             className="flex flex-col"
-            style={{ gap: LIST_GAP * scale }}
+            style={{ gap: (desktop ? 8 : LIST_GAP) * scale }}
           >
             {newFriends.map((friend) => (
               <FriendSearchResultRow
@@ -272,38 +297,51 @@ function FriendsPage() {
     );
   }
 
-  return (
-    <ResponsivePageShell
-      mode="main-layout"
-      topPadding={PAGE_TOP_PADDING}
-      bottomPadding={PAGE_BOTTOM_PADDING}
-      className="bg-background"
-    >
-      <div className="flex flex-col" style={{ gap: SECTION_GAP * scale }}>
-        <div className="flex flex-col" style={{ gap: TITLE_GAP * scale }}>
-          <h1
-            ref={titleRef}
-            tabIndex={-1}
-            className="font-semibold text-black outline-none"
-            style={{ fontSize: TITLE_SIZE * scale, lineHeight: 'normal' }}
-          >
-            친구 목록
-          </h1>
-          <p
-            className="text-gray-5"
-            style={{ fontSize: DESCRIPTION_SIZE * scale, lineHeight: 'normal' }}
-          >
-            등록된 친구들을 확인해 보세요
-          </p>
+  const pageContent = (
+    <>
+      <div
+        className="flex flex-col"
+        style={{ gap: (desktop ? 32 : SECTION_GAP) * scale }}
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex flex-col" style={{ gap: TITLE_GAP * scale }}>
+            <h1
+              ref={titleRef}
+              tabIndex={-1}
+              className="font-semibold text-black outline-none"
+              style={{
+                fontSize: (desktop ? 32 : TITLE_SIZE) * scale,
+                lineHeight: 'normal',
+              }}
+            >
+              친구 목록
+            </h1>
+            <p
+              className="text-gray-5"
+              style={{
+                fontSize: (desktop ? 20 : DESCRIPTION_SIZE) * scale,
+                lineHeight: desktop ? 1.5 : 'normal',
+              }}
+            >
+              등록된 친구들을 확인해 보세요
+            </p>
+          </div>
+          {desktop ? <DesktopFriendRequestsLink /> : null}
         </div>
-        <FriendSearchBar
-          value={query}
-          scale={scale}
-          onChange={setQuery}
-          onSubmit={() => setKeyword(query)}
-          onClear={handleClear}
-        />
-        {content}
+        <div
+          className="flex flex-col"
+          style={{ gap: (desktop ? 20 : SECTION_GAP) * scale }}
+        >
+          <FriendSearchBar
+            value={query}
+            scale={scale}
+            desktop={desktop}
+            onChange={setQuery}
+            onSubmit={() => setKeyword(query)}
+            onClear={handleClear}
+          />
+          {content}
+        </div>
       </div>
 
       {showLoadMoreError ? (
@@ -328,6 +366,19 @@ function FriendsPage() {
         onConfirm={() => void handleDeleteConfirm()}
         onCancel={handleDeleteCancel}
       />
+    </>
+  );
+
+  return desktop ? (
+    <DesktopPageShell>{pageContent}</DesktopPageShell>
+  ) : (
+    <ResponsivePageShell
+      mode="main-layout"
+      topPadding={PAGE_TOP_PADDING}
+      bottomPadding={PAGE_BOTTOM_PADDING}
+      className="bg-background"
+    >
+      {pageContent}
     </ResponsivePageShell>
   );
 }

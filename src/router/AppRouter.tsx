@@ -236,12 +236,42 @@ function AppRouter() {
               />
             }
           />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/friends" element={<FriendsPage />} />
-          <Route path="/friends/requests" element={<FriendRequestsPage />} />
+          <Route
+            path="/profile"
+            element={
+              <Responsive
+                desktop={<LikesDesktopPage />}
+                mobile={<ProfilePage />}
+              />
+            }
+          />
+          <Route path="/account" element={<ProfilePage />} />
+          <Route
+            path="/friends"
+            element={
+              <Responsive
+                desktop={<FriendsPage desktop />}
+                mobile={<FriendsPage />}
+              />
+            }
+          />
+          <Route
+            path="/friends/requests"
+            element={
+              <Responsive
+                desktop={<FriendRequestsPage desktop />}
+                mobile={<FriendRequestsPage />}
+              />
+            }
+          />
           <Route
             path="/friends/:friendUserId"
-            element={<FriendProfilePage />}
+            element={
+              <Responsive
+                desktop={<FriendProfilePage desktop />}
+                mobile={<FriendProfilePage />}
+              />
+            }
           />
           <Route
             path="/my-posts"

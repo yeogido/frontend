@@ -35,6 +35,7 @@ interface FriendTravelMapTabProps {
   /** 지도 제목과 부제에 쓰는 친구 이름. */
   nickname: string;
   scale: number;
+  desktop?: boolean;
 }
 
 /**
@@ -46,6 +47,7 @@ function FriendTravelMapTab({
   friendUserId,
   nickname,
   scale,
+  desktop = false,
 }: FriendTravelMapTabProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   // 연도는 URL(?year=)에 둬서 상세에 다녀와도 유지된다. tab 등 다른 파라미터는 보존한다.
@@ -91,7 +93,7 @@ function FriendTravelMapTab({
       <section
         aria-label="여행 지도 불러오는 중"
         aria-busy="true"
-        className="flex h-[596px] flex-col items-center justify-center gap-3 rounded-xl bg-white"
+        className={`flex ${desktop ? 'h-[664px]' : 'h-[596px]'} flex-col items-center justify-center gap-3 rounded-xl bg-white`}
       >
         <LoadingSpinner label="여행 기록을 불러오는 중" />
         <p className="text-gray-4 text-sm">여행 기록을 불러오고 있어요</p>
@@ -119,14 +121,22 @@ function FriendTravelMapTab({
     panel = (
       <section
         aria-label="여행 지도"
-        className="relative h-[596px] overflow-hidden rounded-xl bg-white"
+        className={`relative ${desktop ? 'h-[664px] border border-[#e4e4e4]' : 'h-[596px]'} overflow-hidden rounded-xl bg-white`}
       >
-        <div className="absolute top-4 left-4 z-10">
-          <h2 className="text-[18px] leading-none font-semibold text-black">
-            {nickname}의 전국 지도
+        <div
+          className={`absolute z-10 ${desktop ? 'top-8 left-8' : 'top-4 left-4'}`}
+        >
+          <h2
+            className={`leading-none font-semibold text-black ${desktop ? 'text-[32px]' : 'text-[18px]'}`}
+          >
+            {desktop ? '전국 지도' : `${nickname}의 전국 지도`}
           </h2>
-          <p className="text-gray-3 mt-2 text-[10px] leading-none font-normal">
-            {nickname}님이 다녀온 지역을 확인해 보세요
+          <p
+            className={`text-gray-3 mt-2 leading-none font-normal ${desktop ? 'text-[14px]' : 'text-[10px]'}`}
+          >
+            {desktop
+              ? '다녀온 지역을 한눈에 확인해 보세요'
+              : `${nickname}님이 다녀온 지역을 확인해 보세요`}
           </p>
         </div>
 
