@@ -48,7 +48,7 @@ function HomeDesktopPage() {
               aria-label="여기도 추천 코스"
               className="flex flex-col gap-[20px]"
             >
-              <HomeSectionHeader title="여기도 추천 코스" />
+              <HomeSectionHeader title="여기도 추천 코스로 지금 떠나보세요" />
               <FeaturedCourseCarousel
                 courses={featured}
                 onOpen={(id) => navigate(buildCourseDetailPath('OFFICIAL', id))}
@@ -62,11 +62,7 @@ function HomeDesktopPage() {
             </section>
           ) : null}
 
-          <section
-            aria-label="지역별 여행"
-            className="flex flex-col gap-[20px]"
-          >
-            <HomeSectionHeader title="어디로 떠나볼까요?" />
+          <section aria-label="지역별 여행">
             <HomeRegionStrip
               onSelect={(name) =>
                 navigate(`/region-info/${encodeURIComponent(name)}`)
@@ -75,11 +71,17 @@ function HomeDesktopPage() {
           </section>
 
           <HomeFestivalSection />
-          <HomeLocalCourseSection />
         </div>
 
         <HomeReviewSection />
-        <HomeAdBanner />
+
+        <div className="py-[48px]">
+          <HomeAdBanner />
+        </div>
+
+        <div style={{ width: CONTENT_WIDTH }} className="mx-auto pb-[64px]">
+          <HomeLocalCourseSection />
+        </div>
       </main>
 
       <DesktopFooter />
