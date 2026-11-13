@@ -1,5 +1,9 @@
 import type { CursorResponse } from '../apis/common/apiTypes';
 import type { Course } from './course.type';
+import type {
+  TravelRecordApiVisibility,
+  TravelRecordImageResponse,
+} from './travelRecord.type';
 
 // 스웨거 기준: GET /api/v1/friends의 UserSummary
 export interface FriendSummary {
@@ -119,3 +123,36 @@ export interface GetFriendLocalCoursesParams {
 }
 
 export type GetFriendLocalCoursesResponse = CursorResponse<Course>;
+
+// GET /api/v1/friends/{friendUserId}/travel-map. blurred가 true인 항목은 지역, 좌표,
+// 날짜만 의미가 있고 title, visibility, images는 null이다(친구에게만 내려온다).
+export interface FriendTravelMapItem {
+  blurred: boolean;
+  travelRecordId: number;
+  regionId: number;
+  regionName: string;
+  latitude: number | null;
+  longitude: number | null;
+  startDate: string;
+  endDate: string;
+  title: string | null;
+  visibility: TravelRecordApiVisibility | null;
+  images: TravelRecordImageResponse[] | null;
+}
+
+// size는 최대 100이다. year를 생략했을 때 전체를 주는지는 확인하지 못했다.
+export interface GetFriendTravelMapParams {
+  cursor?: number;
+  size?: number;
+  year?: number;
+}
+
+export type GetFriendTravelMapResponse = CursorResponse<
+  FriendTravelMapItem,
+  unknown
+>;
+
+// GET /api/v1/friends/{friendUserId}/travel-map/years. 최신순이다.
+export interface GetFriendTravelMapYearsResponse {
+  years: number[];
+}

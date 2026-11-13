@@ -6,6 +6,9 @@ import type {
   GetFriendLocalCoursesParams,
   GetFriendLocalCoursesResponse,
   GetFriendRequestsParams,
+  GetFriendTravelMapParams,
+  GetFriendTravelMapResponse,
+  GetFriendTravelMapYearsResponse,
   GetFriendsParams,
   GetFriendsResponse,
   GetReceivedFriendRequestsResponse,
@@ -163,6 +166,36 @@ export async function getFriendLocalCourses(
     const { data } = await apiClient.get<GetFriendLocalCoursesResponse>(
       `/friends/${friendUserId}/courses/local`,
       { params }
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function getFriendTravelMap(
+  friendUserId: number,
+  params: GetFriendTravelMapParams = {}
+): Promise<GetFriendTravelMapResponse> {
+  try {
+    const { data } = await apiClient.get<GetFriendTravelMapResponse>(
+      `/friends/${friendUserId}/travel-map`,
+      { params }
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function getFriendTravelMapYears(
+  friendUserId: number
+): Promise<GetFriendTravelMapYearsResponse> {
+  try {
+    const { data } = await apiClient.get<GetFriendTravelMapYearsResponse>(
+      `/friends/${friendUserId}/travel-map/years`
     );
 
     return data;
