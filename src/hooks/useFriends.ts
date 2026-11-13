@@ -13,6 +13,7 @@ import type { GetFriendsResponse } from '../types/friend.type';
 import { getFriendsFromPages } from './utils/friendPages';
 import { keepFriendsPlaceholderData } from './utils/friendPlaceholder';
 import { shouldRetryFriendsQuery } from './utils/friendRetry';
+import { invalidateFriendTravelQueries } from './friendQueryKeys';
 import { FRIEND_PROFILE_QUERY_PREFIX } from './useFriendProfile';
 import { FRIEND_SEARCH_QUERY_PREFIX } from './useFriendSearch';
 
@@ -89,7 +90,7 @@ export function useDeleteFriend() {
 
   return useMutation<void, Error, number>({
     mutationFn: (friendUserId) => deleteFriend(friendUserId),
-    onSuccess: () => {
+    onSuccess: (_result, friendUserId) => {
       void queryClient.invalidateQueries({
         queryKey: [FRIENDS_QUERY_PREFIX, userId],
       });
@@ -99,6 +100,8 @@ export function useDeleteFriend() {
       void queryClient.invalidateQueries({
         queryKey: [FRIEND_PROFILE_QUERY_PREFIX, userId],
       });
+      // 친구를 끊으면 친구에게만 보이던 여행 데이터가 캐시에 남지 않게 한다.
+      invalidateFriendTravelQueries(queryClient, userId, friendUserId);
     },
   });
 }

@@ -19,3 +19,67 @@ export const getFriendProfileTabId = (tab: FriendProfileTab) =>
 
 export const getFriendProfilePanelId = (tab: FriendProfileTab) =>
   `friend-profile-panel-${tab}`;
+
+// 선택한 탭과 지도 연도는 URL(?tab=, ?year=)에 둬서, 상세에 다녀와도 그대로 돌아온다.
+export const FRIEND_PROFILE_TAB_PARAM = 'tab';
+export const FRIEND_PROFILE_YEAR_PARAM = 'year';
+
+/** ?tab= 값을 탭으로 바꾼다. 없거나 잘못된 값이면 기본 탭이다. */
+export function parseFriendProfileTab(
+  value: string | null | undefined
+): FriendProfileTab {
+  return (
+    FRIEND_PROFILE_TABS.find((tab) => tab.key === value)?.key ??
+    DEFAULT_FRIEND_PROFILE_TAB
+  );
+}
+
+/** ?year= 값을 연도로 바꾼다. 양의 정수가 아니면 null(전체)이다. */
+export function parseFriendProfileYear(
+  value: string | null | undefined
+): number | null {
+  if (!value || !/^[1-9]\d*$/.test(value)) {
+    return null;
+  }
+
+  const year = Number(value);
+
+  return Number.isSafeInteger(year) ? year : null;
+}
+
+/**
+ * 탭을 바꾼 쿼리. 기본 탭은 ?tab=을 뺀다. 탭마다 연도의 의미가 달라서 ?year=는
+ * 지우고, 그 밖의 파라미터는 그대로 둔다.
+ */
+export function withFriendProfileTab(
+  params: URLSearchParams,
+  tab: FriendProfileTab
+): URLSearchParams {
+  const next = new URLSearchParams(params);
+
+  next.delete(FRIEND_PROFILE_YEAR_PARAM);
+
+  if (tab === DEFAULT_FRIEND_PROFILE_TAB) {
+    next.delete(FRIEND_PROFILE_TAB_PARAM);
+  } else {
+    next.set(FRIEND_PROFILE_TAB_PARAM, tab);
+  }
+
+  return next;
+}
+
+/** 연도를 바꾼 쿼리. 전체(null)는 ?year=를 빼고 다른 파라미터는 그대로 둔다. */
+export function withFriendProfileYear(
+  params: URLSearchParams,
+  year: number | null
+): URLSearchParams {
+  const next = new URLSearchParams(params);
+
+  if (year === null) {
+    next.delete(FRIEND_PROFILE_YEAR_PARAM);
+  } else {
+    next.set(FRIEND_PROFILE_YEAR_PARAM, String(year));
+  }
+
+  return next;
+}

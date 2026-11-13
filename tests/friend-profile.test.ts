@@ -15,6 +15,10 @@ import {
   FRIEND_PROFILE_TABS,
   getFriendProfilePanelId,
   getFriendProfileTabId,
+  parseFriendProfileTab,
+  parseFriendProfileYear,
+  withFriendProfileTab,
+  withFriendProfileYear,
 } from '../src/pages/friends/profile/friendProfileTabs.ts';
 
 const profile = (
@@ -173,4 +177,71 @@ test('tab and panel ids are unique per tab and never collide', () => {
     getFriendProfilePanelId('courses'),
     'friend-profile-panel-courses'
   );
+});
+
+test('parses a valid tab and falls back to the default tab otherwise', () => {
+  for (const tab of FRIEND_PROFILE_TABS) {
+    assert.equal(parseFriendProfileTab(tab.key), tab.key);
+  }
+  for (const value of [null, undefined, '', 'unknown', 'MAP', ' map', 'map ']) {
+    assert.equal(
+      parseFriendProfileTab(value),
+      DEFAULT_FRIEND_PROFILE_TAB,
+      String(value)
+    );
+  }
+});
+
+test('parses a positive integer year and treats anything else as all years', () => {
+  assert.equal(parseFriendProfileYear('2025'), 2025);
+  for (const value of [
+    null,
+    undefined,
+    '',
+    '0',
+    '-1',
+    '2025.5',
+    'abc',
+    '2025a',
+    '02025',
+    ' 2025',
+  ]) {
+    assert.equal(parseFriendProfileYear(value), null, String(value));
+  }
+  assert.equal(parseFriendProfileYear('99999999999999999999'), null);
+});
+
+test('choosing the default tab drops ?tab= and a year from the url', () => {
+  const next = withFriendProfileTab(
+    new URLSearchParams('tab=map&year=2025'),
+    DEFAULT_FRIEND_PROFILE_TAB
+  );
+
+  assert.equal(next.toString(), '');
+});
+
+test('choosing another tab sets ?tab=, clears the year and keeps other params', () => {
+  const next = withFriendProfileTab(
+    new URLSearchParams('year=2025&from=list'),
+    'map'
+  );
+
+  assert.equal(next.get('tab'), 'map');
+  assert.equal(next.has('year'), false);
+  assert.equal(next.get('from'), 'list');
+});
+
+test('changing the year keeps the tab and other params, and all years drops it', () => {
+  const params = new URLSearchParams('tab=map&from=list');
+  const picked = withFriendProfileYear(params, 2024);
+
+  assert.equal(picked.get('year'), '2024');
+  assert.equal(picked.get('tab'), 'map');
+  assert.equal(picked.get('from'), 'list');
+
+  const all = withFriendProfileYear(picked, null);
+
+  assert.equal(all.has('year'), false);
+  assert.equal(all.get('tab'), 'map');
+  assert.equal(params.has('year'), false);
 });
