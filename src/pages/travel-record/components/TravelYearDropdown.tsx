@@ -6,6 +6,7 @@ interface TravelYearDropdownProps {
   years: readonly number[];
   onChange: (year: number) => void;
   onSelectAll?: () => void;
+  desktop?: boolean;
 }
 
 function TravelYearDropdown({
@@ -13,6 +14,7 @@ function TravelYearDropdown({
   years,
   onChange,
   onSelectAll,
+  desktop = false,
 }: TravelYearDropdownProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -44,14 +46,18 @@ function TravelYearDropdown({
     <div
       ref={rootRef}
       onKeyDown={handleTriggerKeyDown}
-      className="relative h-[30px] w-[75px] shrink-0"
+      className={
+        desktop
+          ? 'relative h-[37px] w-[83px] shrink-0'
+          : 'relative h-[30px] w-[75px] shrink-0'
+      }
     >
       <button
         type="button"
         aria-expanded={isOpen}
         aria-label={`여행 기록 연도 선택, 현재 ${value === null ? '전체' : `${value}년`}`}
         onClick={() => setIsOpen((current) => !current)}
-        className="border-gray-2 text-gray-4 flex h-[30px] w-full items-center justify-between rounded-full border bg-white px-2.5 py-1.5 text-sm leading-[17px]"
+        className={`border-gray-2 text-gray-4 flex w-full items-center justify-between rounded-full border bg-white px-2.5 ${desktop ? 'h-[37px] py-2 text-[18px]' : 'h-[30px] py-1.5 text-sm leading-[17px]'}`}
       >
         <span>{value ?? '전체'}</span>
         <img
@@ -65,7 +71,9 @@ function TravelYearDropdown({
       </button>
 
       {isOpen ? (
-        <div className="border-gray-2 absolute top-9 left-0 z-50 flex max-h-60 w-[75px] flex-col items-start overflow-y-auto rounded-xl border bg-white shadow-sm">
+        <div
+          className={`border-gray-2 absolute left-0 z-50 flex max-h-60 flex-col items-start overflow-y-auto rounded-xl border bg-white shadow-sm ${desktop ? 'top-[43px] w-[83px]' : 'top-9 w-[75px]'}`}
+        >
           {onSelectAll && (
             <button
               type="button"

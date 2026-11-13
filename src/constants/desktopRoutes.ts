@@ -25,6 +25,7 @@ export const DESKTOP_VIEW_PATHS = [
   '/forgot-password',
   '/forgot-password/reset',
   '/likes',
+  '/travel-record',
   '/my-posts',
   '/festival',
   '/festival/detail/:festivalId',

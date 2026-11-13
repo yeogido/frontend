@@ -69,6 +69,7 @@ import PlaceSelectionDesktopPage from '../pages/local-recommendation/place-selec
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TagSelectionDesktopPage from '../pages/local-recommendation/tag-selection/desktop';
 import TravelRecordPage from '../pages/travel-record';
+import TravelRecordDesktopPage from '../pages/travel-record/desktop';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
 import TravelRecordDetailPage from '../pages/travel-record/detail';
 import TravelRecordFolderDecorationPage from '../pages/travel-record/folder-decoration';
@@ -222,7 +223,15 @@ function AppRouter() {
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/travel-record" element={<TravelRecordPage />} />
+          <Route
+            path="/travel-record"
+            element={
+              <Responsive
+                desktop={<TravelRecordDesktopPage />}
+                mobile={<TravelRecordPage />}
+              />
+            }
+          />
           <Route
             path="/travel-record/:folderId"
             element={<TravelRecordDetailPage />}
