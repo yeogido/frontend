@@ -16,14 +16,16 @@ import {
   getFriendMapYearOptions,
   mergeFriendTravelMapItems,
 } from './utils/friendTravelMapPages';
+import {
+  FRIEND_TRAVEL_MAP_QUERY_PREFIX,
+  FRIEND_TRAVEL_MAP_YEARS_QUERY_PREFIX,
+} from './friendQueryKeys';
 import { shouldRetryFriendsQuery } from './utils/friendRetry';
 
 // 서버가 허용하는 최대값. 커서를 끝까지 따라가 한 연도의 기록을 모두 모은다.
 const FRIEND_TRAVEL_MAP_PAGE_SIZE = 100;
 
 // 계정별로 캐시를 분리한다. 이유는 useMyBusinesses의 주석 참고.
-export const FRIEND_TRAVEL_MAP_QUERY_PREFIX = 'friendTravelMap';
-export const FRIEND_TRAVEL_MAP_YEARS_QUERY_PREFIX = 'friendTravelMapYears';
 
 export const getFriendTravelMapQueryKey = (
   viewerUserId: number | null,
