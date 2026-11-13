@@ -1,4 +1,12 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useIsFetching } from '@tanstack/react-query';
 
 import { getApiErrorMessage } from '../../apis/common';
@@ -34,6 +42,7 @@ import { toFriendKeyword } from './utils/friendKeyword';
 import { shouldShowLoadMoreError } from './utils/friendListStatus';
 
 const SEARCH_DEBOUNCE_MS = 300;
+const KEYWORD_PARAM = 'keyword';
 const LOAD_MORE_ERROR_MESSAGE = '친구를 더 불러오지 못했어요.';
 const SEARCH_ERROR_MESSAGE = '새로운 친구를 불러오지 못했어요.';
 
@@ -49,9 +58,25 @@ const LOAD_MORE_SPACE = 16;
 
 function FriendsPage() {
   const scale = useGlobalScale();
-  const [query, setQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  // 프로필에 다녀와도 검색어가 남도록 URL(?keyword=)에 둔다. 읽는 건 마운트할 때뿐이고,
+  // 이후 입력창은 이 로컬 상태가 제어한다(한글 조합 중 글자가 URL 갱신에 덮이지 않게).
+  const [query, setQuery] = useState(
+    () => searchParams.get(KEYWORD_PARAM) ?? ''
+  );
   // 입력은 디바운스 뒤에 검색어가 되고, Enter와 지우기는 기다리지 않고 바로 반영한다.
   const [keyword, setKeyword] = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
+
+  // 디바운스를 거친 검색어만 URL에 반영한다. replace라 입력할 때마다 히스토리가
+  // 쌓이지 않고, URL과 같으면 아무것도 하지 않아 갱신이 되풀이되지 않는다.
+  useEffect(() => {
+    const current = searchParams.get(KEYWORD_PARAM) ?? '';
+    const next = toFriendKeyword(keyword) ?? '';
+
+    if (next === current) return;
+
+    setSearchParams(next ? { [KEYWORD_PARAM]: next } : {}, { replace: true });
+  }, [keyword, searchParams, setSearchParams]);
   const {
     friends,
     isPending,
