@@ -28,6 +28,24 @@ export function getFriendTravelRecordsFromPages(
   return records;
 }
 
+/**
+ * 다음 페이지를 받을 커서. hasNext가 true이고 cursorId가 있고 방금 요청한 커서와
+ * 다를 때만 돌려준다. 같은 커서가 그대로 오면 서버가 같은 페이지를 계속 주는
+ * 상태라 오류가 아니라 "다음 페이지 없음"으로 보고 멈춘다(이미 받은 목록은 유지).
+ */
+export function getNextFriendRecordsCursor(
+  lastPage: Pick<GetFriendTravelRecordsResponse, 'hasNext' | 'cursorId'>,
+  requestedCursor?: number
+): { cursor: number } | undefined {
+  const { hasNext, cursorId } = lastPage;
+
+  if (!hasNext || cursorId == null || cursorId === requestedCursor) {
+    return undefined;
+  }
+
+  return { cursor: cursorId };
+}
+
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 

@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   getFriendRecordYearOptions,
   getFriendTravelRecordsFromPages,
+  getNextFriendRecordsCursor,
   resolveFriendRecordYear,
   toFriendTravelFolder,
 } from '../src/hooks/utils/friendTravelRecordPages.ts';
@@ -166,4 +167,39 @@ test('the default year prefers a valid url year, then this year, then the latest
   // 목록이 비면 null
   assert.equal(resolveFriendRecordYear([], 2025, 2026), null);
   assert.equal(resolveFriendRecordYear([], null, 2026), null);
+});
+
+test('the next cursor advances when the server moves forward', () => {
+  assert.deepEqual(
+    getNextFriendRecordsCursor({ hasNext: true, cursorId: 20 }, 10),
+    { cursor: 20 }
+  );
+});
+
+test('the first page has no requested cursor and still advances', () => {
+  assert.deepEqual(
+    getNextFriendRecordsCursor({ hasNext: true, cursorId: 20 }),
+    {
+      cursor: 20,
+    }
+  );
+});
+
+test('there is no next page when hasNext is false or cursorId is missing', () => {
+  assert.equal(
+    getNextFriendRecordsCursor({ hasNext: false, cursorId: 20 }, 10),
+    undefined
+  );
+  assert.equal(
+    getNextFriendRecordsCursor({ hasNext: true, cursorId: null }, 10),
+    undefined
+  );
+  assert.equal(getNextFriendRecordsCursor({ hasNext: true }), undefined);
+});
+
+test('the same cursor as requested stops instead of looping', () => {
+  assert.equal(
+    getNextFriendRecordsCursor({ hasNext: true, cursorId: 10 }, 10),
+    undefined
+  );
 });

@@ -18,6 +18,7 @@ import {
 import { shouldRetryFriendsQuery } from './utils/friendRetry';
 import {
   getFriendRecordYearOptions,
+  getNextFriendRecordsCursor,
   getFriendTravelRecordsFromPages,
 } from './utils/friendTravelRecordPages';
 
@@ -109,10 +110,8 @@ export function useFriendTravelRecords(
         ...pageParam,
       }),
     initialPageParam: {},
-    getNextPageParam: (lastPage) =>
-      lastPage.hasNext && lastPage.cursorId != null
-        ? { cursor: lastPage.cursorId }
-        : undefined,
+    getNextPageParam: (lastPage, _pages, lastPageParam) =>
+      getNextFriendRecordsCursor(lastPage, lastPageParam.cursor),
     enabled: canQueryFriend(viewerUserId, friendUserId) && year !== null,
     retry: shouldRetryFriendsQuery,
   });
