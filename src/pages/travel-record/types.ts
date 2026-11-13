@@ -1,6 +1,9 @@
 import type { TravelFolderDecoration } from './folder-decoration/folderDecoration';
 import type { NicknameAvatarColor } from '../../components/common/NicknameAvatar';
-import type { TravelRecordPermissions, TravelRecordUserProfile } from '../../types/travelRecord.type';
+import type {
+  TravelRecordPermissions,
+  TravelRecordUserProfile,
+} from '../../types/travelRecord.type';
 
 export type TravelRecordView = 'folder' | 'map';
 export type TravelMapViewer = 'owner' | 'shared';
@@ -39,7 +42,12 @@ export interface TravelRecordInvitation {
   id: string;
   inviterName: string;
   inviterColor: NicknameAvatarColor;
-  folder: TravelRecordFolder;
+  inviterProfileImageUrl?: string | null;
+  /** 수락 전에는 사진·장식·상세 권한이 제공되지 않는다. */
+  folder: Pick<
+    TravelRecordFolder,
+    'id' | 'title' | 'startDate' | 'endDate' | 'period'
+  >;
 }
 
 export interface TravelRecordDraftRegion {
