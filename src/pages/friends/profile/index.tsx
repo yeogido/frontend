@@ -14,8 +14,8 @@ import {
   parseFriendUserId,
 } from '../utils/friendProfile';
 import FriendCoursesTab from './components/FriendCoursesTab';
+import FriendFolderTab from './components/FriendFolderTab';
 import FriendProfileHeader from './components/FriendProfileHeader';
-import FriendProfileMessage from './components/FriendProfileMessage';
 import FriendProfileTabs from './components/FriendProfileTabs';
 import FriendTravelMapTab from './components/FriendTravelMapTab';
 import {
@@ -33,7 +33,6 @@ const PAGE_BOTTOM_PADDING = 40;
 const SECTION_GAP = 24;
 
 const NOT_FOUND_MESSAGE = '존재하지 않는 사용자예요.';
-const COMING_SOON_MESSAGE = '준비 중이에요';
 
 interface FriendProfileContentProps {
   friendUserId: number;
@@ -154,7 +153,7 @@ function ProfileBody({
             scale={scale}
           />
         ) : (
-          <FriendProfileMessage message={COMING_SOON_MESSAGE} scale={scale} />
+          <FriendFolderTab friendUserId={friendUserId} scale={scale} />
         )}
       </div>
     </div>
