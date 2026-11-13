@@ -6,6 +6,9 @@ import type {
   GetFriendLocalCoursesParams,
   GetFriendLocalCoursesResponse,
   GetFriendRequestsParams,
+  GetFriendTravelRecordsParams,
+  GetFriendTravelRecordsResponse,
+  GetFriendTravelRecordYearsResponse,
   GetFriendTravelMapParams,
   GetFriendTravelMapResponse,
   GetFriendTravelMapYearsResponse,
@@ -196,6 +199,37 @@ export async function getFriendTravelMapYears(
   try {
     const { data } = await apiClient.get<GetFriendTravelMapYearsResponse>(
       `/friends/${friendUserId}/travel-map/years`
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function getFriendTravelRecords(
+  friendUserId: number,
+  params: GetFriendTravelRecordsParams = {}
+): Promise<GetFriendTravelRecordsResponse> {
+  try {
+    const { data } = await apiClient.get<GetFriendTravelRecordsResponse>(
+      '/travel-records',
+      { params: { ...params, userId: friendUserId } }
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function getFriendTravelRecordYears(
+  friendUserId: number
+): Promise<GetFriendTravelRecordYearsResponse> {
+  try {
+    const { data } = await apiClient.get<GetFriendTravelRecordYearsResponse>(
+      '/travel-records/years',
+      { params: { userId: friendUserId } }
     );
 
     return data;

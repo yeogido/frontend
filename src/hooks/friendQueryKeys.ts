@@ -5,14 +5,19 @@ import type { QueryClient } from '@tanstack/react-query';
 // 파일이 react-query를 type import만 해서 Node 테스트 러너에서 그대로 검증한다.
 export const FRIEND_TRAVEL_MAP_QUERY_PREFIX = 'friendTravelMap';
 export const FRIEND_TRAVEL_MAP_YEARS_QUERY_PREFIX = 'friendTravelMapYears';
+export const FRIEND_TRAVEL_RECORDS_QUERY_PREFIX = 'friendTravelRecords';
+export const FRIEND_TRAVEL_RECORD_YEARS_QUERY_PREFIX =
+  'friendTravelRecordYears';
 
 /**
  * 친구가 되거나 친구를 끊으면 보이는 범위가 달라지는 쿼리의 접두사. 같은 성격의
- * 쿼리(예: 친구의 여행 폴더 목록)가 생기면 여기에 한 줄 추가한다.
+ * 쿼리가 생기면 여기에 한 줄 추가한다.
  */
 export const FRIEND_TRAVEL_QUERY_PREFIXES: readonly string[] = [
   FRIEND_TRAVEL_MAP_QUERY_PREFIX,
   FRIEND_TRAVEL_MAP_YEARS_QUERY_PREFIX,
+  FRIEND_TRAVEL_RECORDS_QUERY_PREFIX,
+  FRIEND_TRAVEL_RECORD_YEARS_QUERY_PREFIX,
 ];
 
 /** 한 친구에 대한 쿼리 범위 키. 연도 등 뒤쪽 값은 접두사 매칭으로 함께 걸린다. */
