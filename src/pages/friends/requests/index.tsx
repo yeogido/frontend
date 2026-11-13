@@ -166,6 +166,7 @@ function FriendRequestsPage() {
               key={request.requestId}
               friend={request.requester}
               scale={scale}
+              profileUserId={request.requester.userId}
               actions={
                 <>
                   <FriendRequestButton
