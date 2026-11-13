@@ -157,12 +157,12 @@ test('flattens course pages and drops repeated courses', () => {
   assert.deepEqual(getFriendCoursesFromPages(undefined), []);
 });
 
-test('tabs follow the design order and open on the courses tab', () => {
+test('tabs follow the design order and open on the folder tab', () => {
   assert.deepEqual(
     FRIEND_PROFILE_TABS.map((tab) => tab.label),
     ['여행 폴더', '여행 지도', '우리동네추천코스']
   );
-  assert.equal(DEFAULT_FRIEND_PROFILE_TAB, 'courses');
+  assert.equal(DEFAULT_FRIEND_PROFILE_TAB, 'folder');
 });
 
 test('tab and panel ids are unique per tab and never collide', () => {
@@ -244,4 +244,11 @@ test('changing the year keeps the tab and other params, and all years drops it',
   assert.equal(all.has('year'), false);
   assert.equal(all.get('tab'), 'map');
   assert.equal(params.has('year'), false);
+});
+
+test('the courses tab is no longer the default, so it keeps ?tab=courses', () => {
+  const next = withFriendProfileTab(new URLSearchParams(''), 'courses');
+
+  assert.equal(next.get('tab'), 'courses');
+  assert.equal(parseFriendProfileTab(next.get('tab')), 'courses');
 });

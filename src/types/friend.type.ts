@@ -3,6 +3,8 @@ import type { Course } from './course.type';
 import type {
   TravelRecordApiVisibility,
   TravelRecordImageResponse,
+  TravelRecordStickerResponse,
+  TravelRecordYearListResponse,
 } from './travelRecord.type';
 
 // 스웨거 기준: GET /api/v1/friends의 UserSummary
@@ -156,3 +158,36 @@ export type GetFriendTravelMapResponse = CursorResponse<
 export interface GetFriendTravelMapYearsResponse {
   years: number[];
 }
+
+// GET /api/v1/travel-records?userId={친구}. 내 목록과 같은 엔드포인트라 목록에는
+// permissions, version이 없다. previewImages는 최대 2장이고 stickers의 모양은
+// 상세와 같다고 보지만 확인하지 못해서 필드가 빠진 항목은 매퍼가 건너뛴다.
+export interface FriendTravelRecordItem {
+  travelRecordId: number;
+  title: string;
+  regionId: number;
+  startDate: string;
+  endDate: string;
+  coverImageUrl: string | null;
+  folderTheme: string;
+  visibility: TravelRecordApiVisibility | null;
+  previewImages?:
+    Pick<TravelRecordImageResponse, 'imageUrl' | 'imageOrder'>[] | null;
+  stickers?: Partial<TravelRecordStickerResponse>[] | null;
+  createdAt?: string;
+}
+
+// year를 생략하면 서버 기본은 현재 연도다. 첫 요청은 cursor를 비운다.
+export interface GetFriendTravelRecordsParams {
+  year?: number;
+  cursor?: number;
+  size?: number;
+}
+
+export type GetFriendTravelRecordsResponse = CursorResponse<
+  FriendTravelRecordItem,
+  unknown
+>;
+
+// GET /api/v1/travel-records/years?userId={친구}. 최신순이고 없으면 빈 배열이다.
+export type GetFriendTravelRecordYearsResponse = TravelRecordYearListResponse;
