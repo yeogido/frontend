@@ -8,6 +8,7 @@ import { matchPath } from 'react-router-dom';
  * 쓰기 때문이다. 데스크톱 화면을 추가할 때 두 곳을 함께 고친다.
  */
 export const DESKTOP_VIEW_PATHS = [
+  '/',
   '/local-course',
   '/local-course/popular',
   '/local-recommendation',
