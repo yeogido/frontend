@@ -18,6 +18,7 @@ import FriendCoursesTab from './components/FriendCoursesTab';
 import FriendProfileHeader from './components/FriendProfileHeader';
 import FriendProfileMessage from './components/FriendProfileMessage';
 import FriendProfileTabs from './components/FriendProfileTabs';
+import FriendTravelMapTab from './components/FriendTravelMapTab';
 import {
   DEFAULT_FRIEND_PROFILE_TAB,
   getFriendProfilePanelId,
@@ -135,6 +136,12 @@ function ProfileBody({
       >
         {activeTab === 'courses' ? (
           <FriendCoursesTab friendUserId={friendUserId} scale={scale} />
+        ) : activeTab === 'map' ? (
+          <FriendTravelMapTab
+            friendUserId={friendUserId}
+            nickname={profile.nickname}
+            scale={scale}
+          />
         ) : (
           <FriendProfileMessage message={COMING_SOON_MESSAGE} scale={scale} />
         )}
