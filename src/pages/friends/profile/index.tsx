@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../components/layout';
 import { useFriendProfile } from '../../../hooks/useFriendProfile';
@@ -20,9 +19,11 @@ import FriendProfileMessage from './components/FriendProfileMessage';
 import FriendProfileTabs from './components/FriendProfileTabs';
 import FriendTravelMapTab from './components/FriendTravelMapTab';
 import {
-  DEFAULT_FRIEND_PROFILE_TAB,
+  FRIEND_PROFILE_TAB_PARAM,
   getFriendProfilePanelId,
   getFriendProfileTabId,
+  parseFriendProfileTab,
+  withFriendProfileTab,
   type FriendProfileTab,
 } from './friendProfileTabs';
 
@@ -40,9 +41,19 @@ interface FriendProfileContentProps {
 
 function FriendProfileContent({ friendUserId }: FriendProfileContentProps) {
   const scale = useGlobalScale();
-  const [activeTab, setActiveTab] = useState<FriendProfileTab>(
-    DEFAULT_FRIEND_PROFILE_TAB
+  const [searchParams, setSearchParams] = useSearchParams();
+  // 탭은 URL이 정한다. 지도에서 상세에 갔다가 뒤로 와도 보던 탭이 그대로이고,
+  // 잘못된 값은 기본 탭으로 보되 URL은 고쳐 쓰지 않는다.
+  const activeTab = parseFriendProfileTab(
+    searchParams.get(FRIEND_PROFILE_TAB_PARAM)
   );
+  const handleTabChange = (tab: FriendProfileTab) => {
+    if (tab === activeTab) return;
+
+    setSearchParams((previous) => withFriendProfileTab(previous, tab), {
+      replace: true,
+    });
+  };
   const { profile, isPending, isError, error, refetch } =
     useFriendProfile(friendUserId);
 
@@ -80,7 +91,7 @@ function FriendProfileContent({ friendUserId }: FriendProfileContentProps) {
         profile={profile}
         friendUserId={friendUserId}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         scale={scale}
       />
     );

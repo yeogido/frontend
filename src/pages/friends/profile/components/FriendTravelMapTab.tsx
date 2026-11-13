@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { LoadingSpinner } from '../../../../components/common';
 import {
@@ -15,6 +16,11 @@ import Map from '../../../home/map/components/Map';
 import { toRegionPhotoMap } from '../../../home/map/types/regionPhoto';
 import TravelYearDropdown from '../../../travel-record/components/TravelYearDropdown';
 import TravelYearDropdownSkeleton from '../../../travel-record/components/TravelYearDropdownSkeleton';
+import {
+  FRIEND_PROFILE_YEAR_PARAM,
+  parseFriendProfileYear,
+  withFriendProfileYear,
+} from '../friendProfileTabs';
 
 const EMPTY_MESSAGE = '아직 공개된 여행 기록이 없어요';
 const LOAD_ERROR_MESSAGE = '여행 기록을 불러오지 못했어요';
@@ -41,9 +47,17 @@ function FriendTravelMapTab({
   nickname,
   scale,
 }: FriendTravelMapTabProps) {
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // 연도는 URL(?year=)에 둬서 상세에 다녀와도 유지된다. tab 등 다른 파라미터는 보존한다.
+  const selectedYear = parseFriendProfileYear(
+    searchParams.get(FRIEND_PROFILE_YEAR_PARAM)
+  );
+  const setSelectedYear = (nextYear: number | null) =>
+    setSearchParams((previous) => withFriendProfileYear(previous, nextYear), {
+      replace: true,
+    });
   const yearsQuery = useFriendTravelMapYears(friendUserId);
-  // 목록에서 사라진 연도를 가리키고 있으면 전체로 돌아간다.
+  // 목록에 없는 연도(잘못된 ?year= 포함)는 전체로 본다. URL은 고쳐 쓰지 않는다.
   const year =
     selectedYear !== null && yearsQuery.years.includes(selectedYear)
       ? selectedYear
