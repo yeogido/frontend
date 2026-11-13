@@ -162,7 +162,7 @@ function LoginDesktopPage() {
                 onClick={handleNaverLogin}
                 disabled={isSocialLoginLoading}
                 style={{ width: SNS_BUTTON_SIZE, height: SNS_BUTTON_SIZE }}
-                className="flex cursor-pointer items-center justify-center rounded-full bg-[#03C75A] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex cursor-pointer items-center justify-center rounded-full bg-[#03C75A] text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <NaverIcon
                   width={NAVER_ICON_SIZE}
