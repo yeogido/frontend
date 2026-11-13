@@ -8,6 +8,7 @@ import { matchPath } from 'react-router-dom';
  * 쓰기 때문이다. 데스크톱 화면을 추가할 때 두 곳을 함께 고친다.
  */
 export const DESKTOP_VIEW_PATHS = [
+  '/',
   '/review',
   '/local-course',
   '/local-course/popular',
@@ -18,6 +19,13 @@ export const DESKTOP_VIEW_PATHS = [
   '/local-recommendation/event-selection',
   '/local-recommendation/place-selection',
   '/local-course/detail/:courseId',
+  '/likes',
+  '/my-posts',
+  '/festival',
+  '/festival/detail/:festivalId',
+  '/festival/detail/:festivalId/courses',
+  '/local-business',
+  '/local-business/detail/:id',
 ] as const;
 
 /** :courseId 같은 경로 파라미터가 있는 패턴도 맞춘다. 끝까지 일치해야 한다. */

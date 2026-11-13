@@ -21,6 +21,9 @@ import type {
   ReceivedFriendRequest,
   SentFriendRequest,
 } from '../types/friend.type';
+import { invalidateFriendTravelQueries } from './friendQueryKeys';
+import { FRIEND_PROFILE_QUERY_PREFIX } from './useFriendProfile';
+import { FRIEND_SEARCH_QUERY_PREFIX } from './useFriendSearch';
 import { FRIENDS_QUERY_PREFIX } from './useFriends';
 import {
   getRequestsFromPages,
@@ -136,12 +139,20 @@ export function useAcceptFriendRequest() {
 
   return useMutation<AcceptFriendRequestResult, Error, number>({
     mutationFn: acceptFriendRequest,
-    onSuccess: async (_result, requestId) => {
+    onSuccess: async (result, requestId) => {
       await removeFromCache('received', requestId);
       // 새 친구가 목록에 보이고, 받은 요청이 서버 상태와 맞도록 다시 받는다.
       void queryClient.invalidateQueries({
         queryKey: [FRIENDS_QUERY_PREFIX, userId],
       });
+      void queryClient.invalidateQueries({
+        queryKey: [FRIEND_SEARCH_QUERY_PREFIX, userId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [FRIEND_PROFILE_QUERY_PREFIX, userId],
+      });
+      // 친구가 되면 블러 항목 등 친구에게만 내려오는 여행 데이터가 달라진다.
+      invalidateFriendTravelQueries(queryClient, userId, result.friend.userId);
       void queryClient.invalidateQueries({
         queryKey: getFriendRequestsQueryKey('received', userId),
       });

@@ -82,6 +82,7 @@ function SentRequestsCard({
             key={request.requestId}
             friend={request.receiver}
             scale={scale}
+            profileUserId={request.receiver.userId}
             actions={
               <FriendRequestButton
                 variant="neutral"
