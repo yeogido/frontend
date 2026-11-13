@@ -89,6 +89,7 @@ export function useLikesPage() {
     isError,
     isFetchingNextPage,
     isPending,
+    refetch,
   } = useLikedItems({
     category,
     keyword: keyword.trim() || undefined,
@@ -222,6 +223,7 @@ export function useLikesPage() {
     handleUnlike,
     loadMoreRef,
     isError,
+    refetch,
     hasEmptyResult,
   };
 }

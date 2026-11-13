@@ -27,6 +27,7 @@ function DesktopFilterDropdown<TOption extends string>({
 }: DesktopFilterDropdownProps<TOption>) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const menuId = useId();
 
   useEffect(() => {
@@ -36,8 +37,12 @@ function DesktopFilterDropdown<TOption extends string>({
       if (containerRef.current?.contains(event.target as Node)) return;
       setIsOpen(false);
     };
+    // 포커스를 받은 옵션 버튼이 메뉴와 함께 사라지므로, 닫으면서 트리거로 돌려준다.
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsOpen(false);
+      if (event.key !== 'Escape') return;
+
+      setIsOpen(false);
+      triggerRef.current?.focus();
     };
 
     document.addEventListener('pointerdown', handlePointerDown);
@@ -52,13 +57,15 @@ function DesktopFilterDropdown<TOption extends string>({
   const handleSelect = (option: TOption) => {
     onChange(option);
     setIsOpen(false);
+    triggerRef.current?.focus();
   };
 
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
-        aria-label={label}
+        aria-label={`${label}: ${value}`}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
