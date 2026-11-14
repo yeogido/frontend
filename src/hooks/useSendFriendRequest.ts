@@ -7,6 +7,7 @@ import type { SendFriendRequestResult } from '../types/friend.type';
 import { getFriendRequestsQueryKey } from './useFriendRequests';
 import { useFriendSearchCache } from './useFriendSearch';
 import { FRIENDS_QUERY_PREFIX } from './useFriends';
+import { invalidateFriendRequestPresence } from './utils/friendRequestDot';
 import { normalizeFriendCode } from './utils/friendSearchPages';
 
 export function useSendFriendRequest() {
@@ -44,6 +45,7 @@ export function useSendFriendRequest() {
         void queryClient.invalidateQueries({
           queryKey: getFriendRequestsQueryKey('received', userId),
         });
+        invalidateFriendRequestPresence(queryClient, userId);
       }
     },
   });

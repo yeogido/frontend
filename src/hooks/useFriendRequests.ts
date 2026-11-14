@@ -22,6 +22,7 @@ import type {
   SentFriendRequest,
 } from '../types/friend.type';
 import { invalidateFriendTravelQueries } from './friendQueryKeys';
+import { invalidateFriendRequestPresence } from './utils/friendRequestDot';
 import { FRIEND_PROFILE_QUERY_PREFIX } from './useFriendProfile';
 import { FRIEND_SEARCH_QUERY_PREFIX } from './useFriendSearch';
 import { FRIENDS_QUERY_PREFIX } from './useFriends';
@@ -123,6 +124,11 @@ export function useRemoveFriendRequestFromCache() {
 
   return async (kind: FriendRequestKind, requestId: number) => {
     const queryKey = getFriendRequestsQueryKey(kind, userId);
+
+    // 받은 요청이 줄면 헤더의 점도 다시 확인한다. 보낸 요청은 영향이 없다.
+    if (kind === 'received') {
+      invalidateFriendRequestPresence(queryClient, userId);
+    }
 
     await queryClient.cancelQueries({ queryKey });
     queryClient.setQueryData<FriendRequestsData<{ requestId: number }>>(
