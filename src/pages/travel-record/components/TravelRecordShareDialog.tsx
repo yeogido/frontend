@@ -221,7 +221,7 @@ function TravelRecordShareDialog({
                         src={option.icon}
                         alt=""
                         aria-hidden="true"
-                        className="block max-w-none"
+                        className={`block max-w-none ${isDesktopLayout ? 'size-12' : ''}`}
                       />
                     </button>
                   </li>
