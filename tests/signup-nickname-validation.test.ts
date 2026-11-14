@@ -24,7 +24,7 @@ test('rejects signup nicknames outside the two-to-ten character range', () => {
 
 test('blocks social signup until the nickname is within the two-to-ten character range', async () => {
   const source = await readFile(
-    new URL('../src/pages/auth/signup/components/SocialProfileForm.tsx', import.meta.url),
+    new URL('../src/pages/auth/signup/hooks/useSocialProfileForm.ts', import.meta.url),
     'utf8'
   );
 

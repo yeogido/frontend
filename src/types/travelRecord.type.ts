@@ -43,6 +43,48 @@ export interface TravelRecordInvitationCreateResponse {
   }>;
 }
 
+export type TravelRecordInvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
+export type TravelRecordInvitationResponseStatus = Exclude<
+  TravelRecordInvitationStatus,
+  'PENDING'
+>;
+
+export interface TravelRecordReceivedInvitation {
+  invitationId: number;
+  status: TravelRecordInvitationStatus;
+  inviter: TravelRecordUserProfile;
+  owner: TravelRecordUserProfile;
+  travelRecord: {
+    travelRecordId: number;
+    title: string;
+    regionId: number;
+    startDate: string;
+    endDate: string;
+    folderTheme: 'BASIC';
+  };
+  createdAt: string;
+}
+
+export interface TravelRecordInvitationListParams {
+  cursor?: number;
+  size?: number;
+}
+
+export type TravelRecordInvitationListResponse = CursorResponse<
+  TravelRecordReceivedInvitation,
+  null
+>;
+
+export interface TravelRecordInvitationRespondRequest {
+  status: TravelRecordInvitationResponseStatus;
+}
+
+export interface TravelRecordInvitationRespondResponse {
+  invitationId: number;
+  travelRecordId: number;
+  status: TravelRecordInvitationStatus;
+}
+
 export interface TravelRecordMapParams extends TravelRecordListParams {
   visibility?: TravelRecordApiVisibility;
 }
@@ -96,8 +138,10 @@ export interface TravelRecordCreateResponse {
   createdAt: string;
 }
 
-export interface TravelRecordUpdateRequest
-  extends Omit<TravelRecordCreateRequest, 'visibility'> {
+export interface TravelRecordUpdateRequest extends Omit<
+  TravelRecordCreateRequest,
+  'visibility'
+> {
   version: number;
 }
 

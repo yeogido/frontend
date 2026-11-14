@@ -1,3 +1,5 @@
+import { useTravelRecordInvitations } from '../../hooks/useTravelRecordInvitations';
+import { useRespondToTravelRecordInvitation } from '../../hooks/useRespondToTravelRecordInvitation';
 import { useTravelMap } from '../../hooks/useTravelMap';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -38,15 +40,8 @@ function TravelRecordPage() {
   const location = useLocation();
   const [visibilityFilter, setVisibilityFilter] =
     useState<TravelRecordVisibilityFilter>('all');
-  const invitations = useTravelRecordSessionStore((state) => state.invitations);
   const previewSharedFolders = useTravelRecordSessionStore(
     (state) => state.previewSharedFolders
-  );
-  const handleAcceptInvitation = useTravelRecordSessionStore(
-    (state) => state.acceptInvitation
-  );
-  const handleDeclineInvitation = useTravelRecordSessionStore(
-    (state) => state.declineInvitation
   );
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   // 상세·작성 화면에 다녀오면 이 페이지가 다시 마운트되므로, 보고 있던 탭은
@@ -69,6 +64,17 @@ function TravelRecordPage() {
     navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, location.state, navigate]);
 
+  const invitationsQuery = useTravelRecordInvitations({
+    enabled: activeView === 'folder',
+  });
+  const { respond, pendingIds } = useRespondToTravelRecordInvitation();
+  const showInvitations =
+    visibilityFilter === 'all' || visibilityFilter === 'friends';
+  const invitations = invitationsQuery.invitations;
+  const handleAcceptInvitation = (invitation: { id: string }) =>
+    respond(invitation.id, 'ACCEPTED');
+  const handleDeclineInvitation = (id: string) => respond(id, 'DECLINED');
+
   const travelRecordYearsQuery = useTravelRecordYears();
   const years = useMemo(
     () =>
@@ -78,12 +84,9 @@ function TravelRecordPage() {
           ...previewSharedFolders.map((folder) =>
             Number(folder.startDate.slice(0, 4))
           ),
-          ...invitations.map(({ folder }) =>
-            Number(folder.startDate.slice(0, 4))
-          ),
         ]),
       ].sort((a, b) => b - a),
-    [travelRecordYearsQuery.data?.years, previewSharedFolders, invitations]
+    [travelRecordYearsQuery.data?.years, previewSharedFolders]
   );
 
   useEffect(() => {
@@ -151,25 +154,28 @@ function TravelRecordPage() {
       Number(folder.startDate.slice(0, 4)) === validSelectedYear &&
       (visibilityFilter === 'all' || folder.visibility === visibilityFilter)
   );
-  const visibleInvitations = invitations.filter(
-    ({ folder }) =>
-      Number(folder.startDate.slice(0, 4)) === validSelectedYear &&
-      (visibilityFilter === 'all' || visibilityFilter === 'friends')
+  const visibleInvitations = showInvitations ? invitations : [];
+  const hasPreviewContent = visibleFolders.some((folder) =>
+    folder.id.startsWith('preview-')
   );
-  const hasPreviewContent =
-    visibleInvitations.length > 0 ||
-    visibleFolders.some((folder) => folder.id.startsWith('preview-'));
-
+  const canLoadFolders =
+    Boolean(hasNextPage) && !isFetchingNextPage && !isTravelRecordsError;
+  const canLoadInvitations =
+    showInvitations &&
+    Boolean(invitationsQuery.hasNextPage) &&
+    !invitationsQuery.isFetchingNextPage &&
+    !invitationsQuery.isError;
+  const fetchNextInvitations = invitationsQuery.fetchNextPage;
   const handleLoadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
+    if (canLoadFolders) void fetchNextPage();
+    if (canLoadInvitations) void fetchNextInvitations();
+  }, [canLoadFolders, canLoadInvitations, fetchNextPage, fetchNextInvitations]);
   const loadMoreRef = useInfiniteScroll({
-    enabled: activeView === 'folder' && Boolean(hasNextPage) && !isPending,
+    enabled: activeView === 'folder' && (canLoadFolders || canLoadInvitations),
     onIntersect: handleLoadMore,
   });
+  const invitationsPending = showInvitations && invitationsQuery.isLoading;
+  const invitationsError = showInvitations && invitationsQuery.isError;
 
   const handleFolderClick = (folder: TravelRecordFolder) => {
     navigate(`/travel-record/${folder.id}`, { state: { folder } });
@@ -222,16 +228,42 @@ function TravelRecordPage() {
         </div>
       )}
 
-      {activeView === 'folder' && (!isPending || hasPreviewContent) && (
-        <TravelFolderGrid
-          folders={visibleFolders}
-          invitations={visibleInvitations}
-          onAcceptInvitation={handleAcceptInvitation}
-          onDeclineInvitation={handleDeclineInvitation}
-          onFolderClick={handleFolderClick}
-          recentlySavedFolderId={recentlySavedFolderId}
-          isFiltered={visibilityFilter !== 'all'}
-        />
+      {activeView === 'folder' &&
+        (!isPending || hasPreviewContent || visibleInvitations.length > 0) && (
+          <TravelFolderGrid
+            folders={visibleFolders}
+            invitations={visibleInvitations}
+            onAcceptInvitation={handleAcceptInvitation}
+            onDeclineInvitation={handleDeclineInvitation}
+            pendingInvitationIds={pendingIds}
+            hideEmptyState={
+              invitationsPending || invitationsError || isTravelRecordsError
+            }
+            onFolderClick={handleFolderClick}
+            recentlySavedFolderId={recentlySavedFolderId}
+            isFiltered={visibilityFilter !== 'all'}
+          />
+        )}
+
+      {activeView === 'folder' && invitationsError && (
+        <section
+          role="alert"
+          className="mt-4 flex flex-col items-center gap-4 text-center"
+        >
+          <p className="text-gray-4 text-sm">
+            {getApiErrorMessage(
+              invitationsQuery.error,
+              '받은 초대를 불러오지 못했어요.'
+            )}
+          </p>
+          <button
+            type="button"
+            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-sm text-[#505050]"
+            onClick={() => void invitationsQuery.retry()}
+          >
+            받은 초대 다시 시도
+          </button>
+        </section>
       )}
 
       {(activeView === 'map' ? isMapError : isTravelRecordsError) ? (
@@ -260,7 +292,7 @@ function TravelRecordPage() {
       ) : activeView === 'folder' ? (
         // 첫 조회가 끝나기 전에는 목록이 비어 있어 '기록이 없어요' 안내가
         // 잠깐 스쳐 지나간다. 그동안은 폴더 자리 표시를 대신 보여 준다.
-        isPending ? (
+        isPending || invitationsPending ? (
           <TravelFolderGridSkeleton />
         ) : null
       ) : isMapPending ? (

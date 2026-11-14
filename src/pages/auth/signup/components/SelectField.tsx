@@ -27,11 +27,20 @@ interface SelectFieldProps {
   onChange: (value: string) => void;
   options: SelectFieldOption[];
   ariaLabel: string;
+  /** 데스크톱 시안 크기(높이 46, 글자 12). 기본은 모바일 크기(높이 48, 글자 14). */
+  compact?: boolean;
 }
 
 // 마이페이지(profile/edit) 드롭다운과 동일한 스타일 — 포털로 띄우는 패널,
 // 커스텀 스크롤바, 화면 밖으로 안 나가게 위/아래 자동 전환.
-function SelectField({ id, value, onChange, options, ariaLabel }: SelectFieldProps) {
+function SelectField({
+  id,
+  value,
+  onChange,
+  options,
+  ariaLabel,
+  compact = false,
+}: SelectFieldProps) {
   const buttonId = useId();
   const listboxId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -245,7 +254,9 @@ function SelectField({ id, value, onChange, options, ariaLabel }: SelectFieldPro
         aria-expanded={isOpen}
         aria-controls={listboxId}
         onClick={() => (isOpen ? setIsOpen(false) : openDropdown())}
-        className="flex h-12 w-full items-center justify-between rounded-[12px] border border-gray-2 bg-white px-4 text-left text-sm font-medium text-gray-4 outline-none focus:border-main-5"
+        className={`flex w-full items-center justify-between rounded-[12px] border border-gray-2 bg-white text-left font-medium text-gray-4 outline-none focus:border-main-5 ${
+          compact ? 'h-[46px] px-[14px] text-xs' : 'h-12 px-4 text-sm'
+        }`}
       >
         <span className="truncate">{selectedOption?.label}</span>
         <img

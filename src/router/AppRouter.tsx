@@ -8,10 +8,15 @@ import AdminRoute from '../components/auth/AdminRoute';
 import BusinessRoute from '../components/auth/BusinessRoute';
 
 import HomePage from '../pages/home';
+import HomeDesktopPage from '../pages/home/desktop';
 import LoginPage from '../pages/auth/login';
+import LoginDesktopPage from '../pages/auth/login/desktop';
 import ForgotPasswordPage from '../pages/auth/forgot-password';
+import ForgotPasswordDesktop from '../pages/auth/forgot-password/desktop/ForgotPasswordDesktop';
+import ResetPasswordDesktop from '../pages/auth/forgot-password/desktop/ResetPasswordDesktop';
 import ForgotPasswordResetPage from '../pages/auth/forgot-password/reset';
 import SignupPage from '../pages/auth/signup';
+import SignUpDesktopPage from '../pages/auth/signup/desktop';
 import KakaoSignupPage from '../pages/auth/signup/kakao';
 import KakaoCallbackPage from '../pages/auth/kakao-callback';
 import NaverSignupPage from '../pages/auth/signup/naver';
@@ -22,6 +27,7 @@ import LocalCoursePopularPage from '../pages/local-course/popular';
 import LocalCourseRecentPage from '../pages/local-course/recent';
 import LocalCourseSearchPage from '../pages/local-course/search';
 import FestivalPage from '../pages/festival';
+import FestivalDesktopPage from '../pages/festival/desktop';
 import FestivalOngoingPage from '../pages/festival/ongoing';
 import FestivalRecentPage from '../pages/festival/recent';
 import FestivalSearchPage from '../pages/festival/search';
@@ -32,7 +38,9 @@ import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
 import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
 import LocalBusinessPage from '../pages/local-business';
+import LocalBusinessDesktopPage from '../pages/local-business/desktop';
 import LocalBusinessDetailPage from '../pages/detail/local-business';
+import LocalBusinessDetailDesktopPage from '../pages/detail/local-business/desktop';
 import LocalRecommendationPage from '../pages/local-recommendation';
 import RegionSelectionDesktopPage from '../pages/local-recommendation/region-selection/desktop';
 import AdminPage from '../pages/admin';
@@ -72,25 +80,36 @@ import NotFoundPage from '../pages/not-found';
 import YeogidoCourseDetailPage from '../pages/detail/yeogido-course';
 import LocalCourseDetailPage from '../pages/detail/local-course';
 import FestivalDetailPage from '../pages/detail/festival';
+import FestivalDetailDesktopPage from '../pages/detail/festival/desktop';
 import FestivalRelatedCoursesPage from '../pages/detail/festival/courses';
+import FestivalCoursesDesktopPage from '../pages/detail/festival/courses/desktop';
 import RegionInfoPage from '../pages/region-info';
 import LikesPage from '../pages/likes';
+import LikesDesktopPage from '../pages/likes/desktop';
 import MyPostsPage from '../pages/my-posts';
+import MyPostsDesktopPage from '../pages/my-posts/desktop';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
 import CourseReviewsPage from '../pages/course-reviews';
 import ProfilePage from '../pages/profile';
 import ProfileEditPage from '../pages/profile/edit';
 import FriendsPage from '../pages/friends';
 import FriendRequestsPage from '../pages/friends/requests';
+import FriendProfilePage from '../pages/friends/profile';
 import BusinessVerificationPage from '../pages/business-verification';
 import BusinessPromotionRegistrationPage from '../pages/business-promotion-registration';
 
 function AppRouter() {
   return (
     <Routes>
-      <Route element={<MainLayout />}>
+      <Route
+        element={
+          <Responsive desktop={<HomeDesktopPage />} mobile={<MainLayout />} />
+        }
+      >
         <Route path="/" element={<HomePage />} />
+      </Route>
 
+      <Route element={<MainLayout />}>
         <Route
           path="/local-course/recent"
           element={<LocalCourseRecentPage />}
@@ -101,7 +120,15 @@ function AppRouter() {
           element={<LocalCourseSearchPage />}
         />
 
-        <Route path="/festival" element={<FestivalPage />} />
+        <Route
+          path="/festival"
+          element={
+            <Responsive
+              desktop={<FestivalDesktopPage />}
+              mobile={<FestivalPage />}
+            />
+          }
+        />
 
         <Route path="/festival/ongoing" element={<FestivalOngoingPage />} />
 
@@ -111,7 +138,12 @@ function AppRouter() {
 
         <Route
           path="/festival/detail/:festivalId/courses"
-          element={<FestivalRelatedCoursesPage />}
+          element={
+            <Responsive
+              desktop={<FestivalCoursesDesktopPage />}
+              mobile={<FestivalRelatedCoursesPage />}
+            />
+          }
         />
 
         <Route
@@ -138,7 +170,15 @@ function AppRouter() {
           element={<YeogidoCourseSearchPage />}
         />
 
-        <Route path="/local-business" element={<LocalBusinessPage />} />
+        <Route
+          path="/local-business"
+          element={
+            <Responsive
+              desktop={<LocalBusinessDesktopPage />}
+              mobile={<LocalBusinessPage />}
+            />
+          }
+        />
 
         <Route
           path="/recent-review-courses"
@@ -187,11 +227,31 @@ function AppRouter() {
             path="/travel-record/:folderId"
             element={<TravelRecordDetailPage />}
           />
-          <Route path="/likes" element={<LikesPage />} />
+          <Route
+            path="/likes"
+            element={
+              <Responsive
+                desktop={<LikesDesktopPage />}
+                mobile={<LikesPage />}
+              />
+            }
+          />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/friends/requests" element={<FriendRequestsPage />} />
-          <Route path="/my-posts" element={<MyPostsPage />} />
+          <Route
+            path="/friends/:friendUserId"
+            element={<FriendProfilePage />}
+          />
+          <Route
+            path="/my-posts"
+            element={
+              <Responsive
+                desktop={<MyPostsDesktopPage />}
+                mobile={<MyPostsPage />}
+              />
+            }
+          />
         </Route>
       </Route>
 
@@ -300,13 +360,39 @@ function AppRouter() {
       </Route>
 
       <Route element={<AuthLayout />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route
+          path="/login"
+          element={
+            <Responsive desktop={<LoginDesktopPage />} mobile={<LoginPage />} />
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <Responsive
+              desktop={<ForgotPasswordDesktop />}
+              mobile={<ForgotPasswordPage />}
+            />
+          }
+        />
         <Route
           path="/forgot-password/reset"
-          element={<ForgotPasswordResetPage />}
+          element={
+            <Responsive
+              desktop={<ResetPasswordDesktop />}
+              mobile={<ForgotPasswordResetPage />}
+            />
+          }
         />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route
+          path="/signup"
+          element={
+            <Responsive
+              desktop={<SignUpDesktopPage />}
+              mobile={<SignupPage />}
+            />
+          }
+        />
         <Route path="/signup/kakao" element={<KakaoSignupPage />} />
         <Route path="/signup/naver" element={<NaverSignupPage />} />
         <Route path="/auth/kakao/callback" element={<KakaoCallbackPage />} />
@@ -322,11 +408,21 @@ function AppRouter() {
       />
       <Route
         path="/local-business/detail/:id"
-        element={<LocalBusinessDetailPage />}
+        element={
+          <Responsive
+            desktop={<LocalBusinessDetailDesktopPage />}
+            mobile={<LocalBusinessDetailPage />}
+          />
+        }
       />
       <Route
         path="/festival/detail/:festivalId"
-        element={<FestivalDetailPage />}
+        element={
+          <Responsive
+            desktop={<FestivalDetailDesktopPage />}
+            mobile={<FestivalDetailPage />}
+          />
+        }
       />
       <Route path="/review" element={<ReviewPage />} />
 

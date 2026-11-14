@@ -11,6 +11,8 @@ interface TravelFolderGridProps {
   onAcceptInvitation?: (invitation: TravelRecordInvitation) => void;
   onDeclineInvitation?: (invitationId: string) => void;
   isFiltered?: boolean;
+  pendingInvitationIds?: Set<string>;
+  hideEmptyState?: boolean;
 }
 
 const folderListLabel = '\uC5EC\uD589 \uD3F4\uB354 \uBAA9\uB85D';
@@ -23,8 +25,11 @@ function TravelFolderGrid({
   onAcceptInvitation,
   onDeclineInvitation,
   isFiltered = false,
+  pendingInvitationIds,
+  hideEmptyState = false,
 }: TravelFolderGridProps) {
   if (folders.length === 0 && invitations.length === 0) {
+    if (hideEmptyState) return null;
     return (
       <section
         aria-label={folderListLabel}
@@ -55,6 +60,7 @@ function TravelFolderGrid({
           <TravelRecordInvitationCard
             key={invitation.id}
             invitation={invitation}
+            isPending={pendingInvitationIds?.has(invitation.id)}
             onAccept={onAcceptInvitation}
             onDecline={onDeclineInvitation}
           />
