@@ -17,6 +17,7 @@ const SUBTITLE_SIZE = 14;
 interface FriendProfileHeaderProps {
   profile: FriendProfile;
   scale: number;
+  desktop?: boolean;
   /** 관계 버튼 요청이 진행 중이면 버튼을 막는다. */
   isActionPending: boolean;
   onSendRequest: () => void;
@@ -27,6 +28,7 @@ interface FriendProfileHeaderProps {
 function FriendProfileHeader({
   profile,
   scale,
+  desktop = false,
   isActionPending,
   onSendRequest,
   onAccept,
@@ -40,13 +42,13 @@ function FriendProfileHeader({
     >
       <div
         className="flex min-w-0 items-center"
-        style={{ gap: ROW_GAP * scale }}
+        style={{ gap: (desktop ? 32 : ROW_GAP) * scale }}
       >
         <FriendAvatar
           userId={profile.userId}
           nickname={profile.nickname}
           profileImageUrl={profile.profileImageUrl}
-          size={AVATAR_SIZE * scale}
+          size={(desktop ? 100 : AVATAR_SIZE) * scale}
         />
         <div
           className="flex min-w-0 flex-col font-medium"
@@ -54,13 +56,13 @@ function FriendProfileHeader({
         >
           <h1
             className="truncate text-black"
-            style={{ fontSize: NAME_SIZE * scale }}
+            style={{ fontSize: (desktop ? 24 : NAME_SIZE) * scale }}
           >
             {profile.nickname}
           </h1>
           <p
             className="text-gray-3 truncate"
-            style={{ fontSize: SUBTITLE_SIZE * scale }}
+            style={{ fontSize: (desktop ? 16 : SUBTITLE_SIZE) * scale }}
           >
             {getProfileSubtitle(profile)}
           </p>

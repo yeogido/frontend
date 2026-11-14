@@ -9,6 +9,7 @@ import { matchPath } from 'react-router-dom';
  */
 export const DESKTOP_VIEW_PATHS = [
   '/',
+  '/review',
   '/local-course',
   '/local-course/popular',
   '/local-recommendation',
@@ -18,6 +19,9 @@ export const DESKTOP_VIEW_PATHS = [
   '/local-recommendation/event-selection',
   '/local-recommendation/place-selection',
   '/local-course/detail/:courseId',
+  '/yeogido-course',
+  '/yeogido-course/popular',
+  '/yeogido-course/detail/:courseId',
   '/login',
   '/signup',
   '/signup/kakao',
@@ -34,6 +38,10 @@ export const DESKTOP_VIEW_PATHS = [
   '/travel-record/:travelRecordId/edit/photos',
   '/travel-record/folder-decoration',
   '/travel-record/:travelRecordId/edit/decorate',
+  '/profile',
+  '/friends',
+  '/friends/requests',
+  '/friends/:friendUserId',
   '/my-posts',
   '/festival',
   '/festival/detail/:festivalId',
