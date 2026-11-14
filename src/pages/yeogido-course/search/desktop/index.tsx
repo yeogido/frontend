@@ -93,6 +93,7 @@ function YeogidoCourseSearchDesktopPage() {
     fetchNextPage,
     hasNextPage,
     isError,
+    isFetching,
     isFetchingNextPage,
     isPending: isCoursesPending,
     refetch,
@@ -135,10 +136,14 @@ function YeogidoCourseSearchDesktopPage() {
     !conditionSearch.isError &&
     conditionCourses.length === 0;
 
-  /** 목록 끝이 보이면 다음 페이지를 불러온다(이미 불러오는 중이면 건너뛴다). */
+  /**
+   * 목록 끝이 보이면 다음 페이지를 불러온다. 갱신(만료된 searchId 복구 등)
+   * 중에 다음 페이지를 요청하면 그 갱신이 취소되므로, 아무 요청도 진행 중이지
+   * 않을 때만 받는다.
+   */
   const handleIntersect = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+    if (hasNextPage && !isFetching) void fetchNextPage();
+  }, [hasNextPage, isFetching, fetchNextPage]);
   const loadMoreRef = useInfiniteScroll({
     enabled: Boolean(hasNextPage) && !isPending && !isError,
     onIntersect: handleIntersect,
@@ -166,7 +171,10 @@ function YeogidoCourseSearchDesktopPage() {
       shouldShowConditionCourses &&
       !hasNextPage &&
       Boolean(hasNextConditionPage) &&
-      !conditionSearch.isPending,
+      !conditionSearch.isPending &&
+      // 실패한 뒤 감지 요소가 다시 알려도 같은 페이지를 반복 요청하지 않는다.
+      // 재시도는 '다시 시도' 버튼으로 한다.
+      !conditionSearch.isError,
     onIntersect: handleConditionIntersect,
   });
 
@@ -346,7 +354,7 @@ function YeogidoCourseSearchDesktopPage() {
                 <p className="text-main-5">코스를 더 불러오지 못했어요.</p>
                 <button
                   type="button"
-                  onClick={() => void conditionSearch.refetch()}
+                  onClick={conditionSearch.refetch}
                   className="border-gray-2 mt-[16px] rounded-full border px-[16px] py-[8px]"
                 >
                   다시 시도

@@ -154,6 +154,7 @@ function YeogidoCourseSearchPage() {
     fetchNextPage,
     hasNextPage,
     isError,
+    isFetching,
     isFetchingNextPage,
     isPending: isCoursesPending,
     refetch,
@@ -216,12 +217,16 @@ function YeogidoCourseSearchPage() {
     !isRegionError &&
     yeogidoCourses.length === 0;
 
-  /** 목록 끝이 보이면 다음 페이지를 불러온다(이미 불러오는 중이면 건너뛴다). */
+  /**
+   * 목록 끝이 보이면 다음 페이지를 불러온다. 갱신(만료된 searchId 복구 등)
+   * 중에 다음 페이지를 요청하면 그 갱신이 취소되므로, 아무 요청도 진행 중이지
+   * 않을 때만 받는다.
+   */
   const handleIntersect = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
+    if (hasNextPage && !isFetching) {
       fetchNextPage();
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetching]);
 
   const loadMoreRef = useInfiniteScroll({
     enabled: Boolean(hasNextPage) && !isPending,
@@ -249,7 +254,9 @@ function YeogidoCourseSearchPage() {
     enabled:
       shouldShowConditionCourses &&
       Boolean(hasNextConditionPage) &&
-      !conditionSearch.isPending,
+      !conditionSearch.isPending &&
+      // 실패한 뒤 감지 요소가 다시 알려도 같은 페이지를 반복 요청하지 않는다.
+      !conditionSearch.isError,
     onIntersect: handleConditionIntersect,
   });
 
