@@ -18,18 +18,16 @@ test('matches parameterized paths for any id', () => {
   assert.equal(hasDesktopView('/local-course/detail/9'), true);
 });
 
-test('keeps travel record creation routes in the mobile frame', () => {
-  assert.equal(hasDesktopView('/travel-record/123'), true);
-  for (const path of [
-    '/travel-record/new',
-    '/travel-record/date-selection',
-    '/travel-record/photo-selection',
-    '/travel-record/folder-decoration',
-  ]) {
-    assert.equal(hasDesktopView(path), false, path);
-  }
-  assert.equal(hasDesktopView('/travel-record/new/'), false);
-  assert.equal(hasDesktopView('/TRAVEL-RECORD/NEW'), false);
+test('matches the travel record create and edit steps', () => {
+  assert.equal(hasDesktopView('/travel-record/new'), true);
+  assert.equal(hasDesktopView('/travel-record/date-selection'), true);
+  assert.equal(hasDesktopView('/travel-record/photo-selection'), true);
+  assert.equal(hasDesktopView('/travel-record/folder-decoration'), true);
+  assert.equal(hasDesktopView('/travel-record/42/edit'), true);
+  assert.equal(hasDesktopView('/travel-record/42/edit/date'), true);
+  assert.equal(hasDesktopView('/travel-record/42/edit/photos'), true);
+  assert.equal(hasDesktopView('/travel-record/42/edit/decorate'), true);
+  assert.equal(hasDesktopView('/travel-record/42'), true);
 });
 
 test('does not match paths that only start the same way', () => {
@@ -41,7 +39,7 @@ test('does not match paths that only start the same way', () => {
 });
 
 test('keeps screens without a desktop design on the mobile frame', () => {
-  assert.equal(hasDesktopView('/yeogido-course/detail/117'), false);
+  assert.equal(hasDesktopView('/yeogido-course/detail/117/reviews'), false);
   assert.equal(hasDesktopView('/admin/courses/detail/117'), false);
   assert.ok(DESKTOP_VIEW_PATHS.length > 0);
 });

@@ -108,6 +108,7 @@ function FestivalDetailDesktopContent({ contentId }: { contentId: number }) {
             }
             shareLabel={`${festival.title} 공유하기`}
             onShare={handleShare}
+            shareFirst
           />
         }
         infoRows={infoRows}

@@ -59,7 +59,10 @@ export function useForgotPasswordForm() {
     codeAuth.status !== 'sending' &&
     codeAuth.status !== 'verifying';
   const canVerifyCode =
-    isCodeSent && isCodeFilled && codeAuth.status !== 'verifying';
+    isCodeSent &&
+    isCodeFilled &&
+    codeAuth.status !== 'sending' &&
+    codeAuth.status !== 'verifying';
   const isResetButtonEnabled = codeAuth.status === 'verified';
 
   const handleEmailChange = (value: string) => {

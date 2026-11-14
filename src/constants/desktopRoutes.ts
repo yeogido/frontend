@@ -9,6 +9,7 @@ import { matchPath } from 'react-router-dom';
  */
 export const DESKTOP_VIEW_PATHS = [
   '/',
+  '/review',
   '/local-course',
   '/local-course/popular',
   '/local-recommendation',
@@ -18,6 +19,9 @@ export const DESKTOP_VIEW_PATHS = [
   '/local-recommendation/event-selection',
   '/local-recommendation/place-selection',
   '/local-course/detail/:courseId',
+  '/yeogido-course',
+  '/yeogido-course/popular',
+  '/yeogido-course/detail/:courseId',
   '/login',
   '/signup',
   '/signup/kakao',
@@ -27,6 +31,18 @@ export const DESKTOP_VIEW_PATHS = [
   '/likes',
   '/travel-record',
   '/travel-record/:folderId',
+  '/travel-record/new',
+  '/travel-record/:travelRecordId/edit',
+  '/travel-record/date-selection',
+  '/travel-record/:travelRecordId/edit/date',
+  '/travel-record/photo-selection',
+  '/travel-record/:travelRecordId/edit/photos',
+  '/travel-record/folder-decoration',
+  '/travel-record/:travelRecordId/edit/decorate',
+  '/profile',
+  '/friends',
+  '/friends/requests',
+  '/friends/:friendUserId',
   '/my-posts',
   '/festival',
   '/festival/detail/:festivalId',
@@ -37,15 +53,5 @@ export const DESKTOP_VIEW_PATHS = [
 
 /** :courseId 같은 경로 파라미터가 있는 패턴도 맞춘다. 끝까지 일치해야 한다. */
 export function hasDesktopView(pathname: string) {
-  // 등록 단계는 상세의 :folderId와 겹치지만 아직 모바일 전용이다.
-  if (
-    [
-      '/travel-record/new',
-      '/travel-record/date-selection',
-      '/travel-record/photo-selection',
-      '/travel-record/folder-decoration',
-    ].includes(pathname.replace(/\/+$/, '').toLowerCase())
-  )
-    return false;
   return DESKTOP_VIEW_PATHS.some((path) => matchPath(path, pathname) !== null);
 }

@@ -1,3 +1,4 @@
+import type { TravelRecordApiVisibility } from '../../../types/travelRecord.type';
 import type { TravelRecordDraftRegion } from '../types';
 import type { TravelDateRange } from '../date-selection/types';
 
@@ -183,5 +184,43 @@ export const getTravelRecordDraftDateRange = () => {
     return { startDate, endDate };
   } catch {
     return null;
+  }
+};
+
+const TRAVEL_RECORD_DRAFT_VISIBILITY_KEY = 'travel-record-draft-visibility';
+const TRAVEL_RECORD_VISIBILITIES: TravelRecordApiVisibility[] = [
+  'PRIVATE',
+  'FRIENDS',
+  'PUBLIC',
+];
+
+/** 데스크톱 사진 선택 화면에서 고른 공개 범위. 고르지 않았으면 나만 보기. */
+export const getTravelRecordDraftVisibility = (): TravelRecordApiVisibility => {
+  try {
+    const stored = window.sessionStorage.getItem(
+      TRAVEL_RECORD_DRAFT_VISIBILITY_KEY,
+    );
+
+    return TRAVEL_RECORD_VISIBILITIES.find((value) => value === stored) ?? 'PRIVATE';
+  } catch {
+    return 'PRIVATE';
+  }
+};
+
+export const saveTravelRecordDraftVisibility = (
+  visibility: TravelRecordApiVisibility,
+) => {
+  try {
+    window.sessionStorage.setItem(TRAVEL_RECORD_DRAFT_VISIBILITY_KEY, visibility);
+  } catch {
+    // Storage can be blocked or full. Continue without a persisted draft.
+  }
+};
+
+export const clearTravelRecordDraftVisibility = () => {
+  try {
+    window.sessionStorage.removeItem(TRAVEL_RECORD_DRAFT_VISIBILITY_KEY);
+  } catch {
+    // Nothing to clear when storage is blocked.
   }
 };
