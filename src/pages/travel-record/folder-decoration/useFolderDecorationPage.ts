@@ -33,6 +33,7 @@ import {
   getTravelRecordPhotoDraft,
   type TravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
+import { formatPeriodLabel } from '../utils/formatPeriodLabel';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
 import { hasTravelRecordVersion, requireTravelRecordVersion } from '../utils/editVersion';
 import { SAVE_SUCCESS_ANIMATION_MS } from './saveAnimation';
@@ -52,17 +53,6 @@ const createPreviewPhotoUrls = (photos: TravelRecordPhotoDraft[]) =>
   photos.slice(0, 2).map((photo) =>
     photo.source === 'server' ? photo.imageUrl : URL.createObjectURL(photo.file),
   );
-
-const formatPeriod = (startDate: Date, endDate: Date) => {
-  const formatDate = (date: Date) => {
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${month}.${day}`;
-  };
-
-  return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-};
 
 /** 폴더 꾸미기 화면의 상태·스티커 드래그·저장. 모바일·데스크톱이 함께 쓴다. */
 export function useFolderDecorationPage() {
@@ -125,7 +115,7 @@ export function useFolderDecorationPage() {
   const regionName =
     selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
   const periodLabel = selectedDateRange
-    ? formatPeriod(selectedDateRange.startDate, selectedDateRange.endDate)
+    ? formatPeriodLabel(selectedDateRange.startDate, selectedDateRange.endDate)
     : '';
 
   const replaceDecorations = (nextDecorations: TravelFolderDecoration[]) => {
