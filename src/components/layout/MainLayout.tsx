@@ -18,6 +18,8 @@ function MainLayout() {
       <div className={isDesktop ? undefined : 'bg-[#F1F1F1]'}>
         {!isDesktop && <Header onMenuClick={() => setIsSidebarOpen(true)} />}
         <Outlet />
+        {/* 데스크톱 상세는 DesktopPageShell이 자기 푸터를 그린다. */}
+        {!isDesktop && <Footer />}
         {!isDesktop &&
           (isAuthenticated ? (
             <AuthSidebar
