@@ -45,7 +45,7 @@ export function useSendFriendRequest() {
         void queryClient.invalidateQueries({
           queryKey: getFriendRequestsQueryKey('received', userId),
         });
-        invalidateFriendRequestPresence(queryClient, userId);
+        void invalidateFriendRequestPresence(queryClient, userId);
       }
     },
   });

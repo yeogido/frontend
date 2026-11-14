@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
+
 import {
   FRIEND_REQUEST_PRESENCE_QUERY_PREFIX,
   getFriendRequestButtonLabel,
@@ -65,18 +67,73 @@ test('the dot shows on the friends list and profiles but not on the requests pag
   assert.equal(isFriendRequestDotPath('/friendship'), false);
 });
 
-test('the helper invalidates the presence key of that user only', () => {
-  const calls: unknown[] = [];
+test('the helper cancels then invalidates the presence key of that user only', async () => {
+  const calls: [string, unknown][] = [];
 
-  invalidateFriendRequestPresence(
+  await invalidateFriendRequestPresence(
     {
+      cancelQueries: ((filters: { queryKey: unknown }) => {
+        calls.push(['cancel', filters.queryKey]);
+        return Promise.resolve();
+      }) as never,
       invalidateQueries: ((filters: { queryKey: unknown }) => {
-        calls.push(filters.queryKey);
+        calls.push(['invalidate', filters.queryKey]);
         return Promise.resolve();
       }) as never,
     },
     7
   );
 
-  assert.deepEqual(calls, [getFriendRequestPresenceQueryKey(7)]);
+  assert.deepEqual(calls, [
+    ['cancel', getFriendRequestPresenceQueryKey(7)],
+    ['invalidate', getFriendRequestPresenceQueryKey(7)],
+  ]);
+});
+
+// 회귀: 데이터가 없는 최초 조회가 진행 중일 때 invalidate만 하면 새 요청이 시작되지
+// 않아 수락 전 응답이 캐시에 남았다.
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function runFirstFetchRace(withCancel: boolean) {
+  const queryClient = new QueryClient();
+  const queryKey = getFriendRequestPresenceQueryKey(7);
+  let calls = 0;
+  let server = 'before';
+  const observer = new QueryObserver(queryClient, {
+    queryKey,
+    queryFn: async () => {
+      calls += 1;
+      const snapshot = server;
+
+      await sleep(30);
+      return snapshot;
+    },
+    retry: false,
+  });
+  const unsubscribe = observer.subscribe(() => {});
+
+  await sleep(5); // 최초 조회 진행 중
+  server = 'after'; // 수락으로 서버 상태가 바뀜
+
+  if (withCancel) {
+    await invalidateFriendRequestPresence(queryClient, 7);
+  } else {
+    await queryClient.invalidateQueries({ queryKey });
+  }
+
+  await sleep(100);
+  unsubscribe();
+
+  return { calls, data: queryClient.getQueryData(queryKey) };
+}
+
+test('invalidating alone during the first fetch keeps the stale response (the bug)', async () => {
+  assert.deepEqual(await runFirstFetchRace(false), {
+    calls: 1,
+    data: 'before',
+  });
+});
+
+test('the helper leaves the fresh response after a first fetch in flight', async () => {
+  assert.deepEqual(await runFirstFetchRace(true), { calls: 2, data: 'after' });
 });

@@ -11,14 +11,20 @@ export const getFriendRequestPresenceQueryKey = (
   userId: number | null
 ): [string, number | null] => [FRIEND_REQUEST_PRESENCE_QUERY_PREFIX, userId];
 
-/** 받은 요청 수가 바뀔 수 있을 때 점 쿼리를 다시 받게 한다. */
-export function invalidateFriendRequestPresence(
-  queryClient: Pick<QueryClient, 'invalidateQueries'>,
+/**
+ * 받은 요청 수가 바뀔 수 있을 때 점 쿼리를 다시 받게 한다. 진행 중인 조회를 먼저
+ * 취소한다. 데이터가 없는 최초 조회가 진행 중이면 invalidateQueries만으로는 새 요청이
+ * 시작되지 않고(cancelRefetch도 데이터가 있을 때만 듣는다) 수락 전 응답이 캐시에
+ * 남는다. 다시 받는 요청은 기다리지 않는다. 취소만 끝나면 돌아온다.
+ */
+export async function invalidateFriendRequestPresence(
+  queryClient: Pick<QueryClient, 'cancelQueries' | 'invalidateQueries'>,
   userId: number | null
 ) {
-  void queryClient.invalidateQueries({
-    queryKey: getFriendRequestPresenceQueryKey(userId),
-  });
+  const queryKey = getFriendRequestPresenceQueryKey(userId);
+
+  await queryClient.cancelQueries({ queryKey });
+  void queryClient.invalidateQueries({ queryKey });
 }
 
 /**

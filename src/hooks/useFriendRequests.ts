@@ -127,7 +127,7 @@ export function useRemoveFriendRequestFromCache() {
 
     // 받은 요청이 줄면 헤더의 점도 다시 확인한다. 보낸 요청은 영향이 없다.
     if (kind === 'received') {
-      invalidateFriendRequestPresence(queryClient, userId);
+      await invalidateFriendRequestPresence(queryClient, userId);
     }
 
     await queryClient.cancelQueries({ queryKey });
