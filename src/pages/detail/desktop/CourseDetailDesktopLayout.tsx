@@ -80,15 +80,6 @@ function CourseDetailDesktopContent(props: CourseDetailLayoutProps) {
 
   return (
     <DesktopPageShell>
-      {props.onBack ? (
-        <button
-          type="button"
-          onClick={props.onBack}
-          className="text-gray-5 mb-[24px] text-[16px]"
-        >
-          이전 화면으로
-        </button>
-      ) : null}
       <div className="flex flex-col gap-[32px]">
         <div
           className="bg-gray-2 overflow-hidden rounded-[24px]"

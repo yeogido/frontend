@@ -20,6 +20,7 @@ interface DetailTitleActionsProps {
   };
   readonly shareLabel: string;
   readonly onShare: () => void;
+  readonly shareFirst?: boolean;
 }
 
 /** 상세 화면 태그 줄 오른쪽의 좋아요(또는 관리 메뉴)와 공유 버튼. */
@@ -28,9 +29,22 @@ function DetailTitleActions({
   like,
   shareLabel,
   onShare,
+  shareFirst = false,
 }: DetailTitleActionsProps) {
+  const shareButton = (
+    <button type="button" aria-label={shareLabel} onClick={onShare}>
+      <img
+        src={shareIcon}
+        alt=""
+        draggable={false}
+        style={{ width: ICON_SIZE, height: ICON_SIZE }}
+      />
+    </button>
+  );
+
   return (
     <>
+      {shareFirst ? shareButton : null}
       {manage ? (
         <ReviewActionMenu
           onEditClick={manage.onEdit}
@@ -57,14 +71,7 @@ function DetailTitleActions({
         </button>
       ) : null}
 
-      <button type="button" aria-label={shareLabel} onClick={onShare}>
-        <img
-          src={shareIcon}
-          alt=""
-          draggable={false}
-          style={{ width: ICON_SIZE, height: ICON_SIZE }}
-        />
-      </button>
+      {!shareFirst ? shareButton : null}
     </>
   );
 }
