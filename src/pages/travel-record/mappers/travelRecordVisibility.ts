@@ -11,3 +11,13 @@ const uiVisibility = {
 export const toTravelRecordVisibility = (
   value: TravelRecordApiVisibility | undefined
 ) => (value === undefined ? undefined : uiVisibility[value]);
+
+const apiVisibility = {
+  private: 'PRIVATE',
+  friends: 'FRIENDS',
+  public: 'PUBLIC',
+} satisfies Record<TravelRecordVisibility, TravelRecordApiVisibility>;
+
+export const toTravelRecordApiVisibility = (
+  value: TravelRecordVisibility | undefined
+) => (value === undefined ? undefined : apiVisibility[value]);

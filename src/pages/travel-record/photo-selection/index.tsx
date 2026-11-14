@@ -2,13 +2,13 @@ import { TravelRecordPageFrame } from '../components';
 
 import {
   DraggingPhotoPreview,
-  PhotoSelectionTip,
   PhotoUploadBox,
   SelectedPhotoStrip,
   TravelFolderPreview,
 } from './components';
 import { usePhotoSelectionPage } from './usePhotoSelectionPage';
 import backIcon from '../../../assets/icons/back.svg';
+import TravelRecordVisibilitySelector from './components/TravelRecordVisibilitySelector';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -34,6 +34,9 @@ function TravelRecordPhotoSelectionPage() {
     openFilePicker,
     registerPhotoItem,
     removePhoto,
+    visibility,
+    canSelect,
+    selectVisibility,
   } = usePhotoSelectionPage();
 
   return (
@@ -84,7 +87,11 @@ function TravelRecordPhotoSelectionPage() {
         onAddPhoto={openFilePicker}
       />
 
-      <PhotoSelectionTip />
+      <TravelRecordVisibilitySelector
+        value={visibility}
+        canSelect={canSelect}
+        onChange={selectVisibility}
+      />
       <DraggingPhotoPreview draggingPhoto={draggingPhoto} />
 
       <button

@@ -1,3 +1,4 @@
+import type { TravelRecordApiVisibility } from '../types/travelRecord.type';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -15,6 +16,8 @@ const isTravelRecordPreviewEnabled =
 interface TravelRecordEditSession {
   id: string;
   version: number;
+  visibility?: TravelRecordApiVisibility;
+  ownerId?: number;
   decorations: TravelRecordFolder['decorations'];
   serverPhotos?: TravelRecordServerPhoto[];
   /** 서버에 저장돼 있던 제목. 수정 화면에는 제목 입력이 없어 그대로 되돌려 보낸다. */
@@ -23,7 +26,16 @@ interface TravelRecordEditSession {
   regionId?: number;
 }
 
+interface TravelRecordVisibilityDraft {
+  travelRecordId: string | null;
+  userId: number | null;
+  authGeneration: number;
+  visibility: TravelRecordApiVisibility;
+}
+
 interface TravelRecordSessionState {
+  visibilityDraft: TravelRecordVisibilityDraft | null;
+  setVisibilityDraft: (draft: TravelRecordVisibilityDraft) => void;
   editSession: TravelRecordEditSession | null;
   /**
    * 목록 화면에서 마지막으로 보던 탭.
@@ -43,13 +55,16 @@ export const useTravelRecordSessionStore = create<TravelRecordSessionState>()(
   persist(
     (set) => ({
       editSession: null,
+      visibilityDraft: null,
+      setVisibilityDraft: (visibilityDraft) => set({ visibilityDraft }),
       listView: 'folder',
       // Preview data survives route remounts, but is excluded from persistence.
       previewSharedFolders: isTravelRecordPreviewEnabled
         ? mockSharedTravelRecordFolders
         : [],
-      beginEdit: (session) => set({ editSession: session }),
-      clearEdit: () => set({ editSession: null }),
+      beginEdit: (session) =>
+        set({ editSession: session, visibilityDraft: null }),
+      clearEdit: () => set({ editSession: null, visibilityDraft: null }),
       setListView: (view) => set({ listView: view }),
     }),
     {
@@ -57,6 +72,7 @@ export const useTravelRecordSessionStore = create<TravelRecordSessionState>()(
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         editSession: state.editSession,
+        visibilityDraft: state.visibilityDraft,
         listView: state.listView,
       }),
     }

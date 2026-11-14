@@ -16,6 +16,7 @@ import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
+  TravelRecordPartialSaveError,
   useCreateTravelRecord,
   useUpdateTravelRecord,
 } from '../../../hooks/useTravelRecords';
@@ -32,7 +33,6 @@ import {
 import {
   getTravelRecordDraftDateRange,
   getTravelRecordDraftRegion,
-  getTravelRecordDraftVisibility,
 } from '../utils/draftStorage';
 import {
   clearTravelRecordPhotoDraft,
@@ -46,6 +46,8 @@ import {
   requireTravelRecordVersion,
 } from '../utils/editVersion';
 import { SAVE_SUCCESS_ANIMATION_MS } from './saveAnimation';
+import { useTravelRecordVisibilityDraft } from '../../../hooks/useTravelRecordVisibilityDraft';
+import { useAuthStore } from '../../../store/auth.store';
 import {
   clearPhotoDraftAfterTravelRecordSave,
   isTravelRecordEditorLocked,
@@ -76,6 +78,14 @@ export function useFolderDecorationPage() {
   const navigate = useNavigate();
   const { travelRecordId } = useParams<{ travelRecordId: string }>();
   const location = useLocation();
+  const activePageRef = useRef<string | null>(location.pathname);
+  useEffect(() => {
+    activePageRef.current = location.pathname;
+    return () => {
+      activePageRef.current = null;
+    };
+  }, [location.pathname]);
+  const { visibility } = useTravelRecordVisibilityDraft(travelRecordId);
   const locationState =
     location.state as TravelFolderDecorationLocationState | null;
   const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
@@ -346,6 +356,16 @@ export function useFolderDecorationPage() {
       return;
     }
 
+    const session = useAuthStore.getState();
+    const startedPage = location.pathname;
+    const canCompleteSave = () => {
+      const current = useAuthStore.getState();
+      return (
+        window.location.pathname === startedPage &&
+        current.userId === session.userId &&
+        current.authGeneration === session.authGeneration
+      );
+    };
     const saveOwner = acquireTravelRecordSave();
     if (!saveOwner) return;
 
@@ -364,6 +384,7 @@ export function useFolderDecorationPage() {
                   version: requireTravelRecordVersion(
                     restoredEditSession?.version
                   ),
+                  visibility,
                   selectedRegion,
                   selectedDateRange,
                   selectedPhotos,
@@ -379,9 +400,7 @@ export function useFolderDecorationPage() {
             id: String(
               (
                 await createTravelRecordMutation.mutateAsync({
-                  visibility:
-                    locationState?.visibility ??
-                    getTravelRecordDraftVisibility(),
+                  visibility,
                   selectedRegion,
                   selectedDateRange,
                   selectedPhotos: uploadedPhotos,
@@ -390,11 +409,14 @@ export function useFolderDecorationPage() {
               ).travelRecordId
             ),
           };
-      setIsSaveComplete(true);
+      if (!canCompleteSave()) return;
+      if (activePageRef.current === startedPage) setIsSaveComplete(true);
       await new Promise<void>((resolve) => {
         window.setTimeout(resolve, SAVE_SUCCESS_ANIMATION_MS);
       });
+      if (!canCompleteSave()) return;
       await clearPhotoDraftAfterTravelRecordSave(clearTravelRecordPhotoDraft);
+      if (!canCompleteSave()) return;
       clearEdit();
       showToast('여행 기록이 저장되었어요.');
       // 방금 만든 폴더를 강조해 보여 주는 자리는 폴더 목록이라, 지도를 보던
@@ -407,9 +429,14 @@ export function useFolderDecorationPage() {
         },
       });
     } catch (error) {
+      if (!canCompleteSave()) return;
       // 사진 장수, 스티커 위치, 지역 등 실패 원인이 서버 문구로 구분되므로
       // 그대로 보여준다.
-      showToast(getApiErrorMessage(error, '여행 기록을 저장하지 못했어요.'));
+      showToast(
+        error instanceof TravelRecordPartialSaveError
+          ? error.message
+          : getApiErrorMessage(error, '여행 기록을 저장하지 못했어요.')
+      );
     } finally {
       releaseTravelRecordSave(saveOwner);
     }

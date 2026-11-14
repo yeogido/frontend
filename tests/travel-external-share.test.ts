@@ -15,14 +15,30 @@ const folder = {
 } as TravelRecordFolder;
 
 test('only server-authorized PUBLIC folders yield a canonical share target', () => {
-  assert.deepEqual(getTravelFolderShareData(folder, 'https://yeogido.kr'), {
-    title: '부산 & 바다 #여행 | 여기도',
-    text: '여기도에서 여행 폴더를 확인해 보세요.',
-    url: 'https://yeogido.kr/travel-record/20',
-  });
-  for (const visibility of ['private', 'friends'] as const)
+  for (const visibility of ['public'] as const)
+    assert.deepEqual(
+      getTravelFolderShareData({ ...folder, visibility }, 'https://yeogido.kr'),
+      {
+        title: '부산 & 바다 #여행 | 여기도',
+        text: '여기도에서 여행 폴더를 확인해 보세요.',
+        url: 'https://yeogido.kr/travel-record/20',
+      }
+    );
+  for (const visibility of ['private', 'friends', undefined] as const)
     assert.equal(
       getTravelFolderShareData({ ...folder, visibility }, 'https://yeogido.kr'),
+      null
+    );
+  for (const visibility of ['public', 'friends'] as const)
+    assert.equal(
+      getTravelFolderShareData(
+        {
+          ...folder,
+          visibility,
+          permissions: { ...folder.permissions!, canLinkShare: false },
+        },
+        'https://yeogido.kr'
+      ),
       null
     );
   assert.equal(

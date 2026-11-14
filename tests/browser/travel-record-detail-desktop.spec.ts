@@ -34,6 +34,10 @@ async function setup(page: Page, shared = false) {
   });
   await page.route('**/api/v1/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
+    if (path.endsWith('/regions/popular'))
+      return route.fulfill({ json: { result: [] } });
+    if (path.endsWith('/regions'))
+      return route.fulfill({ json: { result: { regions: [] } } });
     let result: unknown = {
       items: [],
       hasNext: false,
@@ -57,7 +61,7 @@ async function setup(page: Page, shared = false) {
         folderTheme: 'BASIC',
         createdAt: '',
         coverImageUrl: images[0].imageUrl,
-        visibility: shared ? 'FRIENDS' : 'PRIVATE',
+        visibility: shared ? 'FRIENDS' : 'PUBLIC',
         version: 0,
         owner: {
           userId: shared ? 2 : 999,
@@ -148,7 +152,18 @@ test('shared record respects permissions and mobile breakpoint', async ({
   await expect(page.getByRole('list', { name: '앨범 참여자' })).toBeVisible();
   await expect(
     page.getByRole('button', { name: '여행 기록 메뉴' })
+  ).toBeVisible();
+  await page.getByRole('button', { name: '여행 기록 메뉴' }).click();
+  await expect(
+    page.getByRole('menuitem', { name: '나가기', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('menuitem', { name: '수정', exact: true })
   ).toHaveCount(0);
+  await expect(
+    page.getByRole('menuitem', { name: '삭제', exact: true })
+  ).toHaveCount(0);
+  await page.keyboard.press('Escape');
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth

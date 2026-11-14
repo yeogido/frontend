@@ -78,7 +78,7 @@ import DateSelectionDesktopPage from '../pages/travel-record/desktop/create/Date
 import PhotoSelectionDesktopPage from '../pages/travel-record/desktop/create/PhotoSelectionDesktopPage';
 import FolderDecorationDesktopPage from '../pages/travel-record/desktop/create/FolderDecorationDesktopPage';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
-import TravelRecordDetailPage from '../pages/travel-record/detail';
+import TravelRecordDetailPage from '../pages/travel-record/detail/ResponsiveTravelRecordDetailPage';
 import TravelRecordFolderDecorationPage from '../pages/travel-record/folder-decoration';
 import TravelRecordPhotoSelectionPage from '../pages/travel-record/photo-selection';
 import TravelRecordRegionSelectionPage from '../pages/travel-record/region-selection';
@@ -268,12 +268,7 @@ function AppRouter() {
           />
           <Route
             path="/travel-record/:folderId"
-            element={
-              <Responsive
-                desktop={<TravelRecordDetailPage desktop />}
-                mobile={<TravelRecordDetailPage />}
-              />
-            }
+            element={<TravelRecordDetailPage />}
           />
           <Route
             path="/likes"

@@ -14,8 +14,14 @@ import { IoEllipsisVertical } from 'react-icons/io5';
 import uploadIcon from '../../../assets/icons/upload.svg';
 import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
+import ConfirmDialog from '../../../components/common/ConfirmDialog';
 import { useAuthStore } from '../../../store/auth.store';
-import { useUpdateTravelRecordVisibility } from '../../../hooks/useUpdateTravelRecordVisibility';
+import {
+  useLeaveTravelRecord,
+  type LeaveTravelRecordVariables,
+} from '../../../hooks/useLeaveTravelRecord';
+import { canLeaveTravelRecord } from '../utils/leavePermission';
+import { toTravelRecordApiVisibility } from '../mappers/travelRecordVisibility';
 import {
   useDeleteTravelRecord,
   useTravelRecordDetail,
@@ -29,11 +35,8 @@ import {
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { hasTravelRecordVersion } from '../utils/editVersion';
 import { getTravelRecordActionPermissions } from '../utils/travelRecordPermissions';
-import {
-  hasTravelRecordVersion,
-  requireTravelRecordVersion,
-} from '../utils/editVersion';
 import TravelRecordMembers from './components/TravelRecordMembers';
 import TravelRecordShareModal from './components/TravelRecordShareModal';
 import { getFriendAvatarColor } from '../../friends/utils/friendAvatarColor';
@@ -77,10 +80,21 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
   const [isPhotoTransitioning, setIsPhotoTransitioning] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [leaveConfirmation, setLeaveConfirmation] =
+    useState<LeaveTravelRecordVariables | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const closeShareModal = useCallback(() => setIsShareModalOpen(false), []);
   const { data: profile } = useMyProfile();
   const [isDeleted, setIsDeleted] = useState(false);
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
+  const [leaveRequest, setLeaveRequest] =
+    useState<LeaveTravelRecordVariables | null>(null);
+  const leaveLocksRef = useRef(new Set<string>());
+  const currentFolderIdRef = useRef(folderId);
+  useEffect(() => {
+    currentFolderIdRef.current = folderId;
+  }, [folderId]);
   const { showToast } = useToast();
   const beginEdit = useTravelRecordSessionStore((state) => state.beginEdit);
   const [transitionTargetIndex, setTransitionTargetIndex] = useState<
@@ -90,26 +104,39 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
     location.state as TravelRecordDetailLocationState | null;
   const travelRecordId =
     folderId && /^\d+$/.test(folderId) ? Number(folderId) : null;
+  const isLeaving =
+    leaveRequest !== null &&
+    leaveRequest.travelRecordId === travelRecordId &&
+    leaveRequest.userId === userId &&
+    leaveRequest.authGeneration === authGeneration;
   const serverTravelRecordQuery = useTravelRecordDetail(
-    isDeleted ? null : travelRecordId
+    isDeleted || isLeaving ? null : travelRecordId
   );
   const deleteTravelRecordMutation = useDeleteTravelRecord();
-  const visibilityMutation = useUpdateTravelRecordVisibility();
-  const isChangingVisibilityRef = useRef(false);
-  const userId = useAuthStore((state) => state.userId);
+  const leaveMutation = useLeaveTravelRecord();
+  const isDetailActionPending = isLeaving;
   const inviteFolder = serverTravelRecordQuery.data;
-  const canChangeVisibility =
-    (inviteFolder?.visibility === 'private' ||
-      inviteFolder?.visibility === 'public') &&
+  const canOpenShare =
+    inviteFolder?.visibility === 'public' ||
+    inviteFolder?.visibility === 'friends';
+  const canLeave = canLeaveTravelRecord(inviteFolder, userId);
+  const isLeaveDialogOpen =
+    canLeave &&
+    leaveConfirmation?.travelRecordId === travelRecordId &&
+    leaveConfirmation.userId === userId &&
+    leaveConfirmation.authGeneration === authGeneration;
+  const isSharedFolderWithParticipants =
+    inviteFolder?.visibility === 'friends' &&
     inviteFolder.owner?.userId === userId &&
-    hasTravelRecordVersion(inviteFolder.version);
+    (inviteFolder.participants?.some(
+      (member) => member.userId !== inviteFolder.owner?.userId
+    ) ??
+      false);
   const { canEdit, canDelete } = getTravelRecordActionPermissions(
     inviteFolder,
     userId
   );
-  const hasActionMenuItems = canEdit || canDelete || canChangeVisibility;
-  const visibilityTargetLabel =
-    inviteFolder?.visibility === 'public' ? '나만보기' : '전체공개';
+  const hasActionMenuItems = canEdit || canDelete || canLeave;
   // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
   // 실패했는데도 그걸 그대로 그리면 남의 기록(403)이나 이미 지워진 기록(404)이
   // 정상 화면처럼 보이므로, 실패했을 때는 캐시 데이터를 쓰지 않는다.
@@ -148,7 +175,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
     resizeObserver.observe(photoStack);
 
     return () => resizeObserver.disconnect();
-  }, [folder?.id]);
+  }, [folder?.id, desktop]);
 
   useEffect(() => {
     if (!isActionMenuOpen) {
@@ -186,7 +213,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
   if (
     travelRecordId &&
     !folder &&
-    (serverTravelRecordQuery.isLoading || isDeleted)
+    (serverTravelRecordQuery.isLoading || isDeleted || isLeaving)
   ) {
     if (desktop)
       return (
@@ -358,45 +385,6 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
     };
   };
 
-  const handleVisibilityChange = async () => {
-    if (
-      !canChangeVisibility ||
-      !travelRecordId ||
-      !inviteFolder ||
-      isChangingVisibilityRef.current
-    )
-      return;
-    const session = useAuthStore.getState();
-    isChangingVisibilityRef.current = true;
-    try {
-      await visibilityMutation.mutateAsync({
-        travelRecordId,
-        visibility: inviteFolder.visibility === 'public' ? 'PRIVATE' : 'PUBLIC',
-        version: requireTravelRecordVersion(inviteFolder.version),
-      });
-      const current = useAuthStore.getState();
-      if (
-        current.userId === session.userId &&
-        current.authGeneration === session.authGeneration
-      )
-        showToast(`${visibilityTargetLabel}로 전환했어요.`);
-    } catch (error) {
-      const current = useAuthStore.getState();
-      if (
-        current.userId === session.userId &&
-        current.authGeneration === session.authGeneration
-      )
-        showToast(
-          getApiErrorMessage(
-            error,
-            `${visibilityTargetLabel}로 전환하지 못했어요.`
-          )
-        );
-    } finally {
-      isChangingVisibilityRef.current = false;
-    }
-  };
-
   const handleEdit = async () => {
     if (!travelRecordId) {
       return;
@@ -450,11 +438,78 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
     beginEdit({
       id: editableFolder.id,
       version: editableFolder.version,
+      visibility: toTravelRecordApiVisibility(editableFolder.visibility),
+      ownerId: editableFolder.owner?.userId,
       decorations: editableFolder.decorations,
       title: editableFolder.title,
       regionId: editableFolder.regionId,
     });
     navigate(getTravelRecordEditRoute(String(travelRecordId)));
+  };
+
+  const handleLeave = async () => {
+    const session = useAuthStore.getState();
+    if (
+      !travelRecordId ||
+      isDeleted ||
+      isDetailActionPending ||
+      session.userId === null ||
+      session.userId !== userId ||
+      session.authGeneration !== authGeneration ||
+      !canLeaveTravelRecord(serverTravelRecordQuery.data, session.userId)
+    )
+      return;
+    const variables: LeaveTravelRecordVariables = {
+      travelRecordId,
+      userId: session.userId,
+      authGeneration: session.authGeneration,
+    };
+    const key = `${session.userId}:${session.authGeneration}:${travelRecordId}`;
+    if (leaveLocksRef.current.has(key)) return;
+    leaveLocksRef.current.add(key);
+    const startedFolderId = folderId;
+    const canUpdatePage = () => {
+      const current = useAuthStore.getState();
+      return (
+        isMountedRef.current &&
+        currentFolderIdRef.current === startedFolderId &&
+        current.userId === session.userId &&
+        current.authGeneration === session.authGeneration
+      );
+    };
+    setLeaveRequest(variables);
+    try {
+      await leaveMutation.mutateAsync(variables);
+      if (!canUpdatePage()) return;
+      showToast('폴더에서 나왔어요.');
+      navigate('/travel-record', { replace: true });
+    } catch (error) {
+      if (canUpdatePage())
+        showToast(
+          getApiErrorMessage(
+            error,
+            '폴더에서 나가지 못했어요. 다시 시도해 주세요.'
+          )
+        );
+    } finally {
+      leaveLocksRef.current.delete(key);
+      if (isMountedRef.current) {
+        setLeaveConfirmation((current) =>
+          current?.travelRecordId === variables.travelRecordId &&
+          current.userId === variables.userId &&
+          current.authGeneration === variables.authGeneration
+            ? null
+            : current
+        );
+        setLeaveRequest((current) =>
+          current?.travelRecordId === variables.travelRecordId &&
+          current.userId === variables.userId &&
+          current.authGeneration === variables.authGeneration
+            ? null
+            : current
+        );
+      }
+    }
   };
 
   const handleDelete = async () => {
@@ -478,30 +533,72 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
     navigate('/travel-record');
   };
 
+  const openLeaveDialog = () => {
+    if (travelRecordId && userId !== null)
+      setLeaveConfirmation({ travelRecordId, userId, authGeneration });
+  };
+  const actionDialogs = (
+    <>
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title={
+          isSharedFolderWithParticipants
+            ? '공유 폴더를 삭제할까요?'
+            : '여행 기록을 삭제할까요?'
+        }
+        description={
+          isSharedFolderWithParticipants
+            ? '삭제하면 모든 참여자가 이 폴더를 볼 수 없어요.\n사진·스티커도 함께 삭제되며, 되돌릴 수 없어요.'
+            : '삭제한 기록은 되돌릴 수 없어요.'
+        }
+        isPending={deleteTravelRecordMutation.isPending}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => {
+          if (!deleteTravelRecordMutation.isPending)
+            setIsDeleteDialogOpen(false);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={isLeaveDialogOpen}
+        title="공유 폴더에서 나갈까요?"
+        description={
+          '나가면 이 폴더를 보거나 수정할 수 없어요.\n폴더와 사진·스티커는 다른 참여자에게 그대로 남아요.'
+        }
+        confirmLabel="나가기"
+        isPending={isLeaving}
+        onConfirm={() => void handleLeave()}
+        onCancel={() => {
+          if (!isLeaving) setLeaveConfirmation(null);
+        }}
+      />
+    </>
+  );
+
   if (desktop) {
     return (
-      <TravelRecordDetailDesktop
-        folder={folder}
-        inviteFolder={inviteFolder}
-        profileName={profile?.name ?? ''}
-        profileImageUrl={profile?.profileImageUrl}
-        menuRef={actionMenuRef}
-        menuOpen={isActionMenuOpen}
-        setMenuOpen={setIsActionMenuOpen}
-        shareOpen={isShareModalOpen}
-        setShareOpen={setIsShareModalOpen}
-        deleteOpen={isDeleteDialogOpen}
-        setDeleteOpen={setIsDeleteDialogOpen}
-        isPending={visibilityMutation.isPending}
-        isDeleting={deleteTravelRecordMutation.isPending}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        canChangeVisibility={canChangeVisibility}
-        visibilityTargetLabel={visibilityTargetLabel}
-        onEdit={() => void handleEdit()}
-        onDelete={() => void handleDelete()}
-        onVisibilityChange={() => void handleVisibilityChange()}
-      />
+      <>
+        <TravelRecordDetailDesktop
+          folder={folder}
+          inviteFolder={inviteFolder}
+          profileName={profile?.name ?? ''}
+          profileImageUrl={profile?.profileImageUrl}
+          menuRef={actionMenuRef}
+          menuOpen={isActionMenuOpen}
+          setMenuOpen={setIsActionMenuOpen}
+          shareOpen={isShareModalOpen}
+          setShareOpen={setIsShareModalOpen}
+          setDeleteOpen={setIsDeleteDialogOpen}
+          isPending={isDetailActionPending}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          canLeave={canLeave}
+          canOpenShare={canOpenShare}
+          onEdit={() => void handleEdit()}
+          onLeave={openLeaveDialog}
+        />
+        {actionDialogs}
+      </>
     );
   }
 
@@ -538,29 +635,32 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
           )}
         </div>
         <div className="absolute -top-1 -right-1 z-20 flex items-center">
-          <button
-            type="button"
-            aria-label="여행 폴더 공유하기"
-            disabled={!inviteFolder || visibilityMutation.isPending}
-            onClick={() => {
-              setIsActionMenuOpen(false);
-              setIsShareModalOpen(true);
-            }}
-            className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
-          >
-            <img
-              src={uploadIcon}
-              alt=""
-              aria-hidden="true"
-              width={24}
-              height={24}
-            />
-          </button>
+          {canOpenShare && (
+            <button
+              type="button"
+              aria-label="여행 폴더 공유하기"
+              disabled={!inviteFolder || isDetailActionPending}
+              onClick={() => {
+                setIsActionMenuOpen(false);
+                setIsShareModalOpen(true);
+              }}
+              className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              <img
+                src={uploadIcon}
+                alt=""
+                aria-hidden="true"
+                width={24}
+                height={24}
+              />
+            </button>
+          )}
           <div ref={actionMenuRef} className="relative">
-            {(canEdit || canDelete || canChangeVisibility) && (
+            {hasActionMenuItems && (
               <button
                 type="button"
                 aria-label="여행 기록 메뉴"
+                disabled={isDetailActionPending}
                 aria-controls="travel-record-action-menu"
                 aria-expanded={isActionMenuOpen}
                 onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
@@ -597,7 +697,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
                     key={label}
                     type="button"
                     role="menuitem"
-                    disabled={visibilityMutation.isPending}
+                    disabled={isDetailActionPending}
                     onClick={() => {
                       setIsActionMenuOpen(false);
                       onClick();
@@ -607,18 +707,23 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
                     {label}
                   </button>
                 ))}
-                {canChangeVisibility && (
+                {canLeave && (
                   <button
                     type="button"
                     role="menuitem"
-                    disabled={visibilityMutation.isPending}
+                    disabled={isDetailActionPending}
                     onClick={() => {
                       setIsActionMenuOpen(false);
-                      void handleVisibilityChange();
+                      if (travelRecordId && userId !== null)
+                        setLeaveConfirmation({
+                          travelRecordId,
+                          userId,
+                          authGeneration,
+                        });
                     }}
                     className="flex h-[42px] w-full items-center px-4 text-left text-sm font-medium whitespace-nowrap text-[#7f7f7f] hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none disabled:opacity-50"
                   >
-                    {visibilityTargetLabel}로 전환
+                    나가기
                   </button>
                 )}
               </div>
@@ -627,7 +732,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
         </div>
       </header>
 
-      {isShareModalOpen && inviteFolder && (
+      {isShareModalOpen && inviteFolder && canOpenShare && (
         <TravelRecordShareModal
           folder={inviteFolder}
           sharerName={profile?.name ?? ''}
@@ -636,43 +741,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
         />
       )}
 
-      {isDeleteDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="travel-record-delete-title"
-            className="w-full max-w-[342px] rounded-2xl bg-[#f9f9f9] p-6"
-          >
-            <h2
-              id="travel-record-delete-title"
-              className="text-xl font-semibold text-[#1c1c1c]"
-            >
-              여행 기록을 삭제할까요?
-            </h2>
-            <p className="mt-3 text-sm text-[#7f7f7f]">
-              삭제한 기록은 되돌릴 수 없어요.
-            </p>
-            <div className="mt-6 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setIsDeleteDialogOpen(false)}
-                className="h-11 flex-1 rounded-xl bg-[#e4e4e4] text-sm font-semibold text-[#505050]"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleDelete()}
-                disabled={deleteTravelRecordMutation.isPending}
-                className="h-11 flex-1 rounded-xl bg-[#ff6f41] text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                삭제
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
+      {actionDialogs}
 
       <div
         ref={photoStackRef}

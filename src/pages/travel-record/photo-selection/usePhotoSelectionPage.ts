@@ -1,14 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import type { TravelRecordApiVisibility } from '../../../types/travelRecord.type';
-import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
+import { useTravelRecordVisibilityDraft } from '../../../hooks/useTravelRecordVisibilityDraft';
 import type { TravelPhotoSelectionLocationState } from '../date-selection/types';
 import {
   getTravelRecordDraftDateRange,
   getTravelRecordDraftRegion,
-  getTravelRecordDraftVisibility,
-  saveTravelRecordDraftVisibility,
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
 import {
@@ -35,23 +32,18 @@ export function usePhotoSelectionPage() {
     locationState?.selectedDateRange ?? storedSelectedDateRange;
   const regionName =
     selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
-  const isEditing = useTravelRecordSessionStore(
-    (state) => state.editSession !== null
-  );
-  const [visibility, setVisibility] = useState<TravelRecordApiVisibility>(
-    getTravelRecordDraftVisibility
-  );
+  const isEditing = Boolean(travelRecordId);
+  const {
+    visibility,
+    canSelect,
+    setVisibility: selectVisibility,
+  } = useTravelRecordVisibilityDraft(travelRecordId);
   const selection = useTravelRecordPhotoSelection(isEditing);
   const { hasSelectedPhotos, photos, photosRef, reorderPhotos } = selection;
   const drag = useDraggablePhotoOrder({
     photosRef,
     onReorderPhotos: reorderPhotos,
   });
-
-  const selectVisibility = (next: TravelRecordApiVisibility) => {
-    setVisibility(next);
-    saveTravelRecordDraftVisibility(next);
-  };
 
   const handleDecorateFolder = async () => {
     if (!hasSelectedPhotos || !selectedRegion || !selectedDateRange) {
@@ -82,7 +74,6 @@ export function usePhotoSelectionPage() {
           selectedRegion,
           selectedDateRange,
           photoDraftId: TRAVEL_RECORD_PHOTO_DRAFT_ID,
-          visibility,
         },
       }
     );
@@ -117,6 +108,7 @@ export function usePhotoSelectionPage() {
     regionName,
     selectedDateRange,
     visibility,
+    canSelect,
     handleDecorateFolder,
     selectVisibility,
   };
