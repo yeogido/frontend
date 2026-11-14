@@ -32,8 +32,10 @@ import FestivalOngoingPage from '../pages/festival/ongoing';
 import FestivalRecentPage from '../pages/festival/recent';
 import FestivalSearchPage from '../pages/festival/search';
 import ReviewPage from '../pages/review';
+import ReviewDesktopPage from '../pages/review/desktop';
 import CourseRegionSearchPage from '../pages/course-region-search';
 import YeogidoCoursePage from '../pages/yeogido-course';
+import YeogidoCourseDesktopPage from '../pages/yeogido-course/desktop';
 import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
 import YeogidoCourseRecentPage from '../pages/yeogido-course/recent';
 import YeogidoCourseSearchPage from '../pages/yeogido-course/search';
@@ -70,6 +72,10 @@ import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TagSelectionDesktopPage from '../pages/local-recommendation/tag-selection/desktop';
 import TravelRecordPage from '../pages/travel-record';
 import TravelRecordDesktopPage from '../pages/travel-record/desktop';
+import TravelRecordRegionSelectionDesktopPage from '../pages/travel-record/desktop/create/RegionSelectionDesktopPage';
+import DateSelectionDesktopPage from '../pages/travel-record/desktop/create/DateSelectionDesktopPage';
+import PhotoSelectionDesktopPage from '../pages/travel-record/desktop/create/PhotoSelectionDesktopPage';
+import FolderDecorationDesktopPage from '../pages/travel-record/desktop/create/FolderDecorationDesktopPage';
 import TravelRecordDateSelectionPage from '../pages/travel-record/date-selection';
 import TravelRecordDetailPage from '../pages/travel-record/detail';
 import TravelRecordFolderDecorationPage from '../pages/travel-record/folder-decoration';
@@ -154,11 +160,24 @@ function AppRouter() {
 
         <Route path="/region-info/:region" element={<RegionInfoPage />} />
 
-        <Route path="/yeogido-course" element={<YeogidoCoursePage />} />
+        <Route
+          path="/yeogido-course"
+          element={
+            <Responsive
+              desktop={<YeogidoCourseDesktopPage />}
+              mobile={<YeogidoCoursePage />}
+            />
+          }
+        />
 
         <Route
           path="/yeogido-course/popular"
-          element={<YeogidoCoursePopularPage />}
+          element={
+            <Responsive
+              desktop={<YeogidoCourseDesktopPage defaultSort="인기순" />}
+              mobile={<YeogidoCoursePopularPage />}
+            />
+          }
         />
 
         <Route
@@ -245,12 +264,42 @@ function AppRouter() {
               />
             }
           />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/friends" element={<FriendsPage />} />
-          <Route path="/friends/requests" element={<FriendRequestsPage />} />
+          <Route
+            path="/profile"
+            element={
+              <Responsive
+                desktop={<LikesDesktopPage />}
+                mobile={<ProfilePage />}
+              />
+            }
+          />
+          <Route path="/account" element={<ProfilePage />} />
+          <Route
+            path="/friends"
+            element={
+              <Responsive
+                desktop={<FriendsPage desktop />}
+                mobile={<FriendsPage />}
+              />
+            }
+          />
+          <Route
+            path="/friends/requests"
+            element={
+              <Responsive
+                desktop={<FriendRequestsPage desktop />}
+                mobile={<FriendRequestsPage />}
+              />
+            }
+          />
           <Route
             path="/friends/:friendUserId"
-            element={<FriendProfilePage />}
+            element={
+              <Responsive
+                desktop={<FriendProfilePage desktop />}
+                mobile={<FriendProfilePage />}
+              />
+            }
           />
           <Route
             path="/my-posts"
@@ -326,36 +375,76 @@ function AppRouter() {
 
         <Route
           path="/travel-record/new"
-          element={<TravelRecordRegionSelectionPage />}
+          element={
+            <Responsive
+              desktop={<TravelRecordRegionSelectionDesktopPage />}
+              mobile={<TravelRecordRegionSelectionPage />}
+            />
+          }
         />
         <Route
           path="/travel-record/:travelRecordId/edit"
-          element={<TravelRecordRegionSelectionPage />}
+          element={
+            <Responsive
+              desktop={<TravelRecordRegionSelectionDesktopPage />}
+              mobile={<TravelRecordRegionSelectionPage />}
+            />
+          }
         />
 
         <Route
           path="/travel-record/date-selection"
-          element={<TravelRecordDateSelectionPage />}
+          element={
+            <Responsive
+              desktop={<DateSelectionDesktopPage />}
+              mobile={<TravelRecordDateSelectionPage />}
+            />
+          }
         />
         <Route
           path="/travel-record/:travelRecordId/edit/date"
-          element={<TravelRecordDateSelectionPage />}
+          element={
+            <Responsive
+              desktop={<DateSelectionDesktopPage />}
+              mobile={<TravelRecordDateSelectionPage />}
+            />
+          }
         />
         <Route
           path="/travel-record/photo-selection"
-          element={<TravelRecordPhotoSelectionPage />}
+          element={
+            <Responsive
+              desktop={<PhotoSelectionDesktopPage />}
+              mobile={<TravelRecordPhotoSelectionPage />}
+            />
+          }
         />
         <Route
           path="/travel-record/:travelRecordId/edit/photos"
-          element={<TravelRecordPhotoSelectionPage />}
+          element={
+            <Responsive
+              desktop={<PhotoSelectionDesktopPage />}
+              mobile={<TravelRecordPhotoSelectionPage />}
+            />
+          }
         />
         <Route
           path="/travel-record/folder-decoration"
-          element={<TravelRecordFolderDecorationPage />}
+          element={
+            <Responsive
+              desktop={<FolderDecorationDesktopPage />}
+              mobile={<TravelRecordFolderDecorationPage />}
+            />
+          }
         />
         <Route
           path="/travel-record/:travelRecordId/edit/decorate"
-          element={<TravelRecordFolderDecorationPage />}
+          element={
+            <Responsive
+              desktop={<FolderDecorationDesktopPage />}
+              mobile={<TravelRecordFolderDecorationPage />}
+            />
+          }
         />
         <Route
           path="/local-recommendation/visit-order-selection"
@@ -433,7 +522,12 @@ function AppRouter() {
           />
         }
       />
-      <Route path="/review" element={<ReviewPage />} />
+      <Route
+        path="/review"
+        element={
+          <Responsive desktop={<ReviewDesktopPage />} mobile={<ReviewPage />} />
+        }
+      />
 
       <Route element={<AdminRoute />}>
         <Route
