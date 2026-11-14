@@ -2,12 +2,10 @@ import { NavLink, useNavigate } from 'react-router-dom';
 
 import searchIcon from '../../../assets/icons/search.svg';
 import { Logo } from '../../common';
-import ProfileAvatar from '../../common/ProfileAvatar';
 import { useAuth } from '../../../hooks/useAuth';
-import { useMyProfile } from '../../../hooks/useMyProfile';
+import DesktopProfileMenu from './DesktopProfileMenu';
 
 // Figma 1440 데스크톱 시안(5725:30472) 기준 리터럴 px
-const AVATAR_SIZE = 45;
 
 const NAV_ITEMS = [
   { label: '여기도 추천 코스', to: '/yeogido-course' },
@@ -24,7 +22,6 @@ const NAV_ITEMS = [
 function DesktopHeader() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { data: profile } = useMyProfile();
 
   return (
     <header className="border-gray-2 w-full border-b bg-white">
@@ -68,12 +65,7 @@ function DesktopHeader() {
           </button>
 
           {isAuthenticated ? (
-            <NavLink to="/profile" aria-label="내 프로필">
-              <ProfileAvatar
-                src={profile?.profileImageUrl}
-                size={AVATAR_SIZE}
-              />
-            </NavLink>
+            <DesktopProfileMenu />
           ) : (
             <NavLink
               to="/login"

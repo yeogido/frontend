@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { MdCake, MdLocationOn } from 'react-icons/md';
 import { Link, useNavigate } from 'react-router-dom';
 
-import ProfileAvatar from '../../../components/common/ProfileAvatar';
+import DesktopOwnAvatar from '../../../components/layout/desktop/DesktopOwnAvatar';
 import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
 import { useMyProfile } from '../../../hooks/useMyProfile';
 
@@ -37,7 +37,11 @@ function MyActivityShell({ activeTab, children }: MyActivityShellProps) {
           className="flex items-start justify-between"
         >
           <div className="flex items-center gap-[32px]">
-            <ProfileAvatar src={profile?.profileImageUrl} size={AVATAR_SIZE} />
+            <DesktopOwnAvatar
+              src={profile?.profileImageUrl}
+              name={profile?.name ?? '회원'}
+              size={AVATAR_SIZE}
+            />
 
             <div className="flex flex-col gap-[12px]">
               <div className="flex flex-col gap-[4px]">
