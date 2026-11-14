@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import menu from '../../assets/icons/menu.svg';
+import friendRequestsNotification from '../../assets/icons/friend-requests-notification.svg';
 import personAdd from '../../assets/icons/person-add-rounded.svg';
 import search from '../../assets/icons/search.svg';
 
 import { Logo } from '../common';
 
 import { useGlobalScale } from '../../hooks/useGlobalScale';
+import { useHasReceivedFriendRequest } from '../../hooks/useHasReceivedFriendRequest';
+import {
+  getFriendRequestButtonLabel,
+  isFriendRequestDotPath,
+} from '../../hooks/utils/friendRequestDot';
 import { APP_HEADER_HEIGHT, MIN_TOUCH_TARGET } from '../../constants/layout';
 
 const HEADER_PADDING_X = 24;
@@ -15,6 +21,8 @@ const HEADER_PADDING_X = 24;
 const ICON_FRAME_SIZE = 24;
 const ICON_SIZE = 17.57;
 const ICON_GAP = 8;
+// 받은 요청 점이 있는 친구 아이콘 SVG의 크기.
+const FRIEND_DOT_ICON_SIZE = 25;
 
 // 히어로 이미지가 있는 화면은 맨 위에서만 헤더를 투명하게 해서 사진이
 // 그대로 보이게 하고, 스크롤하면 원래처럼 채워진 헤더로 돌아온다.
@@ -36,6 +44,9 @@ function Header({ onMenuClick }: HeaderProps) {
   const isProfilePage = pathname === '/profile';
   const isFriendsPage =
     pathname === '/friends' || pathname.startsWith('/friends/');
+  const hasFriendRequest = useHasReceivedFriendRequest(
+    isFriendRequestDotPath(pathname)
+  );
   const isTransparentHeaderPage = TRANSPARENT_HEADER_PATHS.includes(pathname);
 
   const [isAtTop, setIsAtTop] = useState(true);
@@ -62,6 +73,10 @@ function Header({ onMenuClick }: HeaderProps) {
     ? '[filter:brightness(0)_invert(1)_drop-shadow(0_1px_3px_rgba(0,0,0,0.5))]'
     : '';
 
+  const friendIconSize = hasFriendRequest
+    ? FRIEND_DOT_ICON_SIZE
+    : ICON_FRAME_SIZE;
+  const dotShift = hasFriendRequest ? 0.5 * scale : 0;
   const iconFrameSize = Math.max(ICON_FRAME_SIZE, ICON_FRAME_SIZE * scale);
   const iconGap = ICON_GAP * scale;
   // The 390px visual frames stay 24px wide. Because their centers are closer
@@ -115,7 +130,11 @@ function Header({ onMenuClick }: HeaderProps) {
               onClick={
                 isFriendsPage ? handleFriendRequestClick : handleSearchClick
               }
-              aria-label={isFriendsPage ? '친구 요청' : '검색'}
+              aria-label={
+                isFriendsPage
+                  ? getFriendRequestButtonLabel(hasFriendRequest)
+                  : '검색'
+              }
               className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
               style={{
                 width: MIN_TOUCH_TARGET,
@@ -124,13 +143,21 @@ function Header({ onMenuClick }: HeaderProps) {
               }}
             >
               <img
-                src={isFriendsPage ? personAdd : search}
+                src={
+                  isFriendsPage
+                    ? hasFriendRequest
+                      ? friendRequestsNotification
+                      : personAdd
+                    : search
+                }
                 alt=""
                 className={`transition-[filter] duration-200 ${transparentIconClassName}`}
                 style={{
-                  width: (isFriendsPage ? ICON_FRAME_SIZE : ICON_SIZE) * scale,
-                  height: (isFriendsPage ? ICON_FRAME_SIZE : ICON_SIZE) * scale,
-                  transform: `translateX(${hitTargetOffset}px)`,
+                  width: (isFriendsPage ? friendIconSize : ICON_SIZE) * scale,
+                  height: (isFriendsPage ? friendIconSize : ICON_SIZE) * scale,
+                  // 점 아이콘(25×25)은 글리프가 1px 아래라 위로 1px·오른쪽으로 1px
+                  // 삐져나오게 둔다(시안 Variant2). 가운데 정렬 기준으로는 각 0.5px.
+                  transform: `translate(${hitTargetOffset + dotShift}px, ${-dotShift}px)`,
                 }}
               />
             </button>
