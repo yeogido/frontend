@@ -35,6 +35,11 @@ export interface GetCoursesResponse {
    * (예: ["부산", "1박2일", "혼자"]). 해석하지 못하면 빈 배열이다.
    */
   extractedKeywords?: string[];
+  /**
+   * 첫 자연어 검색(keyword)에서만 발급하는 추가 조회용 ID. 발급 후 1시간 동안
+   * searchId + keywords로 조건 칩 추가 조회에 쓸 수 있다.
+   */
+  searchId?: string;
 }
 
 export interface GetCoursesParams {
@@ -53,6 +58,14 @@ export interface GetCoursesParams {
   cursorValue?: string;
   cursorId?: number;
   size?: number;
+  /**
+   * 조건 칩 추가 조회 — 첫 검색의 searchId와 그 extractedKeywords 중 고른
+   * 키워드를 보낸다. 서버는 첫 검색의 필터를 그대로 쓰고 첫 검색 결과에 있던
+   * 코스는 빼고 준다. 이때는 keyword·필터·정렬·courseType을 함께 보내면
+   * 400(COMMON4002)이므로 searchId·keywords·size·커서만 보낸다.
+   */
+  searchId?: string;
+  keywords?: string[];
 }
 
 export interface GetPopularCoursesParams {

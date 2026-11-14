@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   type InfiniteData,
+  type PlaceholderDataFunction,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -46,9 +47,19 @@ interface CoursesPageParam {
   cursorId?: number;
 }
 
+type CoursesQueryKey = [string, number, GetCoursesParams];
+
 export function useCourses(
   params: GetCoursesParams,
-  options?: { enabled?: boolean }
+  options?: {
+    enabled?: boolean;
+    placeholderData?: PlaceholderDataFunction<
+      InfiniteData<GetCoursesResponse, CoursesPageParam>,
+      NormalizedApiError,
+      InfiniteData<GetCoursesResponse, CoursesPageParam>,
+      CoursesQueryKey
+    >;
+  }
 ) {
   const authGeneration = useAuthStore((state) => state.authGeneration);
 
@@ -56,7 +67,7 @@ export function useCourses(
     GetCoursesResponse,
     NormalizedApiError,
     InfiniteData<GetCoursesResponse, CoursesPageParam>,
-    [string, number, GetCoursesParams],
+    CoursesQueryKey,
     CoursesPageParam
   >({
     queryKey: ['courses', authGeneration, params],
@@ -75,6 +86,7 @@ export function useCourses(
           }
         : undefined,
     enabled: options?.enabled,
+    placeholderData: options?.placeholderData,
   });
 }
 
