@@ -1,21 +1,33 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { DesktopPageShell } from '../../../components/layout/desktop';
+import DesktopFilterDropdown from '../../../components/layout/desktop/DesktopFilterDropdown';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useCourses } from '../../../hooks/useCourses';
+import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useRegion } from '../../../hooks/useRegions';
 import { toCourseCardProps } from '../../../utils/courseCard';
 import { getExplicitRegionId } from '../../../utils/regionSearch';
 import { buildCourseDetailPath } from '../../../utils/routes';
 import HomeCourseCard from '../../home/desktop/HomeCourseCard';
-import HomeFestivalSection from '../../home/desktop/HomeFestivalSection';
 import HomeSectionHeader from '../../home/desktop/HomeSectionHeader';
+import { yeogidoCourseFilterGroups } from '../../yeogido-course/constants/filters';
+import useYeogidoCourseFilters from '../../yeogido-course/hooks/useYeogidoCourseFilters';
+import { toCourseFilterParams } from '../../yeogido-course/utils/filterParams';
 import { useResolvedRegion } from '../hooks/useResolvedRegion';
+import RegionFestivalSection from './RegionFestivalSection';
+import RegionPlaceSection from './RegionPlaceSection';
 
 // Figma 1440 데스크톱 시안(6364:54980 지역 선택 결과) 기준 리터럴 px.
 const CONTENT_WIDTH = 1048;
 const COURSE_COUNT = 8;
 const SKELETON_COUNT = 4;
+const filterLabels = {
+  transport: '이동 수단',
+  duration: '여행 기간',
+  companion: '동행',
+  sort: '코스 정렬',
+};
 
 /** 데스크톱 지역 결과 — 한 지역의 여기도 코스와 진행 중인 행사를 모아 보여준다. */
 function RegionInfoDesktopPage() {
@@ -23,6 +35,10 @@ function RegionInfoDesktopPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { getLiked, toggleLike } = useCourseLikeToggle();
+  const { selectedFilters, handleFilterSelect } = useYeogidoCourseFilters();
+  const { coordinates, status, requestCoordinates } =
+    useDistanceSortCoordinates();
+  const isDistanceSort = selectedFilters.sort === '거리순';
 
   const {
     regionId,
@@ -49,10 +65,17 @@ function RegionInfoDesktopPage() {
       courseType: 'OFFICIAL',
       regionId,
       keyword: regionId === undefined ? regionName : undefined,
-      sort: 'RECOMMEND',
+      ...toCourseFilterParams(selectedFilters),
+      latitude: isDistanceSort ? coordinates?.latitude : undefined,
+      longitude: isDistanceSort ? coordinates?.longitude : undefined,
       size: COURSE_COUNT,
     },
-    { enabled: !isRegionLoading && !isRegionNotFound }
+    {
+      enabled:
+        !isRegionLoading &&
+        !isRegionNotFound &&
+        (!isDistanceSort || status === 'ready' || status === 'failed'),
+    }
   );
   const courses = (data?.pages[0]?.items ?? [])
     .slice(0, COURSE_COUNT)
@@ -95,6 +118,32 @@ function RegionInfoDesktopPage() {
             title={`${displayName} 여기도 가볼까?`}
             onMoreClick={() => navigate(courseSearchPath)}
           />
+
+          <div className="flex items-start justify-between">
+            <div className="flex gap-[16px]">
+              {yeogidoCourseFilterGroups
+                .filter((group) => group.key !== 'sort')
+                .map((group) => (
+                  <DesktopFilterDropdown
+                    key={group.key}
+                    label={filterLabels[group.key]}
+                    options={group.options}
+                    value={selectedFilters[group.key]}
+                    onChange={(option) => handleFilterSelect(group.key, option)}
+                  />
+                ))}
+            </div>
+            <DesktopFilterDropdown
+              label={filterLabels.sort}
+              options={yeogidoCourseFilterGroups[3].options}
+              value={selectedFilters.sort}
+              align="right"
+              onChange={(option) => {
+                handleFilterSelect('sort', option);
+                if (option === '거리순') void requestCoordinates();
+              }}
+            />
+          </div>
 
           {isCoursesError ? (
             <div className="py-[32px] text-center">
@@ -148,13 +197,22 @@ function RegionInfoDesktopPage() {
           </div>
         </section>
 
-        <HomeFestivalSection
+        <RegionFestivalSection
           title={`${displayName}에서 진행 중인 행사`}
           regionId={regionId}
           keyword={regionId === undefined ? regionName : undefined}
           enabled={!isRegionLoading}
           moreTo={`/festival/search?region=${encodeURIComponent(regionName)}`}
         />
+
+        {regionId !== undefined ? (
+          <RegionPlaceSection
+            title={`${displayName}에서 이 곳은 어때요?`}
+            regionId={regionId}
+            enabled={!isRegionLoading}
+            moreTo="/local-business"
+          />
+        ) : null}
       </div>
     </DesktopPageShell>
   );
