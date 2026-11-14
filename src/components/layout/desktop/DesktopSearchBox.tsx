@@ -203,11 +203,7 @@ function SearchBox() {
                           onClick={() => selectCity(city)}
                           aria-pressed={city.id === selectedCityId}
                           style={{ width: CITY_SIZE, height: CITY_SIZE }}
-                          className={`relative overflow-hidden rounded-full ${
-                            city.id === selectedCityId
-                              ? 'ring-main-5 ring-2'
-                              : ''
-                          }`}
+                          className="relative overflow-hidden rounded-full"
                         >
                           {city.imageSrc ? (
                             <img
@@ -218,6 +214,12 @@ function SearchBox() {
                             />
                           ) : null}
                           <span className="absolute inset-0 bg-black/30" />
+                          {city.id === selectedCityId ? (
+                            <span
+                              aria-hidden="true"
+                              className="border-main-5 pointer-events-none absolute inset-0 rounded-full border-2"
+                            />
+                          ) : null}
                           <span className="relative text-[13px] font-semibold text-white">
                             {city.name}
                           </span>
