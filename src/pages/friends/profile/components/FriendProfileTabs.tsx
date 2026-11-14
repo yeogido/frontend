@@ -14,11 +14,17 @@ const TAB_SIZE = 20;
 interface FriendProfileTabsProps {
   value: FriendProfileTab;
   scale: number;
+  desktop?: boolean;
   onChange: (tab: FriendProfileTab) => void;
 }
 
 /** 여행 폴더 / 여행 지도 / 우리동네추천코스 탭. 좌우 화살표로 옮길 수 있다. */
-function FriendProfileTabs({ value, scale, onChange }: FriendProfileTabsProps) {
+function FriendProfileTabs({
+  value,
+  scale,
+  onChange,
+  desktop = false,
+}: FriendProfileTabsProps) {
   const tabRefs = useRef<Partial<Record<FriendProfileTab, HTMLButtonElement>>>(
     {}
   );
@@ -47,8 +53,8 @@ function FriendProfileTabs({ value, scale, onChange }: FriendProfileTabsProps) {
     <div
       role="tablist"
       aria-label="친구 프로필"
-      className="flex items-center"
-      style={{ gap: TAB_GAP * scale }}
+      className={`flex items-center ${desktop ? 'border-b border-[#e4e4e4]' : ''}`}
+      style={{ gap: (desktop ? 0 : TAB_GAP) * scale }}
     >
       {FRIEND_PROFILE_TABS.map((tab, index) => {
         const isSelected = tab.key === value;
@@ -70,10 +76,13 @@ function FriendProfileTabs({ value, scale, onChange }: FriendProfileTabsProps) {
             tabIndex={isSelected ? 0 : -1}
             onClick={() => onChange(tab.key)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`font-semibold whitespace-nowrap ${
+            className={`font-semibold whitespace-nowrap ${desktop ? '-mb-px border-b-2 px-10 py-3' : ''} ${desktop && isSelected ? 'border-black' : 'border-transparent'} ${
               isSelected ? 'text-black' : 'text-gray-3'
             }`}
-            style={{ fontSize: TAB_SIZE * scale, lineHeight: 'normal' }}
+            style={{
+              fontSize: (desktop ? 16 : TAB_SIZE) * scale,
+              lineHeight: 'normal',
+            }}
           >
             {tab.label}
           </button>

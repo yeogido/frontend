@@ -32,6 +32,7 @@ import FestivalOngoingPage from '../pages/festival/ongoing';
 import FestivalRecentPage from '../pages/festival/recent';
 import FestivalSearchPage from '../pages/festival/search';
 import ReviewPage from '../pages/review';
+import ReviewDesktopPage from '../pages/review/desktop';
 import CourseRegionSearchPage from '../pages/course-region-search';
 import YeogidoCoursePage from '../pages/yeogido-course';
 import YeogidoCourseDesktopPage from '../pages/yeogido-course/desktop';
@@ -250,12 +251,42 @@ function AppRouter() {
               />
             }
           />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/friends" element={<FriendsPage />} />
-          <Route path="/friends/requests" element={<FriendRequestsPage />} />
+          <Route
+            path="/profile"
+            element={
+              <Responsive
+                desktop={<LikesDesktopPage />}
+                mobile={<ProfilePage />}
+              />
+            }
+          />
+          <Route path="/account" element={<ProfilePage />} />
+          <Route
+            path="/friends"
+            element={
+              <Responsive
+                desktop={<FriendsPage desktop />}
+                mobile={<FriendsPage />}
+              />
+            }
+          />
+          <Route
+            path="/friends/requests"
+            element={
+              <Responsive
+                desktop={<FriendRequestsPage desktop />}
+                mobile={<FriendRequestsPage />}
+              />
+            }
+          />
           <Route
             path="/friends/:friendUserId"
-            element={<FriendProfilePage />}
+            element={
+              <Responsive
+                desktop={<FriendProfilePage desktop />}
+                mobile={<FriendProfilePage />}
+              />
+            }
           />
           <Route
             path="/my-posts"
@@ -438,7 +469,12 @@ function AppRouter() {
           />
         }
       />
-      <Route path="/review" element={<ReviewPage />} />
+      <Route
+        path="/review"
+        element={
+          <Responsive desktop={<ReviewDesktopPage />} mobile={<ReviewPage />} />
+        }
+      />
 
       <Route element={<AdminRoute />}>
         <Route
