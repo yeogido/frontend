@@ -253,7 +253,12 @@ function AppRouter() {
           />
           <Route
             path="/travel-record/:folderId"
-            element={<TravelRecordDetailPage />}
+            element={
+              <Responsive
+                desktop={<TravelRecordDetailPage desktop />}
+                mobile={<TravelRecordDetailPage />}
+              />
+            }
           />
           <Route
             path="/likes"
