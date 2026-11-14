@@ -29,6 +29,7 @@ import {
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { getTravelRecordActionPermissions } from '../utils/travelRecordPermissions';
 import {
   hasTravelRecordVersion,
   requireTravelRecordVersion,
@@ -102,6 +103,11 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
       inviteFolder?.visibility === 'public') &&
     inviteFolder.owner?.userId === userId &&
     hasTravelRecordVersion(inviteFolder.version);
+  const { canEdit, canDelete } = getTravelRecordActionPermissions(
+    inviteFolder,
+    userId
+  );
+  const hasActionMenuItems = canEdit || canDelete || canChangeVisibility;
   const visibilityTargetLabel =
     inviteFolder?.visibility === 'public' ? '나만보기' : '전체공개';
   // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
@@ -488,14 +494,8 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
         setDeleteOpen={setIsDeleteDialogOpen}
         isPending={visibilityMutation.isPending}
         isDeleting={deleteTravelRecordMutation.isPending}
-        canEdit={
-          inviteFolder?.permissions?.canEdit ??
-          (inviteFolder?.owner?.userId === userId && userId !== null)
-        }
-        canDelete={
-          inviteFolder?.permissions?.canDelete ??
-          (inviteFolder?.owner?.userId === userId && userId !== null)
-        }
+        canEdit={canEdit}
+        canDelete={canDelete}
         canChangeVisibility={canChangeVisibility}
         visibilityTargetLabel={visibilityTargetLabel}
         onEdit={() => void handleEdit()}
@@ -557,18 +557,23 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
             />
           </button>
           <div ref={actionMenuRef} className="relative">
-            <button
-              type="button"
-              aria-label="여행 기록 메뉴"
-              aria-controls="travel-record-action-menu"
-              aria-expanded={isActionMenuOpen}
-              onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
-              className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded text-black focus-visible:outline-2 focus-visible:outline-offset-2"
-            >
-              <IoEllipsisVertical aria-hidden="true" className="text-[24px]" />
-            </button>
+            {(canEdit || canDelete || canChangeVisibility) && (
+              <button
+                type="button"
+                aria-label="여행 기록 메뉴"
+                aria-controls="travel-record-action-menu"
+                aria-expanded={isActionMenuOpen}
+                onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
+                className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded text-black focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                <IoEllipsisVertical
+                  aria-hidden="true"
+                  className="text-[24px]"
+                />
+              </button>
+            )}
 
-            {isActionMenuOpen && (
+            {isActionMenuOpen && hasActionMenuItems && (
               <div
                 id="travel-record-action-menu"
                 role="menu"
@@ -576,8 +581,17 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
                 className="absolute top-9 right-0 min-w-[104px] overflow-hidden rounded-2xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
               >
                 {[
-                  { label: '수정', onClick: () => void handleEdit() },
-                  { label: '삭제', onClick: () => setIsDeleteDialogOpen(true) },
+                  ...(canEdit
+                    ? [{ label: '수정', onClick: () => void handleEdit() }]
+                    : []),
+                  ...(canDelete
+                    ? [
+                        {
+                          label: '삭제',
+                          onClick: () => setIsDeleteDialogOpen(true),
+                        },
+                      ]
+                    : []),
                 ].map(({ label, onClick }) => (
                   <button
                     key={label}
