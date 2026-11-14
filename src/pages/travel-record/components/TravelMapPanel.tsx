@@ -14,6 +14,7 @@ interface TravelMapPanelProps {
   folders: readonly TravelRecordFolder[];
   viewer?: TravelMapViewer;
   ownerName?: string;
+  desktop?: boolean;
 }
 
 const mapPanelLabel = '여행 지도';
@@ -24,6 +25,7 @@ function TravelMapPanel({
   folders,
   viewer = 'owner',
   ownerName = '사용자',
+  desktop = false,
 }: TravelMapPanelProps) {
   const navigate = useNavigate();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -36,13 +38,27 @@ function TravelMapPanel({
   return (
     <section
       aria-label={mapPanelLabel}
-      className="relative mt-7 h-[596px] overflow-hidden rounded-xl bg-white"
+      className={
+        desktop
+          ? 'relative mt-[24px] h-[666px] overflow-hidden rounded-[24px] border border-[#e4e4e4] bg-white'
+          : 'relative mt-7 h-[596px] overflow-hidden rounded-xl bg-white'
+      }
     >
-      <div className="absolute top-4 left-4 z-10">
-        <h2 className="text-[18px] leading-none font-semibold text-black">
+      <div
+        className={
+          desktop
+            ? 'absolute top-[35px] left-[35px] z-10'
+            : 'absolute top-4 left-4 z-10'
+        }
+      >
+        <h2
+          className={`${desktop ? 'text-[32px]' : 'text-[18px]'} leading-none font-semibold text-black`}
+        >
           {viewer === 'shared' ? `${ownerName}의 ${mapTitle}` : mapTitle}
         </h2>
-        <p className="text-gray-3 mt-2 text-[10px] leading-none font-normal">
+        <p
+          className={`text-gray-3 mt-2 leading-none font-normal ${desktop ? 'text-[16px]' : 'text-[10px]'}`}
+        >
           {viewer === 'shared'
             ? `${ownerName}님이 다녀온 지역을 확인해 보세요`
             : mapDescription}
@@ -54,7 +70,7 @@ function TravelMapPanel({
           type="button"
           aria-label="여행 지도 공유하기"
           onClick={() => setIsShareModalOpen(true)}
-          className="focus-visible:outline-main-5 absolute top-[11px] right-3 z-10 flex size-8 cursor-pointer items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
+          className={`focus-visible:outline-main-5 absolute z-10 flex size-8 cursor-pointer items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2 ${desktop ? 'top-[35px] right-[35px]' : 'top-[11px] right-3'}`}
         >
           <span
             aria-hidden="true"

@@ -36,10 +36,13 @@ import {
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
 import { hasTravelRecordVersion } from '../utils/editVersion';
+import { getTravelRecordActionPermissions } from '../utils/travelRecordPermissions';
 import TravelRecordMembers from './components/TravelRecordMembers';
 import TravelRecordShareModal from './components/TravelRecordShareModal';
 import { getFriendAvatarColor } from '../../friends/utils/friendAvatarColor';
 import { useMyProfile } from '../../../hooks/useMyProfile';
+import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
+import TravelRecordDetailDesktop from './desktop/TravelRecordDetailDesktop';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
@@ -62,7 +65,7 @@ const thumbnailTransition: Transition = {
   ease: 'easeOut',
 };
 
-function TravelRecordDetailPage() {
+function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
   const { folderId } = useParams<{ folderId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,6 +132,11 @@ function TravelRecordDetailPage() {
       (member) => member.userId !== inviteFolder.owner?.userId
     ) ??
       false);
+  const { canEdit, canDelete } = getTravelRecordActionPermissions(
+    inviteFolder,
+    userId
+  );
+  const hasActionMenuItems = canEdit || canDelete || canLeave;
   // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
   // 실패했는데도 그걸 그대로 그리면 남의 기록(403)이나 이미 지워진 기록(404)이
   // 정상 화면처럼 보이므로, 실패했을 때는 캐시 데이터를 쓰지 않는다.
@@ -167,7 +175,7 @@ function TravelRecordDetailPage() {
     resizeObserver.observe(photoStack);
 
     return () => resizeObserver.disconnect();
-  }, [folder?.id]);
+  }, [folder?.id, desktop]);
 
   useEffect(() => {
     if (!isActionMenuOpen) {
@@ -179,16 +187,26 @@ function TravelRecordDetailPage() {
         setIsActionMenuOpen(false);
       }
     };
+    const closeActionMenuOnEscape = (event: KeyboardEvent) => {
+      if (desktop && event.key === 'Escape') {
+        setIsActionMenuOpen(false);
+        actionMenuRef.current
+          ?.querySelector<HTMLButtonElement>('button')
+          ?.focus();
+      }
+    };
 
     document.addEventListener('pointerdown', closeActionMenuOnOutsideClick);
+    document.addEventListener('keydown', closeActionMenuOnEscape);
 
     return () => {
       document.removeEventListener(
         'pointerdown',
         closeActionMenuOnOutsideClick
       );
+      document.removeEventListener('keydown', closeActionMenuOnEscape);
     };
-  }, [isActionMenuOpen]);
+  }, [isActionMenuOpen, desktop]);
 
   // 삭제가 성공하면 상세 캐시가 제거되어 folder가 비는데, 목록으로
   // 이동하기 전 한 프레임 동안 "찾을 수 없어요"가 스치는 것을 막는다.
@@ -197,6 +215,12 @@ function TravelRecordDetailPage() {
     !folder &&
     (serverTravelRecordQuery.isLoading || isDeleted || isLeaving)
   ) {
+    if (desktop)
+      return (
+        <DesktopPageShell contentWidth={1048}>
+          <div aria-busy="true" className="min-h-[400px]" />
+        </DesktopPageShell>
+      );
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1]">
         <div
@@ -208,6 +232,31 @@ function TravelRecordDetailPage() {
   }
 
   if (!folder) {
+    if (desktop)
+      return (
+        <DesktopPageShell contentWidth={1048}>
+          <div
+            role={serverTravelRecordQuery.isError ? 'alert' : undefined}
+            className="flex min-h-[400px] flex-col items-center justify-center text-center"
+          >
+            <p className="text-gray-4">
+              {serverTravelRecordQuery.isError
+                ? getApiErrorMessage(
+                    serverTravelRecordQuery.error,
+                    missingRecordLabel
+                  )
+                : missingRecordLabel}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/travel-record')}
+              className="mt-4 text-sm font-semibold"
+            >
+              {backToArchiveLabel}
+            </button>
+          </div>
+        </DesktopPageShell>
+      );
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
         <div
@@ -484,6 +533,75 @@ function TravelRecordDetailPage() {
     navigate('/travel-record');
   };
 
+  const openLeaveDialog = () => {
+    if (travelRecordId && userId !== null)
+      setLeaveConfirmation({ travelRecordId, userId, authGeneration });
+  };
+  const actionDialogs = (
+    <>
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title={
+          isSharedFolderWithParticipants
+            ? '공유 폴더를 삭제할까요?'
+            : '여행 기록을 삭제할까요?'
+        }
+        description={
+          isSharedFolderWithParticipants
+            ? '삭제하면 모든 참여자가 이 폴더를 볼 수 없어요.\n사진·스티커도 함께 삭제되며, 되돌릴 수 없어요.'
+            : '삭제한 기록은 되돌릴 수 없어요.'
+        }
+        isPending={deleteTravelRecordMutation.isPending}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => {
+          if (!deleteTravelRecordMutation.isPending)
+            setIsDeleteDialogOpen(false);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={isLeaveDialogOpen}
+        title="공유 폴더에서 나갈까요?"
+        description={
+          '나가면 이 폴더를 보거나 수정할 수 없어요.\n폴더와 사진·스티커는 다른 참여자에게 그대로 남아요.'
+        }
+        confirmLabel="나가기"
+        isPending={isLeaving}
+        onConfirm={() => void handleLeave()}
+        onCancel={() => {
+          if (!isLeaving) setLeaveConfirmation(null);
+        }}
+      />
+    </>
+  );
+
+  if (desktop) {
+    return (
+      <>
+        <TravelRecordDetailDesktop
+          folder={folder}
+          inviteFolder={inviteFolder}
+          profileName={profile?.name ?? ''}
+          profileImageUrl={profile?.profileImageUrl}
+          menuRef={actionMenuRef}
+          menuOpen={isActionMenuOpen}
+          setMenuOpen={setIsActionMenuOpen}
+          shareOpen={isShareModalOpen}
+          setShareOpen={setIsShareModalOpen}
+          setDeleteOpen={setIsDeleteDialogOpen}
+          isPending={isDetailActionPending}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          canLeave={canLeave}
+          canOpenShare={canOpenShare}
+          onEdit={() => void handleEdit()}
+          onLeave={openLeaveDialog}
+        />
+        {actionDialogs}
+      </>
+    );
+  }
+
   return (
     <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
       <header className="relative min-h-[146px] pb-2">
@@ -538,19 +656,24 @@ function TravelRecordDetailPage() {
             </button>
           )}
           <div ref={actionMenuRef} className="relative">
-            <button
-              type="button"
-              aria-label="여행 기록 메뉴"
-              disabled={isDetailActionPending}
-              aria-controls="travel-record-action-menu"
-              aria-expanded={isActionMenuOpen}
-              onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
-              className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded text-black focus-visible:outline-2 focus-visible:outline-offset-2"
-            >
-              <IoEllipsisVertical aria-hidden="true" className="text-[24px]" />
-            </button>
+            {hasActionMenuItems && (
+              <button
+                type="button"
+                aria-label="여행 기록 메뉴"
+                disabled={isDetailActionPending}
+                aria-controls="travel-record-action-menu"
+                aria-expanded={isActionMenuOpen}
+                onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
+                className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded text-black focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                <IoEllipsisVertical
+                  aria-hidden="true"
+                  className="text-[24px]"
+                />
+              </button>
+            )}
 
-            {isActionMenuOpen && (
+            {isActionMenuOpen && hasActionMenuItems && (
               <div
                 id="travel-record-action-menu"
                 role="menu"
@@ -558,8 +681,17 @@ function TravelRecordDetailPage() {
                 className="absolute top-9 right-0 min-w-[104px] overflow-hidden rounded-2xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
               >
                 {[
-                  { label: '수정', onClick: () => void handleEdit() },
-                  { label: '삭제', onClick: () => setIsDeleteDialogOpen(true) },
+                  ...(canEdit
+                    ? [{ label: '수정', onClick: () => void handleEdit() }]
+                    : []),
+                  ...(canDelete
+                    ? [
+                        {
+                          label: '삭제',
+                          onClick: () => setIsDeleteDialogOpen(true),
+                        },
+                      ]
+                    : []),
                 ].map(({ label, onClick }) => (
                   <button
                     key={label}
@@ -609,39 +741,7 @@ function TravelRecordDetailPage() {
         />
       )}
 
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        title={
-          isSharedFolderWithParticipants
-            ? '공유 폴더를 삭제할까요?'
-            : '여행 기록을 삭제할까요?'
-        }
-        description={
-          isSharedFolderWithParticipants
-            ? '삭제하면 모든 참여자가 이 폴더를 볼 수 없어요.\n사진·스티커도 함께 삭제되며, 되돌릴 수 없어요.'
-            : '삭제한 기록은 되돌릴 수 없어요.'
-        }
-        isPending={deleteTravelRecordMutation.isPending}
-        onConfirm={() => void handleDelete()}
-        onCancel={() => {
-          if (!deleteTravelRecordMutation.isPending)
-            setIsDeleteDialogOpen(false);
-        }}
-      />
-
-      <ConfirmDialog
-        isOpen={isLeaveDialogOpen}
-        title="공유 폴더에서 나갈까요?"
-        description={
-          '나가면 이 폴더를 보거나 수정할 수 없어요.\n폴더와 사진·스티커는 다른 참여자에게 그대로 남아요.'
-        }
-        confirmLabel="나가기"
-        isPending={isLeaving}
-        onConfirm={() => void handleLeave()}
-        onCancel={() => {
-          if (!isLeaving) setLeaveConfirmation(null);
-        }}
-      />
+      {actionDialogs}
 
       <div
         ref={photoStackRef}

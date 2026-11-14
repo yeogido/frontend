@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import copyIcon from '../../../assets/icons/share/link-copy.svg';
 import moreIcon from '../../../assets/icons/share/more.svg';
 import kakaoIcon from '../../../assets/icons/share/kakaotalk.png';
@@ -6,6 +7,8 @@ import xIcon from '../../../assets/icons/share/x.svg';
 import threadsIcon from '../../../assets/icons/share/threads.svg';
 import tumblrIcon from '../../../assets/icons/share/external-7.svg';
 import { useToast } from '../../../components/toast';
+import { hasDesktopView } from '../../../constants/desktopRoutes';
+import { useIsDesktop } from '../../../hooks/useIsDesktop';
 import { useAuthStore } from '../../../store/auth.store';
 import { loadKakaoAuthSdk } from '../../../utils/kakaoAuth';
 import {
@@ -36,6 +39,8 @@ export default function TravelRecordExternalShareActions({
   onBusyChange,
 }: Props) {
   const { showToast } = useToast();
+  const { pathname } = useLocation();
+  const isDesktopLayout = useIsDesktop() && hasDesktopView(pathname);
   const [pending, setPending] = useState<Action | null>(null);
   const [kakaoReady, setKakaoReady] = useState(false);
   const locked = useRef(false);
@@ -118,7 +123,9 @@ export default function TravelRecordExternalShareActions({
   return (
     <ul
       aria-label="외부 앱으로 공유"
-      className="scrollbar-hide -mx-5 mt-6 flex w-[calc(100%+40px)] gap-3 overflow-x-auto px-5"
+      className={`scrollbar-hide flex gap-3 overflow-x-auto ${
+        isDesktopLayout ? 'mt-8' : '-mx-5 mt-6 w-[calc(100%+40px)] px-5'
+      }`}
     >
       {actions.map(({ id, label, icon }) => (
         <li key={id} className="shrink-0">

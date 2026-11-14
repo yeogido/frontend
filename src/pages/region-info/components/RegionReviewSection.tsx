@@ -71,7 +71,9 @@ function RegionReviewSection({
           title={`${regionName}에서 이 곳은 어때요?`}
           actionText="전체보기"
           onActionClick={() =>
-            navigate(`/local-business?${new URLSearchParams({ region: regionSlug }).toString()}`)
+            navigate(
+              `/local-business?${new URLSearchParams({ region: regionSlug }).toString()}`
+            )
           }
         />
       </div>

@@ -94,6 +94,10 @@ async function setup(
   await page.route('**/api/v1/**', async (route) => {
     const req = route.request();
     const url = new URL(req.url());
+    if (url.pathname.endsWith('/regions/popular'))
+      return route.fulfill({ json: { result: [] } });
+    if (url.pathname.endsWith('/regions'))
+      return route.fulfill({ json: { result: { regions: [] } } });
     const json = (result: unknown) =>
       route.fulfill({
         json: { isSuccess: true, code: 'COMMON200', message: 'ok', result },
@@ -437,7 +441,9 @@ for (const visibility of ['PUBLIC', 'FRIENDS']) {
     const rowBox = await row.boundingBox();
     const dialogBox = await dialog.boundingBox();
     expect(rowBox!.height).toBeGreaterThanOrEqual(
-      (48 * dialogBox!.width) / 342 - 1
+      (page.viewportSize()!.width >= 1024
+        ? 48
+        : (48 * dialogBox!.width) / 342) - 1
     );
     await expect(
       dialog.getByRole('button', { name: '보내기', exact: true })
@@ -780,5 +786,33 @@ test('PUBLIC 친구 초대 실패는 PUBLIC과 선택을 유지하고 재시도 
   ).toBeDisabled();
   expect(app.invites).toHaveLength(2);
   expect(app.visibilityChanges).toEqual([]);
+  expect(app.errors).toEqual([]);
+});
+
+test('saving survives a mobile desktop layout switch without a second creation', async ({
+  page,
+}) => {
+  const app = await setup(page, { heldUpload: true });
+  await openCreation(page, false);
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'test.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('fixture'),
+  });
+  await page.getByRole('button', { name: '폴더 꾸미기', exact: true }).click();
+  await page
+    .getByRole('button', { name: '기록 저장하기', exact: true })
+    .click();
+  await expect.poll(app.getUploads).toBe(1);
+  await page.setViewportSize({
+    width: page.viewportSize()!.width < 1024 ? 1280 : 390,
+    height: 900,
+  });
+  await expect(
+    page.getByRole('button', { name: '기록 저장하기', exact: true })
+  ).toBeDisabled();
+  app.releaseUpload();
+  await expect(page).toHaveURL(/\/travel-record$/, { timeout: 4000 });
+  expect(app.creates).toHaveLength(1);
   expect(app.errors).toEqual([]);
 });

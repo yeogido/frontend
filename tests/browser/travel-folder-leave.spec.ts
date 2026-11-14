@@ -53,6 +53,10 @@ async function setup(
     const req = route.request();
     const url = new URL(req.url());
     const path = url.pathname;
+    if (path.endsWith('/regions/popular'))
+      return route.fulfill({ json: { result: [] } });
+    if (path.endsWith('/regions'))
+      return route.fulfill({ json: { result: { regions: [] } } });
     const json = (result: unknown) =>
       route.fulfill({
         json: { isSuccess: true, code: 'COMMON200', message: 'ok', result },
@@ -188,7 +192,7 @@ async function setup(
   };
 }
 
-test('adds leave below edit and delete for an authorized FRIENDS participant', async ({
+test('offers edit and leave without owner deletion for an authorized FRIENDS participant', async ({
   page,
 }, info) => {
   const app = await setup(page);
@@ -198,7 +202,6 @@ test('adds leave below edit and delete for an authorized FRIENDS participant', a
   ).toBeVisible();
   expect(await page.getByRole('menuitem').allTextContents()).toEqual([
     '수정',
-    '삭제',
     '나가기',
   ]);
   const path = `C:/yeogido/travel-leave-${info.project.name}.png`;
@@ -217,6 +220,13 @@ for (const [name, options] of [
 ] as const) {
   test(`does not offer leave for ${name}`, async ({ page }) => {
     const app = await setup(page, options);
+    if (name === 'permissions missing') {
+      await expect(
+        page.getByRole('button', { name: '여행 기록 메뉴' })
+      ).toHaveCount(0);
+      expect(app.writes).toEqual([]);
+      return;
+    }
     await app.menu();
     await expect(
       page.getByRole('menuitem', { name: '나가기', exact: true })
@@ -408,6 +418,13 @@ for (const [name, options] of [
   test(`keeps the existing delete message for ${name}`, async ({ page }) => {
     const app = await setup(page, options);
     await app.menu();
+    if (name === 'participant') {
+      await expect(
+        page.getByRole('menuitem', { name: '삭제', exact: true })
+      ).toHaveCount(0);
+      expect(app.writes).toEqual([]);
+      return;
+    }
     await page.getByRole('menuitem', { name: '삭제', exact: true }).click();
     const dialog = page.getByRole('dialog', {
       name: '여행 기록을 삭제할까요?',
@@ -418,3 +435,30 @@ for (const [name, options] of [
     expect(app.writes).toEqual([]);
   });
 }
+
+test('pending leave survives a mobile desktop layout switch', async ({
+  page,
+}) => {
+  const app = await setup(page, { held: true });
+  await app.menu();
+  await page.getByRole('menuitem', { name: '나가기', exact: true }).click();
+  await app.confirmLeave();
+  await expect.poll(() => app.writes.length).toBe(1);
+  await page.setViewportSize({
+    width: page.viewportSize()!.width < 1024 ? 1280 : 390,
+    height: 900,
+  });
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+  );
+  app.release();
+  await expect(page).toHaveURL(/\/travel-record$/);
+  await expect(
+    page.getByText('폴더에서 나왔어요.', { exact: true })
+  ).toBeVisible();
+  expect(app.writes).toHaveLength(1);
+  expect(app.errors).toEqual([]);
+});
