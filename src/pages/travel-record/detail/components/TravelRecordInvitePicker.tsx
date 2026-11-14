@@ -28,7 +28,8 @@ export default function TravelRecordInvitePicker({
   const submitting = useRef(false);
   const { showToast } = useToast();
   const canInvite =
-    folder.visibility === 'friends' && folder.permissions?.canInvite === true;
+    (folder.visibility === 'friends' || folder.visibility === 'public') &&
+    folder.permissions?.canInvite === true;
   const excluded = new Set([
     folder.owner?.userId,
     ...(folder.participants ?? []).map((member) => member.userId),
@@ -40,13 +41,7 @@ export default function TravelRecordInvitePicker({
     friends.some((friend) => friend.userId === id)
   );
   const submit = async () => {
-    if (
-      submitting.current ||
-      !eligibleIds.length ||
-      !folder.permissions?.canInvite ||
-      folder.visibility !== 'friends'
-    )
-      return;
+    if (submitting.current || !eligibleIds.length || !canInvite) return;
     const session = useAuthStore.getState();
     submitting.current = true;
     onBusyChange(true);

@@ -7,7 +7,9 @@ import {
   useQueries,
 } from '@tanstack/react-query';
 
-import { normalizeApiError } from '../apis/common';
+import { normalizeApiError, getApiErrorMessage } from '../apis/common';
+import { useUpdateTravelRecordVisibility } from './useUpdateTravelRecordVisibility';
+import { useTravelRecordSessionStore } from '../store/travelRecordSession.store';
 import { useAuthStore } from '../store/auth.store';
 import { requireTravelRecordVersion } from '../pages/travel-record/utils/editVersion';
 import {
@@ -48,6 +50,8 @@ import type {
   TravelRecordApiVisibility,
 } from '../types/travelRecord.type';
 
+export class TravelRecordPartialSaveError extends Error {}
+
 type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
 
 const TRAVEL_RECORD_NOT_FOUND_CODE = 'TRAVEL_RECORD4041';
@@ -71,6 +75,7 @@ interface CreateTravelRecordFromDraftParams {
 }
 
 interface UpdateTravelRecordFromDraftParams {
+  visibility?: TravelRecordApiVisibility;
   travelRecordId: number;
   version: number;
   selectedRegion: TravelRecordDraftRegion;
@@ -82,15 +87,21 @@ interface UpdateTravelRecordFromDraftParams {
   originalRegionId?: number;
 }
 
-const uploadTravelRecordImages = async (selectedPhotos: File[]) => {
+const uploadTravelRecordImages = async (
+  selectedPhotos: File[],
+  requireCurrentSession: () => void
+) => {
   const uploadedImages: UploadedTravelRecordImage[] = [];
 
   for (const photo of selectedPhotos) {
+    requireCurrentSession();
     const presignedUrl = await createPresignedUrl({
       fileName: photo.name,
       contentType: photo.type || 'application/octet-stream',
     });
+    requireCurrentSession();
     await uploadFileToPresignedUrl(presignedUrl.uploadUrl, photo);
+    requireCurrentSession();
     uploadedImages.push({ objectKey: presignedUrl.objectKey });
   }
 
@@ -98,11 +109,13 @@ const uploadTravelRecordImages = async (selectedPhotos: File[]) => {
 };
 
 const uploadTravelRecordDraftImages = async (
-  selectedPhotos: TravelRecordPhotoDraft[]
+  selectedPhotos: TravelRecordPhotoDraft[],
+  requireCurrentSession: () => void
 ) => {
   const uploadedImages: UploadedTravelRecordImage[] = [];
 
   for (const photo of selectedPhotos) {
+    requireCurrentSession();
     if (photo.source === 'server') {
       uploadedImages.push({ objectKey: photo.imageKey });
       continue;
@@ -112,7 +125,9 @@ const uploadTravelRecordDraftImages = async (
       fileName: photo.file.name,
       contentType: photo.file.type || 'application/octet-stream',
     });
+    requireCurrentSession();
     await uploadFileToPresignedUrl(presignedUrl.uploadUrl, photo.file);
+    requireCurrentSession();
     uploadedImages.push({ objectKey: presignedUrl.objectKey });
   }
 
@@ -216,8 +231,22 @@ export function useCreateTravelRecord() {
       selectedPhotos,
       decorations,
     }) => {
-      const uploadedImages = await uploadTravelRecordImages(selectedPhotos);
-
+      const session = useAuthStore.getState();
+      const requireCurrentSession = () => {
+        const current = useAuthStore.getState();
+        if (
+          session.userId === null ||
+          current.userId !== session.userId ||
+          current.authGeneration !== session.authGeneration
+        )
+          throw new Error('인증 상태가 변경되었습니다.');
+      };
+      requireCurrentSession();
+      const uploadedImages = await uploadTravelRecordImages(
+        selectedPhotos,
+        requireCurrentSession
+      );
+      requireCurrentSession();
       return createTravelRecord(
         createTravelRecordCreateRequest({
           visibility,
@@ -240,6 +269,7 @@ export function useCreateTravelRecord() {
 
 export function useUpdateTravelRecord() {
   const queryClient = useQueryClient();
+  const visibilityMutation = useUpdateTravelRecordVisibility();
 
   return useMutation<
     TravelRecordUpdateResponse,
@@ -249,6 +279,7 @@ export function useUpdateTravelRecord() {
     mutationFn: async ({
       travelRecordId,
       version,
+      visibility,
       selectedRegion,
       selectedDateRange,
       selectedPhotos,
@@ -258,20 +289,92 @@ export function useUpdateTravelRecord() {
       originalRegionId,
     }) => {
       // 사진 업로드 전에 검사한다. 오래된 세션에 임의의 버전을 채우지 않는다.
-      const editVersion = requireTravelRecordVersion(version);
-      return updateTravelRecord(
-        travelRecordId,
-        createTravelRecordUpdateRequest({
-          version: editVersion,
-          selectedRegion,
-          selectedDateRange,
-          uploadedImages: await uploadTravelRecordDraftImages(selectedPhotos),
-          decorations,
-          isStickerStateRestored,
-          originalTitle,
-          originalRegionId,
-        })
+      let editVersion = requireTravelRecordVersion(version);
+      const session = useAuthStore.getState();
+      const original = useTravelRecordSessionStore.getState().editSession;
+      const needsVisibilityChange =
+        visibility !== undefined && visibility !== original?.visibility;
+      if (
+        needsVisibilityChange &&
+        (original?.id !== String(travelRecordId) ||
+          original.ownerId !== session.userId ||
+          session.userId === null ||
+          original.version !== version ||
+          (original.visibility !== 'PRIVATE' &&
+            original.visibility !== 'PUBLIC') ||
+          (visibility !== 'PRIVATE' && visibility !== 'PUBLIC'))
+      )
+        throw new Error(
+          '이 폴더의 공개범위를 변경할 수 없어요. 상세 화면에서 다시 수정해 주세요.'
+        );
+
+      // 업로드 실패만으로 공개범위가 먼저 바뀌지 않도록 파일을 준비한다.
+      const requireCurrentSession = () => {
+        const current = useAuthStore.getState();
+        if (
+          session.userId === null ||
+          current.userId !== session.userId ||
+          current.authGeneration !== session.authGeneration
+        )
+          throw new Error('인증 상태가 변경되었습니다.');
+      };
+      const uploadedImages = await uploadTravelRecordDraftImages(
+        selectedPhotos,
+        requireCurrentSession
       );
+      requireCurrentSession();
+      let visibilitySaved = false;
+      try {
+        if (
+          needsVisibilityChange &&
+          visibility !== 'FRIENDS' &&
+          visibility !== undefined
+        ) {
+          const result = await visibilityMutation.mutateAsync({
+            travelRecordId,
+            visibility,
+            version: editVersion,
+          });
+          visibilitySaved = true;
+          requireCurrentSession();
+          editVersion = requireTravelRecordVersion(result.version);
+          const store = useTravelRecordSessionStore.getState();
+          if (
+            store.editSession?.id !== String(travelRecordId) ||
+            store.editSession.version !== version
+          )
+            throw new Error(
+              '수정 상태가 변경됐어요. 상세 화면에서 다시 수정해 주세요.'
+            );
+          // 후속 내용 저장 실패 시에도 서버에 반영된 상태·버전으로 재시도한다.
+          store.beginEdit({
+            ...store.editSession,
+            visibility: result.visibility,
+            version: editVersion,
+          });
+        }
+        requireCurrentSession();
+        return await updateTravelRecord(
+          travelRecordId,
+          createTravelRecordUpdateRequest({
+            version: editVersion,
+            selectedRegion,
+            selectedDateRange,
+            uploadedImages,
+            decorations,
+            isStickerStateRestored,
+            originalTitle,
+            originalRegionId,
+          })
+        );
+      } catch (error) {
+        if (visibilitySaved)
+          throw new TravelRecordPartialSaveError(
+            `공개범위는 변경됐지만 기록을 저장하지 못했어요. 다시 저장해 주세요. ${getApiErrorMessage(error, '')}`,
+            { cause: error }
+          );
+        throw error;
+      }
     },
     onSuccess: (_, { travelRecordId }) => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });

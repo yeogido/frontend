@@ -16,12 +16,12 @@ import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import ConfirmDialog from '../../../components/common/ConfirmDialog';
 import { useAuthStore } from '../../../store/auth.store';
-import { useUpdateTravelRecordVisibility } from '../../../hooks/useUpdateTravelRecordVisibility';
 import {
   useLeaveTravelRecord,
   type LeaveTravelRecordVariables,
 } from '../../../hooks/useLeaveTravelRecord';
 import { canLeaveTravelRecord } from '../utils/leavePermission';
+import { toTravelRecordApiVisibility } from '../mappers/travelRecordVisibility';
 import {
   useDeleteTravelRecord,
   useTravelRecordDetail,
@@ -35,10 +35,7 @@ import {
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
-import {
-  hasTravelRecordVersion,
-  requireTravelRecordVersion,
-} from '../utils/editVersion';
+import { hasTravelRecordVersion } from '../utils/editVersion';
 import TravelRecordMembers from './components/TravelRecordMembers';
 import TravelRecordShareModal from './components/TravelRecordShareModal';
 import { getFriendAvatarColor } from '../../friends/utils/friendAvatarColor';
@@ -113,11 +110,12 @@ function TravelRecordDetailPage() {
     isDeleted || isLeaving ? null : travelRecordId
   );
   const deleteTravelRecordMutation = useDeleteTravelRecord();
-  const visibilityMutation = useUpdateTravelRecordVisibility();
   const leaveMutation = useLeaveTravelRecord();
-  const isDetailActionPending = visibilityMutation.isPending || isLeaving;
-  const isChangingVisibilityRef = useRef(false);
+  const isDetailActionPending = isLeaving;
   const inviteFolder = serverTravelRecordQuery.data;
+  const canOpenShare =
+    inviteFolder?.visibility === 'public' ||
+    inviteFolder?.visibility === 'friends';
   const canLeave = canLeaveTravelRecord(inviteFolder, userId);
   const isLeaveDialogOpen =
     canLeave &&
@@ -131,13 +129,6 @@ function TravelRecordDetailPage() {
       (member) => member.userId !== inviteFolder.owner?.userId
     ) ??
       false);
-  const canChangeVisibility =
-    (inviteFolder?.visibility === 'private' ||
-      inviteFolder?.visibility === 'public') &&
-    inviteFolder.owner?.userId === userId &&
-    hasTravelRecordVersion(inviteFolder.version);
-  const visibilityTargetLabel =
-    inviteFolder?.visibility === 'public' ? '나만보기' : '전체공개';
   // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
   // 실패했는데도 그걸 그대로 그리면 남의 기록(403)이나 이미 지워진 기록(404)이
   // 정상 화면처럼 보이므로, 실패했을 때는 캐시 데이터를 쓰지 않는다.
@@ -345,45 +336,6 @@ function TravelRecordDetailPage() {
     };
   };
 
-  const handleVisibilityChange = async () => {
-    if (
-      !canChangeVisibility ||
-      !travelRecordId ||
-      !inviteFolder ||
-      isChangingVisibilityRef.current
-    )
-      return;
-    const session = useAuthStore.getState();
-    isChangingVisibilityRef.current = true;
-    try {
-      await visibilityMutation.mutateAsync({
-        travelRecordId,
-        visibility: inviteFolder.visibility === 'public' ? 'PRIVATE' : 'PUBLIC',
-        version: requireTravelRecordVersion(inviteFolder.version),
-      });
-      const current = useAuthStore.getState();
-      if (
-        current.userId === session.userId &&
-        current.authGeneration === session.authGeneration
-      )
-        showToast(`${visibilityTargetLabel}로 전환했어요.`);
-    } catch (error) {
-      const current = useAuthStore.getState();
-      if (
-        current.userId === session.userId &&
-        current.authGeneration === session.authGeneration
-      )
-        showToast(
-          getApiErrorMessage(
-            error,
-            `${visibilityTargetLabel}로 전환하지 못했어요.`
-          )
-        );
-    } finally {
-      isChangingVisibilityRef.current = false;
-    }
-  };
-
   const handleEdit = async () => {
     if (!travelRecordId) {
       return;
@@ -437,6 +389,8 @@ function TravelRecordDetailPage() {
     beginEdit({
       id: editableFolder.id,
       version: editableFolder.version,
+      visibility: toTravelRecordApiVisibility(editableFolder.visibility),
+      ownerId: editableFolder.owner?.userId,
       decorations: editableFolder.decorations,
       title: editableFolder.title,
       regionId: editableFolder.regionId,
@@ -563,24 +517,26 @@ function TravelRecordDetailPage() {
           )}
         </div>
         <div className="absolute -top-1 -right-1 z-20 flex items-center">
-          <button
-            type="button"
-            aria-label="여행 폴더 공유하기"
-            disabled={!inviteFolder || isDetailActionPending}
-            onClick={() => {
-              setIsActionMenuOpen(false);
-              setIsShareModalOpen(true);
-            }}
-            className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
-          >
-            <img
-              src={uploadIcon}
-              alt=""
-              aria-hidden="true"
-              width={24}
-              height={24}
-            />
-          </button>
+          {canOpenShare && (
+            <button
+              type="button"
+              aria-label="여행 폴더 공유하기"
+              disabled={!inviteFolder || isDetailActionPending}
+              onClick={() => {
+                setIsActionMenuOpen(false);
+                setIsShareModalOpen(true);
+              }}
+              className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              <img
+                src={uploadIcon}
+                alt=""
+                aria-hidden="true"
+                width={24}
+                height={24}
+              />
+            </button>
+          )}
           <div ref={actionMenuRef} className="relative">
             <button
               type="button"
@@ -619,20 +575,6 @@ function TravelRecordDetailPage() {
                     {label}
                   </button>
                 ))}
-                {canChangeVisibility && (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    disabled={isDetailActionPending}
-                    onClick={() => {
-                      setIsActionMenuOpen(false);
-                      void handleVisibilityChange();
-                    }}
-                    className="flex h-[42px] w-full items-center px-4 text-left text-sm font-medium whitespace-nowrap text-[#7f7f7f] hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none disabled:opacity-50"
-                  >
-                    {visibilityTargetLabel}로 전환
-                  </button>
-                )}
                 {canLeave && (
                   <button
                     type="button"
@@ -658,7 +600,7 @@ function TravelRecordDetailPage() {
         </div>
       </header>
 
-      {isShareModalOpen && inviteFolder && (
+      {isShareModalOpen && inviteFolder && canOpenShare && (
         <TravelRecordShareModal
           folder={inviteFolder}
           sharerName={profile?.name ?? ''}

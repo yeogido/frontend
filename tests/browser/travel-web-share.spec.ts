@@ -162,7 +162,11 @@ async function openShare(
     });
   });
   await page.goto('/travel-record/20?source=test#photo');
-  await page.getByRole('button', { name: '여행 폴더 공유하기' }).click();
+  await expect(
+    page.getByRole('heading', { name: '부산 여행', exact: true })
+  ).toBeVisible();
+  if (visibility !== 'PRIVATE')
+    await page.getByRole('button', { name: '여행 폴더 공유하기' }).click();
   return {
     button: page.getByRole('button', { name: '더보기', exact: true }),
     read: () =>
@@ -249,7 +253,7 @@ test('share failure is reported without claiming a successful send', async ({
 });
 
 for (const [visibility, permission] of [
-  ['PRIVATE', true],
+  ['FRIENDS', false],
   ['FRIENDS', true],
   ['PUBLIC', false],
 ] as const) {
@@ -414,3 +418,23 @@ test('Kakao errors do not claim a successful send', async ({ page }) => {
     page.getByRole('button', { name: '카카오톡에 공유' })
   ).toBeEnabled();
 });
+
+for (const permission of [true, false]) {
+  test(`PRIVATE hides the share entry even with canLinkShare=${permission}`, async ({
+    page,
+  }) => {
+    const app = await openShare(page, 'pending', 'PRIVATE', permission);
+    await expect(
+      page.getByRole('button', { name: '여행 폴더 공유하기' })
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('dialog', { name: '여행 폴더 공유' })
+    ).toHaveCount(0);
+    await page.getByRole('button', { name: '여행 기록 메뉴' }).click();
+    await expect(
+      page.getByRole('menuitem', { name: '수정', exact: true })
+    ).toBeVisible();
+    expect(app.writes).toEqual([]);
+    expect(app.errors).toEqual([]);
+  });
+}

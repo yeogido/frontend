@@ -134,7 +134,7 @@ export default function TravelRecordExternalShareActions({
             }
             title={
               !data
-                ? '링크 공유가 허용된 전체공개 폴더에서 사용할 수 있어요.'
+                ? '이 폴더는 링크 공유 권한이 없어요.'
                 : id === 'kakao' && !kakaoReady
                   ? '카카오톡 공유를 사용할 수 없어요.'
                   : label

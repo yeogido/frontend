@@ -2,11 +2,9 @@ import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { TravelRecordPageFrame } from '../components';
-import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 
 import {
   DraggingPhotoPreview,
-  PhotoSelectionTip,
   PhotoUploadBox,
   SelectedPhotoStrip,
   TravelFolderPreview,
@@ -24,6 +22,8 @@ import {
 } from '../utils/travelRecordSave';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
 import backIcon from '../../../assets/icons/back.svg';
+import { useTravelRecordVisibilityDraft } from '../../../hooks/useTravelRecordVisibilityDraft';
+import TravelRecordVisibilitySelector from './components/TravelRecordVisibilitySelector';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -49,7 +49,9 @@ function TravelRecordPhotoSelectionPage() {
     locationState?.selectedDateRange ?? storedSelectedDateRange;
   const regionName =
     selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
-  const isEditing = useTravelRecordSessionStore((state) => state.editSession !== null);
+  const isEditing = Boolean(travelRecordId);
+  const { visibility, canSelect, setVisibility } =
+    useTravelRecordVisibilityDraft(travelRecordId);
   const {
     fileInputRef,
     hasSelectedPhotos,
@@ -79,23 +81,29 @@ function TravelRecordPhotoSelectionPage() {
     await saveTravelRecordPhotoDraft(
       photos.flatMap<TravelRecordPhotoDraft>((photo) => {
         if (photo.source === 'server' && photo.imageKey) {
-          return [{ source: 'server' as const, imageKey: photo.imageKey, imageUrl: photo.url }];
+          return [
+            {
+              source: 'server' as const,
+              imageKey: photo.imageKey,
+              imageUrl: photo.url,
+            },
+          ];
         }
 
         return photo.file ? [{ source: 'new' as const, file: photo.file }] : [];
-      }),
+      })
     );
     navigate(
       travelRecordId
         ? getTravelRecordEditRoute(travelRecordId, 'decorate')
         : '/travel-record/folder-decoration',
       {
-      state: {
-        selectedRegion,
-        selectedDateRange,
-        photoDraftId: TRAVEL_RECORD_PHOTO_DRAFT_ID,
-      },
-      },
+        state: {
+          selectedRegion,
+          selectedDateRange,
+          photoDraftId: TRAVEL_RECORD_PHOTO_DRAFT_ID,
+        },
+      }
     );
   };
 
@@ -105,7 +113,7 @@ function TravelRecordPhotoSelectionPage() {
         travelRecordId
           ? getTravelRecordEditRoute(travelRecordId)
           : '/travel-record/new',
-        { replace: true },
+        { replace: true }
       );
       return;
     }
@@ -115,7 +123,7 @@ function TravelRecordPhotoSelectionPage() {
         travelRecordId
           ? getTravelRecordEditRoute(travelRecordId, 'date')
           : '/travel-record/date-selection',
-        { replace: true },
+        { replace: true }
       );
     }
   }, [navigate, selectedDateRange, selectedRegion, travelRecordId]);
@@ -168,7 +176,11 @@ function TravelRecordPhotoSelectionPage() {
         onAddPhoto={openFilePicker}
       />
 
-      <PhotoSelectionTip />
+      <TravelRecordVisibilitySelector
+        value={visibility}
+        canSelect={canSelect}
+        onChange={setVisibility}
+      />
       <DraggingPhotoPreview draggingPhoto={draggingPhoto} />
 
       <button

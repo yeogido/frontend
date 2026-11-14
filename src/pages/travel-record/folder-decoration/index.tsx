@@ -12,6 +12,7 @@ import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import {
+  TravelRecordPartialSaveError,
   useCreateTravelRecord,
   useUpdateTravelRecord,
 } from '../../../hooks/useTravelRecords';
@@ -26,10 +27,7 @@ import {
   type FolderDecorationSeed,
   type TravelFolderDecoration,
 } from './folderDecoration';
-import {
-  FolderDecorationCanvas,
-  FolderDecorationPalette,
-} from './components';
+import { FolderDecorationCanvas, FolderDecorationPalette } from './components';
 import {
   getTravelRecordDraftDateRange,
   getTravelRecordDraftRegion,
@@ -40,13 +38,18 @@ import {
   type TravelRecordPhotoDraft,
 } from '../utils/travelRecordSave';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
-import { hasTravelRecordVersion, requireTravelRecordVersion } from '../utils/editVersion';
+import {
+  hasTravelRecordVersion,
+  requireTravelRecordVersion,
+} from '../utils/editVersion';
 import { SAVE_SUCCESS_ANIMATION_MS } from './saveAnimation';
 import {
   clearPhotoDraftAfterTravelRecordSave,
   isTravelRecordEditorLocked,
 } from './saveState';
 import backIcon from '../../../assets/icons/back.svg';
+import { useTravelRecordVisibilityDraft } from '../../../hooks/useTravelRecordVisibilityDraft';
+import { useAuthStore } from '../../../store/auth.store';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -65,9 +68,13 @@ interface DraggingStickerState {
 }
 
 const createPreviewPhotoUrls = (photos: TravelRecordPhotoDraft[]) =>
-  photos.slice(0, 2).map((photo) =>
-    photo.source === 'server' ? photo.imageUrl : URL.createObjectURL(photo.file),
-  );
+  photos
+    .slice(0, 2)
+    .map((photo) =>
+      photo.source === 'server'
+        ? photo.imageUrl
+        : URL.createObjectURL(photo.file)
+    );
 
 const formatPeriod = (startDate: Date, endDate: Date) => {
   const formatDate = (date: Date) => {
@@ -84,6 +91,14 @@ function TravelRecordFolderDecorationPage() {
   const navigate = useNavigate();
   const { travelRecordId } = useParams<{ travelRecordId: string }>();
   const location = useLocation();
+  const activePageRef = useRef<string | null>(location.pathname);
+  useEffect(() => {
+    activePageRef.current = location.pathname;
+    return () => {
+      activePageRef.current = null;
+    };
+  }, [location.pathname]);
+  const { visibility } = useTravelRecordVisibilityDraft(travelRecordId);
   const locationState =
     location.state as TravelFolderDecorationLocationState | null;
   const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
@@ -95,7 +110,9 @@ function TravelRecordFolderDecorationPage() {
   const selectedDateRange =
     locationState?.selectedDateRange ?? storedSelectedDateRange;
   const previewPhotoUrlsRef = useRef<string[]>([]);
-  const [selectedPhotos, setSelectedPhotos] = useState<TravelRecordPhotoDraft[] | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<
+    TravelRecordPhotoDraft[] | null
+  >(null);
   const [previewPhotoUrls, setPreviewPhotoUrls] = useState<string[]>([]);
   const editSession = useTravelRecordSessionStore((state) => state.editSession);
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
@@ -106,7 +123,7 @@ function TravelRecordFolderDecorationPage() {
     travelRecordId && editSession?.id === travelRecordId ? editSession : null;
   const restoredDecorations = restoredEditSession?.decorations ?? [];
   const [decorations, setDecorations] = useState<TravelFolderDecoration[]>(
-    () => restoredDecorations,
+    () => restoredDecorations
   );
   const decorationsRef = useRef<TravelFolderDecoration[]>(restoredDecorations);
   const folderCanvasRef = useRef<HTMLDivElement>(null);
@@ -133,9 +150,9 @@ function TravelRecordFolderDecorationPage() {
   const photoSlotIndexes = useMemo(
     () =>
       getFolderPhotoSlotIndexes(
-        getVisibleFolderPhotos(folderPhotos ?? []).length,
+        getVisibleFolderPhotos(folderPhotos ?? []).length
       ),
-    [folderPhotos],
+    [folderPhotos]
   );
   const regionName =
     selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
@@ -150,13 +167,13 @@ function TravelRecordFolderDecorationPage() {
 
   const appendDecoration = (
     seed: FolderDecorationSeed,
-    point?: { x: number; y: number },
+    point?: { x: number; y: number }
   ) => {
     const result = appendFolderDecoration(decorationsRef.current, seed, point);
 
     if (!result.added) {
       showToast(
-        '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
+        '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.'
       );
       return;
     }
@@ -176,7 +193,7 @@ function TravelRecordFolderDecorationPage() {
   const handleStickerDragStart = (
     seed: FolderDecorationSeed,
     point: { x: number; y: number },
-    pointerId: number,
+    pointerId: number
   ) => {
     if (draggingStickerRef.current) {
       return;
@@ -201,7 +218,7 @@ function TravelRecordFolderDecorationPage() {
         !currentDraggingSticker ||
         !isActiveStickerDragPointer(
           currentDraggingSticker.pointerId,
-          event.pointerId,
+          event.pointerId
         )
       ) {
         return;
@@ -228,7 +245,7 @@ function TravelRecordFolderDecorationPage() {
         !currentDraggingSticker ||
         !isActiveStickerDragPointer(
           currentDraggingSticker.pointerId,
-          event.pointerId,
+          event.pointerId
         )
       ) {
         return;
@@ -239,20 +256,21 @@ function TravelRecordFolderDecorationPage() {
       const canvasRect = folderCanvasRef.current?.getBoundingClientRect();
       const isDropTarget = Boolean(
         canvasRect &&
-          isFolderDecorationDropTarget(
-            canvasRect,
-            event.clientX,
-            event.clientY,
-            photoSlotIndexesRef.current,
-          ),
+        isFolderDecorationDropTarget(
+          canvasRect,
+          event.clientX,
+          event.clientY,
+          photoSlotIndexesRef.current
+        )
       );
-      const dropPoint = isDropTarget && canvasRect
-        ? getDecorationDragPoint(canvasRect, event.clientX, event.clientY)
-        : null;
+      const dropPoint =
+        isDropTarget && canvasRect
+          ? getDecorationDragPoint(canvasRect, event.clientX, event.clientY)
+          : null;
 
       const movedDistance = Math.hypot(
         event.clientX - currentDraggingSticker.origin.x,
-        event.clientY - currentDraggingSticker.origin.y,
+        event.clientY - currentDraggingSticker.origin.y
       );
 
       if (
@@ -267,7 +285,7 @@ function TravelRecordFolderDecorationPage() {
 
       appendDecorationRef.current(
         currentDraggingSticker.seed,
-        isDropTarget ? dropPoint ?? undefined : undefined,
+        isDropTarget ? (dropPoint ?? undefined) : undefined
       );
     };
 
@@ -278,7 +296,7 @@ function TravelRecordFolderDecorationPage() {
         !currentDraggingSticker ||
         !isActiveStickerDragPointer(
           currentDraggingSticker.pointerId,
-          event.pointerId,
+          event.pointerId
         )
       ) {
         return;
@@ -338,17 +356,32 @@ function TravelRecordFolderDecorationPage() {
       return;
     }
 
-    if (travelRecordId && !hasTravelRecordVersion(restoredEditSession?.version)) {
-      showToast('수정 버전을 확인할 수 없어요. 상세 화면에서 다시 수정해 주세요.');
+    if (
+      travelRecordId &&
+      !hasTravelRecordVersion(restoredEditSession?.version)
+    ) {
+      showToast(
+        '수정 버전을 확인할 수 없어요. 상세 화면에서 다시 수정해 주세요.'
+      );
       return;
     }
 
+    const session = useAuthStore.getState();
+    const startedPage = location.pathname;
+    const canCompleteSave = () => {
+      const current = useAuthStore.getState();
+      return (
+        activePageRef.current === startedPage &&
+        current.userId === session.userId &&
+        current.authGeneration === session.authGeneration
+      );
+    };
     isSavingRef.current = true;
     setIsSaving(true);
 
     try {
       const uploadedPhotos = selectedPhotos.flatMap((photo) =>
-        photo.source === 'new' ? [photo.file] : [],
+        photo.source === 'new' ? [photo.file] : []
       );
       // 수정 여부는 URL의 travelRecordId를 기준으로 판단한다. 세션에만
       // 의존하면 편집 URL로 바로 진입했을 때 수정 대신 새 기록이 생성된다.
@@ -358,7 +391,10 @@ function TravelRecordFolderDecorationPage() {
               (
                 await updateTravelRecordMutation.mutateAsync({
                   travelRecordId: Number(travelRecordId),
-                  version: requireTravelRecordVersion(restoredEditSession?.version),
+                  version: requireTravelRecordVersion(
+                    restoredEditSession?.version
+                  ),
+                  visibility,
                   selectedRegion,
                   selectedDateRange,
                   selectedPhotos,
@@ -367,27 +403,30 @@ function TravelRecordFolderDecorationPage() {
                   originalTitle: restoredEditSession?.title,
                   originalRegionId: restoredEditSession?.regionId,
                 })
-              ).travelRecordId,
+              ).travelRecordId
             ),
           }
         : {
             id: String(
               (
                 await createTravelRecordMutation.mutateAsync({
-                  visibility: 'PRIVATE',
+                  visibility,
                   selectedRegion,
                   selectedDateRange,
                   selectedPhotos: uploadedPhotos,
                   decorations,
                 })
-              ).travelRecordId,
+              ).travelRecordId
             ),
           };
+      if (!canCompleteSave()) return;
       setIsSaveComplete(true);
       await new Promise<void>((resolve) => {
         window.setTimeout(resolve, SAVE_SUCCESS_ANIMATION_MS);
       });
+      if (!canCompleteSave()) return;
       await clearPhotoDraftAfterTravelRecordSave(clearTravelRecordPhotoDraft);
+      if (!canCompleteSave()) return;
       clearEdit();
       showToast('여행 기록이 저장되었어요.');
       // 방금 만든 폴더를 강조해 보여 주는 자리는 폴더 목록이라, 지도를 보던
@@ -400,11 +439,16 @@ function TravelRecordFolderDecorationPage() {
         },
       });
     } catch (error) {
+      if (!canCompleteSave()) return;
       isSavingRef.current = false;
       setIsSaving(false);
       // 사진 장수, 스티커 위치, 지역 등 실패 원인이 서버 문구로 구분되므로
       // 그대로 보여준다.
-      showToast(getApiErrorMessage(error, '여행 기록을 저장하지 못했어요.'));
+      showToast(
+        error instanceof TravelRecordPartialSaveError
+          ? error.message
+          : getApiErrorMessage(error, '여행 기록을 저장하지 못했어요.')
+      );
     }
   };
 
@@ -414,7 +458,7 @@ function TravelRecordFolderDecorationPage() {
         travelRecordId
           ? getTravelRecordEditRoute(travelRecordId)
           : '/travel-record/new',
-        { replace: true },
+        { replace: true }
       );
       return;
     }
@@ -424,7 +468,7 @@ function TravelRecordFolderDecorationPage() {
         travelRecordId
           ? getTravelRecordEditRoute(travelRecordId, 'date')
           : '/travel-record/date-selection',
-        { replace: true },
+        { replace: true }
       );
       return;
     }
@@ -434,10 +478,16 @@ function TravelRecordFolderDecorationPage() {
         travelRecordId
           ? getTravelRecordEditRoute(travelRecordId, 'photos')
           : '/travel-record/photo-selection',
-        { replace: true },
+        { replace: true }
       );
     }
-  }, [navigate, selectedDateRange, selectedPhotos, selectedRegion, travelRecordId]);
+  }, [
+    navigate,
+    selectedDateRange,
+    selectedPhotos,
+    selectedRegion,
+    travelRecordId,
+  ]);
 
   return (
     <TravelRecordPageFrame className="bg-[#f9f9f9]">
@@ -487,7 +537,7 @@ function TravelRecordFolderDecorationPage() {
           decorations={decorations}
           onLimitReached={() =>
             showToast(
-              '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
+              '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.'
             )
           }
           onAddSticker={appendDecoration}
@@ -504,10 +554,10 @@ function TravelRecordFolderDecorationPage() {
                 className="pointer-events-none fixed z-70 size-[58px] object-contain"
                 style={getDraggingStickerPreviewStyle(
                   draggingSticker.current,
-                  scale,
+                  scale
                 )}
               />,
-              document.body,
+              document.body
             )
           : null}
 
