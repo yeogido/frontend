@@ -1,3 +1,5 @@
+import TravelRecordExternalShareActions from '../../components/TravelRecordExternalShareActions';
+import { getTravelFolderShareData } from '../../utils/externalShare';
 import NicknameAvatar from '../../../../components/common/NicknameAvatar';
 import { useState } from 'react';
 import { useAuthStore } from '../../../../store/auth.store';
@@ -34,6 +36,14 @@ function TravelRecordShareModal({
       title="여행 폴더 공유"
       friends={[]}
       isBusy={isBusy}
+      externalShareAction={
+        <TravelRecordExternalShareActions
+          key={`external:${folder.id}:${userId}:${authGeneration}`}
+          data={getTravelFolderShareData(folder, window.location.origin)}
+          isBusy={isBusy}
+          onBusyChange={setIsBusy}
+        />
+      }
       friendSection={
         <TravelRecordInvitePicker
           key={`${folder.id}:${userId}:${authGeneration}`}

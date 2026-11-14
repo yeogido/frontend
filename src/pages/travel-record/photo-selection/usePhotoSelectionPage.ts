@@ -28,7 +28,7 @@ export function usePhotoSelectionPage() {
   const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
   const storedSelectedDateRange = useMemo(
     () => getTravelRecordDraftDateRange(),
-    [],
+    []
   );
   const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const selectedDateRange =
@@ -36,10 +36,10 @@ export function usePhotoSelectionPage() {
   const regionName =
     selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
   const isEditing = useTravelRecordSessionStore(
-    (state) => state.editSession !== null,
+    (state) => state.editSession !== null
   );
   const [visibility, setVisibility] = useState<TravelRecordApiVisibility>(
-    getTravelRecordDraftVisibility,
+    getTravelRecordDraftVisibility
   );
   const selection = useTravelRecordPhotoSelection(isEditing);
   const { hasSelectedPhotos, photos, photosRef, reorderPhotos } = selection;
@@ -71,7 +71,7 @@ export function usePhotoSelectionPage() {
         }
 
         return photo.file ? [{ source: 'new' as const, file: photo.file }] : [];
-      }),
+      })
     );
     navigate(
       travelRecordId
@@ -82,8 +82,9 @@ export function usePhotoSelectionPage() {
           selectedRegion,
           selectedDateRange,
           photoDraftId: TRAVEL_RECORD_PHOTO_DRAFT_ID,
+          visibility,
         },
-      },
+      }
     );
   };
 
@@ -93,7 +94,7 @@ export function usePhotoSelectionPage() {
         travelRecordId
           ? getTravelRecordEditRoute(travelRecordId)
           : '/travel-record/new',
-        { replace: true },
+        { replace: true }
       );
       return;
     }
@@ -103,7 +104,7 @@ export function usePhotoSelectionPage() {
         travelRecordId
           ? getTravelRecordEditRoute(travelRecordId, 'date')
           : '/travel-record/date-selection',
-        { replace: true },
+        { replace: true }
       );
     }
   }, [navigate, selectedDateRange, selectedRegion, travelRecordId]);
