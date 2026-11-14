@@ -18,6 +18,20 @@ test('matches parameterized paths for any id', () => {
   assert.equal(hasDesktopView('/local-course/detail/9'), true);
 });
 
+test('keeps travel record creation routes in the mobile frame', () => {
+  assert.equal(hasDesktopView('/travel-record/123'), true);
+  for (const path of [
+    '/travel-record/new',
+    '/travel-record/date-selection',
+    '/travel-record/photo-selection',
+    '/travel-record/folder-decoration',
+  ]) {
+    assert.equal(hasDesktopView(path), false, path);
+  }
+  assert.equal(hasDesktopView('/travel-record/new/'), false);
+  assert.equal(hasDesktopView('/TRAVEL-RECORD/NEW'), false);
+});
+
 test('does not match paths that only start the same way', () => {
   // 후기 목록은 데스크톱 시안이 없어서 모바일 프레임을 그대로 써야 한다.
   assert.equal(hasDesktopView('/local-course/detail/117/reviews'), false);

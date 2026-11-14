@@ -37,6 +37,8 @@ import TravelRecordMembers from './components/TravelRecordMembers';
 import TravelRecordShareModal from './components/TravelRecordShareModal';
 import { getFriendAvatarColor } from '../../friends/utils/friendAvatarColor';
 import { useMyProfile } from '../../../hooks/useMyProfile';
+import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
+import TravelRecordDetailDesktop from './desktop/TravelRecordDetailDesktop';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
@@ -59,7 +61,7 @@ const thumbnailTransition: Transition = {
   ease: 'easeOut',
 };
 
-function TravelRecordDetailPage() {
+function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
   const { folderId } = useParams<{ folderId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -152,16 +154,26 @@ function TravelRecordDetailPage() {
         setIsActionMenuOpen(false);
       }
     };
+    const closeActionMenuOnEscape = (event: KeyboardEvent) => {
+      if (desktop && event.key === 'Escape') {
+        setIsActionMenuOpen(false);
+        actionMenuRef.current
+          ?.querySelector<HTMLButtonElement>('button')
+          ?.focus();
+      }
+    };
 
     document.addEventListener('pointerdown', closeActionMenuOnOutsideClick);
+    document.addEventListener('keydown', closeActionMenuOnEscape);
 
     return () => {
       document.removeEventListener(
         'pointerdown',
         closeActionMenuOnOutsideClick
       );
+      document.removeEventListener('keydown', closeActionMenuOnEscape);
     };
-  }, [isActionMenuOpen]);
+  }, [isActionMenuOpen, desktop]);
 
   // 삭제가 성공하면 상세 캐시가 제거되어 folder가 비는데, 목록으로
   // 이동하기 전 한 프레임 동안 "찾을 수 없어요"가 스치는 것을 막는다.
@@ -170,6 +182,12 @@ function TravelRecordDetailPage() {
     !folder &&
     (serverTravelRecordQuery.isLoading || isDeleted)
   ) {
+    if (desktop)
+      return (
+        <DesktopPageShell contentWidth={1048}>
+          <div aria-busy="true" className="min-h-[400px]" />
+        </DesktopPageShell>
+      );
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1]">
         <div
@@ -181,6 +199,31 @@ function TravelRecordDetailPage() {
   }
 
   if (!folder) {
+    if (desktop)
+      return (
+        <DesktopPageShell contentWidth={1048}>
+          <div
+            role={serverTravelRecordQuery.isError ? 'alert' : undefined}
+            className="flex min-h-[400px] flex-col items-center justify-center text-center"
+          >
+            <p className="text-gray-4">
+              {serverTravelRecordQuery.isError
+                ? getApiErrorMessage(
+                    serverTravelRecordQuery.error,
+                    missingRecordLabel
+                  )
+                : missingRecordLabel}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/travel-record')}
+              className="mt-4 text-sm font-semibold"
+            >
+              {backToArchiveLabel}
+            </button>
+          </div>
+        </DesktopPageShell>
+      );
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
         <div
@@ -428,6 +471,39 @@ function TravelRecordDetailPage() {
 
     navigate('/travel-record');
   };
+
+  if (desktop) {
+    return (
+      <TravelRecordDetailDesktop
+        folder={folder}
+        inviteFolder={inviteFolder}
+        profileName={profile?.name ?? ''}
+        profileImageUrl={profile?.profileImageUrl}
+        menuRef={actionMenuRef}
+        menuOpen={isActionMenuOpen}
+        setMenuOpen={setIsActionMenuOpen}
+        shareOpen={isShareModalOpen}
+        setShareOpen={setIsShareModalOpen}
+        deleteOpen={isDeleteDialogOpen}
+        setDeleteOpen={setIsDeleteDialogOpen}
+        isPending={visibilityMutation.isPending}
+        isDeleting={deleteTravelRecordMutation.isPending}
+        canEdit={
+          inviteFolder?.permissions?.canEdit ??
+          (inviteFolder?.owner?.userId === userId && userId !== null)
+        }
+        canDelete={
+          inviteFolder?.permissions?.canDelete ??
+          (inviteFolder?.owner?.userId === userId && userId !== null)
+        }
+        canChangeVisibility={canChangeVisibility}
+        visibilityTargetLabel={visibilityTargetLabel}
+        onEdit={() => void handleEdit()}
+        onDelete={() => void handleDelete()}
+        onVisibilityChange={() => void handleVisibilityChange()}
+      />
+    );
+  }
 
   return (
     <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
