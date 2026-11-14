@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react';
 import { MdCalendarToday, MdLocationOn } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 
 import { useCultureContents } from '../../../hooks/useCultureContents';
+import type { ContentCategory, ContentSort } from '../../../types/content.type';
 import { buildFestivalDetailPath } from '../../../utils/routes';
 import HomeSectionHeader from './HomeSectionHeader';
 
@@ -19,6 +21,13 @@ interface HomeFestivalSectionProps {
   /** 지역을 확인하는 동안 요청을 미룰 때 false. */
   readonly enabled?: boolean;
   readonly moreTo?: string;
+  /** 지역 결과 화면의 분류·정렬 필터. 홈은 쓰지 않는다. */
+  readonly category?: ContentCategory;
+  readonly sort?: ContentSort;
+  readonly latitude?: number;
+  readonly longitude?: number;
+  /** 제목 줄과 카드 사이에 놓을 필터 줄. */
+  readonly toolbar?: ReactNode;
 }
 
 /** 진행 중인 행사 — 큰 사진 위에 제목·기간·지역을 얹은 카드 4개. */
@@ -28,6 +37,11 @@ function HomeFestivalSection({
   keyword,
   enabled = true,
   moreTo = '/festival',
+  category,
+  sort = 'RECOMMEND',
+  latitude,
+  longitude,
+  toolbar,
 }: HomeFestivalSectionProps) {
   const navigate = useNavigate();
   const { data, isPending, isError } = useCultureContents(
@@ -35,7 +49,10 @@ function HomeFestivalSection({
       regionId,
       keyword,
       statuses: ['ONGOING'],
-      sort: 'RECOMMEND',
+      category,
+      sort,
+      latitude,
+      longitude,
       size: PREVIEW_COUNT,
     },
     { enabled }
@@ -45,6 +62,7 @@ function HomeFestivalSection({
   return (
     <section aria-label={title} className="flex flex-col gap-[20px]">
       <HomeSectionHeader title={title} onMoreClick={() => navigate(moreTo)} />
+      {toolbar}
 
       {isError ? (
         <p role="alert" className="text-main-5 text-[16px] font-medium">
