@@ -20,17 +20,14 @@ interface Props {
   setMenuOpen: (open: boolean | ((open: boolean) => boolean)) => void;
   shareOpen: boolean;
   setShareOpen: (open: boolean) => void;
-  deleteOpen: boolean;
   setDeleteOpen: (open: boolean) => void;
   isPending: boolean;
-  isDeleting: boolean;
   canEdit: boolean;
   canDelete: boolean;
-  canChangeVisibility: boolean;
-  visibilityTargetLabel: string;
+  canLeave: boolean;
+  canOpenShare: boolean;
+  onLeave: () => void;
   onEdit: () => void;
-  onDelete: () => void;
-  onVisibilityChange: () => void;
 }
 
 function PhotoGallery({ photos, title }: { photos: string[]; title: string }) {
@@ -179,17 +176,14 @@ function TravelRecordDetailDesktop({
   setMenuOpen,
   shareOpen,
   setShareOpen,
-  deleteOpen,
   setDeleteOpen,
   isPending,
-  isDeleting,
   canEdit,
   canDelete,
-  canChangeVisibility,
-  visibilityTargetLabel,
+  canLeave,
+  canOpenShare,
+  onLeave,
   onEdit,
-  onDelete,
-  onVisibilityChange,
 }: Props) {
   const photos = folder.photos.filter(Boolean);
   const members = [
@@ -230,23 +224,26 @@ function TravelRecordDetailDesktop({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-[16px]">
-          <button
-            type="button"
-            aria-label="여행 폴더 공유하기"
-            disabled={!inviteFolder || isPending}
-            onClick={() => {
-              setMenuOpen(false);
-              setShareOpen(true);
-            }}
-            className="flex size-8 items-center justify-center disabled:opacity-50"
-          >
-            <img src={uploadIcon} alt="" width={32} height={32} />
-          </button>
-          {canEdit || canDelete || canChangeVisibility ? (
+          {canOpenShare && (
+            <button
+              type="button"
+              aria-label="여행 폴더 공유하기"
+              disabled={!inviteFolder || isPending}
+              onClick={() => {
+                setMenuOpen(false);
+                setShareOpen(true);
+              }}
+              className="flex size-8 items-center justify-center disabled:opacity-50"
+            >
+              <img src={uploadIcon} alt="" width={32} height={32} />
+            </button>
+          )}
+          {canEdit || canDelete || canLeave ? (
             <div ref={menuRef} className="relative">
               <button
                 type="button"
                 aria-label="여행 기록 메뉴"
+                disabled={isPending}
                 aria-controls="travel-record-action-menu"
                 aria-expanded={menuOpen}
                 onClick={() => setMenuOpen((open) => !open)}
@@ -266,14 +263,7 @@ function TravelRecordDetailDesktop({
                     ...(canDelete
                       ? [{ label: '삭제', action: () => setDeleteOpen(true) }]
                       : []),
-                    ...(canChangeVisibility
-                      ? [
-                          {
-                            label: `${visibilityTargetLabel}로 전환`,
-                            action: onVisibilityChange,
-                          },
-                        ]
-                      : []),
+                    ...(canLeave ? [{ label: '나가기', action: onLeave }] : []),
                   ].map(({ label, action }) => (
                     <button
                       key={label}
@@ -297,50 +287,13 @@ function TravelRecordDetailDesktop({
       </header>
       <div className="border-gray-2 my-[60px] border-t" />
       <PhotoGallery photos={photos} title={folder.title} />
-      {shareOpen && inviteFolder ? (
+      {shareOpen && inviteFolder && canOpenShare ? (
         <TravelRecordShareModal
           folder={inviteFolder}
           sharerName={profileName}
           sharerProfileImageUrl={profileImageUrl}
           onClose={() => setShareOpen(false)}
         />
-      ) : null}
-      {deleteOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="travel-record-delete-title"
-            className="w-full max-w-[342px] rounded-2xl bg-white p-6"
-          >
-            <h2
-              id="travel-record-delete-title"
-              className="text-xl font-semibold"
-            >
-              여행 기록을 삭제할까요?
-            </h2>
-            <p className="text-gray-4 mt-3 text-sm">
-              삭제한 기록은 되돌릴 수 없어요.
-            </p>
-            <div className="mt-6 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setDeleteOpen(false)}
-                className="bg-gray-2 text-gray-5 h-11 flex-1 rounded-xl text-sm font-semibold"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={onDelete}
-                disabled={isDeleting}
-                className="bg-main-5 h-11 flex-1 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
-              >
-                삭제
-              </button>
-            </div>
-          </section>
-        </div>
       ) : null}
     </DesktopPageShell>
   );

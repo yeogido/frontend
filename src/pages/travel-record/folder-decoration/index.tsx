@@ -84,7 +84,7 @@ function TravelRecordFolderDecorationPage() {
           decorations={decorations}
           onLimitReached={() =>
             showToast(
-              '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.',
+              '\uC2A4\uD2F0\uCEE4\uB294 \uCD5C\uB300 10\uAC1C\uAE4C\uC9C0 \uB4F1\uB85D\uD560 \uC218 \uC788\uC5B4\uC694.'
             )
           }
           onAddSticker={appendDecoration}
@@ -101,10 +101,10 @@ function TravelRecordFolderDecorationPage() {
                 className="pointer-events-none fixed z-70 size-[58px] object-contain"
                 style={getDraggingStickerPreviewStyle(
                   draggingSticker.current,
-                  scale,
+                  scale
                 )}
               />,
-              document.body,
+              document.body
             )
           : null}
 

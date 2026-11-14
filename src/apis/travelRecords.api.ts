@@ -1,5 +1,8 @@
 import { apiClient, normalizeApiError } from './common';
-import { deleteTravelRecordWithClient } from './travelRecordsClient.ts';
+import {
+  deleteTravelRecordWithClient,
+  leaveTravelRecordWithClient,
+} from './travelRecordsClient.ts';
 
 import type {
   TravelRecordCreateRequest,
@@ -20,6 +23,16 @@ import type {
   TravelRecordInvitationRespondRequest,
   TravelRecordInvitationRespondResponse,
 } from '../types/travelRecord.type';
+
+export async function leaveTravelRecordById(
+  travelRecordId: number
+): Promise<void> {
+  try {
+    await leaveTravelRecordWithClient(apiClient, travelRecordId);
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function getTravelRecordInvitations(
   params: TravelRecordInvitationListParams = {}
@@ -68,7 +81,7 @@ export async function updateTravelRecordVisibility(
   }
 }
 
-/** FRIENDS 앨범 참여 초대만 생성한다. 앨범 생성이나 참여 수락은 수행하지 않는다. */
+/** 참여 초대를 생성한다. PUBLIC은 초대 성공 시 서버에서 FRIENDS로 전환된다. */
 export async function inviteTravelRecordFriends(
   travelRecordId: number,
   inviteeUserIds: number[]

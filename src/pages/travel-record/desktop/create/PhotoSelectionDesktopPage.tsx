@@ -33,7 +33,7 @@ function PhotoSelectionDesktopPage() {
     draggingPhoto,
     fileInputRef,
     hasSelectedPhotos,
-    isEditing,
+    canSelect,
     photos,
     regionName,
     selectedDateRange,
@@ -196,44 +196,42 @@ function PhotoSelectionDesktopPage() {
         </ul>
       </section>
 
-      {/* 공개 범위는 새 기록을 만들 때만 정한다. 수정할 때는 상세 화면의 공유 설정에서 바꾼다. */}
-      {isEditing ? null : (
-        <section aria-labelledby="visibility-title" className="mt-[40px]">
-          <h2
-            id="visibility-title"
-            className="text-[16px] font-semibold text-black"
-          >
-            공개범위 설정
-          </h2>
-          <div
-            role="radiogroup"
-            aria-labelledby="visibility-title"
-            className="mt-[16px] grid grid-cols-3 gap-[15px]"
-          >
-            {VISIBILITY_OPTIONS.map(({ value, label, Icon }) => {
-              const isSelected = visibility === value;
+      <section aria-labelledby="visibility-title" className="mt-[40px]">
+        <h2
+          id="visibility-title"
+          className="text-[16px] font-semibold text-black"
+        >
+          공개범위 설정
+        </h2>
+        <div
+          role="radiogroup"
+          aria-labelledby="visibility-title"
+          className="mt-[16px] grid grid-cols-3 gap-[15px]"
+        >
+          {VISIBILITY_OPTIONS.map(({ value, label, Icon }) => {
+            const isSelected = visibility === value;
 
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  onClick={() => selectVisibility(value)}
-                  className={`flex h-[111px] flex-col items-center justify-center gap-[12px] rounded-[12px] border text-[14px] font-medium ${
-                    isSelected
-                      ? 'border-main-5 bg-main-1 text-main-5'
-                      : 'border-gray-2 text-gray-5 bg-white'
-                  }`}
-                >
-                  <Icon aria-hidden="true" className="text-[28px]" />
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                disabled={!canSelect(value)}
+                onClick={() => selectVisibility(value)}
+                className={`flex h-[111px] flex-col items-center justify-center gap-[12px] rounded-[12px] border text-[14px] font-medium disabled:cursor-default ${
+                  isSelected
+                    ? 'border-main-5 bg-main-1 text-main-5'
+                    : 'border-gray-2 text-gray-5 bg-white'
+                }`}
+              >
+                <Icon aria-hidden="true" className="text-[28px]" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       <DraggingPhotoPreview draggingPhoto={draggingPhoto} />
     </CreateStepLayout>

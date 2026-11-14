@@ -57,6 +57,10 @@ test.beforeEach(async ({ page }) => {
   });
   await page.route('**/api/v1/**', async (route) => {
     const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/regions/popular'))
+      return route.fulfill({ json: { result: [] } });
+    if (url.pathname.endsWith('/regions'))
+      return route.fulfill({ json: { result: { regions: [] } } });
     let result: unknown = empty;
     if (url.pathname.endsWith('/users/me'))
       result = {

@@ -25,6 +25,9 @@ export async function getCourses(
   try {
     const { data } = await apiClient.get<GetCoursesResponse>('/courses', {
       params,
+      // 서버는 배열을 keywords=a&keywords=b로만 읽는다. axios 기본값인
+      // keywords[]=a 형식은 COURSE4010으로 거절된다.
+      paramsSerializer: { indexes: null },
     });
 
     return data;
