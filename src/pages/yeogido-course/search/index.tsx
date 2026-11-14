@@ -33,9 +33,11 @@ import SearchConditionChips from '../components/SearchConditionChips';
 import { yeogidoCourseFilterGroups } from '../constants/filters';
 import { YEOGIDO_COURSE_SKELETON_ITEMS } from '../constants/ui';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
+import useSearchConditionCourses from '../hooks/useSearchConditionCourses';
 import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
-import { getCourseSearchConditions } from '../utils/searchConditions';
+import { SEARCH_CONDITION_PARAM } from '../utils/searchConditions';
 import type {
+  Course,
   CourseCompanionType,
   CourseDurationType,
   CourseSort,
@@ -50,6 +52,7 @@ const TITLE_LINE_HEIGHT = 21;
 const SEARCH_BAR_MARGIN_TOP = 12;
 const FILTER_MARGIN_TOP = 12;
 const SEARCH_CONDITIONS_MARGIN_TOP = 32;
+const CONDITION_COURSES_MARGIN_TOP = 16;
 const LIST_MARGIN_TOP = 24;
 const LIST_GAP = 16;
 const EMPTY_MARGIN_TOP = 40;
@@ -153,6 +156,7 @@ function YeogidoCourseSearchPage() {
     isError,
     isFetchingNextPage,
     isPending: isCoursesPending,
+    refetch,
   } = useCourses(
     {
       courseType: 'OFFICIAL',
@@ -183,9 +187,13 @@ function YeogidoCourseSearchPage() {
   const yeogidoCourses = data?.pages.flatMap((page) => page.items) ?? [];
   // 검색어(문장)로 찾았을 때는 그 문장을 제목으로 보여준다. 서버는 문장에서
   // 지역·기간·동행 등을 직접 해석해 결과에 적용하고, 해석한 조건을
-  // extractedKeywords로 돌려준다 — 하단 칩은 그중 하나로 다시 검색한다.
+  // extractedKeywords로 돌려준다 — 하단 칩은 그중 하나로 코스를 더 찾는다.
   const searchTitle = keyword.trim();
-  const searchConditions = getCourseSearchConditions(data?.pages, searchTitle);
+  const conditionSearch = useSearchConditionCourses({
+    firstSearchPages: data?.pages,
+    keyword: searchTitle,
+    refetchFirstSearch: refetch,
+  });
   // 다음 페이지를 다 받은 뒤(목록 끝)에만 띄워야 무한 스크롤 중에 목록
   // 사이에 끼었다가 밀려나지 않는다.
   const shouldShowSearchConditions =
@@ -193,7 +201,14 @@ function YeogidoCourseSearchPage() {
     !isPending &&
     !isError &&
     !hasNextPage &&
-    searchConditions.length > 0;
+    conditionSearch.conditions.length > 0;
+  const shouldShowConditionCourses =
+    shouldShowSearchConditions && Boolean(conditionSearch.selectedCondition);
+  const hasEmptyConditionCourses =
+    shouldShowConditionCourses &&
+    !conditionSearch.isPending &&
+    !conditionSearch.isError &&
+    conditionSearch.courses.length === 0;
   const hasEmptyResult =
     !isRegionPending &&
     !isPending &&
@@ -213,13 +228,40 @@ function YeogidoCourseSearchPage() {
     onIntersect: handleIntersect,
   });
 
+  const {
+    hasNextPage: hasNextConditionPage,
+    isFetchingNextPage: isFetchingNextConditionPage,
+    fetchNextPage: fetchNextConditionPage,
+  } = conditionSearch;
+
+  /** 조건 칩으로 더 찾은 목록의 끝이 보이면 다음 페이지를 불러온다. */
+  const handleConditionIntersect = useCallback(() => {
+    if (hasNextConditionPage && !isFetchingNextConditionPage) {
+      fetchNextConditionPage();
+    }
+  }, [
+    fetchNextConditionPage,
+    hasNextConditionPage,
+    isFetchingNextConditionPage,
+  ]);
+
+  const loadMoreConditionRef = useInfiniteScroll({
+    enabled:
+      shouldShowConditionCourses &&
+      Boolean(hasNextConditionPage) &&
+      !conditionSearch.isPending,
+    onIntersect: handleConditionIntersect,
+  });
+
   /**
-   * 검색어로 다시 검색한다. 지역 검색 파라미터는 지우고 필터는 그대로 두며,
-   * 검색어를 최근 검색어에 추가한다. 빈 검색어면 검색 조건만 비운다.
+   * 검색어로 다시 검색한다. 지역 검색 파라미터와 선택한 조건 칩은 지우고
+   * 필터는 그대로 두며, 검색어를 최근 검색어에 추가한다. 빈 검색어면 검색
+   * 조건만 비운다.
    */
   const handleSearch = (query: string) => {
     const trimmedQuery = query.trim();
     const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete(SEARCH_CONDITION_PARAM);
 
     if (trimmedQuery) {
       nextSearchParams.set('keyword', trimmedQuery);
@@ -241,6 +283,40 @@ function YeogidoCourseSearchPage() {
 
     setSearchParams(nextSearchParams);
   };
+
+  /** 코스 카드 하나 — 관리 권한이 있으면 수정·삭제 카드, 아니면 좋아요 카드. */
+  const renderCourseCard = (course: Course) =>
+    course.canManage ? (
+      <EditableContentCard
+        key={course.courseId}
+        image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+        title={course.title}
+        firstInfo={durationLabelByType[course.durationType]}
+        secondInfo={toTransportLabel(course.transportType)}
+        thirdInfo={toCompanionLabel(course.companionType)}
+        tags={toContentTagIds(course.tags)}
+        className="w-full"
+        onClick={() => handleCourseClick(course.courseId)}
+        onEdit={() => void editCourse(course.courseId)}
+        onDelete={() => requestDelete(course.courseId)}
+      />
+    ) : (
+      <ContentCard
+        key={course.courseId}
+        image={course.routeImageUrl?.trim() || course.thumbnailUrl}
+        title={course.title}
+        firstInfo={durationLabelByType[course.durationType]}
+        secondInfo={toTransportLabel(course.transportType)}
+        thirdInfo={toCompanionLabel(course.companionType)}
+        tags={toContentTagIds(course.tags)}
+        liked={getLiked(course.courseId, course.isLiked)}
+        className="w-full"
+        onClick={() => handleCourseClick(course.courseId)}
+        onLikeClick={() =>
+          toggleLike(course.courseId, getLiked(course.courseId, course.isLiked))
+        }
+      />
+    );
 
   /** 최근 검색어 목록에서 하나를 지운다. */
   const handleRemoveRecentSearchSuggestion = (suggestion: string) => {
@@ -321,46 +397,7 @@ function YeogidoCourseSearchPage() {
                     imageClassName="aspect-[163/115] h-auto"
                   />
                 ))
-              : yeogidoCourses.map((course) =>
-                  course.canManage ? (
-                    <EditableContentCard
-                      key={course.courseId}
-                      image={
-                        course.routeImageUrl?.trim() || course.thumbnailUrl
-                      }
-                      title={course.title}
-                      firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={toTransportLabel(course.transportType)}
-                      thirdInfo={toCompanionLabel(course.companionType)}
-                      tags={toContentTagIds(course.tags)}
-                      className="w-full"
-                      onClick={() => handleCourseClick(course.courseId)}
-                      onEdit={() => void editCourse(course.courseId)}
-                      onDelete={() => requestDelete(course.courseId)}
-                    />
-                  ) : (
-                    <ContentCard
-                      key={course.courseId}
-                      image={
-                        course.routeImageUrl?.trim() || course.thumbnailUrl
-                      }
-                      title={course.title}
-                      firstInfo={durationLabelByType[course.durationType]}
-                      secondInfo={toTransportLabel(course.transportType)}
-                      thirdInfo={toCompanionLabel(course.companionType)}
-                      tags={toContentTagIds(course.tags)}
-                      liked={getLiked(course.courseId, course.isLiked)}
-                      className="w-full"
-                      onClick={() => handleCourseClick(course.courseId)}
-                      onLikeClick={() =>
-                        toggleLike(
-                          course.courseId,
-                          getLiked(course.courseId, course.isLiked)
-                        )
-                      }
-                    />
-                  )
-                )}
+              : yeogidoCourses.map(renderCourseCard)}
 
             {isFetchingNextPage
               ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
@@ -397,17 +434,80 @@ function YeogidoCourseSearchPage() {
             </p>
           ) : null}
 
+          <div
+            ref={loadMoreRef}
+            style={{ height: LOAD_MORE_HEIGHT * scale }}
+            aria-hidden="true"
+          />
+
           {shouldShowSearchConditions ? (
             <div style={{ marginTop: SEARCH_CONDITIONS_MARGIN_TOP * scale }}>
               <SearchConditionChips
-                conditions={searchConditions}
-                onSelect={handleSearch}
+                conditions={conditionSearch.conditions}
+                selectedCondition={conditionSearch.selectedCondition}
+                onSelect={conditionSearch.selectCondition}
               />
             </div>
           ) : null}
 
+          {shouldShowConditionCourses ? (
+            <section
+              className="grid grid-cols-2"
+              aria-label={`${conditionSearch.selectedCondition} 조건으로 더 찾은 코스`}
+              style={{
+                marginTop: CONDITION_COURSES_MARGIN_TOP * scale,
+                columnGap: LIST_GAP * scale,
+                rowGap: LIST_GAP * scale,
+              }}
+            >
+              {conditionSearch.isPending
+                ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
+                    <ContentCardSkeleton
+                      key={`condition-${item}`}
+                      className="w-full"
+                      imageClassName="aspect-[163/115] h-auto"
+                    />
+                  ))
+                : conditionSearch.courses.map(renderCourseCard)}
+
+              {isFetchingNextConditionPage
+                ? YEOGIDO_COURSE_SKELETON_ITEMS.slice(0, 4).map((item) => (
+                    <ContentCardSkeleton
+                      key={`condition-next-page-${item}`}
+                      className="w-full"
+                      imageClassName="aspect-[163/115] h-auto"
+                    />
+                  ))
+                : null}
+            </section>
+          ) : null}
+
+          {hasEmptyConditionCourses ? (
+            <p
+              className="text-gray-4 text-center font-medium"
+              style={{
+                marginTop: EMPTY_MARGIN_TOP * scale,
+                fontSize: MESSAGE_TEXT_SIZE * scale,
+              }}
+            >
+              이 조건으로 더 찾은 코스가 없어요.
+            </p>
+          ) : null}
+
+          {shouldShowConditionCourses && conditionSearch.isError ? (
+            <p
+              className="text-main-5 text-center font-medium"
+              style={{
+                marginTop: ERROR_MARGIN_TOP * scale,
+                fontSize: MESSAGE_TEXT_SIZE * scale,
+              }}
+            >
+              코스를 더 불러오지 못했어요.
+            </p>
+          ) : null}
+
           <div
-            ref={loadMoreRef}
+            ref={loadMoreConditionRef}
             style={{ height: LOAD_MORE_HEIGHT * scale }}
             aria-hidden="true"
           />

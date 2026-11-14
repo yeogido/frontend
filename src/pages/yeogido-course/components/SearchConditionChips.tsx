@@ -13,12 +13,18 @@ const CHEVRON_SIZE = 12;
 
 interface SearchConditionChipsProps {
   conditions: readonly string[];
+  /** 지금 추가 조회 중인 조건(없으면 빈 문자열) */
+  selectedCondition: string;
   onSelect: (condition: string) => void;
 }
 
-/** 자연어 검색 결과 하단 — 서버가 문장에서 뽑은 조건 하나로 다시 검색한다. */
+/**
+ * 자연어 검색 결과 하단 — 서버가 문장에서 뽑은 조건 중 하나를 골라 그 조건에
+ * 맞는 코스를 더 불러온다. 선택된 칩을 다시 누르면 선택을 푼다.
+ */
 function SearchConditionChips({
   conditions,
+  selectedCondition,
   onSelect,
 }: SearchConditionChipsProps) {
   const scale = useGlobalScale();
@@ -51,9 +57,14 @@ function SearchConditionChips({
           <li key={condition}>
             <button
               type="button"
-              aria-label={`${condition} 조건으로 다시 검색`}
+              aria-label={`${condition} 조건으로 코스 더 보기`}
+              aria-pressed={condition === selectedCondition}
               onClick={() => onSelect(condition)}
-              className="border-main-5 bg-main-1 text-main-5 flex items-center rounded-full border font-medium"
+              className={`border-main-5 flex items-center rounded-full border font-medium ${
+                condition === selectedCondition
+                  ? 'bg-main-5 text-white'
+                  : 'bg-main-1 text-main-5'
+              }`}
               style={{
                 height: CHIP_HEIGHT * scale,
                 paddingLeft: CHIP_PADDING_LEFT * scale,
