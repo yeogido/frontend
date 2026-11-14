@@ -32,6 +32,7 @@ import FestivalOngoingPage from '../pages/festival/ongoing';
 import FestivalRecentPage from '../pages/festival/recent';
 import FestivalSearchPage from '../pages/festival/search';
 import ReviewPage from '../pages/review';
+import ReviewDesktopPage from '../pages/review/desktop';
 import CourseRegionSearchPage from '../pages/course-region-search';
 import YeogidoCoursePage from '../pages/yeogido-course';
 import YeogidoCoursePopularPage from '../pages/yeogido-course/popular';
@@ -424,7 +425,12 @@ function AppRouter() {
           />
         }
       />
-      <Route path="/review" element={<ReviewPage />} />
+      <Route
+        path="/review"
+        element={
+          <Responsive desktop={<ReviewDesktopPage />} mobile={<ReviewPage />} />
+        }
+      />
 
       <Route element={<AdminRoute />}>
         <Route
