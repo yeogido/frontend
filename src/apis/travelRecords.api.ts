@@ -1,5 +1,8 @@
 import { apiClient, normalizeApiError } from './common';
-import { deleteTravelRecordWithClient } from './travelRecordsClient.ts';
+import {
+  deleteTravelRecordWithClient,
+  leaveTravelRecordWithClient,
+} from './travelRecordsClient.ts';
 
 import type {
   TravelRecordCreateRequest,
@@ -20,6 +23,16 @@ import type {
   TravelRecordInvitationRespondRequest,
   TravelRecordInvitationRespondResponse,
 } from '../types/travelRecord.type';
+
+export async function leaveTravelRecordById(
+  travelRecordId: number
+): Promise<void> {
+  try {
+    await leaveTravelRecordWithClient(apiClient, travelRecordId);
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function getTravelRecordInvitations(
   params: TravelRecordInvitationListParams = {}
