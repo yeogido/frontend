@@ -1,8 +1,8 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
-import searchIcon from '../../../assets/icons/search.svg';
 import { Logo } from '../../common';
 import { useAuth } from '../../../hooks/useAuth';
+import DesktopSearchBox from './DesktopSearchBox';
 import DesktopProfileMenu from './DesktopProfileMenu';
 
 // Figma 1440 데스크톱 시안(5725:30472) 기준 리터럴 px
@@ -16,11 +16,9 @@ const NAV_ITEMS = [
 
 /**
  * 데스크톱 전용 상단 헤더. 모바일 Header(로고 + 검색/메뉴 아이콘)와 달리
- * 네비게이션을 펼쳐서 보여준다. 검색은 기존 검색 화면으로 넘기고, 여기서
- * 입력받지는 않는다 — 시안의 검색창도 진입점이다.
+ * 네비게이션을 펼쳐서 보여주고, 검색창은 입력과 지역 선택 패널을 직접 가진다.
  */
 function DesktopHeader() {
-  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
   return (
@@ -52,17 +50,7 @@ function DesktopHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-[16px]">
-          <button
-            type="button"
-            onClick={() => navigate('/course-region-search?from=home')}
-            aria-label="검색 화면으로 이동"
-            className="border-gray-2 flex w-[clamp(150px,19.58vw,282px)] items-center justify-between rounded-full border bg-white px-[16px] py-[10px] max-[1199px]:w-[44px] max-[1199px]:justify-center max-[1199px]:px-[10px]"
-          >
-            <span className="text-gray-4 text-[14px] max-[1199px]:hidden">
-              검색어를 입력해 주세요
-            </span>
-            <img src={searchIcon} alt="" className="size-[18px]" />
-          </button>
+          <DesktopSearchBox />
 
           {isAuthenticated ? (
             <DesktopProfileMenu />

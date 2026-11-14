@@ -103,9 +103,6 @@ function DesktopProfileMenu() {
             <Link to="/friends" onClick={() => setOpen(false)}>
               친구 목록
             </Link>
-            <Link to="/account" onClick={() => setOpen(false)}>
-              계정 관리
-            </Link>
             <button
               type="button"
               disabled
