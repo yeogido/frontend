@@ -13,6 +13,7 @@ interface TravelFolderGridProps {
   isFiltered?: boolean;
   pendingInvitationIds?: Set<string>;
   hideEmptyState?: boolean;
+  desktop?: boolean;
 }
 
 const folderListLabel = '\uC5EC\uD589 \uD3F4\uB354 \uBAA9\uB85D';
@@ -27,6 +28,7 @@ function TravelFolderGrid({
   isFiltered = false,
   pendingInvitationIds,
   hideEmptyState = false,
+  desktop = false,
 }: TravelFolderGridProps) {
   if (folders.length === 0 && invitations.length === 0) {
     if (hideEmptyState) return null;
@@ -52,7 +54,11 @@ function TravelFolderGrid({
   return (
     <section
       aria-label={folderListLabel}
-      className="mt-7 grid grid-cols-2 gap-x-6 gap-y-[30px]"
+      className={
+        desktop
+          ? 'mt-[60px] grid grid-cols-3 gap-x-[40px] gap-y-[96px]'
+          : 'mt-7 grid grid-cols-2 gap-x-6 gap-y-[30px]'
+      }
     >
       {onAcceptInvitation &&
         onDeclineInvitation &&
@@ -65,14 +71,24 @@ function TravelFolderGrid({
             onDecline={onDeclineInvitation}
           />
         ))}
-      {folders.map((folder) => (
-        <TravelFolderCard
-          key={folder.id}
-          folder={folder}
-          onClick={onFolderClick}
-          isRecentlySaved={String(folder.id) === recentlySavedFolderId}
-        />
-      ))}
+      {folders.map((folder) =>
+        desktop ? (
+          <div key={folder.id} style={{ zoom: 221 / 159 }}>
+            <TravelFolderCard
+              folder={folder}
+              onClick={onFolderClick}
+              isRecentlySaved={String(folder.id) === recentlySavedFolderId}
+            />
+          </div>
+        ) : (
+          <TravelFolderCard
+            key={folder.id}
+            folder={folder}
+            onClick={onFolderClick}
+            isRecentlySaved={String(folder.id) === recentlySavedFolderId}
+          />
+        )
+      )}
     </section>
   );
 }
