@@ -8,6 +8,8 @@ interface TravelRecordInvitationCardProps {
   onAccept: (invitation: TravelRecordInvitation) => void;
   onDecline: (invitationId: string) => void;
   isPending?: boolean;
+  /** 주어지면 폴더 부분을 눌러 팝업을 열 수 있다(데스크톱). */
+  onOpen?: (invitation: TravelRecordInvitation) => void;
 }
 
 function TravelRecordInvitationCard({
@@ -15,6 +17,7 @@ function TravelRecordInvitationCard({
   onAccept,
   onDecline,
   isPending = false,
+  onOpen,
 }: TravelRecordInvitationCardProps) {
   return (
     <article
@@ -22,7 +25,25 @@ function TravelRecordInvitationCard({
       aria-label={`${invitation.inviterName}님의 ${invitation.folder.title} 앨범 초대`}
       className="w-[159px] pt-[43px]"
     >
-      <div className="relative h-[140px] w-full">
+      <div
+        role={onOpen ? 'button' : undefined}
+        tabIndex={onOpen ? 0 : undefined}
+        aria-label={
+          onOpen ? `${invitation.inviterName}님의 공유앨범 열기` : undefined
+        }
+        onClick={onOpen ? () => onOpen(invitation) : undefined}
+        onKeyDown={
+          onOpen
+            ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onOpen(invitation);
+                }
+              }
+            : undefined
+        }
+        className={`relative h-[140px] w-full ${onOpen ? 'cursor-pointer' : ''}`}
+      >
         <img
           src={invitationFolder}
           alt=""
