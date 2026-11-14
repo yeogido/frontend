@@ -1,5 +1,8 @@
+import { useState } from 'react';
+
 import TravelFolderCard from './TravelFolderCard';
 import TravelRecordInvitationCard from './TravelRecordInvitationCard';
+import TravelRecordInvitationDialog from './TravelRecordInvitationDialog';
 
 import type { TravelRecordFolder, TravelRecordInvitation } from '../types';
 
@@ -30,6 +33,14 @@ function TravelFolderGrid({
   hideEmptyState = false,
   desktop = false,
 }: TravelFolderGridProps) {
+  // 초대가 수락·거절돼 목록에서 사라지면 팝업도 함께 닫힌다.
+  const [openedInvitationId, setOpenedInvitationId] = useState<string | null>(
+    null
+  );
+  const openedInvitation = invitations.find(
+    (invitation) => invitation.id === openedInvitationId
+  );
+
   if (folders.length === 0 && invitations.length === 0) {
     if (hideEmptyState) return null;
     return (
@@ -52,44 +63,58 @@ function TravelFolderGrid({
   }
 
   return (
-    <section
-      aria-label={folderListLabel}
-      className={
-        desktop
-          ? 'mt-[60px] grid grid-cols-3 gap-x-[40px] gap-y-[96px]'
-          : 'mt-7 grid grid-cols-2 gap-x-6 gap-y-[30px]'
-      }
-    >
-      {onAcceptInvitation &&
-        onDeclineInvitation &&
-        invitations.map((invitation) => (
-          <TravelRecordInvitationCard
-            key={invitation.id}
-            invitation={invitation}
-            isPending={pendingInvitationIds?.has(invitation.id)}
-            onAccept={onAcceptInvitation}
-            onDecline={onDeclineInvitation}
-          />
-        ))}
-      {folders.map((folder) =>
-        desktop ? (
-          <div key={folder.id} style={{ zoom: 221 / 159 }}>
+    <>
+      <section
+        aria-label={folderListLabel}
+        className={
+          desktop
+            ? 'mt-[60px] grid grid-cols-3 gap-x-[40px] gap-y-[96px]'
+            : 'mt-7 grid grid-cols-2 gap-x-6 gap-y-[30px]'
+        }
+      >
+        {onAcceptInvitation &&
+          onDeclineInvitation &&
+          invitations.map((invitation) => (
+            <TravelRecordInvitationCard
+              key={invitation.id}
+              invitation={invitation}
+              isPending={pendingInvitationIds?.has(invitation.id)}
+              onAccept={onAcceptInvitation}
+              onDecline={onDeclineInvitation}
+              onOpen={
+                desktop ? (item) => setOpenedInvitationId(item.id) : undefined
+              }
+            />
+          ))}
+        {folders.map((folder) =>
+          desktop ? (
+            <div key={folder.id} style={{ zoom: 221 / 159 }}>
+              <TravelFolderCard
+                folder={folder}
+                onClick={onFolderClick}
+                isRecentlySaved={String(folder.id) === recentlySavedFolderId}
+              />
+            </div>
+          ) : (
             <TravelFolderCard
+              key={folder.id}
               folder={folder}
               onClick={onFolderClick}
               isRecentlySaved={String(folder.id) === recentlySavedFolderId}
             />
-          </div>
-        ) : (
-          <TravelFolderCard
-            key={folder.id}
-            folder={folder}
-            onClick={onFolderClick}
-            isRecentlySaved={String(folder.id) === recentlySavedFolderId}
-          />
-        )
-      )}
-    </section>
+          )
+        )}
+      </section>
+      {openedInvitation && onAcceptInvitation && onDeclineInvitation ? (
+        <TravelRecordInvitationDialog
+          invitation={openedInvitation}
+          isPending={pendingInvitationIds?.has(openedInvitation.id)}
+          onAccept={onAcceptInvitation}
+          onDecline={onDeclineInvitation}
+          onClose={() => setOpenedInvitationId(null)}
+        />
+      ) : null}
+    </>
   );
 }
 

@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { MdLink } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
 
 import closeIcon from '../../../assets/icons/share/close.svg';
 import instagramIcon from '../../../assets/icons/share/instagram.svg';
@@ -12,7 +14,9 @@ import external7Icon from '../../../assets/icons/share/external-7.svg';
 import external8Icon from '../../../assets/icons/share/external-8.svg';
 import NicknameAvatar from '../../../components/common/NicknameAvatar';
 import { useToast } from '../../../components/toast';
+import { hasDesktopView } from '../../../constants/desktopRoutes';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { useIsDesktop } from '../../../hooks/useIsDesktop';
 import type { TravelRecordMember } from '../detail/components/TravelRecordMembers';
 
 const externalShareOptions = [
@@ -36,6 +40,9 @@ interface TravelRecordShareDialogProps {
   onClose: () => void;
 }
 
+// Figma 1440 데스크톱 시안(6336:73049) 기준 리터럴 px.
+const DESKTOP_DIALOG_WIDTH = 600;
+
 function TravelRecordShareDialog({
   friendSection,
   isBusy = false,
@@ -46,6 +53,9 @@ function TravelRecordShareDialog({
   onClose,
 }: TravelRecordShareDialogProps) {
   const scale = useGlobalScale();
+  // 데스크톱 뷰가 있는 화면(1440 시안)에서만 600px 폭으로 키운다.
+  const { pathname } = useLocation();
+  const isDesktopLayout = useIsDesktop() && hasDesktopView(pathname);
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -131,17 +141,24 @@ function TravelRecordShareDialog({
         tabIndex={-1}
         aria-labelledby={titleId}
         className="relative overflow-y-auto rounded-xl bg-white shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
-        style={{ width: 342 * scale, maxHeight: 'calc(100dvh - 32px)' }}
+        style={{
+          width: isDesktopLayout ? DESKTOP_DIALOG_WIDTH : 342 * scale,
+          maxHeight: 'calc(100dvh - 32px)',
+        }}
       >
         <div
           className="relative"
-          style={{ height: friendSection ? undefined : 541 * scale }}
+          style={{
+            height: friendSection || isDesktopLayout ? undefined : 541 * scale,
+          }}
         >
           <div
             className={
-              friendSection
-                ? 'relative w-[342px] p-5'
-                : 'absolute top-0 left-0 h-[541px] w-[342px] overflow-hidden p-5'
+              isDesktopLayout
+                ? 'relative w-full p-8'
+                : friendSection
+                  ? 'relative w-[342px] p-5'
+                  : 'absolute top-0 left-0 h-[541px] w-[342px] overflow-hidden p-5'
             }
             style={{ zoom: scale }}
           >
@@ -154,7 +171,9 @@ function TravelRecordShareDialog({
               aria-label="공유 창 닫기"
               disabled={isBusy}
               onClick={onClose}
-              className="focus-visible:outline-main-5 absolute top-5 right-5 flex size-6 items-center justify-center rounded focus-visible:outline-2"
+              className={`focus-visible:outline-main-5 absolute flex size-6 items-center justify-center rounded focus-visible:outline-2 ${
+                isDesktopLayout ? 'top-8 right-8' : 'top-5 right-5'
+              }`}
             >
               <img
                 src={closeIcon}
@@ -170,8 +189,25 @@ function TravelRecordShareDialog({
             {showExternalShare && (
               <ul
                 aria-label="외부 앱으로 공유"
-                className="scrollbar-hide -mx-5 mt-6 flex w-[calc(100%+40px)] gap-3 overflow-x-auto px-5"
+                className={`scrollbar-hide flex gap-3 overflow-x-auto ${
+                  isDesktopLayout
+                    ? 'mt-8'
+                    : '-mx-5 mt-6 w-[calc(100%+40px)] px-5'
+                }`}
               >
+                {isDesktopLayout ? (
+                  <li className="shrink-0">
+                    <button
+                      type="button"
+                      aria-label="링크 복사"
+                      disabled={isBusy}
+                      onClick={() => showToast('링크 복사는 준비 중이에요.')}
+                      className="bg-gray-2 text-gray-4 focus-visible:outline-main-5 flex size-12 items-center justify-center rounded-full focus-visible:outline-2"
+                    >
+                      <MdLink aria-hidden="true" className="text-[24px]" />
+                    </button>
+                  </li>
+                ) : null}
                 {externalShareOptions.map((option) => (
                   <li key={option.name} className="shrink-0">
                     <button
@@ -195,11 +231,17 @@ function TravelRecordShareDialog({
 
             {friendSection ?? (
               <>
-                <fieldset className="mt-5 min-w-0">
+                <fieldset
+                  className={`min-w-0 ${isDesktopLayout ? 'mt-8' : 'mt-5'}`}
+                >
                   <legend className="text-sm leading-[17px] font-medium">
                     친구에게 공유
                   </legend>
-                  <ul className="scrollbar-hide -mx-5 mt-2 flex w-[calc(100%+40px)] gap-3 overflow-x-auto px-5">
+                  <ul
+                    className={`scrollbar-hide mt-2 flex gap-3 overflow-x-auto ${
+                      isDesktopLayout ? '' : '-mx-5 w-[calc(100%+40px)] px-5'
+                    }`}
+                  >
                     {friends.map((friend) => {
                       const isSelected = selectedFriendIds.includes(friend.id);
 
