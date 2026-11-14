@@ -27,8 +27,7 @@ test('matches the travel record create and edit steps', () => {
   assert.equal(hasDesktopView('/travel-record/42/edit/date'), true);
   assert.equal(hasDesktopView('/travel-record/42/edit/photos'), true);
   assert.equal(hasDesktopView('/travel-record/42/edit/decorate'), true);
-  // 상세 화면은 아직 데스크톱 뷰가 없다.
-  assert.equal(hasDesktopView('/travel-record/42'), false);
+  assert.equal(hasDesktopView('/travel-record/42'), true);
 });
 
 test('does not match paths that only start the same way', () => {
