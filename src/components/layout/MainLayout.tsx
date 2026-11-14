@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
-import { AuthSidebar, Header, Sidebar } from './';
+import { AuthSidebar, Footer, Header, Sidebar } from './';
 import { hasDesktopView } from '../../constants/desktopRoutes';
 import { useAuth } from '../../hooks/useAuth';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
@@ -25,6 +25,8 @@ function MainLayout() {
       <main>
         <Outlet />
       </main>
+
+      <Footer />
 
       {isAuthenticated ? (
         <AuthSidebar
