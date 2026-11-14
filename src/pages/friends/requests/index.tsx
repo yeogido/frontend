@@ -3,6 +3,7 @@ import { useCallback, type ReactNode } from 'react';
 import { getApiErrorMessage } from '../../../apis/common';
 import { LoadingSpinner } from '../../../components/common';
 import { ResponsivePageShell } from '../../../components/layout';
+import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
 import {
   useReceivedFriendRequests,
   useSentFriendRequests,
@@ -44,8 +45,9 @@ const EMPTY_TOP_SPACE_WITH_CARD = 24;
 const EMPTY_MESSAGE_SIZE = 16;
 const EMPTY_MESSAGE_LINE_HEIGHT = 22;
 
-function FriendRequestsPage() {
-  const scale = useGlobalScale();
+function FriendRequestsPage({ desktop = false }: { desktop?: boolean }) {
+  const mobileScale = useGlobalScale();
+  const scale = desktop ? 1 : mobileScale;
   const received = useReceivedFriendRequests();
   const sent = useSentFriendRequests();
   const { pendingIds, accept, reject, cancel } = useFriendRequestActions({
@@ -196,24 +198,28 @@ function FriendRequestsPage() {
     );
   }
 
-  return (
-    <ResponsivePageShell
-      mode="main-layout"
-      topPadding={PAGE_TOP_PADDING}
-      bottomPadding={PAGE_BOTTOM_PADDING}
-      className="bg-background"
-    >
-      <div className="flex flex-col" style={{ gap: SECTION_GAP * scale }}>
+  const pageContent = (
+    <>
+      <div
+        className="flex flex-col"
+        style={{ gap: (desktop ? 32 : SECTION_GAP) * scale }}
+      >
         <div className="flex flex-col" style={{ gap: TITLE_GAP * scale }}>
           <h1
             className="font-semibold text-black"
-            style={{ fontSize: TITLE_SIZE * scale, lineHeight: 'normal' }}
+            style={{
+              fontSize: (desktop ? 32 : TITLE_SIZE) * scale,
+              lineHeight: 'normal',
+            }}
           >
             친구 요청
           </h1>
           <p
             className="text-gray-5"
-            style={{ fontSize: DESCRIPTION_SIZE * scale, lineHeight: 'normal' }}
+            style={{
+              fontSize: (desktop ? 20 : DESCRIPTION_SIZE) * scale,
+              lineHeight: desktop ? 1.5 : 'normal',
+            }}
           >
             새로운 친구 요청을 확인해 보세요
           </p>
@@ -264,6 +270,18 @@ function FriendRequestsPage() {
         <LoadingSpinner label="친구 요청을 불러오는 중" />
       ) : null}
       <div style={{ height: LOAD_MORE_SPACE * scale }} aria-hidden="true" />
+    </>
+  );
+  return desktop ? (
+    <DesktopPageShell>{pageContent}</DesktopPageShell>
+  ) : (
+    <ResponsivePageShell
+      mode="main-layout"
+      topPadding={PAGE_TOP_PADDING}
+      bottomPadding={PAGE_BOTTOM_PADDING}
+      className="bg-background"
+    >
+      {pageContent}
     </ResponsivePageShell>
   );
 }

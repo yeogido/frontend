@@ -15,6 +15,7 @@ const TEXT_SIZE = 12;
 interface FriendSearchBarProps {
   value: string;
   scale: number;
+  desktop?: boolean;
   onChange: (value: string) => void;
   /** Enter로 디바운스를 기다리지 않고 바로 검색한다. */
   onSubmit: () => void;
@@ -24,6 +25,7 @@ interface FriendSearchBarProps {
 function FriendSearchBar({
   value,
   scale,
+  desktop = false,
   onChange,
   onSubmit,
   onClear,
@@ -64,7 +66,10 @@ function FriendSearchBar({
         onChange={(event) => onChange(event.target.value)}
         placeholder="친구 이름 또는 친구 코드를 검색해 보세요"
         className="text-gray-5 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent font-medium outline-none"
-        style={{ fontSize: TEXT_SIZE * scale, lineHeight: 'normal' }}
+        style={{
+          fontSize: (desktop ? 14 : TEXT_SIZE) * scale,
+          lineHeight: 'normal',
+        }}
       />
       {value ? (
         <button

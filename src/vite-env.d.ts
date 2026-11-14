@@ -117,6 +117,14 @@ interface KakaoSDK {
   init(appKey: string): void;
   isInitialized(): boolean;
   Auth: KakaoAuth;
+  Share?: {
+    sendDefault(settings: {
+      objectType: 'text';
+      text: string;
+      link: { mobileWebUrl: string; webUrl: string };
+      buttonTitle: string;
+    }): void | Promise<unknown>;
+  };
 }
 
 // 네이버 로그인 JS SDK(naveridlogin_js_sdk_2.0.2.js)는 Kakao와 달리

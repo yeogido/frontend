@@ -1,33 +1,16 @@
+import TravelRecordExternalShareActions from './TravelRecordExternalShareActions';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import closeIcon from '../../../assets/icons/share/close.svg';
-import instagramIcon from '../../../assets/icons/share/instagram.svg';
-import xIcon from '../../../assets/icons/share/x.svg';
-import facebookIcon from '../../../assets/icons/share/facebook.svg';
-import discordIcon from '../../../assets/icons/share/discord.svg';
-import threadsIcon from '../../../assets/icons/share/threads.svg';
-import linkedinIcon from '../../../assets/icons/share/linkedin.svg';
-import external7Icon from '../../../assets/icons/share/external-7.svg';
-import external8Icon from '../../../assets/icons/share/external-8.svg';
 import NicknameAvatar from '../../../components/common/NicknameAvatar';
 import { useToast } from '../../../components/toast';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import type { TravelRecordMember } from '../detail/components/TravelRecordMembers';
 
-const externalShareOptions = [
-  { name: 'Instagram', icon: instagramIcon },
-  { name: 'X', icon: xIcon },
-  { name: 'Facebook', icon: facebookIcon },
-  { name: 'Discord', icon: discordIcon },
-  { name: 'Threads', icon: threadsIcon },
-  { name: 'LinkedIn', icon: linkedinIcon },
-  { name: '외부 앱 7', icon: external7Icon },
-  { name: '외부 앱 8', icon: external8Icon },
-] as const;
-
 interface TravelRecordShareDialogProps {
   friendSection?: ReactNode;
+  externalShareAction?: ReactNode;
   isBusy?: boolean;
   showExternalShare?: boolean;
   title: string;
@@ -38,6 +21,7 @@ interface TravelRecordShareDialogProps {
 
 function TravelRecordShareDialog({
   friendSection,
+  externalShareAction,
   isBusy = false,
   showExternalShare = true,
   title,
@@ -167,31 +151,10 @@ function TravelRecordShareDialog({
 
             <div className="mt-5 flex flex-col items-center">{children}</div>
 
-            {showExternalShare && (
-              <ul
-                aria-label="외부 앱으로 공유"
-                className="scrollbar-hide -mx-5 mt-6 flex w-[calc(100%+40px)] gap-3 overflow-x-auto px-5"
-              >
-                {externalShareOptions.map((option) => (
-                  <li key={option.name} className="shrink-0">
-                    <button
-                      type="button"
-                      aria-label={`${option.name}으로 공유`}
-                      disabled={isBusy}
-                      onClick={() => showToast('외부 앱 공유는 준비 중이에요.')}
-                      className="focus-visible:outline-main-5 block rounded-full focus-visible:outline-2 focus-visible:-outline-offset-2"
-                    >
-                      <img
-                        src={option.icon}
-                        alt=""
-                        aria-hidden="true"
-                        className="block max-w-none"
-                      />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {showExternalShare &&
+              (externalShareAction ?? (
+                <TravelRecordExternalShareActions data={null} isBusy={isBusy} />
+              ))}
 
             {friendSection ?? (
               <>

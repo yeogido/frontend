@@ -10,17 +10,23 @@ const visibilityOptions = [
 interface TravelRecordVisibilityFiltersProps {
   value: TravelRecordVisibilityFilter;
   onChange: (value: TravelRecordVisibilityFilter) => void;
+  desktop?: boolean;
 }
 
 function TravelRecordVisibilityFilters({
   value,
   onChange,
+  desktop = false,
 }: TravelRecordVisibilityFiltersProps) {
   return (
     <div
       role="group"
       aria-label="여행 폴더 공개범위"
-      className="scrollbar-hide -mr-6 flex min-w-0 flex-1 gap-2 overflow-x-auto pr-6"
+      className={
+        desktop
+          ? 'flex min-w-0 gap-[16px]'
+          : 'scrollbar-hide -mr-6 flex min-w-0 flex-1 gap-2 overflow-x-auto pr-6'
+      }
     >
       {visibilityOptions.map((option) => (
         <button
@@ -28,7 +34,7 @@ function TravelRecordVisibilityFilters({
           type="button"
           aria-pressed={value === option.value}
           onClick={() => onChange(option.value)}
-          className={`shrink-0 rounded-full border px-3 py-1.5 text-sm leading-[17px] whitespace-nowrap ${value === option.value ? 'border-main-5 bg-main-2 text-main-5' : 'border-gray-2 text-gray-4 bg-white'}`}
+          className={`shrink-0 rounded-full border whitespace-nowrap ${desktop ? 'px-[14px] py-[8px] text-[18px]' : 'px-3 py-1.5 text-sm leading-[17px]'} ${value === option.value ? 'border-main-5 bg-main-2 text-main-5' : 'border-gray-2 text-gray-4 bg-white'}`}
         >
           {option.label}
         </button>

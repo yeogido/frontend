@@ -1,8 +1,4 @@
-import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-
 import { TravelRecordPageFrame } from '../components';
-import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 
 import {
   EmptyFolderPreview,
@@ -11,22 +7,10 @@ import {
   RegionSuggestionList,
   SelectedRegionSearchBar,
 } from './components';
-import { useTravelRecordRegionSelection } from './hooks';
-import {
-  clearTravelRecordDraftDateRange,
-  saveTravelRecordDraftRegion,
-} from '../utils/draftStorage';
-import { getTravelRecordDraftRegion } from '../utils/draftStorage';
-import { getTravelRecordEditRoute } from '../utils/editRoute';
-import { getInitialTravelRecordRegion } from './initialSelectedRegion';
+import { useRegionSelectionPage } from './useRegionSelectionPage';
 import backIcon from '../../../assets/icons/back.svg';
 
 function TravelRecordRegionSelectionPage() {
-  const navigate = useNavigate();
-  const { travelRecordId } = useParams<{ travelRecordId: string }>();
-  const storedDraftRegion = getTravelRecordDraftRegion();
-  const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
-  const isEditing = Boolean(travelRecordId);
   const {
     isSuggestionOpen,
     query,
@@ -35,20 +19,14 @@ function TravelRecordRegionSelectionPage() {
     visibleSuggestions,
     clearRecentSearches,
     clearSelectedRegion,
+    handleNext,
+    navigate,
     openSuggestions,
     removeRecentSearch,
     selectRegionName,
     submitSearch,
     updateQuery,
-  } = useTravelRecordRegionSelection(
-    getInitialTravelRecordRegion(isEditing, storedDraftRegion),
-  );
-
-  useEffect(() => {
-    if (!travelRecordId) {
-      clearEdit();
-    }
-  }, [clearEdit, travelRecordId]);
+  } = useRegionSelectionPage();
 
   return (
     <TravelRecordPageFrame className="bg-[#f9f9f9] px-6 pt-[60px]">
@@ -114,35 +92,7 @@ function TravelRecordRegionSelectionPage() {
       <button
         type="button"
         disabled={!selectedRegion}
-        onClick={() => {
-          if (!selectedRegion) {
-            return;
-          }
-
-          const draftRegion = {
-            id: selectedRegion.id,
-            regionId: selectedRegion.regionId,
-            name: selectedRegion.name,
-            province: selectedRegion.province,
-            selectionName: selectedRegion.selectionName,
-          };
-
-          if (!isEditing) {
-            clearTravelRecordDraftDateRange();
-          }
-          saveTravelRecordDraftRegion(draftRegion);
-
-          navigate(
-            travelRecordId
-              ? getTravelRecordEditRoute(travelRecordId, 'date')
-              : '/travel-record/date-selection',
-            {
-            state: {
-              selectedRegion: draftRegion,
-            },
-            },
-          );
-        }}
+        onClick={handleNext}
         className="bg-gray-2 text-gray-4 enabled:bg-main-5 absolute top-[759px] right-6 left-6 flex h-[53px] items-center justify-center rounded-xl text-[18px] leading-none font-semibold enabled:text-white"
       >
         날짜 선택하기
