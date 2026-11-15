@@ -1,5 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 
+import { invalidateFriendRequestPresence } from './utils/friendRequestDot.ts';
+
 // 친구 관계에 따라 서버 응답이 달라지는 친구 여행 데이터의 쿼리 키. 키는
 // [접두사, 내 ID, 친구 ID, ...]이고 내 ID가 인덱스 1이다(계정별 캐시 분리).
 // 파일이 react-query를 type import만 해서 Node 테스트 러너에서 그대로 검증한다.
@@ -51,4 +53,49 @@ export function invalidateFriendTravelQueries(
   )) {
     void queryClient.invalidateQueries({ queryKey });
   }
+}
+
+// 다른 훅 파일이 가진 접두사와 같은 값이다. 그 파일들은 react-query와 API를 import해서
+// 이 순수 파일이 가져올 수 없으므로 문자열을 따로 두고, 값이 어긋나면 이 상수를 쓰는
+// useAcceptFriendQr.ts의 타입 검사가 실패한다.
+export const FRIENDSHIP_QUERY_PREFIXES = {
+  friends: 'friends',
+  friendSearch: 'friendSearch',
+  friendProfile: 'friendProfile',
+  friendRequests: 'friendRequests',
+} as const;
+
+/**
+ * 친구 관계가 새로 생겼을 때 다시 받을 쿼리 키. 친구 목록, 친구 검색, 친구 프로필,
+ * 그 친구의 여행 데이터, 받은·보낸 요청 목록이다(받은 요청 존재 키는 따로 다룬다).
+ */
+export const getFriendshipInvalidationKeys = (
+  viewerUserId: number | null,
+  friendUserId: number
+): readonly (readonly unknown[])[] => [
+  [FRIENDSHIP_QUERY_PREFIXES.friends, viewerUserId],
+  [FRIENDSHIP_QUERY_PREFIXES.friendSearch, viewerUserId],
+  [FRIENDSHIP_QUERY_PREFIXES.friendProfile, viewerUserId],
+  ...getFriendTravelInvalidationKeys(viewerUserId, friendUserId),
+  [FRIENDSHIP_QUERY_PREFIXES.friendRequests, 'received', viewerUserId],
+  [FRIENDSHIP_QUERY_PREFIXES.friendRequests, 'sent', viewerUserId],
+];
+
+/**
+ * 친구 관계가 새로 생긴 뒤(QR로 맺기 등) 화면에 남은 낡은 캐시를 다시 받게 한다.
+ * 받은 요청 존재 키는 진행 중인 조회를 먼저 취소해야 해서 따로 부른다.
+ */
+export async function invalidateFriendshipQueries(
+  queryClient: Pick<QueryClient, 'cancelQueries' | 'invalidateQueries'>,
+  viewerUserId: number | null,
+  friendUserId: number
+) {
+  for (const queryKey of getFriendshipInvalidationKeys(
+    viewerUserId,
+    friendUserId
+  )) {
+    void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+  }
+
+  await invalidateFriendRequestPresence(queryClient, viewerUserId);
 }
