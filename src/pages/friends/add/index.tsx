@@ -63,29 +63,33 @@ function FriendQrAddContent({ qrToken, scale }: FriendQrAddContentProps) {
   const goToProfile = (friendUserId: number) =>
     navigate(`/friends/${friendUserId}`, { replace: true });
 
-  const handleBefriend = async (friend: FriendQrPreview) => {
+  // mutate의 옵션 콜백은 화면이 해제되면 호출되지 않는다. 요청 중에 떠나거나 토큰이
+  // 바뀌어도 늦게 온 응답이 지금 화면에 토스트를 띄우거나 프로필로 보내지 못한다.
+  // 캐시 갱신은 훅의 onSuccess/onError가 해제와 상관없이 처리한다.
+  const handleBefriend = (friend: FriendQrPreview) => {
     if (qrToken === null || acceptQr.isPending) return;
 
-    try {
-      const result = await acceptQr.mutateAsync({
-        qrToken,
-        friendUserId: friend.userId,
-      });
+    acceptQr.mutate(
+      { qrToken, friendUserId: friend.userId },
+      {
+        onSuccess: (result) => {
+          showToast(FRIEND_ADDED_MESSAGE);
+          goToProfile(result.friend.userId);
+        },
+        onError: (error) => {
+          const failure = getQrScanError(error, QR_ACCEPT_FAILURE_MESSAGE);
 
-      showToast(FRIEND_ADDED_MESSAGE);
-      goToProfile(result.friend.userId);
-    } catch (error) {
-      const failure = getQrScanError(error, QR_ACCEPT_FAILURE_MESSAGE);
-
-      if (failure.kind === 'already-friend') {
-        showToast(failure.message);
-        goToProfile(friend.userId);
-      } else if (TERMINAL_KINDS.has(failure.kind)) {
-        setBlocked(failure);
-      } else {
-        showToast(failure.message);
+          if (failure.kind === 'already-friend') {
+            showToast(failure.message);
+            goToProfile(friend.userId);
+          } else if (TERMINAL_KINDS.has(failure.kind)) {
+            setBlocked(failure);
+          } else {
+            showToast(failure.message);
+          }
+        },
       }
-    }
+    );
   };
 
   let content;
@@ -167,7 +171,7 @@ function FriendQrAddContent({ qrToken, scale }: FriendQrAddContentProps) {
               scale={scale}
               disabled={acceptQr.isPending}
               aria-label={getProfileActionAriaLabel('send', friend.nickname)}
-              onClick={() => void handleBefriend(friend)}
+              onClick={() => handleBefriend(friend)}
             >
               {action.label}
             </FriendRequestButton>
