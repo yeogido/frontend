@@ -98,6 +98,7 @@ export function useRespondToTravelRecordInvitation() {
       const { code, status } = normalizeApiError(error);
       if (
         status === 403 ||
+        status === 404 ||
         [
           'TRAVEL_RECORD4042',
           'TRAVEL_RECORD4094',

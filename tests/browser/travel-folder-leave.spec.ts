@@ -17,6 +17,7 @@ async function setup(
     missingPermissions?: boolean;
     held?: boolean;
     failure?: number;
+    afterLeaveVisibility?: 'PUBLIC' | 'FRIENDS';
   } = {}
 ) {
   const writes: { method: string; path: string; body: string | null }[] = [];
@@ -101,6 +102,16 @@ async function setup(
       detailReads++;
       const id = path.endsWith('/21') ? 21 : 20;
       const ownerId = options.ownerId ?? 2;
+      if (left && id === 20 && options.afterLeaveVisibility === 'FRIENDS')
+        return route.fulfill({
+          status: 403,
+          json: {
+            isSuccess: false,
+            code: 'COMMON4031',
+            message: '참여자가 아니에요.',
+            result: null,
+          },
+        });
       return json({
         travelRecordId: id,
         title: id === 20 ? '함께 부산' : '다른 여행',
@@ -108,13 +119,16 @@ async function setup(
         startDate: '2026-08-17',
         endDate: '2026-08-18',
         folderTheme: 'BASIC',
-        visibility: options.visibility ?? 'FRIENDS',
+        visibility: left
+          ? (options.afterLeaveVisibility ?? options.visibility ?? 'FRIENDS')
+          : (options.visibility ?? 'FRIENDS'),
         version: 1,
         createdAt: '',
         coverImageUrl: photo,
         owner: { userId: ownerId, nickname: '생성자', profileImageUrl: null },
         participants:
-          options.participant === false
+          options.participant === false ||
+          (left && options.afterLeaveVisibility)
             ? []
             : [
                 {
@@ -126,11 +140,11 @@ async function setup(
         permissions: options.missingPermissions
           ? undefined
           : {
-              canEdit: true,
+              canEdit: !left || !options.afterLeaveVisibility,
               canDelete: ownerId === 999,
               canInvite: false,
-              canLeave: options.canLeave ?? true,
-              canLinkShare: false,
+              canLeave: left ? false : (options.canLeave ?? true),
+              canLinkShare: left && options.afterLeaveVisibility === 'PUBLIC',
             },
         images: [
           { imageId: 1, imageKey: 'test.png', imageUrl: photo, imageOrder: 1 },
@@ -345,6 +359,43 @@ test('does not navigate away from a different folder when a previous leave finis
   expect(app.errors).toEqual([]);
 });
 
+for (const afterLeaveVisibility of ['PUBLIC', 'FRIENDS'] as const) {
+  test(`revisiting after leave follows server ${afterLeaveVisibility} visibility`, async ({
+    page,
+  }) => {
+    const app = await setup(page, { afterLeaveVisibility });
+    await app.menu();
+    await page.getByRole('menuitem', { name: '나가기', exact: true }).click();
+    await app.confirmLeave();
+    await expect(page).toHaveURL(/\/travel-record$/);
+    await page.goto('/travel-record/20');
+    if (afterLeaveVisibility === 'PUBLIC') {
+      await expect(
+        page.getByRole('heading', { name: '함께 부산', exact: true })
+      ).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: '여행 기록 메뉴' })
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole('button', { name: '여행 폴더 공유하기' })
+      ).toBeVisible();
+    } else {
+      await expect(page.getByRole('alert')).toContainText('참여자가 아니에요.');
+      await expect(
+        page.getByRole('heading', { name: '함께 부산', exact: true })
+      ).toHaveCount(0);
+    }
+    expect(app.writes).toEqual([
+      {
+        method: 'DELETE',
+        path: '/api/v1/travel-records/20/members/me',
+        body: null,
+      },
+    ]);
+    expect(app.errors).toEqual([]);
+  });
+}
+
 test('confirms leaving and cancel keeps the participant in the folder', async ({
   page,
 }, info) => {
@@ -354,10 +405,7 @@ test('confirms leaving and cancel keeps the participant in the folder', async ({
   const dialog = page.getByRole('dialog', { name: '공유 폴더에서 나갈까요?' });
   await expect(dialog).toBeVisible({ timeout: 2000 });
   await expect(dialog).toContainText(
-    '나가면 이 폴더를 보거나 수정할 수 없어요.'
-  );
-  await expect(dialog).toContainText(
-    '폴더와 사진·스티커는 다른 참여자에게 그대로 남아요.'
+    '나가도 다른 참여자의 폴더는 그대로 유지돼요.'
   );
   expect(app.writes).toEqual([]);
   const path = `C:/yeogido/travel-leave-dialog-${info.project.name}.png`;

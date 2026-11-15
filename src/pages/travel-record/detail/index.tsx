@@ -562,9 +562,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
       <ConfirmDialog
         isOpen={isLeaveDialogOpen}
         title="공유 폴더에서 나갈까요?"
-        description={
-          '나가면 이 폴더를 보거나 수정할 수 없어요.\n폴더와 사진·스티커는 다른 참여자에게 그대로 남아요.'
-        }
+        description="나가도 다른 참여자의 폴더는 그대로 유지돼요."
         confirmLabel="나가기"
         isPending={isLeaving}
         onConfirm={() => void handleLeave()}

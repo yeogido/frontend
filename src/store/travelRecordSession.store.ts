@@ -2,16 +2,11 @@ import type { TravelRecordApiVisibility } from '../types/travelRecord.type';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { mockSharedTravelRecordFolders } from '../mocks/travelRecordInvitations';
-
 import type {
   TravelRecordFolder,
   TravelRecordServerPhoto,
   TravelRecordView,
 } from '../pages/travel-record/types';
-
-const isTravelRecordPreviewEnabled =
-  import.meta.env.VITE_TRAVEL_RECORD_PREVIEW === 'true';
 
 interface TravelRecordEditSession {
   id: string;
@@ -45,7 +40,6 @@ interface TravelRecordSessionState {
    * 다시 눌러야 한다.
    */
   listView: TravelRecordView;
-  previewSharedFolders: TravelRecordFolder[];
   beginEdit: (session: TravelRecordEditSession) => void;
   clearEdit: () => void;
   setListView: (view: TravelRecordView) => void;
@@ -58,10 +52,6 @@ export const useTravelRecordSessionStore = create<TravelRecordSessionState>()(
       visibilityDraft: null,
       setVisibilityDraft: (visibilityDraft) => set({ visibilityDraft }),
       listView: 'folder',
-      // Preview data survives route remounts, but is excluded from persistence.
-      previewSharedFolders: isTravelRecordPreviewEnabled
-        ? mockSharedTravelRecordFolders
-        : [],
       beginEdit: (session) =>
         set({ editSession: session, visibilityDraft: null }),
       clearEdit: () => set({ editSession: null, visibilityDraft: null }),

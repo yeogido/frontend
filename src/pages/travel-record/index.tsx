@@ -23,13 +23,11 @@ function TravelRecordPage() {
     setVisibilityFilter,
     activeView,
     setActiveView,
-    previewSharedFolders,
     recentlySavedFolderId,
     setSelectedYear,
     years,
     validSelectedYear,
     isPending,
-    hasPreviewContent,
     visibleInvitations,
     visibleFolders,
     handleAcceptInvitation,
@@ -96,7 +94,7 @@ function TravelRecordPage() {
       )}
 
       {activeView === 'folder' &&
-        (!isPending || hasPreviewContent || visibleInvitations.length > 0) && (
+        (!isPending || visibleInvitations.length > 0) && (
           <TravelFolderGrid
             folders={visibleFolders}
             invitations={visibleInvitations}
@@ -174,9 +172,7 @@ function TravelRecordPage() {
           </p>
         </section>
       ) : (
-        <TravelMapView
-          folders={[...previewSharedFolders, ...mapRecordsQuery.folders]}
-        />
+        <TravelMapView folders={mapRecordsQuery.folders} />
       )}
 
       <div ref={loadMoreRef} aria-hidden="true" />

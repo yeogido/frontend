@@ -24,9 +24,6 @@ export function useTravelRecordPage() {
   const location = useLocation();
   const [visibilityFilter, setVisibilityFilter] =
     useState<TravelRecordVisibilityFilter>('all');
-  const previewSharedFolders = useTravelRecordSessionStore(
-    (state) => state.previewSharedFolders
-  );
   const clearEdit = useTravelRecordSessionStore((state) => state.clearEdit);
   // 상세·작성 화면에 다녀오면 이 페이지가 다시 마운트되므로, 보고 있던 탭은
   // 컴포넌트 상태가 아니라 세션에 남겨 둔다.
@@ -62,15 +59,10 @@ export function useTravelRecordPage() {
   const travelRecordYearsQuery = useTravelRecordYears();
   const years = useMemo(
     () =>
-      [
-        ...new Set([
-          ...(travelRecordYearsQuery.data?.years ?? []),
-          ...previewSharedFolders.map((folder) =>
-            Number(folder.startDate.slice(0, 4))
-          ),
-        ]),
-      ].sort((a, b) => b - a),
-    [travelRecordYearsQuery.data?.years, previewSharedFolders]
+      [...new Set(travelRecordYearsQuery.data?.years ?? [])].sort(
+        (a, b) => b - a
+      ),
+    [travelRecordYearsQuery.data?.years]
   );
 
   useEffect(() => {
@@ -133,15 +125,12 @@ export function useTravelRecordPage() {
   // 받은 페이지만 다시 정렬하면 다음 페이지를 불러올 때 뒤에 붙은 기록이
   // 위로 끼어들어 목록이 튄다.
   // 공개범위가 제공되지 않는 기존 API 데이터는 '전체'에만 표시한다.
-  const visibleFolders = [...previewSharedFolders, ...apiFolders].filter(
+  const visibleFolders = apiFolders.filter(
     (folder) =>
       Number(folder.startDate.slice(0, 4)) === validSelectedYear &&
       (visibilityFilter === 'all' || folder.visibility === visibilityFilter)
   );
   const visibleInvitations = showInvitations ? invitations : [];
-  const hasPreviewContent = visibleFolders.some((folder) =>
-    folder.id.startsWith('preview-')
-  );
   const canLoadFolders =
     Boolean(hasNextPage) && !isFetchingNextPage && !isTravelRecordsError;
   const canLoadInvitations =
@@ -172,7 +161,6 @@ export function useTravelRecordPage() {
     setVisibilityFilter,
     activeView,
     setActiveView,
-    previewSharedFolders,
     savedTravelRecord,
     recentlySavedFolderId,
     selectedYear,
@@ -180,7 +168,6 @@ export function useTravelRecordPage() {
     years,
     validSelectedYear,
     isPending,
-    hasPreviewContent,
     visibleInvitations,
     visibleFolders,
     handleAcceptInvitation,

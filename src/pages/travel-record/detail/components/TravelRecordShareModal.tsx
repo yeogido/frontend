@@ -34,7 +34,6 @@ function TravelRecordShareModal({
   return (
     <TravelRecordShareDialog
       title="여행 폴더 공유"
-      friends={[]}
       isBusy={isBusy}
       externalShareAction={
         <TravelRecordExternalShareActions

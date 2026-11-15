@@ -77,6 +77,7 @@ async function mockApp(
       cursorId: null,
       hasNext: false,
     };
+    if (url.pathname.endsWith('/regions')) return json({ regions: [] });
     if (url.pathname.endsWith('/travel-records/years')) {
       return json({ years: accountChanged ? [2026] : [2026, 2025] });
     }
@@ -167,6 +168,35 @@ test('지도 API를 페이지 끝까지 조회하고 종료일 연도로 필터�
   expect(runtimeErrors).toEqual([]);
 });
 
+test('지도 공유에는 가짜 친구 선택과 미연동 전송 버튼을 표시하지 않는다', async ({
+  page,
+}, info) => {
+  const { runtimeErrors } = await mockApp(page);
+  await page.goto('/travel-record');
+  await page.getByRole('button', { name: '여행 지도', exact: true }).click();
+  await page.getByRole('button', { name: '여행 지도 공유하기' }).click();
+  const dialog = page.getByRole('dialog', {
+    name: '여행 지도 공유',
+    exact: true,
+  });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('친구에게 공유', { exact: true })).toHaveCount(
+    0
+  );
+  await expect(
+    dialog.getByRole('button', { name: '보내기', exact: true })
+  ).toHaveCount(0);
+  await expect(
+    dialog.getByRole('button', { name: '링크 복사', exact: true })
+  ).toBeDisabled();
+  await page.screenshot({
+    path: `C:/yeogido/travel-map-share-${info.project.name}.png`,
+  });
+  await dialog.getByRole('button', { name: '공유 창 닫기' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(runtimeErrors).toEqual([]);
+});
+
 test('계정이 바뀌면 이전 계정의 지도 캐시를 표시하지 않는다', async ({
   page,
 }) => {
@@ -210,10 +240,14 @@ test('중간 페이지가 실패하면 부분 지도를 숨기고 재시도로 �
 
 test('비로그인 홈에서는 개인 여행지도 API를 요청하지 않는다', async ({
   page,
-}) => {
+}, info) => {
   const { requests, runtimeErrors } = await mockApp(page, { guest: true });
   await page.goto('/');
-  await expect(page.getByText('기록 지도', { exact: true })).toBeVisible();
+  if (info.project.name === 'desktop') {
+    await expect(page.getByRole('region', { name: '지역별 여행' })).toBeVisible();
+  } else {
+    await expect(page.getByText('기록 지도', { exact: true })).toBeVisible();
+  }
   expect(
     requests.some((url) => url.pathname.includes('/travel-records'))
   ).toBeFalsy();
