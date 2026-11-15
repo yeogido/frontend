@@ -24,6 +24,7 @@ import type { MapMarker } from '../types/map';
 import type { RegionPhotoMap } from '../types/regionPhoto';
 
 interface MapProps {
+  showControls?: boolean;
   baseScale?: number;
   labelBaseScale?: number;
   minZoom?: number;
@@ -36,6 +37,7 @@ interface MapProps {
 }
 
 function Map({
+  showControls = true,
   baseScale = BASE_ZOOM_SCALE,
   labelBaseScale = baseScale,
   minZoom = MIN_ZOOM,
@@ -146,11 +148,13 @@ function Map({
         />
       </svg>
 
-      <MapControls
-        zoom={displayZoom}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-      />
+      {showControls && (
+        <MapControls
+          zoom={displayZoom}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+        />
+      )}
     </div>
   );
 }

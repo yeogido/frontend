@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AnimatePresence,
@@ -11,8 +11,17 @@ import {
 } from 'motion/react';
 import { IoEllipsisVertical } from 'react-icons/io5';
 
+import uploadIcon from '../../../assets/icons/upload.svg';
 import { getApiErrorMessage } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
+import ConfirmDialog from '../../../components/common/ConfirmDialog';
+import { useAuthStore } from '../../../store/auth.store';
+import {
+  useLeaveTravelRecord,
+  type LeaveTravelRecordVariables,
+} from '../../../hooks/useLeaveTravelRecord';
+import { canLeaveTravelRecord } from '../utils/leavePermission';
+import { toTravelRecordApiVisibility } from '../mappers/travelRecordVisibility';
 import {
   useDeleteTravelRecord,
   useTravelRecordDetail,
@@ -26,6 +35,14 @@ import {
   saveTravelRecordDraftRegion,
 } from '../utils/draftStorage';
 import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { hasTravelRecordVersion } from '../utils/editVersion';
+import { getTravelRecordActionPermissions } from '../utils/travelRecordPermissions';
+import TravelRecordMembers from './components/TravelRecordMembers';
+import TravelRecordShareModal from './components/TravelRecordShareModal';
+import { getFriendAvatarColor } from '../../friends/utils/friendAvatarColor';
+import { useMyProfile } from '../../../hooks/useMyProfile';
+import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
+import TravelRecordDetailDesktop from './desktop/TravelRecordDetailDesktop';
 
 interface TravelRecordDetailLocationState {
   folder?: TravelRecordFolder;
@@ -48,7 +65,7 @@ const thumbnailTransition: Transition = {
   ease: 'easeOut',
 };
 
-function TravelRecordDetailPage() {
+function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
   const { folderId } = useParams<{ folderId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,7 +80,21 @@ function TravelRecordDetailPage() {
   const [isPhotoTransitioning, setIsPhotoTransitioning] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [leaveConfirmation, setLeaveConfirmation] =
+    useState<LeaveTravelRecordVariables | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const closeShareModal = useCallback(() => setIsShareModalOpen(false), []);
+  const { data: profile } = useMyProfile();
   const [isDeleted, setIsDeleted] = useState(false);
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
+  const [leaveRequest, setLeaveRequest] =
+    useState<LeaveTravelRecordVariables | null>(null);
+  const leaveLocksRef = useRef(new Set<string>());
+  const currentFolderIdRef = useRef(folderId);
+  useEffect(() => {
+    currentFolderIdRef.current = folderId;
+  }, [folderId]);
   const { showToast } = useToast();
   const beginEdit = useTravelRecordSessionStore((state) => state.beginEdit);
   const [transitionTargetIndex, setTransitionTargetIndex] = useState<
@@ -73,10 +104,39 @@ function TravelRecordDetailPage() {
     location.state as TravelRecordDetailLocationState | null;
   const travelRecordId =
     folderId && /^\d+$/.test(folderId) ? Number(folderId) : null;
+  const isLeaving =
+    leaveRequest !== null &&
+    leaveRequest.travelRecordId === travelRecordId &&
+    leaveRequest.userId === userId &&
+    leaveRequest.authGeneration === authGeneration;
   const serverTravelRecordQuery = useTravelRecordDetail(
-    isDeleted ? null : travelRecordId,
+    isDeleted || isLeaving ? null : travelRecordId
   );
   const deleteTravelRecordMutation = useDeleteTravelRecord();
+  const leaveMutation = useLeaveTravelRecord();
+  const isDetailActionPending = isLeaving;
+  const inviteFolder = serverTravelRecordQuery.data;
+  const canOpenShare =
+    inviteFolder?.visibility === 'public' ||
+    inviteFolder?.visibility === 'friends';
+  const canLeave = canLeaveTravelRecord(inviteFolder, userId);
+  const isLeaveDialogOpen =
+    canLeave &&
+    leaveConfirmation?.travelRecordId === travelRecordId &&
+    leaveConfirmation.userId === userId &&
+    leaveConfirmation.authGeneration === authGeneration;
+  const isSharedFolderWithParticipants =
+    inviteFolder?.visibility === 'friends' &&
+    inviteFolder.owner?.userId === userId &&
+    (inviteFolder.participants?.some(
+      (member) => member.userId !== inviteFolder.owner?.userId
+    ) ??
+      false);
+  const { canEdit, canDelete } = getTravelRecordActionPermissions(
+    inviteFolder,
+    userId
+  );
+  const hasActionMenuItems = canEdit || canDelete || canLeave;
   // 목록에서 넘어오면 location.state에 요약 폴더가 실려 있다. 상세 조회가
   // 실패했는데도 그걸 그대로 그리면 남의 기록(403)이나 이미 지워진 기록(404)이
   // 정상 화면처럼 보이므로, 실패했을 때는 캐시 데이터를 쓰지 않는다.
@@ -115,7 +175,7 @@ function TravelRecordDetailPage() {
     resizeObserver.observe(photoStack);
 
     return () => resizeObserver.disconnect();
-  }, [folder?.id]);
+  }, [folder?.id, desktop]);
 
   useEffect(() => {
     if (!isActionMenuOpen) {
@@ -127,21 +187,40 @@ function TravelRecordDetailPage() {
         setIsActionMenuOpen(false);
       }
     };
+    const closeActionMenuOnEscape = (event: KeyboardEvent) => {
+      if (desktop && event.key === 'Escape') {
+        setIsActionMenuOpen(false);
+        actionMenuRef.current
+          ?.querySelector<HTMLButtonElement>('button')
+          ?.focus();
+      }
+    };
 
     document.addEventListener('pointerdown', closeActionMenuOnOutsideClick);
+    document.addEventListener('keydown', closeActionMenuOnEscape);
 
     return () => {
-      document.removeEventListener('pointerdown', closeActionMenuOnOutsideClick);
+      document.removeEventListener(
+        'pointerdown',
+        closeActionMenuOnOutsideClick
+      );
+      document.removeEventListener('keydown', closeActionMenuOnEscape);
     };
-  }, [isActionMenuOpen]);
+  }, [isActionMenuOpen, desktop]);
 
   // 삭제가 성공하면 상세 캐시가 제거되어 folder가 비는데, 목록으로
   // 이동하기 전 한 프레임 동안 "찾을 수 없어요"가 스치는 것을 막는다.
   if (
     travelRecordId &&
     !folder &&
-    (serverTravelRecordQuery.isLoading || isDeleted)
+    (serverTravelRecordQuery.isLoading || isDeleted || isLeaving)
   ) {
+    if (desktop)
+      return (
+        <DesktopPageShell contentWidth={1048}>
+          <div aria-busy="true" className="min-h-[400px]" />
+        </DesktopPageShell>
+      );
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1]">
         <div
@@ -153,6 +232,31 @@ function TravelRecordDetailPage() {
   }
 
   if (!folder) {
+    if (desktop)
+      return (
+        <DesktopPageShell contentWidth={1048}>
+          <div
+            role={serverTravelRecordQuery.isError ? 'alert' : undefined}
+            className="flex min-h-[400px] flex-col items-center justify-center text-center"
+          >
+            <p className="text-gray-4">
+              {serverTravelRecordQuery.isError
+                ? getApiErrorMessage(
+                    serverTravelRecordQuery.error,
+                    missingRecordLabel
+                  )
+                : missingRecordLabel}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/travel-record')}
+              className="mt-4 text-sm font-semibold"
+            >
+              {backToArchiveLabel}
+            </button>
+          </div>
+        </DesktopPageShell>
+      );
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
         <div
@@ -163,7 +267,7 @@ function TravelRecordDetailPage() {
             {serverTravelRecordQuery.isError
               ? getApiErrorMessage(
                   serverTravelRecordQuery.error,
-                  missingRecordLabel,
+                  missingRecordLabel
                 )
               : missingRecordLabel}
           </p>
@@ -293,6 +397,11 @@ function TravelRecordDetailPage() {
       return;
     }
 
+    if (!hasTravelRecordVersion(editableFolder.version)) {
+      showToast('수정 버전을 확인할 수 없어요. 상세 화면을 새로고침해 주세요.');
+      return;
+    }
+
     if (!editableFolder.serverPhotos?.length) {
       showToast('사진 정보가 없어 수정할 수 없어요.');
       return;
@@ -305,7 +414,9 @@ function TravelRecordDetailPage() {
     }));
 
     const startDate = new Date(`${editableFolder.startDate}T00:00:00`);
-    const endDate = new Date(`${editableFolder.endDate ?? editableFolder.startDate}T00:00:00`);
+    const endDate = new Date(
+      `${editableFolder.endDate ?? editableFolder.startDate}T00:00:00`
+    );
     saveTravelRecordDraftRegion({
       id: String(editableFolder.regionId ?? editableFolder.regionCode),
       regionId: editableFolder.regionId,
@@ -326,11 +437,79 @@ function TravelRecordDetailPage() {
 
     beginEdit({
       id: editableFolder.id,
+      version: editableFolder.version,
+      visibility: toTravelRecordApiVisibility(editableFolder.visibility),
+      ownerId: editableFolder.owner?.userId,
       decorations: editableFolder.decorations,
       title: editableFolder.title,
       regionId: editableFolder.regionId,
     });
     navigate(getTravelRecordEditRoute(String(travelRecordId)));
+  };
+
+  const handleLeave = async () => {
+    const session = useAuthStore.getState();
+    if (
+      !travelRecordId ||
+      isDeleted ||
+      isDetailActionPending ||
+      session.userId === null ||
+      session.userId !== userId ||
+      session.authGeneration !== authGeneration ||
+      !canLeaveTravelRecord(serverTravelRecordQuery.data, session.userId)
+    )
+      return;
+    const variables: LeaveTravelRecordVariables = {
+      travelRecordId,
+      userId: session.userId,
+      authGeneration: session.authGeneration,
+    };
+    const key = `${session.userId}:${session.authGeneration}:${travelRecordId}`;
+    if (leaveLocksRef.current.has(key)) return;
+    leaveLocksRef.current.add(key);
+    const startedFolderId = folderId;
+    const canUpdatePage = () => {
+      const current = useAuthStore.getState();
+      return (
+        isMountedRef.current &&
+        currentFolderIdRef.current === startedFolderId &&
+        current.userId === session.userId &&
+        current.authGeneration === session.authGeneration
+      );
+    };
+    setLeaveRequest(variables);
+    try {
+      await leaveMutation.mutateAsync(variables);
+      if (!canUpdatePage()) return;
+      showToast('폴더에서 나왔어요.');
+      navigate('/travel-record', { replace: true });
+    } catch (error) {
+      if (canUpdatePage())
+        showToast(
+          getApiErrorMessage(
+            error,
+            '폴더에서 나가지 못했어요. 다시 시도해 주세요.'
+          )
+        );
+    } finally {
+      leaveLocksRef.current.delete(key);
+      if (isMountedRef.current) {
+        setLeaveConfirmation((current) =>
+          current?.travelRecordId === variables.travelRecordId &&
+          current.userId === variables.userId &&
+          current.authGeneration === variables.authGeneration
+            ? null
+            : current
+        );
+        setLeaveRequest((current) =>
+          current?.travelRecordId === variables.travelRecordId &&
+          current.userId === variables.userId &&
+          current.authGeneration === variables.authGeneration
+            ? null
+            : current
+        );
+      }
+    }
   };
 
   const handleDelete = async () => {
@@ -354,9 +533,76 @@ function TravelRecordDetailPage() {
     navigate('/travel-record');
   };
 
+  const openLeaveDialog = () => {
+    if (travelRecordId && userId !== null)
+      setLeaveConfirmation({ travelRecordId, userId, authGeneration });
+  };
+  const actionDialogs = (
+    <>
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title={
+          isSharedFolderWithParticipants
+            ? '공유 폴더를 삭제할까요?'
+            : '여행 기록을 삭제할까요?'
+        }
+        description={
+          isSharedFolderWithParticipants
+            ? '삭제하면 모든 참여자가 이 폴더를 볼 수 없어요.\n사진·스티커도 함께 삭제되며, 되돌릴 수 없어요.'
+            : '삭제한 기록은 되돌릴 수 없어요.'
+        }
+        isPending={deleteTravelRecordMutation.isPending}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => {
+          if (!deleteTravelRecordMutation.isPending)
+            setIsDeleteDialogOpen(false);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={isLeaveDialogOpen}
+        title="공유 폴더에서 나갈까요?"
+        description="나가도 다른 참여자의 폴더는 그대로 유지돼요."
+        confirmLabel="나가기"
+        isPending={isLeaving}
+        onConfirm={() => void handleLeave()}
+        onCancel={() => {
+          if (!isLeaving) setLeaveConfirmation(null);
+        }}
+      />
+    </>
+  );
+
+  if (desktop) {
+    return (
+      <>
+        <TravelRecordDetailDesktop
+          folder={folder}
+          inviteFolder={inviteFolder}
+          profileName={profile?.name ?? ''}
+          profileImageUrl={profile?.profileImageUrl}
+          menuRef={actionMenuRef}
+          menuOpen={isActionMenuOpen}
+          setMenuOpen={setIsActionMenuOpen}
+          shareOpen={isShareModalOpen}
+          setShareOpen={setIsShareModalOpen}
+          setDeleteOpen={setIsDeleteDialogOpen}
+          isPending={isDetailActionPending}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          canLeave={canLeave}
+          canOpenShare={canOpenShare}
+          onEdit={() => void handleEdit()}
+          onLeave={openLeaveDialog}
+        />
+        {actionDialogs}
+      </>
+    );
+  }
+
   return (
     <TravelRecordPageFrame className="bg-[#f1f1f1] px-6">
-      <header className="relative h-[146px]">
+      <header className="relative min-h-[146px] pb-2">
         <div className="absolute top-0 left-6 h-[152px] w-[132px] origin-top-left scale-[0.83]">
           <TravelFolderArtwork
             photos={folderPhotos}
@@ -364,87 +610,142 @@ function TravelRecordDetailPage() {
             decorations={folder.decorations}
           />
         </div>
-        <div className="absolute top-[76px] right-[17px] flex w-[110px] flex-col items-center gap-1.5">
-          <h1 className="text-center text-[20px] leading-none font-semibold text-[#1c1c1c]">
+        <div className="ml-[198px] flex w-[110px] flex-col items-start gap-1.5 pt-[39px]">
+          <h1 className="w-full text-[20px] leading-6 font-semibold break-words text-black">
             {folder.title}
           </h1>
-          <time className="shrink-0 whitespace-nowrap rounded-full bg-[#e4e4e4] px-2 py-1 text-[16px] leading-none text-[#7f7f7f]">
+          <time className="bg-gray-2 text-gray-4 shrink-0 rounded-full px-2 py-1 text-[16px] leading-[normal] whitespace-nowrap">
             {folder.period}
           </time>
-        </div>
-        <div ref={actionMenuRef} className="absolute top-0 right-0 z-20">
-          <button
-            type="button"
-            aria-label="여행 기록 메뉴"
-            aria-controls="travel-record-action-menu"
-            aria-expanded={isActionMenuOpen}
-            onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
-            className="flex size-8 items-center justify-center text-[#1c1c1c]"
-          >
-            <IoEllipsisVertical aria-hidden="true" className="text-[24px]" />
-          </button>
-
-          {isActionMenuOpen && (
-            <div
-              id="travel-record-action-menu"
-              role="menu"
-              aria-label="여행 기록 작업"
-              className="absolute top-9 right-0 w-[104px] overflow-hidden rounded-2xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
-            >
-              {[
-                { label: '수정', onClick: () => void handleEdit() },
-                { label: '삭제', onClick: () => setIsDeleteDialogOpen(true) },
-              ].map(({ label, onClick }) => (
-                <button
-                  key={label}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setIsActionMenuOpen(false);
-                    onClick();
-                  }}
-                  className="flex h-[42px] w-full items-center border-b border-[#e4e4e4] px-4 text-left text-sm font-medium text-[#7f7f7f] last:border-b-0 hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+          {folder.visibility === 'friends' && (
+            <TravelRecordMembers
+              members={[
+                ...(folder.owner ? [folder.owner] : []),
+                ...(folder.participants ?? []).filter(
+                  (member) => member.userId !== folder.owner?.userId
+                ),
+              ].map((member) => ({
+                id: String(member.userId),
+                name: member.nickname,
+                color: getFriendAvatarColor(member.userId),
+              }))}
+            />
           )}
+        </div>
+        <div className="absolute -top-1 -right-1 z-20 flex items-center">
+          {canOpenShare && (
+            <button
+              type="button"
+              aria-label="여행 폴더 공유하기"
+              disabled={!inviteFolder || isDetailActionPending}
+              onClick={() => {
+                setIsActionMenuOpen(false);
+                setIsShareModalOpen(true);
+              }}
+              className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              <img
+                src={uploadIcon}
+                alt=""
+                aria-hidden="true"
+                width={24}
+                height={24}
+              />
+            </button>
+          )}
+          <div ref={actionMenuRef} className="relative">
+            {hasActionMenuItems && (
+              <button
+                type="button"
+                aria-label="여행 기록 메뉴"
+                disabled={isDetailActionPending}
+                aria-controls="travel-record-action-menu"
+                aria-expanded={isActionMenuOpen}
+                onClick={() => setIsActionMenuOpen((isOpen) => !isOpen)}
+                className="focus-visible:outline-main-5 flex size-8 items-center justify-center rounded text-black focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                <IoEllipsisVertical
+                  aria-hidden="true"
+                  className="text-[24px]"
+                />
+              </button>
+            )}
+
+            {isActionMenuOpen && hasActionMenuItems && (
+              <div
+                id="travel-record-action-menu"
+                role="menu"
+                aria-label="여행 기록 작업"
+                className="absolute top-9 right-0 min-w-[104px] overflow-hidden rounded-2xl border border-[#e4e4e4] bg-[#f9f9f9] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+              >
+                {[
+                  ...(canEdit
+                    ? [{ label: '수정', onClick: () => void handleEdit() }]
+                    : []),
+                  ...(canDelete
+                    ? [
+                        {
+                          label: '삭제',
+                          onClick: () => setIsDeleteDialogOpen(true),
+                        },
+                      ]
+                    : []),
+                ].map(({ label, onClick }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    role="menuitem"
+                    disabled={isDetailActionPending}
+                    onClick={() => {
+                      setIsActionMenuOpen(false);
+                      onClick();
+                    }}
+                    className="flex h-[42px] w-full items-center border-b border-[#e4e4e4] px-4 text-left text-sm font-medium whitespace-nowrap text-[#7f7f7f] last:border-b-0 hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none disabled:opacity-50"
+                  >
+                    {label}
+                  </button>
+                ))}
+                {canLeave && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={isDetailActionPending}
+                    onClick={() => {
+                      setIsActionMenuOpen(false);
+                      if (travelRecordId && userId !== null)
+                        setLeaveConfirmation({
+                          travelRecordId,
+                          userId,
+                          authGeneration,
+                        });
+                    }}
+                    className="flex h-[42px] w-full items-center px-4 text-left text-sm font-medium whitespace-nowrap text-[#7f7f7f] hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none disabled:opacity-50"
+                  >
+                    나가기
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {isDeleteDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="travel-record-delete-title"
-            className="w-full max-w-[342px] rounded-2xl bg-[#f9f9f9] p-6"
-          >
-            <h2 id="travel-record-delete-title" className="text-xl font-semibold text-[#1c1c1c]">
-              여행 기록을 삭제할까요?
-            </h2>
-            <p className="mt-3 text-sm text-[#7f7f7f]">삭제한 기록은 되돌릴 수 없어요.</p>
-            <div className="mt-6 flex gap-2">
-              <button type="button" onClick={() => setIsDeleteDialogOpen(false)} className="h-11 flex-1 rounded-xl bg-[#e4e4e4] text-sm font-semibold text-[#505050]">취소</button>
-              <button
-                type="button"
-                onClick={() => void handleDelete()}
-                disabled={deleteTravelRecordMutation.isPending}
-                className="h-11 flex-1 rounded-xl bg-[#ff6f41] text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                삭제
-              </button>
-            </div>
-          </section>
-        </div>
+      {isShareModalOpen && inviteFolder && canOpenShare && (
+        <TravelRecordShareModal
+          folder={inviteFolder}
+          sharerName={profile?.name ?? ''}
+          sharerProfileImageUrl={profile?.profileImageUrl}
+          onClose={closeShareModal}
+        />
       )}
+
+      {actionDialogs}
 
       <div
         ref={photoStackRef}
         role="region"
         aria-label={`${folder.title} 여행 사진`}
-        className="relative mt-6 h-[456px] w-full overflow-hidden"
+        className="relative mt-6 h-[456px] w-full overflow-hidden rounded-xl shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
       >
         <AnimatePresence initial={false}>
           {visiblePhotoIndexes.map((index) => {
@@ -467,7 +768,7 @@ function TravelRecordDetailPage() {
                 dragMomentum={false}
                 onDragEnd={handlePhotoDragEnd}
                 style={getPhotoCardStyle(index)}
-                className="absolute inset-0 overflow-hidden rounded-[24px] bg-[#e4e4e4]"
+                className="bg-gray-2 absolute inset-0 overflow-hidden rounded-xl"
               >
                 {photo && (
                   <img
@@ -482,7 +783,7 @@ function TravelRecordDetailPage() {
         </AnimatePresence>
       </div>
 
-      <div className="mt-8 flex justify-center gap-[15px] overflow-hidden">
+      <div className="mt-8 flex justify-center gap-4 overflow-hidden">
         {folderPhotos.map((photo, index) => (
           <button
             key={`${photo}-${index}`}
@@ -494,11 +795,15 @@ function TravelRecordDetailPage() {
             className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-[#e4e4e4] disabled:cursor-default"
           >
             {photo && (
-              <img src={photo} alt="" className="block size-full object-cover" />
+              <img
+                src={photo}
+                alt=""
+                className="block size-full object-cover"
+              />
             )}
             {selectedThumbnailIndex !== index && (
               <span
-                className="pointer-events-none absolute inset-0 bg-black/45"
+                className="pointer-events-none absolute inset-0 bg-black/43"
                 aria-hidden="true"
               />
             )}

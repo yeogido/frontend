@@ -43,7 +43,7 @@ export function ProfileSummary({
       <button
         type="button"
         onClick={onEdit}
-        className="bg-main-5 rounded-lg font-semibold text-[#f9f9f9]"
+        className="bg-gray-2 text-gray-4 rounded-lg font-semibold"
         style={{
           marginTop: 8 * scale,
           padding: `${8 * scale}px ${12 * scale}px`,

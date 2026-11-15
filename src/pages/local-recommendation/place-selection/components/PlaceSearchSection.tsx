@@ -1,3 +1,4 @@
+import { getCourseDayLabel } from '../../../../utils/courseDetail';
 import SelectionPageLayout from '../../components/SelectionPageLayout';
 import SelectionResultCard from '../../components/SelectionResultCard';
 import type { PlaceItem } from '../types';
@@ -8,6 +9,8 @@ interface PlaceSearchSectionProps {
   onSearchChange: (query: string) => void;
   onItemAdd: (place: PlaceItem) => void;
   onBack: () => void;
+  /** 지금 편집 중인 일차(1부터). */
+  day: number;
 }
 
 function PlaceSearchSection({
@@ -16,12 +19,13 @@ function PlaceSearchSection({
   onSearchChange,
   onItemAdd,
   onBack,
+  day,
 }: PlaceSearchSectionProps) {
   return (
     <SelectionPageLayout
       title={
         <>
-          코스에
+          {getCourseDayLabel(day)}에 방문할
           <br />
           장소를 등록해 주세요
         </>

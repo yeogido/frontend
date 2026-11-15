@@ -10,6 +10,13 @@ import type { CourseBasicInfoValues } from '../pages/local-recommendation/course
 import type { VisitEvent } from '../pages/local-recommendation/visit-order-selection/constants';
 import { useAdminCourseRegistrationStore } from '../store/adminCourseRegistration.store';
 import { toContentTagIds } from '../utils/contentTags';
+import { FORM_DURATION_TO_DURATION_TYPE } from '../pages/local-recommendation/course-basic-info/constants/options';
+import {
+  getTotalDaysForDuration,
+  normalizeCourseDay,
+  padVisitOrderToDays,
+  resolveCourseTotalDays,
+} from '../utils/courseDetail';
 import { deriveImageKeyFromUrl } from '../utils/deriveImageKeyFromUrl';
 
 const DURATION_TYPE_TO_FORM: Record<string, CourseBasicInfoValues['duration']> =
@@ -108,7 +115,17 @@ export function useEditCourse() {
 
       const places: AdminCoursePlaceItem[] = [];
       const events: FestivalItem[] = [];
-      const visitOrder: VisitEvent[] = [];
+      const totalDays = resolveCourseTotalDays(detail);
+      // 일차 확장 이전 코스는 day가 없어 전부 1일차로 모인다.
+      const visitOrder: VisitEvent[][] = Array.from(
+        { length: totalDays },
+        () => []
+      );
+      const pushToDay = (day: number | undefined, event: VisitEvent) => {
+        visitOrder[Math.min(normalizeCourseDay(day), totalDays) - 1].push(
+          event
+        );
+      };
 
       detail.courseItems.forEach((item: CourseDetailItem) => {
         if (item.type === 'PLACE') {
@@ -128,7 +145,7 @@ export function useEditCourse() {
             photoPreviewUrl: item.imageUrl,
             existingImageKey: item.imageKey ?? null,
           });
-          visitOrder.push({
+          pushToDay(item.day, {
             id: `place:${id}`,
             kind: 'PLACE',
             name: item.name,
@@ -151,7 +168,7 @@ export function useEditCourse() {
             address: item.roadAddress || item.lotAddress,
             imageSrc: item.imageUrl,
           });
-          visitOrder.push({
+          pushToDay(item.day, {
             id: `content:${item.contentId}`,
             kind: 'CONTENT',
             name: item.name,
@@ -164,7 +181,18 @@ export function useEditCourse() {
 
       setSelectedPlaces(places);
       setSelectedEvents(events);
-      setVisitOrder(visitOrder);
+      // 스토어의 totalDays는 기간에서 파생되므로 같은 기준으로 길이를 맞춘다.
+      setVisitOrder(
+        padVisitOrderToDays(
+          visitOrder,
+          getTotalDaysForDuration(
+            FORM_DURATION_TO_DURATION_TYPE[
+              DURATION_TYPE_TO_FORM[detail.durationType] ?? 'day-trip'
+            ],
+            totalDays
+          )
+        )
+      );
       setEditingCourseId(courseId);
 
       navigate('/admin/course-registration/basic-info');

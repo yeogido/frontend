@@ -16,17 +16,17 @@ import type {
 } from '../../../types/travelRecord.type';
 import type { TravelDateRange } from '../date-selection/types';
 import type { TravelFolderDecoration } from '../folder-decoration/folderDecoration';
-import type {
-  TravelRecordDraftRegion,
-  TravelRecordFolder,
-} from '../types';
+import type { TravelRecordDraftRegion, TravelRecordFolder } from '../types';
 import { formatTravelRecordLocalDate } from '../utils/sessionFolders.ts';
+import { requireTravelRecordVersion } from '../utils/editVersion.ts';
+import { toTravelRecordVisibility } from './travelRecordVisibility.ts';
+import type { TravelRecordApiVisibility } from '../../../types/travelRecord.type';
 
 type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
 
 const resolveTravelRecordMapRegion = (
   fallbackName: string,
-  regionInfo?: TravelRecordRegionInfo,
+  regionInfo?: TravelRecordRegionInfo
 ) => {
   const match = findMapRegion({
     name: regionInfo?.name,
@@ -52,10 +52,10 @@ const formatPeriod = (startDate: string, endDate: string) =>
     .replace('-', '.')}`;
 
 const getRegionProvince = (fullName?: string, name?: string) =>
-  fullName && name && fullName !== name ? fullName : name ?? '';
+  fullName && name && fullName !== name ? fullName : (name ?? '');
 
 export const mapPopularRegionToTravelRecordRegion = (
-  region: PopularRegionResponse,
+  region: PopularRegionResponse
 ) => ({
   id: String(region.regionId),
   regionId: region.regionId,
@@ -66,7 +66,7 @@ export const mapPopularRegionToTravelRecordRegion = (
 });
 
 export const mapRegionSearchToTravelRecordRegion = (
-  region: RegionSearchResponse,
+  region: RegionSearchResponse
 ) => ({
   id: String(region.regionId),
   regionId: region.regionId,
@@ -78,13 +78,13 @@ export const mapRegionSearchToTravelRecordRegion = (
 
 const getRenderablePhotos = (
   images: TravelRecordImageResponse[],
-  coverImageUrl?: string,
+  coverImageUrl?: string
 ): [string, ...string[]] => {
   const photos = images
     .filter((image) => image.imageUrl)
     .sort(
       (currentImage, nextImage) =>
-        currentImage.imageOrder - nextImage.imageOrder,
+        currentImage.imageOrder - nextImage.imageOrder
     )
     .map((image) => image.imageUrl);
 
@@ -101,10 +101,11 @@ const getRenderablePhotos = (
 
 export const mapTravelRecordSummaryToFolder = (
   record: TravelRecordSummary,
-  regionInfo?: TravelRecordRegionInfo,
+  regionInfo?: TravelRecordRegionInfo
 ): TravelRecordFolder => ({
   id: String(record.travelRecordId),
   regionId: record.regionId,
+  ...(record.visibility ? { visibility: toTravelRecordVisibility(record.visibility) } : {}),
   ...resolveTravelRecordMapRegion(record.title, regionInfo),
   title: record.title,
   folderTheme: record.folderTheme,
@@ -117,7 +118,7 @@ export const mapTravelRecordSummaryToFolder = (
 
 export const mapTravelRecordDetailToFolder = (
   record: TravelRecordDetailResponse,
-  regionInfo?: TravelRecordRegionInfo,
+  regionInfo?: TravelRecordRegionInfo
 ): TravelRecordFolder => {
   const stickers = Array.isArray(record.stickers) ? record.stickers : [];
   const images = Array.isArray(record.images) ? record.images : [];
@@ -125,7 +126,7 @@ export const mapTravelRecordDetailToFolder = (
     .filter((image) => image.imageUrl)
     .sort(
       (currentImage, nextImage) =>
-        currentImage.imageOrder - nextImage.imageOrder,
+        currentImage.imageOrder - nextImage.imageOrder
     )
     .map((image) => ({
       imageKey: image.imageKey,
@@ -135,14 +136,19 @@ export const mapTravelRecordDetailToFolder = (
   return {
     id: String(record.travelRecordId),
     regionId: record.regionId,
+    ...(record.visibility ? { visibility: toTravelRecordVisibility(record.visibility) } : {}),
+    ...(record.owner ? { owner: record.owner } : {}),
+    ...(record.participants ? { participants: record.participants } : {}),
+    ...(record.permissions ? { permissions: record.permissions } : {}),
     ...resolveTravelRecordMapRegion(record.title, regionInfo),
     title: record.title,
     folderTheme: record.folderTheme,
-      startDate: record.startDate,
+    startDate: record.startDate,
     endDate: record.endDate,
     period: formatPeriod(record.startDate, record.endDate),
     photos: getRenderablePhotos(images, record.coverImageUrl),
     serverPhotos,
+    ...(record.version !== undefined ? { version: record.version } : {}),
     decorations: stickers.map((sticker) => ({
       id: String(sticker.recordStickerId),
       stickerId: sticker.stickerId,
@@ -159,13 +165,17 @@ export const mapTravelRecordDetailToFolder = (
 export const mapTravelRecordFolder = (
   summary: TravelRecordSummary,
   detail?: TravelRecordDetailResponse,
-  regionInfo?: TravelRecordRegionInfo,
+  regionInfo?: TravelRecordRegionInfo
 ) =>
   detail
-    ? mapTravelRecordDetailToFolder(detail, regionInfo)
+    ? mapTravelRecordDetailToFolder(
+        { ...detail, visibility: detail.visibility ?? summary.visibility },
+        regionInfo
+      )
     : mapTravelRecordSummaryToFolder(summary, regionInfo);
 
 interface CreateTravelRecordCreateRequestParams {
+  visibility?: TravelRecordApiVisibility;
   selectedRegion: TravelRecordDraftRegion;
   selectedDateRange: TravelDateRange;
   uploadedImages: UploadedTravelRecordImage[];
@@ -176,7 +186,7 @@ const getSelectedRegionId = (selectedRegion: TravelRecordDraftRegion) =>
   selectedRegion.regionId ?? Number(selectedRegion.id);
 
 const createTravelRecordImageRequests = (
-  uploadedImages: UploadedTravelRecordImage[],
+  uploadedImages: UploadedTravelRecordImage[]
 ): TravelRecordImageRequest[] =>
   uploadedImages.map((image, index) => ({
     imageKey: image.objectKey,
@@ -184,7 +194,7 @@ const createTravelRecordImageRequests = (
   }));
 
 const createTravelRecordStickerRequests = (
-  decorations: TravelFolderDecoration[],
+  decorations: TravelFolderDecoration[]
 ): TravelRecordStickerRequest[] =>
   decorations.map((decoration) => ({
     stickerId: decoration.stickerId,
@@ -196,11 +206,13 @@ const createTravelRecordStickerRequests = (
   }));
 
 export const createTravelRecordCreateRequest = ({
+  visibility,
   selectedRegion,
   selectedDateRange,
   uploadedImages,
   decorations,
 }: CreateTravelRecordCreateRequestParams): TravelRecordCreateRequest => ({
+  ...(visibility ? { visibility } : {}),
   title: selectedRegion.name,
   regionId: getSelectedRegionId(selectedRegion),
   startDate: formatTravelRecordLocalDate(selectedDateRange.startDate),
@@ -210,8 +222,8 @@ export const createTravelRecordCreateRequest = ({
   stickers: createTravelRecordStickerRequests(decorations),
 });
 
-interface CreateTravelRecordUpdateRequestParams
-  extends CreateTravelRecordCreateRequestParams {
+interface CreateTravelRecordUpdateRequestParams extends CreateTravelRecordCreateRequestParams {
+  version: number;
   /** 서버에 저장돼 있던 스티커를 실제로 복원한 상태인지. */
   isStickerStateRestored: boolean;
   /** 서버에 저장돼 있던 제목. */
@@ -221,6 +233,7 @@ interface CreateTravelRecordUpdateRequestParams
 }
 
 export const createTravelRecordUpdateRequest = ({
+  version,
   selectedRegion,
   selectedDateRange,
   uploadedImages,
@@ -236,6 +249,7 @@ export const createTravelRecordUpdateRequest = ({
   const keepsServerStickers = !isStickerStateRestored;
 
   return {
+    version: requireTravelRecordVersion(version),
     // 제목 입력 화면이 없어 생성 시에는 지역명을 제목으로 쓴다. 수정하면서
     // 지역을 바꾸지 않았다면 서버에 저장된 제목을 그대로 되돌려 보낸다.
     title:

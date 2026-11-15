@@ -11,6 +11,11 @@ import {
   type AdminCoursePlaceItem,
 } from '../pages/admin/course-registration/types';
 import type { TagId } from '../types/tag.type';
+import { FORM_DURATION_TO_DURATION_TYPE } from '../pages/local-recommendation/course-basic-info/constants/options.ts';
+import {
+  getTotalDaysForDuration,
+  padVisitOrderToDays,
+} from '../utils/courseDetail.ts';
 
 interface AdminCourseRegistrationState {
   region: Neighborhood | null;
@@ -19,7 +24,10 @@ interface AdminCourseRegistrationState {
   keywordTagIds: TagId[];
   selectedEvents: FestivalItem[];
   selectedPlaces: AdminCoursePlaceItem[];
-  visitOrder: VisitEvent[];
+  /** 일차별 방문 순서 — 인덱스 0이 1일차다. 길이는 totalDays와 같게 유지한다. */
+  visitOrder: VisitEvent[][];
+  /** 실제 여행 일수. basicInfo.duration에서 파생한다. */
+  totalDays: number;
   /** null이면 새로 등록, 값이 있으면 해당 코스를 수정하는 흐름이다. */
   editingCourseId: number | null;
   /**
@@ -34,7 +42,7 @@ interface AdminCourseRegistrationState {
   setKeywordTagIds: (tagIds: TagId[]) => void;
   setSelectedEvents: (events: FestivalItem[]) => void;
   setSelectedPlaces: (places: AdminCoursePlaceItem[]) => void;
-  setVisitOrder: (visitOrder: VisitEvent[]) => void;
+  setVisitOrder: (visitOrder: VisitEvent[][]) => void;
   setEditingCourseId: (courseId: number | null) => void;
   setExistingThumbnailKey: (key: string | null) => void;
   reset: () => void;
@@ -42,6 +50,11 @@ interface AdminCourseRegistrationState {
 
 // selectedPlaces는 통째로 교체되는 배열이라, 이전 배열에는 있었지만 다음
 // 배열에는 없는(삭제된) 항목의 사진 blob URL만 골라 해제한다.
+const filterVisitOrder = (
+  visitOrder: readonly VisitEvent[][],
+  keep: (event: VisitEvent) => boolean
+): VisitEvent[][] => visitOrder.map((dayEvents) => dayEvents.filter(keep));
+
 const revokeRemovedPlacePhotos = (
   previous: AdminCoursePlaceItem[],
   next: AdminCoursePlaceItem[]
@@ -63,10 +76,23 @@ export const useAdminCourseRegistrationStore =
     selectedEvents: [],
     selectedPlaces: [],
     visitOrder: [],
+    totalDays: 1,
     editingCourseId: null,
     existingThumbnailKey: null,
     setRegion: (region) => set({ region }),
-    setBasicInfo: (basicInfo) => set({ basicInfo }),
+    setBasicInfo: (basicInfo) =>
+      set((state) => {
+        const totalDays = getTotalDaysForDuration(
+          FORM_DURATION_TO_DURATION_TYPE[basicInfo.duration],
+          state.totalDays
+        );
+
+        return {
+          basicInfo,
+          totalDays,
+          visitOrder: padVisitOrderToDays(state.visitOrder, totalDays),
+        };
+      }),
     setPhoto: (photo) => {
       const previousPhoto = get().photo;
       if (previousPhoto && previousPhoto.previewUrl !== photo?.previewUrl) {
@@ -79,11 +105,14 @@ export const useAdminCourseRegistrationStore =
       // 방문 순서에 이미 반영된 행사가 빠지면(뒤로 가서 삭제) visitOrder에도
       // 유령 항목으로 남지 않도록 같이 정리한다.
       const contentIds = new Set(
-        selectedEvents.map((event) => `${VISIT_EVENT_CONTENT_ID_PREFIX}${event.id}`)
+        selectedEvents.map(
+          (event) => `${VISIT_EVENT_CONTENT_ID_PREFIX}${event.id}`
+        )
       );
       set((state) => ({
         selectedEvents,
-        visitOrder: state.visitOrder.filter(
+        visitOrder: filterVisitOrder(
+          state.visitOrder,
           (event) => event.kind !== 'CONTENT' || contentIds.has(event.id)
         ),
       }));
@@ -91,11 +120,14 @@ export const useAdminCourseRegistrationStore =
     setSelectedPlaces: (selectedPlaces) => {
       revokeRemovedPlacePhotos(get().selectedPlaces, selectedPlaces);
       const placeIds = new Set(
-        selectedPlaces.map((place) => `${VISIT_EVENT_PLACE_ID_PREFIX}${place.id}`)
+        selectedPlaces.map(
+          (place) => `${VISIT_EVENT_PLACE_ID_PREFIX}${place.id}`
+        )
       );
       set((state) => ({
         selectedPlaces,
-        visitOrder: state.visitOrder.filter(
+        visitOrder: filterVisitOrder(
+          state.visitOrder,
           (event) => event.kind !== 'PLACE' || placeIds.has(event.id)
         ),
       }));
@@ -118,6 +150,7 @@ export const useAdminCourseRegistrationStore =
         selectedEvents: [],
         selectedPlaces: [],
         visitOrder: [],
+        totalDays: 1,
         editingCourseId: null,
         existingThumbnailKey: null,
       });

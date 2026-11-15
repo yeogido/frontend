@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/tmap-routing/walk",
+      "destination": "/api/tmap/walk"
+    },
+    {
       "source": "/kakao-maps/static-map",
       "destination": "/api/kakao-maps/static-map"
     },

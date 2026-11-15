@@ -1,58 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
 import {
   ContentCard,
   CourseFilterBar,
   SearchBar,
 } from '../../components/common';
 import {
-  openKakaoMapPlace,
-  openKakaoMapSearch,
-} from '../../components/kakaomap/utils/kakaoMapLink';
-import { useToast } from '../../components/toast';
-import {
   LIKED_ITEM_FILTER_GRID_CLASS_NAME,
   getLikedItemFilterColumnClassName,
 } from '../../constants/courseFilterLayout';
-import {
-  removeContentLike,
-  removeCourseLike,
-  removePlaceLike,
-} from '../../apis/courses';
-import { useNavigateToCourseDetail } from '../../hooks/useCourses';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
-import useInfiniteScroll from '../../hooks/useInfiniteScroll';
-import {
-  formatTodayOpeningHours,
-  usePlaceOpeningHours,
-} from '../../hooks/usePlaceOpeningHours';
 import { toContentTagIds } from '../../utils/contentTags';
-import { buildFestivalDetailPath } from '../../utils/routes';
-import {
-  readStoredUserLocation,
-  requestUserLocation,
-  type UserLocation,
-} from '../../utils/geolocation';
 
-import {
-  ALL_FILTER_OPTION,
-  LIKED_CATEGORY_OPTIONS,
-  LIKED_SORT_LATEST,
-  LIKED_SORT_OPTIONS,
-  likedCategoryByLabel,
-  type LikedItemFilterKey,
-} from './constants/filters';
-import useLikedItemFilters from './hooks/useLikedItemFilters';
-import { useLikedItems } from './hooks/useLikedItems';
-import {
-  filterLikedItems,
-  getDetailFilterOptions,
-  mapLikedItemResponse,
-  sortLikedItems,
-  toLikedItemInfoLines,
-} from './utils/likedItems';
-import type { LikedItem } from './types';
+import { useLikesPage } from './hooks/useLikesPage';
+import { toLikedItemInfoLines } from './utils/likedItems';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -72,160 +31,23 @@ const ERROR_MARGIN_TOP = 24;
 const LOAD_MORE_HEIGHT = 40;
 
 function LikesPage() {
-  const navigate = useNavigate();
   const scale = useGlobalScale();
-  const { showToast } = useToast();
-  const { goToCourseDetail } = useNavigateToCourseDetail();
-  const [keyword, setKeyword] = useState('');
-  const [unlikedIds, setUnlikedIds] = useState<ReadonlySet<string>>(new Set());
-  const [initialUserLocation] = useState<UserLocation | null>(() =>
-    readStoredUserLocation()
-  );
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(
-    initialUserLocation
-  );
-
-  useEffect(() => {
-    if (initialUserLocation) return;
-
-    let isActive = true;
-
-    void requestUserLocation().then((location) => {
-      if (!isActive) return;
-      setUserLocation(location);
-    });
-
-    return () => {
-      isActive = false;
-    };
-  }, [initialUserLocation]);
-
   const {
+    setKeyword,
     filterContainerRef,
     openFilterKey,
     selectedFilters,
     handleFilterToggle,
     handleFilterSelect,
-  } = useLikedItemFilters();
-
-  const category = likedCategoryByLabel[selectedFilters.category] ?? 'ALL';
-  const sort = selectedFilters.sort === LIKED_SORT_LATEST ? 'LATEST' : 'OLDEST';
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
+    filterGroups,
+    likedItems,
+    getPlaceOpeningLabel,
+    handleCardClick,
+    handleUnlike,
+    loadMoreRef,
     isError,
-    isFetchingNextPage,
-    isPending,
-  } = useLikedItems({
-    category,
-    keyword: keyword.trim() || undefined,
-    sort,
-    latitude: userLocation?.latitude,
-    longitude: userLocation?.longitude,
-  });
-
-  const activeLikedItems = useMemo(
-    () =>
-      (
-        data?.pages.flatMap((page) => page.items).map(mapLikedItemResponse) ??
-        []
-      ).filter((item) => !unlikedIds.has(`${item.category}-${item.id}`)),
-    [data, unlikedIds]
-  );
-
-  const showDetailFilter =
-    selectedFilters.category === ALL_FILTER_OPTION ||
-    selectedFilters.category === '코스';
-
-  const filterGroups = useMemo(() => {
-    const groups: { key: LikedItemFilterKey; options: readonly string[] }[] = [
-      { key: 'category', options: LIKED_CATEGORY_OPTIONS },
-    ];
-
-    if (showDetailFilter) {
-      groups.push({
-        key: 'detail',
-        options: getDetailFilterOptions(
-          selectedFilters.category,
-          activeLikedItems
-        ),
-      });
-    }
-
-    groups.push({ key: 'sort', options: LIKED_SORT_OPTIONS });
-
-    return groups;
-  }, [selectedFilters.category, activeLikedItems, showDetailFilter]);
-
-  const likedItems = useMemo(
-    () =>
-      sortLikedItems(
-        filterLikedItems({
-          items: activeLikedItems,
-          categoryLabel: selectedFilters.category,
-          detailLabel: selectedFilters.detail,
-          keyword,
-        }),
-        selectedFilters.sort
-      ),
-    [activeLikedItems, keyword, selectedFilters]
-  );
-  const openingHoursByItemId = usePlaceOpeningHours(
-    likedItems.flatMap((item) =>
-      item.category === 'PLACE'
-        ? [{ id: item.id, name: item.title, address: item.location }]
-        : []
-    )
-  );
-
-  const handleCardClick = useCallback(
-    (item: LikedItem) => {
-      const placeId = item.externalPlaceId?.trim();
-
-      if (item.category === 'COURSE') {
-        void goToCourseDetail(item.id);
-      } else if (item.category === 'EVENT') {
-        navigate(buildFestivalDetailPath(item.id));
-      } else if (placeId) {
-        openKakaoMapPlace(placeId);
-      } else {
-        openKakaoMapSearch(`${item.title} ${item.location}`);
-      }
-    },
-    [goToCourseDetail, navigate]
-  );
-
-  const handleUnlike = async (item: LikedItem) => {
-    try {
-      if (item.category === 'COURSE') {
-        await removeCourseLike(item.id);
-      } else if (item.category === 'PLACE') {
-        await removePlaceLike(item.id);
-      } else {
-        await removeContentLike(item.id);
-      }
-
-      setUnlikedIds((currentIds) =>
-        new Set(currentIds).add(`${item.category}-${item.id}`)
-      );
-    } catch {
-      showToast('좋아요 취소에 실패했습니다. 잠시 후 다시 시도해주세요.');
-    }
-  };
-
-  const handleIntersect = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const loadMoreRef = useInfiniteScroll({
-    enabled: Boolean(hasNextPage) && !isPending,
-    onIntersect: handleIntersect,
-  });
-
-  const hasEmptyResult = !isPending && !isError && likedItems.length === 0;
+    hasEmptyResult,
+  } = useLikesPage();
 
   return (
     <section
@@ -290,24 +112,17 @@ function LikesPage() {
           }}
         >
           {likedItems.map((item) => {
-            const itemKey = `${item.category}-${item.id}`;
             const { firstInfo, secondInfo, thirdInfo, distanceInfo } =
               toLikedItemInfoLines(item);
-            const placeHours =
-              item.category === 'PLACE'
-                ? openingHoursByItemId.get(item.id)
-                : undefined;
-            const openingHours =
-              placeHours && formatTodayOpeningHours(placeHours);
 
             return (
               <ContentCard
-                key={itemKey}
+                key={`${item.category}-${item.id}`}
                 image={item.thumbnailUrl}
                 title={item.title}
                 firstInfo={
                   item.category === 'PLACE'
-                    ? (openingHours ?? '영업시간 정보 없음')
+                    ? getPlaceOpeningLabel(item)
                     : firstInfo
                 }
                 secondInfo={secondInfo}

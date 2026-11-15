@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { IoChevronDown } from 'react-icons/io5';
+import yearChevron from '../assets/year-chevron.svg';
 
 interface TravelYearDropdownProps {
-  value: number;
+  value: number | null;
   years: readonly number[];
   onChange: (year: number) => void;
+  onSelectAll?: () => void;
+  desktop?: boolean;
 }
 
 function TravelYearDropdown({
   value,
   years,
   onChange,
+  onSelectAll,
+  desktop = false,
 }: TravelYearDropdownProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -32,26 +36,35 @@ function TravelYearDropdown({
     setIsOpen(false);
   };
 
-  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
       setIsOpen(false);
     }
   };
 
   return (
-    <div ref={rootRef} className="relative mt-4 h-8 w-[86px]">
+    <div
+      ref={rootRef}
+      onKeyDown={handleTriggerKeyDown}
+      className={
+        desktop
+          ? 'relative h-[37px] w-[83px] shrink-0'
+          : 'relative h-[30px] w-[75px] shrink-0'
+      }
+    >
       <button
         type="button"
         aria-expanded={isOpen}
-        aria-label={`여행 기록 연도 선택, 현재 ${value}년`}
+        aria-label={`여행 기록 연도 선택, 현재 ${value === null ? '전체' : `${value}년`}`}
         onClick={() => setIsOpen((current) => !current)}
-        onKeyDown={handleTriggerKeyDown}
-        className="flex h-8 w-[86px] items-center justify-center gap-0.5 rounded-full bg-gray-2 px-2 py-1 text-[18px] leading-none font-medium text-gray-4"
+        className={`border-gray-2 text-gray-4 flex w-full items-center justify-between rounded-full border bg-white px-2.5 ${desktop ? 'h-[37px] py-2 text-[18px]' : 'h-[30px] py-1.5 text-sm leading-[17px]'}`}
       >
-        <span>{value}</span>
-        <IoChevronDown
+        <span>{value ?? '전체'}</span>
+        <img
+          src={yearChevron}
+          alt=""
           aria-hidden="true"
-          className={`size-6 shrink-0 transition-transform ${
+          className={`block max-w-none shrink-0 transition-transform ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -59,26 +72,32 @@ function TravelYearDropdown({
 
       {isOpen ? (
         <div
-          className="absolute top-9 left-0 z-50 flex w-[86px] flex-col items-start"
+          className={`border-gray-2 absolute left-0 z-50 flex max-h-60 flex-col items-start overflow-y-auto rounded-xl border bg-white shadow-sm ${desktop ? 'top-[43px] w-[83px]' : 'top-9 w-[75px]'}`}
         >
-          {years.map((year, index) => {
-            const isFirst = index === 0;
-            const isLast = index === years.length - 1;
-
-            return (
-              <button
-                key={year}
-                type="button"
-                aria-current={year === value ? 'true' : undefined}
-                onClick={() => handleSelect(year)}
-                className={`h-8 w-full bg-gray-2 px-2 text-left text-[18px] leading-none font-medium whitespace-nowrap text-gray-4 ${
-                  isFirst ? 'rounded-t-xl' : ''
-                } ${isLast ? 'rounded-b-xl' : ''}`}
-              >
-                {year}
-              </button>
-            );
-          })}
+          {onSelectAll && (
+            <button
+              type="button"
+              aria-current={value === null ? 'true' : undefined}
+              onClick={() => {
+                onSelectAll();
+                setIsOpen(false);
+              }}
+              className="text-gray-4 hover:bg-main-2 h-8 w-full shrink-0 px-2.5 text-left text-sm whitespace-nowrap"
+            >
+              전체
+            </button>
+          )}
+          {years.map((year) => (
+            <button
+              key={year}
+              type="button"
+              aria-current={year === value ? 'true' : undefined}
+              onClick={() => handleSelect(year)}
+              className="text-gray-4 hover:bg-main-2 h-8 w-full shrink-0 px-2.5 text-left text-sm whitespace-nowrap"
+            >
+              {year}
+            </button>
+          ))}
         </div>
       ) : null}
     </div>

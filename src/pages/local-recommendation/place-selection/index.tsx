@@ -1,64 +1,40 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-import { useLocalRecommendationStore } from '../../../store/localRecommendation.store';
 import PlacePhotoModal from './components/PlacePhotoModal';
 import PlaceSearchSection from './components/PlaceSearchSection';
 import SelectedPlaceSection from './components/SelectedPlaceSection';
-import { usePlacePhotoModal } from './hooks/usePlacePhotoModal';
-import { usePlaceSearch } from './hooks/usePlaceSearch';
-import { useSelectedPlaces } from './hooks/useSelectedPlaces';
+import { usePlaceSelectionPage } from './usePlaceSelectionPage';
 
 function PlaceSelectionPage() {
-  const navigate = useNavigate();
-  const imageRecoveryRequired = useLocalRecommendationStore(
-    (state) => state.imageRecoveryRequired
-  );
-  const { setQuery, searchResults } = usePlaceSearch();
   const {
+    day,
+    setQuery,
+    searchResults,
     selectedPlaces,
     selectedPlaceIds,
-    addSelectedPlace,
     removeSelectedPlace,
     removeAllSelectedPlaces,
-  } = useSelectedPlaces();
+    photoModal,
+    handleConfirmImage,
+    handleSubmitPlaces,
+    handleBack,
+  } = usePlaceSelectionPage();
   const {
     pendingPlace,
-    pendingImageFile,
     pendingImagePreviewUrl,
     isImageModalOpen,
     handlePlaceAdd,
     closeImageModal,
     handleImageFileChange,
-    clearModalState,
-  } = usePlacePhotoModal();
-
-  useEffect(() => {
-    if (!imageRecoveryRequired) return;
-    navigate('/local-recommendation/tag-selection', { replace: true });
-  }, [imageRecoveryRequired, navigate]);
-
-  const handleConfirmImage = () => {
-    if (!pendingPlace || !pendingImageFile) return;
-
-    addSelectedPlace(pendingPlace, pendingImageFile, pendingImagePreviewUrl);
-    clearModalState();
-  };
-
-  const handleSubmitPlaces = () => {
-    navigate('/local-recommendation/visit-order-selection');
-  };
+  } = photoModal;
 
   return (
     <>
       <PlaceSearchSection
         searchResults={searchResults}
         selectedPlaceIds={selectedPlaceIds}
+        day={day}
         onSearchChange={setQuery}
         onItemAdd={handlePlaceAdd}
-        onBack={() =>
-          navigate('/local-recommendation/event-selection', { replace: true })
-        }
+        onBack={handleBack}
       />
       <SelectedPlaceSection
         selectedPlaces={selectedPlaces}

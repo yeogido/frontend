@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { geoMercator, geoPath } from 'd3-geo';
 
@@ -11,7 +11,6 @@ import type { RegionPhotoMap } from '../types/regionPhoto';
 const MAP_WIDTH = 400;
 const MAP_HEIGHT = 600;
 const MAP_PADDING = 20;
-
 
 /**
  * 사진 위에 덮는 스크림. 사진마다 밝기가 제각각이라 그대로 두면 흰
@@ -37,6 +36,8 @@ interface PhotoLayerProps {
  * 도형이 넓은 도형에 가려지지 않게 한다.
  */
 function PhotoLayer({ regionPhotos }: PhotoLayerProps) {
+  const layerId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const blurId = `photo-blur-${layerId}`;
   const provinceProjection = useMemo(
     () =>
       geoMercator().fitExtent(
@@ -44,9 +45,9 @@ function PhotoLayer({ regionPhotos }: PhotoLayerProps) {
           [MAP_PADDING, MAP_PADDING],
           [MAP_WIDTH - MAP_PADDING, MAP_HEIGHT - MAP_PADDING],
         ],
-        koreaProvince,
+        koreaProvince
       ),
-    [],
+    []
   );
 
   const cityProjection = useMemo(
@@ -56,20 +57,17 @@ function PhotoLayer({ regionPhotos }: PhotoLayerProps) {
           [MAP_PADDING, MAP_PADDING],
           [MAP_WIDTH - MAP_PADDING, MAP_HEIGHT - MAP_PADDING],
         ],
-        koreaCity,
+        koreaCity
       ),
-    [],
+    []
   );
 
   const provincePath = useMemo(
     () => geoPath(provinceProjection),
-    [provinceProjection],
+    [provinceProjection]
   );
 
-  const cityPath = useMemo(
-    () => geoPath(cityProjection),
-    [cityProjection],
-  );
+  const cityPath = useMemo(() => geoPath(cityProjection), [cityProjection]);
 
   const provinceItems = useMemo(
     () =>
@@ -92,34 +90,34 @@ function PhotoLayer({ regionPhotos }: PhotoLayerProps) {
           return { key: `province-${index}`, name, d, bounds, photoUrl };
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item)),
-    [provincePath, regionPhotos],
+    [provincePath, regionPhotos]
   );
 
   const cityItems = useMemo(
     () =>
       koreaCity.features
-      .map((feature, index) => {
-        const properties = feature.properties as {
-          code?: string;
-          name?: string;
-        } | null;
+        .map((feature, index) => {
+          const properties = feature.properties as {
+            code?: string;
+            name?: string;
+          } | null;
 
-        if (isMetroCityCode(properties?.code)) return null;
+          if (isMetroCityCode(properties?.code)) return null;
 
-        const name = properties?.name ?? '';
-        const photoUrl = regionPhotos[name]?.photoUrl;
+          const name = properties?.name ?? '';
+          const photoUrl = regionPhotos[name]?.photoUrl;
 
-        if (!photoUrl) return null;
+          if (!photoUrl) return null;
 
-        const d = cityPath(feature);
-        if (!d) return null;
+          const d = cityPath(feature);
+          if (!d) return null;
 
-        const bounds = cityPath.bounds(feature);
+          const bounds = cityPath.bounds(feature);
 
-        return { key: `city-${index}`, name, d, bounds, photoUrl };
-      })
-      .filter((item): item is NonNullable<typeof item> => Boolean(item)),
-    [cityPath, regionPhotos],
+          return { key: `city-${index}`, name, d, bounds, photoUrl };
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item)),
+    [cityPath, regionPhotos]
   );
 
   const items = useMemo(() => {
@@ -135,11 +133,17 @@ function PhotoLayer({ regionPhotos }: PhotoLayerProps) {
 
   return (
     <>
-      {items.map(({ key, d, bounds, photoUrl }) => {
+      <defs>
+        <filter id={blurId} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="1" />
+        </filter>
+      </defs>
+      {items.map(({ key, name, d, bounds, photoUrl }) => {
         const [[x0, y0], [x1, y1]] = bounds;
         const width = x1 - x0;
         const height = y1 - y0;
-        const clipId = `photo-clip-${key}`;
+        const clipId = `photo-clip-${layerId}-${key}`;
+        const isBlurred = regionPhotos[name]?.isBlurred === true;
 
         return (
           <g key={key} pointerEvents="none">
@@ -147,15 +151,19 @@ function PhotoLayer({ regionPhotos }: PhotoLayerProps) {
               <path d={d} />
             </clipPath>
 
-            <image
-              href={photoUrl}
-              x={x0}
-              y={y0}
-              width={width}
-              height={height}
-              preserveAspectRatio="xMidYMid slice"
-              clipPath={`url(#${clipId})`}
-            />
+            <g clipPath={`url(#${clipId})`}>
+              <image
+                href={photoUrl}
+                x={x0}
+                y={y0}
+                width={width}
+                height={height}
+                preserveAspectRatio="xMidYMid slice"
+                filter={isBlurred ? `url(#${blurId})` : undefined}
+                data-region={name}
+                data-blurred={isBlurred ? 'true' : undefined}
+              />
+            </g>
 
             {/* 도형과 같은 path라 클리핑 없이도 사진 영역에만 얹힌다 */}
             <path

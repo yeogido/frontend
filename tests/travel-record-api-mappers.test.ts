@@ -618,6 +618,7 @@ const busanDraftRegion = {
 };
 
 const createUpdateRequestParams = () => ({
+  version: 7,
   selectedRegion: busanDraftRegion,
   selectedDateRange: {
     startDate: new Date(2026, 6, 20),
@@ -634,6 +635,7 @@ test('creates a travel record update request from the edited draft data', () => 
       isStickerStateRestored: true,
     }),
     {
+      version: 7,
       title: 'Busan',
       regionId: 27,
       startDate: '2026-07-20',

@@ -1,3 +1,5 @@
+import { useLocalRecommendationStore } from '../../store/localRecommendation.store';
+
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -126,6 +128,7 @@ function LocalCoursePage() {
   };
 
   const goToCreateCourse = () => {
+    useLocalRecommendationStore.getState().resetDraft();
     navigate('/local-recommendation');
   };
 

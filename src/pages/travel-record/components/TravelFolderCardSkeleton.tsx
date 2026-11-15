@@ -4,6 +4,7 @@ import { FolderFrontFace } from './FolderFrontFace';
 import {
   FOLDER_ARTWORK_HEIGHT,
   FOLDER_ARTWORK_WIDTH,
+  FOLDER_FRONT_TOP,
   FOLDER_PERIOD_HEIGHT,
   FOLDER_TITLE_HEIGHT,
   folderPhotoSlots,
@@ -32,7 +33,8 @@ function TravelFolderCardSkeleton() {
         <img
           src={folderShadowLayerImage}
           alt=""
-          className="pointer-events-none absolute top-[38px] left-[-10px] z-0 h-[160px] w-[179px]"
+          className="pointer-events-none absolute left-[-10px] z-0 h-[160px] w-[179px] max-w-none"
+          style={{ top: FOLDER_FRONT_TOP - 18 }}
           aria-hidden="true"
         />
 

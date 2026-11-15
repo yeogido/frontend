@@ -42,15 +42,12 @@ function ProvinceLayer({
           [MAP_PADDING, MAP_PADDING],
           [MAP_WIDTH - MAP_PADDING, MAP_HEIGHT - MAP_PADDING],
         ],
-        koreaProvince,
+        koreaProvince
       ),
-    [],
+    []
   );
 
-  const pathGenerator = useMemo(
-    () => geoPath(projection),
-    [projection],
-  );
+  const pathGenerator = useMemo(() => geoPath(projection), [projection]);
 
   const paths = useMemo(
     () =>
@@ -65,7 +62,7 @@ function ProvinceLayer({
           d: pathGenerator(feature),
         };
       }),
-    [pathGenerator],
+    [pathGenerator]
   );
 
   const handleClick = (name: string) => {
@@ -74,6 +71,7 @@ function ProvinceLayer({
     const record = regionPhotos?.[name];
 
     if (record) {
+      if (record.isBlurred || !record.folderId) return;
       navigate(buildRecordPath(record.folderId));
       return;
     }

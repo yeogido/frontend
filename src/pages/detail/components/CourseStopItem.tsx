@@ -6,6 +6,7 @@ import transitIcon from '../../../assets/icons/transport-transit.svg';
 import operatingStatusClockIcon from '../../../assets/icons/operating-status-clock.svg';
 import { isValidGeoPoint } from '../../../components/kakaomap/types';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
+import { getCourseTransportInfo } from '../../../utils/courseDetail';
 import {
   formatOperatingDay,
   formatTodayOperatingHours,
@@ -32,7 +33,7 @@ const META_MARGIN_TOP = 2;
 const META_FONT_SIZE = 11;
 const META_LINE_HEIGHT = 16;
 const TRANSPORT_MARGIN_TOP = 4;
-const TRANSPORT_GAP = 10;
+const TRANSPORT_GAP = 4;
 const TRANSPORT_ICON_GAP = 4;
 const TRANSPORT_ICON_SIZE = 12;
 const HOURS_STATUS_ICON_SIZE = 12;
@@ -49,17 +50,17 @@ const CLOSED_STATUS_LABEL = '영업 종료';
 export interface CourseStopItemProps {
   readonly stop: CourseStop;
   readonly isLast: boolean;
+  readonly isFirst?: boolean;
   readonly onLikeToggle: () => void;
   readonly onFocus?: () => void;
   readonly isLikeAvailable?: boolean;
   readonly isLikePending?: boolean;
-  /** 있으면 영업시간이 드롭다운(영업중/영업종료 + 요일별 시간)으로 표시된다. */
-  /** 바로 이전 코스 아이템과의 이동 소요시간. 첫 번째 아이템은 비교 대상이 없어 항상 undefined다. */
 }
 
 export function CourseStopItem({
   stop,
   isLast,
+  isFirst = false,
   onLikeToggle,
   onFocus,
   isLikeAvailable = true,
@@ -69,8 +70,7 @@ export function CourseStopItem({
   const [isHoursOpen, setIsHoursOpen] = useState(false);
   const operatingDays = stop.operatingDays ?? [];
   const isTwentyFourHourOperation = isTwentyFourHoursEveryDay(operatingDays);
-  const canExpandHours =
-    operatingDays.length > 0 && !isTwentyFourHourOperation;
+  const canExpandHours = operatingDays.length > 0 && !isTwentyFourHourOperation;
   // 요일별 영업시간을 파싱할 수 있으면 현재 요일·시각 기준으로 직접 계산하고,
   // 파싱할 수 없는 경우(휴무 표기만 있거나 형식이 다른 경우)에만 구글이
   // 내려준 openNow 값으로 대체한다.
@@ -84,12 +84,9 @@ export function CourseStopItem({
   const todayHours = formatTodayOperatingHours(operatingDays);
   const defaultHoursText =
     todayHours ?? (canExpandHours ? '정기휴무' : '영업시간 정보 없음');
-  const carDurationMinutes = stop.timesFromPrevious.find(
-    (time) => time.transportMode === 'CAR'
-  )?.durationMinutes;
-  const transitDurationMinutes = stop.timesFromPrevious.find(
-    (time) => time.transportMode === 'PUBLIC'
-  )?.durationMinutes;
+  const transportInfo = isFirst
+    ? []
+    : getCourseTransportInfo(stop.timesFromPrevious);
   const isActive = stop.liked;
   const location = stop.location;
   const canFocus = isValidGeoPoint(location) && !!onFocus;
@@ -252,63 +249,39 @@ export function CourseStopItem({
             </p>
           ))}
 
-        {(carDurationMinutes !== undefined ||
-          transitDurationMinutes !== undefined) && (
+        {transportInfo.length > 0 && (
           <div
-            className="text-gray-4 flex items-center"
+            className="text-gray-4 flex flex-wrap items-center"
             style={{
               marginTop: TRANSPORT_MARGIN_TOP * scale,
               gap: TRANSPORT_GAP * scale,
+              fontSize: META_FONT_SIZE * scale,
+              lineHeight: `${META_LINE_HEIGHT * scale}px`,
             }}
           >
-            {carDurationMinutes !== undefined && (
+            {transportInfo.map((time, index) => (
               <span
-                className="flex items-center"
+                key={time.transportMode}
+                className="flex items-center whitespace-nowrap"
                 style={{ gap: TRANSPORT_ICON_GAP * scale }}
               >
-                <img
-                  src={carIcon}
-                  alt="자동차"
-                  style={{
-                    width: TRANSPORT_ICON_SIZE * scale,
-                    height: TRANSPORT_ICON_SIZE * scale,
-                  }}
-                />
-                <span
-                  className="font-sans"
-                  style={{
-                    fontSize: META_FONT_SIZE * scale,
-                    lineHeight: `${META_LINE_HEIGHT * scale}px`,
-                  }}
-                >
-                  {carDurationMinutes}분
+                {index > 0 && <span aria-hidden="true">·</span>}
+                {time.transportMode !== 'WALK' && (
+                  <img
+                    src={time.transportMode === 'CAR' ? carIcon : transitIcon}
+                    alt=""
+                    aria-hidden="true"
+                    style={{
+                      width: TRANSPORT_ICON_SIZE * scale,
+                      height: TRANSPORT_ICON_SIZE * scale,
+                    }}
+                  />
+                )}
+                <span className="font-sans">
+                  {time.label} {time.durationMinutes}분
                 </span>
               </span>
-            )}
-            {transitDurationMinutes !== undefined && (
-              <span
-                className="flex items-center"
-                style={{ gap: TRANSPORT_ICON_GAP * scale }}
-              >
-                <img
-                  src={transitIcon}
-                  alt="대중교통"
-                  style={{
-                    width: TRANSPORT_ICON_SIZE * scale,
-                    height: TRANSPORT_ICON_SIZE * scale,
-                  }}
-                />
-                <span
-                  className="font-sans"
-                  style={{
-                    fontSize: META_FONT_SIZE * scale,
-                    lineHeight: `${META_LINE_HEIGHT * scale}px`,
-                  }}
-                >
-                  {transitDurationMinutes}분
-                </span>
-              </span>
-            )}
+            ))}
           </div>
         )}
       </div>

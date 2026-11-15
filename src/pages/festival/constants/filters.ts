@@ -18,6 +18,9 @@ export type FestivalSortValue = FestivalSortOption['value'];
 export type FestivalCategoryOption = (typeof festivalCategoryOptions)[number];
 export type FestivalCategoryValue = FestivalCategoryOption['value'];
 
+/** 진행 중인 행사 목록의 보기 방식. calendar는 행사 일정(달력) 보기다. */
+export type FestivalViewMode = 'grid' | 'calendar';
+
 export interface FestivalSelectedFilters {
   sort: FestivalSortValue;
   category: FestivalCategoryValue;

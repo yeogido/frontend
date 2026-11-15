@@ -8,23 +8,23 @@ export interface RegionRecordPhoto {
   photoUrl: string;
   /** 클릭 시 이동할 여행 기록 폴더 id (/travel-record/:folderId) */
   folderId: string;
+  isBlurred?: boolean;
 }
 
 /** 컴포넌트 내부에서 다루기 편하도록 지역명 기준으로 변환한 맵 */
 export type RegionPhotoMap = Record<
   string,
-  { photoUrl: string; folderId: string }
+  { photoUrl: string; folderId: string; isBlurred?: boolean }
 >;
 
-export function toRegionPhotoMap(
-  photos: RegionRecordPhoto[],
-): RegionPhotoMap {
+export function toRegionPhotoMap(photos: RegionRecordPhoto[]): RegionPhotoMap {
   const map: RegionPhotoMap = {};
 
   for (const photo of photos) {
     map[photo.regionName] = {
       photoUrl: photo.photoUrl,
       folderId: photo.folderId,
+      ...(photo.isBlurred ? { isBlurred: true } : {}),
     };
   }
 

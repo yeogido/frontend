@@ -1,29 +1,14 @@
-import { useEffect, useMemo } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-
 import { TravelRecordPageFrame } from '../components';
-import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 
 import {
   DraggingPhotoPreview,
-  PhotoSelectionTip,
   PhotoUploadBox,
   SelectedPhotoStrip,
   TravelFolderPreview,
 } from './components';
-import { useDraggablePhotoOrder, useTravelRecordPhotoSelection } from './hooks';
-import type { TravelPhotoSelectionLocationState } from '../date-selection/types';
-import {
-  getTravelRecordDraftDateRange,
-  getTravelRecordDraftRegion,
-} from '../utils/draftStorage';
-import {
-  saveTravelRecordPhotoDraft,
-  TRAVEL_RECORD_PHOTO_DRAFT_ID,
-  type TravelRecordPhotoDraft,
-} from '../utils/travelRecordSave';
-import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { usePhotoSelectionPage } from './usePhotoSelectionPage';
 import backIcon from '../../../assets/icons/back.svg';
+import TravelRecordVisibilitySelector from './components/TravelRecordVisibilitySelector';
 
 const previousPageLabel =
   '\uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30';
@@ -34,91 +19,25 @@ const description =
 const decorateFolderLabel = '\uD3F4\uB354 \uAFB8\uBBF8\uAE30';
 
 function TravelRecordPhotoSelectionPage() {
-  const navigate = useNavigate();
-  const { travelRecordId } = useParams<{ travelRecordId: string }>();
-  const location = useLocation();
-  const locationState =
-    location.state as TravelPhotoSelectionLocationState | null;
-  const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
-  const storedSelectedDateRange = useMemo(
-    () => getTravelRecordDraftDateRange(),
-    []
-  );
-  const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
-  const selectedDateRange =
-    locationState?.selectedDateRange ?? storedSelectedDateRange;
-  const regionName =
-    selectedRegion?.selectionName ?? selectedRegion?.name ?? '';
-  const isEditing = useTravelRecordSessionStore((state) => state.editSession !== null);
   const {
+    draggingPhoto,
     fileInputRef,
     hasSelectedPhotos,
     photos,
-    photosRef,
+    regionName,
+    handleDecorateFolder,
     handlePhotoChange,
-    openFilePicker,
-    removePhoto,
-    reorderPhotos,
-  } = useTravelRecordPhotoSelection(isEditing);
-  const {
-    draggingPhoto,
     handlePhotoPointerDown,
     handlePhotoPointerMove,
     handlePhotoPointerUp,
+    navigate,
+    openFilePicker,
     registerPhotoItem,
-  } = useDraggablePhotoOrder({
-    photosRef,
-    onReorderPhotos: reorderPhotos,
-  });
-
-  const handleDecorateFolder = async () => {
-    if (!hasSelectedPhotos || !selectedRegion || !selectedDateRange) {
-      return;
-    }
-
-    await saveTravelRecordPhotoDraft(
-      photos.flatMap<TravelRecordPhotoDraft>((photo) => {
-        if (photo.source === 'server' && photo.imageKey) {
-          return [{ source: 'server' as const, imageKey: photo.imageKey, imageUrl: photo.url }];
-        }
-
-        return photo.file ? [{ source: 'new' as const, file: photo.file }] : [];
-      }),
-    );
-    navigate(
-      travelRecordId
-        ? getTravelRecordEditRoute(travelRecordId, 'decorate')
-        : '/travel-record/folder-decoration',
-      {
-      state: {
-        selectedRegion,
-        selectedDateRange,
-        photoDraftId: TRAVEL_RECORD_PHOTO_DRAFT_ID,
-      },
-      },
-    );
-  };
-
-  useEffect(() => {
-    if (!selectedRegion) {
-      navigate(
-        travelRecordId
-          ? getTravelRecordEditRoute(travelRecordId)
-          : '/travel-record/new',
-        { replace: true },
-      );
-      return;
-    }
-
-    if (!selectedDateRange) {
-      navigate(
-        travelRecordId
-          ? getTravelRecordEditRoute(travelRecordId, 'date')
-          : '/travel-record/date-selection',
-        { replace: true },
-      );
-    }
-  }, [navigate, selectedDateRange, selectedRegion, travelRecordId]);
+    removePhoto,
+    visibility,
+    canSelect,
+    selectVisibility,
+  } = usePhotoSelectionPage();
 
   return (
     <TravelRecordPageFrame className="bg-[#f9f9f9]">
@@ -168,7 +87,11 @@ function TravelRecordPhotoSelectionPage() {
         onAddPhoto={openFilePicker}
       />
 
-      <PhotoSelectionTip />
+      <TravelRecordVisibilitySelector
+        value={visibility}
+        canSelect={canSelect}
+        onChange={selectVisibility}
+      />
       <DraggingPhotoPreview draggingPhoto={draggingPhoto} />
 
       <button

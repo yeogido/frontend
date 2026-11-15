@@ -1,3 +1,6 @@
+import type { CourseDurationType } from '../../../../utils/courseDetail';
+import type { CourseBasicInfoValues } from '../schema';
+
 export const durationOptions = [
   { value: 'day-trip', label: '당일치기' },
   { value: '1-night-2-days', label: '1박 2일' },
@@ -36,3 +39,31 @@ export const companionOptions = [
   { value: 'family', label: '가족과' },
   { value: 'pet', label: '반려동물과' },
 ] as const;
+
+/**
+ * 폼의 여행 기간 값 ↔ API enum. 기간이 바뀌면 여행 일수(totalDays)도 따라가야
+ * 해서, 요청 빌더와 스토어가 같은 매핑을 공유한다.
+ */
+export const FORM_DURATION_TO_DURATION_TYPE: Record<
+  CourseBasicInfoValues['duration'],
+  CourseDurationType
+> = {
+  'day-trip': 'DAY_TRIP',
+  '1-night-2-days': 'ONE_NIGHT',
+  '2-nights-3-days': 'TWO_NIGHT',
+  '3-nights-or-more': 'THREE_PLUS',
+};
+
+/**
+ * API enum → 폼의 여행 기간 값. 수정 화면에서 일차를 늘리거나 줄이면 기간
+ * 선택도 따라가야 해서(THREE_PLUS ↔ TWO_NIGHT 등) 역매핑이 필요하다.
+ */
+export const DURATION_TYPE_TO_FORM_DURATION: Record<
+  CourseDurationType,
+  CourseBasicInfoValues['duration']
+> = {
+  DAY_TRIP: 'day-trip',
+  ONE_NIGHT: '1-night-2-days',
+  TWO_NIGHT: '2-nights-3-days',
+  THREE_PLUS: '3-nights-or-more',
+};

@@ -1,23 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigate } from 'react-router-dom';
 
-import { getApiErrorMessage } from '../../../../apis/common';
-import { resetPassword } from '../../../../apis/auth.api';
 import {
   AuthField,
   BackButton,
   PasswordInput,
 } from '../../../../components/auth';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
-import {
-  resetPasswordSchema,
-  type ResetPasswordFormValues,
-} from '../schema';
+import { useResetPasswordForm } from '../hooks/useResetPasswordForm';
 
-const DEFAULT_RESET_ERROR_MESSAGE =
-  '비밀번호 재설정에 실패했습니다. 다시 시도해 주세요.';
 
 // Figma 390 디자인 기준 리터럴 px. detail 페이지/SignupStart와 같은 방식으로
 // useGlobalScale() 배율을 곱해서 쓴다.
@@ -50,55 +40,16 @@ function ResetPasswordForm() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const s = (value: number) => value * scale;
-  const { state } = useLocation() as {
-    state?: {
-      email?: string;
-      resetToken?: string;
-    };
-  };
-  const [submitError, setSubmitError] = useState('');
-
   const {
     register,
     handleSubmit,
-    formState: {
-      errors,
-      isValid,
-      isSubmitting,
-    },
-  } = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
-    mode: 'onChange',
-    defaultValues: {
-      password: '',
-      passwordConfirm: '',
-    },
-  });
+    errors,
+    isValid,
+    isSubmitting,
+    submitError,
+    onSubmit,
+  } = useResetPasswordForm();
 
-  useEffect(() => {
-    if (!state?.email || !state?.resetToken) {
-      navigate('/forgot-password', { replace: true });
-    }
-  }, [navigate, state?.email, state?.resetToken]);
-
-  const onSubmit = async (values: ResetPasswordFormValues) => {
-    if (!state?.resetToken) {
-      return;
-    }
-
-    setSubmitError('');
-
-    try {
-      await resetPassword({
-        resetToken: state.resetToken,
-        newPassword: values.password,
-      });
-
-      navigate('/login');
-    } catch (error) {
-      setSubmitError(getApiErrorMessage(error, DEFAULT_RESET_ERROR_MESSAGE));
-    }
-  };
 
   const inputStyle = {
     height: s(INPUT_HEIGHT),

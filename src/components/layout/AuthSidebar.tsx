@@ -64,6 +64,7 @@ const MY_MENU: { label: string; path?: string; onNavigate?: () => void }[] = [
   },
   { label: '좋아요', path: '/likes' },
   { label: '내가 등록한 게시물', path: '/my-posts' },
+  { label: '친구 목록', path: '/friends' },
 ];
 
 interface AuthSidebarProps {

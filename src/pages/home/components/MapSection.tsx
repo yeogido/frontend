@@ -1,23 +1,13 @@
 import { Map } from '../map/components';
-import {
-  getTravelRecordFoldersFromSummaries,
-  useTravelRecordsForMap,
-} from '../../../hooks/useTravelRecords';
-import { useTravelRecordRegionDetails } from '../../../hooks/useTravelRecordRegions';
+import { useTravelMap } from '../../../hooks/useTravelMap';
+import { LoadingSpinner } from '../../../components/common';
 import { getTravelRecordRegionPhotoRecords } from '../../travel-record/utils/regionPhotoRecords';
 import { toRegionPhotoMap } from '../map/types/regionPhoto';
 
 function MapSection() {
-  const { records, isError, retry } = useTravelRecordsForMap();
-  const regionInfoByRegionId = useTravelRecordRegionDetails(
-    records.map((record) => record.regionId)
-  );
-  const travelRecordFolders = getTravelRecordFoldersFromSummaries(
-    records,
-    regionInfoByRegionId
-  );
+  const { folders, isPending, isError, retry } = useTravelMap();
   const regionPhotos = toRegionPhotoMap(
-    getTravelRecordRegionPhotoRecords(travelRecordFolders)
+    getTravelRecordRegionPhotoRecords(folders)
   );
 
   return (
@@ -43,6 +33,15 @@ function MapSection() {
         <p className="absolute top-[41px] left-4 text-[10px] leading-[100%] font-normal text-[#7F7F7F]">
           다녀온 지역을 한눈에 확인해 보세요
         </p>
+
+        {isPending ? (
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-white/60"
+            aria-busy="true"
+          >
+            <LoadingSpinner label="여행 지도 불러오는 중" />
+          </div>
+        ) : null}
 
         {isError ? (
           <div

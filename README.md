@@ -497,7 +497,13 @@ KAKAO_REST_API_KEY        카카오 REST API 키(지오코딩/길찾기/정적�
 VITE_NAVER_CLIENT_ID      네이버 로그인 클라이언트 ID
 GOOGLE_MAPS_API_KEY       구글 플레이스 API 키(영업시간/사진 조회, 서버 프록시 전용)
 ODSAY_API_KEY             ODsay 대중교통 API 키(서버 프록시 전용)
+TMAP_API_KEY              TMAP 보행자 경로안내 앱 키(서버 프록시 전용)
 ```
+
+도보 시간 조회는 [TMAP 보행자 경로안내 API](https://tmap-skopenapi.readme.io/reference/보행자-경로안내)를 사용합니다.
+로컬 `.env`와 Vercel 서버 환경 변수에 `TMAP_API_KEY`를 설정하고 개발 서버를 재시작하거나 재배포하세요.
+`VITE_` 접두사를 붙이지 않습니다. 키 미설정 또는 조회 실패 시에는 도보 시간만 생략하며 차량·대중교통 시간은 계속 저장합니다.
+코스 등록·수정 시 조회한 시간을 `timesFromPrevious`의 `WALK`로 저장하며, 기존 코스는 수정·저장 후 도보 시간이 반영됩니다.
 
 패키지 설치:
 

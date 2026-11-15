@@ -7,9 +7,15 @@ import {
   useQueries,
 } from '@tanstack/react-query';
 
-import { normalizeApiError } from '../apis/common';
-import { useAuth } from './useAuth';
-import { createPresignedUrl, uploadFileToPresignedUrl } from '../apis/files.api';
+import { normalizeApiError, getApiErrorMessage } from '../apis/common';
+import { useUpdateTravelRecordVisibility } from './useUpdateTravelRecordVisibility';
+import { useTravelRecordSessionStore } from '../store/travelRecordSession.store';
+import { useAuthStore } from '../store/auth.store';
+import { requireTravelRecordVersion } from '../pages/travel-record/utils/editVersion';
+import {
+  createPresignedUrl,
+  uploadFileToPresignedUrl,
+} from '../apis/files.api';
 import { getRegion } from '../apis/regions.api';
 import {
   createTravelRecord,
@@ -30,12 +36,7 @@ import {
 import type { TravelDateRange } from '../pages/travel-record/date-selection/types';
 import type { TravelFolderDecoration } from '../pages/travel-record/folder-decoration/folderDecoration';
 import type { TravelRecordDraftRegion } from '../pages/travel-record/types';
-import { collectTravelRecords } from '../pages/travel-record/utils/collectTravelRecords';
-import {
-  getTravelRecordMapRecords,
-  getTravelRecordMapYearQueries,
-  getTravelRecordMapYears,
-} from '../pages/travel-record/utils/mapAuth';
+import { TRAVEL_RECORD_MAP_QUERY_KEY } from '../pages/travel-record/utils/mapAuth';
 import type { TravelRecordPhotoDraft } from '../pages/travel-record/utils/travelRecordSave';
 import type { RegionDetailResponse } from '../types/region.type';
 import type {
@@ -46,7 +47,10 @@ import type {
   TravelRecordSummary,
   TravelRecordUpdateResponse,
   UploadedTravelRecordImage,
+  TravelRecordApiVisibility,
 } from '../types/travelRecord.type';
+
+export class TravelRecordPartialSaveError extends Error {}
 
 type TravelRecordRegionInfo = Pick<RegionDetailResponse, 'name' | 'fullName'>;
 
@@ -63,6 +67,7 @@ interface TravelRecordsPageParam {
 }
 
 interface CreateTravelRecordFromDraftParams {
+  visibility?: TravelRecordApiVisibility;
   selectedRegion: TravelRecordDraftRegion;
   selectedDateRange: TravelDateRange;
   selectedPhotos: File[];
@@ -70,7 +75,9 @@ interface CreateTravelRecordFromDraftParams {
 }
 
 interface UpdateTravelRecordFromDraftParams {
+  visibility?: TravelRecordApiVisibility;
   travelRecordId: number;
+  version: number;
   selectedRegion: TravelRecordDraftRegion;
   selectedDateRange: TravelDateRange;
   selectedPhotos: TravelRecordPhotoDraft[];
@@ -80,15 +87,21 @@ interface UpdateTravelRecordFromDraftParams {
   originalRegionId?: number;
 }
 
-const uploadTravelRecordImages = async (selectedPhotos: File[]) => {
+const uploadTravelRecordImages = async (
+  selectedPhotos: File[],
+  requireCurrentSession: () => void
+) => {
   const uploadedImages: UploadedTravelRecordImage[] = [];
 
   for (const photo of selectedPhotos) {
+    requireCurrentSession();
     const presignedUrl = await createPresignedUrl({
       fileName: photo.name,
       contentType: photo.type || 'application/octet-stream',
     });
+    requireCurrentSession();
     await uploadFileToPresignedUrl(presignedUrl.uploadUrl, photo);
+    requireCurrentSession();
     uploadedImages.push({ objectKey: presignedUrl.objectKey });
   }
 
@@ -97,10 +110,12 @@ const uploadTravelRecordImages = async (selectedPhotos: File[]) => {
 
 const uploadTravelRecordDraftImages = async (
   selectedPhotos: TravelRecordPhotoDraft[],
+  requireCurrentSession: () => void
 ) => {
   const uploadedImages: UploadedTravelRecordImage[] = [];
 
   for (const photo of selectedPhotos) {
+    requireCurrentSession();
     if (photo.source === 'server') {
       uploadedImages.push({ objectKey: photo.imageKey });
       continue;
@@ -110,28 +125,36 @@ const uploadTravelRecordDraftImages = async (
       fileName: photo.file.name,
       contentType: photo.file.type || 'application/octet-stream',
     });
+    requireCurrentSession();
     await uploadFileToPresignedUrl(presignedUrl.uploadUrl, photo.file);
+    requireCurrentSession();
     uploadedImages.push({ objectKey: presignedUrl.objectKey });
   }
 
   return uploadedImages;
 };
 
-export function useTravelRecords(params: TravelRecordListParams = {}) {
+export function useTravelRecords(
+  params: TravelRecordListParams = {},
+  { enabled = true } = {}
+) {
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   return useInfiniteQuery<
     TravelRecordListResponse,
     Error,
     InfiniteData<TravelRecordListResponse, TravelRecordsPageParam>,
-    [string, TravelRecordListParams],
+    [string, number | null, number, TravelRecordListParams],
     TravelRecordsPageParam
   >({
-    queryKey: ['travelRecords', params],
+    queryKey: ['travelRecords', userId, authGeneration, params],
     queryFn: ({ pageParam }) =>
       getTravelRecords({
         ...params,
         cursor: pageParam.cursor,
       }),
     initialPageParam: {},
+    enabled: enabled && userId !== null,
     getNextPageParam: (lastPage) =>
       lastPage.hasNext && lastPage.cursorId
         ? { cursor: lastPage.cursorId }
@@ -140,86 +163,28 @@ export function useTravelRecords(params: TravelRecordListParams = {}) {
 }
 
 export function useTravelRecordYears({ enabled = true } = {}) {
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   return useQuery({
-    queryKey: ['travelRecordYears'],
+    queryKey: ['travelRecordYears', userId, authGeneration],
     queryFn: getTravelRecordYears,
-    enabled,
+    enabled: enabled && userId !== null,
   });
-}
-
-const MAP_RECORDS_PAGE_SIZE = 50;
-
-const getAllTravelRecordsInYear = (year: number) =>
-  collectTravelRecords((cursor) =>
-    getTravelRecords({ year, size: MAP_RECORDS_PAGE_SIZE, cursor }),
-  );
-
-/**
- * 지도에 찍을 여행 기록 전체.
- *
- * 목록 API는 year를 생략하면 현재 연도만 돌려주기 때문에, 연도 목록을 받아
- * 연도별로 조회한 뒤 합친다. 지도 전용 API가 생기면 이 훅만 바꾸면 된다.
- *
- * 홈은 로그인 없이 열리는 화면인데 여행 기록 API는 인증이 필요하다. 로그인
- * 전에는 조회를 시작하지 않는다.
- */
-export function useTravelRecordsForMap() {
-  const { isAuthenticated } = useAuth();
-  const travelRecordYearsQuery = useTravelRecordYears({
-    enabled: isAuthenticated,
-  });
-  const cachedYears = travelRecordYearsQuery.data?.years;
-  const years = getTravelRecordMapYears(isAuthenticated, cachedYears);
-
-  const yearQueries = useQueries({
-    queries: getTravelRecordMapYearQueries(isAuthenticated, years).map(
-      ({ year, enabled }) => ({
-      queryKey: ['travelRecordsByYear', year],
-      queryFn: () => getAllTravelRecordsInYear(year),
-      enabled,
-      }),
-    ),
-  });
-
-  const failedYearQueries = yearQueries.filter((query) => query.isError);
-  // 비활성 쿼리는 계속 pending으로 남는다. 로그인 전 상태가 로딩이나 실패로
-  // 보이지 않도록 인증 여부를 함께 본다.
-  const isError =
-    isAuthenticated &&
-    (travelRecordYearsQuery.isError || failedYearQueries.length > 0);
-  const isPending =
-    isAuthenticated &&
-    (travelRecordYearsQuery.isPending ||
-      yearQueries.some((query) => query.isPending));
-
-  return {
-    // 한 연도라도 실패하면 나머지 연도만 넘기지 않는다. 일부만 빠진 지도는
-    // 그 지역에 다녀온 적이 없는 것처럼 보여서 실패보다 더 오해를 준다.
-    records: getTravelRecordMapRecords(
-      isAuthenticated && !isError,
-      yearQueries.map((query) => query.data ?? []),
-    ),
-    isPending,
-    isError,
-    retry: () => {
-      if (!isAuthenticated) {
-        return;
-      }
-
-      if (travelRecordYearsQuery.isError) {
-        void travelRecordYearsQuery.refetch();
-      }
-
-      failedYearQueries.forEach((query) => void query.refetch());
-    },
-  };
 }
 
 export function useTravelRecordDetail(travelRecordId: number | null) {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
 
   return useQuery({
-    queryKey: ['travelRecord', travelRecordId, 'folder'],
+    queryKey: [
+      'travelRecord',
+      travelRecordId,
+      'folder',
+      userId,
+      authGeneration,
+    ],
     queryFn: async (): Promise<TravelRecordFolder> => {
       const detail = await getTravelRecordDetail(travelRecordId as number);
       const regionInfo = await queryClient
@@ -232,15 +197,21 @@ export function useTravelRecordDetail(travelRecordId: number | null) {
 
       return mapTravelRecordDetailToFolder(detail, regionInfo);
     },
-    enabled: typeof travelRecordId === 'number' && travelRecordId > 0,
+    enabled:
+      userId !== null &&
+      typeof travelRecordId === 'number' &&
+      travelRecordId > 0,
   });
 }
 
 export function useTravelRecordDetails(records: TravelRecordSummary[]) {
+  const userId = useAuthStore((state) => state.userId);
+  const authGeneration = useAuthStore((state) => state.authGeneration);
   return useQueries({
     queries: records.map((record) => ({
-      queryKey: ['travelRecord', record.travelRecordId],
+      queryKey: ['travelRecord', record.travelRecordId, userId, authGeneration],
       queryFn: () => getTravelRecordDetail(record.travelRecordId),
+      enabled: userId !== null,
     })),
   });
 }
@@ -254,25 +225,43 @@ export function useCreateTravelRecord() {
     CreateTravelRecordFromDraftParams
   >({
     mutationFn: async ({
+      visibility,
       selectedRegion,
       selectedDateRange,
       selectedPhotos,
       decorations,
     }) => {
-      const uploadedImages = await uploadTravelRecordImages(selectedPhotos);
-
+      const session = useAuthStore.getState();
+      const requireCurrentSession = () => {
+        const current = useAuthStore.getState();
+        if (
+          session.userId === null ||
+          current.userId !== session.userId ||
+          current.authGeneration !== session.authGeneration
+        )
+          throw new Error('인증 상태가 변경되었습니다.');
+      };
+      requireCurrentSession();
+      const uploadedImages = await uploadTravelRecordImages(
+        selectedPhotos,
+        requireCurrentSession
+      );
+      requireCurrentSession();
       return createTravelRecord(
         createTravelRecordCreateRequest({
+          visibility,
           selectedRegion,
           selectedDateRange,
           uploadedImages,
           decorations,
-        }),
+        })
       );
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
-      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
+      void queryClient.invalidateQueries({
+        queryKey: TRAVEL_RECORD_MAP_QUERY_KEY,
+      });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
     },
   });
@@ -280,6 +269,7 @@ export function useCreateTravelRecord() {
 
 export function useUpdateTravelRecord() {
   const queryClient = useQueryClient();
+  const visibilityMutation = useUpdateTravelRecordVisibility();
 
   return useMutation<
     TravelRecordUpdateResponse,
@@ -288,6 +278,8 @@ export function useUpdateTravelRecord() {
   >({
     mutationFn: async ({
       travelRecordId,
+      version,
+      visibility,
       selectedRegion,
       selectedDateRange,
       selectedPhotos,
@@ -295,22 +287,100 @@ export function useUpdateTravelRecord() {
       isStickerStateRestored,
       originalTitle,
       originalRegionId,
-    }) =>
-      updateTravelRecord(
-        travelRecordId,
-        createTravelRecordUpdateRequest({
-          selectedRegion,
-          selectedDateRange,
-          uploadedImages: await uploadTravelRecordDraftImages(selectedPhotos),
-          decorations,
-          isStickerStateRestored,
-          originalTitle,
-          originalRegionId,
-        }),
-      ),
+    }) => {
+      // 사진 업로드 전에 검사한다. 오래된 세션에 임의의 버전을 채우지 않는다.
+      let editVersion = requireTravelRecordVersion(version);
+      const session = useAuthStore.getState();
+      const original = useTravelRecordSessionStore.getState().editSession;
+      const needsVisibilityChange =
+        visibility !== undefined && visibility !== original?.visibility;
+      if (
+        needsVisibilityChange &&
+        (original?.id !== String(travelRecordId) ||
+          original.ownerId !== session.userId ||
+          session.userId === null ||
+          original.version !== version ||
+          (original.visibility !== 'PRIVATE' &&
+            original.visibility !== 'PUBLIC') ||
+          (visibility !== 'PRIVATE' && visibility !== 'PUBLIC'))
+      )
+        throw new Error(
+          '이 폴더의 공개범위를 변경할 수 없어요. 상세 화면에서 다시 수정해 주세요.'
+        );
+
+      // 업로드 실패만으로 공개범위가 먼저 바뀌지 않도록 파일을 준비한다.
+      const requireCurrentSession = () => {
+        const current = useAuthStore.getState();
+        if (
+          session.userId === null ||
+          current.userId !== session.userId ||
+          current.authGeneration !== session.authGeneration
+        )
+          throw new Error('인증 상태가 변경되었습니다.');
+      };
+      const uploadedImages = await uploadTravelRecordDraftImages(
+        selectedPhotos,
+        requireCurrentSession
+      );
+      requireCurrentSession();
+      let visibilitySaved = false;
+      try {
+        if (
+          needsVisibilityChange &&
+          visibility !== 'FRIENDS' &&
+          visibility !== undefined
+        ) {
+          const result = await visibilityMutation.mutateAsync({
+            travelRecordId,
+            visibility,
+            version: editVersion,
+          });
+          visibilitySaved = true;
+          requireCurrentSession();
+          editVersion = requireTravelRecordVersion(result.version);
+          const store = useTravelRecordSessionStore.getState();
+          if (
+            store.editSession?.id !== String(travelRecordId) ||
+            store.editSession.version !== version
+          )
+            throw new Error(
+              '수정 상태가 변경됐어요. 상세 화면에서 다시 수정해 주세요.'
+            );
+          // 후속 내용 저장 실패 시에도 서버에 반영된 상태·버전으로 재시도한다.
+          store.beginEdit({
+            ...store.editSession,
+            visibility: result.visibility,
+            version: editVersion,
+          });
+        }
+        requireCurrentSession();
+        return await updateTravelRecord(
+          travelRecordId,
+          createTravelRecordUpdateRequest({
+            version: editVersion,
+            selectedRegion,
+            selectedDateRange,
+            uploadedImages,
+            decorations,
+            isStickerStateRestored,
+            originalTitle,
+            originalRegionId,
+          })
+        );
+      } catch (error) {
+        if (visibilitySaved)
+          throw new TravelRecordPartialSaveError(
+            `공개범위는 변경됐지만 기록을 저장하지 못했어요. 다시 저장해 주세요. ${getApiErrorMessage(error, '')}`,
+            { cause: error }
+          );
+        throw error;
+      }
+    },
     onSuccess: (_, { travelRecordId }) => {
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
-      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
+      void queryClient.invalidateQueries({
+        queryKey: TRAVEL_RECORD_MAP_QUERY_KEY,
+      });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.invalidateQueries({
         queryKey: ['travelRecord', travelRecordId],
@@ -353,13 +423,15 @@ export function useDeleteTravelRecord() {
           pages: data.pages.map((page) => ({
             ...page,
             items: page.items.filter(
-              (item) => item.travelRecordId !== travelRecordId,
+              (item) => item.travelRecordId !== travelRecordId
             ),
           })),
         };
       });
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
-      void queryClient.invalidateQueries({ queryKey: ['travelRecordsByYear'] });
+      void queryClient.invalidateQueries({
+        queryKey: TRAVEL_RECORD_MAP_QUERY_KEY,
+      });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
       void queryClient.removeQueries({
         queryKey: ['travelRecord', travelRecordId],
@@ -370,41 +442,41 @@ export function useDeleteTravelRecord() {
 
 export const getTravelRecordFoldersFromPages = (
   pages: TravelRecordListResponse[] | undefined,
-  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map()
 ) =>
   pages?.flatMap((page) =>
     page.items.map((record) =>
       mapTravelRecordSummaryToFolder(
         record,
-        regionInfoByRegionId.get(record.regionId),
-      ),
-    ),
+        regionInfoByRegionId.get(record.regionId)
+      )
+    )
   ) ?? [];
 
 export const getTravelRecordSummariesFromPages = (
-  pages: TravelRecordListResponse[] | undefined,
+  pages: TravelRecordListResponse[] | undefined
 ) => pages?.flatMap((page) => page.items) ?? [];
 
 export const getTravelRecordFoldersFromSummaries = (
   records: TravelRecordSummary[],
-  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map()
 ) =>
   records.map((record) =>
     mapTravelRecordSummaryToFolder(
       record,
-      regionInfoByRegionId.get(record.regionId),
-    ),
+      regionInfoByRegionId.get(record.regionId)
+    )
   );
 
 export const getTravelRecordFolders = (
   records: TravelRecordSummary[],
   details: Array<TravelRecordDetailResponse | undefined>,
-  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map(),
+  regionInfoByRegionId: ReadonlyMap<number, TravelRecordRegionInfo> = new Map()
 ) =>
   records.map((record, index) =>
     mapTravelRecordFolder(
       record,
       details[index],
-      regionInfoByRegionId.get(record.regionId),
-    ),
+      regionInfoByRegionId.get(record.regionId)
+    )
   );

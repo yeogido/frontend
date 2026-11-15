@@ -70,6 +70,7 @@ export function mapCourseStopDtoToViewModel(dto: unknown): CourseStop {
 
   return {
     id: dto.id,
+    day: dto.day,
     placeId: dto.placeId,
     contentId: dto.contentId,
     order: dto.order,

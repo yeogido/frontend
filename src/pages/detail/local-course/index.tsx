@@ -11,7 +11,7 @@ import { NotFoundPage } from '../../not-found';
 import { saveRecentCourse } from '../../../utils/recentCourses';
 import { useRemoveDeletedRecentCourse } from '../../../hooks/useRecentCourses';
 import { isCourseNotFoundError } from '../../../hooks/useReviews';
-import { CourseDetailLayout, DetailStateGuard } from '../components';
+import { DetailStateGuard, ResponsiveCourseDetailLayout } from '../components';
 import {
   mapCourseApiDetailToCourseSummary,
   mapCourseApiDetailToDto,
@@ -237,7 +237,7 @@ function LocalCourseDetailPage() {
   return (
     <DetailStateGuard error={null} data={course}>
       {(courseData) => (
-        <CourseDetailLayout
+        <ResponsiveCourseDetailLayout
           course={courseData}
           reviewType="local-course"
           onFavoriteToggle={handleFavoriteToggle}

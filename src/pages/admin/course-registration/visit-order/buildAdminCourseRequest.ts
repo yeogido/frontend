@@ -5,20 +5,9 @@ import type { Neighborhood } from '../../../local-recommendation/region-selectio
 import { buildCourseItemsFromVisitEvents } from '../../../local-recommendation/visit-order-selection/buildCourseRequest';
 import type { VisitEvent } from '../../../local-recommendation/visit-order-selection/constants';
 import type { VisitEventTravelData } from '../../../local-recommendation/visit-order-selection/useVisitEventTravelData';
+import { FORM_DURATION_TO_DURATION_TYPE } from '../../../local-recommendation/course-basic-info/constants/options.ts';
+import { isTotalDaysValidForDuration } from '../../../../utils/courseDetail.ts';
 import type { AdminCoursePhoto } from '../types';
-
-// local-recommendation/visit-order-selection/buildCourseRequest.ts와 동일한
-// 매핑표 — CourseBasicInfoValues 기준이라 그대로다. 원본 파일이 export하지
-// 않아(store 구조가 달라 함수 자체는 재사용 못 함) 매핑표만 그대로 복제한다.
-const DURATION_TYPE_MAP: Record<
-  CourseBasicInfoValues['duration'],
-  CreateLocalRecommendationRequest['durationType']
-> = {
-  'day-trip': 'DAY_TRIP',
-  '1-night-2-days': 'ONE_NIGHT',
-  '2-nights-3-days': 'TWO_NIGHT',
-  '3-nights-or-more': 'THREE_PLUS',
-};
 
 const TRANSPORT_TYPE_MAP: Record<
   CourseBasicInfoValues['transport'],
@@ -45,43 +34,65 @@ interface AdminCourseRequestParams {
   photo: AdminCoursePhoto | null;
   /** 수정 중 대표 사진을 새로 고르지 않았을 때 재사용할 기존 key. */
   existingThumbnailKey?: string | null;
-  visitEvents: readonly VisitEvent[];
+  /** 일차별 방문 일정 — 인덱스 0이 1일차다. */
+  visitEventsByDay: readonly (readonly VisitEvent[])[];
+  /** 실제 여행 일수. basicInfo.duration과 맞아야 한다. */
+  totalDays: number;
 }
 
 export function getAdminCourseRequestValidationError(
   params: AdminCourseRequestParams
 ): string | null {
-  const { region, basicInfo, photo, existingThumbnailKey, visitEvents } =
-    params;
+  const {
+    region,
+    basicInfo,
+    photo,
+    existingThumbnailKey,
+    visitEventsByDay,
+    totalDays,
+  } = params;
 
   if (!region) return '지역 선택 단계에서 지역을 선택해 주세요.';
   if (!basicInfo) return '기본 정보 입력 단계에서 코스 정보를 입력해 주세요.';
   if (!photo?.file && !existingThumbnailKey)
     return '대표 사진을 등록해 주세요.';
-  if (visitEvents.length === 0) {
-    return '방문할 장소 또는 행사를 하나 이상 추가해 주세요.';
-  }
-  if (!visitEvents.some((event) => event.kind === 'PLACE')) {
-    return '코스에는 장소를 하나 이상 추가해 주세요.';
-  }
-  if (
-    visitEvents.some(
-      (event) =>
-        event.kind === 'PLACE' &&
-        !event.roadAddress?.trim() &&
-        !event.lotAddress?.trim()
-    )
-  ) {
-    return '장소의 도로명 주소 또는 지번 주소를 입력해 주세요.';
-  }
 
   const { duration, transport, companion } = basicInfo;
+  const durationType = FORM_DURATION_TO_DURATION_TYPE[duration];
   if (
-    !DURATION_TYPE_MAP[duration] ||
+    !durationType ||
     !TRANSPORT_TYPE_MAP[transport] ||
     !COMPANION_TYPE_MAP[companion]
   ) {
     return '기본 정보의 여행 기간, 이동 수단, 동행 정보를 다시 선택해 주세요.';
+  }
+
+  if (!isTotalDaysValidForDuration(durationType, totalDays)) {
+    return '여행 기간과 일차 수가 맞지 않아요. 기간을 다시 선택해 주세요.';
+  }
+  if (visitEventsByDay.length !== totalDays) {
+    return `${totalDays}일차까지 일정을 모두 구성해 주세요.`;
+  }
+
+  // 서버는 빈 일차도, 행사만 있는 일차도 받지 않는다(COURSE4002).
+  const dayWithoutPlace = visitEventsByDay.findIndex(
+    (dayEvents) => !dayEvents.some((event) => event.kind === 'PLACE')
+  );
+  if (dayWithoutPlace >= 0) {
+    return `${dayWithoutPlace + 1}일차에 장소를 하나 이상 추가해 주세요.`;
+  }
+
+  if (
+    visitEventsByDay
+      .flat()
+      .some(
+        (event) =>
+          event.kind === 'PLACE' &&
+          !event.roadAddress?.trim() &&
+          !event.lotAddress?.trim()
+      )
+  ) {
+    return '장소의 도로명 주소 또는 지번 주소를 입력해 주세요.';
   }
 
   return null;
@@ -100,7 +111,8 @@ export function buildAdminCourseRequest(
     basicInfo,
     thumbnailKey,
     hashtagIds,
-    visitEvents,
+    visitEventsByDay,
+    totalDays,
     travelData,
     routeImageKey,
   } = params;
@@ -113,7 +125,7 @@ export function buildAdminCourseRequest(
     return null;
   }
 
-  const durationType = DURATION_TYPE_MAP[basicInfo.duration];
+  const durationType = FORM_DURATION_TO_DURATION_TYPE[basicInfo.duration];
   const transportType = TRANSPORT_TYPE_MAP[basicInfo.transport];
   const companionType = COMPANION_TYPE_MAP[basicInfo.companion];
 
@@ -130,10 +142,11 @@ export function buildAdminCourseRequest(
     companionType,
     monthStart: Number(basicInfo.visitStartMonth),
     monthEnd: Number(basicInfo.visitEndMonth),
+    totalDays,
     thumbnailKey,
     routeImageKey,
     hashtagIds,
-    courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
+    courseItems: buildCourseItemsFromVisitEvents(visitEventsByDay, travelData),
   };
 }
 
@@ -156,7 +169,8 @@ export function buildAdminCourseUpdateRequest(
     thumbnailKey,
     routeImageKey,
     hashtagIds,
-    visitEvents,
+    visitEventsByDay,
+    totalDays,
     travelData,
   } = params;
 
@@ -168,7 +182,7 @@ export function buildAdminCourseUpdateRequest(
     return null;
   }
 
-  const durationType = DURATION_TYPE_MAP[basicInfo.duration];
+  const durationType = FORM_DURATION_TO_DURATION_TYPE[basicInfo.duration];
   const transportType = TRANSPORT_TYPE_MAP[basicInfo.transport];
   const companionType = COMPANION_TYPE_MAP[basicInfo.companion];
 
@@ -180,13 +194,16 @@ export function buildAdminCourseUpdateRequest(
     title: basicInfo.courseName,
     description: basicInfo.summary,
     durationType,
+    totalDays,
     transportType,
     companionType,
     monthStart: Number(basicInfo.visitStartMonth),
     monthEnd: Number(basicInfo.visitEndMonth),
     thumbnailKey,
     ...(routeImageKey ? { routeImageKey } : {}),
-    hashtagIds,
-    courseItems: buildCourseItemsFromVisitEvents(visitEvents, travelData),
+    // 전달하면 전체 교체라, 매핑이 하나도 안 된 경우엔 보내지 않아 서버의
+    // 기존 해시태그를 유지한다.
+    ...(hashtagIds.length > 0 ? { hashtagIds } : {}),
+    courseItems: buildCourseItemsFromVisitEvents(visitEventsByDay, travelData),
   };
 }

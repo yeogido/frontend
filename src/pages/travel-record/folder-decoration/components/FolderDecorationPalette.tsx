@@ -44,10 +44,12 @@ interface FolderDecorationPaletteProps {
   onStickerDragStart: (
     seed: FolderDecorationSeed,
     point: { x: number; y: number },
-    pointerId: number,
+    pointerId: number
   ) => void;
   onLimitReached: () => void;
   isInteractionDisabled?: boolean;
+  /** 데스크톱 시안(1440) 배치. 모바일은 390 프레임 안의 절대 좌표를 쓴다. */
+  desktop?: boolean;
 }
 
 export function FolderDecorationPalette({
@@ -56,6 +58,7 @@ export function FolderDecorationPalette({
   onStickerDragStart,
   onLimitReached,
   isInteractionDisabled = false,
+  desktop = false,
 }: FolderDecorationPaletteProps) {
   const { showToast } = useToast();
   const stickerCatalogQuery = useStickerCatalog();
@@ -69,17 +72,19 @@ export function FolderDecorationPalette({
 
   const categoryGroups = getStickerCategoryGroups(stickerCatalogQuery.data);
   // 서버가 내려준 순서를 그대로 따르고, 사용자가 고르기 전에는 첫 카테고리를 쓴다.
-  const activeCategory = selectedCategory ?? categoryGroups[0]?.category ?? null;
+  const activeCategory =
+    selectedCategory ?? categoryGroups[0]?.category ?? null;
   const activeStickers =
     categoryGroups.find((group) => group.category === activeCategory)
       ?.stickers ?? [];
   const customStickers = getCustomStickers(stickerCatalogQuery.data);
   const customStickerSlotState = getCustomStickerSlotState(
-    customStickers.length,
+    customStickers.length
   );
   const isFolderFull = decorations.length >= MAX_FOLDER_DECORATION_COUNT;
   const isCustomCategory = activeCategory === 'CUSTOM';
   const isSavingCustomSticker = createCustomStickerMutation.isPending;
+  const cellSize = desktop ? 'size-[100px]' : 'size-14';
 
   const selectStickerFile = useCallback(
     (file: File) => {
@@ -94,7 +99,7 @@ export function FolderDecorationPalette({
 
       setPendingFile(file);
     },
-    [isInteractionDisabled, showToast],
+    [isInteractionDisabled, showToast]
   );
 
   useEffect(() => {
@@ -130,7 +135,9 @@ export function FolderDecorationPalette({
 
     // HTTPS(또는 localhost)가 아니거나 지원하지 않는 브라우저에서는 아예 없다.
     if (!clipboard?.read) {
-      showToast('이 브라우저에서는 붙여넣기를 쓸 수 없어요. 사진에서 선택해 주세요.');
+      showToast(
+        '이 브라우저에서는 붙여넣기를 쓸 수 없어요. 사진에서 선택해 주세요.'
+      );
       return;
     }
 
@@ -138,7 +145,9 @@ export function FolderDecorationPalette({
       const clipboardImage = await readStickerImageFromClipboard(clipboard);
 
       if (!clipboardImage) {
-        showToast('복사한 사진이 없어요. 사진 앱에서 피사체를 복사한 뒤 다시 눌러 주세요.');
+        showToast(
+          '복사한 사진이 없어요. 사진 앱에서 피사체를 복사한 뒤 다시 눌러 주세요.'
+        );
         return;
       }
 
@@ -150,7 +159,7 @@ export function FolderDecorationPalette({
       showToast(
         isPermissionDenied
           ? '붙여넣기를 허용해야 사진을 가져올 수 있어요.'
-          : '붙여넣기에 실패했어요. 사진에서 선택해 주세요.',
+          : '붙여넣기에 실패했어요. 사진에서 선택해 주세요.'
       );
     }
   };
@@ -190,7 +199,7 @@ export function FolderDecorationPalette({
       onStickerDragStart(
         { stickerId, imageUrl },
         { x: event.clientX, y: event.clientY },
-        event.pointerId,
+        event.pointerId
       );
     },
     onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
@@ -208,7 +217,8 @@ export function FolderDecorationPalette({
     }
 
     try {
-      const sticker = await createCustomStickerMutation.mutateAsync(pendingFile);
+      const sticker =
+        await createCustomStickerMutation.mutateAsync(pendingFile);
 
       closeUploadModal();
 
@@ -266,12 +276,12 @@ export function FolderDecorationPalette({
       return (
         <>
           {customStickers.map((sticker) => (
-            <div key={sticker.stickerId} className="relative size-14">
+            <div key={sticker.stickerId} className={`relative ${cellSize}`}>
               <button
                 type="button"
                 aria-label={`${sticker.name} 스티커 추가`}
                 {...getStickerHandlers(sticker.stickerId, sticker.imageUrl)}
-                className="size-full touch-none cursor-grab select-none overflow-hidden rounded-xl bg-[#e4e4e4] active:cursor-grabbing"
+                className="size-full cursor-grab touch-none overflow-hidden rounded-xl bg-[#e4e4e4] select-none active:cursor-grabbing"
               >
                 <img
                   src={sticker.imageUrl}
@@ -284,7 +294,9 @@ export function FolderDecorationPalette({
                 type="button"
                 aria-label={`${sticker.name} 스티커 삭제`}
                 disabled={deleteCustomStickerMutation.isPending}
-                onClick={() => void handleDeleteCustomSticker(sticker.stickerId)}
+                onClick={() =>
+                  void handleDeleteCustomSticker(sticker.stickerId)
+                }
                 className="absolute -top-2 -right-2 z-10 flex size-5 items-center justify-center rounded-full bg-[#f9f9f9] shadow-[0_2px_8px_rgba(0,0,0,0.16)] disabled:opacity-60"
               >
                 <img src={closeRoundedIcon} alt="" className="size-4" />
@@ -296,7 +308,7 @@ export function FolderDecorationPalette({
               type="button"
               aria-label="이미지 추가"
               onClick={() => setIsUploadModalOpen(true)}
-              className="flex size-14 items-center justify-center rounded-xl bg-[#e4e4e4]"
+              className={`flex ${cellSize} items-center justify-center rounded-xl bg-[#e4e4e4]`}
             >
               <img src={addRoundedIcon} alt="" className="size-8" />
             </button>
@@ -305,9 +317,9 @@ export function FolderDecorationPalette({
             (_, index) => (
               <div
                 key={`empty-custom-sticker-slot-${index}`}
-                className="size-14 rounded-xl bg-[#e4e4e4]"
+                className={`${cellSize} rounded-xl bg-[#e4e4e4]`}
               />
-            ),
+            )
           )}
         </>
       );
@@ -320,7 +332,7 @@ export function FolderDecorationPalette({
         aria-disabled={isFolderFull}
         aria-label={`${sticker.name} 스티커 추가`}
         {...getStickerHandlers(sticker.stickerId, sticker.imageUrl)}
-        className="flex size-14 touch-none cursor-grab items-center justify-center overflow-hidden rounded-xl bg-[#e4e4e4] select-none active:cursor-grabbing"
+        className={`flex ${cellSize} cursor-grab touch-none items-center justify-center overflow-hidden rounded-xl bg-[#e4e4e4] select-none active:cursor-grabbing`}
       >
         <img
           src={sticker.imageUrl}
@@ -335,16 +347,26 @@ export function FolderDecorationPalette({
   return (
     <section
       inert={isInteractionDisabled}
-      className="absolute inset-0 bg-[#f9f9f9]"
+      className={desktop ? 'bg-[#f9f9f9]' : 'absolute inset-0 bg-[#f9f9f9]'}
     >
-      <div className="absolute top-7 left-6 flex w-[342px] gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        className={
+          desktop
+            ? 'flex gap-2'
+            : 'absolute top-7 left-6 flex w-[342px] [scrollbar-width:none] gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden'
+        }
+      >
         {categoryGroups.map((group) => (
           <button
             key={group.category}
             type="button"
-            aria-current={activeCategory === group.category ? 'true' : undefined}
+            aria-current={
+              activeCategory === group.category ? 'true' : undefined
+            }
             onClick={() => setSelectedCategory(group.category)}
             className={`shrink-0 rounded-full border px-3 py-[7px] text-[14px] leading-normal ${
+              desktop && group.category === 'CUSTOM' ? 'ml-auto' : ''
+            } ${
               activeCategory === group.category
                 ? 'border-[#ff6f41] bg-[#ffebe5] text-[#ff6f41]'
                 : 'border-[#e4e4e4] text-[#7f7f7f]'
@@ -355,7 +377,13 @@ export function FolderDecorationPalette({
         ))}
       </div>
 
-      <div className="absolute top-[76px] left-1/2 grid w-[344px] -translate-x-1/2 grid-cols-5 gap-4">
+      <div
+        className={
+          desktop
+            ? 'mt-8 grid h-[521px] grid-cols-5 content-start gap-5 overflow-y-auto pr-3'
+            : 'absolute top-[76px] left-1/2 grid w-[344px] -translate-x-1/2 grid-cols-5 gap-4'
+        }
+      >
         {renderStickerGrid()}
       </div>
 
@@ -376,12 +404,20 @@ export function FolderDecorationPalette({
       />
 
       {isUploadModalOpen ? (
-        <div className="absolute -top-[503px] left-0 z-50 h-[844px] w-[390px] bg-black/50">
+        <div
+          className={
+            desktop
+              ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/50'
+              : 'absolute -top-[503px] left-0 z-50 h-[844px] w-[390px] bg-black/50'
+          }
+        >
           <section
             role="dialog"
             aria-modal="true"
             aria-label="나만의 스티커 만들기"
-            className="absolute top-1/2 left-6 w-[342px] -translate-y-1/2 rounded-xl bg-[#f9f9f9] p-6 shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+            className={`w-[342px] rounded-xl bg-[#f9f9f9] p-6 shadow-[0_1px_5px_rgba(0,0,0,0.07)] ${
+              desktop ? 'relative' : 'absolute top-1/2 left-6 -translate-y-1/2'
+            }`}
           >
             <button
               type="button"

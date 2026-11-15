@@ -34,6 +34,8 @@ export interface CourseReview {
 
 export interface CourseStopDto {
   readonly id: number;
+  /** 1부터 시작하는 일차. 기존 응답은 생략 가능하다. */
+  readonly day?: number;
   readonly placeId?: number;
   readonly contentId?: number;
   readonly order: number;
@@ -51,6 +53,7 @@ export interface CourseStopDto {
 
 export interface CourseStop {
   readonly id: number;
+  readonly day?: number;
   readonly placeId?: number;
   readonly contentId?: number;
   readonly order: number;

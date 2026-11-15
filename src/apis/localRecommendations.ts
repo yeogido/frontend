@@ -18,6 +18,9 @@ export interface TimeFromPrevious {
 
 export type CourseItem =
   | {
+      /** 방문 일차. 1 이상 totalDays 이하. */
+      day: number;
+      /** 해당 일차 안에서의 방문 순서 — 일차마다 1부터 다시 시작한다. */
       order: number;
       type: 'PLACE';
       externalPlaceId: string;
@@ -35,6 +38,7 @@ export type CourseItem =
       timesFromPrevious?: TimeFromPrevious[];
     }
   | {
+      day: number;
       order: number;
       type: 'CONTENT';
       contentId: number;
@@ -46,6 +50,11 @@ export interface CreateLocalRecommendationRequest {
   regionId: number;
   description: string;
   durationType: 'DAY_TRIP' | 'ONE_NIGHT' | 'TWO_NIGHT' | 'THREE_PLUS';
+  /**
+   * 실제 여행 일수. durationType과 일치해야 한다
+   * (DAY_TRIP=1, ONE_NIGHT=2, TWO_NIGHT=3, THREE_PLUS=4 이상).
+   */
+  totalDays: number;
   // 라이브 스펙(CourseCreateRequest) 기준 이동수단은 WALK/CAR만 받는다 —
   // PUBLIC은 더 이상 유효한 요청 값이 아니다(과거 데이터에만 남아 있을 수
   // 있고, 그건 응답 쪽 CourseDetailResult.transportType이 느슨한 string인

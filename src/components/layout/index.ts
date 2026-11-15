@@ -2,6 +2,7 @@ export { default as AuthLayout } from './AuthLayout';
 export { default as AuthSidebar } from './AuthSidebar';
 export { default as Header } from './Header';
 export { default as FixedMobilePageFrame } from './FixedMobilePageFrame';
+export { default as Footer } from './Footer';
 export { default as MainLayout } from './MainLayout';
 export {
   default as ResponsivePageShell,
@@ -10,4 +11,5 @@ export {
   type ResponsivePageShellMode,
   type ResponsivePageShellProps,
 } from './ResponsivePageShell';
+export { default as Responsive, type ResponsiveProps } from './Responsive';
 export { default as Sidebar } from './Sidebar';

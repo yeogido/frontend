@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   type InfiniteData,
+  type PlaceholderDataFunction,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -46,9 +47,19 @@ interface CoursesPageParam {
   cursorId?: number;
 }
 
+type CoursesQueryKey = [string, number, GetCoursesParams];
+
 export function useCourses(
   params: GetCoursesParams,
-  options?: { enabled?: boolean }
+  options?: {
+    enabled?: boolean;
+    placeholderData?: PlaceholderDataFunction<
+      InfiniteData<GetCoursesResponse, CoursesPageParam>,
+      NormalizedApiError,
+      InfiniteData<GetCoursesResponse, CoursesPageParam>,
+      CoursesQueryKey
+    >;
+  }
 ) {
   const authGeneration = useAuthStore((state) => state.authGeneration);
 
@@ -56,7 +67,7 @@ export function useCourses(
     GetCoursesResponse,
     NormalizedApiError,
     InfiniteData<GetCoursesResponse, CoursesPageParam>,
-    [string, number, GetCoursesParams],
+    CoursesQueryKey,
     CoursesPageParam
   >({
     queryKey: ['courses', authGeneration, params],
@@ -75,6 +86,7 @@ export function useCourses(
           }
         : undefined,
     enabled: options?.enabled,
+    placeholderData: options?.placeholderData,
   });
 }
 
@@ -103,7 +115,9 @@ export function useRecommendedCourses() {
   });
 }
 
-export function useCourseDelete() {
+export function useCourseDelete(options?: {
+  onDeleted?: (courseId: number) => void;
+}) {
   const [targetCourseId, setTargetCourseId] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -162,6 +176,7 @@ export function useCourseDelete() {
     try {
       await deleteCourseMutation.mutateAsync(targetCourseId);
       closeDialog();
+      options?.onDeleted?.(targetCourseId);
       showToast('코스를 삭제했어요.');
     } catch (error) {
       closeDialog();

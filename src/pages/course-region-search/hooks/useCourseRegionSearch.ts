@@ -20,7 +20,7 @@ import {
   getNationwideSearchPagePath,
   getNationwideSearchPath,
 } from '../constants/searchTargets';
-import type { CityOption } from '../types';
+import type { CityOption, CourseRegionSearchTarget } from '../types';
 import { isNationwideCity } from '../utils/citySelection';
 import {
   getRecentSearchLocation,
@@ -67,7 +67,7 @@ function createSearchResultLocation(params: {
   };
 }
 
-function useCourseRegionSearch() {
+function useCourseRegionSearch(forcedTarget?: CourseRegionSearchTarget) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -77,9 +77,13 @@ function useCourseRegionSearch() {
     isLoading: isRegionLoading,
     isError: isRegionError,
   } = useRegionOptions();
-  const searchTarget = getCourseRegionSearchTarget(
-    searchParams.get(COURSE_REGION_SEARCH_TARGET_PARAM)
-  );
+  // 헤더 검색창처럼 URL의 from 파라미터와 상관없이 대상을 고정해야 하는 곳은
+  // forcedTarget을 넘긴다.
+  const searchTarget =
+    forcedTarget ??
+    getCourseRegionSearchTarget(
+      searchParams.get(COURSE_REGION_SEARCH_TARGET_PARAM)
+    );
   const searchTargetConfig = courseRegionSearchTargets[searchTarget];
   const searchTargetPathname = searchTargetConfig.pathname;
   const [selectedCityId, setSelectedCityId] = useState(defaultCityId);

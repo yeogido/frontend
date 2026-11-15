@@ -1,6 +1,3 @@
-import { useEffect, useMemo } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-
 import { TravelRecordPageFrame } from '../components';
 
 import backIcon from '../../../assets/icons/back.svg';
@@ -9,23 +6,9 @@ import {
   TravelDatePresetSelectorSection,
   TravelDatePromptSection,
 } from './components';
-import { useTravelDateSelection } from './hooks';
-import type { TravelDateSelectionLocationState } from './types';
-import {
-  getTravelRecordDraftRegion,
-  getTravelRecordDraftDateRange,
-  saveTravelRecordDraftDateRange,
-} from '../utils/draftStorage';
-import { getTravelRecordEditRoute } from '../utils/editRoute';
+import { useDateSelectionPage } from './useDateSelectionPage';
 
 function TravelRecordDateSelectionPage() {
-  const navigate = useNavigate();
-  const { travelRecordId } = useParams<{ travelRecordId: string }>();
-  const location = useLocation();
-  const locationState =
-    location.state as TravelDateSelectionLocationState | null;
-  const storedSelectedRegion = useMemo(() => getTravelRecordDraftRegion(), []);
-  const selectedRegion = locationState?.selectedRegion ?? storedSelectedRegion;
   const {
     canGoToNextMonth,
     canGoToPreviousMonth,
@@ -37,41 +20,12 @@ function TravelRecordDateSelectionPage() {
     visibleMonthLabel,
     goToNextMonth,
     goToPreviousMonth,
+    handleAddPhoto,
+    navigate,
     selectDate,
     selectMonth,
     selectPreset,
-  } = useTravelDateSelection(getTravelRecordDraftDateRange());
-
-  useEffect(() => {
-    if (!selectedRegion) {
-      navigate(
-        travelRecordId
-          ? getTravelRecordEditRoute(travelRecordId)
-          : '/travel-record/new',
-        { replace: true },
-      );
-    }
-  }, [navigate, selectedRegion, travelRecordId]);
-
-  const handleAddPhoto = () => {
-    if (!selectedRange || !selectedRegion) {
-      return;
-    }
-
-    saveTravelRecordDraftDateRange(selectedRange);
-
-    navigate(
-      travelRecordId
-        ? getTravelRecordEditRoute(travelRecordId, 'photos')
-        : '/travel-record/photo-selection',
-      {
-      state: {
-        selectedRegion,
-        selectedDateRange: selectedRange,
-      },
-      },
-    );
-  };
+  } = useDateSelectionPage();
 
   return (
     <TravelRecordPageFrame className="bg-[#f9f9f9]">

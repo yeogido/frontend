@@ -18,6 +18,7 @@ export { default as DetailPlaceCard } from './DetailPlaceCard';
 export type { DetailPlaceCardProps } from './DetailPlaceCard';
 export { CourseDetailLayout } from './CourseDetailLayout';
 export type { CourseDetailLayoutProps } from './CourseDetailLayout';
+export { ResponsiveCourseDetailLayout } from './ResponsiveCourseDetailLayout';
 export { ShareToast } from './ShareToast';
 export type { ShareToastProps } from './ShareToast';
 export { DetailStateGuard } from './DetailStateGuard';
