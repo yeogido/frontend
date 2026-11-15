@@ -102,6 +102,7 @@ import CourseReviewsPage from '../pages/course-reviews';
 import ProfilePage from '../pages/profile';
 import ProfileEditPage from '../pages/profile/edit';
 import FriendsPage from '../pages/friends';
+import FriendQrAddPage from '../pages/friends/add';
 import FriendRequestsPage from '../pages/friends/requests';
 import FriendProfilePage from '../pages/friends/profile';
 import BusinessVerificationPage from '../pages/business-verification';
@@ -304,6 +305,15 @@ function AppRouter() {
               <Responsive
                 desktop={<FriendRequestsPage desktop />}
                 mobile={<FriendRequestsPage />}
+              />
+            }
+          />
+          <Route
+            path="/friends/add"
+            element={
+              <Responsive
+                desktop={<FriendQrAddPage desktop />}
+                mobile={<FriendQrAddPage />}
               />
             }
           />

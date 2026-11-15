@@ -191,3 +191,18 @@ export type GetFriendTravelRecordsResponse = CursorResponse<
 
 // GET /api/v1/travel-records/years?userId={친구}. 최신순이고 없으면 빈 배열이다.
 export type GetFriendTravelRecordYearsResponse = TravelRecordYearListResponse;
+
+// GET /api/v1/friends/qr/{qrToken}. relationStatus와 requestId의 의미는 친구 검색과 같다
+// (requestId는 REQUESTED와 RECEIVED일 때만 온다).
+export interface FriendQrPreview extends FriendSummary {
+  relationStatus: FriendRelationStatus;
+  requestId?: number | null;
+}
+
+// POST /api/v1/friends/qr/{qrToken}. 수락 없이 바로 친구가 되고, 대기 중인 요청이
+// 있으면 그 요청이 수락된다.
+export interface AcceptFriendQrResult {
+  requestId: number;
+  status: 'ACCEPTED';
+  friend: FriendSummary;
+}
