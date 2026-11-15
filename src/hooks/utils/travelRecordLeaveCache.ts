@@ -10,7 +10,7 @@ export interface TravelRecordLeaveSession {
   authGeneration: number;
 }
 
-/** 권한을 잃은 기록을 성공 후에만 제거하며 다른 계정·세대의 캐시는 보존한다. */
+/** 참여를 종료한 기록을 내 목록에서 제거하고, 자동 PUBLIC 전환 여부는 재조회로 반영한다. */
 export async function clearLeftTravelRecordQueries(
   client: QueryClient,
   travelRecordId: number,

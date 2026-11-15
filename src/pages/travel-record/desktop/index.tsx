@@ -25,7 +25,6 @@ function TravelRecordDesktopPage() {
     isPending,
     visibilityFilter,
     setVisibilityFilter,
-    hasPreviewContent,
     visibleInvitations,
     visibleFolders,
     handleAcceptInvitation,
@@ -42,7 +41,6 @@ function TravelRecordDesktopPage() {
     refetchTravelRecords,
     handleFolderClick,
     recentlySavedFolderId,
-    previewSharedFolders,
     loadMoreRef,
   } = useTravelRecordPage();
   const addButton = (
@@ -102,9 +100,7 @@ function TravelRecordDesktopPage() {
             </div>
             {addButton}
           </div>
-          {(!isPending ||
-            hasPreviewContent ||
-            visibleInvitations.length > 0) && (
+          {(!isPending || visibleInvitations.length > 0) && (
             <TravelFolderGrid
               desktop
               folders={visibleFolders}
@@ -184,7 +180,7 @@ function TravelRecordDesktopPage() {
         <TravelMapView
           desktop
           action={addButton}
-          folders={[...previewSharedFolders, ...mapRecordsQuery.folders]}
+          folders={mapRecordsQuery.folders}
         />
       )}
       <div ref={loadMoreRef} aria-hidden="true" />

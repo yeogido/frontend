@@ -102,6 +102,8 @@ async function setup(
           result: null,
         },
       });
+    if (url.pathname.endsWith('/regions')) return json({ regions: [] });
+    if (url.pathname.endsWith('/regions/popular')) return json([]);
     const otherAccount = req.headers().authorization?.includes(token(1000));
     if (
       url.pathname.endsWith('/travel-records/invitations') &&
@@ -557,6 +559,7 @@ test('keeps an invitation after a response network failure and allows a manual r
 for (const code of [
   'COMMON4031',
   'TRAVEL_RECORD4042',
+  'TEST404',
   'TRAVEL_RECORD4094',
   'TRAVEL_RECORD4095',
 ]) {

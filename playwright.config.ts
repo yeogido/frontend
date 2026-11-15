@@ -24,7 +24,6 @@ export default defineConfig({
     reuseExistingServer: false,
     env: {
       VITE_API_BASE_URL: 'http://127.0.0.1:5181/api/v1',
-      VITE_TRAVEL_RECORD_PREVIEW: 'false',
     },
   },
 });

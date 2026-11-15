@@ -1,7 +1,6 @@
 import ProfileAvatar from '../../../components/common/ProfileAvatar';
 import mapSharerIcon from '../../../assets/icons/share/map-sharer.svg';
 import { useMyProfile } from '../../../hooks/useMyProfile';
-import { mockTravelRecordShareFriends } from '../../../mocks/travelRecordShareFriends';
 import Map from '../../home/map/components/Map';
 import type { RegionPhotoMap } from '../../home/map/types/regionPhoto';
 import TravelRecordShareDialog from './TravelRecordShareDialog';
@@ -18,11 +17,7 @@ function TravelMapShareModal({
   const { data: profile } = useMyProfile();
 
   return (
-    <TravelRecordShareDialog
-      title="여행 지도 공유"
-      friends={mockTravelRecordShareFriends}
-      onClose={onClose}
-    >
+    <TravelRecordShareDialog title="여행 지도 공유" onClose={onClose}>
       <div
         inert
         aria-hidden="true"
