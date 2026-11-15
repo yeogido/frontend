@@ -1,8 +1,10 @@
 import { apiClient, normalizeApiError } from './common';
 
 import type {
+  AcceptFriendQrResult,
   AcceptFriendRequestResult,
   FriendProfile,
+  FriendQrPreview,
   GetFriendLocalCoursesParams,
   GetFriendLocalCoursesResponse,
   GetFriendRequestsParams,
@@ -230,6 +232,35 @@ export async function getFriendTravelRecordYears(
     const { data } = await apiClient.get<GetFriendTravelRecordYearsResponse>(
       '/travel-records/years',
       { params: { userId: friendUserId } }
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+// 토큰은 경로 한 칸에 들어가야 하므로 인코딩해서 넘긴다.
+export async function getFriendQrPreview(
+  qrToken: string
+): Promise<FriendQrPreview> {
+  try {
+    const { data } = await apiClient.get<FriendQrPreview>(
+      `/friends/qr/${encodeURIComponent(qrToken)}`
+    );
+
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function acceptFriendByQr(
+  qrToken: string
+): Promise<AcceptFriendQrResult> {
+  try {
+    const { data } = await apiClient.post<AcceptFriendQrResult>(
+      `/friends/qr/${encodeURIComponent(qrToken)}`
     );
 
     return data;
