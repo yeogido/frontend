@@ -13,13 +13,18 @@ import { usePersistedIndex } from './usePersistedIndex';
 // Figma 1440 데스크톱 시안(6115:16019 carousel_featured_course) 기준 리터럴 px.
 // 가운데 카드가 가장 크고, 양옆으로 갈수록 작아지며 가운데 카드 뒤로 겹친다.
 const CAROUSEL_HEIGHT = 476;
+// 화면 밖 슬롯(±3)은 보이지 않는 대기 자리다. 카드가 이 자리로 빠져나가고, 반대편
+// 대기 자리에서 들어와서 끝에서 끝으로 순간이동하지 않고 이어서 미끄러진다.
 const SLOTS = [
+  { offset: -3, left: -330, width: 500, height: 380, top: 48, zIndex: 5 },
   { offset: -2, left: -164, width: 564, height: 410, top: 33, zIndex: 10 },
   { offset: -1, left: 0, width: 610, height: 444, top: 16, zIndex: 20 },
   { offset: 0, left: 197, width: 654, height: 476, top: 0, zIndex: 30 },
   { offset: 1, left: 438, width: 610, height: 444, top: 16, zIndex: 20 },
   { offset: 2, left: 648, width: 564, height: 410, top: 33, zIndex: 10 },
+  { offset: 3, left: 770, width: 500, height: 380, top: 48, zIndex: 5 },
 ] as const;
+const MAX_VISIBLE_OFFSET = 2;
 
 export interface FeaturedCourse {
   readonly id: number;
@@ -64,44 +69,36 @@ function FeaturedCourseCarousel({
   onLikeClick,
 }: FeaturedCourseCarouselProps) {
   const count = courses.length;
-  const [activeIndex, setActiveIndex] = usePersistedIndex(
+  const [savedIndex, setSavedIndex] = usePersistedIndex(
     'home-featured-index',
     count
   );
-  // 직전에 가운데였던 카드. 어느 카드가 반대편 끝으로 넘어갔는지 가리는 데 쓴다.
-  const [previousIndex, setPreviousIndex] = useState(activeIndex);
+  // 계속 늘어나는 위치. 카드 인덱스는 이 값을 count로 나눈 나머지라, 끝에서 끝으로
+  // 넘어가는 카드도 "한 칸 더 옆으로" 가는 것으로 계산돼 이어서 미끄러진다.
+  const [position, setPosition] = useState(savedIndex);
   const [isPaused, setIsPaused] = useState(false);
 
-  const goTo = (nextIndex: number) => {
-    setPreviousIndex(activeIndex);
-    setActiveIndex(nextIndex);
+  const mod = (value: number) => ((value % count) + count) % count;
+
+  const move = (delta: number) => {
+    const next = position + delta;
+
+    setPosition(next);
+    setSavedIndex(mod(next));
   };
 
   useEffect(() => {
     if (isPaused || count <= 1) return;
 
     const timer = window.setInterval(() => {
-      setPreviousIndex(activeIndex);
-      setActiveIndex((activeIndex + 1) % count);
+      const next = position + 1;
+
+      setPosition(next);
+      setSavedIndex(((next % count) + count) % count);
     }, ROTATE_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
-  }, [isPaused, count, activeIndex, setActiveIndex]);
-
-  // center를 기준으로 한 index의 위치(-2..2). 이동 전후 위치 차이가 이동량과
-  // 다르면 그 카드는 한쪽 끝에서 반대편 끝으로 넘어간 것이다.
-  const half = Math.floor(count / 2);
-  const offsetFrom = (index: number, center: number) =>
-    ((index - center + count + half) % count) - half;
-  const shift = offsetFrom(activeIndex, previousIndex);
-  const hasWrapped = (index: number) =>
-    offsetFrom(index, activeIndex) !== offsetFrom(index, previousIndex) - shift;
-
-  // 카드가 모자랄 때 같은 코스가 양쪽에 겹쳐 보이지 않도록, 서로 다른
-  // 인덱스가 나오는 오프셋만 그린다.
-  const visibleSlots = SLOTS.filter(
-    (slot) => count > Math.abs(slot.offset) * 2
-  );
+  }, [isPaused, count, position, setSavedIndex]);
 
   return (
     <div
@@ -115,36 +112,38 @@ function FeaturedCourseCarousel({
       onFocus={() => setIsPaused(true)}
       onBlur={() => setIsPaused(false)}
     >
-      {visibleSlots.map((slot) => {
-        const index = (activeIndex + slot.offset + count) % count;
-        const course = courses[index];
+      {SLOTS.map((slot) => {
+        const virtualIndex = position + slot.offset;
+        const course = courses[mod(virtualIndex)];
         const isActive = slot.offset === 0;
-        // 넘어간 카드는 DOM이 옮겨지며 전환이 끊겨 순간이동하므로, 새 자리에 새로
-        // 그려 페이드인시킨다.
-        const wrapped = hasWrapped(index);
+        // 같은 코스가 양쪽에 겹쳐 보이지 않을 만큼 카드가 모자라면 그 자리는 숨긴다.
+        const isVisible =
+          Math.abs(slot.offset) <= MAX_VISIBLE_OFFSET &&
+          count > Math.abs(slot.offset) * 2;
 
         return (
           <article
-            key={wrapped ? `${course.id}-${activeIndex}` : course.id}
+            key={virtualIndex}
+            aria-hidden={!isVisible}
             style={{
               left: slot.left,
               top: slot.top,
               width: slot.width,
               height: slot.height,
               zIndex: slot.zIndex,
+              opacity: isVisible ? 1 : 0,
+              pointerEvents: isVisible ? undefined : 'none',
               transition: `all ${SLIDE_DURATION_MS}ms ${SLIDE_EASING}`,
-              animation: wrapped
-                ? `featured-card-enter ${SLIDE_DURATION_MS}ms ${SLIDE_EASING}`
-                : undefined,
             }}
             className="bg-gray-2 absolute overflow-hidden rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.2)]"
           >
             <button
               type="button"
+              tabIndex={isVisible ? 0 : -1}
               aria-label={
                 isActive ? `${course.title} 코스 보기` : `${course.title} 선택`
               }
-              onClick={() => (isActive ? onOpen(course.id) : goTo(index))}
+              onClick={() => (isActive ? onOpen(course.id) : move(slot.offset))}
               className="absolute inset-0 block text-left"
             >
               {course.image ? (
@@ -183,6 +182,7 @@ function FeaturedCourseCarousel({
                   : `${course.title} 좋아요`
               }
               aria-pressed={course.liked}
+              tabIndex={isVisible ? 0 : -1}
               onClick={() => onLikeClick(course.id)}
               className="absolute top-[22px] right-[26px]"
             >

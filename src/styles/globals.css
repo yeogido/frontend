@@ -77,16 +77,6 @@
   }
 }
 
-/* 홈 추천 코스 캐러셀 — 반대편 끝으로 넘어가는 카드가 순간이동 대신 나타난다. */
-@keyframes featured-card-enter {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 /*
  * type="search"는 searchbox 시맨틱과 모바일 키보드의 '검색' 키를 위해 유지하되,
  * 브라우저 기본 취소 버튼은 감춘다. 우리 검색창은 44px 터치 영역을 가진
