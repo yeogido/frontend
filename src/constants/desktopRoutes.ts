@@ -22,6 +22,8 @@ export const DESKTOP_VIEW_PATHS = [
   '/yeogido-course',
   '/yeogido-course/popular',
   '/yeogido-course/detail/:courseId',
+  '/yeogido-course/detail/:courseId/reviews',
+  '/local-course/detail/:courseId/reviews',
   '/login',
   '/signup',
   '/signup/kakao',
