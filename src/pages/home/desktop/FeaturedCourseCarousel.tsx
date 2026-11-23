@@ -68,17 +68,34 @@ function FeaturedCourseCarousel({
     'home-featured-index',
     count
   );
+  // 직전에 가운데였던 카드. 어느 카드가 반대편 끝으로 넘어갔는지 가리는 데 쓴다.
+  const [previousIndex, setPreviousIndex] = useState(activeIndex);
   const [isPaused, setIsPaused] = useState(false);
+
+  const goTo = (nextIndex: number) => {
+    setPreviousIndex(activeIndex);
+    setActiveIndex(nextIndex);
+  };
 
   useEffect(() => {
     if (isPaused || count <= 1) return;
 
     const timer = window.setInterval(() => {
+      setPreviousIndex(activeIndex);
       setActiveIndex((activeIndex + 1) % count);
     }, ROTATE_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
   }, [isPaused, count, activeIndex, setActiveIndex]);
+
+  // center를 기준으로 한 index의 위치(-2..2). 이동 전후 위치 차이가 이동량과
+  // 다르면 그 카드는 한쪽 끝에서 반대편 끝으로 넘어간 것이다.
+  const half = Math.floor(count / 2);
+  const offsetFrom = (index: number, center: number) =>
+    ((index - center + count + half) % count) - half;
+  const shift = offsetFrom(activeIndex, previousIndex);
+  const hasWrapped = (index: number) =>
+    offsetFrom(index, activeIndex) !== offsetFrom(index, previousIndex) - shift;
 
   // 카드가 모자랄 때 같은 코스가 양쪽에 겹쳐 보이지 않도록, 서로 다른
   // 인덱스가 나오는 오프셋만 그린다.
@@ -102,10 +119,13 @@ function FeaturedCourseCarousel({
         const index = (activeIndex + slot.offset + count) % count;
         const course = courses[index];
         const isActive = slot.offset === 0;
+        // 넘어간 카드는 DOM이 옮겨지며 전환이 끊겨 순간이동하므로, 새 자리에 새로
+        // 그려 페이드인시킨다.
+        const wrapped = hasWrapped(index);
 
         return (
           <article
-            key={course.id}
+            key={wrapped ? `${course.id}-${activeIndex}` : course.id}
             style={{
               left: slot.left,
               top: slot.top,
@@ -113,6 +133,9 @@ function FeaturedCourseCarousel({
               height: slot.height,
               zIndex: slot.zIndex,
               transition: `all ${SLIDE_DURATION_MS}ms ${SLIDE_EASING}`,
+              animation: wrapped
+                ? `featured-card-enter ${SLIDE_DURATION_MS}ms ${SLIDE_EASING}`
+                : undefined,
             }}
             className="bg-gray-2 absolute overflow-hidden rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.2)]"
           >
@@ -121,9 +144,7 @@ function FeaturedCourseCarousel({
               aria-label={
                 isActive ? `${course.title} 코스 보기` : `${course.title} 선택`
               }
-              onClick={() =>
-                isActive ? onOpen(course.id) : setActiveIndex(index)
-              }
+              onClick={() => (isActive ? onOpen(course.id) : goTo(index))}
               className="absolute inset-0 block text-left"
             >
               {course.image ? (
