@@ -2,7 +2,7 @@ export const localCourseFilterGroups = [
   {
     key: 'transport',
     defaultLabel: '전체',
-    options: ['전체', '도보', '자차'],
+    options: ['전체', '도보', '자동차'],
   },
   {
     key: 'duration',
