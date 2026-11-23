@@ -1,5 +1,3 @@
-import { MdFormatQuote } from 'react-icons/md';
-
 import darkStar from '../../../assets/icons/dark star.svg';
 import star from '../../../assets/icons/star.svg';
 import ReviewerAvatar from '../../../components/common/ReviewerAvatar';
@@ -10,7 +8,9 @@ import { toReviewCardProps } from '../../../utils/reviewCard';
 // Figma 1440 데스크톱 시안(6115:36813 card_review) 기준 리터럴 px.
 const REVIEW_COUNT = 8;
 const CARD_WIDTH = 333;
-const CARD_HEIGHT = 419;
+const CARD_HEIGHT = 311;
+const PHOTO_COUNT = 3;
+const PHOTO_HEIGHT = 102;
 const AVATAR_SIZE = 56;
 const STAR_SIZE = 20;
 const STAR_COUNT = 5;
@@ -57,7 +57,7 @@ function HomeReviewSection() {
                     type="button"
                     onClick={() => goToCourseDetail(review)}
                     style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
-                    className="flex flex-col gap-[20px] rounded-[24px] bg-white p-[28px] text-left"
+                    className="flex flex-col gap-[16px] rounded-[24px] bg-white p-[20px] text-left"
                   >
                     <span className="flex items-center gap-[12px]">
                       <ReviewerAvatar
@@ -93,17 +93,30 @@ function HomeReviewSection() {
                       </span>
                     </span>
 
-                    <MdFormatQuote
-                      aria-hidden="true"
-                      className="text-gray-3 shrink-0 text-[32px]"
-                    />
+                    {review.images.length > 0 ? (
+                      <span className="flex gap-[8px]">
+                        {review.images.slice(0, PHOTO_COUNT).map((url) => (
+                          <img
+                            key={url}
+                            src={url}
+                            alt=""
+                            draggable={false}
+                            style={{ height: PHOTO_HEIGHT }}
+                            className="min-w-0 flex-1 rounded-[8px] object-cover"
+                          />
+                        ))}
+                      </span>
+                    ) : null}
 
-                    <span className="line-clamp-6 min-h-0 flex-1 text-[16px] leading-[1.6] break-words text-black">
+                    <span className="line-clamp-3 min-h-0 flex-1 text-[16px] leading-[1.5] break-words text-black">
                       {review.content}
                     </span>
 
-                    <span className="border-gray-3 text-gray-4 truncate border-l-2 pl-[8px] text-[14px]">
-                      {review.courseTitle}
+                    <span className="text-gray-4 flex items-center justify-between gap-[8px] text-[12px]">
+                      <span className="border-gray-3 truncate border-l-2 pl-[8px]">
+                        {review.courseTitle}
+                      </span>
+                      <span className="shrink-0">{review.date}</span>
                     </span>
                   </button>
                 </li>

@@ -1,8 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MdCalendarToday, MdLocationOn, MdPerson } from 'react-icons/md';
 
 import heart from '../../../assets/icons/heart.svg';
 import oheart from '../../../assets/icons/oheart.svg';
+import {
+  ROTATE_INTERVAL_MS,
+  SLIDE_DURATION_MS,
+  SLIDE_EASING,
+} from '../constants/carousel';
+import { usePersistedIndex } from './usePersistedIndex';
 
 // Figma 1440 데스크톱 시안(6115:16019 carousel_featured_course) 기준 리터럴 px.
 // 가운데 카드가 가장 크고, 양옆으로 갈수록 작아지며 가운데 카드 뒤로 겹친다.
@@ -57,8 +63,22 @@ function FeaturedCourseCarousel({
   onOpen,
   onLikeClick,
 }: FeaturedCourseCarouselProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
   const count = courses.length;
+  const [activeIndex, setActiveIndex] = usePersistedIndex(
+    'home-featured-index',
+    count
+  );
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused || count <= 1) return;
+
+    const timer = window.setInterval(() => {
+      setActiveIndex((activeIndex + 1) % count);
+    }, ROTATE_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [isPaused, count, activeIndex, setActiveIndex]);
 
   // 카드가 모자랄 때 같은 코스가 양쪽에 겹쳐 보이지 않도록, 서로 다른
   // 인덱스가 나오는 오프셋만 그린다.
@@ -73,6 +93,10 @@ function FeaturedCourseCarousel({
       aria-label="추천 코스"
       style={{ height: CAROUSEL_HEIGHT }}
       className="relative w-full"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={() => setIsPaused(false)}
     >
       {visibleSlots.map((slot) => {
         const index = (activeIndex + slot.offset + count) % count;
@@ -88,8 +112,9 @@ function FeaturedCourseCarousel({
               width: slot.width,
               height: slot.height,
               zIndex: slot.zIndex,
+              transition: `all ${SLIDE_DURATION_MS}ms ${SLIDE_EASING}`,
             }}
-            className="bg-gray-2 absolute overflow-hidden rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.2)] transition-all duration-300"
+            className="bg-gray-2 absolute overflow-hidden rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.2)]"
           >
             <button
               type="button"

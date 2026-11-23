@@ -1,8 +1,8 @@
 import { regionCities } from '../../../constants/regions';
 import { regionCityImages } from '../../../constants/regionImages';
 
-// Figma 1440 데스크톱 시안(6373:68055) 기준 리터럴 px.
-const CIRCLE_SIZE = 156;
+// 지역 소상공인 페이지(6336:75105)의 지역 원형 줄과 같은 크기·간격.
+const CIRCLE_SIZE = 128;
 
 interface HomeRegionStripProps {
   readonly onSelect: (regionName: string) => void;
@@ -13,7 +13,7 @@ function HomeRegionStrip({ onSelect }: HomeRegionStripProps) {
   return (
     <ul
       aria-label="지역 바로가기"
-      className="flex [scrollbar-width:none] gap-[24px] overflow-x-auto px-[24px] py-[4px] [&::-webkit-scrollbar]:hidden"
+      className="flex [scrollbar-width:none] gap-[36px] overflow-x-auto p-[4px] [&::-webkit-scrollbar]:hidden"
     >
       {regionCities.map((city) => (
         <li key={city.id} className="shrink-0">
@@ -30,8 +30,8 @@ function HomeRegionStrip({ onSelect }: HomeRegionStripProps) {
               draggable={false}
               className="absolute inset-0 h-full w-full object-cover"
             />
-            <span aria-hidden="true" className="absolute inset-0 bg-black/30" />
-            <span className="relative text-[32px] font-semibold text-white">
+            <span aria-hidden="true" className="absolute inset-0 bg-black/20" />
+            <span className="relative text-[24px] font-semibold text-white">
               {city.name}
             </span>
           </button>
