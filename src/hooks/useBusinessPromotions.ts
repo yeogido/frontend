@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  keepPreviousData,
   type InfiniteData,
   useMutation,
   useQueryClient,
@@ -26,6 +27,8 @@ interface BusinessPromotionsPageParam {
 
 interface UseBusinessPromotionsOptions {
   enabled?: boolean;
+  /** 필터가 바뀌어도 새 결과가 올 때까지 이전 목록을 유지해 스켈레톤 깜빡임을 막는다. */
+  keepPreviousData?: boolean;
 }
 
 export function useBusinessPromotions(
@@ -48,6 +51,7 @@ export function useBusinessPromotions(
       }),
     initialPageParam: {},
     enabled: options.enabled,
+    placeholderData: options.keepPreviousData ? keepPreviousData : undefined,
     getNextPageParam: (lastPage) => {
       if (!lastPage.hasNext) return undefined;
 
@@ -161,7 +165,9 @@ function useDeleteBusinessPromotion() {
     },
     onSuccess: (_, promotionId) => {
       void queryClient.invalidateQueries({ queryKey: ['businessPromotions'] });
-      queryClient.removeQueries({ queryKey: ['businessPromotion', promotionId] });
+      queryClient.removeQueries({
+        queryKey: ['businessPromotion', promotionId],
+      });
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
