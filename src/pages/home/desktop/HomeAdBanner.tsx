@@ -1,29 +1,36 @@
 import { useEffect, useState } from 'react';
 
 import { HOME_BANNERS } from '../constants/banners';
+import {
+  ROTATE_INTERVAL_MS,
+  SLIDE_DURATION_MS,
+  SLIDE_EASING,
+} from '../constants/carousel';
+import { usePersistedIndex } from './usePersistedIndex';
 
 // Figma 1440 데스크톱 시안(6093:34684 banner) 기준 리터럴 px.
 const BANNER_HEIGHT = 118;
-const ROTATE_INTERVAL_MS = 3000;
 
 /**
  * 정부 정책·이벤트 배너 — 전체 폭 띠에 배너가 돌아가며 보이고, 누르면 해당
  * 사업 페이지가 새 탭으로 열린다. 마우스를 올리거나 포커스가 있으면 멈춘다.
  */
 function HomeAdBanner() {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = usePersistedIndex(
+    'home-banner-index',
+    HOME_BANNERS.length
+  );
   const [isPaused, setIsPaused] = useState(false);
-  const banner = HOME_BANNERS[activeIndex];
 
   useEffect(() => {
     if (isPaused || HOME_BANNERS.length <= 1) return;
 
     const timer = window.setInterval(() => {
-      setActiveIndex((index) => (index + 1) % HOME_BANNERS.length);
+      setActiveIndex((activeIndex + 1) % HOME_BANNERS.length);
     }, ROTATE_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, activeIndex, setActiveIndex]);
 
   return (
     <section
@@ -35,27 +42,40 @@ function HomeAdBanner() {
       onFocus={() => setIsPaused(true)}
       onBlur={() => setIsPaused(false)}
     >
-      <a
-        href={banner.link}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`${banner.titleWhite} ${banner.titleOrangeBold}`}
-        className="relative block h-full w-full"
+      <div
+        className="flex h-full w-full"
+        style={{
+          transform: `translateX(-${activeIndex * 100}%)`,
+          transition: `transform ${SLIDE_DURATION_MS}ms ${SLIDE_EASING}`,
+        }}
       >
-        <img
-          src={banner.image}
-          alt=""
-          draggable={false}
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <span
-          aria-hidden="true"
-          className="absolute inset-0 flex items-center justify-center gap-[12px] bg-black/30 text-[32px] font-semibold"
-        >
-          <span className="text-white">{banner.titleWhite}</span>
-          <span className="text-main-5">{banner.titleOrangeBold}</span>
-        </span>
-      </a>
+        {HOME_BANNERS.map((banner, index) => (
+          <a
+            key={banner.id}
+            href={banner.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${banner.titleWhite} ${banner.titleOrangeBold}`}
+            aria-hidden={index !== activeIndex}
+            tabIndex={index === activeIndex ? 0 : -1}
+            className="relative block h-full w-full shrink-0"
+          >
+            <img
+              src={banner.image}
+              alt=""
+              draggable={false}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 flex items-center justify-center gap-[12px] bg-black/30 text-[32px] font-semibold"
+            >
+              <span className="text-white">{banner.titleWhite}</span>
+              <span className="text-main-5">{banner.titleOrangeBold}</span>
+            </span>
+          </a>
+        ))}
+      </div>
 
       <p
         aria-live="off"

@@ -2,6 +2,9 @@ import type { ReactNode } from 'react';
 import { MdCalendarToday, MdLocationOn } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 
+import heart from '../../../assets/icons/heart.svg';
+import oheart from '../../../assets/icons/oheart.svg';
+import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCultureContents } from '../../../hooks/useCultureContents';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
 import { buildFestivalDetailPath } from '../../../utils/routes';
@@ -44,6 +47,7 @@ function HomeFestivalSection({
   toolbar,
 }: HomeFestivalSectionProps) {
   const navigate = useNavigate();
+  const { getLiked, toggleLike } = useContentLikeToggle();
   const { data, isPending, isError } = useCultureContents(
     {
       regionId,
@@ -79,44 +83,66 @@ function HomeFestivalSection({
                   className="bg-gray-2 animate-pulse rounded-[12px]"
                 />
               ))
-            : festivals.map((festival) => (
-                <li key={festival.contentId}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(buildFestivalDetailPath(festival.contentId))
-                    }
-                    style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
-                    className="bg-gray-2 relative block overflow-hidden rounded-[12px] text-left"
-                  >
-                    {festival.thumbnailImageUrl ? (
+            : festivals.map((festival) => {
+                const liked = getLiked(festival.contentId, festival.isLiked);
+
+                return (
+                  <li key={festival.contentId} className="relative">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(buildFestivalDetailPath(festival.contentId))
+                      }
+                      style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
+                      className="bg-gray-2 relative block overflow-hidden rounded-[12px] text-left"
+                    >
+                      {festival.thumbnailImageUrl ? (
+                        <img
+                          src={festival.thumbnailImageUrl}
+                          alt=""
+                          draggable={false}
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      ) : null}
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/70 to-transparent"
+                      />
+                      <span className="absolute inset-x-[16px] bottom-[16px] flex flex-col gap-[8px] text-white">
+                        <span className="truncate text-[18px] font-semibold">
+                          {festival.title}
+                        </span>
+                        <span className="flex items-center gap-[4px] text-[14px]">
+                          <MdCalendarToday aria-hidden="true" />
+                          {festival.startDate} ~ {festival.endDate}
+                        </span>
+                        <span className="flex items-center gap-[4px] text-[14px]">
+                          <MdLocationOn aria-hidden="true" />
+                          {festival.regionName}
+                        </span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={
+                        liked
+                          ? `${festival.title} 좋아요 취소`
+                          : `${festival.title} 좋아요`
+                      }
+                      aria-pressed={liked}
+                      onClick={() => toggleLike(festival.contentId, liked)}
+                      className="absolute top-[12px] right-[12px]"
+                    >
                       <img
-                        src={festival.thumbnailImageUrl}
+                        src={liked ? oheart : heart}
                         alt=""
                         draggable={false}
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="h-[24px] w-[24px]"
                       />
-                    ) : null}
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/70 to-transparent"
-                    />
-                    <span className="absolute inset-x-[16px] bottom-[16px] flex flex-col gap-[8px] text-white">
-                      <span className="truncate text-[18px] font-semibold">
-                        {festival.title}
-                      </span>
-                      <span className="flex items-center gap-[4px] text-[14px]">
-                        <MdCalendarToday aria-hidden="true" />
-                        {festival.startDate} ~ {festival.endDate}
-                      </span>
-                      <span className="flex items-center gap-[4px] text-[14px]">
-                        <MdLocationOn aria-hidden="true" />
-                        {festival.regionName}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
+                    </button>
+                  </li>
+                );
+              })}
         </ul>
       )}
     </section>
