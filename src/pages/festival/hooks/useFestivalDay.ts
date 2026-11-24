@@ -9,7 +9,7 @@ import { useEditFestival } from '../../../hooks/useEditFestival';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
 import { buildFestivalDetailPath } from '../../../utils/routes';
-import useFestivalFilters from '../hooks/useFestivalFilters';
+import useFestivalFilters from './useFestivalFilters';
 import {
   formatFestivalDateValue,
   resolveFestivalCalendarMonth,
@@ -20,7 +20,7 @@ import {
 const PAGE_SIZE = 20;
 const DAY_PANEL_SIZE = 3;
 
-// 모바일 진행 중 행사 화면과 같은 필터 매핑. 페이지마다 로컬로 둔다.
+// 진행 중 행사 화면과 같은 필터 매핑. 페이지마다 로컬로 둔다.
 const categoryByFilterValue: Record<string, ContentCategory | undefined> = {
   ALL: undefined,
   EXPERIENCE: 'EXPERIENCE',
@@ -37,10 +37,10 @@ const sortByFilterValue: Record<string, ContentSort> = {
 };
 
 /**
- * 데스크톱 행사 화면의 상태·데이터. 위쪽은 달력에서 고른 날짜의 추천 행사,
+ * 행사 화면(데스크톱·모바일 공용)의 상태·데이터. 위쪽은 달력에서 고른 날짜의 추천 행사,
  * 아래쪽은 분류·정렬로 거른 진행 중 행사 목록이다.
  */
-export function useFestivalDesktop() {
+export function useFestivalDay() {
   const navigate = useNavigate();
   const { getLiked, toggleLike } = useContentLikeToggle();
   const { editFestival } = useEditFestival();
@@ -129,6 +129,7 @@ export function useFestivalDesktop() {
     handleCategorySelect,
     handleSortChange,
     calendarMonth,
+    changeMonth: setCalendarMonth,
     shiftMonth,
     selectedDate,
     selectDate,
