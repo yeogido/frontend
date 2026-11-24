@@ -71,12 +71,12 @@ function DesktopFilterDropdown<TOption extends string>({
         aria-controls={isOpen ? menuId : undefined}
         onClick={() => setIsOpen((open) => !open)}
         style={{ height: TRIGGER_HEIGHT }}
-        className="border-gray-2 text-gray-4 flex items-center gap-[8px] rounded-full border bg-white px-[10px] text-[18px] whitespace-nowrap"
+        className="border-gray-2 text-gray-4 flex items-center gap-[8px] rounded-full border bg-[#f9f9f9] px-[10px] text-[18px] whitespace-nowrap"
       >
         {value}
         <MdExpandMore
           aria-hidden="true"
-          className={`text-[16px] transition-transform ${
+          className={`text-[12px] transition-transform ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -88,7 +88,7 @@ function DesktopFilterDropdown<TOption extends string>({
           role="listbox"
           aria-label={label}
           style={{ top: TRIGGER_HEIGHT + MENU_GAP }}
-          className={`border-gray-2 absolute z-20 min-w-full overflow-hidden rounded-[12px] border bg-white ${
+          className={`border-gray-2 absolute z-20 min-w-full overflow-hidden rounded-[12px] border bg-[#f9f9f9] ${
             align === 'right' ? 'right-0' : 'left-0'
           }`}
         >
@@ -106,7 +106,7 @@ function DesktopFilterDropdown<TOption extends string>({
                   type="button"
                   onClick={() => handleSelect(option)}
                   className={`text-gray-4 w-full px-[10px] py-[8px] text-left text-[18px] whitespace-nowrap ${
-                    isSelected ? 'bg-gray-2' : 'bg-white'
+                    isSelected ? 'bg-gray-2' : 'bg-[#f9f9f9]'
                   }`}
                 >
                   {option}
