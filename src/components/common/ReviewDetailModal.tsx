@@ -20,6 +20,8 @@ export interface ReviewDetailModalReview {
   meta: string;
   rating?: number;
   isMine?: boolean;
+  /** 작성일 "2026.11.17." */
+  date?: string;
 }
 
 export interface ReviewDetailModalProps {
@@ -112,11 +114,14 @@ function ReviewDetailModal({
     profileImage,
     nickname,
     meta,
+    date,
     rating = 5,
     isMine = false,
   } = review;
   const displayedRating = Math.min(Math.max(Math.round(rating), 0), 5);
-  const title = courseTitle ? `${courseTitle}의 후기예요!` : '여행자의 후기예요!';
+  const title = courseTitle
+    ? `${courseTitle}의 후기예요!`
+    : '여행자의 후기예요!';
 
   return createPortal(
     <div
@@ -199,7 +204,16 @@ function ReviewDetailModal({
                 className="text-[12px] font-medium text-[#1c1c1c]"
               />
               {meta && (
-                <span className="shrink-0 font-normal text-[#7f7f7f]"> · {meta}</span>
+                <span className="shrink-0 font-normal text-[#7f7f7f]">
+                  {' '}
+                  · {meta}
+                </span>
+              )}
+              {date && (
+                <span className="shrink-0 font-normal text-[#7f7f7f]">
+                  {' '}
+                  · {date}
+                </span>
               )}
             </p>
             <div className="mt-[2px] flex items-center">
