@@ -103,14 +103,9 @@ function DesktopProfileMenu() {
             <Link to="/friends" onClick={() => setOpen(false)}>
               친구 목록
             </Link>
-            <button
-              type="button"
-              disabled
-              title="준비 중인 기능"
-              className="text-gray-3 text-left"
-            >
+            <Link to="/recent-viewed" onClick={() => setOpen(false)}>
               최근 본 게시물
-            </button>
+            </Link>
           </nav>
           <button
             type="button"

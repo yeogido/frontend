@@ -31,6 +31,7 @@ export const DESKTOP_VIEW_PATHS = [
   '/forgot-password',
   '/forgot-password/reset',
   '/likes',
+  '/recent-viewed',
   '/travel-record',
   '/travel-record/:folderId',
   '/travel-record/new',
