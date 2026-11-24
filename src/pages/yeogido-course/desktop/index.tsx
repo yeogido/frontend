@@ -138,7 +138,7 @@ function YeogidoCourseDesktopPage({
         className="flex flex-col gap-[32px]"
       >
         <div className="flex flex-col gap-[6px]">
-          <h1 className="text-[32px] font-semibold text-black">
+          <h1 className="text-[32px] leading-[38px] font-semibold text-black">
             여기도 가볼까?
           </h1>
           <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">

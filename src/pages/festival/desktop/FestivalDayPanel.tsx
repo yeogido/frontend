@@ -49,7 +49,7 @@ function FestivalDayPanel({
   return (
     <section
       aria-label="선택한 날짜의 행사"
-      className="bg-background flex flex-col gap-[24px] rounded-[24px] px-[24px] py-[20px]"
+      className="bg-background flex h-full flex-col gap-[24px] overflow-hidden rounded-[24px] px-[24px] py-[20px]"
     >
       <h2 className="text-[18px] font-semibold text-black">
         {toDateTitle(selectedDate)}
