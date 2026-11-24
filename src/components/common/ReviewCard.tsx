@@ -40,6 +40,8 @@ export interface ReviewCardProps {
   profileImage: string;
   nickname: string;
   meta: string;
+  /** 작성일("2026.11.17."). 비어 있으면 그리지 않는다. */
+  date?: string;
   content: string;
   rating?: number;
   isMine?: boolean;
@@ -56,6 +58,7 @@ function ReviewCard({
   profileImage,
   nickname,
   meta,
+  date,
   content,
   rating = 5,
   isMine = false,
@@ -251,6 +254,15 @@ function ReviewCard({
                   ))}
                 </div>
               </div>
+
+              {date ? (
+                <span
+                  className="ml-auto shrink-0 self-end font-normal leading-none text-[#7F7F7F]"
+                  style={{ fontSize: NAME_META_SIZE }}
+                >
+                  {date}
+                </span>
+              ) : null}
             </div>
           </div>
         </article>

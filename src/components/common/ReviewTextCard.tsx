@@ -35,6 +35,8 @@ export interface ReviewTextCardProps {
   nickname: string;
   /** 작성자 메타 문구("20대 여"). */
   meta: string;
+  /** 작성일("2026.11.17."). 비어 있으면 그리지 않는다. */
+  date?: string;
   rating?: number;
   /** 본인이 쓴 후기면 우측 상단에 더보기(수정·삭제)가 뜬다. */
   isMine?: boolean;
@@ -56,6 +58,7 @@ function ReviewTextCard({
   profileImage,
   nickname,
   meta,
+  date,
   rating = 5,
   isMine = false,
   onClick,
@@ -153,6 +156,15 @@ function ReviewTextCard({
               ))}
             </div>
           </div>
+
+          {date ? (
+            <span
+              className="text-gray-4 ml-auto shrink-0 self-end leading-none font-normal"
+              style={{ fontSize: NAME_SIZE }}
+            >
+              {date}
+            </span>
+          ) : null}
         </div>
 
         {/* 카드가 overflow-hidden이라 메뉴 패널은 포털로 뜬다. */}
