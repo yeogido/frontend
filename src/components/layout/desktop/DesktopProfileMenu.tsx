@@ -39,7 +39,7 @@ function DesktopProfileMenu() {
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative flex">
       <button
         ref={triggerRef}
         type="button"
