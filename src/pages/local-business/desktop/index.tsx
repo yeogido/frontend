@@ -53,7 +53,7 @@ function LocalBusinessDesktopPage() {
       >
         <header className="flex items-start justify-between">
           <div className="flex flex-col gap-[6px]">
-            <h1 className="text-[32px] font-semibold text-black">
+            <h1 className="text-[32px] leading-[38px] font-semibold text-black">
               지역의 다양한 매력을 만나보세요
             </h1>
             <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
