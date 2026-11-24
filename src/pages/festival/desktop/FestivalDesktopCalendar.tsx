@@ -44,7 +44,7 @@ function FestivalDesktopCalendar({
   return (
     <section
       aria-label="행사 달력"
-      className="border-gray-2 flex flex-col gap-[32px] rounded-[24px] border bg-white px-[33px] py-[25px]"
+      className="border-gray-2 flex h-full flex-col gap-[32px] rounded-[24px] border bg-white px-[33px] py-[25px]"
     >
       <div className="flex items-center justify-between">
         <button
