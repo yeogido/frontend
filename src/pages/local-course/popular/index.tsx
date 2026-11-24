@@ -49,7 +49,7 @@ const LOAD_MORE_HEIGHT = 40;
 
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  자차: 'CAR',
+  자동차: 'CAR',
 };
 
 const durationTypeByLabel: Record<string, CourseDurationType | undefined> = {

@@ -42,7 +42,7 @@ const SKELETON_HEIGHT = 350;
 // 모바일 행사 포함 코스 화면과 같은 라벨↔enum 매핑. 페이지마다 로컬로 둔다.
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  자차: 'CAR',
+  자동차: 'CAR',
 };
 
 const durationTypeByLabel: Record<string, CourseDurationType | undefined> = {

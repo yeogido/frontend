@@ -129,7 +129,7 @@ function FriendTravelMapTab({
           <h2
             className={`leading-none font-semibold text-black ${desktop ? 'text-[32px]' : 'text-[18px]'}`}
           >
-            {desktop ? '전국 지도' : `${nickname}의 전국 지도`}
+            {desktop ? '여행 지도' : `${nickname}의 여행 지도`}
           </h2>
           <p
             className={`text-gray-3 mt-2 leading-none font-normal ${desktop ? 'text-[14px]' : 'text-[10px]'}`}

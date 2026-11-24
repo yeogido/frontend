@@ -39,7 +39,7 @@ const PAGE_SIZE = 20;
 
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  자차: 'CAR',
+  자동차: 'CAR',
 };
 const durationTypeByLabel: Record<string, CourseDurationType | undefined> = {
   당일치기: 'DAY_TRIP',

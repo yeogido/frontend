@@ -41,7 +41,7 @@ import useLocalCourseFilters from '../hooks/useLocalCourseFilters';
 
 const transport: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  자차: 'CAR',
+  자동차: 'CAR',
 };
 const duration: Record<string, CourseDurationType | undefined> = {
   당일치기: 'DAY_TRIP',

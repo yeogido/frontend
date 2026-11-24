@@ -72,7 +72,7 @@ function SearchBox() {
       <form
         onSubmit={handleSubmit}
         role="search"
-        className="border-gray-2 flex w-[clamp(150px,19.58vw,282px)] items-center justify-between gap-[8px] rounded-full border bg-white px-[16px] py-[10px] max-[1199px]:w-[44px] max-[1199px]:justify-center max-[1199px]:px-[10px]"
+        className="border-gray-2 flex w-[clamp(150px,19.58vw,282px)] items-center justify-between gap-[8px] rounded-full border bg-[#f9f9f9] px-[16px] py-[10px] max-[1199px]:w-[44px] max-[1199px]:justify-center max-[1199px]:px-[10px]"
       >
         <input
           type="text"
@@ -81,7 +81,7 @@ function SearchBox() {
           onFocus={() => setIsOpen(true)}
           placeholder="검색어를 입력해 주세요"
           aria-label="코스 또는 지역 검색"
-          className="text-gray-5 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[14px] outline-none max-[1199px]:hidden"
+          className="text-gray-5 placeholder:text-gray-4 min-w-0 flex-1 bg-transparent text-[16px] font-bold outline-none max-[1199px]:hidden"
         />
         <button
           type="submit"

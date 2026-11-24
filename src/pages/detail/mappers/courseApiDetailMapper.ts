@@ -26,7 +26,7 @@ const durationLabels: Record<string, string> = {
 
 const transportLabels: Record<string, { label: string; icon: BadgeId }> = {
   WALK: { label: '도보', icon: 'walk' },
-  CAR: { label: '자차', icon: 'car' },
+  CAR: { label: '자동차', icon: 'car' },
   PUBLIC_TRANSPORT: { label: '대중교통', icon: 'people' },
   PUBLIC: { label: '대중교통', icon: 'people' },
 };
