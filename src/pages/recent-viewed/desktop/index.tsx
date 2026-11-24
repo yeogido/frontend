@@ -13,17 +13,15 @@ import {
   buildFestivalDetailPath,
 } from '../../../utils/routes';
 import HomeCourseCard from '../../home/desktop/HomeCourseCard';
+import {
+  isRecentCategory,
+  RECENT_CATEGORY_OPTIONS,
+  type RecentCategory,
+} from '../constants';
 
 // Figma 1440 데스크톱 시안(6456:48320) 기준 리터럴 px.
 const CONTENT_WIDTH = 1048;
 const TITLE_OFFSET_TOP = 60;
-
-const CATEGORY_OPTIONS = ['전체', '코스', '행사', '장소'] as const;
-type RecentCategory = (typeof CATEGORY_OPTIONS)[number];
-
-function isRecentCategory(value: string | null): value is RecentCategory {
-  return CATEGORY_OPTIONS.some((option) => option === value);
-}
 
 /**
  * 최근 본 게시물 — 상세 화면을 열었을 때 저장해 둔 코스·행사를 4열로 보여준다.
@@ -83,7 +81,7 @@ function RecentViewedDesktopPage() {
         <div className="flex">
           <DesktopFilterDropdown
             label="분류"
-            options={CATEGORY_OPTIONS}
+            options={RECENT_CATEGORY_OPTIONS}
             value={category}
             onChange={handleCategoryChange}
           />
