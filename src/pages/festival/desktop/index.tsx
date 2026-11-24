@@ -162,7 +162,7 @@ function FestivalDesktopPage() {
 
             {hasEmptyResult ? (
               <p className="text-gray-4 text-center text-[16px] font-medium">
-                진행 중인 행사가 없습니다.
+                선택한 날짜에 열리는 행사가 없습니다.
               </p>
             ) : null}
 

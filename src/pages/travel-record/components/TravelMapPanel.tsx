@@ -18,7 +18,7 @@ interface TravelMapPanelProps {
 }
 
 const mapPanelLabel = '여행 지도';
-const mapTitle = '전국 지도';
+const mapTitle = '나의 여행 지도';
 const mapDescription = '다녀온 지역을 한눈에 확인해 보세요';
 
 function TravelMapPanel({

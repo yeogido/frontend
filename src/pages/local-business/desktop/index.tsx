@@ -4,6 +4,7 @@ import { ConfirmDialog } from '../../../components/common';
 import DesktopFilterChip from '../../../components/layout/desktop/DesktopFilterChip';
 import DesktopFilterDropdown from '../../../components/layout/desktop/DesktopFilterDropdown';
 import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
+import { useScrollRestoration } from '../../../hooks/useScrollRestoration';
 import {
   businessCategories,
   businessSortOptions,
@@ -42,6 +43,7 @@ function LocalBusinessDesktopPage() {
     handleSortChange,
     handleStartPromotionRegistration,
   } = useLocalBusinessList();
+  const saveScroll = useScrollRestoration(!isPending);
 
   return (
     <DesktopPageShell contentWidth={CONTENT_WIDTH}>
@@ -109,7 +111,10 @@ function LocalBusinessDesktopPage() {
                   <BusinessDesktopCard
                     key={business.id}
                     business={business}
-                    onClick={() => handleCardClick(business.id)}
+                    onClick={() => {
+                      saveScroll();
+                      handleCardClick(business.id);
+                    }}
                     onLikeClick={() => void handleLikeClick(business.id)}
                     onEdit={() => handleEditClick(business.id)}
                     onDelete={() => handleDeleteClick(business.id)}

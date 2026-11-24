@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
-import { AuthSidebar, Header, Sidebar } from './';
+import { AuthSidebar, Footer, Header, Sidebar } from './';
 import { hasDesktopView } from '../../constants/desktopRoutes';
 import { useAuth } from '../../hooks/useAuth';
 import { useIsDesktop } from '../../hooks/useIsDesktop';
@@ -18,6 +18,8 @@ function MainLayout() {
       <div className={isDesktop ? undefined : 'bg-[#F1F1F1]'}>
         {!isDesktop && <Header onMenuClick={() => setIsSidebarOpen(true)} />}
         <Outlet />
+        {/* 데스크톱 상세는 DesktopPageShell이 자기 푸터를 그린다. */}
+        {!isDesktop && <Footer />}
         {!isDesktop &&
           (isAuthenticated ? (
             <AuthSidebar
@@ -47,6 +49,8 @@ function MainLayout() {
       <main>
         <Outlet />
       </main>
+
+      <Footer />
 
       {isAuthenticated ? (
         <AuthSidebar

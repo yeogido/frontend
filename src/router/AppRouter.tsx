@@ -99,9 +99,11 @@ import MyPostsPage from '../pages/my-posts';
 import MyPostsDesktopPage from '../pages/my-posts/desktop';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
 import CourseReviewsPage from '../pages/course-reviews';
+import CourseReviewsDesktopPage from '../pages/course-reviews/desktop';
 import ProfilePage from '../pages/profile';
 import ProfileEditPage from '../pages/profile/edit';
 import FriendsPage from '../pages/friends';
+import FriendQrAddPage from '../pages/friends/add';
 import FriendRequestsPage from '../pages/friends/requests';
 import FriendProfilePage from '../pages/friends/profile';
 import BusinessVerificationPage from '../pages/business-verification';
@@ -222,12 +224,22 @@ function AppRouter() {
 
         <Route
           path="/yeogido-course/detail/:courseId/reviews"
-          element={<CourseReviewsPage />}
+          element={
+            <Responsive
+              desktop={<CourseReviewsDesktopPage />}
+              mobile={<CourseReviewsPage />}
+            />
+          }
         />
 
         <Route
           path="/local-course/detail/:courseId/reviews"
-          element={<CourseReviewsPage />}
+          element={
+            <Responsive
+              desktop={<CourseReviewsDesktopPage />}
+              mobile={<CourseReviewsPage />}
+            />
+          }
         />
 
         <Route element={<AdminRoute />}>
@@ -304,6 +316,15 @@ function AppRouter() {
               <Responsive
                 desktop={<FriendRequestsPage desktop />}
                 mobile={<FriendRequestsPage />}
+              />
+            }
+          />
+          <Route
+            path="/friends/add"
+            element={
+              <Responsive
+                desktop={<FriendQrAddPage desktop />}
+                mobile={<FriendQrAddPage />}
               />
             }
           />

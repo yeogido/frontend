@@ -62,9 +62,12 @@ export function useFestivalDesktop() {
 
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
 
+  // 아래 전체 목록도 달력에서 고른 날짜에 열리는 행사만 보여준다. statuses를
+  // 보내지 않으면 날짜와 하루라도 겹치는 행사를 모두 돌려준다.
   const list = useCultureContents(
     {
-      statuses: ['ONGOING'],
+      startDate: selectedDate,
+      endDate: selectedDate,
       category: categoryByFilterValue[selectedFilters.category],
       sort: sortByFilterValue[selectedFilters.sort],
       latitude: isDistanceSort ? distanceSortCoordinates?.latitude : undefined,
