@@ -17,12 +17,12 @@ const DAY_PANEL_MARGIN_TOP = 16;
 const DAY_PANEL_PADDING_X = 12;
 const DAY_PANEL_PADDING_TOP = 16;
 const DAY_PANEL_PADDING_BOTTOM = 16;
-const DAY_PANEL_TITLE_SIZE = 16;
+const DAY_PANEL_TITLE_SIZE = 18;
 const DAY_PANEL_TITLE_LINE_HEIGHT = 21;
 const DAY_PANEL_LIST_MARGIN_TOP = 24;
 const DAY_PANEL_LIST_GAP = 20;
 const DAY_PANEL_RADIUS = 12;
-const FILTER_MARGIN_TOP = 32;
+const FILTER_MARGIN_TOP = 20;
 const LIST_MARGIN_TOP = 24;
 const LIST_GAP = 16;
 const MESSAGE_TEXT_SIZE = 13;
@@ -82,7 +82,7 @@ function FestivalHomeSections() {
 
       <section
         aria-label="선택한 날짜의 행사"
-        className="border border-[#e4e4e4] bg-[#f9f9f9]"
+        className="bg-[#f9f9f9] shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
         style={{
           marginTop: DAY_PANEL_MARGIN_TOP * scale,
           paddingLeft: DAY_PANEL_PADDING_X * scale,
@@ -93,7 +93,7 @@ function FestivalHomeSections() {
         }}
       >
         <h2
-          className="font-semibold text-black"
+          className="font-semibold text-[#505050]"
           style={{
             fontSize: DAY_PANEL_TITLE_SIZE * scale,
             lineHeight: `${DAY_PANEL_TITLE_LINE_HEIGHT * scale}px`,
@@ -111,7 +111,7 @@ function FestivalHomeSections() {
         >
           {isDayPanelPending
             ? Array.from({ length: DAY_PANEL_SKELETON_COUNT }, (_, index) => (
-                <FestivalListCardSkeleton key={index} />
+                <FestivalListCardSkeleton key={index} variant="day-panel" />
               ))
             : dayFestivals.map((festival) => (
                 <FestivalListCard
@@ -120,6 +120,8 @@ function FestivalHomeSections() {
                   title={festival.title}
                   startDate={festival.startDate}
                   endDate={festival.endDate}
+                  regionName={festival.regionName}
+                  variant="day-panel"
                   tags={toContentTagIds(festival.hashtags)}
                   isAdmin={festival.canManage}
                   liked={getLiked(festival.contentId, festival.isLiked)}
