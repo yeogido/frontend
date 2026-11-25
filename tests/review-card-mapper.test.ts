@@ -44,6 +44,7 @@ const review: ReviewDetail = {
 test('maps a review into review card props', () => {
   assert.deepEqual(toReviewCardProps(review), {
     id: 101,
+    date: '2026.07.05.',
     // imageOrder 순으로 정렬된다.
     images: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
     editableImages: [
