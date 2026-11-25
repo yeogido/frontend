@@ -15,17 +15,20 @@ import { useCourseLikeToggle } from '../../hooks/useCourseLikeToggle';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import { useRecentCourses } from '../../hooks/useRecentCourses';
 import { useRecentCultureContents } from '../../hooks/useRecentCultureContents';
+import { useRecentPromotions } from '../../hooks/useRecentPromotions';
 import { toContentTagIds } from '../../utils/contentTags';
 import { toCourseCardProps } from '../../utils/courseCard';
 import {
   buildCourseDetailPath,
   buildFestivalDetailPath,
+  buildLocalBusinessDetailPath,
 } from '../../utils/routes';
 import {
   isRecentCategory,
   RECENT_CATEGORY_OPTIONS,
   type RecentCategory,
 } from './constants';
+import { useRecentPromotionLike } from './hooks/useRecentPromotionLike';
 import { mergeRecentViewed } from './utils';
 
 const PAGE_PADDING_X = 24;
@@ -47,10 +50,10 @@ const filterGroups = [{ key: 'category', options: RECENT_CATEGORY_OPTIONS }];
 const noop = () => undefined;
 
 /**
- * 모바일 최근 본 게시물 — 상세 화면을 열었을 때 저장해 둔 코스·행사를 2열로
- * 보여준다. 목록은 브라우저(localStorage)에 있어서 이 기기·이 계정에서 본
- * 것만 나온다. 장소(소상공인)는 상세를 열 때 기록하지 않아 지금은 항상
- * 비어 있고, '전체'는 코스·행사를 본 시각 최신순으로 섞어 보여준다.
+ * 모바일 최근 본 게시물 — 상세 화면을 열었을 때 저장해 둔 코스·행사·소상공인
+ * 홍보글을 같은 크기의 카드 2열로 보여준다. 목록은 브라우저(localStorage)에
+ * 있어서 이 기기·이 계정에서 본 것만 나온다. '전체'는 본 시각 최신순으로 섞어
+ * 보여준다.
  */
 function RecentViewedPage() {
   const navigate = useNavigate();
@@ -80,6 +83,8 @@ function RecentViewedPage() {
 
   const recentCourses = useRecentCourses();
   const recentContents = useRecentCultureContents();
+  const recentPromotions = useRecentPromotions();
+  const togglePromotionLike = useRecentPromotionLike();
   const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
     useCourseLikeToggle();
   const { getLiked: getContentLiked, toggleLike: toggleContentLike } =
@@ -87,9 +92,11 @@ function RecentViewedPage() {
 
   const showCourses = category === '전체' || category === '코스';
   const showContents = category === '전체' || category === '행사';
+  const showPromotions = category === '전체' || category === '홍보게시물';
   const items = mergeRecentViewed(
     showCourses ? recentCourses : [],
-    showContents ? recentContents : []
+    showContents ? recentContents : [],
+    showPromotions ? recentPromotions : []
   );
   const isEmpty = items.length === 0;
 
@@ -161,9 +168,7 @@ function RecentViewedPage() {
             fontSize: EMPTY_TEXT_SIZE * scale,
           }}
         >
-          {category === '장소'
-            ? '최근 본 장소는 아직 지원하지 않아요.'
-            : '최근 본 게시물이 없습니다.'}
+          최근 본 게시물이 없습니다.
         </p>
       ) : (
         <div
@@ -201,6 +206,29 @@ function RecentViewedPage() {
                   }
                   onEdit={noop}
                   onDelete={noop}
+                />
+              );
+            }
+
+            if (item.kind === 'promotion') {
+              const { promotion } = item;
+
+              return (
+                <ContentCard
+                  key={`promotion-${promotion.promotionId}`}
+                  image={promotion.image || null}
+                  title={promotion.title}
+                  firstInfo={promotion.date}
+                  secondInfo={promotion.location}
+                  tags={toContentTagIds(promotion.hashtags)}
+                  liked={promotion.liked}
+                  className="w-full"
+                  onClick={() =>
+                    navigate(
+                      buildLocalBusinessDetailPath(promotion.promotionId)
+                    )
+                  }
+                  onLikeClick={() => void togglePromotionLike(promotion)}
                 />
               );
             }

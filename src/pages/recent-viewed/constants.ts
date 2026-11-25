@@ -2,7 +2,7 @@ export const RECENT_CATEGORY_OPTIONS = [
   '전체',
   '코스',
   '행사',
-  '장소',
+  '홍보게시물',
 ] as const;
 
 export type RecentCategory = (typeof RECENT_CATEGORY_OPTIONS)[number];

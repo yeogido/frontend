@@ -6,11 +6,13 @@ import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useRecentCourses } from '../../../hooks/useRecentCourses';
 import { useRecentCultureContents } from '../../../hooks/useRecentCultureContents';
+import { useRecentPromotions } from '../../../hooks/useRecentPromotions';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { toCourseCardProps } from '../../../utils/courseCard';
 import {
   buildCourseDetailPath,
   buildFestivalDetailPath,
+  buildLocalBusinessDetailPath,
 } from '../../../utils/routes';
 import HomeCourseCard from '../../home/desktop/HomeCourseCard';
 import {
@@ -18,6 +20,7 @@ import {
   RECENT_CATEGORY_OPTIONS,
   type RecentCategory,
 } from '../constants';
+import { useRecentPromotionLike } from '../hooks/useRecentPromotionLike';
 import { mergeRecentViewed } from '../utils';
 
 // Figma 1440 데스크톱 시안(6456:48320) 기준 리터럴 px.
@@ -25,11 +28,9 @@ const CONTENT_WIDTH = 1048;
 const TITLE_OFFSET_TOP = 60;
 
 /**
- * 최근 본 게시물 — 상세 화면을 열었을 때 저장해 둔 코스·행사를 4열로 보여준다.
- * 목록은 브라우저(localStorage)에 있어서 이 기기·이 계정에서 본 것만 나온다.
- *
- * 장소(소상공인)는 상세를 열 때 기록하지 않아 지금은 항상 비어 있다.
- * '전체'는 코스·행사를 본 시각 최신순으로 섞어 보여준다.
+ * 최근 본 게시물 — 상세 화면을 열었을 때 저장해 둔 코스·행사·소상공인
+ * 홍보글을 4열로 보여준다. 목록은 브라우저(localStorage)에 있어서 이 기기·이
+ * 계정에서 본 것만 나온다. '전체'는 본 시각 최신순으로 섞어 보여준다.
  */
 function RecentViewedDesktopPage() {
   const navigate = useNavigate();
@@ -41,6 +42,8 @@ function RecentViewedDesktopPage() {
 
   const recentCourses = useRecentCourses();
   const recentContents = useRecentCultureContents();
+  const recentPromotions = useRecentPromotions();
+  const togglePromotionLike = useRecentPromotionLike();
   const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
     useCourseLikeToggle();
   const { getLiked: getContentLiked, toggleLike: toggleContentLike } =
@@ -48,9 +51,11 @@ function RecentViewedDesktopPage() {
 
   const showCourses = category === '전체' || category === '코스';
   const showContents = category === '전체' || category === '행사';
+  const showPromotions = category === '전체' || category === '홍보게시물';
   const items = mergeRecentViewed(
     showCourses ? recentCourses : [],
-    showContents ? recentContents : []
+    showContents ? recentContents : [],
+    showPromotions ? recentPromotions : []
   );
   const isEmpty = items.length === 0;
 
@@ -95,9 +100,7 @@ function RecentViewedDesktopPage() {
             role="status"
             className="text-gray-4 py-[48px] text-center text-[16px] font-medium"
           >
-            {category === '장소'
-              ? '최근 본 장소는 아직 지원하지 않아요.'
-              : '최근 본 게시물이 없습니다.'}
+            최근 본 게시물이 없습니다.
           </p>
         ) : (
           <ul className="grid grid-cols-4 gap-x-[24px] gap-y-[48px]">
@@ -124,6 +127,30 @@ function RecentViewedDesktopPage() {
                           getContentLiked(content.contentId, content.liked)
                         )
                       }
+                    />
+                  </li>
+                );
+              }
+
+              if (item.kind === 'promotion') {
+                const { promotion } = item;
+
+                return (
+                  <li key={`promotion-${promotion.promotionId}`}>
+                    <HomeCourseCard
+                      image={promotion.image || null}
+                      title={promotion.title}
+                      duration={promotion.date}
+                      courseType={promotion.location}
+                      companion=""
+                      tags={toContentTagIds(promotion.hashtags)}
+                      liked={promotion.liked}
+                      onClick={() =>
+                        navigate(
+                          buildLocalBusinessDetailPath(promotion.promotionId)
+                        )
+                      }
+                      onLikeClick={() => void togglePromotionLike(promotion)}
                     />
                   </li>
                 );

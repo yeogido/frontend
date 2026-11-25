@@ -19,6 +19,7 @@ import type {
   BusinessPromotionListResponse,
 } from '../types/businessPromotion.type';
 import type { GetMyPostsResponse } from '../types/user.type';
+import { removeRecentPromotion } from '../utils/recentPromotions';
 
 interface BusinessPromotionsPageParam {
   cursorValue?: string;
@@ -199,6 +200,7 @@ export function useBusinessPromotionDelete(onSuccess?: () => void) {
 
     try {
       await deleteMutation.mutateAsync(targetPromotionId);
+      removeRecentPromotion(targetPromotionId);
       closeDialog();
       showToast('홍보글을 삭제했어요.');
       onSuccess?.();
@@ -206,6 +208,7 @@ export function useBusinessPromotionDelete(onSuccess?: () => void) {
       closeDialog();
 
       if (isPromotionNotFoundError(error)) {
+        removeRecentPromotion(targetPromotionId);
         showToast('이미 삭제되었거나 존재하지 않는 게시물이에요.');
         return;
       }
