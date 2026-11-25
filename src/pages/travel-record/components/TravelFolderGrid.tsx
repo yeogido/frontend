@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useToast } from '../../../components/toast';
 
 import TravelFolderCard from './TravelFolderCard';
 import TravelRecordInvitationCard from './TravelRecordInvitationCard';
@@ -33,6 +34,7 @@ function TravelFolderGrid({
   hideEmptyState = false,
   desktop = false,
 }: TravelFolderGridProps) {
+  const { showToast } = useToast();
   // 초대가 수락·거절돼 목록에서 사라지면 팝업도 함께 닫힌다.
   const [openedInvitationId, setOpenedInvitationId] = useState<string | null>(
     null
@@ -110,7 +112,10 @@ function TravelFolderGrid({
           onAccept={onAcceptInvitation}
           onDecline={onDeclineInvitation}
           onClose={() => setOpenedInvitationId(null)}
-          onPreviewFailure={() => setOpenedInvitationId(null)}
+          onPreviewFailure={() => {
+            setOpenedInvitationId(null);
+            showToast('초대를 불러오지 못했어요. 다시 시도해 주세요.');
+          }}
         />
       ) : null}
     </>
