@@ -13,6 +13,7 @@ export type TravelRecordVisibilityFilter = 'all' | TravelRecordVisibility;
 export interface TravelRecordServerPhoto {
   imageKey: string;
   imageUrl: string;
+  uploader?: TravelRecordUserProfile | null;
 }
 
 export interface TravelRecordFolder {

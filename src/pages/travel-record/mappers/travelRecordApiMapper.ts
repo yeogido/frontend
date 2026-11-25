@@ -105,7 +105,9 @@ export const mapTravelRecordSummaryToFolder = (
 ): TravelRecordFolder => ({
   id: String(record.travelRecordId),
   regionId: record.regionId,
-  ...(record.visibility ? { visibility: toTravelRecordVisibility(record.visibility) } : {}),
+  ...(record.visibility
+    ? { visibility: toTravelRecordVisibility(record.visibility) }
+    : {}),
   ...resolveTravelRecordMapRegion(record.title, regionInfo),
   title: record.title,
   folderTheme: record.folderTheme,
@@ -131,12 +133,15 @@ export const mapTravelRecordDetailToFolder = (
     .map((image) => ({
       imageKey: image.imageKey,
       imageUrl: image.imageUrl,
+      ...(image.uploader !== undefined ? { uploader: image.uploader } : {}),
     }));
 
   return {
     id: String(record.travelRecordId),
     regionId: record.regionId,
-    ...(record.visibility ? { visibility: toTravelRecordVisibility(record.visibility) } : {}),
+    ...(record.visibility
+      ? { visibility: toTravelRecordVisibility(record.visibility) }
+      : {}),
     ...(record.owner ? { owner: record.owner } : {}),
     ...(record.participants ? { participants: record.participants } : {}),
     ...(record.permissions ? { permissions: record.permissions } : {}),

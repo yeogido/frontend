@@ -193,6 +193,7 @@ export interface TravelRecordImageResponse {
   imageKey: string;
   imageUrl: string;
   imageOrder: number;
+  uploader?: TravelRecordUserProfile | null;
 }
 
 export interface TravelRecordStickerResponse {

@@ -40,7 +40,6 @@ import { getTravelRecordActionPermissions } from '../utils/travelRecordPermissio
 import TravelRecordMembers from './components/TravelRecordMembers';
 import TravelRecordShareModal from './components/TravelRecordShareModal';
 import { getFriendAvatarColor } from '../../friends/utils/friendAvatarColor';
-import { useMyProfile } from '../../../hooks/useMyProfile';
 import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
 import TravelRecordDetailDesktop from './desktop/TravelRecordDetailDesktop';
 
@@ -84,7 +83,6 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
     useState<LeaveTravelRecordVariables | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const closeShareModal = useCallback(() => setIsShareModalOpen(false), []);
-  const { data: profile } = useMyProfile();
   const [isDeleted, setIsDeleted] = useState(false);
   const userId = useAuthStore((state) => state.userId);
   const authGeneration = useAuthStore((state) => state.authGeneration);
@@ -577,8 +575,6 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
         <TravelRecordDetailDesktop
           folder={folder}
           inviteFolder={inviteFolder}
-          profileName={profile?.name ?? ''}
-          profileImageUrl={profile?.profileImageUrl}
           menuRef={actionMenuRef}
           menuOpen={isActionMenuOpen}
           setMenuOpen={setIsActionMenuOpen}
@@ -626,6 +622,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
                 id: String(member.userId),
                 name: member.nickname,
                 color: getFriendAvatarColor(member.userId),
+                profileImageUrl: member.profileImageUrl,
               }))}
             />
           )}
@@ -731,8 +728,8 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
       {isShareModalOpen && inviteFolder && canOpenShare && (
         <TravelRecordShareModal
           folder={inviteFolder}
-          sharerName={profile?.name ?? ''}
-          sharerProfileImageUrl={profile?.profileImageUrl}
+          sharerName={inviteFolder.owner?.nickname ?? ''}
+          sharerProfileImageUrl={inviteFolder.owner?.profileImageUrl}
           onClose={closeShareModal}
         />
       )}
