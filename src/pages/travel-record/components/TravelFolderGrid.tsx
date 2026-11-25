@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import TravelFolderCard from './TravelFolderCard';
 import TravelRecordInvitationCard from './TravelRecordInvitationCard';
-import TravelRecordInvitationDialog from './TravelRecordInvitationDialog';
+import TravelRecordInvitationDialog from './ValidatedTravelInvitationDialog';
 
 import type { TravelRecordFolder, TravelRecordInvitation } from '../types';
 
@@ -81,9 +81,7 @@ function TravelFolderGrid({
               isPending={pendingInvitationIds?.has(invitation.id)}
               onAccept={onAcceptInvitation}
               onDecline={onDeclineInvitation}
-              onOpen={
-                desktop ? (item) => setOpenedInvitationId(item.id) : undefined
-              }
+              onOpen={(item) => setOpenedInvitationId(item.id)}
             />
           ))}
         {folders.map((folder) =>
