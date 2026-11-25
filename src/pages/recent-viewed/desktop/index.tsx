@@ -141,7 +141,8 @@ function RecentViewedDesktopPage() {
                     <HomeCourseCard
                       image={promotion.image || null}
                       title={promotion.title}
-                      duration={promotion.date}
+                      // 시안의 장소 카드(card_desktop place_m)는 지역만 보여준다.
+                      duration=""
                       courseType={promotion.location}
                       companion=""
                       tags={toContentTagIds(promotion.hashtags)}

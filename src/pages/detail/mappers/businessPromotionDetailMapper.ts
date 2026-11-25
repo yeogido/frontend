@@ -119,11 +119,21 @@ export function toRecentPromotion(
     placeId: detail.place.placeId,
     title: detail.place.name,
     location: `${getFullRegionName(province)} ${district}`.trim(),
-    date: detail.createdAt.slice(0, 10).replace(/-/g, '.'),
     image: getHeroImageUrls(detail.images)[0] ?? '',
     hashtags: detail.hashtags,
     liked: detail.isLiked,
+    operatingDays: toOperatingDays(detail.businessHours),
+    ...toCoordinates(detail.place),
   };
+}
+
+function toCoordinates({
+  latitude,
+  longitude,
+}: BusinessPromotionDetailResponse['place']) {
+  return Number.isFinite(latitude) && Number.isFinite(longitude)
+    ? { latitude, longitude }
+    : undefined;
 }
 
 export function mapBusinessPromotionDetail(
@@ -146,10 +156,6 @@ export function mapBusinessPromotionDetail(
     operatingDays: toOperatingDays(detail.businessHours),
     phone: detail.phoneNumber,
     snsAccount: detail.snsAccount,
-    location:
-      Number.isFinite(detail.place.latitude) &&
-      Number.isFinite(detail.place.longitude)
-        ? { latitude: detail.place.latitude, longitude: detail.place.longitude }
-        : undefined,
+    location: toCoordinates(detail.place),
   };
 }

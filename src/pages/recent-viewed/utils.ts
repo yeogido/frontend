@@ -1,4 +1,6 @@
 import type { RecentCultureContent } from '../../types/content.type';
+import { getDistanceKm, type UserLocation } from '../../utils/geolocation.ts';
+import { formatTodayOperatingHours } from '../../utils/operatingHours.ts';
 import type { RecentCourse } from '../../utils/recentCourses';
 import type { RecentPromotion } from '../../utils/recentPromotions';
 
@@ -38,4 +40,29 @@ export function mergeRecentViewed(
   ];
 
   return items.sort((a, b) => b.viewedAt - a.viewedAt);
+}
+
+/**
+ * 홍보글 카드에 보여줄 오늘 영업시간과 현 위치까지의 거리. 영업시간·좌표를
+ * 담기 전에 저장된 기록은 상세를 다시 열어야 채워진다.
+ */
+export function toRecentPromotionInfo(
+  {
+    operatingDays = [],
+    latitude,
+    longitude,
+  }: Pick<RecentPromotion, 'operatingDays' | 'latitude' | 'longitude'>,
+  userLocation: UserLocation | null,
+  now: Date = new Date()
+): { hoursLabel: string; distanceKm: number | null } {
+  const hoursLabel =
+    operatingDays.length === 0
+      ? '영업시간 정보 없음'
+      : (formatTodayOperatingHours(operatingDays, now) ?? '휴무');
+  const distanceKm =
+    userLocation && latitude !== undefined && longitude !== undefined
+      ? getDistanceKm(userLocation, { latitude, longitude })
+      : null;
+
+  return { hoursLabel, distanceKm };
 }

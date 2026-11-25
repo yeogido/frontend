@@ -23,13 +23,15 @@ import {
   buildFestivalDetailPath,
   buildLocalBusinessDetailPath,
 } from '../../utils/routes';
+import { toDistanceLabel } from '../likes/utils/likedItems';
 import {
   isRecentCategory,
   RECENT_CATEGORY_OPTIONS,
   type RecentCategory,
 } from './constants';
 import { useRecentPromotionLike } from './hooks/useRecentPromotionLike';
-import { mergeRecentViewed } from './utils';
+import { useUserLocation } from './hooks/useUserLocation';
+import { mergeRecentViewed, toRecentPromotionInfo } from './utils';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -51,9 +53,10 @@ const noop = () => undefined;
 
 /**
  * 모바일 최근 본 게시물 — 상세 화면을 열었을 때 저장해 둔 코스·행사·소상공인
- * 홍보글을 같은 크기의 카드 2열로 보여준다. 목록은 브라우저(localStorage)에
- * 있어서 이 기기·이 계정에서 본 것만 나온다. '전체'는 본 시각 최신순으로 섞어
- * 보여준다.
+ * 홍보글을 같은 크기의 카드 2열로 보여준다. 홍보글 카드는 시안(6958:51712)의
+ * 장소 카드처럼 태그 없이 영업시간·지역·거리를 보여준다. 목록은
+ * 브라우저(localStorage)에 있어서 이 기기·이 계정에서 본 것만 나온다. '전체'는
+ * 본 시각 최신순으로 섞어 보여준다.
  */
 function RecentViewedPage() {
   const navigate = useNavigate();
@@ -99,6 +102,9 @@ function RecentViewedPage() {
     showPromotions ? recentPromotions : []
   );
   const isEmpty = items.length === 0;
+  const userLocation = useUserLocation(
+    showPromotions && recentPromotions.length > 0
+  );
 
   const handleCategorySelect = (_: string, option: string) => {
     if (!isRecentCategory(option)) return;
@@ -212,15 +218,19 @@ function RecentViewedPage() {
 
             if (item.kind === 'promotion') {
               const { promotion } = item;
+              const { hoursLabel, distanceKm } = toRecentPromotionInfo(
+                promotion,
+                userLocation
+              );
 
               return (
                 <ContentCard
                   key={`promotion-${promotion.promotionId}`}
                   image={promotion.image || null}
                   title={promotion.title}
-                  firstInfo={promotion.date}
+                  firstInfo={hoursLabel}
                   secondInfo={promotion.location}
-                  tags={toContentTagIds(promotion.hashtags)}
+                  distanceInfo={toDistanceLabel(distanceKm)}
                   liked={promotion.liked}
                   className="w-full"
                   onClick={() =>

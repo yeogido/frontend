@@ -1,4 +1,5 @@
 import { useAuthStore } from '../store/auth.store.ts';
+import type { OperatingDay } from './operatingHours';
 
 export const RECENT_PROMOTIONS_STORAGE_KEY = 'recent-promotions';
 export const MAX_RECENT_PROMOTIONS = 10;
@@ -16,11 +17,35 @@ export interface RecentPromotion {
   placeId: number;
   title: string;
   location: string;
-  date: string;
   image: string;
   hashtags: string[];
   liked: boolean;
   viewedAt: number;
+  // 아래 셋은 나중에 추가돼, 예전에 저장한 기록에는 없다.
+  operatingDays?: OperatingDay[];
+  latitude?: number;
+  longitude?: number;
+}
+
+function isOptionalNumber(value: unknown): boolean {
+  return value === undefined || typeof value === 'number';
+}
+
+function isOptionalOperatingDays(value: unknown): boolean {
+  if (value === undefined) return true;
+
+  return (
+    Array.isArray(value) &&
+    value.every((item) => {
+      const day = item as Partial<Record<keyof OperatingDay, unknown>> | null;
+
+      return (
+        typeof day?.dayOfWeek === 'string' &&
+        typeof day.openTime === 'string' &&
+        typeof day.closeTime === 'string'
+      );
+    })
+  );
 }
 
 function notifyRecentPromotionsUpdated(): void {
@@ -46,7 +71,9 @@ function isRecentPromotion(value: unknown): value is RecentPromotion {
     typeof promotion.placeId === 'number' &&
     typeof promotion.title === 'string' &&
     typeof promotion.location === 'string' &&
-    typeof promotion.date === 'string' &&
+    isOptionalOperatingDays(promotion.operatingDays) &&
+    isOptionalNumber(promotion.latitude) &&
+    isOptionalNumber(promotion.longitude) &&
     typeof promotion.image === 'string' &&
     Array.isArray(promotion.hashtags) &&
     promotion.hashtags.every((hashtag) => typeof hashtag === 'string') &&
