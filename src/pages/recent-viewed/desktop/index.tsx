@@ -18,6 +18,7 @@ import {
   RECENT_CATEGORY_OPTIONS,
   type RecentCategory,
 } from '../constants';
+import { mergeRecentViewed } from '../utils';
 
 // Figma 1440 데스크톱 시안(6456:48320) 기준 리터럴 px.
 const CONTENT_WIDTH = 1048;
@@ -28,7 +29,7 @@ const TITLE_OFFSET_TOP = 60;
  * 목록은 브라우저(localStorage)에 있어서 이 기기·이 계정에서 본 것만 나온다.
  *
  * 장소(소상공인)는 상세를 열 때 기록하지 않아 지금은 항상 비어 있다.
- * 코스·행사 기록에는 본 시각이 없어, '전체'는 코스 다음에 행사 순으로 보여준다.
+ * '전체'는 코스·행사를 본 시각 최신순으로 섞어 보여준다.
  */
 function RecentViewedDesktopPage() {
   const navigate = useNavigate();
@@ -47,9 +48,11 @@ function RecentViewedDesktopPage() {
 
   const showCourses = category === '전체' || category === '코스';
   const showContents = category === '전체' || category === '행사';
-  const courses = showCourses ? recentCourses : [];
-  const contents = showContents ? recentContents : [];
-  const isEmpty = courses.length === 0 && contents.length === 0;
+  const items = mergeRecentViewed(
+    showCourses ? recentCourses : [],
+    showContents ? recentContents : []
+  );
+  const isEmpty = items.length === 0;
 
   const handleCategoryChange = (next: RecentCategory) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -98,7 +101,35 @@ function RecentViewedDesktopPage() {
           </p>
         ) : (
           <ul className="grid grid-cols-4 gap-x-[24px] gap-y-[48px]">
-            {courses.map((recentCourse) => {
+            {items.map((item) => {
+              if (item.kind === 'content') {
+                const { content } = item;
+
+                return (
+                  <li key={`content-${content.contentId}`}>
+                    <HomeCourseCard
+                      image={content.thumbnailImageUrl || null}
+                      title={content.title}
+                      duration={`${content.startDate} ~ ${content.endDate}`}
+                      courseType={content.regionName}
+                      companion=""
+                      tags={toContentTagIds(content.hashtags)}
+                      liked={getContentLiked(content.contentId, content.liked)}
+                      onClick={() =>
+                        navigate(buildFestivalDetailPath(content.contentId))
+                      }
+                      onLikeClick={() =>
+                        toggleContentLike(
+                          content.contentId,
+                          getContentLiked(content.contentId, content.liked)
+                        )
+                      }
+                    />
+                  </li>
+                );
+              }
+
+              const recentCourse = item.course;
               const course = toCourseCardProps(recentCourse);
 
               return (
@@ -129,28 +160,6 @@ function RecentViewedDesktopPage() {
                 </li>
               );
             })}
-            {contents.map((content) => (
-              <li key={`content-${content.contentId}`}>
-                <HomeCourseCard
-                  image={content.thumbnailImageUrl || null}
-                  title={content.title}
-                  duration={`${content.startDate} ~ ${content.endDate}`}
-                  courseType={content.regionName}
-                  companion=""
-                  tags={toContentTagIds(content.hashtags)}
-                  liked={getContentLiked(content.contentId, content.liked)}
-                  onClick={() =>
-                    navigate(buildFestivalDetailPath(content.contentId))
-                  }
-                  onLikeClick={() =>
-                    toggleContentLike(
-                      content.contentId,
-                      getContentLiked(content.contentId, content.liked)
-                    )
-                  }
-                />
-              </li>
-            ))}
           </ul>
         )}
       </div>

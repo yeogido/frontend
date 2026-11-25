@@ -26,6 +26,7 @@ import {
   RECENT_CATEGORY_OPTIONS,
   type RecentCategory,
 } from './constants';
+import { mergeRecentViewed } from './utils';
 
 const PAGE_PADDING_X = 24;
 const PAGE_PADDING_TOP = 12;
@@ -49,7 +50,7 @@ const noop = () => undefined;
  * 모바일 최근 본 게시물 — 상세 화면을 열었을 때 저장해 둔 코스·행사를 2열로
  * 보여준다. 목록은 브라우저(localStorage)에 있어서 이 기기·이 계정에서 본
  * 것만 나온다. 장소(소상공인)는 상세를 열 때 기록하지 않아 지금은 항상
- * 비어 있고, '전체'는 코스 다음에 행사 순으로 보여준다(본 시각이 없다).
+ * 비어 있고, '전체'는 코스·행사를 본 시각 최신순으로 섞어 보여준다.
  */
 function RecentViewedPage() {
   const navigate = useNavigate();
@@ -86,9 +87,11 @@ function RecentViewedPage() {
 
   const showCourses = category === '전체' || category === '코스';
   const showContents = category === '전체' || category === '행사';
-  const courses = showCourses ? recentCourses : [];
-  const contents = showContents ? recentContents : [];
-  const isEmpty = courses.length === 0 && contents.length === 0;
+  const items = mergeRecentViewed(
+    showCourses ? recentCourses : [],
+    showContents ? recentContents : []
+  );
+  const isEmpty = items.length === 0;
 
   const handleCategorySelect = (_: string, option: string) => {
     if (!isRecentCategory(option)) return;
@@ -171,7 +174,38 @@ function RecentViewedPage() {
             rowGap: LIST_GAP * scale,
           }}
         >
-          {courses.map((recentCourse) => {
+          {items.map((item) => {
+            if (item.kind === 'content') {
+              const { content } = item;
+
+              return (
+                <FestivalContentCard
+                  key={`content-${content.contentId}`}
+                  image={content.thumbnailImageUrl || null}
+                  title={content.title}
+                  startDate={content.startDate}
+                  endDate={content.endDate}
+                  regionName={content.regionName}
+                  tags={toContentTagIds(content.hashtags)}
+                  className="w-full"
+                  isAdmin={false}
+                  liked={getContentLiked(content.contentId, content.liked)}
+                  onClick={() =>
+                    navigate(buildFestivalDetailPath(content.contentId))
+                  }
+                  onLikeClick={() =>
+                    toggleContentLike(
+                      content.contentId,
+                      getContentLiked(content.contentId, content.liked)
+                    )
+                  }
+                  onEdit={noop}
+                  onDelete={noop}
+                />
+              );
+            }
+
+            const recentCourse = item.course;
             const course = toCourseCardProps(recentCourse);
 
             return (
@@ -199,31 +233,6 @@ function RecentViewedPage() {
               />
             );
           })}
-          {contents.map((content) => (
-            <FestivalContentCard
-              key={`content-${content.contentId}`}
-              image={content.thumbnailImageUrl || null}
-              title={content.title}
-              startDate={content.startDate}
-              endDate={content.endDate}
-              regionName={content.regionName}
-              tags={toContentTagIds(content.hashtags)}
-              className="w-full"
-              isAdmin={false}
-              liked={getContentLiked(content.contentId, content.liked)}
-              onClick={() =>
-                navigate(buildFestivalDetailPath(content.contentId))
-              }
-              onLikeClick={() =>
-                toggleContentLike(
-                  content.contentId,
-                  getContentLiked(content.contentId, content.liked)
-                )
-              }
-              onEdit={noop}
-              onDelete={noop}
-            />
-          ))}
         </div>
       )}
     </section>
