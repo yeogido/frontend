@@ -110,6 +110,7 @@ function TravelFolderGrid({
           onAccept={onAcceptInvitation}
           onDecline={onDeclineInvitation}
           onClose={() => setOpenedInvitationId(null)}
+          onPreviewFailure={() => setOpenedInvitationId(null)}
         />
       ) : null}
     </>

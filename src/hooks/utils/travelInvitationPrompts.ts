@@ -27,10 +27,14 @@ export const invitationPromptHistoryKey = (userId: number) =>
 export function getNextInvitationPrompt(
   items: TravelRecordReceivedInvitation[],
   history: InvitationPromptHistory | null,
-  activeId?: number | null
+  activeId?: number | null,
+  excludedIds?: ReadonlySet<string>
 ): TravelRecordReceivedInvitation | undefined {
   const pending = items.filter(
-    (item) => item.status === 'PENDING' && validCursor(cursorOf(item))
+    (item) =>
+      item.status === 'PENDING' &&
+      !excludedIds?.has(String(item.invitationId)) &&
+      validCursor(cursorOf(item))
   );
   const active = pending.find((item) => item.invitationId === activeId);
   if (active) return active;

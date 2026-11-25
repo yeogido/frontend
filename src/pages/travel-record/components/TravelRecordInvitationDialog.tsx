@@ -8,6 +8,12 @@ import { useGlobalScale } from '../../../hooks/useGlobalScale';
 import { useIsDesktop } from '../../../hooks/useIsDesktop';
 import type { TravelRecordInvitation } from '../types';
 import { TravelFolderArtwork } from './TravelFolderCard';
+import {
+  FOLDER_ARTWORK_WIDTH,
+  FOLDER_FRONT_HEIGHT,
+  FOLDER_FRONT_TOP,
+  folderClipPath,
+} from './folderArtworkLayout';
 
 interface TravelRecordInvitationDialogProps {
   invitation: TravelRecordInvitation;
@@ -131,12 +137,24 @@ function TravelRecordInvitationDialog({
             {inviterName}님과의 공유앨범
           </h2>
           <div
-            className={`relative isolate mt-4 shrink-0 ${desktop ? 'h-[183px] w-[159px]' : 'h-[150px] w-[136px]'}`}
+            className={`relative mt-4 shrink-0 ${desktop ? 'h-[183px] w-[159px]' : 'h-[150px] w-[136px]'}`}
+            style={{ willChange: 'opacity' }}
           >
             <div
               className="absolute top-0 left-0 origin-top-left"
               style={{ transform: desktop ? undefined : 'scale(0.83)' }}
             >
+              <div
+                aria-hidden="true"
+                className="bg-background pointer-events-none absolute left-0"
+                style={{
+                  top: FOLDER_FRONT_TOP,
+                  width: FOLDER_ARTWORK_WIDTH,
+                  height: FOLDER_FRONT_HEIGHT,
+                  clipPath: folderClipPath,
+                  WebkitClipPath: folderClipPath,
+                }}
+              />
               <TravelFolderArtwork
                 photos={folder.photos ?? []}
                 title={folder.title}

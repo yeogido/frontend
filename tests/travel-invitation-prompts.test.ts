@@ -33,6 +33,18 @@ test('orders invitations by creation time then ID and keeps the open invitation 
   );
 });
 
+test('skips an invalid newest invitation and selects the next pending one', () => {
+  assert.equal(
+    getNextInvitationPrompt(
+      [invitation(20), invitation(19)],
+      null,
+      null,
+      new Set(['20'])
+    )?.invitationId,
+    19
+  );
+});
+
 test('closing suppresses the whole current batch including older pages, but allows future invitations', () => {
   const history = dismissInvitationBatch(
     [invitation(12), invitation(11)],

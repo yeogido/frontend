@@ -53,6 +53,7 @@ function InvitationPrompts({
   });
   const [selected, setSelected] =
     useState<TravelRecordReceivedInvitation | null>(null);
+  const [invalidIds, setInvalidIds] = useState<Set<string>>(() => new Set());
   const searchedCursors = useRef(new Set<string>());
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) ?? [],
@@ -64,7 +65,9 @@ function InvitationPrompts({
   );
   // Absence from a single page doesn't mean the open invitation was resolved.
   const active =
-    selected && !resolvedIds.has(String(selected.invitationId))
+    selected &&
+    !resolvedIds.has(String(selected.invitationId)) &&
+    !invalidIds.has(String(selected.invitationId))
       ? (latestActive ??
         (query.hasNextPage ||
         query.isFetching ||
@@ -112,13 +115,39 @@ function InvitationPrompts({
   }, [selected, latestActive, blocked, resolvedIds, pendingIds, query]);
 
   useEffect(() => {
+    if (
+      blocked ||
+      mutations > 0 ||
+      invalidIds.size === 0 ||
+      items.some(
+        (item) =>
+          item.status === 'PENDING' &&
+          !invalidIds.has(String(item.invitationId)) &&
+          !resolvedIds.has(String(item.invitationId))
+      ) ||
+      !query.hasNextPage ||
+      query.isFetching ||
+      query.isError
+    )
+      return;
+    const cursor = query.data?.pages.at(-1)?.cursorId;
+    if (cursor == null) return;
+    const searchKey = `invalid:${cursor}`;
+    if (searchedCursors.current.has(searchKey)) return;
+    searchedCursors.current.add(searchKey);
+    void query.fetchNextPage();
+  }, [blocked, mutations, invalidIds, items, resolvedIds, query]);
+
+  useEffect(() => {
     if (blocked || mutations > 0 || !query.isSuccess || query.isFetching)
       return;
     const next =
       active ??
       getNextInvitationPrompt(
         items.filter((item) => !resolvedIds.has(String(item.invitationId))),
-        history
+        history,
+        null,
+        invalidIds
       ) ??
       null;
     // Synchronize selection with the server-owned pending list, never invitation status.
@@ -128,6 +157,7 @@ function InvitationPrompts({
     selected,
     active,
     resolvedIds,
+    invalidIds,
     blocked,
     history,
     items,
@@ -161,6 +191,11 @@ function InvitationPrompts({
       onAccept={(item) => respond(item.id, 'ACCEPTED')}
       onDecline={(id) => respond(id, 'DECLINED')}
       onClose={close}
+      onPreviewFailure={(action, id) => {
+        if (action !== 'skip') return;
+        setInvalidIds((previous) => new Set(previous).add(id));
+        setSelected(null);
+      }}
     />
   );
 }
