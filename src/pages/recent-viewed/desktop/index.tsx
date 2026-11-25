@@ -116,6 +116,7 @@ function RecentViewedDesktopPage() {
                       duration={`${content.startDate} ~ ${content.endDate}`}
                       courseType={content.regionName}
                       companion=""
+                      stackedInfo
                       tags={toContentTagIds(content.hashtags)}
                       liked={getContentLiked(content.contentId, content.liked)}
                       onClick={() =>
