@@ -1,4 +1,4 @@
-import { Navigate, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 
 import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
@@ -98,6 +98,7 @@ import LikesDesktopPage from '../pages/likes/desktop';
 import MyPostsPage from '../pages/my-posts';
 import MyPostsDesktopPage from '../pages/my-posts/desktop';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
+import RecentViewedPage from '../pages/recent-viewed';
 import RecentViewedDesktopPage from '../pages/recent-viewed/desktop';
 import CourseReviewsPage from '../pages/course-reviews';
 import CourseReviewsDesktopPage from '../pages/course-reviews/desktop';
@@ -297,7 +298,7 @@ function AppRouter() {
             element={
               <Responsive
                 desktop={<RecentViewedDesktopPage />}
-                mobile={<Navigate to="/" replace />}
+                mobile={<RecentViewedPage />}
               />
             }
           />

@@ -26,6 +26,8 @@ function getStorageKey(): string {
 // 화면별로 자신의 courseType만 걸러 보여줄 수 있도록 태그를 붙여 저장한다.
 export interface RecentCourse extends Course {
   courseType: CourseType;
+  /** 상세를 연 시각(ms). 이 필드가 생기기 전에 저장된 항목에는 없다. */
+  viewedAt?: number;
 }
 
 export function upsertRecentCourse(
@@ -80,7 +82,10 @@ export function saveRecentCourse(course: RecentCourse): void {
   if (typeof window === 'undefined') return;
 
   try {
-    const courses = upsertRecentCourse(getStoredRecentCourses(), course);
+    const courses = upsertRecentCourse(getStoredRecentCourses(), {
+      ...course,
+      viewedAt: Date.now(),
+    });
 
     window.localStorage.setItem(
       getStorageKey(),

@@ -6,31 +6,31 @@ import { useContentLikeToggle } from '../../../hooks/useContentLikeToggle';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useRecentCourses } from '../../../hooks/useRecentCourses';
 import { useRecentCultureContents } from '../../../hooks/useRecentCultureContents';
+import { useRecentPromotions } from '../../../hooks/useRecentPromotions';
 import { toContentTagIds } from '../../../utils/contentTags';
 import { toCourseCardProps } from '../../../utils/courseCard';
 import {
   buildCourseDetailPath,
   buildFestivalDetailPath,
+  buildLocalBusinessDetailPath,
 } from '../../../utils/routes';
 import HomeCourseCard from '../../home/desktop/HomeCourseCard';
+import {
+  isRecentCategory,
+  RECENT_CATEGORY_OPTIONS,
+  type RecentCategory,
+} from '../constants';
+import { useRecentPromotionLike } from '../hooks/useRecentPromotionLike';
+import { mergeRecentViewed } from '../utils';
 
 // Figma 1440 데스크톱 시안(6456:48320) 기준 리터럴 px.
 const CONTENT_WIDTH = 1048;
 const TITLE_OFFSET_TOP = 60;
 
-const CATEGORY_OPTIONS = ['전체', '코스', '행사', '장소'] as const;
-type RecentCategory = (typeof CATEGORY_OPTIONS)[number];
-
-function isRecentCategory(value: string | null): value is RecentCategory {
-  return CATEGORY_OPTIONS.some((option) => option === value);
-}
-
 /**
- * 최근 본 게시물 — 상세 화면을 열었을 때 저장해 둔 코스·행사를 4열로 보여준다.
- * 목록은 브라우저(localStorage)에 있어서 이 기기·이 계정에서 본 것만 나온다.
- *
- * 장소(소상공인)는 상세를 열 때 기록하지 않아 지금은 항상 비어 있다.
- * 코스·행사 기록에는 본 시각이 없어, '전체'는 코스 다음에 행사 순으로 보여준다.
+ * 최근 본 게시물 — 상세 화면을 열었을 때 저장해 둔 코스·행사·소상공인
+ * 홍보글을 4열로 보여준다. 목록은 브라우저(localStorage)에 있어서 이 기기·이
+ * 계정에서 본 것만 나온다. '전체'는 본 시각 최신순으로 섞어 보여준다.
  */
 function RecentViewedDesktopPage() {
   const navigate = useNavigate();
@@ -42,6 +42,8 @@ function RecentViewedDesktopPage() {
 
   const recentCourses = useRecentCourses();
   const recentContents = useRecentCultureContents();
+  const recentPromotions = useRecentPromotions();
+  const togglePromotionLike = useRecentPromotionLike();
   const { getLiked: getCourseLiked, toggleLike: toggleCourseLike } =
     useCourseLikeToggle();
   const { getLiked: getContentLiked, toggleLike: toggleContentLike } =
@@ -49,9 +51,13 @@ function RecentViewedDesktopPage() {
 
   const showCourses = category === '전체' || category === '코스';
   const showContents = category === '전체' || category === '행사';
-  const courses = showCourses ? recentCourses : [];
-  const contents = showContents ? recentContents : [];
-  const isEmpty = courses.length === 0 && contents.length === 0;
+  const showPromotions = category === '전체' || category === '홍보게시물';
+  const items = mergeRecentViewed(
+    showCourses ? recentCourses : [],
+    showContents ? recentContents : [],
+    showPromotions ? recentPromotions : []
+  );
+  const isEmpty = items.length === 0;
 
   const handleCategoryChange = (next: RecentCategory) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -83,7 +89,7 @@ function RecentViewedDesktopPage() {
         <div className="flex">
           <DesktopFilterDropdown
             label="분류"
-            options={CATEGORY_OPTIONS}
+            options={RECENT_CATEGORY_OPTIONS}
             value={category}
             onChange={handleCategoryChange}
           />
@@ -94,13 +100,65 @@ function RecentViewedDesktopPage() {
             role="status"
             className="text-gray-4 py-[48px] text-center text-[16px] font-medium"
           >
-            {category === '장소'
-              ? '최근 본 장소는 아직 지원하지 않아요.'
-              : '최근 본 게시물이 없습니다.'}
+            최근 본 게시물이 없습니다.
           </p>
         ) : (
           <ul className="grid grid-cols-4 gap-x-[24px] gap-y-[48px]">
-            {courses.map((recentCourse) => {
+            {items.map((item) => {
+              if (item.kind === 'content') {
+                const { content } = item;
+
+                return (
+                  <li key={`content-${content.contentId}`}>
+                    <HomeCourseCard
+                      image={content.thumbnailImageUrl || null}
+                      title={content.title}
+                      duration={`${content.startDate} ~ ${content.endDate}`}
+                      courseType={content.regionName}
+                      companion=""
+                      stackedInfo
+                      tags={toContentTagIds(content.hashtags)}
+                      liked={getContentLiked(content.contentId, content.liked)}
+                      onClick={() =>
+                        navigate(buildFestivalDetailPath(content.contentId))
+                      }
+                      onLikeClick={() =>
+                        toggleContentLike(
+                          content.contentId,
+                          getContentLiked(content.contentId, content.liked)
+                        )
+                      }
+                    />
+                  </li>
+                );
+              }
+
+              if (item.kind === 'promotion') {
+                const { promotion } = item;
+
+                return (
+                  <li key={`promotion-${promotion.promotionId}`}>
+                    <HomeCourseCard
+                      image={promotion.image || null}
+                      title={promotion.title}
+                      // 시안의 장소 카드(card_desktop place_m)는 지역만 보여준다.
+                      duration=""
+                      courseType={promotion.location}
+                      companion=""
+                      tags={toContentTagIds(promotion.hashtags)}
+                      liked={promotion.liked}
+                      onClick={() =>
+                        navigate(
+                          buildLocalBusinessDetailPath(promotion.promotionId)
+                        )
+                      }
+                      onLikeClick={() => void togglePromotionLike(promotion)}
+                    />
+                  </li>
+                );
+              }
+
+              const recentCourse = item.course;
               const course = toCourseCardProps(recentCourse);
 
               return (
@@ -131,28 +189,6 @@ function RecentViewedDesktopPage() {
                 </li>
               );
             })}
-            {contents.map((content) => (
-              <li key={`content-${content.contentId}`}>
-                <HomeCourseCard
-                  image={content.thumbnailImageUrl || null}
-                  title={content.title}
-                  duration={`${content.startDate} ~ ${content.endDate}`}
-                  courseType={content.regionName}
-                  companion=""
-                  tags={toContentTagIds(content.hashtags)}
-                  liked={getContentLiked(content.contentId, content.liked)}
-                  onClick={() =>
-                    navigate(buildFestivalDetailPath(content.contentId))
-                  }
-                  onLikeClick={() =>
-                    toggleContentLike(
-                      content.contentId,
-                      getContentLiked(content.contentId, content.liked)
-                    )
-                  }
-                />
-              </li>
-            ))}
           </ul>
         )}
       </div>
