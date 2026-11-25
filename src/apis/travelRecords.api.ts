@@ -23,7 +23,57 @@ import type {
   TravelRecordInvitationRespondRequest,
   TravelRecordInvitationRespondResponse,
   TravelRecordReceivedInvitation,
+  TravelRecordShareLinkResponse,
+  TravelRecordSharedView,
+  TravelRecordShareRespondResponse,
+  TravelRecordInvitationResponseStatus,
 } from '../types/travelRecord.type';
+
+export async function getSharedTravelRecord(
+  token: string
+): Promise<TravelRecordSharedView> {
+  try {
+    const { data } = await apiClient.get<TravelRecordSharedView>(
+      `/travel-records/shared/${encodeURIComponent(token)}`
+    );
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function respondToSharedTravelRecord(
+  token: string,
+  status: TravelRecordInvitationResponseStatus
+): Promise<TravelRecordShareRespondResponse> {
+  try {
+    const { data } = await apiClient.patch<TravelRecordShareRespondResponse>(
+      `/travel-records/shared/${encodeURIComponent(token)}`,
+      { status }
+    );
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function createTravelRecordShareLink(
+  travelRecordId: number
+): Promise<TravelRecordShareLinkResponse> {
+  try {
+    const { data } = await apiClient.post<TravelRecordShareLinkResponse>(
+      `/travel-records/${travelRecordId}/share-link`
+    );
+    if (
+      data.travelRecordId !== travelRecordId ||
+      !/^[a-f0-9]{64}$/.test(data.token)
+    )
+      throw new Error('유효하지 않은 공유 링크입니다.');
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function getTravelRecordInvitation(
   invitationId: number

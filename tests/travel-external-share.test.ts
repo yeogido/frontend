@@ -14,19 +14,28 @@ const folder = {
   permissions: { canLinkShare: true },
 } as TravelRecordFolder;
 
-test('only server-authorized PUBLIC folders yield a canonical share target', () => {
-  for (const visibility of ['public'] as const)
+test('authorized PUBLIC and FRIENDS folders use the issued token', () => {
+  const token = 'a'.repeat(64);
+  for (const visibility of ['public', 'friends'] as const)
     assert.deepEqual(
-      getTravelFolderShareData({ ...folder, visibility }, 'https://yeogido.kr'),
+      getTravelFolderShareData(
+        { ...folder, visibility },
+        'https://yeogido.kr',
+        token
+      ),
       {
         title: '부산 & 바다 #여행 | 여기도',
         text: '여기도에서 여행 폴더를 확인해 보세요.',
-        url: 'https://yeogido.kr/travel-record/20',
+        url: `https://yeogido.kr/travel-record/shared/${token}`,
       }
     );
-  for (const visibility of ['private', 'friends', undefined] as const)
+  for (const visibility of ['private', undefined] as const)
     assert.equal(
-      getTravelFolderShareData({ ...folder, visibility }, 'https://yeogido.kr'),
+      getTravelFolderShareData(
+        { ...folder, visibility },
+        'https://yeogido.kr',
+        token
+      ),
       null
     );
   for (const visibility of ['public', 'friends'] as const)
@@ -37,22 +46,29 @@ test('only server-authorized PUBLIC folders yield a canonical share target', () 
           visibility,
           permissions: { ...folder.permissions!, canLinkShare: false },
         },
-        'https://yeogido.kr'
+        'https://yeogido.kr',
+        token
       ),
       null
     );
   assert.equal(
     getTravelFolderShareData(
       { ...folder, permissions: undefined },
-      'https://yeogido.kr'
+      'https://yeogido.kr',
+      token
     ),
     null
   );
   assert.equal(
     getTravelFolderShareData(
       { ...folder, id: 'preview-20' },
-      'https://yeogido.kr'
+      'https://yeogido.kr',
+      token
     ),
+    null
+  );
+  assert.equal(
+    getTravelFolderShareData(folder, 'https://yeogido.kr', 'invalid'),
     null
   );
 });

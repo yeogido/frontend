@@ -116,9 +116,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
   const leaveMutation = useLeaveTravelRecord();
   const isDetailActionPending = isLeaving;
   const inviteFolder = serverTravelRecordQuery.data;
-  const canOpenShare =
-    inviteFolder?.visibility === 'public' ||
-    inviteFolder?.visibility === 'friends';
+  const canOpenShare = inviteFolder?.permissions?.canLinkShare === true;
   const canLeave = canLeaveTravelRecord(inviteFolder, userId);
   const isLeaveDialogOpen =
     canLeave &&

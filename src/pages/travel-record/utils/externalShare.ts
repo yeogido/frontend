@@ -8,19 +8,21 @@ export interface TravelShareData {
 
 export function getTravelFolderShareData(
   folder: TravelRecordFolder,
-  origin: string
+  origin: string,
+  token: string
 ): TravelShareData | null {
   if (
-    folder.visibility !== 'public' ||
+    !['public', 'friends'].includes(folder.visibility ?? '') ||
     folder.permissions?.canLinkShare !== true ||
     !/^\d+$/.test(folder.id) ||
-    Number(folder.id) <= 0
+    Number(folder.id) <= 0 ||
+    !/^[a-f0-9]{64}$/.test(token)
   )
     return null;
   return {
     title: `${folder.title} | 여기도`,
     text: '여기도에서 여행 폴더를 확인해 보세요.',
-    url: new URL(`/travel-record/${folder.id}`, origin).href,
+    url: new URL(`/travel-record/shared/${token}`, origin).href,
   };
 }
 
