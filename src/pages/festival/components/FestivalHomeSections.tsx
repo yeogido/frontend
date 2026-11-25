@@ -57,6 +57,7 @@ function FestivalHomeSections() {
     isError,
     isFetchingNextPage,
     isDayPanelPending,
+    isDayPanelError,
     loadMoreRef,
     getLiked,
     toggleLike,
@@ -134,7 +135,18 @@ function FestivalHomeSections() {
                 />
               ))}
 
-          {!isDayPanelPending && dayFestivals.length === 0 ? (
+          {isDayPanelError ? (
+            <p
+              className="text-main-5 text-center font-medium"
+              style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}
+            >
+              추천 행사를 불러오지 못했어요.
+            </p>
+          ) : null}
+
+          {!isDayPanelPending &&
+          !isDayPanelError &&
+          dayFestivals.length === 0 ? (
             <p
               className="text-gray-4 text-center font-medium"
               style={{ fontSize: MESSAGE_TEXT_SIZE * scale }}

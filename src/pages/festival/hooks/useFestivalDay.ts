@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useContentDelete } from '../../../hooks/useContentDelete';
@@ -61,6 +61,18 @@ export function useFestivalDay() {
   );
 
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
+  const initialLocationRequested = useRef(false);
+
+  useEffect(() => {
+    if (
+      isDistanceSort &&
+      status === 'idle' &&
+      !initialLocationRequested.current
+    ) {
+      initialLocationRequested.current = true;
+      void requestCoordinates();
+    }
+  }, [isDistanceSort, status, requestCoordinates]);
 
   // 아래 전체 목록도 달력에서 고른 날짜에 열리는 행사만 보여준다. statuses를
   // 보내지 않으면 날짜와 하루라도 겹치는 행사를 모두 돌려준다.
@@ -105,7 +117,7 @@ export function useFestivalDay() {
 
   const handleSortChange = (sort: Parameters<typeof handleSortSelect>[0]) => {
     handleSortSelect(sort);
-    if (sort === 'DISTANCE') {
+    if (sort === 'DISTANCE' && status === 'failed') {
       void requestCoordinates();
     }
   };
@@ -139,6 +151,7 @@ export function useFestivalDay() {
     isError: list.isError,
     isFetchingNextPage,
     isDayPanelPending: dayPanel.isPending,
+    isDayPanelError: dayPanel.isError,
     loadMoreRef,
     getLiked,
     toggleLike,
