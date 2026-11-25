@@ -61,6 +61,14 @@ export interface TravelRecordReceivedInvitation {
     startDate: string;
     endDate: string;
     folderTheme: 'BASIC';
+    regionName?: string;
+    previewImages?: Array<{
+      imageUrl: string;
+      imageOrder: number;
+      uploader?: TravelRecordUserProfile | null;
+    }>;
+    stickers?: TravelRecordStickerResponse[];
+    photoCount?: number;
   };
   createdAt: string;
 }

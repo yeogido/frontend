@@ -22,7 +22,21 @@ import type {
   TravelRecordInvitationListResponse,
   TravelRecordInvitationRespondRequest,
   TravelRecordInvitationRespondResponse,
+  TravelRecordReceivedInvitation,
 } from '../types/travelRecord.type';
+
+export async function getTravelRecordInvitation(
+  invitationId: number
+): Promise<TravelRecordReceivedInvitation> {
+  try {
+    const { data } = await apiClient.get<TravelRecordReceivedInvitation>(
+      `/travel-records/invitations/${invitationId}`
+    );
+    return data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
 
 export async function leaveTravelRecordById(
   travelRecordId: number

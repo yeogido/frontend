@@ -21,8 +21,15 @@ export function useTravelRecordInvitations({ enabled = true } = {}) {
   );
   const query = useInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam }) =>
-      getTravelRecordInvitations({ size: 10, cursor: pageParam }),
+    queryFn: async ({ pageParam }) => {
+      const page = await getTravelRecordInvitations({
+        size: 10,
+        cursor: pageParam,
+      });
+      if (!page || !Array.isArray(page.items))
+        throw new Error('받은 초대를 불러오지 못했어요.');
+      return page;
+    },
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (page) =>
       page.hasNext ? (page.cursorId ?? undefined) : undefined,
@@ -40,6 +47,14 @@ export function useTravelRecordInvitations({ enabled = true } = {}) {
     // 삭제된 커서를 반복 재요청하지 않는다. 같은 커서의 자동 복구는 한 번뿐이다.
     if (recoveredCursors.current.has(recoveryKey)) return;
     recoveredCursors.current.add(recoveryKey);
+    // The global prompt and folder page observe the same query. Only one
+    // observer restarts a failed cursor read; the other sees the new fetch.
+    const current = queryClient.getQueryState(queryKey);
+    if (
+      current?.fetchStatus === 'fetching' ||
+      normalizeApiError(current?.error).code !== 'TRAVEL_RECORD4006'
+    )
+      return;
     void queryClient.resetQueries({ queryKey, exact: true });
   }, [
     enabled,
