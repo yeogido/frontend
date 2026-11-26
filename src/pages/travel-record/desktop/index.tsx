@@ -90,7 +90,7 @@ function TravelRecordDesktopPage() {
                   desktop
                 />
               ) : isPending ? (
-                <TravelYearDropdownSkeleton />
+                <TravelYearDropdownSkeleton desktop />
               ) : null}
               <TravelRecordVisibilityFilters
                 value={visibilityFilter}
@@ -162,7 +162,7 @@ function TravelRecordDesktopPage() {
         </section>
       ) : activeView === 'folder' ? (
         isPending || invitationsPending ? (
-          <TravelFolderGridSkeleton />
+          <TravelFolderGridSkeleton desktop />
         ) : null
       ) : isMapPending ? (
         <section
