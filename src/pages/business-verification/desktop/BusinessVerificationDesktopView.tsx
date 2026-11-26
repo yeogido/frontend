@@ -9,8 +9,10 @@ import { getBusinessVerificationErrorMessage } from '../errorMessage';
 import type { useBusinessVerificationForm } from '../hooks/useBusinessVerificationForm';
 import { BusinessVerificationDesktopForm } from './BusinessVerificationDesktopForm';
 
-// Figma 1440 데스크톱 시안(7193:53846) 기준 리터럴 px.
-const DESKTOP_SCALE = 1;
+// 다이얼로그에 넘기는 크기 배율. 두 다이얼로그는 390 기준 크기를 scale로 키우는
+// 구조인데, 데스크톱에서는 키우지 않고 그대로 쓴다. 레이아웃 상수
+// DESKTOP_SCALE(1.25)과는 다른 값이다.
+const DIALOG_SCALE = 1;
 
 interface BusinessVerificationDesktopViewProps {
   readonly form: ReturnType<typeof useBusinessVerificationForm>;
@@ -107,7 +109,7 @@ export function BusinessVerificationDesktopView({
 
       <BusinessVerificationConfirmDialog
         isOpen={isConfirmOpen && form.place !== null}
-        scale={DESKTOP_SCALE}
+        scale={DIALOG_SCALE}
         placeName={form.place?.title ?? ''}
         placeAddress={form.businessAddress}
         onConfirm={handleConfirm}
@@ -116,7 +118,7 @@ export function BusinessVerificationDesktopView({
       />
       <BusinessVerificationSuccessDialog
         isOpen={isVerified}
-        scale={DESKTOP_SCALE}
+        scale={DIALOG_SCALE}
         onConfirm={onSuccessConfirm}
       />
     </DesktopPageShell>

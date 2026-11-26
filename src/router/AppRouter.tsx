@@ -109,7 +109,7 @@ import FriendsPage from '../pages/friends';
 import FriendQrAddPage from '../pages/friends/add';
 import FriendRequestsPage from '../pages/friends/requests';
 import FriendProfilePage from '../pages/friends/profile';
-import BusinessVerificationPage from '../pages/business-verification';
+import BusinessVerificationPage from '../pages/business-verification/ResponsiveBusinessVerificationPage';
 import BusinessPromotionRegistrationPage from '../pages/business-promotion-registration';
 import TermsPage from '../pages/terms';
 import TermsDesktopPage from '../pages/terms/desktop';
@@ -402,12 +402,7 @@ function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route
           path="/business-verification"
-          element={
-            <Responsive
-              desktop={<BusinessVerificationPage desktop />}
-              mobile={<BusinessVerificationPage />}
-            />
-          }
+          element={<BusinessVerificationPage />}
         />
         <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route
