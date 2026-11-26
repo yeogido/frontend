@@ -46,6 +46,7 @@ test('keeps each photo uploader with its sorted image, including missing uploade
     startDate: '2026-01-01',
     endDate: '2026-01-02',
     owner,
+    participants: [],
     images: [
       {
         imageId: 1,
@@ -65,6 +66,7 @@ test('keeps each photo uploader with its sorted image, including missing uploade
       ['b', null],
     ]
   );
+  assert.deepEqual(folder.participants, []);
 });
 
 test('uses a stored region only when editing a travel record', () => {

@@ -1,4 +1,9 @@
-import { Navigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  Navigate,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../components/layout';
 import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
@@ -174,7 +179,11 @@ function ProfileBody({
             desktop={desktop}
           />
         ) : (
-          <FriendFolderTab friendUserId={friendUserId} scale={scale} />
+          <FriendFolderTab
+            friendUserId={friendUserId}
+            scale={scale}
+            desktop={desktop}
+          />
         )}
       </div>
     </div>
@@ -183,6 +192,7 @@ function ProfileBody({
 
 function FriendProfilePage({ desktop = false }: { desktop?: boolean }) {
   const scale = useGlobalScale();
+  const location = useLocation();
   const { friendUserId: friendUserIdParam } = useParams();
   const viewerUserId = useAuthStore((state) => state.userId);
   const friendUserId = parseFriendUserId(friendUserIdParam);
@@ -216,7 +226,16 @@ function FriendProfilePage({ desktop = false }: { desktop?: boolean }) {
   }
 
   if (viewerUserId !== null && friendUserId === viewerUserId) {
-    return <Navigate to="/profile" replace />;
+    return (
+      <Navigate
+        to={
+          new URLSearchParams(location.search).get('tab') === 'map'
+            ? '/travel-record?view=map'
+            : '/profile'
+        }
+        replace
+      />
+    );
   }
 
   return <FriendProfileContent friendUserId={friendUserId} desktop={desktop} />;

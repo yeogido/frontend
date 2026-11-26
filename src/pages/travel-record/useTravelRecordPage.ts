@@ -40,6 +40,19 @@ export function useTravelRecordPage() {
   const recentlySavedFolderId = savedTravelRecord?.id ?? null;
 
   useEffect(() => {
+    if (new URLSearchParams(location.search).get('view') === 'map') {
+      setActiveView('map');
+      navigate(location.pathname, { replace: true, state: location.state });
+    }
+  }, [
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+    setActiveView,
+  ]);
+
+  useEffect(() => {
     if (!getSavedTravelRecordState(location.state)) return;
 
     navigate(location.pathname, { replace: true, state: null });

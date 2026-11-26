@@ -154,6 +154,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
             >
               <ProfileAvatar
                 src={profile?.profileImageUrl}
+                nickname={profile?.name}
                 size={AVATAR_SIZE * scale}
               />
 
@@ -179,12 +180,12 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 </div>
                 {profile?.email && (
                   <span
-          className="truncate font-medium text-[#7f7f7f]"
-          style={{
-            fontSize: EMAIL_TEXT_SIZE * scale,
-            lineHeight: `${16 * scale}px`,
-            marginTop: EMAIL_MARGIN_TOP * scale,
-          }}
+                    className="truncate font-medium text-[#7f7f7f]"
+                    style={{
+                      fontSize: EMAIL_TEXT_SIZE * scale,
+                      lineHeight: `${16 * scale}px`,
+                      marginTop: EMAIL_MARGIN_TOP * scale,
+                    }}
                   >
                     {profile.email}
                   </span>
