@@ -8,7 +8,6 @@ import {
 } from '../coverPhotoFile';
 
 // Figma 1440 데스크톱 시안(6364:56449) 기준 리터럴 px
-const BOX_HEIGHT = 272;
 const BOX_RADIUS = 24;
 const ICON_CIRCLE_SIZE = 51;
 const ICON_SIZE = 32;
@@ -68,8 +67,8 @@ function RepresentativePhotoDesktopSection({
       />
 
       <div
-        className="relative w-full overflow-hidden"
-        style={{ height: BOX_HEIGHT, borderRadius: BOX_RADIUS }}
+        className="relative aspect-[742/563] w-full overflow-hidden"
+        style={{ borderRadius: BOX_RADIUS }}
       >
         {photo ? (
           <>
