@@ -9,7 +9,10 @@ import {
 import { getApiErrorMessage, normalizeApiError } from '../../apis/common';
 import { LoadingSpinner } from '../../components/common';
 import { useToast } from '../../components/toast';
+import { DESKTOP_SCALE } from '../../constants/layout';
+import { ScaleContext } from '../../contexts/ScaleContext';
 import { useBusinessPromotionDetail } from '../../hooks/useBusinessPromotionDetail';
+import { useIsDesktop } from '../../hooks/useIsDesktop';
 import type { BusinessInfoResponse } from '../../types/business.type';
 import type {
   BusinessPromotionCreateRequest,
@@ -109,6 +112,9 @@ function BusinessPromotionRegistrationPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  // Responsive로 감싸면 1024px 경계를 넘을 때 새로 마운트돼 입력이 사라진다.
+  // 같은 트리에서 desktop prop만 바꾼다(ResponsiveBusinessVerificationPage와 같다).
+  const isDesktop = useIsDesktop();
   const { promotionId: promotionIdParam } = useParams<{
     promotionId: string;
   }>();
@@ -460,6 +466,7 @@ function BusinessPromotionRegistrationPage() {
   if (step === 'place') {
     content = (
       <PlaceSelectionScreen
+        desktop={isDesktop}
         selectedBusiness={selectedBusiness}
         onSelectedBusinessChange={setSelectedBusiness}
         onNext={handlePlaceNext}
@@ -476,6 +483,7 @@ function BusinessPromotionRegistrationPage() {
     } else {
       content = (
         <PromotionInfoScreen
+          desktop={isDesktop}
           business={
             isEditMode && detailQuery.data
               ? {
@@ -494,6 +502,7 @@ function BusinessPromotionRegistrationPage() {
   } else {
     content = (
       <PhotoTagSelectionScreen
+        desktop={isDesktop}
         photos={photos}
         onPhotosChange={setPhotos}
         selectedTagIds={selectedTagIds}
@@ -508,14 +517,14 @@ function BusinessPromotionRegistrationPage() {
   }
 
   return (
-    <>
+    <ScaleContext.Provider value={isDesktop ? DESKTOP_SCALE : null}>
       {content}
       <UnsavedChangesDialog
         isOpen={unsavedChangesGuard.isDialogOpen}
         onConfirm={unsavedChangesGuard.onConfirm}
         onCancel={unsavedChangesGuard.onCancel}
       />
-    </>
+    </ScaleContext.Provider>
   );
 }
 

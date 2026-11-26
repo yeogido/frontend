@@ -8,6 +8,7 @@ interface DesktopSelectedPanelProps {
   emptyMessage: string;
   isEmpty: boolean;
   onRemoveAll: () => void;
+  removeAllLabel?: string;
   /** 선택된 항목 줄들 — DesktopSelectedRow의 li들. */
   children: ReactNode;
   submitLabel: string;
@@ -24,6 +25,7 @@ function DesktopSelectedPanel({
   emptyMessage,
   isEmpty,
   onRemoveAll,
+  removeAllLabel = '전체 삭제',
   children,
   submitLabel,
   isSubmitDisabled,
@@ -51,7 +53,7 @@ function DesktopSelectedPanel({
             onClick={onRemoveAll}
             className="text-main-5 text-[14px] font-medium disabled:cursor-default disabled:opacity-40"
           >
-            전체 삭제
+            {removeAllLabel}
           </button>
         </div>
 

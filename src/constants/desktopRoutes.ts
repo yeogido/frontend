@@ -52,6 +52,8 @@ export const DESKTOP_VIEW_PATHS = [
   '/festival/detail/:festivalId',
   '/festival/detail/:festivalId/courses',
   '/business-verification',
+  '/business-promotion-registration',
+  '/business-promotion-registration/:promotionId/edit',
   '/local-business',
   '/local-business/detail/:id',
   '/region-info/:region',

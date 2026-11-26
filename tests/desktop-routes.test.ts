@@ -49,3 +49,9 @@ test('matches the business verification screen that has a desktop view', () => {
   assert.equal(hasDesktopView('/business-verification'), true);
   assert.equal(hasDesktopView('/business-verification/extra'), false);
 });
+
+test('matches the business promotion create and edit screens', () => {
+  assert.equal(hasDesktopView('/business-promotion-registration'), true);
+  assert.equal(hasDesktopView('/business-promotion-registration/7/edit'), true);
+  assert.equal(hasDesktopView('/business-promotion-registration/7'), false);
+});

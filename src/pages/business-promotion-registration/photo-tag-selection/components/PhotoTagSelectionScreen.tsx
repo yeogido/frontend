@@ -19,12 +19,13 @@ import type {
   PromotionCategoryLabel,
   TagId,
 } from '../types';
-import { toggleTag } from '../utils';
+import { MAX_PHOTOS, toggleTag } from '../utils';
 
+import PhotoTagDesktopView from '../desktop';
 import BackButton from './BackButton';
 import CategorySelectionSection from './CategorySelectionSection';
 import KeywordSelectionSection from './KeywordSelectionSection';
-import PhotoGallerySection, { MAX_PHOTOS } from './PhotoGallerySection';
+import PhotoGallerySection from './PhotoGallerySection';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_TOP = 48;
@@ -45,6 +46,8 @@ const HASHTAG_MAPPING_ERROR_MESSAGE =
   '선택한 키워드 중 일부를 등록하지 못했어요. 다시 선택해 주세요.';
 
 interface PhotoTagSelectionScreenProps {
+  /** 업로드 중 화면 폭이 바뀌어도 제출 상태가 남도록 같은 컴포넌트에서 가른다. */
+  desktop?: boolean;
   /**
    * 사진/키워드/카테고리 진행 중 값을 이 컴포넌트가 직접 들고 있지 않고
    * 상위(오케스트레이터)에서 받는다 — 뒤로가기로 이 화면이 언마운트됐다가
@@ -63,6 +66,7 @@ interface PhotoTagSelectionScreenProps {
 }
 
 function PhotoTagSelectionScreen({
+  desktop = false,
   photos,
   onPhotosChange,
   selectedTagIds,
@@ -163,6 +167,34 @@ function PhotoTagSelectionScreen({
     }
   };
 
+  const submitLabel = isSubmitting
+    ? mode === 'edit'
+      ? '저장 중...'
+      : '등록 중...'
+    : mode === 'edit'
+      ? '수정 내용 저장하기'
+      : '홍보글 등록하기';
+
+  if (desktop) {
+    return (
+      <PhotoTagDesktopView
+        photos={photos}
+        onAddPhotos={handleAddPhotos}
+        onRemovePhoto={handleRemovePhoto}
+        selectedTagIds={selectedTagIds}
+        limitMessage={limitMessage}
+        onTagToggle={handleTagToggle}
+        category={category}
+        onCategoryChange={onCategoryChange}
+        submitLabel={submitLabel}
+        isSubmitDisabled={!isReady || isSubmitting}
+        submitError={submitError}
+        onSubmit={() => void handleSubmit()}
+        onBack={onBack}
+      />
+    );
+  }
+
   return (
     <ResponsivePageShell
       mode="standalone"
@@ -218,13 +250,7 @@ function PhotoTagSelectionScreen({
           borderRadius: BUTTON_RADIUS * scale,
         }}
       >
-        {isSubmitting
-          ? mode === 'edit'
-            ? '저장 중...'
-            : '등록 중...'
-          : mode === 'edit'
-            ? '수정 내용 저장하기'
-            : '홍보글 등록하기'}
+        {submitLabel}
       </button>
 
       {submitError ? (
