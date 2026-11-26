@@ -1,6 +1,7 @@
 type ReturnStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 const KEY = 'travel-share-login-return';
-const VALID_PATH = /^\/travel-record\/shared\/[a-f0-9]{64}$/;
+const VALID_PATH =
+  /^(?:\/travel-record\/shared\/[a-f0-9]{64}|\/friends\/[1-9]\d*\?tab=map)$/;
 
 export function rememberTravelShareReturn(
   storage: ReturnStorage,
