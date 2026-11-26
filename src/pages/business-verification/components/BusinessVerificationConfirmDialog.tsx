@@ -142,7 +142,11 @@ export function BusinessVerificationConfirmDialog({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/45"
-      onClick={onClose}
+      // click은 누른 곳과 뗀 곳의 공통 조상에서 발생해서, 패널 안에서 드래그를
+      // 시작해 배경에서 놓으면 닫혀 버린다. 배경을 직접 누른 때만 닫는다.
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
       <div
         ref={dialogRef}
@@ -150,7 +154,6 @@ export function BusinessVerificationConfirmDialog({
         aria-modal="true"
         aria-labelledby="business-verification-confirm-title"
         aria-describedby="business-verification-confirm-description"
-        onClick={(event) => event.stopPropagation()}
         className="relative bg-white shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
         style={{
           width: (GLOBAL_CONTENT_WIDTH - MODAL_SIDE_INSET * 2) * scale,
