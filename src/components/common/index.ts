@@ -18,6 +18,7 @@ export { default as CourseReviewCard } from './CourseReviewCard';
 export { default as CourseReviewCardSkeleton } from './CourseReviewCardSkeleton';
 export { default as CourseFilterBar } from './CourseFilterBar';
 export { default as LoadingSpinner } from './LoadingSpinner';
+export { default as RetryButton } from './RetryButton';
 export { default as Logo } from './Logo';
 export { default as NicknameAvatar } from './NicknameAvatar';
 export type {
