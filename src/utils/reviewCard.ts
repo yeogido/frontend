@@ -31,10 +31,16 @@ export function toEditableImages(images: ReviewImage[] | undefined) {
     .map(({ imageKey, imageUrl }) => ({ imageKey, imageUrl }));
 }
 
+/** createdAt("2026-11-17T09:30:00")을 시안 표기 "2026.11.17."로 바꾼다. */
+export function toReviewDateLabel(createdAt: string | undefined): string {
+  return createdAt ? `${createdAt.slice(0, 10).replace(/-/g, '.')}.` : '';
+}
+
 /** 최근 후기를 ReviewCard props로 바꾼다. */
 export function toReviewCardProps(review: ReviewDetail) {
   return {
     id: review.reviewId,
+    date: toReviewDateLabel(review.createdAt),
     images: toImageUrls(review.images),
     editableImages: toEditableImages(review.images),
     profileImage: review.author?.profileImageUrl ?? '',
@@ -60,7 +66,8 @@ export function toReviewCourseCardProps(review: ReviewDetail) {
     isMine: review.isMine,
     // 카드 썸네일은 후기 사진의 첫 장이다. 사진 없이 쓴 후기도 있어(서버가
     // 0장을 허용한다) 그때는 코스 썸네일로 떨어뜨린다.
-    image: review.course.routeImageUrl ?? images[0] ?? review.course.thumbnailUrl,
+    image:
+      review.course.routeImageUrl ?? images[0] ?? review.course.thumbnailUrl,
     images,
     editableImages: toEditableImages(review.images),
     title: review.course.title,

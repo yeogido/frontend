@@ -44,6 +44,7 @@ test('maps course review previews into review card data', () => {
   assert.deepEqual(reviews, [
     {
       id: 7,
+      date: '2026.07.26.',
       // imageOrder 순으로 정렬된다.
       images: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
       // 수정 화면이 유지할 사진을 지목하는 데 쓴다.

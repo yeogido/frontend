@@ -11,13 +11,15 @@ import {
 import FestivalDayPanel from './FestivalDayPanel';
 import FestivalDesktopCalendar from './FestivalDesktopCalendar';
 import FestivalDesktopCard from './FestivalDesktopCard';
-import { useFestivalDesktop } from './useFestivalDesktop';
+import { useFestivalDay } from '../hooks/useFestivalDay';
 
 // Figma 1440 데스크톱 시안(6276:38914) 기준 리터럴 px.
 const CONTENT_WIDTH = 1048;
 const TITLE_OFFSET_TOP = 60;
 const SKELETON_COUNT = 6;
 const SKELETON_HEIGHT = 350;
+// 달력과 행사 패널은 한 줄에서 같은 높이다(시안 6370:67328).
+const CALENDAR_ROW_HEIGHT = 426;
 const SORT_LABELS = festivalSortOptions.map((option) => option.label);
 
 function FestivalDesktopPage() {
@@ -42,7 +44,7 @@ function FestivalDesktopPage() {
     editFestival,
     requestDelete,
     dialogProps,
-  } = useFestivalDesktop();
+  } = useFestivalDay();
 
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
 
@@ -53,7 +55,7 @@ function FestivalDesktopPage() {
         className="flex flex-col gap-[32px]"
       >
         <header className="flex flex-col gap-[6px]">
-          <h1 className="text-[32px] font-semibold text-black">
+          <h1 className="text-[32px] leading-[38px] font-semibold text-black">
             어디로 떠나볼까요?
           </h1>
           <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
@@ -62,7 +64,10 @@ function FestivalDesktopPage() {
         </header>
 
         <div className="flex flex-col gap-[60px]">
-          <div className="flex items-stretch gap-[24px]">
+          <div
+            style={{ height: CALENDAR_ROW_HEIGHT }}
+            className="flex items-stretch gap-[24px]"
+          >
             <div className="w-[621px] shrink-0">
               <FestivalDesktopCalendar
                 month={calendarMonth}
@@ -162,7 +167,7 @@ function FestivalDesktopPage() {
 
             {hasEmptyResult ? (
               <p className="text-gray-4 text-center text-[16px] font-medium">
-                진행 중인 행사가 없습니다.
+                선택한 날짜에 열리는 행사가 없습니다.
               </p>
             ) : null}
 

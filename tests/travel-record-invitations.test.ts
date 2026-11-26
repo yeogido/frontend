@@ -22,14 +22,49 @@ const invitation: TravelRecordReceivedInvitation = {
   createdAt: '2026-11-12T12:00:00',
 };
 
-test('received invitation maps the actual inviter and basic album without inventing photos', () => {
-  const card = mapReceivedTravelRecordInvitation(invitation);
+test('received invitation maps the actual inviter and preview photos and stickers', () => {
+  const card = mapReceivedTravelRecordInvitation({
+    ...invitation,
+    travelRecord: {
+      ...invitation.travelRecord,
+      regionName: '부산시',
+      previewImages: [
+        { imageUrl: 'second.jpg', imageOrder: 2, uploader: null },
+        { imageUrl: 'first.jpg', imageOrder: 1, uploader: null },
+      ],
+      stickers: [
+        {
+          recordStickerId: 7,
+          stickerId: 8,
+          imageUrl: 'sticker.png',
+          positionX: 0.2,
+          positionY: 0.4,
+          rotation: 12,
+          scale: 1,
+          zIndex: 2,
+        },
+      ],
+      photoCount: 2,
+    },
+  });
   assert.equal(card.id, '101');
   assert.equal(card.inviterName, '초대한 친구');
   assert.equal(card.folder.id, '20');
   assert.equal(card.folder.period, '12.31 - 01.02');
-  assert.equal('photos' in card.folder, false);
-  assert.equal('decorations' in card.folder, false);
+  assert.deepEqual(card.folder.photos, ['first.jpg', 'second.jpg']);
+  assert.equal(card.folder.regionName, '부산시');
+  assert.deepEqual(card.folder.decorations, [
+    {
+      id: '7',
+      stickerId: 8,
+      imageUrl: 'sticker.png',
+      x: 0.2,
+      y: 0.4,
+      rotation: 12,
+      scale: 1,
+      zIndex: 2,
+    },
+  ]);
 });
 
 test('received invitation preserves the inviter profile image', () => {

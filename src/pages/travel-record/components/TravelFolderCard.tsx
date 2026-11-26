@@ -146,7 +146,7 @@ export function TravelFolderArtwork({
 
   return (
     <div
-      className="relative"
+      className="relative isolate"
       style={{ width: FOLDER_ARTWORK_WIDTH, height: FOLDER_ARTWORK_HEIGHT }}
     >
       <FolderDecorationClip

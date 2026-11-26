@@ -4,6 +4,10 @@ import { useMyProfile } from '../../../hooks/useMyProfile';
 import Map from '../../home/map/components/Map';
 import type { RegionPhotoMap } from '../../home/map/types/regionPhoto';
 import TravelRecordShareDialog from './TravelRecordShareDialog';
+import TravelRecordExternalShareActions from './TravelRecordExternalShareActions';
+import { getTravelMapShareData } from '../utils/externalShare';
+import { useAuthStore } from '../../../store/auth.store';
+import { useState } from 'react';
 
 interface TravelMapShareModalProps {
   regionPhotos: RegionPhotoMap;
@@ -15,9 +19,27 @@ function TravelMapShareModal({
   onClose,
 }: TravelMapShareModalProps) {
   const { data: profile } = useMyProfile();
+  const userId = useAuthStore((state) => state.userId);
+  const [isBusy, setIsBusy] = useState(false);
+  const shareData = getTravelMapShareData(
+    userId,
+    profile?.name ?? '',
+    window.location.origin
+  );
 
   return (
-    <TravelRecordShareDialog title="여행 지도 공유" onClose={onClose}>
+    <TravelRecordShareDialog
+      title="여행 지도 공유"
+      onClose={onClose}
+      isBusy={isBusy}
+      externalShareAction={
+        <TravelRecordExternalShareActions
+          data={shareData}
+          isBusy={isBusy}
+          onBusyChange={setIsBusy}
+        />
+      }
+    >
       <div
         inert
         aria-hidden="true"

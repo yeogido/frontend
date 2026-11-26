@@ -16,6 +16,8 @@ interface HomeCourseCardProps {
   readonly duration: string;
   readonly courseType: string;
   readonly companion: string;
+  /** 행사 카드(card_desktop event_m)처럼 정보를 한 줄에 하나씩 쌓는다. */
+  readonly stackedInfo?: boolean;
   readonly tags: readonly TagType[];
   readonly liked: boolean;
   readonly onClick: () => void;
@@ -32,9 +34,9 @@ function InfoText({
   if (!text) return null;
 
   return (
-    <span className="flex items-center gap-[2px]">
-      <Icon aria-hidden="true" className="text-[16px]" />
-      {text}
+    <span className="flex min-w-0 items-center gap-[2px]">
+      <Icon aria-hidden="true" className="shrink-0 text-[16px]" />
+      <span className="truncate">{text}</span>
     </span>
   );
 }
@@ -46,6 +48,7 @@ function HomeCourseCard({
   duration,
   courseType,
   companion,
+  stackedInfo = false,
   tags,
   liked,
   onClick,
@@ -77,7 +80,9 @@ function HomeCourseCard({
             <span className="truncate text-[20px] leading-[1.5] font-medium text-black">
               {title}
             </span>
-            <span className="text-gray-4 flex items-center gap-[8px] text-[16px] font-medium whitespace-nowrap">
+            <span
+              className={`text-gray-4 flex gap-[8px] text-[16px] font-medium whitespace-nowrap ${stackedInfo ? 'flex-col' : 'items-center'}`}
+            >
               <InfoText icon={MdCalendarToday} text={duration} />
               <InfoText icon={MdLocationOn} text={courseType} />
               <InfoText icon={MdPerson} text={companion} />

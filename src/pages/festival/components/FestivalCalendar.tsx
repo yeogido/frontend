@@ -53,7 +53,7 @@ function getRangeBandClassName(
   const isStart = calendarDay.date === selectedRange.startDate;
   const isEnd = calendarDay.date === endDate;
 
-  if (isStart && isEnd) return 'left-1/2 w-9 -translate-x-1/2 rounded-full';
+  if (isStart && isEnd) return 'hidden';
   if (isStart) return 'left-[calc(50%-18px)] right-0 rounded-l-full';
   if (isEnd) return 'left-0 right-[calc(50%-18px)] rounded-r-full';
 
@@ -120,7 +120,7 @@ function FestivalCalendar({
       <section
         ref={innerRef}
         aria-label="행사 일정 달력"
-        className="rounded-xl border border-[#e4e4e4] bg-[#f9f9f9] px-[19px] pt-3 pb-[7px]"
+        className="rounded-xl border border-[#e4e4e4] bg-[#f9f9f9] px-[19px] pt-3 pb-[7px] shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
         style={{
           width: CALENDAR_DESIGN_WIDTH,
           transform: `scale(${scale})`,
@@ -266,6 +266,9 @@ function FestivalCalendar({
                   selectedRange
                 );
                 const isSelected = bandClassName !== null;
+                const isEndpoint =
+                  calendarDay.date === selectedRange?.startDate ||
+                  calendarDay.date === selectedRange?.endDate;
 
                 return (
                   <div
@@ -277,7 +280,7 @@ function FestivalCalendar({
                     {bandClassName ? (
                       <span
                         aria-hidden="true"
-                        className={`absolute top-1/2 h-9 -translate-y-1/2 bg-[#fbd0c2] ${bandClassName}`}
+                        className={`absolute top-1/2 h-9 -translate-y-1/2 bg-[#ffebe5] ${bandClassName}`}
                       />
                     ) : null}
                     <button
@@ -285,8 +288,14 @@ function FestivalCalendar({
                       onClick={() => onDateSelect(calendarDay.date)}
                       aria-label={`${Number(calendarDay.date.slice(5, 7))}월 ${calendarDay.day}일`}
                       aria-pressed={isSelected}
-                      className={`relative z-10 flex size-9 items-center justify-center rounded-full text-[12px] leading-none font-medium ${getDayTextColor(calendarDay)}`}
+                      className={`relative z-10 flex size-9 items-center justify-center rounded-full text-[12px] leading-none font-medium ${isEndpoint ? 'text-[#fff]' : getDayTextColor(calendarDay)}`}
                     >
+                      {isEndpoint ? (
+                        <span
+                          aria-hidden="true"
+                          className="absolute -z-10 size-6 rounded-full bg-[#ff6f41]"
+                        />
+                      ) : null}
                       {calendarDay.day}
                     </button>
                   </div>

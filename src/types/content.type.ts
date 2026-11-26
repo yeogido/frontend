@@ -156,6 +156,8 @@ export interface RecentCultureContent {
   startDate: string;
   endDate: string;
   liked: boolean;
+  /** 상세를 연 시각(ms). 이 필드가 생기기 전에 저장된 항목에는 없다. */
+  viewedAt?: number;
 }
 
 export interface GetCultureContentsResponse {

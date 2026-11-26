@@ -1,4 +1,5 @@
 import { FaGithub } from 'react-icons/fa6';
+import { Link } from 'react-router-dom';
 
 import logo from '../../../assets/icons/logo.svg';
 import {
@@ -52,18 +53,9 @@ function DesktopFooter() {
         <hr className="border-gray-2 mt-[32px] border-t" />
 
         <div className="mt-[23px] text-[16px] leading-[19px] font-medium">
-          {FOOTER_TERMS_URL ? (
-            <a
-              href={FOOTER_TERMS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-4"
-            >
-              {FOOTER_TERMS_LABEL}
-            </a>
-          ) : (
-            <span className="text-gray-4">{FOOTER_TERMS_LABEL}</span>
-          )}
+          <Link to={FOOTER_TERMS_URL} className="text-gray-4">
+            {FOOTER_TERMS_LABEL}
+          </Link>
         </div>
       </div>
     </footer>

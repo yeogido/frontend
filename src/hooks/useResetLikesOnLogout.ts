@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/auth.store';
 import { clearStoredContentLikeOverrides } from '../utils/contentLikeOverrides';
 import { clearRecentCoursesLikedState } from '../utils/recentCourses';
 import { clearRecentCultureContentsLikedState } from '../utils/recentCultureContents';
+import { clearRecentPromotionsLikedState } from '../utils/recentPromotions';
 
 // 비로그인 사용자는 좋아요 상태를 가질 수 없다. 로그인 응답/캐시/로컬
 // 저장소 어디에 남아있든, 로그아웃(또는 세션 만료로 인한 clearAuth) 직후
@@ -38,6 +39,7 @@ export function useResetLikesOnLogout(): void {
     clearStoredContentLikeOverrides();
     clearRecentCoursesLikedState();
     clearRecentCultureContentsLikedState();
+    clearRecentPromotionsLikedState();
     queryClient.clear();
   }, [isAuthenticated, queryClient]);
 }

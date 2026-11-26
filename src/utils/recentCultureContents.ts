@@ -91,7 +91,7 @@ export function saveRecentCultureContent(content: RecentCultureContent): void {
   try {
     const contents = upsertRecentCultureContent(
       getStoredRecentCultureContentsRaw(),
-      content
+      { ...content, viewedAt: Date.now() }
     );
 
     window.localStorage.setItem(

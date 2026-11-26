@@ -19,10 +19,10 @@ function DesktopFilterChip({
       aria-pressed={selected}
       onClick={onClick}
       style={{ height: CHIP_HEIGHT }}
-      className={`rounded-full border px-[12px] text-[18px] whitespace-nowrap ${
+      className={`rounded-full border px-[14px] text-[18px] whitespace-nowrap ${
         selected
           ? 'border-main-5 bg-main-2 text-main-5'
-          : 'border-gray-2 text-gray-4 bg-white'
+          : 'border-gray-2 text-gray-4 bg-[#f9f9f9]'
       }`}
     >
       {label}

@@ -11,7 +11,7 @@ import {
   getFolderPhotoSlotIndexes,
   getVisibleFolderPhotos,
 } from '../components/folderPhotos';
-import { getApiErrorMessage } from '../../../apis/common';
+import { getApiErrorMessage, normalizeApiError } from '../../../apis/common';
 import { useToast } from '../../../components/toast';
 import { useTravelRecordSessionStore } from '../../../store/travelRecordSession.store';
 import { useGlobalScale } from '../../../hooks/useGlobalScale';
@@ -430,6 +430,17 @@ export function useFolderDecorationPage() {
       });
     } catch (error) {
       if (!canCompleteSave()) return;
+      const cause =
+        error instanceof TravelRecordPartialSaveError ? error.cause : error;
+      const code = normalizeApiError(cause).code;
+      if (code === 'TRAVEL_RECORD4091' || code === 'TRAVEL_RECORD4095') {
+        showToast(
+          error instanceof TravelRecordPartialSaveError
+            ? '공개범위는 변경됐어요. 상세 화면에서 최신 정보를 확인하고 다시 수정해 주세요.'
+            : '변경된 내용이 있어요. 상세 화면에서 최신 정보를 확인하고 다시 수정해 주세요.'
+        );
+        return;
+      }
       // 사진 장수, 스티커 위치, 지역 등 실패 원인이 서버 문구로 구분되므로
       // 그대로 보여준다.
       showToast(

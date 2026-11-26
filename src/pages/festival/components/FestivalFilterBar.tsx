@@ -112,7 +112,7 @@ function FestivalFilterBar({
               alt=""
               aria-hidden="true"
               className={`h-3 w-3 transition-transform ${
-                isSortOpen ? 'rotate-90' : ''
+                isSortOpen ? '-rotate-90' : 'rotate-90'
               }`}
             />
           </button>

@@ -144,6 +144,7 @@ function CourseReviewsPage() {
                     profileImage={review.profileImage}
                     nickname={review.nickname}
                     meta={review.meta}
+                    date={review.date}
                     content={review.content}
                     rating={review.rating}
                     isMine={review.isMine}
@@ -159,6 +160,7 @@ function CourseReviewsPage() {
                     profileImage={review.profileImage}
                     nickname={review.nickname}
                     meta={review.meta}
+                    date={review.date}
                     content={review.content}
                     rating={review.rating}
                     isMine={review.isMine}

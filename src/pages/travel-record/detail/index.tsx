@@ -40,7 +40,6 @@ import { getTravelRecordActionPermissions } from '../utils/travelRecordPermissio
 import TravelRecordMembers from './components/TravelRecordMembers';
 import TravelRecordShareModal from './components/TravelRecordShareModal';
 import { getFriendAvatarColor } from '../../friends/utils/friendAvatarColor';
-import { useMyProfile } from '../../../hooks/useMyProfile';
 import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
 import TravelRecordDetailDesktop from './desktop/TravelRecordDetailDesktop';
 
@@ -84,7 +83,6 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
     useState<LeaveTravelRecordVariables | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const closeShareModal = useCallback(() => setIsShareModalOpen(false), []);
-  const { data: profile } = useMyProfile();
   const [isDeleted, setIsDeleted] = useState(false);
   const userId = useAuthStore((state) => state.userId);
   const authGeneration = useAuthStore((state) => state.authGeneration);
@@ -116,9 +114,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
   const leaveMutation = useLeaveTravelRecord();
   const isDetailActionPending = isLeaving;
   const inviteFolder = serverTravelRecordQuery.data;
-  const canOpenShare =
-    inviteFolder?.visibility === 'public' ||
-    inviteFolder?.visibility === 'friends';
+  const canOpenShare = inviteFolder?.permissions?.canLinkShare === true;
   const canLeave = canLeaveTravelRecord(inviteFolder, userId);
   const isLeaveDialogOpen =
     canLeave &&
@@ -390,10 +386,11 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
       return;
     }
 
-    const editableFolder = serverTravelRecordQuery.data;
+    const refreshed = await serverTravelRecordQuery.refetch();
+    const editableFolder = refreshed.isError ? undefined : refreshed.data;
 
     if (!editableFolder) {
-      showToast('여행 기록을 불러오는 중이에요.');
+      showToast('최신 여행 기록을 불러오지 못했어요. 다시 시도해 주세요.');
       return;
     }
 
@@ -440,6 +437,9 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
       version: editableFolder.version,
       visibility: toTravelRecordApiVisibility(editableFolder.visibility),
       ownerId: editableFolder.owner?.userId,
+      hasOtherParticipants: editableFolder.participants
+        ? editableFolder.participants.some((member) => member.userId !== editableFolder.owner?.userId)
+        : undefined,
       decorations: editableFolder.decorations,
       title: editableFolder.title,
       regionId: editableFolder.regionId,
@@ -579,8 +579,6 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
         <TravelRecordDetailDesktop
           folder={folder}
           inviteFolder={inviteFolder}
-          profileName={profile?.name ?? ''}
-          profileImageUrl={profile?.profileImageUrl}
           menuRef={actionMenuRef}
           menuOpen={isActionMenuOpen}
           setMenuOpen={setIsActionMenuOpen}
@@ -628,6 +626,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
                 id: String(member.userId),
                 name: member.nickname,
                 color: getFriendAvatarColor(member.userId),
+                profileImageUrl: member.profileImageUrl,
               }))}
             />
           )}
@@ -733,8 +732,8 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
       {isShareModalOpen && inviteFolder && canOpenShare && (
         <TravelRecordShareModal
           folder={inviteFolder}
-          sharerName={profile?.name ?? ''}
-          sharerProfileImageUrl={profile?.profileImageUrl}
+          sharerName={inviteFolder.owner?.nickname ?? ''}
+          sharerProfileImageUrl={inviteFolder.owner?.profileImageUrl}
           onClose={closeShareModal}
         />
       )}

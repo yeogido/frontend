@@ -1,11 +1,11 @@
-import NicknameAvatar, {
-  type NicknameAvatarColor,
-} from '../../../../components/common/NicknameAvatar';
+import type { NicknameAvatarColor } from '../../../../components/common/NicknameAvatar';
+import ProfileAvatar from '../../../../components/common/ProfileAvatar';
 
 export interface TravelRecordMember {
   id: string;
   name: string;
   color: NicknameAvatarColor;
+  profileImageUrl?: string | null;
 }
 
 interface TravelRecordMembersProps {
@@ -28,8 +28,9 @@ function TravelRecordMembers({
           className="relative"
           style={{ zIndex: members.length - index }}
         >
-          <NicknameAvatar
-            name={member.name}
+          <ProfileAvatar
+            src={member.profileImageUrl}
+            nickname={member.name}
             color={member.color}
             size={desktop ? 60 : 32}
           />

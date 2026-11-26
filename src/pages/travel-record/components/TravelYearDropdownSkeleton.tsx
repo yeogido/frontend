@@ -5,11 +5,11 @@
  * 않는데, 그러면 아래 폴더 목록이 통째로 위로 올라와 있다가 로딩이 끝나는
  * 순간 내려온다. 같은 크기(`h-[30px] w-[75px]`)의 자리를 미리 잡아 둔다.
  */
-function TravelYearDropdownSkeleton() {
+function TravelYearDropdownSkeleton({ desktop = false }: { desktop?: boolean }) {
   return (
     <div
       aria-hidden="true"
-      className="h-[30px] w-[75px] shrink-0 animate-pulse rounded-full bg-[#EAEAEA]"
+      className={`shrink-0 animate-pulse rounded-full bg-[#EAEAEA] ${desktop ? 'h-[37px] w-[83px]' : 'h-[30px] w-[75px]'}`}
     />
   );
 }

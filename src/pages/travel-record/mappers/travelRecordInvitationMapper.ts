@@ -17,6 +17,20 @@ export function mapReceivedTravelRecordInvitation(
     folder: {
       id: String(travelRecord.travelRecordId),
       title: travelRecord.title,
+      regionName: travelRecord.regionName,
+      photos: [...(travelRecord.previewImages ?? [])]
+        .sort((a, b) => a.imageOrder - b.imageOrder)
+        .map((image) => image.imageUrl),
+      decorations: (travelRecord.stickers ?? []).map((sticker) => ({
+        id: String(sticker.recordStickerId),
+        stickerId: sticker.stickerId,
+        imageUrl: sticker.imageUrl,
+        x: sticker.positionX,
+        y: sticker.positionY,
+        rotation: sticker.rotation,
+        scale: sticker.scale,
+        zIndex: sticker.zIndex,
+      })),
       startDate: travelRecord.startDate,
       endDate: travelRecord.endDate,
       period: `${travelRecord.startDate.slice(5).replace('-', '.')} - ${travelRecord.endDate.slice(5).replace('-', '.')}`,

@@ -60,7 +60,10 @@ function useLocalBusinesses({
       size: PAGE_SIZE,
       regionId,
     },
-    { enabled: !isRegionResolutionPending && !isRegionResolutionError }
+    {
+      enabled: !isRegionResolutionPending && !isRegionResolutionError,
+      keepPreviousData: true,
+    }
   );
 
   // 지역 조회가 실패하면 useBusinessPromotions는 영원히 enabled:false로

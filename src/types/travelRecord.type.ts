@@ -23,7 +23,7 @@ export interface TravelRecordPermissions {
 }
 
 export interface TravelRecordVisibilityUpdateRequest {
-  visibility: 'PRIVATE' | 'PUBLIC';
+  visibility: TravelRecordApiVisibility;
   version: number;
 }
 
@@ -61,6 +61,14 @@ export interface TravelRecordReceivedInvitation {
     startDate: string;
     endDate: string;
     folderTheme: 'BASIC';
+    regionName?: string;
+    previewImages?: Array<{
+      imageUrl: string;
+      imageOrder: number;
+      uploader?: TravelRecordUserProfile | null;
+    }>;
+    stickers?: TravelRecordStickerResponse[];
+    photoCount?: number;
   };
   createdAt: string;
 }
@@ -83,6 +91,25 @@ export interface TravelRecordInvitationRespondResponse {
   invitationId: number;
   travelRecordId: number;
   status: TravelRecordInvitationStatus;
+}
+
+export interface TravelRecordShareLinkResponse {
+  travelRecordId: number;
+  token: string;
+}
+
+export interface TravelRecordSharedView {
+  travelRecordId: number;
+  visibility: TravelRecordApiVisibility;
+  canAccept: boolean;
+  owner: TravelRecordUserProfile;
+  preview: TravelRecordReceivedInvitation['travelRecord'] | null;
+  detail: TravelRecordDetailResponse | null;
+}
+
+export interface TravelRecordShareRespondResponse {
+  travelRecordId: number;
+  status: TravelRecordInvitationResponseStatus;
 }
 
 export interface TravelRecordMapParams extends TravelRecordListParams {
@@ -166,6 +193,7 @@ export interface TravelRecordImageResponse {
   imageKey: string;
   imageUrl: string;
   imageOrder: number;
+  uploader?: TravelRecordUserProfile | null;
 }
 
 export interface TravelRecordStickerResponse {

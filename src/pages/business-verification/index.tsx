@@ -10,8 +10,9 @@ import {
 import { getBusinessVerificationErrorMessage } from './errorMessage';
 import { useBusinessVerificationForm } from './hooks/useBusinessVerificationForm';
 import { useBusinessVerificationSubmit } from './hooks/useBusinessVerificationSubmit';
+import { BusinessVerificationDesktopView } from './desktop/BusinessVerificationDesktopView';
 
-function BusinessVerificationPage() {
+function BusinessVerificationPage({ desktop = false }: { desktop?: boolean }) {
   const scale = useGlobalScale();
   const navigate = useNavigate();
   const form = useBusinessVerificationForm();
@@ -45,6 +46,19 @@ function BusinessVerificationPage() {
       replace: true,
     });
   };
+
+  if (desktop) {
+    return (
+      <BusinessVerificationDesktopView
+        form={form}
+        isPending={isPending}
+        error={error}
+        isVerified={isVerified}
+        onSubmit={handleSubmit}
+        onSuccessConfirm={handleSuccessConfirm}
+      />
+    );
+  }
 
   return (
     <ResponsivePageShell

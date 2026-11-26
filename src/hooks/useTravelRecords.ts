@@ -12,6 +12,7 @@ import { useUpdateTravelRecordVisibility } from './useUpdateTravelRecordVisibili
 import { useTravelRecordSessionStore } from '../store/travelRecordSession.store';
 import { useAuthStore } from '../store/auth.store';
 import { requireTravelRecordVersion } from '../pages/travel-record/utils/editVersion';
+import { canChangeTravelRecordVisibility } from '../pages/travel-record/utils/visibilityPermission';
 import {
   createPresignedUrl,
   uploadFileToPresignedUrl,
@@ -297,12 +298,9 @@ export function useUpdateTravelRecord() {
       if (
         needsVisibilityChange &&
         (original?.id !== String(travelRecordId) ||
-          original.ownerId !== session.userId ||
-          session.userId === null ||
+          !canChangeTravelRecordVisibility(original.ownerId, session.userId, original.hasOtherParticipants) ||
           original.version !== version ||
-          (original.visibility !== 'PRIVATE' &&
-            original.visibility !== 'PUBLIC') ||
-          (visibility !== 'PRIVATE' && visibility !== 'PUBLIC'))
+          !['PRIVATE', 'FRIENDS', 'PUBLIC'].includes(visibility))
       )
         throw new Error(
           '이 폴더의 공개범위를 변경할 수 없어요. 상세 화면에서 다시 수정해 주세요.'
@@ -327,7 +325,6 @@ export function useUpdateTravelRecord() {
       try {
         if (
           needsVisibilityChange &&
-          visibility !== 'FRIENDS' &&
           visibility !== undefined
         ) {
           const result = await visibilityMutation.mutateAsync({
@@ -368,6 +365,13 @@ export function useUpdateTravelRecord() {
           })
         );
       } catch (error) {
+        const code = normalizeApiError(error).code;
+        if (code === 'TRAVEL_RECORD4091' || code === 'TRAVEL_RECORD4095') {
+          void queryClient.invalidateQueries({
+            queryKey: ['travelRecord', travelRecordId],
+          });
+          void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
+        }
         if (visibilitySaved)
           throw new TravelRecordPartialSaveError(
             `공개범위는 변경됐지만 기록을 저장하지 못했어요. 다시 저장해 주세요. ${getApiErrorMessage(error, '')}`,
