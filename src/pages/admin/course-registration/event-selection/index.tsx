@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { getCultureContents } from '../../../../apis/contents.api';
+import { useIsDesktop } from '../../../../hooks/useIsDesktop';
+import DesktopResultRow, {
+  DesktopSelectedRow,
+} from '../../../local-recommendation/desktop/DesktopResultRow';
+import DesktopSearchField from '../../../local-recommendation/desktop/DesktopSearchField';
+import DesktopSelectedPanel from '../../../local-recommendation/desktop/DesktopSelectedPanel';
+import DesktopSelectionLayout from '../../../local-recommendation/desktop/DesktopSelectionLayout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 
@@ -20,6 +27,7 @@ const STATUS_MESSAGE_FONT_SIZE = 14;
 function AdminCourseEventSelectionPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isDesktop = useIsDesktop();
   const region = useAdminCourseRegistrationStore((state) => state.region);
   const selectedEvents = useAdminCourseRegistrationStore(
     (state) => state.selectedEvents
@@ -104,6 +112,65 @@ function AdminCourseEventSelectionPage() {
     setSelectedEventsInStore([]);
     navigate('/admin/course-registration/place-selection');
   };
+
+  if (isDesktop) {
+    const hasSelected = selectedEvents.length > 0;
+    return (
+      <DesktopSelectionLayout
+        title="코스에 방문할 행사를 등록해 주세요"
+        description="코스에 등록할 행사 및 페스티벌을 검색해 보세요"
+        search={
+          <DesktopSearchField
+            placeholder="행사명을 검색해 주세요"
+            label="행사명 검색"
+            suggestions={festivalSearchSuggestions}
+            onQueryChange={setQuery}
+          />
+        }
+        statusMessage={
+          statusMessage ? (
+            <p className="text-gray-5 text-[16px]">{statusMessage}</p>
+          ) : undefined
+        }
+        results={visibleResults.map((event) => (
+          <DesktopResultRow
+            key={event.id}
+            visual="photo"
+            title={event.title}
+            description={event.address}
+            imageSrc={event.imageSrc}
+            disabled={selectedEventIds.has(event.id)}
+            onAdd={() => handleAddEvent(event)}
+          />
+        ))}
+        panel={
+          <DesktopSelectedPanel
+            title="추가된 행사"
+            emptyMessage="아직 추가된 행사가 없어요"
+            isEmpty={!hasSelected}
+            onRemoveAll={() => setSelectedEventsInStore([])}
+            submitLabel="행사 등록하기"
+            isSubmitDisabled={!hasSelected}
+            onSubmit={() =>
+              navigate('/admin/course-registration/place-selection')
+            }
+            skipLabel={hasSelected ? undefined : '건너뛰기'}
+            onSkip={hasSelected ? undefined : handleSkip}
+          >
+            {selectedEvents.map((event) => (
+              <DesktopSelectedRow
+                key={event.id}
+                title={event.title}
+                description={event.address}
+                imageSrc={event.imageSrc}
+                onRemove={() => handleRemoveEvent(event)}
+              />
+            ))}
+          </DesktopSelectedPanel>
+        }
+      />
+    );
+  }
 
   return (
     <>

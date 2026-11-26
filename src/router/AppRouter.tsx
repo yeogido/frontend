@@ -264,7 +264,15 @@ function AppRouter() {
             element={<AdminFestivalsRecentPage />}
           />
 
-          <Route path="/admin/courses" element={<AdminCoursesPage />} />
+          <Route
+            path="/admin/courses"
+            element={
+              <Responsive
+                desktop={<YeogidoCourseDesktopPage adminMode />}
+                mobile={<AdminCoursesPage />}
+              />
+            }
+          />
           <Route
             path="/admin/courses/popular"
             element={<AdminCoursesPopularPage />}
@@ -605,27 +613,57 @@ function AppRouter() {
 
         <Route
           path="/admin/course-registration/region-selection"
-          element={<AdminCourseRegionSelectionPage />}
+          element={
+            <Responsive
+              desktop={<AdminCourseRegionSelectionPage />}
+              mobile={<AdminCourseRegionSelectionPage />}
+            />
+          }
         />
         <Route
           path="/admin/course-registration/basic-info"
-          element={<AdminCourseBasicInfoPage />}
+          element={
+            <Responsive
+              desktop={<AdminCourseBasicInfoPage />}
+              mobile={<AdminCourseBasicInfoPage />}
+            />
+          }
         />
         <Route
           path="/admin/course-registration/photo-tag"
-          element={<AdminCoursePhotoTagPage />}
+          element={
+            <Responsive
+              desktop={<AdminCoursePhotoTagPage />}
+              mobile={<AdminCoursePhotoTagPage />}
+            />
+          }
         />
         <Route
           path="/admin/course-registration/event-selection"
-          element={<AdminCourseEventSelectionPage />}
+          element={
+            <Responsive
+              desktop={<AdminCourseEventSelectionPage />}
+              mobile={<AdminCourseEventSelectionPage />}
+            />
+          }
         />
         <Route
           path="/admin/course-registration/place-selection"
-          element={<AdminCoursePlaceSelectionPage />}
+          element={
+            <Responsive
+              desktop={<AdminCoursePlaceSelectionPage />}
+              mobile={<AdminCoursePlaceSelectionPage />}
+            />
+          }
         />
         <Route
           path="/admin/course-registration/visit-order"
-          element={<AdminCourseVisitOrderPage />}
+          element={
+            <Responsive
+              desktop={<AdminCourseVisitOrderPage />}
+              mobile={<AdminCourseVisitOrderPage />}
+            />
+          }
         />
         <Route
           path="/admin/course-registration/preview"

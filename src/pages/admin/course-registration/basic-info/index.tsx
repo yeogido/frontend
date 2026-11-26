@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
+import { DesktopPageShell } from '../../../../components/layout/desktop';
+import { useIsDesktop } from '../../../../hooks/useIsDesktop';
+import CourseBasicInfoDesktopForm from '../../../local-recommendation/course-basic-info/desktop/CourseBasicInfoDesktopForm';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 
@@ -19,6 +22,7 @@ const SUBTITLE_FONT_SIZE = 14;
 function AdminCourseBasicInfoPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isDesktop = useIsDesktop();
   const region = useAdminCourseRegistrationStore((state) => state.region);
   const basicInfo = useAdminCourseRegistrationStore((state) => state.basicInfo);
   const setBasicInfoInStore = useAdminCourseRegistrationStore(
@@ -39,6 +43,25 @@ function AdminCourseBasicInfoPage() {
     setBasicInfoInStore(values);
     navigate('/admin/course-registration/photo-tag');
   };
+
+  if (isDesktop) {
+    return (
+      <DesktopPageShell>
+        <header className="mb-[60px] flex flex-col gap-[6px]">
+          <h1 className="text-[32px] font-semibold text-black">
+            어떤 코스인가요?
+          </h1>
+          <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
+            코스의 기본 정보를 입력해주세요
+          </p>
+        </header>
+        <CourseBasicInfoDesktopForm
+          onNext={handleNext}
+          defaultValues={basicInfo ?? undefined}
+        />
+      </DesktopPageShell>
+    );
+  }
 
   return (
     <ResponsivePageShell

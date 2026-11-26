@@ -18,6 +18,14 @@ import {
   IoWalletOutline,
 } from 'react-icons/io5';
 
+import { useIsDesktop } from '../../../../hooks/useIsDesktop';
+import DesktopResultRow, {
+  DesktopSelectedRow,
+} from '../../../local-recommendation/desktop/DesktopResultRow';
+import DesktopSearchField from '../../../local-recommendation/desktop/DesktopSearchField';
+import DesktopSelectedPanel from '../../../local-recommendation/desktop/DesktopSelectedPanel';
+import DesktopSelectionLayout from '../../../local-recommendation/desktop/DesktopSelectionLayout';
+import PlacePhotoDesktopModal from '../../../local-recommendation/place-selection/desktop/PlacePhotoDesktopModal';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { usePlacePhotos } from '../../../../hooks/usePlacePhotos';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
@@ -173,6 +181,7 @@ function getCategoryFallbackIcon(categoryGroupCode: string, scale: number) {
 function AdminCoursePlaceSelectionPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isDesktop = useIsDesktop();
   const region = useAdminCourseRegistrationStore((state) => state.region);
   const selectedPlaces = useAdminCourseRegistrationStore(
     (state) => state.selectedPlaces
@@ -256,6 +265,73 @@ function AdminCoursePlaceSelectionPage() {
       selectedPlaces.filter((item) => item.id !== place.id)
     );
   };
+
+  if (isDesktop) {
+    const hasSelected = selectedPlaces.length > 0;
+    return (
+      <>
+        <DesktopSelectionLayout
+          title="코스에 방문할 장소를 등록해 주세요"
+          description="코스에 등록할 장소를 검색해 보세요"
+          search={
+            <DesktopSearchField
+              placeholder="장소명을 검색해 주세요"
+              label="장소명 검색"
+              onQueryChange={setQuery}
+            />
+          }
+          statusMessage={
+            statusMessage ? (
+              <p className="text-gray-5 text-[16px]">{statusMessage}</p>
+            ) : undefined
+          }
+          results={searchResultsWithPhotos.map((place) => (
+            <DesktopResultRow
+              key={place.id}
+              visual="marker"
+              title={place.title}
+              description={place.address}
+              disabled={selectedPlaceIds.has(place.id)}
+              onAdd={() => handlePlaceAdd(place)}
+            />
+          ))}
+          panel={
+            <DesktopSelectedPanel
+              title="추가된 장소"
+              emptyMessage="아직 추가된 장소가 없어요"
+              isEmpty={!hasSelected}
+              onRemoveAll={() => setSelectedPlacesInStore([])}
+              submitLabel="장소 등록하기"
+              isSubmitDisabled={!hasSelected}
+              onSubmit={() =>
+                navigate('/admin/course-registration/visit-order')
+              }
+            >
+              {selectedPlaces.map((place) => (
+                <DesktopSelectedRow
+                  key={place.id}
+                  title={place.title}
+                  description={place.address}
+                  imageSrc={place.photoPreviewUrl ?? place.imageSrc}
+                  onRemove={() => handleRemovePlace(place)}
+                />
+              ))}
+            </DesktopSelectedPanel>
+          }
+        />
+        {isImageModalOpen && pendingPlace ? (
+          <PlacePhotoDesktopModal
+            placeTitle={pendingPlace.title}
+            previewUrl={pendingImagePreviewUrl}
+            onFileChange={handleImageFileChange}
+            onClose={closeImageModal}
+            onConfirm={handleConfirmImage}
+            requirePhoto={false}
+          />
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <>

@@ -10,6 +10,7 @@ const DIALOG_PADDING = 36;
 const UPLOADER_HEIGHT = 274;
 
 interface PlacePhotoDesktopModalProps {
+  requirePhoto?: boolean;
   placeTitle: string;
   previewUrl: string | null;
   onFileChange: (file: File) => void;
@@ -24,6 +25,7 @@ interface PlacePhotoDesktopModalProps {
  */
 function PlacePhotoDesktopModal({
   placeTitle,
+  requirePhoto = true,
   previewUrl,
   onFileChange,
   onClose,
@@ -182,7 +184,9 @@ function PlacePhotoDesktopModal({
         {fileError ? <p role="alert">{fileError}</p> : null}
         <button
           type="button"
-          disabled={!previewUrl || isProcessing || !!fileError}
+          disabled={
+            (requirePhoto && !previewUrl) || isProcessing || !!fileError
+          }
           onClick={onConfirm}
           className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 mt-[24px] w-full rounded-[12px] py-[16px] text-[20px] font-semibold text-white"
         >

@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
+import { DesktopPageShell } from '../../../../components/layout/desktop';
+import { useIsDesktop } from '../../../../hooks/useIsDesktop';
+import KeywordSelectionDesktopSection from '../../../local-recommendation/tag-selection/desktop/KeywordSelectionDesktopSection';
+import RepresentativePhotoDesktopSection from '../../../local-recommendation/tag-selection/desktop/RepresentativePhotoDesktopSection';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import type { TagId } from '../../../../types/tag.type';
@@ -25,6 +29,7 @@ const BUTTON_RADIUS = 12;
 function AdminCoursePhotoTagPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isDesktop = useIsDesktop();
   const region = useAdminCourseRegistrationStore((state) => state.region);
   // photo는 URL.createObjectURL로 만든 blob URL을 들고 있어 store가 유일한
   // 소유자여야 한다. 컴포넌트에 로컬 사본을 두지 않고 변경 즉시 store에 반영한다.
@@ -84,6 +89,42 @@ function AdminCoursePhotoTagPage() {
     if (!isReady) return;
     navigate('/admin/course-registration/event-selection');
   };
+
+  if (isDesktop) {
+    return (
+      <DesktopPageShell>
+        <div className="flex flex-col gap-[60px]">
+          <div className="flex flex-col gap-[24px]">
+            <header className="flex flex-col gap-[6px]">
+              <h1 className="text-[32px] font-semibold text-black">
+                사진과 키워드를 추가해 주세요
+              </h1>
+              <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
+                코스를 더 매력적으로 소개할 수 있어요!
+              </p>
+            </header>
+            <RepresentativePhotoDesktopSection
+              photo={photo}
+              onPhotoChange={handlePhotoChange}
+            />
+            <KeywordSelectionDesktopSection
+              selectedTagIds={selectedTagIds}
+              limitMessage={limitMessage}
+              onToggle={handleTagToggle}
+            />
+          </div>
+          <button
+            type="button"
+            disabled={!isReady}
+            onClick={handleSubmit}
+            className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 w-full rounded-[12px] py-[16px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
+          >
+            코스 선택하기
+          </button>
+        </div>
+      </DesktopPageShell>
+    );
+  }
 
   return (
     <ResponsivePageShell
