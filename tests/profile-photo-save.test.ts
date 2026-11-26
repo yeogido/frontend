@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   canSavePendingProfilePhoto,
+  getProfilePhotoRemoval,
   PROFILE_PHOTO_BACKGROUND_COLOR,
   shouldShowDefaultProfilePhoto,
 } from '../src/pages/profile/components/profilePhotoSave.ts';
@@ -50,4 +51,18 @@ test('hides the default profile icon while a newly selected photo is processing'
     shouldShowDefaultProfilePhoto({ hasPhoto: false, isProcessingFile: false }),
     true
   );
+});
+
+test('sends an empty image key to remove a saved profile photo', () => {
+  assert.deepEqual(getProfilePhotoRemoval(true), {
+    isPhotoChanged: true,
+    profileImageKey: '',
+  });
+});
+
+test('treats removing a never-saved photo as no change', () => {
+  assert.deepEqual(getProfilePhotoRemoval(false), {
+    isPhotoChanged: false,
+    profileImageKey: undefined,
+  });
 });

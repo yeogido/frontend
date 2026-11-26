@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 
+import { PRESERVE_SCROLL_STATE } from '../../../router/preserveScroll';
 import {
   festivalCategoryOptions,
   festivalSortOptions,
@@ -63,7 +64,7 @@ function useFestivalFilters() {
       nextSearchParams.set('sort', sort);
     }
 
-    setSearchParams(nextSearchParams);
+    setSearchParams(nextSearchParams, { state: PRESERVE_SCROLL_STATE });
   };
 
   const handleCategorySelect = (category: FestivalCategoryValue) => {
@@ -75,7 +76,7 @@ function useFestivalFilters() {
       nextSearchParams.set('category', category);
     }
 
-    setSearchParams(nextSearchParams);
+    setSearchParams(nextSearchParams, { state: PRESERVE_SCROLL_STATE });
   };
 
   const handleViewModeToggle = () => {
@@ -87,7 +88,7 @@ function useFestivalFilters() {
       nextSearchParams.set('view', 'calendar');
     }
 
-    setSearchParams(nextSearchParams);
+    setSearchParams(nextSearchParams, { state: PRESERVE_SCROLL_STATE });
   };
 
   // 날짜를 누를 때마다 기록이 쌓이면 뒤로가기가 날짜 선택을 한 단계씩
@@ -103,14 +104,20 @@ function useFestivalFilters() {
       nextSearchParams.set('end', nextRange.endDate);
     }
 
-    setSearchParams(nextSearchParams, { replace: true });
+    setSearchParams(nextSearchParams, {
+      replace: true,
+      state: PRESERVE_SCROLL_STATE,
+    });
   };
 
   const handleCalendarMonthChange = (month: FestivalCalendarMonth) => {
     const nextSearchParams = new URLSearchParams(searchParams);
 
     nextSearchParams.set('month', formatFestivalMonthValue(month));
-    setSearchParams(nextSearchParams, { replace: true });
+    setSearchParams(nextSearchParams, {
+      replace: true,
+      state: PRESERVE_SCROLL_STATE,
+    });
   };
 
   return {

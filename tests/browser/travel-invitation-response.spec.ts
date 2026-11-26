@@ -54,6 +54,12 @@ async function setup(
   await page.addInitScript(
     ({ accessToken, guest }) => {
       localStorage.setItem('onboarding-dismissed', 'true');
+      // These scenarios exercise the dashed cards after dismissing the auto prompt.
+      for (const id of [999, 1000])
+        sessionStorage.setItem(
+          `travel-invitation-dismissed:${id}`,
+          JSON.stringify({ createdAt: 4102444800000, id: 999999 })
+        );
       if (!guest)
         localStorage.setItem(
           'auth-storage',
@@ -105,6 +111,12 @@ async function setup(
     if (url.pathname.endsWith('/regions')) return json({ regions: [] });
     if (url.pathname.endsWith('/regions/popular')) return json([]);
     const otherAccount = req.headers().authorization?.includes(token(1000));
+    if (
+      /\/travel-records\/invitations\/\d+$/.test(url.pathname) &&
+      req.method() === 'GET'
+    ) {
+      return json(pending(Number(url.pathname.split('/').at(-1))));
+    }
     if (
       url.pathname.endsWith('/travel-records/invitations') &&
       req.method() === 'GET'
@@ -312,14 +324,12 @@ test('does not reuse the previous account folder cache after switching accounts'
   );
   await page.evaluate(async (accessToken) => {
     const { useAuthStore } = await import('/src/store/auth.store.ts');
-    useAuthStore
-      .getState()
-      .setAuth({
-        accessToken,
-        refreshToken: 'fixture-only',
-        userId: 1000,
-        role: 'USER',
-      });
+    useAuthStore.getState().setAuth({
+      accessToken,
+      refreshToken: 'fixture-only',
+      userId: 1000,
+      role: 'USER',
+    });
   }, token(1000));
   await nextAccount;
   await expect(page.getByText('수락한 부산 폴더', { exact: true })).toHaveCount(
@@ -593,14 +603,12 @@ test('ignores a previous account response after switching accounts', async ({
     .toBe(1);
   await page.evaluate(async (accessToken) => {
     const { useAuthStore } = await import('/src/store/auth.store.ts');
-    useAuthStore
-      .getState()
-      .setAuth({
-        accessToken,
-        refreshToken: 'fixture-only',
-        userId: 1000,
-        role: 'USER',
-      });
+    useAuthStore.getState().setAuth({
+      accessToken,
+      refreshToken: 'fixture-only',
+      userId: 1000,
+      role: 'USER',
+    });
   }, token(1000));
   await expect(page.getByRole('article')).toHaveCount(0);
   const response = page.waitForResponse(
@@ -641,14 +649,12 @@ test('does not show a delayed invitation list from the previous account', async 
   );
   await page.evaluate(async (accessToken) => {
     const { useAuthStore } = await import('/src/store/auth.store.ts');
-    useAuthStore
-      .getState()
-      .setAuth({
-        accessToken,
-        refreshToken: 'fixture-only',
-        userId: 1000,
-        role: 'USER',
-      });
+    useAuthStore.getState().setAuth({
+      accessToken,
+      refreshToken: 'fixture-only',
+      userId: 1000,
+      role: 'USER',
+    });
   }, token(1000));
   await nextResponse;
   const oldResponse = page.waitForResponse(

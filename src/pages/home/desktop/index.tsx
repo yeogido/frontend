@@ -70,7 +70,11 @@ function HomeDesktopPage() {
             </section>
           ) : null}
 
-          <section aria-label="지역별 여행">
+          <section
+            aria-label="지역별 여행"
+            className="relative w-screen -translate-x-1/2"
+            style={{ left: 'calc(50% - max(0px, 524px - 50vw))' }}
+          >
             <HomeRegionStrip
               onSelect={(name) =>
                 navigate(`/region-info/${encodeURIComponent(name)}`)

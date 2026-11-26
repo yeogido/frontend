@@ -11,7 +11,7 @@ import {
 import FestivalDayPanel from './FestivalDayPanel';
 import FestivalDesktopCalendar from './FestivalDesktopCalendar';
 import FestivalDesktopCard from './FestivalDesktopCard';
-import { useFestivalDesktop } from './useFestivalDesktop';
+import { useFestivalDay } from '../hooks/useFestivalDay';
 
 // Figma 1440 데스크톱 시안(6276:38914) 기준 리터럴 px.
 const CONTENT_WIDTH = 1048;
@@ -44,7 +44,7 @@ function FestivalDesktopPage() {
     editFestival,
     requestDelete,
     dialogProps,
-  } = useFestivalDesktop();
+  } = useFestivalDay();
 
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
 

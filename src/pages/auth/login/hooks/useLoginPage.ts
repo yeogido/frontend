@@ -6,6 +6,7 @@ import { login } from '../../../../apis/auth.api';
 import { useKakaoLogin } from '../../../../hooks/useKakaoLogin';
 import { useNaverLogin } from '../../../../hooks/useNaverLogin';
 import { useAuthStore } from '../../../../store/auth.store';
+import { consumeTravelShareReturn } from '../../../travel-record/utils/travelShareLoginReturn';
 import type { LoginFormValues } from '../schema';
 
 const DEFAULT_ERROR_MESSAGE = '이메일 또는 비밀번호를 확인해 주세요.';
@@ -60,7 +61,7 @@ export function useLoginPage() {
       const response = await login(values);
 
       setAuth(response);
-      navigate('/');
+      navigate(consumeTravelShareReturn());
     } catch (error) {
       const code = isNormalizedApiError(error) ? error.code : undefined;
       const mappedMessage = code ? LOGIN_ERROR_MESSAGES[code] : undefined;

@@ -104,11 +104,7 @@ function HomeFestivalSection({
                           className="absolute inset-0 h-full w-full object-cover"
                         />
                       ) : null}
-                      <span
-                        aria-hidden="true"
-                        className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/70 to-transparent"
-                      />
-                      <span className="absolute inset-x-[16px] bottom-[16px] flex flex-col gap-[8px] text-white">
+                      <span className="absolute inset-x-0 bottom-0 flex h-[120px] flex-col justify-center gap-[8px] bg-[rgba(146,146,146,0.5)] px-[16px] text-white backdrop-blur-[21.2px]">
                         <span className="truncate text-[18px] font-semibold">
                           {festival.title}
                         </span>

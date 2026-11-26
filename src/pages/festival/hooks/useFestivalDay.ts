@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useContentDelete } from '../../../hooks/useContentDelete';
@@ -9,7 +9,7 @@ import { useEditFestival } from '../../../hooks/useEditFestival';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import type { ContentCategory, ContentSort } from '../../../types/content.type';
 import { buildFestivalDetailPath } from '../../../utils/routes';
-import useFestivalFilters from '../hooks/useFestivalFilters';
+import useFestivalFilters from './useFestivalFilters';
 import {
   formatFestivalDateValue,
   resolveFestivalCalendarMonth,
@@ -20,7 +20,7 @@ import {
 const PAGE_SIZE = 20;
 const DAY_PANEL_SIZE = 3;
 
-// 모바일 진행 중 행사 화면과 같은 필터 매핑. 페이지마다 로컬로 둔다.
+// 진행 중 행사 화면과 같은 필터 매핑. 페이지마다 로컬로 둔다.
 const categoryByFilterValue: Record<string, ContentCategory | undefined> = {
   ALL: undefined,
   EXPERIENCE: 'EXPERIENCE',
@@ -37,10 +37,10 @@ const sortByFilterValue: Record<string, ContentSort> = {
 };
 
 /**
- * 데스크톱 행사 화면의 상태·데이터. 위쪽은 달력에서 고른 날짜의 추천 행사,
+ * 행사 화면(데스크톱·모바일 공용)의 상태·데이터. 위쪽은 달력에서 고른 날짜의 추천 행사,
  * 아래쪽은 분류·정렬로 거른 진행 중 행사 목록이다.
  */
-export function useFestivalDesktop() {
+export function useFestivalDay() {
   const navigate = useNavigate();
   const { getLiked, toggleLike } = useContentLikeToggle();
   const { editFestival } = useEditFestival();
@@ -61,6 +61,18 @@ export function useFestivalDesktop() {
   );
 
   const isDistanceSort = selectedFilters.sort === 'DISTANCE';
+  const initialLocationRequested = useRef(false);
+
+  useEffect(() => {
+    if (
+      isDistanceSort &&
+      status === 'idle' &&
+      !initialLocationRequested.current
+    ) {
+      initialLocationRequested.current = true;
+      void requestCoordinates();
+    }
+  }, [isDistanceSort, status, requestCoordinates]);
 
   // 아래 전체 목록도 달력에서 고른 날짜에 열리는 행사만 보여준다. statuses를
   // 보내지 않으면 날짜와 하루라도 겹치는 행사를 모두 돌려준다.
@@ -105,7 +117,7 @@ export function useFestivalDesktop() {
 
   const handleSortChange = (sort: Parameters<typeof handleSortSelect>[0]) => {
     handleSortSelect(sort);
-    if (sort === 'DISTANCE') {
+    if (sort === 'DISTANCE' && status === 'failed') {
       void requestCoordinates();
     }
   };
@@ -129,6 +141,7 @@ export function useFestivalDesktop() {
     handleCategorySelect,
     handleSortChange,
     calendarMonth,
+    changeMonth: setCalendarMonth,
     shiftMonth,
     selectedDate,
     selectDate,
@@ -138,6 +151,7 @@ export function useFestivalDesktop() {
     isError: list.isError,
     isFetchingNextPage,
     isDayPanelPending: dayPanel.isPending,
+    isDayPanelError: dayPanel.isError,
     loadMoreRef,
     getLiked,
     toggleLike,

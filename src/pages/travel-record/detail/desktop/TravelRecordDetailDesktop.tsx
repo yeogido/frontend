@@ -1,20 +1,25 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
+import { MdGroup } from 'react-icons/md';
 
 import uploadIcon from '../../../../assets/icons/travel-detail-upload-desktop.svg';
 import moreIcon from '../../../../assets/icons/travel-detail-more-desktop.svg';
 import DesktopPageShell from '../../../../components/layout/desktop/DesktopPageShell';
-import { getFriendAvatarColor } from '../../../friends/utils/friendAvatarColor';
+import ProfileAvatar from '../../../../components/common/ProfileAvatar';
 import { TravelFolderArtwork } from '../../components';
 import type { TravelRecordFolder } from '../../types';
-import TravelRecordMembers from '../components/TravelRecordMembers';
+import TravelRecordMemberDialog from '../components/TravelRecordMemberDialog';
 import TravelRecordShareModal from '../components/TravelRecordShareModal';
 
 interface Props {
   folder: TravelRecordFolder;
   inviteFolder?: TravelRecordFolder;
-  profileName: string;
-  profileImageUrl?: string | null;
   menuRef: RefObject<HTMLDivElement | null>;
   menuOpen: boolean;
   setMenuOpen: (open: boolean | ((open: boolean) => boolean)) => void;
@@ -30,7 +35,15 @@ interface Props {
   onEdit: () => void;
 }
 
-function PhotoGallery({ photos, title }: { photos: string[]; title: string }) {
+function PhotoGallery({
+  photos,
+  title,
+  folder,
+}: {
+  photos: string[];
+  title: string;
+  folder: TravelRecordFolder;
+}) {
   const [selected, setSelected] = useState<number | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -104,9 +117,21 @@ function PhotoGallery({ photos, title }: { photos: string[]; title: string }) {
               triggerRef.current = event.currentTarget;
               setSelected(index);
             }}
-            className={`bg-gray-2 overflow-hidden rounded-[24px] ${index === 0 ? 'col-span-2 row-span-2 aspect-[514/688]' : 'aspect-[249/337]'}`}
+            className={`bg-gray-2 relative overflow-hidden rounded-[24px] ${index === 0 ? 'col-span-2 row-span-2 aspect-[514/688]' : 'aspect-[249/337]'}`}
           >
             <img src={photo} alt="" className="size-full object-cover" />
+            {folder.visibility === 'friends' &&
+              folder.serverPhotos?.[index]?.uploader && (
+                <span
+                  aria-label={`${folder.serverPhotos[index].uploader?.nickname}님이 올린 사진`}
+                  className={`absolute ${index === 0 ? 'top-[33px] right-8' : 'top-5 right-5'}`}
+                >
+                  <ProfileAvatar
+                    src={folder.serverPhotos[index].uploader?.profileImageUrl}
+                    size={60}
+                  />
+                </span>
+              )}
           </button>
         ))}
       </section>
@@ -169,8 +194,6 @@ function PhotoGallery({ photos, title }: { photos: string[]; title: string }) {
 function TravelRecordDetailDesktop({
   folder,
   inviteFolder,
-  profileName,
-  profileImageUrl,
   menuRef,
   menuOpen,
   setMenuOpen,
@@ -185,17 +208,15 @@ function TravelRecordDetailDesktop({
   onLeave,
   onEdit,
 }: Props) {
+  const [membersOpen, setMembersOpen] = useState(false);
+  const closeMembers = useCallback(() => setMembersOpen(false), []);
   const photos = folder.photos.filter(Boolean);
   const members = [
     ...(folder.owner ? [folder.owner] : []),
     ...(folder.participants ?? []).filter(
       (member) => member.userId !== folder.owner?.userId
     ),
-  ].map((member) => ({
-    id: String(member.userId),
-    name: member.nickname,
-    color: getFriendAvatarColor(member.userId),
-  }));
+  ];
   return (
     <DesktopPageShell contentWidth={1048}>
       <header className="relative flex items-start justify-between gap-6">
@@ -217,9 +238,15 @@ function TravelRecordDetailDesktop({
               {folder.period}
             </time>
             {folder.visibility === 'friends' && members.length > 0 ? (
-              <div className="mt-[16px]">
-                <TravelRecordMembers members={members} desktop />
-              </div>
+              <button
+                type="button"
+                aria-label={`참여자 ${members.length}명 보기`}
+                onClick={() => setMembersOpen(true)}
+                className="text-gray-4 mt-[16px] flex items-center gap-3 text-[20px] font-semibold"
+              >
+                <MdGroup size={32} aria-hidden="true" />
+                {members.length}
+              </button>
             ) : null}
           </div>
         </div>
@@ -286,12 +313,15 @@ function TravelRecordDetailDesktop({
         </div>
       </header>
       <div className="border-gray-2 my-[60px] border-t" />
-      <PhotoGallery photos={photos} title={folder.title} />
+      <PhotoGallery photos={photos} title={folder.title} folder={folder} />
+      {membersOpen && (
+        <TravelRecordMemberDialog members={members} onClose={closeMembers} />
+      )}
       {shareOpen && inviteFolder && canOpenShare ? (
         <TravelRecordShareModal
           folder={inviteFolder}
-          sharerName={profileName}
-          sharerProfileImageUrl={profileImageUrl}
+          sharerName={inviteFolder.owner?.nickname ?? ''}
+          sharerProfileImageUrl={inviteFolder.owner?.profileImageUrl}
           onClose={() => setShareOpen(false)}
         />
       ) : null}

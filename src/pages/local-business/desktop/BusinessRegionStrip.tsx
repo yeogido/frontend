@@ -1,4 +1,5 @@
 import type { RegionImageOption } from '../../../components/common/RegionImageCarousel';
+import { useMouseDragScroll } from '../../../hooks/useMouseDragScroll';
 
 // Figma 1440 데스크톱 시안(6336:75105) 기준 리터럴 px.
 const CIRCLE_SIZE = 128;
@@ -18,10 +19,13 @@ function BusinessRegionStrip({
   selectedId,
   onSelect,
 }: BusinessRegionStripProps) {
+  const dragScroll = useMouseDragScroll();
   return (
     <ul
+      {...dragScroll}
+      tabIndex={0}
       aria-label="지역 목록"
-      className="flex [scrollbar-width:none] gap-[36px] overflow-x-auto p-[4px] [&::-webkit-scrollbar]:hidden"
+      className="flex cursor-grab [scrollbar-width:none] gap-[36px] overflow-x-auto p-[4px] select-none active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
     >
       {options.map((option) => {
         const isSelected = option.id === selectedId;
@@ -38,17 +42,24 @@ function BusinessRegionStrip({
               }`}
             >
               {option.imageSrc ? (
-                <img
-                  src={option.imageSrc}
-                  alt=""
-                  draggable={false}
-                  className="absolute inset-0 h-full w-full object-cover"
+                <>
+                  <img
+                    src={option.imageSrc}
+                    alt=""
+                    draggable={false}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <span
+                    className="absolute inset-0 bg-black/20"
+                    aria-hidden="true"
+                  />
+                </>
+              ) : (
+                <span
+                  className={`absolute inset-0 ${isSelected ? 'bg-main-5' : 'bg-gray-3'}`}
+                  aria-hidden="true"
                 />
-              ) : null}
-              <span
-                className="absolute inset-0 bg-black/20"
-                aria-hidden="true"
-              />
+              )}
               <span className="relative text-[24px] font-semibold text-white">
                 {option.name}
               </span>

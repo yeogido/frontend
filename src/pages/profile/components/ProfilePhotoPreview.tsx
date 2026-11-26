@@ -1,10 +1,8 @@
-import profile from '../../../assets/icons/profile.svg';
-import type { PointerEventHandler, WheelEventHandler } from 'react';
+import type { PointerEventHandler, ReactNode, WheelEventHandler } from 'react';
 import {
   PROFILE_PHOTO_BACKGROUND_COLOR,
   shouldShowDefaultProfilePhoto,
 } from './profilePhotoSave';
-import { getDefaultProfileAvatarIconStyle } from '../../../components/common/defaultProfileAvatar';
 
 export interface ProfilePhoto {
   src: string;
@@ -16,6 +14,7 @@ export interface ProfilePhoto {
 
 export function ProfilePhotoPreview({
   photo,
+  fallback,
   scale,
   size = 120,
   onPointerDown,
@@ -26,6 +25,8 @@ export function ProfilePhotoPreview({
   isProcessingFile = false,
 }: {
   photo: ProfilePhoto | null;
+  /** 사진이 없을 때 그릴 기본 프로필. */
+  fallback: ReactNode;
   scale: number;
   size?: number;
   onPointerDown?: PointerEventHandler<HTMLDivElement>;
@@ -70,13 +71,7 @@ export function ProfilePhotoPreview({
           hasPhoto: Boolean(photo),
           isProcessingFile,
         }) ? (
-        <img
-          src={profile}
-          alt=""
-          aria-hidden="true"
-          className="absolute left-1/2 -translate-x-1/2"
-          style={getDefaultProfileAvatarIconStyle(scaledSize)}
-        />
+        fallback
       ) : null}
     </div>
   );

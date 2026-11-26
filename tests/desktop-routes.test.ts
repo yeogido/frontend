@@ -16,6 +16,8 @@ test('matches the exact paths that have a desktop view', () => {
 test('matches parameterized paths for any id', () => {
   assert.equal(hasDesktopView('/local-course/detail/117'), true);
   assert.equal(hasDesktopView('/local-course/detail/9'), true);
+  assert.equal(hasDesktopView('/local-course/detail/117/reviews'), true);
+  assert.equal(hasDesktopView('/yeogido-course/detail/117/reviews'), true);
 });
 
 test('matches the travel record create and edit steps', () => {
@@ -31,15 +33,14 @@ test('matches the travel record create and edit steps', () => {
 });
 
 test('does not match paths that only start the same way', () => {
-  // 후기 목록은 데스크톱 시안이 없어서 모바일 프레임을 그대로 써야 한다.
-  assert.equal(hasDesktopView('/local-course/detail/117/reviews'), false);
+  assert.equal(hasDesktopView('/local-course/detail/117/reviews/extra'), false);
   assert.equal(hasDesktopView('/local-course/detail'), false);
   assert.equal(hasDesktopView('/local-recommendation/other'), false);
   assert.equal(hasDesktopView('/local-course/popular/extra'), false);
 });
 
 test('keeps screens without a desktop design on the mobile frame', () => {
-  assert.equal(hasDesktopView('/yeogido-course/detail/117/reviews'), false);
+  assert.equal(hasDesktopView('/yeogido-course/detail/117/reviews/extra'), false);
   assert.equal(hasDesktopView('/admin/courses/detail/117'), false);
   assert.ok(DESKTOP_VIEW_PATHS.length > 0);
 });
