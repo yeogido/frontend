@@ -592,15 +592,30 @@ function AppRouter() {
       <Route element={<AdminRoute />}>
         <Route
           path="/admin/event-registration/place-selection"
-          element={<AdminPlaceSelectionPage />}
+          element={
+            <Responsive
+              desktop={<AdminPlaceSelectionPage desktop />}
+              mobile={<AdminPlaceSelectionPage />}
+            />
+          }
         />
         <Route
           path="/admin/event-registration/basic-info"
-          element={<AdminEventBasicInfoPage />}
+          element={
+            <Responsive
+              desktop={<AdminEventBasicInfoPage desktop />}
+              mobile={<AdminEventBasicInfoPage />}
+            />
+          }
         />
         <Route
           path="/admin/event-registration/photo-tag"
-          element={<AdminEventPhotoTagPage />}
+          element={
+            <Responsive
+              desktop={<AdminEventPhotoTagPage desktop />}
+              mobile={<AdminEventPhotoTagPage />}
+            />
+          }
         />
 
         <Route

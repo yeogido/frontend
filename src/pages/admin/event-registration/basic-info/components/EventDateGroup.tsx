@@ -19,9 +19,16 @@ interface EventDateGroupProps {
   legend: string;
   value: string;
   onChange: (value: string) => void;
+  desktop?: boolean;
 }
 
-function EventDateGroup({ id, legend, value, onChange }: EventDateGroupProps) {
+function EventDateGroup({
+  id,
+  legend,
+  value,
+  onChange,
+  desktop = false,
+}: EventDateGroupProps) {
   const scale = useGlobalScale();
   const [initialYear = '', initialMonth = '', initialDay = ''] = value
     ? value.split('-')
@@ -49,6 +56,52 @@ function EventDateGroup({ id, legend, value, onChange }: EventDateGroupProps) {
         : ''
     );
   };
+
+  if (desktop) {
+    const selections = [
+      {
+        name: '연도',
+        value: year,
+        options: yearOptions,
+        change: (v: string) => applyChange(v, month, day),
+      },
+      {
+        name: '월',
+        value: month,
+        options: monthOptions,
+        change: (v: string) => applyChange(year, v, day),
+      },
+      {
+        name: '일',
+        value: day,
+        options: dayOptions,
+        change: (v: string) => applyChange(year, month, v),
+      },
+    ];
+    return (
+      <fieldset>
+        <legend className="text-gray-5 mb-[6px] text-[16px]">{legend}</legend>
+        <div className="flex gap-[20px]">
+          {selections.map((selection) => (
+            <select
+              key={selection.name}
+              aria-label={`${legend} ${selection.name}`}
+              value={selection.value}
+              onChange={(event) => selection.change(event.target.value)}
+              className="border-gray-2 text-gray-5 min-w-0 flex-1 rounded-[12px] border bg-white p-[20px] text-[16px]"
+            >
+              <option value="">{selection.name}</option>
+              {selection.options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
 
   return (
     <fieldset>
