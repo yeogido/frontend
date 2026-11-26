@@ -50,7 +50,7 @@ function TravelRecordDesktopPage() {
         clearEdit();
         navigate('/travel-record/new');
       }}
-      className="bg-main-5 flex shrink-0 items-center gap-[6px] rounded-[12px] px-[14px] py-[8px] text-[18px] font-semibold text-white"
+      className="bg-main-5 flex shrink-0 self-start items-center gap-[6px] rounded-[12px] px-[14px] py-[8px] text-[18px] font-semibold text-white"
     >
       <img src={addIcon} alt="" width="20" height="20" />
       기록 추가하기

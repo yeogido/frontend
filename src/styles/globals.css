@@ -33,6 +33,13 @@
   }
 }
 
+/* 데스크톱에서 페이지 길이에 따라 가운데 정렬이 흔들리지 않도록 한다. */
+@media (min-width: 1024px) {
+  html {
+    scrollbar-gutter: stable;
+  }
+}
+
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;
