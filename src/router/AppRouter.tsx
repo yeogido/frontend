@@ -389,7 +389,12 @@ function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route
           path="/business-verification"
-          element={<BusinessVerificationPage />}
+          element={
+            <Responsive
+              desktop={<BusinessVerificationPage desktop />}
+              mobile={<BusinessVerificationPage />}
+            />
+          }
         />
         <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route

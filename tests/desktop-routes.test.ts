@@ -43,3 +43,8 @@ test('keeps screens without a desktop design on the mobile frame', () => {
   assert.equal(hasDesktopView('/admin/courses/detail/117'), false);
   assert.ok(DESKTOP_VIEW_PATHS.length > 0);
 });
+
+test('matches the business verification screen that has a desktop view', () => {
+  assert.equal(hasDesktopView('/business-verification'), true);
+  assert.equal(hasDesktopView('/business-verification/extra'), false);
+});
