@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { LoadingSpinner } from '../../../../components/common';
+import { LoadingSpinner, RetryButton } from '../../../../components/common';
 import {
   useFriendTravelMap,
   useFriendTravelMapYears,
@@ -108,13 +108,11 @@ function FriendTravelMapTab({
         <p className="text-gray-4 text-[16px] leading-[22px] font-medium">
           {LOAD_ERROR_MESSAGE}
         </p>
-        <button
-          type="button"
+        <RetryButton
           onClick={retry}
-          className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
         >
           다시 시도
-        </button>
+        </RetryButton>
       </section>
     );
   } else {

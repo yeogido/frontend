@@ -13,6 +13,7 @@ interface TravelRecordEditSession {
   version: number;
   visibility?: TravelRecordApiVisibility;
   ownerId?: number;
+  hasOtherParticipants?: boolean;
   decorations: TravelRecordFolder['decorations'];
   serverPhotos?: TravelRecordServerPhoto[];
   /** 서버에 저장돼 있던 제목. 수정 화면에는 제목 입력이 없어 그대로 되돌려 보낸다. */

@@ -1,5 +1,5 @@
 import { getApiErrorMessage } from '../../apis/common';
-import { FloatingActionButton, LoadingSpinner } from '../../components/common';
+import { FloatingActionButton, LoadingSpinner, RetryButton } from '../../components/common';
 import {
   TravelFolderGrid,
   TravelFolderGridSkeleton,
@@ -121,13 +121,11 @@ function TravelRecordPage() {
               '받은 초대를 불러오지 못했어요.'
             )}
           </p>
-          <button
-            type="button"
-            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-sm text-[#505050]"
+          <RetryButton
             onClick={() => void invitationsQuery.retry()}
           >
             받은 초대 다시 시도
-          </button>
+          </RetryButton>
         </section>
       )}
 
@@ -142,17 +140,15 @@ function TravelRecordPage() {
               '여행 기록을 불러오지 못했어요'
             )}
           </p>
-          <button
-            type="button"
+          <RetryButton
             onClick={() =>
               activeView === 'map'
                 ? mapRecordsQuery.retry()
                 : void refetchTravelRecords()
             }
-            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] font-medium text-[#505050]"
           >
             다시 시도
-          </button>
+          </RetryButton>
         </section>
       ) : activeView === 'folder' ? (
         // 첫 조회가 끝나기 전에는 목록이 비어 있어 '기록이 없어요' 안내가

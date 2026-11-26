@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { getApiErrorMessage } from '../../../../apis/common';
 import NicknameAvatar from '../../../../components/common/NicknameAvatar';
 import ProfileAvatar from '../../../../components/common/ProfileAvatar';
+import RetryButton from '../../../../components/common/RetryButton';
 import { useToast } from '../../../../components/toast';
 import { useFriends } from '../../../../hooks/useFriends';
 import { useInviteTravelRecordFriends } from '../../../../hooks/useInviteTravelRecordFriends';
@@ -24,11 +25,10 @@ export default function TravelRecordInvitePicker({
   const friendsQuery = useFriends('');
   const mutation = useInviteTravelRecordFriends(Number(folder.id));
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const submitting = useRef(false);
   const { showToast } = useToast();
   const canInvite =
-    (folder.visibility === 'friends' || folder.visibility === 'public') &&
+    folder.visibility === 'friends' &&
     folder.permissions?.canInvite === true;
   const excluded = new Set([
     folder.owner?.userId,
@@ -45,7 +45,6 @@ export default function TravelRecordInvitePicker({
     const session = useAuthStore.getState();
     submitting.current = true;
     onBusyChange(true);
-    setError(null);
     try {
       await mutation.mutateAsync(eligibleIds);
       const current = useAuthStore.getState();
@@ -62,7 +61,7 @@ export default function TravelRecordInvitePicker({
         session.userId === current.userId &&
         session.authGeneration === current.authGeneration
       ) {
-        setError(
+        showToast(
           getApiErrorMessage(
             cause,
             '초대를 보내지 못했어요. 폴더는 저장되어 있어요. 다시 시도해 주세요.'
@@ -96,13 +95,12 @@ export default function TravelRecordInvitePicker({
             className="text-gray-4 flex min-h-[48px] w-full shrink-0 flex-col items-start justify-center text-xs"
           >
             <p>친구 목록을 불러오지 못했어요.</p>
-            <button
-              type="button"
+            <RetryButton
               onClick={() => void friendsQuery.refetch()}
-              className="text-main-5 mt-2"
+              className="mt-2"
             >
               친구 목록 다시 시도
-            </button>
+            </RetryButton>
           </li>
         ) : null}
         {!friendsQuery.isPending &&
@@ -128,7 +126,6 @@ export default function TravelRecordInvitePicker({
                     ? ids.filter((id) => id !== friend.userId)
                     : [...ids, friend.userId]
                 );
-                setError(null);
               }}
               title={friend.nickname}
               className="relative block size-12 shrink-0 rounded-full"
@@ -157,7 +154,15 @@ export default function TravelRecordInvitePicker({
           </li>
         ))}
       </ul>
-      {friendsQuery.hasNextPage ? (
+      {friendsQuery.hasNextPage && friendsQuery.isFetchNextPageError ? (
+        <RetryButton
+          className="mt-3"
+          disabled={friendsQuery.isFetchingNextPage || mutation.isPending}
+          onClick={() => void friendsQuery.fetchNextPage()}
+        >
+          친구 더 보기 다시 시도
+        </RetryButton>
+      ) : friendsQuery.hasNextPage ? (
         <button
           type="button"
           disabled={friendsQuery.isFetchingNextPage || mutation.isPending}
@@ -170,11 +175,6 @@ export default function TravelRecordInvitePicker({
               ? '친구 더 보기 다시 시도'
               : '친구 더 보기'}
         </button>
-      ) : null}
-      {error ? (
-        <p role="alert" className="mt-3 text-sm text-red-600">
-          {error}
-        </p>
       ) : null}
       <button
         type="button"

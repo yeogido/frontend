@@ -1,5 +1,5 @@
 import { getApiErrorMessage } from '../../../apis/common';
-import { LoadingSpinner } from '../../../components/common';
+import { LoadingSpinner, RetryButton } from '../../../components/common';
 import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
 import addIcon from '../../../assets/icons/material-symbols_add-2-rounded.svg';
 import {
@@ -127,13 +127,11 @@ function TravelRecordDesktopPage() {
                   '받은 초대를 불러오지 못했어요.'
                 )}
               </p>
-              <button
-                type="button"
-                className="rounded-full border px-4 py-2"
+              <RetryButton
                 onClick={() => void invitationsQuery.retry()}
               >
                 받은 초대 다시 시도
-              </button>
+              </RetryButton>
             </section>
           )}
         </>
@@ -152,9 +150,7 @@ function TravelRecordDesktopPage() {
               '여행 기록을 불러오지 못했어요'
             )}
           </p>
-          <button
-            type="button"
-            className="rounded-full border px-4 py-2"
+          <RetryButton
             onClick={() =>
               activeView === 'map'
                 ? mapRecordsQuery.retry()
@@ -162,7 +158,7 @@ function TravelRecordDesktopPage() {
             }
           >
             다시 시도
-          </button>
+          </RetryButton>
         </section>
       ) : activeView === 'folder' ? (
         isPending || invitationsPending ? (

@@ -386,10 +386,11 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
       return;
     }
 
-    const editableFolder = serverTravelRecordQuery.data;
+    const refreshed = await serverTravelRecordQuery.refetch();
+    const editableFolder = refreshed.isError ? undefined : refreshed.data;
 
     if (!editableFolder) {
-      showToast('여행 기록을 불러오는 중이에요.');
+      showToast('최신 여행 기록을 불러오지 못했어요. 다시 시도해 주세요.');
       return;
     }
 
@@ -436,6 +437,9 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
       version: editableFolder.version,
       visibility: toTravelRecordApiVisibility(editableFolder.visibility),
       ownerId: editableFolder.owner?.userId,
+      hasOtherParticipants: editableFolder.participants
+        ? editableFolder.participants.some((member) => member.userId !== editableFolder.owner?.userId)
+        : undefined,
       decorations: editableFolder.decorations,
       title: editableFolder.title,
       regionId: editableFolder.regionId,
