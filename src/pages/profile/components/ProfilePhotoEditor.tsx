@@ -6,13 +6,17 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   type WheelEvent as ReactWheelEvent,
 } from 'react';
 
 import loadingIcon from '../../../assets/icons/loading.svg';
 import pen from '../../../assets/icons/pen.svg';
 import { getApiErrorMessage } from '../../../apis/common';
-import { createPresignedUrl, uploadFileToPresignedUrl } from '../../../apis/files.api';
+import {
+  createPresignedUrl,
+  uploadFileToPresignedUrl,
+} from '../../../apis/files.api';
 import { useToast } from '../../../components/toast';
 import { ProfilePhotoPreview, type ProfilePhoto } from './ProfilePhotoPreview';
 import {
@@ -21,6 +25,11 @@ import {
 } from './profilePhotoSave';
 
 const PHOTO_FRAME_SIZE = 120;
+const ACTION_BUTTON_SIZE = 32;
+const ACTION_BUTTON_INSET = 4;
+const MENU_WIDTH = 73;
+// 위아래 테두리 1px씩을 더해 시안의 메뉴 높이 58px이 된다.
+const MENU_ITEM_HEIGHT = 28;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 // 원본 파일이 아니라 zoom/position이 반영된 결과물을 올려야 해서,
@@ -46,6 +55,11 @@ interface ProfilePhotoEditorProps {
   // 빈 payload로 저장되면서 사진 변경이 조용히 사라질 수 있다.
   readonly onPendingChange?: (isPending: boolean) => void;
   readonly initialPhotoUrl?: string | null;
+  /** 사진이 없을 때(삭제한 직후 포함) 보여 줄 기본 프로필. */
+  readonly defaultAvatar: ReactNode;
+  // 메뉴에서 "삭제"를 골랐을 때 호출된다. 업로드와 마찬가지로 계정에는
+  // "프로필 저장" 시점에 반영한다.
+  readonly onPhotoRemove?: () => void;
 }
 
 export interface ProfilePhotoEditorHandle {
@@ -55,13 +69,18 @@ export interface ProfilePhotoEditorHandle {
 export const ProfilePhotoEditor = forwardRef<
   ProfilePhotoEditorHandle,
   ProfilePhotoEditorProps
->(function ProfilePhotoEditor({
-  scale,
-  onPhotoChange,
-  onPhotoUploaded,
-  onPendingChange,
-  initialPhotoUrl,
-}, ref) {
+>(function ProfilePhotoEditor(
+  {
+    scale,
+    onPhotoChange,
+    onPhotoUploaded,
+    onPendingChange,
+    initialPhotoUrl,
+    defaultAvatar,
+    onPhotoRemove,
+  },
+  ref
+) {
   const { showToast } = useToast();
   const [savedPhoto, setSavedPhoto] = useState<ProfilePhoto | null>(null);
   const [draftPhoto, setDraftPhoto] = useState<ProfilePhoto | null>(null);
@@ -72,7 +91,10 @@ export const ProfilePhotoEditor = forwardRef<
   // 이 구간에도 저장 버튼이 눌릴 수 있다. isTransforming/isUploading과
   // 별개로 이 구간 자체를 pending으로 알린다.
   const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const actionButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   // 파일 선택과 구도 확정(commit) 시도를 모두 하나의 시퀀스로 취급한다.
   // 새 선택이나 새 확정 시도가 시작되면 값을 올려서, 그 이전 비동기
   // 작업(로컬 미리보기 생성, 업로드)의 응답이 늦게 와도 무시하게 만든다.
@@ -177,73 +199,76 @@ export const ProfilePhotoEditor = forwardRef<
     }
   };
 
-  const commitPhoto = useCallback(async (committedPhoto: ProfilePhoto) => {
-    const attemptId = ++attemptIdRef.current;
+  const commitPhoto = useCallback(
+    async (committedPhoto: ProfilePhoto) => {
+      const attemptId = ++attemptIdRef.current;
 
-    setIsTransforming(false);
-    setIsAdjustmentEnabled(false);
+      setIsTransforming(false);
+      setIsAdjustmentEnabled(false);
 
-    if (!onPhotoUploaded) {
-      // 업로드 연동이 없는 화면(조회 화면)에서는 로컬 미리보기만 확정한다.
-      setSavedPhoto(committedPhoto);
-      setDraftPhoto(null);
-      return null;
-    }
-
-    // 구도 조정 자체를 잃지 않도록 조정 화면으로 되돌린다 — 재선택부터
-    // 다시 시키지 않고 체크 버튼만 다시 누르면 재시도할 수 있게 한다.
-    const rollbackToRetry = () => {
-      setDraftPhoto(committedPhoto);
-      setIsTransforming(true);
-      setIsAdjustmentEnabled(true);
-    };
-
-    setIsUploading(true);
-
-    try {
-      const croppedFile = await createCroppedPhotoFile(committedPhoto);
-      const presignedUrl = await createPresignedUrl({
-        fileName: croppedFile.name,
-        contentType: AVATAR_EXPORT_MIME,
-      });
-      await uploadFileToPresignedUrl(
-        presignedUrl.uploadUrl,
-        croppedFile,
-        AVATAR_EXPORT_MIME
-      );
-
-      if (attemptId !== attemptIdRef.current) return null;
-
-      try {
-        // 호출부가 Promise를 돌려주면(예: PATCH까지 이어서 저장) 그게
-        // 끝나야 진짜 "확정"이다. 실패하면 호출부가 이미 자신만의 에러
-        // 토스트를 띄웠다고 보고, 여기서는 추가 토스트 없이 재시도
-        // 가능한 상태로만 되돌린다.
-        await onPhotoUploaded(presignedUrl.objectKey);
-      } catch {
-        if (attemptId === attemptIdRef.current) rollbackToRetry();
+      if (!onPhotoUploaded) {
+        // 업로드 연동이 없는 화면(조회 화면)에서는 로컬 미리보기만 확정한다.
+        setSavedPhoto(committedPhoto);
+        setDraftPhoto(null);
         return null;
       }
 
-      if (attemptId !== attemptIdRef.current) return null;
+      // 구도 조정 자체를 잃지 않도록 조정 화면으로 되돌린다 — 재선택부터
+      // 다시 시키지 않고 체크 버튼만 다시 누르면 재시도할 수 있게 한다.
+      const rollbackToRetry = () => {
+        setDraftPhoto(committedPhoto);
+        setIsTransforming(true);
+        setIsAdjustmentEnabled(true);
+      };
 
-      // 업로드와 호출부의 저장까지 실제로 성공한 뒤에야 "확정된" 사진으로
-      // 반영한다.
-      setSavedPhoto(committedPhoto);
-      setDraftPhoto(null);
-      return presignedUrl.objectKey;
-    } catch (error) {
-      if (attemptId !== attemptIdRef.current) return null;
+      setIsUploading(true);
 
-      showToast(getApiErrorMessage(error, UPLOAD_ERROR_MESSAGE));
-      rollbackToRetry();
-      return null;
-    } finally {
-      if (attemptId === attemptIdRef.current) {
-        setIsUploading(false);
+      try {
+        const croppedFile = await createCroppedPhotoFile(committedPhoto);
+        const presignedUrl = await createPresignedUrl({
+          fileName: croppedFile.name,
+          contentType: AVATAR_EXPORT_MIME,
+        });
+        await uploadFileToPresignedUrl(
+          presignedUrl.uploadUrl,
+          croppedFile,
+          AVATAR_EXPORT_MIME
+        );
+
+        if (attemptId !== attemptIdRef.current) return null;
+
+        try {
+          // 호출부가 Promise를 돌려주면(예: PATCH까지 이어서 저장) 그게
+          // 끝나야 진짜 "확정"이다. 실패하면 호출부가 이미 자신만의 에러
+          // 토스트를 띄웠다고 보고, 여기서는 추가 토스트 없이 재시도
+          // 가능한 상태로만 되돌린다.
+          await onPhotoUploaded(presignedUrl.objectKey);
+        } catch {
+          if (attemptId === attemptIdRef.current) rollbackToRetry();
+          return null;
+        }
+
+        if (attemptId !== attemptIdRef.current) return null;
+
+        // 업로드와 호출부의 저장까지 실제로 성공한 뒤에야 "확정된" 사진으로
+        // 반영한다.
+        setSavedPhoto(committedPhoto);
+        setDraftPhoto(null);
+        return presignedUrl.objectKey;
+      } catch (error) {
+        if (attemptId !== attemptIdRef.current) return null;
+
+        showToast(getApiErrorMessage(error, UPLOAD_ERROR_MESSAGE));
+        rollbackToRetry();
+        return null;
+      } finally {
+        if (attemptId === attemptIdRef.current) {
+          setIsUploading(false);
+        }
       }
-    }
-  }, [onPhotoUploaded, showToast]);
+    },
+    [onPhotoUploaded, showToast]
+  );
 
   useImperativeHandle(
     ref,
@@ -341,13 +366,65 @@ export const ProfilePhotoEditor = forwardRef<
     }));
   };
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+
+      if (
+        !actionButtonRef.current?.contains(target) &&
+        !menuRef.current?.contains(target)
+      ) {
+        setIsMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+
+      setIsMenuOpen(false);
+      actionButtonRef.current?.focus();
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMenuOpen]);
+
   const handleActionClick = () => {
     if (isTransforming && draftPhoto) {
       void commitPhoto(draftPhoto);
       return;
     }
 
+    // 지울 사진이 없으면 메뉴 없이 바로 사진을 고른다.
+    if (!photo) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    setIsMenuOpen((current) => !current);
+  };
+
+  const handleEditSelect = () => {
+    setIsMenuOpen(false);
     fileInputRef.current?.click();
+  };
+
+  const handleRemoveSelect = () => {
+    setIsMenuOpen(false);
+    // 늦게 도착하는 이전 작업과 서버의 예전 사진이 되살아나지 않게 막는다.
+    attemptIdRef.current += 1;
+    hasUserInteractedRef.current = true;
+    setSavedPhoto(null);
+    setDraftPhoto(null);
+    onPhotoRemove?.();
+    // 누른 항목이 사라지므로 포커스를 버튼으로 돌려준다.
+    actionButtonRef.current?.focus();
   };
 
   const isBusy = isUploading || isProcessingFile;
@@ -356,6 +433,7 @@ export const ProfilePhotoEditor = forwardRef<
     <div className="relative">
       <ProfilePhotoPreview
         photo={photo}
+        fallback={defaultAvatar}
         scale={scale}
         isAdjustable={isAdjustmentEnabled}
         onPointerDown={handlePointerDown}
@@ -375,9 +453,12 @@ export const ProfilePhotoEditor = forwardRef<
         }}
       />
       <button
+        ref={actionButtonRef}
         type="button"
         onClick={handleActionClick}
         disabled={isBusy}
+        aria-haspopup={photo && !isTransforming ? 'menu' : undefined}
+        aria-expanded={photo && !isTransforming ? isMenuOpen : undefined}
         aria-label={
           isBusy
             ? isUploading
@@ -387,8 +468,13 @@ export const ProfilePhotoEditor = forwardRef<
               ? '프로필 사진 편집 저장'
               : '프로필 사진 수정'
         }
-        className="absolute right-0 bottom-0 flex items-center justify-center rounded-full bg-[#f9f9f9]/80 disabled:opacity-70"
-        style={{ width: 30 * scale, height: 30 * scale }}
+        className={`absolute flex items-center justify-center rounded-full disabled:opacity-70 ${isMenuOpen ? 'bg-[#e8e8e8]/80' : 'bg-[#f9f9f9]/80'}`}
+        style={{
+          right: ACTION_BUTTON_INSET * scale,
+          bottom: ACTION_BUTTON_INSET * scale,
+          width: ACTION_BUTTON_SIZE * scale,
+          height: ACTION_BUTTON_SIZE * scale,
+        }}
       >
         {isBusy ? (
           <img
@@ -409,9 +495,58 @@ export const ProfilePhotoEditor = forwardRef<
           />
         )}
       </button>
+      {isMenuOpen && (
+        <div
+          ref={menuRef}
+          role="menu"
+          aria-label="프로필 사진 메뉴"
+          className="absolute z-10 flex flex-col overflow-hidden rounded-xl border border-[#e4e4e4] bg-[#f9f9f9]"
+          style={{
+            top: PHOTO_FRAME_SIZE * scale,
+            // 버튼 왼쪽 끝에 맞춘다.
+            left:
+              (PHOTO_FRAME_SIZE - ACTION_BUTTON_INSET - ACTION_BUTTON_SIZE) *
+              scale,
+            width: MENU_WIDTH * scale,
+          }}
+        >
+          <ProfilePhotoMenuItem scale={scale} onClick={handleEditSelect}>
+            수정
+          </ProfilePhotoMenuItem>
+          <ProfilePhotoMenuItem scale={scale} onClick={handleRemoveSelect}>
+            삭제
+          </ProfilePhotoMenuItem>
+        </div>
+      )}
     </div>
   );
 });
+
+function ProfilePhotoMenuItem({
+  scale,
+  onClick,
+  children,
+}: {
+  scale: number;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className="flex w-full items-center border-b border-[#e4e4e4] text-left text-[#7f7f7f] last:border-b-0 hover:bg-[#f1f1f1] focus-visible:bg-[#f1f1f1] focus-visible:outline-none"
+      style={{
+        height: MENU_ITEM_HEIGHT * scale,
+        paddingInline: 10 * scale,
+        fontSize: 14 * scale,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 function clampPhotoPosition(photo: ProfilePhoto) {
   const aspectRatio = photo.aspectRatio || 1;

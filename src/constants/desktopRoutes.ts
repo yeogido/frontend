@@ -9,6 +9,7 @@ import { matchPath } from 'react-router-dom';
  */
 export const DESKTOP_VIEW_PATHS = [
   '/',
+  '/terms',
   '/review',
   '/local-course',
   '/local-course/popular',

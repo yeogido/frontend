@@ -26,6 +26,8 @@ import {
   type ProfilePhotoEditorHandle,
   UnsavedChangesDialog,
 } from '../components';
+import { getProfilePhotoRemoval } from '../components/profilePhotoSave';
+import FriendAvatar from '../../friends/components/FriendAvatar';
 import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 import { ProfileFormField } from './components';
 import { getDropdownPanelPosition } from './dropdownPosition';
@@ -103,10 +105,7 @@ function ProfileEditPage() {
     birthYear !== initialBirthYear ||
     isPhotoChanged;
   const canSave =
-    isEdited &&
-    !nicknameError &&
-    !updateMyProfile.isPending &&
-    !isPhotoPending;
+    isEdited && !nicknameError && !updateMyProfile.isPending && !isPhotoPending;
   const unsavedChangesGuard = useUnsavedChangesGuard(isEdited);
 
   const handleBack = () => {
@@ -126,7 +125,8 @@ function ProfileEditPage() {
         ? await profilePhotoEditorRef.current?.commitPendingPhoto()
         : undefined);
 
-    if (isPhotoChanged && !uploadedPhotoKey) {
+    // 빈 문자열은 "사진 삭제"라 업로드 실패(null/undefined)와 구분한다.
+    if (isPhotoChanged && uploadedPhotoKey == null) {
       return;
     }
 
@@ -136,7 +136,7 @@ function ProfileEditPage() {
       payload.birthYear = birthYear;
     if (regionId !== initialRegionId && regionId)
       payload.regionId = Number(regionId);
-    if (uploadedPhotoKey) payload.profileImageUrl = uploadedPhotoKey;
+    if (uploadedPhotoKey != null) payload.profileImageUrl = uploadedPhotoKey;
 
     // 지역/출생연도를 빈 값으로 되돌리거나, 사진을 골랐지만 업로드가 아직
     // 끝나지 않았거나 실패한 경우 isEdited는 true지만 실제로 보낼 필드가
@@ -196,6 +196,21 @@ function ProfileEditPage() {
           }}
           onPhotoUploaded={setProfileImageKey}
           onPendingChange={setIsPhotoPending}
+          onPhotoRemove={() => {
+            const removal = getProfilePhotoRemoval(
+              Boolean(profile?.profileImageUrl)
+            );
+            setIsPhotoChanged(removal.isPhotoChanged);
+            setProfileImageKey(removal.profileImageKey);
+          }}
+          defaultAvatar={
+            <FriendAvatar
+              userId={userId ?? 0}
+              nickname={name.trim() || initialName}
+              profileImageUrl={null}
+              size={120 * scale}
+            />
+          }
         />
 
         <form

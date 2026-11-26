@@ -3,6 +3,7 @@ import star from '../../../assets/icons/star.svg';
 import ReviewerAvatar from '../../../components/common/ReviewerAvatar';
 import { useOpenReviewInCourseDetail } from '../../../hooks/useOpenReviewInCourseDetail';
 import { useRecentReviews } from '../../../hooks/useReviews';
+import { useMouseDragScroll } from '../../../hooks/useMouseDragScroll';
 import { toReviewCardProps } from '../../../utils/reviewCard';
 
 // Figma 1440 데스크톱 시안(6115:36813 card_review) 기준 리터럴 px.
@@ -22,6 +23,7 @@ const SKELETON_COUNT = 3;
  */
 function HomeReviewSection() {
   const { data, isPending, isError } = useRecentReviews();
+  const dragScroll = useMouseDragScroll();
   const goToCourseDetail = useOpenReviewInCourseDetail();
   const reviews = (data?.items ?? [])
     .map(toReviewCardProps)
@@ -41,7 +43,12 @@ function HomeReviewSection() {
           후기를 불러오지 못했어요.
         </p>
       ) : (
-        <ul className="mt-[32px] flex w-full [scrollbar-width:none] gap-[24px] overflow-x-auto px-[max(24px,calc((100%-1048px)/2))] pb-[8px] [&::-webkit-scrollbar]:hidden">
+        <ul
+          {...dragScroll}
+          tabIndex={0}
+          aria-label="최근 후기 목록"
+          className="mt-[32px] flex w-full cursor-grab [scrollbar-width:none] gap-[24px] overflow-x-auto px-[max(24px,calc((100%-1048px)/2))] pb-[8px] select-none active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+        >
           {isPending
             ? Array.from({ length: SKELETON_COUNT }, (_, index) => (
                 <li
