@@ -82,14 +82,14 @@ function TravelRecordShareModal({
           onBusyChange={setIsBusy}
         />
       }
-      friendSection={
+      friendSection={folder.visibility === 'friends' && folder.permissions?.canInvite === true ? (
         <TravelRecordInvitePicker
           key={`${folder.id}:${userId}:${authGeneration}`}
           folder={folder}
           onSent={onClose}
           onBusyChange={setIsBusy}
         />
-      }
+      ) : undefined}
       onClose={onClose}
     >
       <>

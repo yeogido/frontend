@@ -23,7 +23,7 @@ export interface TravelRecordPermissions {
 }
 
 export interface TravelRecordVisibilityUpdateRequest {
-  visibility: 'PRIVATE' | 'PUBLIC';
+  visibility: TravelRecordApiVisibility;
   version: number;
 }
 

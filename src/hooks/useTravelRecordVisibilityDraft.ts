@@ -1,6 +1,7 @@
 import { useAuthStore } from '../store/auth.store';
 import { useTravelRecordSessionStore } from '../store/travelRecordSession.store';
 import type { TravelRecordApiVisibility } from '../types/travelRecord.type';
+import { canChangeTravelRecordVisibility } from '../pages/travel-record/utils/visibilityPermission';
 
 /** 사진 선택과 꾸미기 단계가 같은 계정·같은 작성 흐름의 선택을 공유한다. */
 export function useTravelRecordVisibilityDraft(travelRecordId?: string) {
@@ -16,11 +17,8 @@ export function useTravelRecordVisibilityDraft(travelRecordId?: string) {
   const canSelect = (value: TravelRecordApiVisibility) =>
     !travelRecordId ||
     Boolean(
-      original?.ownerId === userId &&
-      userId !== null &&
-      (original?.visibility === 'PRIVATE' ||
-        original?.visibility === 'PUBLIC') &&
-      (value === 'PRIVATE' || value === 'PUBLIC')
+      canChangeTravelRecordVisibility(original?.ownerId, userId, original?.hasOtherParticipants) &&
+      ['PRIVATE', 'FRIENDS', 'PUBLIC'].includes(value)
     );
   const matchingDraft =
     draft &&
