@@ -57,7 +57,7 @@ function BusinessDesktopCard({
             <span className="truncate text-[20px] leading-[1.5] font-medium text-black">
               {business.title}
             </span>
-            <span className="text-gray-4 flex items-center gap-[2px] text-[16px] font-medium">
+            <span className="text-gray-4 flex items-center gap-[2px] text-[16px] leading-[19px] font-medium">
               <MdLocationOn aria-hidden="true" className="text-[18px]" />
               {business.location}
             </span>

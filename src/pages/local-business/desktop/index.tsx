@@ -89,7 +89,7 @@ function LocalBusinessDesktopPage() {
               <button
                 type="button"
                 onClick={handleStartPromotionRegistration}
-                className="bg-main-5 flex shrink-0 items-center gap-[6px] rounded-[12px] px-[14px] py-[8px] text-[18px] font-semibold text-[#f1f1f1]"
+                className="bg-main-5 flex h-[37px] shrink-0 items-center gap-[6px] rounded-[12px] px-[14px] text-[18px] font-semibold text-[#f1f1f1]"
               >
                 <MdAdd aria-hidden="true" className="text-[20px]" />
                 홍보글 올리기
@@ -143,7 +143,12 @@ function LocalBusinessDesktopPage() {
             </p>
           ) : null}
 
-          <div ref={loadMoreRef} className="h-[40px]" aria-hidden="true" />
+          {/* 감지용 요소가 푸터 위 여백을 늘리지 않게 section gap을 상쇄한다. */}
+          <div
+            ref={loadMoreRef}
+            className="-mt-[33px] h-px"
+            aria-hidden="true"
+          />
         </section>
       </div>
 

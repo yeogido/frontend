@@ -25,7 +25,8 @@ function BusinessRegionStrip({
       {...dragScroll}
       tabIndex={0}
       aria-label="지역 목록"
-      className="flex cursor-grab [scrollbar-width:none] gap-[36px] overflow-x-auto p-[4px] select-none active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+      // p는 선택 테두리가 잘리지 않을 자리, -m은 그만큼을 배치에서 상쇄한다.
+      className="-m-[4px] flex cursor-grab [scrollbar-width:none] gap-[36px] overflow-x-auto p-[4px] select-none active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
     >
       {options.map((option) => {
         const isSelected = option.id === selectedId;
@@ -50,7 +51,7 @@ function BusinessRegionStrip({
                     className="absolute inset-0 h-full w-full object-cover"
                   />
                   <span
-                    className="absolute inset-0 bg-black/20"
+                    className="absolute inset-0 bg-black/30"
                     aria-hidden="true"
                   />
                 </>
