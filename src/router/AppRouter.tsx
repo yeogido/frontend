@@ -111,6 +111,8 @@ import FriendRequestsPage from '../pages/friends/requests';
 import FriendProfilePage from '../pages/friends/profile';
 import BusinessVerificationPage from '../pages/business-verification';
 import BusinessPromotionRegistrationPage from '../pages/business-promotion-registration';
+import TermsPage from '../pages/terms';
+import TermsDesktopPage from '../pages/terms/desktop';
 
 function AppRouter() {
   return (
@@ -124,6 +126,12 @@ function AppRouter() {
       </Route>
 
       <Route element={<MainLayout />}>
+        <Route
+          path="/terms"
+          element={
+            <Responsive desktop={<TermsDesktopPage />} mobile={<TermsPage />} />
+          }
+        />
         <Route
           path="/local-course/recent"
           element={<LocalCourseRecentPage />}
