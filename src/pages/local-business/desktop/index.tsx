@@ -51,26 +51,13 @@ function LocalBusinessDesktopPage() {
         style={{ paddingTop: TITLE_OFFSET_TOP }}
         className="flex flex-col gap-[32px]"
       >
-        <header className="flex items-start justify-between">
-          <div className="flex flex-col gap-[6px]">
-            <h1 className="text-[32px] leading-[38px] font-semibold text-black">
-              지역의 다양한 매력을 만나보세요
-            </h1>
-            <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
-              소상공인이 직접 소개하는 공간과 소식을 확인해 보세요
-            </p>
-          </div>
-
-          {isBusinessUser ? (
-            <button
-              type="button"
-              onClick={handleStartPromotionRegistration}
-              className="bg-main-5 flex items-center gap-[4px] rounded-[12px] px-[16px] py-[10px] text-[16px] font-semibold text-white"
-            >
-              <MdAdd aria-hidden="true" className="text-[20px]" />
-              홍보 게시물 등록
-            </button>
-          ) : null}
+        <header className="flex flex-col gap-[6px]">
+          <h1 className="text-[32px] leading-[38px] font-semibold text-black">
+            지역의 다양한 매력을 만나보세요
+          </h1>
+          <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
+            소상공인이 직접 소개하는 공간과 소식을 확인해 보세요
+          </p>
         </header>
 
         <BusinessRegionStrip
@@ -80,21 +67,34 @@ function LocalBusinessDesktopPage() {
         />
 
         <section className="flex flex-col gap-[32px]">
-          <div className="flex items-center gap-[16px]">
-            <DesktopFilterDropdown
-              label="정렬"
-              options={businessSortOptions}
-              value={sortBy}
-              onChange={(option) => handleSortChange(option as BusinessSort)}
-            />
-            {businessCategories.map((category) => (
-              <DesktopFilterChip
-                key={category}
-                label={category}
-                selected={selectedCategory === category}
-                onClick={() => handleSelectCategory(category)}
+          <div className="flex items-center justify-between gap-[16px]">
+            <div className="flex items-center gap-[16px]">
+              <DesktopFilterDropdown
+                label="정렬"
+                options={businessSortOptions}
+                value={sortBy}
+                onChange={(option) => handleSortChange(option as BusinessSort)}
               />
-            ))}
+              {businessCategories.map((category) => (
+                <DesktopFilterChip
+                  key={category}
+                  label={category}
+                  selected={selectedCategory === category}
+                  onClick={() => handleSelectCategory(category)}
+                />
+              ))}
+            </div>
+
+            {isBusinessUser ? (
+              <button
+                type="button"
+                onClick={handleStartPromotionRegistration}
+                className="bg-main-5 flex shrink-0 items-center gap-[6px] rounded-[12px] px-[14px] py-[8px] text-[18px] font-semibold text-[#f1f1f1]"
+              >
+                <MdAdd aria-hidden="true" className="text-[20px]" />
+                홍보글 올리기
+              </button>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-3 gap-x-[24px] gap-y-[48px]">
