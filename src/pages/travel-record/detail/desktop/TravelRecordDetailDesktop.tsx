@@ -12,6 +12,7 @@ import uploadIcon from '../../../../assets/icons/travel-detail-upload-desktop.sv
 import moreIcon from '../../../../assets/icons/travel-detail-more-desktop.svg';
 import DesktopPageShell from '../../../../components/layout/desktop/DesktopPageShell';
 import ProfileAvatar from '../../../../components/common/ProfileAvatar';
+import { getFriendAvatarColor } from '../../../friends/utils/friendAvatarColor';
 import { TravelFolderArtwork } from '../../components';
 import type { TravelRecordFolder } from '../../types';
 import TravelRecordMemberDialog from '../components/TravelRecordMemberDialog';
@@ -120,18 +121,21 @@ function PhotoGallery({
             className={`bg-gray-2 relative overflow-hidden rounded-[24px] ${index === 0 ? 'col-span-2 row-span-2 aspect-[514/688]' : 'aspect-[249/337]'}`}
           >
             <img src={photo} alt="" className="size-full object-cover" />
-            {folder.visibility === 'friends' &&
-              folder.serverPhotos?.[index]?.uploader && (
+            {folder.serverPhotos?.[index]?.uploader && (
                 <span
                   aria-label={`${folder.serverPhotos[index].uploader?.nickname}님이 올린 사진`}
                   className={`absolute ${index === 0 ? 'top-[33px] right-8' : 'top-5 right-5'}`}
                 >
                   <ProfileAvatar
                     src={folder.serverPhotos[index].uploader?.profileImageUrl}
+                    nickname={folder.serverPhotos[index].uploader?.nickname}
+                    color={getFriendAvatarColor(
+                      folder.serverPhotos[index].uploader.userId
+                    )}
                     size={60}
                   />
                 </span>
-              )}
+            )}
           </button>
         ))}
       </section>

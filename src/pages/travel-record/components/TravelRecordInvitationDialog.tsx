@@ -166,6 +166,7 @@ function TravelRecordInvitationDialog({
             {invitation.inviterProfileImageUrl ? (
               <ProfileAvatar
                 src={invitation.inviterProfileImageUrl}
+                nickname={inviterName}
                 size={49}
               />
             ) : (

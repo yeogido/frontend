@@ -134,7 +134,12 @@ export default function TravelRecordInvitePicker({
               className="relative block size-12 shrink-0 rounded-full"
             >
               {friend.profileImageUrl ? (
-                <ProfileAvatar src={friend.profileImageUrl} size={48} />
+                <ProfileAvatar
+                  src={friend.profileImageUrl}
+                  nickname={friend.nickname}
+                  color={getFriendAvatarColor(friend.userId)}
+                  size={48}
+                />
               ) : (
                 <NicknameAvatar
                   name={friend.nickname}

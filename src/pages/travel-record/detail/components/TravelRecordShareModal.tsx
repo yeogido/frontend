@@ -120,6 +120,7 @@ function TravelRecordShareModal({
         {sharerProfileImageUrl ? (
           <ProfileAvatar
             src={sharerProfileImageUrl}
+            nickname={sharerName}
             size={49}
             className="relative z-10 -mt-7 shadow-[0_-2px_10px_rgba(0,0,0,0.25)]"
           />
