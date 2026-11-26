@@ -24,7 +24,6 @@ import CourseStopDesktopList from './CourseStopDesktopList';
 import ReviewDesktopCard from './ReviewDesktopCard';
 
 // Figma 1440 데스크톱 시안(6356:37541, 6356:38115) 기준 리터럴 px
-const HERO_HEIGHT = 426;
 const TAG_HEIGHT = 34;
 
 export function CourseDetailDesktopLayout(props: CourseDetailLayoutProps) {
@@ -81,10 +80,7 @@ function CourseDetailDesktopContent(props: CourseDetailLayoutProps) {
   return (
     <DesktopPageShell>
       <div className="flex flex-col gap-[32px]">
-        <div
-          className="bg-gray-2 overflow-hidden rounded-[24px]"
-          style={{ height: HERO_HEIGHT }}
-        >
+        <div className="bg-gray-2 aspect-[742/563] overflow-hidden rounded-[24px]">
           <img
             src={course.heroImageUrl}
             alt={course.title}
