@@ -79,6 +79,7 @@ export function isInvitationPromptRouteSafe(pathname: string) {
     /^\/(login|signup|auth|forgot-password)(\/|$)/,
     /^\/travel-record\/(new|date-selection|photo-selection|folder-decoration)(\/|$)/,
     /^\/travel-record\/[^/]+\/edit(\/|$)/,
+    /^\/travel-record\/shared(\/|$)/,
     /^\/(local-recommendation|admin|business-promotion-registration|business-verification|review)(\/|$)/,
     /^\/profile\/edit(\/|$)/,
   ].some((pattern) => pattern.test(pathname));

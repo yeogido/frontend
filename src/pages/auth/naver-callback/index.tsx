@@ -6,6 +6,7 @@ import { socialLogin } from '../../../apis/auth.api';
 import { Logo } from '../../../components/common';
 import { getNaverCallbackUrl } from '../../../hooks/useNaverLogin';
 import { useAuthStore } from '../../../store/auth.store';
+import { consumeTravelShareReturn } from '../../travel-record/utils/travelShareLoginReturn';
 import { loadNaverAuthSdk } from '../../../utils/naverAuth';
 
 const DEFAULT_ERROR_MESSAGE =
@@ -99,7 +100,7 @@ function NaverCallbackPage() {
                 accessToken: result.accessToken as string,
                 refreshToken: result.refreshToken as string,
               });
-              navigate('/', { replace: true });
+              navigate(consumeTravelShareReturn(), { replace: true });
             })
             .catch((error: unknown) => {
               const errorCode = isNormalizedApiError(error)
@@ -124,17 +125,17 @@ function NaverCallbackPage() {
 
       {errorMessage ? (
         <>
-          <p className="text-sm font-medium text-main-5">{errorMessage}</p>
+          <p className="text-main-5 text-sm font-medium">{errorMessage}</p>
           <button
             type="button"
             onClick={() => navigate('/login', { replace: true })}
-            className="text-sm font-bold text-gray-4"
+            className="text-gray-4 text-sm font-bold"
           >
             로그인으로 돌아가기
           </button>
         </>
       ) : (
-        <p className="text-sm font-medium text-gray-4">로그인 처리 중...</p>
+        <p className="text-gray-4 text-sm font-medium">로그인 처리 중...</p>
       )}
     </main>
   );

@@ -72,6 +72,7 @@ import PlaceSelectionDesktopPage from '../pages/local-recommendation/place-selec
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TagSelectionDesktopPage from '../pages/local-recommendation/tag-selection/desktop';
 import TravelRecordPage from '../pages/travel-record';
+import SharedTravelRecordPage from '../pages/travel-record/SharedTravelRecordPage';
 import TravelRecordDesktopPage from '../pages/travel-record/desktop';
 import TravelRecordRegionSelectionDesktopPage from '../pages/travel-record/desktop/create/RegionSelectionDesktopPage';
 import DateSelectionDesktopPage from '../pages/travel-record/desktop/create/DateSelectionDesktopPage';
@@ -270,6 +271,10 @@ function AppRouter() {
           />
         </Route>
 
+        <Route
+          path="/travel-record/shared/:token"
+          element={<SharedTravelRecordPage />}
+        />
         <Route element={<ProtectedRoute />}>
           <Route
             path="/travel-record"

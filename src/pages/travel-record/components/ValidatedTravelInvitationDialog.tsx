@@ -8,6 +8,7 @@ import TravelRecordInvitationDialog from './TravelRecordInvitationDialog';
 import { shouldRetryInvitationPreview } from '../utils/invitationPreviewRetry';
 import { getInvitationPreviewFailureAction } from '../utils/invitationPreviewFailure';
 import { getTravelRecordInvitationsQueryKey } from '../../../hooks/useTravelRecordInvitations';
+import { shouldHandleInvitationPreviewFailure } from '../utils/invitationPreviewState';
 
 export default function ValidatedTravelInvitationDialog({
   invitation,
@@ -53,9 +54,18 @@ export default function ValidatedTravelInvitationDialog({
     if (action !== 'wait') onPreviewFailure?.(action, invitation.id);
   });
   useEffect(() => {
-    if (query.isError && !query.isFetching) handleFailure(query.error);
-  }, [query.isError, query.isFetching, query.error]);
-  if (query.isPending || query.isFetching || query.isError) return null;
+    if (
+      query.isError &&
+      !query.isFetching &&
+      shouldHandleInvitationPreviewFailure(Boolean(query.data), query.error)
+    )
+      handleFailure(query.error);
+  }, [query.isError, query.isFetching, query.error, query.data]);
+  if (
+    !query.data ||
+    (query.isError && shouldHandleInvitationPreviewFailure(true, query.error))
+  )
+    return null;
   return (
     <TravelRecordInvitationDialog
       invitation={mapReceivedTravelRecordInvitation(query.data)}

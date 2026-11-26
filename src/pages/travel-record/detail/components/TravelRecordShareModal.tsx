@@ -1,8 +1,11 @@
 import TravelRecordExternalShareActions from '../../components/TravelRecordExternalShareActions';
 import { getTravelFolderShareData } from '../../utils/externalShare';
 import NicknameAvatar from '../../../../components/common/NicknameAvatar';
-import { useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { createTravelRecordShareLink } from '../../../../apis/travelRecords.api';
 import { useAuthStore } from '../../../../store/auth.store';
+import { useToast } from '../../../../components/toast';
 import TravelRecordInvitePicker from './TravelRecordInvitePicker';
 import ProfileAvatar from '../../../../components/common/ProfileAvatar';
 import TravelRecordShareDialog from '../../components/TravelRecordShareDialog';
@@ -29,16 +32,52 @@ function TravelRecordShareModal({
   onClose,
 }: TravelRecordShareModalProps) {
   const [isBusy, setIsBusy] = useState(false);
+  const { showToast } = useToast();
   const userId = useAuthStore((state) => state.userId);
   const authGeneration = useAuthStore((state) => state.authGeneration);
+  const canShare =
+    folder.permissions?.canLinkShare === true &&
+    (folder.visibility === 'public' || folder.visibility === 'friends') &&
+    /^\d+$/.test(folder.id) &&
+    Number(folder.id) > 0 &&
+    userId !== null;
+  const shareLink = useQuery({
+    queryKey: [
+      'travelRecordShareLink',
+      userId,
+      authGeneration,
+      folder.id,
+      folder.visibility,
+    ],
+    queryFn: () => createTravelRecordShareLink(Number(folder.id)),
+    enabled: canShare,
+    retry: false,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  });
+  const notifyShareError = useEffectEvent(() => {
+    showToast('공유 링크를 발급하지 못했어요. 다시 시도해 주세요.');
+  });
+  useEffect(() => {
+    if (shareLink.isError) notifyShareError();
+  }, [shareLink.isError]);
   return (
     <TravelRecordShareDialog
       title="여행 폴더 공유"
       isBusy={isBusy}
+      showExternalShare={canShare}
       externalShareAction={
         <TravelRecordExternalShareActions
           key={`external:${folder.id}:${userId}:${authGeneration}`}
-          data={getTravelFolderShareData(folder, window.location.origin)}
+          data={
+            shareLink.isFetching || shareLink.isError || !shareLink.data
+              ? null
+              : getTravelFolderShareData(
+                  folder,
+                  window.location.origin,
+                  shareLink.data.token
+                )
+          }
           isBusy={isBusy}
           onBusyChange={setIsBusy}
         />

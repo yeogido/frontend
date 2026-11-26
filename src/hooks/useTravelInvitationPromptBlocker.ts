@@ -1,15 +1,37 @@
 import { useSyncExternalStore } from 'react';
 
+const dialogSelector = '[role="dialog"], [aria-modal="true"], dialog[open]';
+
+function containsDialog(node: Node) {
+  return (
+    node instanceof Element &&
+    (node.matches(dialogSelector) ||
+      node.querySelector(dialogSelector) !== null)
+  );
+}
+
+function affectsDialogs(records: MutationRecord[]) {
+  return records.some((record) => {
+    if (record.type === 'attributes') {
+      return (
+        containsDialog(record.target) ||
+        (record.attributeName === 'role' && record.oldValue === 'dialog') ||
+        (record.attributeName === 'aria-modal' && record.oldValue === 'true') ||
+        (record.attributeName === 'open' &&
+          record.target instanceof HTMLDialogElement &&
+          record.oldValue !== null)
+      );
+    }
+    return [...record.addedNodes, ...record.removedNodes].some(containsDialog);
+  });
+}
+
 function getSnapshot() {
   if (document.visibilityState !== 'visible') return true;
   const focused = document.activeElement;
   if (focused?.matches('input, textarea, select, [contenteditable="true"]'))
     return true;
-  return [
-    ...document.querySelectorAll<HTMLElement>(
-      '[role="dialog"], [aria-modal="true"], dialog[open]'
-    ),
-  ].some(
+  return [...document.querySelectorAll<HTMLElement>(dialogSelector)].some(
     (element) =>
       !element.hasAttribute('data-automatic-travel-invitation') &&
       element.getAttribute('aria-hidden') !== 'true' &&
@@ -20,14 +42,20 @@ function getSnapshot() {
 function subscribe(notify: () => void) {
   let frame = 0;
   const schedule = () => {
-    cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(notify);
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      notify();
+    });
   };
-  const observer = new MutationObserver(schedule);
+  const observer = new MutationObserver((records) => {
+    if (affectsDialogs(records)) schedule();
+  });
   observer.observe(document.body, {
     childList: true,
     subtree: true,
     attributes: true,
+    attributeOldValue: true,
     attributeFilter: ['role', 'aria-modal', 'aria-hidden', 'open', 'hidden'],
   });
   document.addEventListener('visibilitychange', schedule);

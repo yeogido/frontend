@@ -93,6 +93,25 @@ export interface TravelRecordInvitationRespondResponse {
   status: TravelRecordInvitationStatus;
 }
 
+export interface TravelRecordShareLinkResponse {
+  travelRecordId: number;
+  token: string;
+}
+
+export interface TravelRecordSharedView {
+  travelRecordId: number;
+  visibility: TravelRecordApiVisibility;
+  canAccept: boolean;
+  owner: TravelRecordUserProfile;
+  preview: TravelRecordReceivedInvitation['travelRecord'] | null;
+  detail: TravelRecordDetailResponse | null;
+}
+
+export interface TravelRecordShareRespondResponse {
+  travelRecordId: number;
+  status: TravelRecordInvitationResponseStatus;
+}
+
 export interface TravelRecordMapParams extends TravelRecordListParams {
   visibility?: TravelRecordApiVisibility;
 }
@@ -174,6 +193,7 @@ export interface TravelRecordImageResponse {
   imageKey: string;
   imageUrl: string;
   imageOrder: number;
+  uploader?: TravelRecordUserProfile | null;
 }
 
 export interface TravelRecordStickerResponse {
