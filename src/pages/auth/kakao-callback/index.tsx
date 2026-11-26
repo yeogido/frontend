@@ -9,6 +9,7 @@ import {
   KAKAO_OAUTH_STATE_KEY,
 } from '../../../hooks/useKakaoLogin';
 import { useAuthStore } from '../../../store/auth.store';
+import { consumeTravelShareReturn } from '../../travel-record/utils/travelShareLoginReturn';
 
 const DEFAULT_ERROR_MESSAGE =
   '카카오 로그인에 실패했습니다. 다시 시도해 주세요.';
@@ -124,7 +125,7 @@ function KakaoCallbackPage() {
           accessToken: result.accessToken as string,
           refreshToken: result.refreshToken as string,
         });
-        navigate('/', { replace: true });
+        navigate(consumeTravelShareReturn(), { replace: true });
       })
       .catch((error: unknown) => {
         const errorCode = isNormalizedApiError(error) ? error.code : undefined;
@@ -142,17 +143,17 @@ function KakaoCallbackPage() {
 
       {errorMessage ? (
         <>
-          <p className="text-sm font-medium text-main-5">{errorMessage}</p>
+          <p className="text-main-5 text-sm font-medium">{errorMessage}</p>
           <button
             type="button"
             onClick={() => navigate('/login', { replace: true })}
-            className="text-sm font-bold text-gray-4"
+            className="text-gray-4 text-sm font-bold"
           >
             로그인으로 돌아가기
           </button>
         </>
       ) : (
-        <p className="text-sm font-medium text-gray-4">로그인 처리 중...</p>
+        <p className="text-gray-4 text-sm font-medium">로그인 처리 중...</p>
       )}
     </main>
   );

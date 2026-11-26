@@ -30,6 +30,8 @@ export interface CourseReview {
   readonly content: string;
   readonly rating: number;
   readonly isMine?: boolean;
+  /** 작성일 "2026.11.17." — 응답에 날짜가 없으면 비어 있다. */
+  readonly date?: string;
 }
 
 export interface CourseStopDto {

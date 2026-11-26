@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom';
 
 import AppRouter from './router/AppRouter';
+import GlobalTravelInvitations from './components/GlobalTravelInvitations';
 import ScrollToTop from './router/ScrollToTop';
 import { ToastProvider } from './components/toast';
 
@@ -32,6 +33,7 @@ function App() {
           >
             <ScrollToTop />
             <AppRouter />
+            <GlobalTravelInvitations />
           </div>
         </div>
       </ToastProvider>

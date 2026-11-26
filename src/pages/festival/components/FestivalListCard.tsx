@@ -1,4 +1,5 @@
 import calendar from '../../../assets/icons/calendar.svg';
+import location from '../../../assets/icons/location.svg';
 import heart from '../../../assets/icons/heart.svg';
 import oheart from '../../../assets/icons/oheart.svg';
 import { CardActionMenu, TagChip } from '../../../components/common';
@@ -20,6 +21,8 @@ interface FestivalListCardProps {
   title: string;
   startDate: string;
   endDate: string;
+  regionName?: string;
+  variant?: 'default' | 'day-panel';
   tags: TagType[];
   /** 관리자면 좋아요 대신 같은 자리에 수정/삭제 메뉴를 띄운다. */
   isAdmin: boolean;
@@ -36,6 +39,8 @@ function FestivalListCard({
   title,
   startDate,
   endDate,
+  regionName,
+  variant = 'default',
   tags,
   isAdmin,
   liked,
@@ -44,7 +49,9 @@ function FestivalListCard({
   onEdit,
   onDelete,
 }: FestivalListCardProps) {
-  const { outerRef, innerRef, scale } = useScaleFrame(CARD_DESIGN_WIDTH);
+  const isDayPanel = variant === 'day-panel';
+  const designWidth = isDayPanel ? 318 : CARD_DESIGN_WIDTH;
+  const { outerRef, innerRef, scale } = useScaleFrame(designWidth);
   const {
     containerRef: visibleContainerRef,
     hiddenRef: hiddenContainerRef,
@@ -71,9 +78,9 @@ function FestivalListCard({
           event.preventDefault();
           onClick();
         }}
-        className="relative flex cursor-pointer overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+        className={`relative flex cursor-pointer overflow-hidden rounded-xl bg-[#F9F9F9] ${isDayPanel ? '' : 'shadow-[0_1px_5px_rgba(0,0,0,0.07)]'}`}
         style={{
-          width: CARD_DESIGN_WIDTH,
+          width: designWidth,
           height: CARD_HEIGHT,
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
@@ -84,29 +91,35 @@ function FestivalListCard({
             src={image}
             alt={title}
             className="h-full shrink-0 rounded-[8px] object-cover"
-            style={{ width: IMAGE_WIDTH }}
+            style={{ width: isDayPanel ? 136 : IMAGE_WIDTH }}
           />
         ) : (
           <div
             className="h-full shrink-0 rounded-[8px] bg-[#EAEAEA]"
-            style={{ width: IMAGE_WIDTH }}
+            style={{ width: isDayPanel ? 136 : IMAGE_WIDTH }}
           />
         )}
 
-        <div className="flex min-w-0 flex-1 flex-col pt-[15px] pr-9 pb-[14px] pl-3">
-          <h3 className="truncate text-[14px] leading-none font-medium text-[#1C1C1C]">
+        <div
+          className={`flex min-w-0 flex-1 flex-col pt-[15px] pb-[14px] pl-3 ${isDayPanel ? 'pr-[22px]' : 'pr-9'}`}
+        >
+          <h3
+            className={`truncate leading-none font-medium text-[#1C1C1C] ${isDayPanel ? 'text-[16px]' : 'text-[14px]'}`}
+          >
             {title}
           </h3>
 
-          <div className="mt-2 flex h-[14px] items-center gap-0.5">
+          <div
+            className={`${isDayPanel ? 'mt-1' : 'mt-2'} flex h-[14px] items-center gap-0.5`}
+          >
             <span
               aria-hidden="true"
               className="flex size-[14px] shrink-0 items-center justify-center"
             >
-              <img src={calendar} alt="" />
+              <img src={isDayPanel ? location : calendar} alt="" />
             </span>
             <span className="min-w-0 truncate text-[12px] leading-none font-medium text-[#7F7F7F]">
-              {`${startDate} ~ ${endDate}`}
+              {isDayPanel ? regionName : `${startDate} ~ ${endDate}`}
             </span>
           </div>
 
@@ -130,7 +143,7 @@ function FestivalListCard({
 
               <div
                 ref={visibleContainerRef}
-                className="mt-auto -mr-6 flex flex-nowrap items-center overflow-hidden"
+                className={`mt-auto flex flex-nowrap items-center overflow-hidden ${isDayPanel ? '' : '-mr-6'}`}
                 style={{ gap: TAG_GAP }}
               >
                 {tags.slice(0, visibleCount).map((tag, index) => (
@@ -151,7 +164,9 @@ function FestivalListCard({
             onEdit={onEdit}
             onDelete={onDelete}
             triggerSize={ACTION_SIZE}
-            triggerClassName="absolute top-3 right-3"
+            triggerClassName={
+              isDayPanel ? 'absolute top-0 right-0' : 'absolute top-3 right-3'
+            }
             ariaLabel="행사 카드 메뉴"
           />
         ) : (
@@ -163,13 +178,19 @@ function FestivalListCard({
               event.stopPropagation();
               onLikeClick();
             }}
-            className="absolute top-[14px] right-3 flex items-center justify-center"
-            style={{ width: HEART_SIZE, height: HEART_SIZE }}
+            className={`absolute flex items-center justify-center ${isDayPanel ? 'top-0 right-0' : 'top-[14px] right-3'}`}
+            style={{
+              width: isDayPanel ? 19 : HEART_SIZE,
+              height: isDayPanel ? 19 : HEART_SIZE,
+            }}
           >
             <img
               src={liked ? oheart : heart}
               alt=""
-              style={{ width: HEART_SIZE, height: HEART_SIZE }}
+              style={{
+                width: isDayPanel ? 19 : HEART_SIZE,
+                height: isDayPanel ? 19 : HEART_SIZE,
+              }}
             />
           </button>
         )}
@@ -178,8 +199,14 @@ function FestivalListCard({
   );
 }
 
-export function FestivalListCardSkeleton() {
-  const { outerRef, innerRef, scale } = useScaleFrame(CARD_DESIGN_WIDTH);
+export function FestivalListCardSkeleton({
+  variant = 'default',
+}: {
+  variant?: 'default' | 'day-panel';
+}) {
+  const isDayPanel = variant === 'day-panel';
+  const designWidth = isDayPanel ? 318 : CARD_DESIGN_WIDTH;
+  const { outerRef, innerRef, scale } = useScaleFrame(designWidth);
 
   return (
     <div
@@ -190,9 +217,9 @@ export function FestivalListCardSkeleton() {
     >
       <div
         ref={innerRef}
-        className="flex animate-pulse overflow-hidden rounded-xl bg-[#F9F9F9] shadow-[0_1px_5px_rgba(0,0,0,0.07)]"
+        className={`flex animate-pulse overflow-hidden rounded-xl bg-[#F9F9F9] ${isDayPanel ? '' : 'shadow-[0_1px_5px_rgba(0,0,0,0.07)]'}`}
         style={{
-          width: CARD_DESIGN_WIDTH,
+          width: designWidth,
           height: CARD_HEIGHT,
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
@@ -200,7 +227,7 @@ export function FestivalListCardSkeleton() {
       >
         <div
           className="h-full shrink-0 rounded-[8px] bg-[#EAEAEA]"
-          style={{ width: IMAGE_WIDTH }}
+          style={{ width: isDayPanel ? 136 : IMAGE_WIDTH }}
         />
         <div className="flex flex-1 flex-col pt-[15px] pb-[14px] pl-3">
           <div className="h-[14px] w-24 rounded bg-[#EAEAEA]" />

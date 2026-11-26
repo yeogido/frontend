@@ -72,6 +72,7 @@ import PlaceSelectionDesktopPage from '../pages/local-recommendation/place-selec
 import TagSelectionPage from '../pages/local-recommendation/tag-selection';
 import TagSelectionDesktopPage from '../pages/local-recommendation/tag-selection/desktop';
 import TravelRecordPage from '../pages/travel-record';
+import SharedTravelRecordPage from '../pages/travel-record/SharedTravelRecordPage';
 import TravelRecordDesktopPage from '../pages/travel-record/desktop';
 import TravelRecordRegionSelectionDesktopPage from '../pages/travel-record/desktop/create/RegionSelectionDesktopPage';
 import DateSelectionDesktopPage from '../pages/travel-record/desktop/create/DateSelectionDesktopPage';
@@ -98,15 +99,20 @@ import LikesDesktopPage from '../pages/likes/desktop';
 import MyPostsPage from '../pages/my-posts';
 import MyPostsDesktopPage from '../pages/my-posts/desktop';
 import RecentReviewCoursesPage from '../pages/recent-review-courses';
+import RecentViewedPage from '../pages/recent-viewed';
+import RecentViewedDesktopPage from '../pages/recent-viewed/desktop';
 import CourseReviewsPage from '../pages/course-reviews';
+import CourseReviewsDesktopPage from '../pages/course-reviews/desktop';
 import ProfilePage from '../pages/profile';
 import ProfileEditPage from '../pages/profile/edit';
 import FriendsPage from '../pages/friends';
 import FriendQrAddPage from '../pages/friends/add';
 import FriendRequestsPage from '../pages/friends/requests';
 import FriendProfilePage from '../pages/friends/profile';
-import BusinessVerificationPage from '../pages/business-verification';
+import BusinessVerificationPage from '../pages/business-verification/ResponsiveBusinessVerificationPage';
 import BusinessPromotionRegistrationPage from '../pages/business-promotion-registration';
+import TermsPage from '../pages/terms';
+import TermsDesktopPage from '../pages/terms/desktop';
 
 function AppRouter() {
   return (
@@ -120,6 +126,12 @@ function AppRouter() {
       </Route>
 
       <Route element={<MainLayout />}>
+        <Route
+          path="/terms"
+          element={
+            <Responsive desktop={<TermsDesktopPage />} mobile={<TermsPage />} />
+          }
+        />
         <Route
           path="/local-course/recent"
           element={<LocalCourseRecentPage />}
@@ -223,12 +235,22 @@ function AppRouter() {
 
         <Route
           path="/yeogido-course/detail/:courseId/reviews"
-          element={<CourseReviewsPage />}
+          element={
+            <Responsive
+              desktop={<CourseReviewsDesktopPage />}
+              mobile={<CourseReviewsPage />}
+            />
+          }
         />
 
         <Route
           path="/local-course/detail/:courseId/reviews"
-          element={<CourseReviewsPage />}
+          element={
+            <Responsive
+              desktop={<CourseReviewsDesktopPage />}
+              mobile={<CourseReviewsPage />}
+            />
+          }
         />
 
         <Route element={<AdminRoute />}>
@@ -257,6 +279,10 @@ function AppRouter() {
           />
         </Route>
 
+        <Route
+          path="/travel-record/shared/:token"
+          element={<SharedTravelRecordPage />}
+        />
         <Route element={<ProtectedRoute />}>
           <Route
             path="/travel-record"
@@ -277,6 +303,15 @@ function AppRouter() {
               <Responsive
                 desktop={<LikesDesktopPage />}
                 mobile={<LikesPage />}
+              />
+            }
+          />
+          <Route
+            path="/recent-viewed"
+            element={
+              <Responsive
+                desktop={<RecentViewedDesktopPage />}
+                mobile={<RecentViewedPage />}
               />
             }
           />

@@ -6,6 +6,8 @@ import type {
   BusinessPromotionImage,
 } from '../../../types/businessPromotion.type';
 import type { DetailTag } from '../../../types/detail';
+import type { RecentPromotion } from '../../../utils/recentPromotions';
+import { getFullRegionName } from '../../../utils/regionName';
 
 import type { BusinessPromotionDetail } from '../types/businessPromotionDetail';
 
@@ -101,6 +103,39 @@ function mapHashtagsToTags(hashtags: string[]): DetailTag[] {
   });
 }
 
+/**
+ * "최근 본 게시물"에 남길 스냅샷. 상세 응답에는 목록의 regionName이 없어,
+ * 지역은 도로명 주소의 시/도(정식 명칭)와 시/군/구로 만든다.
+ */
+export function toRecentPromotion(
+  detail: BusinessPromotionDetailResponse
+): Omit<RecentPromotion, 'viewedAt'> {
+  const [province = '', district = ''] = detail.place.roadAddress
+    .trim()
+    .split(/\s+/);
+
+  return {
+    promotionId: detail.promotionId,
+    placeId: detail.place.placeId,
+    title: detail.place.name,
+    location: `${getFullRegionName(province)} ${district}`.trim(),
+    image: getHeroImageUrls(detail.images)[0] ?? '',
+    hashtags: detail.hashtags,
+    liked: detail.isLiked,
+    operatingDays: toOperatingDays(detail.businessHours),
+    ...toCoordinates(detail.place),
+  };
+}
+
+function toCoordinates({
+  latitude,
+  longitude,
+}: BusinessPromotionDetailResponse['place']) {
+  return Number.isFinite(latitude) && Number.isFinite(longitude)
+    ? { latitude, longitude }
+    : undefined;
+}
+
 export function mapBusinessPromotionDetail(
   detail: BusinessPromotionDetailResponse
 ): BusinessPromotionDetail {
@@ -121,10 +156,6 @@ export function mapBusinessPromotionDetail(
     operatingDays: toOperatingDays(detail.businessHours),
     phone: detail.phoneNumber,
     snsAccount: detail.snsAccount,
-    location:
-      Number.isFinite(detail.place.latitude) &&
-      Number.isFinite(detail.place.longitude)
-        ? { latitude: detail.place.latitude, longitude: detail.place.longitude }
-        : undefined,
+    location: toCoordinates(detail.place),
   };
 }

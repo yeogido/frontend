@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import {
   useMutation,
   useMutationState,
@@ -13,6 +13,7 @@ import { TRAVEL_RECORD_MAP_QUERY_KEY } from '../pages/travel-record/utils/mapAut
 import type {
   TravelRecordInvitationListResponse,
   TravelRecordInvitationResponseStatus,
+  TravelRecordInvitationRespondResponse,
 } from '../types/travelRecord.type';
 import { getTravelRecordInvitationsQueryKey } from './useTravelRecordInvitations';
 
@@ -44,6 +45,22 @@ export function useRespondToTravelRecordInvitation() {
     select: (mutation) =>
       (mutation.state.variables as ResponseVariables).invitationId,
   });
+  const completed = useMutationState({
+    filters: { mutationKey, status: 'success' },
+    select: (mutation) => {
+      const result = mutation.state.data as
+        TravelRecordInvitationRespondResponse | undefined;
+      const variables = mutation.state.variables as
+        ResponseVariables | undefined;
+      return result && variables && result.status === variables.status
+        ? String(result.invitationId)
+        : null;
+    },
+  });
+  const resolvedIds = useMemo(
+    () => new Set(completed.filter((id): id is string => id !== null)),
+    [completed]
+  );
   const mutation = useMutation({
     mutationKey,
     mutationFn: ({ invitationId, status }: ResponseVariables) =>
@@ -125,6 +142,7 @@ export function useRespondToTravelRecordInvitation() {
     },
   });
   return {
+    resolvedIds,
     pendingIds: new Set(pendingIds.map(String)),
     respond: (
       invitationId: string,
@@ -141,6 +159,17 @@ export function useRespondToTravelRecordInvitation() {
       if (
         !Number.isSafeInteger(variables.invitationId) ||
         variables.invitationId <= 0 ||
+        queryClient.isMutating({
+          mutationKey: [
+            'respondTravelRecordInvitation',
+            session.userId,
+            session.authGeneration,
+          ],
+          exact: true,
+          predicate: (pending) =>
+            (pending.state.variables as ResponseVariables | undefined)
+              ?.invitationId === variables.invitationId,
+        }) > 0 ||
         locks.current.has(getLockKey(variables))
       )
         return;

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { addPlaceLike, removePlaceLike } from '../../../../apis/courses';
@@ -10,9 +10,13 @@ import { useBusinessPromotionDelete } from '../../../../hooks/useBusinessPromoti
 import { useBusinessPromotionDetail } from '../../../../hooks/useBusinessPromotionDetail';
 import { useLoginModal } from '../../../../hooks/useLoginModal';
 import { useAuthStore } from '../../../../store/auth.store';
+import { saveRecentPromotion } from '../../../../utils/recentPromotions';
 import { buildBusinessPromotionEditPath } from '../../../../utils/routes';
 import { useShareToast } from '../../hooks/useShareToast';
-import { mapBusinessPromotionDetail } from '../../mappers/businessPromotionDetailMapper';
+import {
+  mapBusinessPromotionDetail,
+  toRecentPromotion,
+} from '../../mappers/businessPromotionDetailMapper';
 
 const NOT_FOUND_MESSAGE = '업체 정보를 불러오지 못했습니다.';
 
@@ -71,6 +75,13 @@ export function useLocalBusinessDetail(promotionId: number) {
   const business = detailResponse
     ? mapBusinessPromotionDetail(detailResponse)
     : null;
+
+  // 상세를 연 홍보글은 "최근 본 게시물"에 남긴다.
+  useEffect(() => {
+    if (!detailResponse) return;
+
+    saveRecentPromotion(toRecentPromotion(detailResponse));
+  }, [detailResponse]);
 
   const errorMessage = !isValidPromotionId
     ? NOT_FOUND_MESSAGE

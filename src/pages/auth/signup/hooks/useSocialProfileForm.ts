@@ -6,6 +6,7 @@ import type { NormalizedApiError } from '../../../../apis/common';
 import { completeSocialSignup } from '../../../../apis/auth.api';
 import { useRegions } from '../../../../hooks/useRegions';
 import { useAuthStore } from '../../../../store/auth.store';
+import { consumeTravelShareReturn } from '../../../travel-record/utils/travelShareLoginReturn';
 import type { SocialGender } from '../../../../types/auth.type';
 import { getNicknameError } from '../../../../utils/nickname';
 
@@ -85,7 +86,7 @@ export function useSocialProfileForm({
       });
 
       setAuth(result);
-      navigate('/');
+      navigate(consumeTravelShareReturn());
     } catch (error) {
       const code = isNormalizedApiError(error) ? error.code : undefined;
       const mappedMessage = code ? SIGNUP_ERROR_MESSAGES[code] : undefined;

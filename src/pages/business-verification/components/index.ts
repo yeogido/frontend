@@ -4,3 +4,4 @@ export { BusinessVerificationDateField } from './BusinessVerificationDateField';
 export { BusinessVerificationForm } from './BusinessVerificationForm';
 export { BusinessVerificationField } from './BusinessVerificationField';
 export { BusinessVerificationSuccessDialog } from './BusinessVerificationSuccessDialog';
+export { BusinessVerificationConfirmDialog } from './BusinessVerificationConfirmDialog';

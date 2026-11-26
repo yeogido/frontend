@@ -1,5 +1,5 @@
 import { getApiErrorMessage } from '../../../apis/common';
-import { LoadingSpinner } from '../../../components/common';
+import { LoadingSpinner, RetryButton } from '../../../components/common';
 import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
 import addIcon from '../../../assets/icons/material-symbols_add-2-rounded.svg';
 import {
@@ -50,7 +50,7 @@ function TravelRecordDesktopPage() {
         clearEdit();
         navigate('/travel-record/new');
       }}
-      className="bg-main-5 flex shrink-0 items-center gap-[6px] rounded-[12px] px-[14px] py-[8px] text-[18px] font-semibold text-white"
+      className="bg-main-5 flex shrink-0 self-start items-center gap-[6px] rounded-[12px] px-[14px] py-[8px] text-[18px] font-semibold text-white"
     >
       <img src={addIcon} alt="" width="20" height="20" />
       기록 추가하기
@@ -90,7 +90,7 @@ function TravelRecordDesktopPage() {
                   desktop
                 />
               ) : isPending ? (
-                <TravelYearDropdownSkeleton />
+                <TravelYearDropdownSkeleton desktop />
               ) : null}
               <TravelRecordVisibilityFilters
                 value={visibilityFilter}
@@ -127,13 +127,11 @@ function TravelRecordDesktopPage() {
                   '받은 초대를 불러오지 못했어요.'
                 )}
               </p>
-              <button
-                type="button"
-                className="rounded-full border px-4 py-2"
+              <RetryButton
                 onClick={() => void invitationsQuery.retry()}
               >
                 받은 초대 다시 시도
-              </button>
+              </RetryButton>
             </section>
           )}
         </>
@@ -152,9 +150,7 @@ function TravelRecordDesktopPage() {
               '여행 기록을 불러오지 못했어요'
             )}
           </p>
-          <button
-            type="button"
-            className="rounded-full border px-4 py-2"
+          <RetryButton
             onClick={() =>
               activeView === 'map'
                 ? mapRecordsQuery.retry()
@@ -162,11 +158,11 @@ function TravelRecordDesktopPage() {
             }
           >
             다시 시도
-          </button>
+          </RetryButton>
         </section>
       ) : activeView === 'folder' ? (
         isPending || invitationsPending ? (
-          <TravelFolderGridSkeleton />
+          <TravelFolderGridSkeleton desktop />
         ) : null
       ) : isMapPending ? (
         <section

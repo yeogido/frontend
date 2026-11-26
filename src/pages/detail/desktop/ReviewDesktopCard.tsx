@@ -96,6 +96,10 @@ function ReviewDesktopCard({
         </ul>
       ) : null}
 
+      {review.date ? (
+        <p className="text-gray-4 text-[14px] leading-none">{review.date}</p>
+      ) : null}
+
       {onClick ? (
         <button
           type="button"

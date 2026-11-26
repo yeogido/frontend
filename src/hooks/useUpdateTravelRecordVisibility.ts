@@ -57,6 +57,8 @@ export function useUpdateTravelRecordVisibility() {
       });
       void queryClient.invalidateQueries({ queryKey: ['travelRecords'] });
       void queryClient.invalidateQueries({ queryKey: ['travelRecordYears'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordInvitations'] });
+      void queryClient.invalidateQueries({ queryKey: ['travelRecordShareLink'] });
       void queryClient.invalidateQueries({
         queryKey: TRAVEL_RECORD_MAP_QUERY_KEY,
       });

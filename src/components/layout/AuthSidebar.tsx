@@ -64,6 +64,7 @@ const MY_MENU: { label: string; path?: string; onNavigate?: () => void }[] = [
   },
   { label: '좋아요', path: '/likes' },
   { label: '내가 등록한 게시물', path: '/my-posts' },
+  { label: '최근 본 게시물', path: '/recent-viewed' },
   { label: '친구 목록', path: '/friends' },
 ];
 
@@ -153,6 +154,7 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
             >
               <ProfileAvatar
                 src={profile?.profileImageUrl}
+                nickname={profile?.name}
                 size={AVATAR_SIZE * scale}
               />
 
@@ -178,12 +180,12 @@ function AuthSidebar({ isOpen, onClose }: AuthSidebarProps) {
                 </div>
                 {profile?.email && (
                   <span
-          className="truncate font-medium text-[#7f7f7f]"
-          style={{
-            fontSize: EMAIL_TEXT_SIZE * scale,
-            lineHeight: `${16 * scale}px`,
-            marginTop: EMAIL_MARGIN_TOP * scale,
-          }}
+                    className="truncate font-medium text-[#7f7f7f]"
+                    style={{
+                      fontSize: EMAIL_TEXT_SIZE * scale,
+                      lineHeight: `${16 * scale}px`,
+                      marginTop: EMAIL_MARGIN_TOP * scale,
+                    }}
                   >
                     {profile.email}
                   </span>

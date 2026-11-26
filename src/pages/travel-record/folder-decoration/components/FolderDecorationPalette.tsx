@@ -9,6 +9,7 @@ import {
 
 import { getApiErrorMessage } from '../../../../apis/common';
 import { UploadedStickerImage } from '../../../../components/sticker';
+import RetryButton from '../../../../components/common/RetryButton';
 import { useToast } from '../../../../components/toast';
 import {
   useCreateCustomSticker,
@@ -261,13 +262,11 @@ export function FolderDecorationPalette({
           <p className="text-center text-[14px] text-[#7f7f7f]">
             스티커를 불러오지 못했어요
           </p>
-          <button
-            type="button"
+          <RetryButton
             onClick={() => void stickerCatalogQuery.refetch()}
-            className="rounded-full border border-[#e4e4e4] px-4 py-2 text-[14px] text-[#505050]"
           >
             다시 시도
-          </button>
+          </RetryButton>
         </div>
       );
     }

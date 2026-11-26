@@ -31,8 +31,16 @@ function HomeDesktopPage() {
   });
   const featured = (data?.pages[0]?.items ?? [])
     .slice(0, FEATURED_COUNT)
-    .map(toCourseCardProps)
-    .map((course) => ({ ...course, liked: getLiked(course.id, course.liked) }));
+    .map((item) => {
+      const course = toCourseCardProps(item);
+
+      // 캐러셀은 경로 지도가 아니라 코스 대표 사진을 쓴다.
+      return {
+        ...course,
+        image: item.thumbnailUrl || course.image,
+        liked: getLiked(course.id, course.liked),
+      };
+    });
 
   return (
     <div className="flex min-h-dvh flex-col overflow-x-hidden bg-white">
@@ -62,7 +70,11 @@ function HomeDesktopPage() {
             </section>
           ) : null}
 
-          <section aria-label="지역별 여행">
+          <section
+            aria-label="지역별 여행"
+            className="relative w-screen -translate-x-1/2"
+            style={{ left: 'calc(50% - max(0px, 524px - 50vw))' }}
+          >
             <HomeRegionStrip
               onSelect={(name) =>
                 navigate(`/region-info/${encodeURIComponent(name)}`)

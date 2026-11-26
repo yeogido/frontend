@@ -52,7 +52,12 @@ function TravelRecordInvitationCard({
         />
         <div className="absolute inset-x-0 top-8 flex flex-col items-center gap-3 px-2">
           {invitation.inviterProfileImageUrl ? (
-            <ProfileAvatar src={invitation.inviterProfileImageUrl} size={36} />
+            <ProfileAvatar
+              src={invitation.inviterProfileImageUrl}
+              nickname={invitation.inviterName}
+              color={invitation.inviterColor}
+              size={36}
+            />
           ) : (
             <NicknameAvatar
               name={invitation.inviterName}

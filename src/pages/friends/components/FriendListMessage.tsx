@@ -1,3 +1,5 @@
+import RetryButton from '../../../components/common/RetryButton';
+
 const MESSAGE_TOP_SPACE = 110;
 const LOAD_MORE_ERROR_TOP_SPACE = 16;
 const MESSAGE_SIZE = 16;
@@ -5,7 +7,7 @@ const MESSAGE_LINE_HEIGHT = 22;
 const RETRY_GAP = 16;
 const RETRY_PADDING_X = 16;
 const RETRY_PADDING_Y = 8;
-const RETRY_TEXT_SIZE = 14;
+const RETRY_TEXT_SIZE = 16;
 
 const NO_RESULT_MESSAGE = '검색 결과가 없어요.';
 const NO_RESULT_HINT = '이름이나 친구 코드를 정확히 입력해 주세요.';
@@ -73,10 +75,8 @@ function FriendListMessage({
         </p>
       ) : null}
       {isError && onRetry ? (
-        <button
-          type="button"
+        <RetryButton
           onClick={onRetry}
-          className="border-gray-2 text-gray-5 rounded-full border font-medium"
           style={{
             marginTop: RETRY_GAP * scale,
             padding: `${RETRY_PADDING_Y * scale}px ${RETRY_PADDING_X * scale}px`,
@@ -84,7 +84,7 @@ function FriendListMessage({
           }}
         >
           다시 시도
-        </button>
+        </RetryButton>
       ) : null}
     </section>
   );

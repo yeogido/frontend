@@ -14,6 +14,7 @@ import {
   DesktopFooter,
   DesktopHeader,
 } from '../../../components/layout/desktop';
+import DesktopFilterDropdown from '../../../components/layout/desktop/DesktopFilterDropdown';
 import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
@@ -41,7 +42,7 @@ import useLocalCourseFilters from '../hooks/useLocalCourseFilters';
 
 const transport: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  자차: 'CAR',
+  자동차: 'CAR',
 };
 const duration: Record<string, CourseDurationType | undefined> = {
   당일치기: 'DAY_TRIP',
@@ -170,15 +171,16 @@ function LocalCourseDesktopPage() {
         >
           <div className="mb-[24px] flex flex-wrap items-center gap-[12px]">
             {localCourseFilterGroups.map((group) => (
-              <label
+              <div
                 key={group.key}
                 className={group.key === 'sort' ? 'ml-auto' : ''}
               >
-                <span className="sr-only">{filterLabels[group.key]}</span>
-                <select
+                <DesktopFilterDropdown
+                  label={filterLabels[group.key]}
+                  options={group.options}
                   value={selectedFilters[group.key]}
-                  onChange={(event) => {
-                    const value = event.target.value;
+                  align={group.key === 'sort' ? 'right' : 'left'}
+                  onChange={(value) => {
                     handleFilterSelect(group.key, value);
                     if (
                       group.key === 'sort' &&
@@ -187,15 +189,8 @@ function LocalCourseDesktopPage() {
                     )
                       void requestCoordinates();
                   }}
-                  className="border-gray-2 text-gray-4 rounded-full border bg-white px-[12px] py-[8px] text-[16px]"
-                >
-                  {group.options.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                />
+              </div>
             ))}
           </div>
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  keepPreviousData,
   type InfiniteData,
   useMutation,
   useQueryClient,
@@ -18,6 +19,7 @@ import type {
   BusinessPromotionListResponse,
 } from '../types/businessPromotion.type';
 import type { GetMyPostsResponse } from '../types/user.type';
+import { removeRecentPromotion } from '../utils/recentPromotions';
 
 interface BusinessPromotionsPageParam {
   cursorValue?: string;
@@ -26,6 +28,8 @@ interface BusinessPromotionsPageParam {
 
 interface UseBusinessPromotionsOptions {
   enabled?: boolean;
+  /** 필터가 바뀌어도 새 결과가 올 때까지 이전 목록을 유지해 스켈레톤 깜빡임을 막는다. */
+  keepPreviousData?: boolean;
 }
 
 export function useBusinessPromotions(
@@ -48,6 +52,7 @@ export function useBusinessPromotions(
       }),
     initialPageParam: {},
     enabled: options.enabled,
+    placeholderData: options.keepPreviousData ? keepPreviousData : undefined,
     getNextPageParam: (lastPage) => {
       if (!lastPage.hasNext) return undefined;
 
@@ -161,7 +166,9 @@ function useDeleteBusinessPromotion() {
     },
     onSuccess: (_, promotionId) => {
       void queryClient.invalidateQueries({ queryKey: ['businessPromotions'] });
-      queryClient.removeQueries({ queryKey: ['businessPromotion', promotionId] });
+      queryClient.removeQueries({
+        queryKey: ['businessPromotion', promotionId],
+      });
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['myPosts'] });
@@ -193,6 +200,7 @@ export function useBusinessPromotionDelete(onSuccess?: () => void) {
 
     try {
       await deleteMutation.mutateAsync(targetPromotionId);
+      removeRecentPromotion(targetPromotionId);
       closeDialog();
       showToast('홍보글을 삭제했어요.');
       onSuccess?.();
@@ -200,6 +208,7 @@ export function useBusinessPromotionDelete(onSuccess?: () => void) {
       closeDialog();
 
       if (isPromotionNotFoundError(error)) {
+        removeRecentPromotion(targetPromotionId);
         showToast('이미 삭제되었거나 존재하지 않는 게시물이에요.');
         return;
       }

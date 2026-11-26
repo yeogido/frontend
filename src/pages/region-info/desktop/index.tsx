@@ -4,6 +4,7 @@ import { DesktopPageShell } from '../../../components/layout/desktop';
 import DesktopFilterDropdown from '../../../components/layout/desktop/DesktopFilterDropdown';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useCourses } from '../../../hooks/useCourses';
+import { useScrollRestoration } from '../../../hooks/useScrollRestoration';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useRegion } from '../../../hooks/useRegions';
 import { toCourseCardProps } from '../../../utils/courseCard';
@@ -20,6 +21,8 @@ import RegionPlaceSection from './RegionPlaceSection';
 
 // Figma 1440 데스크톱 시안(6364:54980 지역 선택 결과) 기준 리터럴 px.
 const CONTENT_WIDTH = 1048;
+// 다른 데스크톱 목록 화면처럼 제목 위에 본문 패딩(60)을 한 번 더 둔다 — 시안에서 제목이 y=209.
+const TITLE_OFFSET_TOP = 60;
 const COURSE_COUNT = 8;
 const SKELETON_COUNT = 4;
 const filterLabels = {
@@ -80,6 +83,10 @@ function RegionInfoDesktopPage() {
   const courses = (data?.pages[0]?.items ?? [])
     .slice(0, COURSE_COUNT)
     .map(toCourseCardProps);
+  // 코스·소상공인·행사 어느 카드로 상세에 가든 뒤로 가기로 돌아오면 이 위치로 복원한다.
+  const saveScroll = useScrollRestoration(
+    !isRegionLoading && !isCoursesPending
+  );
   const courseSearchPath = `/yeogido-course/search?region=${encodeURIComponent(regionName)}${
     regionId === undefined ? '' : `&regionId=${regionId}`
   }`;
@@ -99,9 +106,13 @@ function RegionInfoDesktopPage() {
 
   return (
     <DesktopPageShell contentWidth={CONTENT_WIDTH}>
-      <div className="flex flex-col gap-[64px]">
-        <header className="flex flex-col gap-[8px]">
-          <h1 className="text-[32px] font-semibold text-black">
+      <div
+        style={{ paddingTop: TITLE_OFFSET_TOP }}
+        className="flex flex-col gap-[64px]"
+        onClickCapture={saveScroll}
+      >
+        <header className="flex flex-col gap-[6px]">
+          <h1 className="text-[32px] leading-[38px] font-semibold text-black">
             {displayName}의 코스와 장소
           </h1>
           <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">

@@ -31,6 +31,44 @@ import type {
   TravelRecordDetailResponse,
 } from '../src/types/travelRecord.type.ts';
 
+test('keeps each photo uploader with its sorted image, including missing uploaders', () => {
+  const owner = { userId: 1, nickname: 'owner', profileImageUrl: null };
+  const uploader = {
+    userId: 2,
+    nickname: 'guest',
+    profileImageUrl: 'https://example.com/p.jpg',
+  };
+  const folder = mapTravelRecordDetailToFolder({
+    travelRecordId: 1,
+    regionId: 1,
+    title: 'trip',
+    folderTheme: 'BASIC',
+    startDate: '2026-01-01',
+    endDate: '2026-01-02',
+    owner,
+    participants: [],
+    images: [
+      {
+        imageId: 1,
+        imageKey: 'b',
+        imageUrl: 'b',
+        imageOrder: 2,
+        uploader: null,
+      },
+      { imageId: 2, imageKey: 'a', imageUrl: 'a', imageOrder: 1, uploader },
+    ],
+    stickers: [],
+  } as TravelRecordDetailResponse);
+  assert.deepEqual(
+    folder.serverPhotos?.map((photo) => [photo.imageUrl, photo.uploader]),
+    [
+      ['a', uploader],
+      ['b', null],
+    ]
+  );
+  assert.deepEqual(folder.participants, []);
+});
+
 test('uses a stored region only when editing a travel record', () => {
   const storedRegion = {
     id: '27',
@@ -104,7 +142,7 @@ test('offers one suggestion per name even when regions share it', () => {
       searchedRegions,
       selectedRegion: null,
     }),
-    ['Jung-gu'],
+    ['Jung-gu']
   );
 });
 
@@ -137,11 +175,11 @@ test('excludes special and metropolitan city districts from travel map selection
       name: '부산광역시',
       fullName: '부산광역시',
     }),
-    true,
+    true
   );
   assert.deepEqual(
     filterTravelMapSelectableRegions(regions).map((region) => region.fullName),
-    ['충청남도 보령시', '세종특별자치시'],
+    ['충청남도 보령시', '세종특별자치시']
   );
 });
 
@@ -163,7 +201,7 @@ test('normalizes a selected popular metropolitan district to its parent region',
         selectionName: '중구',
         imageSrc: 'busan-junggu.jpg',
       },
-      TOP_LEVEL_REGIONS,
+      TOP_LEVEL_REGIONS
     ),
     {
       id: '2',
@@ -172,7 +210,7 @@ test('normalizes a selected popular metropolitan district to its parent region',
       province: '부산광역시',
       selectionName: '부산',
       imageSrc: 'busan-junggu.jpg',
-    },
+    }
   );
 });
 
@@ -189,7 +227,7 @@ test('takes the parent region id from the API list, never a hardcoded table', ()
   assert.equal(
     normalizeTravelMapSelectedRegion(gwangjuDistrict, TOP_LEVEL_REGIONS)
       .regionId,
-    4,
+    4
   );
 });
 
@@ -204,7 +242,7 @@ test('keeps a metropolitan city itself unchanged', () => {
 
   assert.deepEqual(
     normalizeTravelMapSelectedRegion(gwangju, TOP_LEVEL_REGIONS),
-    gwangju,
+    gwangju
   );
 });
 
@@ -220,7 +258,7 @@ test('keeps the selection unchanged while the region list is unavailable', () =>
 
   assert.deepEqual(
     normalizeTravelMapSelectedRegion(busanDistrict, []),
-    busanDistrict,
+    busanDistrict
   );
 });
 
@@ -229,7 +267,7 @@ test('excludes 울산 districts from selection even without a parent region id',
   // 그래도 하위 구가 선택되지는 않아야 한다.
   assert.equal(
     isTravelMapSelectableRegion({ fullName: '울산광역시 남구' }),
-    false,
+    false
   );
   assert.equal(isTravelMapSelectableRegion({ fullName: '울산광역시' }), true);
 });
@@ -246,7 +284,7 @@ test('keeps a region unchanged when its metropolitan parent is not in the list',
 
   assert.deepEqual(
     normalizeTravelMapSelectedRegion(ulsanDistrict, TOP_LEVEL_REGIONS),
-    ulsanDistrict,
+    ulsanDistrict
   );
 });
 
@@ -281,7 +319,7 @@ test('maps a travel record summary cover image URL to the folder photo', () => {
       period: '07.20 - 07.22',
       photos: ['https://example.com/travel-records/10/image-1.jpg'],
       decorations: [],
-    },
+    }
   );
 });
 
@@ -377,7 +415,7 @@ test('matches cities promoted from 군 to 시 against the outdated map name', ()
         photos: ['yeoju.jpg'],
       },
     ]),
-    [{ regionName: '여주군', photoUrl: 'yeoju.jpg', folderId: folder.id }],
+    [{ regionName: '여주군', photoUrl: 'yeoju.jpg', folderId: folder.id }]
   );
 });
 
@@ -395,11 +433,11 @@ const createSummaryForRegion = (regionId: number): TravelRecordSummary => ({
 test('tells apart same-named counties in different provinces', () => {
   const gangwonGoseong = mapTravelRecordSummaryToFolder(
     createSummaryForRegion(4282),
-    { name: '고성군', fullName: '강원도 고성군' },
+    { name: '고성군', fullName: '강원도 고성군' }
   );
   const gyeongnamGoseong = mapTravelRecordSummaryToFolder(
     createSummaryForRegion(4882),
-    { name: '고성군', fullName: '경상남도 고성군' },
+    { name: '고성군', fullName: '경상남도 고성군' }
   );
 
   assert.equal(gangwonGoseong.regionCode, '4282');
@@ -641,11 +679,9 @@ test('creates a travel record update request from the edited draft data', () => 
       startDate: '2026-07-20',
       endDate: '2026-07-22',
       folderTheme: 'BASIC',
-      images: [
-        { imageKey: 'travel-records/10/image-1.jpg', imageOrder: 1 },
-      ],
+      images: [{ imageKey: 'travel-records/10/image-1.jpg', imageOrder: 1 }],
       stickers: [],
-    },
+    }
   );
 });
 
@@ -779,7 +815,7 @@ test('creates travel record create request from draft data and uploaded image ke
           zIndex: 3,
         },
       ],
-    },
+    }
   );
 });
 
@@ -926,17 +962,14 @@ test('resolves a recent search keyword to a searched region', () => {
     { regionId: 179, name: '전주시', fullName: '전북특별자치도 전주시' },
   ];
 
-  assert.deepEqual(
-    resolveTravelRecordRegionFromSearch(searchResults, '전주'),
-    {
-      id: '179',
-      regionId: 179,
-      name: '전주시',
-      province: '전북특별자치도 전주시',
-      selectionName: '전주시',
-      imageSrc: '',
-    },
-  );
+  assert.deepEqual(resolveTravelRecordRegionFromSearch(searchResults, '전주'), {
+    id: '179',
+    regionId: 179,
+    name: '전주시',
+    province: '전북특별자치도 전주시',
+    selectionName: '전주시',
+    imageSrc: '',
+  });
 });
 
 test('prefers the exactly matching region over the first search result', () => {
@@ -947,7 +980,7 @@ test('prefers the exactly matching region over the first search result', () => {
 
   assert.equal(
     resolveTravelRecordRegionFromSearch(searchResults, '제주')?.regionId,
-    88,
+    88
   );
 });
 
@@ -960,7 +993,7 @@ test('skips metropolitan sub-districts when resolving a recent search', () => {
 
   assert.equal(
     resolveTravelRecordRegionFromSearch(searchResults, '부산')?.regionId,
-    27,
+    27
   );
 });
 

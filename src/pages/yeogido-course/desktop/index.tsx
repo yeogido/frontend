@@ -10,6 +10,7 @@ import { CourseDeleteDialog } from '../../../components/common';
 import CardActionMenu from '../../../components/common/CardActionMenu';
 import TagChip from '../../../components/common/TagChip';
 import { DesktopPageShell } from '../../../components/layout/desktop';
+import DesktopFilterDropdown from '../../../components/layout/desktop/DesktopFilterDropdown';
 import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
@@ -34,12 +35,13 @@ import useYeogidoCourseFilters from '../hooks/useYeogidoCourseFilters';
 // Figma 1440 데스크톱 시안(6291:41574) 기준 리터럴 px.
 const CONTENT_WIDTH = 1048;
 // DesktopPageShell 기본 위 여백(60)에 더해 시안의 제목 위치(209)를 맞춘다.
-const EXTRA_TOP_SPACE = 1;
+// 행사 화면(6276:38914)과 같은 소개 영역 위치 — 본문 패딩 60 + 60.
+const EXTRA_TOP_SPACE = 60;
 const PAGE_SIZE = 20;
 
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
   도보: 'WALK',
-  자차: 'CAR',
+  자동차: 'CAR',
 };
 const durationTypeByLabel: Record<string, CourseDurationType | undefined> = {
   당일치기: 'DAY_TRIP',
@@ -136,7 +138,7 @@ function YeogidoCourseDesktopPage({
         className="flex flex-col gap-[32px]"
       >
         <div className="flex flex-col gap-[6px]">
-          <h1 className="text-[32px] font-semibold text-black">
+          <h1 className="text-[32px] leading-[38px] font-semibold text-black">
             여기도 가볼까?
           </h1>
           <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
@@ -146,15 +148,16 @@ function YeogidoCourseDesktopPage({
 
         <div className="flex items-start gap-[16px]">
           {yeogidoCourseFilterGroups.map((group) => (
-            <label
+            <div
               key={group.key}
               className={group.key === 'sort' ? 'ml-auto' : ''}
             >
-              <span className="sr-only">{filterLabels[group.key]}</span>
-              <select
+              <DesktopFilterDropdown
+                label={filterLabels[group.key]}
+                options={group.options}
                 value={selectedFilters[group.key]}
-                onChange={(event) => {
-                  const value = event.target.value;
+                align={group.key === 'sort' ? 'right' : 'left'}
+                onChange={(value) => {
                   handleFilterSelect(group.key, value);
                   if (
                     group.key === 'sort' &&
@@ -164,15 +167,8 @@ function YeogidoCourseDesktopPage({
                     void requestCoordinates();
                   }
                 }}
-                className="border-gray-2 text-gray-4 h-[37px] cursor-pointer rounded-full border bg-white px-[10px] text-[18px]"
-              >
-                {group.options.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
+              />
+            </div>
           ))}
         </div>
 

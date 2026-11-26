@@ -13,6 +13,7 @@ export type TravelRecordVisibilityFilter = 'all' | TravelRecordVisibility;
 export interface TravelRecordServerPhoto {
   imageKey: string;
   imageUrl: string;
+  uploader?: TravelRecordUserProfile | null;
 }
 
 export interface TravelRecordFolder {
@@ -43,11 +44,14 @@ export interface TravelRecordInvitation {
   inviterName: string;
   inviterColor: NicknameAvatarColor;
   inviterProfileImageUrl?: string | null;
-  /** 수락 전에는 사진·장식·상세 권한이 제공되지 않는다. */
   folder: Pick<
     TravelRecordFolder,
     'id' | 'title' | 'startDate' | 'endDate' | 'period'
-  >;
+  > & {
+    regionName?: string;
+    photos?: string[];
+    decorations?: TravelFolderDecoration[];
+  };
 }
 
 export interface TravelRecordDraftRegion {

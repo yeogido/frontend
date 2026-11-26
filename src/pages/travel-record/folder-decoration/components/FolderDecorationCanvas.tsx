@@ -169,7 +169,7 @@ export function FolderDecorationCanvas({
     <div
       ref={canvasRef}
       inert={isInteractionDisabled}
-      className="relative h-[183px] w-[159px] touch-none"
+      className="relative isolate h-[183px] w-[159px] touch-none"
       onPointerMove={handlePointerMove}
       onPointerUp={endEditing}
       onPointerCancel={endEditing}

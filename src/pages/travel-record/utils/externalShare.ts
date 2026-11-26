@@ -4,23 +4,41 @@ export interface TravelShareData {
   title: string;
   text: string;
   url: string;
+  buttonTitle?: string;
+}
+
+export function getTravelMapShareData(
+  userId: number | null,
+  nickname: string,
+  origin: string
+): TravelShareData | null {
+  if (userId === null || !Number.isSafeInteger(userId) || userId <= 0)
+    return null;
+  return {
+    title: `${nickname || '사용자'}님의 여행 지도 | 여기도`,
+    text: '여기도에서 여행 지도를 확인해 보세요.',
+    url: new URL(`/friends/${userId}?tab=map`, origin).href,
+    buttonTitle: '지도 보기',
+  };
 }
 
 export function getTravelFolderShareData(
   folder: TravelRecordFolder,
-  origin: string
+  origin: string,
+  token: string
 ): TravelShareData | null {
   if (
-    folder.visibility !== 'public' ||
+    !['public', 'friends'].includes(folder.visibility ?? '') ||
     folder.permissions?.canLinkShare !== true ||
     !/^\d+$/.test(folder.id) ||
-    Number(folder.id) <= 0
+    Number(folder.id) <= 0 ||
+    !/^[a-f0-9]{64}$/.test(token)
   )
     return null;
   return {
     title: `${folder.title} | 여기도`,
     text: '여기도에서 여행 폴더를 확인해 보세요.',
-    url: new URL(`/travel-record/${folder.id}`, origin).href,
+    url: new URL(`/travel-record/shared/${token}`, origin).href,
   };
 }
 
@@ -62,6 +80,6 @@ export function getKakaoTravelShareTemplate(data: TravelShareData) {
     objectType: 'text' as const,
     text,
     link: { mobileWebUrl: data.url, webUrl: data.url },
-    buttonTitle: '폴더 보기',
+    buttonTitle: data.buttonTitle ?? '폴더 보기',
   };
 }
