@@ -18,16 +18,22 @@ const SKELETON_CARD_COUNT = SKELETON_ROW_COUNT * 2;
 
 const loadingLabel = '여행 폴더를 불러오는 중';
 
-function TravelFolderGridSkeleton() {
+function TravelFolderGridSkeleton({ desktop = false }: { desktop?: boolean }) {
   return (
     <section
       aria-label={loadingLabel}
       aria-busy="true"
       // 실제 목록과 같은 격자를 써야 로딩이 끝날 때 자리가 흔들리지 않는다.
-      className="mt-7 grid grid-cols-2 gap-x-6 gap-y-[30px]"
+      className={
+        desktop
+          ? 'mt-[60px] grid grid-cols-3 gap-x-[40px] gap-y-[96px]'
+          : 'mt-7 grid grid-cols-2 gap-x-6 gap-y-[30px]'
+      }
     >
       {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
-        <TravelFolderCardSkeleton key={index} />
+        <div key={index} style={desktop ? { zoom: 221 / 159 } : undefined}>
+          <TravelFolderCardSkeleton />
+        </div>
       ))}
     </section>
   );

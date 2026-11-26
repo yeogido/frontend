@@ -179,7 +179,11 @@ function ProfileBody({
             desktop={desktop}
           />
         ) : (
-          <FriendFolderTab friendUserId={friendUserId} scale={scale} />
+          <FriendFolderTab
+            friendUserId={friendUserId}
+            scale={scale}
+            desktop={desktop}
+          />
         )}
       </div>
     </div>

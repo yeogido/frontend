@@ -40,6 +40,7 @@ const LOAD_MORE_ERROR_MESSAGE = '여행 폴더를 더 불러오지 못했어요.
 interface FriendFolderTabProps {
   friendUserId: number;
   scale: number;
+  desktop: boolean;
 }
 
 /**
@@ -47,7 +48,11 @@ interface FriendFolderTabProps {
  * 다시 거르지 않는다. 카드를 누르면 상세로 가되 목록 데이터는 넘기지 않아 상세가
  * 직접 조회한다(목록에는 권한과 버전이 없다).
  */
-function FriendFolderTab({ friendUserId, scale }: FriendFolderTabProps) {
+function FriendFolderTab({
+  friendUserId,
+  scale,
+  desktop,
+}: FriendFolderTabProps) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const yearsQuery = useFriendTravelRecordYears(friendUserId);
@@ -103,8 +108,8 @@ function FriendFolderTab({ friendUserId, scale }: FriendFolderTabProps) {
   let content;
 
   if (yearsQuery.isPending) {
-    dropdown = <TravelYearDropdownSkeleton />;
-    content = <TravelFolderGridSkeleton />;
+    dropdown = <TravelYearDropdownSkeleton desktop={desktop} />;
+    content = <TravelFolderGridSkeleton desktop={desktop} />;
   } else if (yearsQuery.isError) {
     content = (
       <FriendListMessage
@@ -123,11 +128,12 @@ function FriendFolderTab({ friendUserId, scale }: FriendFolderTabProps) {
         value={year}
         years={yearsQuery.years}
         onChange={handleYearChange}
+        desktop={desktop}
       />
     );
 
     if (isPending) {
-      content = <TravelFolderGridSkeleton />;
+      content = <TravelFolderGridSkeleton desktop={desktop} />;
     } else if (isError && folders.length === 0) {
       content = (
         <FriendListMessage
@@ -146,6 +152,7 @@ function FriendFolderTab({ friendUserId, scale }: FriendFolderTabProps) {
           folders={folders}
           onFolderClick={handleFolderClick}
           hideEmptyState
+          desktop={desktop}
         />
       );
     }
