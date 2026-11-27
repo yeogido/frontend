@@ -190,10 +190,13 @@ export async function getTravelRecords(
   }
 }
 
-export async function getTravelRecordYears(): Promise<TravelRecordYearListResponse> {
+export async function getTravelRecordYears(
+  visibility?: TravelRecordMapParams['visibility']
+): Promise<TravelRecordYearListResponse> {
   try {
     const { data } = await apiClient.get<TravelRecordYearListResponse>(
-      '/travel-records/years'
+      '/travel-records/years',
+      { params: visibility ? { visibility } : undefined }
     );
 
     return data;

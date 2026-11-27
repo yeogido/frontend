@@ -117,12 +117,33 @@ interface KakaoSDK {
   isInitialized(): boolean;
   Auth: KakaoAuth;
   Share?: {
-    sendDefault(settings: {
-      objectType: 'text';
-      text: string;
-      link: { mobileWebUrl: string; webUrl: string };
-      buttonTitle: string;
-    }): void | Promise<unknown>;
+    uploadImage(settings: { file: FileList }): Promise<{
+      infos: { original: { url: string; width: number; height: number } };
+    }>;
+    sendDefault(
+      settings:
+        | {
+            objectType: 'text';
+            text: string;
+            link: { mobileWebUrl: string; webUrl: string };
+            buttonTitle: string;
+          }
+        | {
+            objectType: 'feed';
+            content: {
+              title: string;
+              description: string;
+              imageUrl: string;
+              imageWidth: number;
+              imageHeight: number;
+              link: { mobileWebUrl: string; webUrl: string };
+            };
+            buttons: Array<{
+              title: string;
+              link: { mobileWebUrl: string; webUrl: string };
+            }>;
+          }
+    ): void | Promise<unknown>;
   };
 }
 
