@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import type { NormalizedApiError } from '../../../apis/common';
 import { socialLogin } from '../../../apis/auth.api';
 import { Logo } from '../../../components/common';
+import SocialLoginLoadingDesktop from '../../../components/auth/SocialLoginLoadingDesktop';
+import { useIsDesktop } from '../../../hooks/useIsDesktop';
 import {
   getKakaoCallbackUrl,
   KAKAO_OAUTH_STATE_KEY,
@@ -51,6 +53,7 @@ function parseKakaoCallbackParams() {
 
 function KakaoCallbackPage() {
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
   const setAuth = useAuthStore((state) => state.setAuth);
   // code/error 파라미터는 최초 진입 시점에 고정이므로, effect에서
   // setState하지 않고 초기 렌더 시점에 lazy initializer로 미리 계산한다.
@@ -136,6 +139,8 @@ function KakaoCallbackPage() {
         setErrorMessage(mappedMessage ?? DEFAULT_ERROR_MESSAGE);
       });
   }, [navigate, setAuth]);
+
+  if (isDesktop && !errorMessage) return <SocialLoginLoadingDesktop />;
 
   return (
     <main className="flex min-h-dvh w-full flex-col items-center justify-center gap-6 bg-white px-6 text-center">
