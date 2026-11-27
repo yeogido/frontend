@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import type { NormalizedApiError } from '../../../apis/common';
 import { socialLogin } from '../../../apis/auth.api';
 import { Logo } from '../../../components/common';
+import SocialLoginLoadingDesktop from '../../../components/auth/SocialLoginLoadingDesktop';
+import { useIsDesktop } from '../../../hooks/useIsDesktop';
 import { getNaverCallbackUrl } from '../../../hooks/useNaverLogin';
 import { useAuthStore } from '../../../store/auth.store';
 import { consumeTravelShareReturn } from '../../travel-record/utils/travelShareLoginReturn';
@@ -45,6 +47,7 @@ function hasNaverAuthError(): boolean {
 
 function NaverCallbackPage() {
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [errorMessage, setErrorMessage] = useState(() =>
     hasNaverAuthError() ? '네이버 로그인이 취소되었습니다.' : ''
@@ -118,6 +121,8 @@ function NaverCallbackPage() {
         setErrorMessage(DEFAULT_ERROR_MESSAGE);
       });
   }, [navigate, setAuth]);
+
+  if (isDesktop && !errorMessage) return <SocialLoginLoadingDesktop />;
 
   return (
     <main className="flex min-h-dvh w-full flex-col items-center justify-center gap-6 bg-white px-6 text-center">

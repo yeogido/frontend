@@ -26,6 +26,8 @@ export const DESKTOP_VIEW_PATHS = [
   '/yeogido-course/detail/:courseId/reviews',
   '/local-course/detail/:courseId/reviews',
   '/login',
+  '/auth/kakao/callback',
+  '/auth/naver/callback',
   '/signup',
   '/signup/kakao',
   '/signup/naver',

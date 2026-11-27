@@ -1,9 +1,12 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../hooks/useAuth';
 import { useMyProfile } from '../../hooks/useMyProfile';
 import { isBusinessRole } from '../../utils/role';
 import LoadingSpinner from '../common/LoadingSpinner';
+import DesktopLoadingPage from '../common/DesktopLoadingPage';
+import { useIsDesktop } from '../../hooks/useIsDesktop';
+import { hasDesktopView } from '../../constants/desktopRoutes';
 
 /**
  * AdminRoute와 같은 패턴 — 소상공인 권한 여부도 서버가 준 role로만
@@ -12,6 +15,8 @@ import LoadingSpinner from '../common/LoadingSpinner';
  * 리다이렉트하지 않고 기다린다.
  */
 function BusinessRoute() {
+  const isDesktop = useIsDesktop();
+  const { pathname } = useLocation();
   const { isAuthenticated } = useAuth();
   const { data, isPending, isError, refetch } = useMyProfile();
 
@@ -20,6 +25,7 @@ function BusinessRoute() {
   }
 
   if (isPending) {
+    if (isDesktop && hasDesktopView(pathname)) return <DesktopLoadingPage />;
     return <LoadingSpinner className="min-h-screen" />;
   }
 
