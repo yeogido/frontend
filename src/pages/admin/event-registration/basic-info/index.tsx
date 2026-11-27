@@ -9,7 +9,14 @@ import { useAdminEventRegistrationStore } from '../../../../store/adminEventRegi
 
 import BackButton from '../../../local-recommendation/components/BackButton';
 import FormField from '../../../local-recommendation/course-basic-info/components/FormField';
-import EventDateGroup from './components/EventDateGroup';
+import EventDateGroup, {
+  type EventDateDraft,
+} from './components/EventDateGroup';
+
+function toDateDraft(value: string): EventDateDraft {
+  const [year = '', month = '', day = ''] = value.split('-');
+  return { year, month, day };
+}
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_TOP = 48;
@@ -48,6 +55,13 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
     homepage: basicInfo.officialLinks[0]?.url ?? '',
     placeName: basicInfo.placeName || place?.title || '',
   }));
+
+  const [startDateDraft, setStartDateDraft] = useState(() =>
+    toDateDraft(basicInfo.startDate)
+  );
+  const [endDateDraft, setEndDateDraft] = useState(() =>
+    toDateDraft(basicInfo.endDate)
+  );
 
   useEffect(() => {
     if (!place) {
@@ -158,7 +172,8 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
                 desktop
                 id="desktop-event-start-date"
                 legend="시작 날짜"
-                value={form.startDate}
+                draft={startDateDraft}
+                onDraftChange={setStartDateDraft}
                 onChange={(value) =>
                   setForm((prev) => ({ ...prev, startDate: value }))
                 }
@@ -167,7 +182,8 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
                 desktop
                 id="desktop-event-end-date"
                 legend="종료 날짜"
-                value={form.endDate}
+                draft={endDateDraft}
+                onDraftChange={setEndDateDraft}
                 onChange={(value) =>
                   setForm((prev) => ({ ...prev, endDate: value }))
                 }
@@ -300,7 +316,8 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
               <EventDateGroup
                 id="event-start-date"
                 legend="시작 날짜"
-                value={form.startDate}
+                draft={startDateDraft}
+                onDraftChange={setStartDateDraft}
                 onChange={(value) =>
                   setForm((prev) => ({ ...prev, startDate: value }))
                 }
@@ -308,7 +325,8 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
               <EventDateGroup
                 id="event-end-date"
                 legend="종료 날짜"
-                value={form.endDate}
+                draft={endDateDraft}
+                onDraftChange={setEndDateDraft}
                 onChange={(value) =>
                   setForm((prev) => ({ ...prev, endDate: value }))
                 }

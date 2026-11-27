@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { MdExpandMore } from 'react-icons/md';
 
 import CustomSelect from '../../../../local-recommendation/course-basic-info/components/CustomSelect';
@@ -15,10 +14,17 @@ const LEGEND_MARGIN_BOTTOM = 8;
 const LEGEND_FONT_SIZE = 14;
 const ROW_GAP = 12;
 
+export interface EventDateDraft {
+  year: string;
+  month: string;
+  day: string;
+}
+
 interface EventDateGroupProps {
   id: string;
   legend: string;
-  value: string;
+  draft: EventDateDraft;
+  onDraftChange: (draft: EventDateDraft) => void;
   onChange: (value: string) => void;
   desktop?: boolean;
 }
@@ -26,17 +32,13 @@ interface EventDateGroupProps {
 function EventDateGroup({
   id,
   legend,
-  value,
+  draft,
+  onDraftChange,
   onChange,
   desktop = false,
 }: EventDateGroupProps) {
   const scale = useGlobalScale();
-  const [initialYear = '', initialMonth = '', initialDay = ''] = value
-    ? value.split('-')
-    : [];
-  const [year, setYear] = useState(initialYear);
-  const [month, setMonth] = useState(initialMonth);
-  const [day, setDay] = useState(initialDay);
+  const { year, month, day } = draft;
   const dayOptions = getDayOptions(year, month);
 
   const applyChange = (
@@ -48,9 +50,7 @@ function EventDateGroup({
     const maxDay = getDaysInMonth(nextYear, nextMonth);
     const clampedDay = nextDay && Number(nextDay) > maxDay ? '' : nextDay;
 
-    setYear(nextYear);
-    setMonth(nextMonth);
-    setDay(clampedDay);
+    onDraftChange({ year: nextYear, month: nextMonth, day: clampedDay });
     onChange(
       nextYear && nextMonth && clampedDay
         ? `${nextYear}-${nextMonth}-${clampedDay}`
