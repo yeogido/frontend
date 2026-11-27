@@ -7,6 +7,46 @@ export interface TravelShareData {
   buttonTitle?: string;
 }
 
+export interface KakaoShareImage {
+  url: string;
+  width: number;
+  height: number;
+}
+
+/** 카카오 업로드 API는 HTTP CDN 주소도 반환한다. 알려진 CDN은 HTTPS로 사용한다. */
+export function normalizeKakaoImageUrl(value: string): string {
+  const url = new URL(value);
+  if (url.username || url.password) throw new Error('Invalid uploaded image');
+  if (
+    url.protocol === 'http:' &&
+    (url.hostname.endsWith('.kakaocdn.net') ||
+      url.hostname.endsWith('.kakao.com'))
+  ) {
+    url.protocol = 'https:';
+  }
+  if (url.protocol !== 'https:') throw new Error('Invalid uploaded image');
+  return url.href;
+}
+
+export function getKakaoTravelImageTemplate(
+  data: TravelShareData,
+  image: KakaoShareImage
+) {
+  const link = { mobileWebUrl: data.url, webUrl: data.url };
+  return {
+    objectType: 'feed' as const,
+    content: {
+      title: data.title,
+      description: data.text,
+      imageUrl: image.url,
+      imageWidth: image.width,
+      imageHeight: image.height,
+      link,
+    },
+    buttons: [{ title: data.buttonTitle ?? '폴더 보기', link }],
+  };
+}
+
 export function getTravelMapShareData(
   userId: number | null,
   nickname: string,

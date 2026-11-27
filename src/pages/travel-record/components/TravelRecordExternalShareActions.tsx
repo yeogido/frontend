@@ -13,9 +13,12 @@ import { useAuthStore } from '../../../store/auth.store';
 import { loadKakaoAuthSdk } from '../../../utils/kakaoAuth';
 import {
   getKakaoTravelShareTemplate,
+  getKakaoTravelImageTemplate,
+  normalizeKakaoImageUrl,
   getTravelShareIntentUrl,
   type TravelShareData,
 } from '../utils/externalShare';
+import type { ShareCardPng } from '../utils/shareCardPng';
 
 const actions = [
   { id: 'copy', label: '링크 복사', icon: copyIcon },
@@ -31,12 +34,14 @@ interface Props {
   data: TravelShareData | null;
   isBusy?: boolean;
   onBusyChange?: (busy: boolean) => void;
+  createKakaoImage?: () => Promise<ShareCardPng>;
 }
 
 export default function TravelRecordExternalShareActions({
   data,
   isBusy = false,
   onBusyChange,
+  createKakaoImage,
 }: Props) {
   const { showToast } = useToast();
   const { pathname } = useLocation();
@@ -44,6 +49,13 @@ export default function TravelRecordExternalShareActions({
   const [pending, setPending] = useState<Action | null>(null);
   const [kakaoReady, setKakaoReady] = useState(false);
   const locked = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const available = data !== null;
 
   useEffect(() => {
@@ -68,6 +80,7 @@ export default function TravelRecordExternalShareActions({
     const isCurrentSession = () => {
       const current = useAuthStore.getState();
       return (
+        mounted.current &&
         current.userId === session.userId &&
         current.authGeneration === session.authGeneration
       );
@@ -75,6 +88,7 @@ export default function TravelRecordExternalShareActions({
     locked.current = true;
     setPending(action);
     onBusyChange?.(true);
+    let imageStage: 'create' | 'file' | 'upload' | 'send' = 'create';
     try {
       if (
         action === 'copy' ||
@@ -98,7 +112,33 @@ export default function TravelRecordExternalShareActions({
       } else if (action === 'kakao') {
         if (!kakaoReady || !window.Kakao?.Share)
           throw new Error('Kakao unavailable');
-        await window.Kakao.Share.sendDefault(getKakaoTravelShareTemplate(data));
+        if (createKakaoImage) {
+          const image = await createKakaoImage();
+          if (!isCurrentSession()) return;
+          imageStage = 'file';
+          const files = new DataTransfer();
+          files.items.add(image.file);
+          imageStage = 'upload';
+          const uploaded = await window.Kakao.Share.uploadImage({
+            file: files.files,
+          });
+          if (!isCurrentSession()) return;
+          const original = uploaded.infos?.original;
+          if (!original?.url) throw new Error('Invalid uploaded image');
+          const imageUrl = normalizeKakaoImageUrl(original.url);
+          imageStage = 'send';
+          await window.Kakao.Share.sendDefault(
+            getKakaoTravelImageTemplate(data, {
+              url: imageUrl,
+              width: original.width || image.width,
+              height: original.height || image.height,
+            })
+          );
+        } else {
+          await window.Kakao.Share.sendDefault(
+            getKakaoTravelShareTemplate(data)
+          );
+        }
       } else {
         const popup = window.open('about:blank', '_blank');
         if (!popup) throw new Error('Popup blocked');
@@ -111,12 +151,20 @@ export default function TravelRecordExternalShareActions({
         showToast(
           action === 'copy'
             ? '링크를 복사하지 못했어요. 다시 시도해 주세요.'
-            : '공유하지 못했어요. 다시 시도해 주세요.'
+            : action === 'kakao' && createKakaoImage
+              ? imageStage === 'create'
+                ? '공유 이미지를 생성하지 못했어요. 다시 시도해 주세요.'
+                : imageStage === 'file' || imageStage === 'upload'
+                  ? '공유 이미지를 업로드하지 못했어요. 다시 시도해 주세요.'
+                  : '카카오톡 공유창을 열지 못했어요. 팝업 허용을 확인해 주세요.'
+              : '공유하지 못했어요. 다시 시도해 주세요.'
         );
     } finally {
       locked.current = false;
-      setPending(null);
-      onBusyChange?.(false);
+      if (mounted.current) {
+        setPending(null);
+        onBusyChange?.(false);
+      }
     }
   };
 

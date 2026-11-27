@@ -1,3 +1,4 @@
+import DesktopLoadingPage from '../../../../components/common/DesktopLoadingPage';
 import { useParams } from 'react-router-dom';
 import {
   MdAccessTimeFilled,
@@ -53,6 +54,8 @@ function FestivalDetailDesktopContent({ contentId }: { contentId: number }) {
     requestDelete,
     dialogProps,
   } = useFestivalDetail(contentId);
+
+  if (!contentError && !festival) return <DesktopLoadingPage />;
 
   if (contentError || !festival) {
     return (

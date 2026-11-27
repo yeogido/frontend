@@ -146,6 +146,7 @@ export function TravelFolderArtwork({
 
   return (
     <div
+      data-folder-artwork
       className="relative isolate"
       style={{ width: FOLDER_ARTWORK_WIDTH, height: FOLDER_ARTWORK_HEIGHT }}
     >
@@ -193,6 +194,7 @@ export function TravelFolderArtwork({
         </span>
       ) : null}
       <div
+        data-folder-stickers
         className="pointer-events-none absolute inset-0 z-60 overflow-visible"
         style={{
           WebkitClipPath: `url(#${decorationClipId})`,
