@@ -39,7 +39,8 @@ const BUTTON_RADIUS = 12;
 const SUBMIT_ERROR_MARGIN_TOP = 8;
 const SUBMIT_ERROR_FONT_SIZE = 12;
 
-const SUBMIT_ERROR_MESSAGE = '사진/키워드 등록에 실패했어요. 다시 시도해 주세요.';
+const SUBMIT_ERROR_MESSAGE =
+  '사진/키워드 등록에 실패했어요. 다시 시도해 주세요.';
 const EDIT_SUBMIT_ERROR_MESSAGE =
   '사진/키워드 수정에 실패했어요. 다시 시도해 주세요.';
 const HASHTAG_MAPPING_ERROR_MESSAGE =
@@ -130,7 +131,11 @@ function PhotoTagSelectionScreen({
             fileName: photo.file.name,
             contentType: photo.file.type,
           });
-          await uploadFileToPresignedUrl(uploadUrl, photo.file, photo.file.type);
+          await uploadFileToPresignedUrl(
+            uploadUrl,
+            photo.file,
+            photo.file.type
+          );
           return { imageKey: objectKey, sortOrder: index + 1 };
         })
       );

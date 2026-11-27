@@ -40,7 +40,10 @@ test('does not match paths that only start the same way', () => {
 });
 
 test('keeps screens without a desktop design on the mobile frame', () => {
-  assert.equal(hasDesktopView('/yeogido-course/detail/117/reviews/extra'), false);
+  assert.equal(
+    hasDesktopView('/yeogido-course/detail/117/reviews/extra'),
+    false
+  );
   assert.equal(hasDesktopView('/admin/courses/detail/117'), false);
   assert.ok(DESKTOP_VIEW_PATHS.length > 0);
 });

@@ -47,10 +47,7 @@ function PromotionInfoForm(props: UsePromotionInfoFormParams) {
   };
 
   return (
-    <form
-      onSubmit={submitForm}
-      style={{ marginTop: FORM_MARGIN_TOP * scale }}
-    >
+    <form onSubmit={submitForm} style={{ marginTop: FORM_MARGIN_TOP * scale }}>
       <div className="flex flex-col" style={{ gap: FIELD_GAP * scale }}>
         <FormField
           id="promotion-short-description"
