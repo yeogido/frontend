@@ -49,6 +49,7 @@ function TravelMapView({
       </div>
       <TravelMapPanel
         folders={filterTravelMapFoldersByYear(folders, selectedYear)}
+        selectedYear={selectedYear}
         viewer={viewer}
         ownerName={ownerName}
         desktop={desktop}

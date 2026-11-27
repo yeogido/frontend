@@ -1,21 +1,15 @@
 import TravelRecordExternalShareActions from '../../components/TravelRecordExternalShareActions';
 import { getTravelFolderShareData } from '../../utils/externalShare';
-import NicknameAvatar from '../../../../components/common/NicknameAvatar';
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { createTravelRecordShareLink } from '../../../../apis/travelRecords.api';
 import { useAuthStore } from '../../../../store/auth.store';
 import { useToast } from '../../../../components/toast';
 import TravelRecordInvitePicker from './TravelRecordInvitePicker';
-import ProfileAvatar from '../../../../components/common/ProfileAvatar';
 import TravelRecordShareDialog from '../../components/TravelRecordShareDialog';
-import { TravelFolderArtwork } from '../../components/TravelFolderCard';
-import {
-  FOLDER_ARTWORK_WIDTH,
-  FOLDER_FRONT_HEIGHT,
-  FOLDER_FRONT_TOP,
-  folderClipPath,
-} from '../../components/folderArtworkLayout';
+import TravelFolderSharePreview from './TravelFolderSharePreview';
+import { createShareCardPng } from '../../utils/shareCardPng';
 import type { TravelRecordFolder } from '../../types';
 
 interface TravelRecordShareModalProps {
@@ -32,6 +26,7 @@ function TravelRecordShareModal({
   onClose,
 }: TravelRecordShareModalProps) {
   const [isBusy, setIsBusy] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
   const userId = useAuthStore((state) => state.userId);
   const authGeneration = useAuthStore((state) => state.authGeneration);
@@ -62,87 +57,88 @@ function TravelRecordShareModal({
     if (shareLink.isError) notifyShareError();
   }, [shareLink.isError]);
   return (
-    <TravelRecordShareDialog
-      title="여행 폴더 공유"
-      isBusy={isBusy}
-      showExternalShare={canShare}
-      externalShareAction={
-        <TravelRecordExternalShareActions
-          key={`external:${folder.id}:${userId}:${authGeneration}`}
-          data={
-            shareLink.isFetching || shareLink.isError || !shareLink.data
-              ? null
-              : getTravelFolderShareData(
-                  folder,
-                  window.location.origin,
-                  shareLink.data.token
-                )
-          }
-          isBusy={isBusy}
-          onBusyChange={setIsBusy}
-        />
-      }
-      friendSection={folder.visibility === 'friends' && folder.permissions?.canInvite === true ? (
-        <TravelRecordInvitePicker
-          key={`${folder.id}:${userId}:${authGeneration}`}
-          folder={folder}
-          onSent={onClose}
-          onBusyChange={setIsBusy}
-        />
-      ) : undefined}
-      onClose={onClose}
-    >
-      <>
+    <>
+      {createPortal(
         <div
-          className="relative h-[150px] w-[136px] shrink-0"
-          style={{ willChange: 'opacity' }}
+          aria-hidden="true"
+          inert
+          style={{
+            position: 'fixed',
+            left: -10000,
+            top: 0,
+            pointerEvents: 'none',
+          }}
         >
-          <div className="absolute top-0 left-0 origin-top-left scale-[0.83]">
-            {/* 블러 경계 안에 상세 페이지와 같은 배경을 둔다. */}
-            <div
-              aria-hidden="true"
-              className="bg-background pointer-events-none absolute left-0"
-              style={{
-                top: FOLDER_FRONT_TOP,
-                width: FOLDER_ARTWORK_WIDTH,
-                height: FOLDER_FRONT_HEIGHT,
-                clipPath: folderClipPath,
-                WebkitClipPath: folderClipPath,
-              }}
-            />
-            <TravelFolderArtwork
-              photos={folder.photos}
-              title={folder.title}
-              decorations={folder.decorations}
+          <div
+            ref={cardRef}
+            style={{
+              width: 254,
+              padding: '24px 20px',
+              background: '#f9f9f9',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            <TravelFolderSharePreview
+              folder={folder}
+              sharerName={sharerName}
+              sharerProfileImageUrl={sharerProfileImageUrl}
             />
           </div>
-        </div>
-        {sharerProfileImageUrl ? (
-          <ProfileAvatar
-            src={sharerProfileImageUrl}
-            nickname={sharerName}
-            size={49}
-            className="relative z-10 -mt-7 shadow-[0_-2px_10px_rgba(0,0,0,0.25)]"
+        </div>,
+        document.body
+      )}
+      <TravelRecordShareDialog
+        title="여행 폴더 공유"
+        isBusy={isBusy}
+        showExternalShare={canShare}
+        externalShareAction={
+          <TravelRecordExternalShareActions
+            key={`external:${folder.id}:${userId}:${authGeneration}`}
+            data={
+              shareLink.isFetching || shareLink.isError || !shareLink.data
+                ? null
+                : getTravelFolderShareData(
+                    folder,
+                    window.location.origin,
+                    shareLink.data.token
+                  )
+            }
+            isBusy={isBusy}
+            onBusyChange={setIsBusy}
+            createKakaoImage={async () => {
+              if (!cardRef.current || !canShare)
+                throw new Error('Share card unavailable');
+              return createShareCardPng(cardRef.current, [
+                ...folder.photos,
+                ...folder.decorations.map((item) => item.imageUrl),
+                sharerProfileImageUrl ?? '',
+              ]);
+            }}
           />
-        ) : (
-          <NicknameAvatar
-            name={sharerName}
-            color="orange"
-            size={49}
-            className="relative z-10 -mt-7 shadow-[0_-2px_10px_rgba(0,0,0,0.25)]"
-          />
-        )}
-        <p className="mt-2 max-w-full truncate text-center text-sm leading-[17px] font-semibold">
-          {sharerName || '사용자'}
-        </p>
-        <p className="mt-3 max-w-full truncate text-center text-base leading-[19px] font-medium">
-          {folder.title}
-        </p>
-        <time className="bg-gray-2 text-gray-4 mt-1.5 rounded-full px-2 py-1 text-sm leading-[17px]">
-          {folder.period}
-        </time>
-      </>
-    </TravelRecordShareDialog>
+        }
+        friendSection={
+          folder.visibility === 'friends' &&
+          folder.permissions?.canInvite === true ? (
+            <TravelRecordInvitePicker
+              key={`${folder.id}:${userId}:${authGeneration}`}
+              folder={folder}
+              onSent={onClose}
+              onBusyChange={setIsBusy}
+            />
+          ) : undefined
+        }
+        onClose={onClose}
+      >
+        <TravelFolderSharePreview
+          folder={folder}
+          sharerName={sharerName}
+          sharerProfileImageUrl={sharerProfileImageUrl}
+        />
+      </TravelRecordShareDialog>
+    </>
   );
 }
 

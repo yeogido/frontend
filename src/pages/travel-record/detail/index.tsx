@@ -1,3 +1,4 @@
+import DesktopLoadingPage from '../../../components/common/DesktopLoadingPage';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -211,12 +212,7 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
     !folder &&
     (serverTravelRecordQuery.isLoading || isDeleted || isLeaving)
   ) {
-    if (desktop)
-      return (
-        <DesktopPageShell contentWidth={1048}>
-          <div aria-busy="true" className="min-h-[400px]" />
-        </DesktopPageShell>
-      );
+    if (desktop) return <DesktopLoadingPage />;
     return (
       <TravelRecordPageFrame className="bg-[#f1f1f1]">
         <div
@@ -438,7 +434,9 @@ function TravelRecordDetailPage({ desktop = false }: { desktop?: boolean }) {
       visibility: toTravelRecordApiVisibility(editableFolder.visibility),
       ownerId: editableFolder.owner?.userId,
       hasOtherParticipants: editableFolder.participants
-        ? editableFolder.participants.some((member) => member.userId !== editableFolder.owner?.userId)
+        ? editableFolder.participants.some(
+            (member) => member.userId !== editableFolder.owner?.userId
+          )
         : undefined,
       decorations: editableFolder.decorations,
       title: editableFolder.title,
