@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -8,6 +14,8 @@ import {
 } from '../../apis/business-promotions.api';
 import { getApiErrorMessage, normalizeApiError } from '../../apis/common';
 import { LoadingSpinner } from '../../components/common';
+import DesktopLoadingPage from '../../components/common/DesktopLoadingPage';
+import { DesktopPageShell } from '../../components/layout/desktop';
 import { useToast } from '../../components/toast';
 import { DESKTOP_SCALE } from '../../constants/layout';
 import { ScaleContext } from '../../contexts/ScaleContext';
@@ -140,6 +148,11 @@ function BusinessPromotionRegistrationPage() {
   const detailQuery = useBusinessPromotionDetail(promotionId ?? 0);
 
   const [step, setStep] = useState<Step>(isEditMode ? 'info' : 'place');
+  // 단계는 라우트가 아니라서 ScrollToTop이 걸리지 않는다. 긴 화면의 아래에서
+  // 넘어가면 다음 단계가 중간부터 보이므로 직접 맨 위로 올린다.
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step]);
 
   // 1단계: 선택한 사업장. 수정 모드에선 쓰지 않는다.
   const [selectedBusiness, setSelectedBusiness] =
@@ -433,8 +446,12 @@ function BusinessPromotionRegistrationPage() {
 
   if (isEditMode && !hasSeeded) {
     if (isInvalidPromotionId || detailQuery.isError) {
-      return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+      const errorView = (
+        <div
+          className={`flex flex-col items-center justify-center gap-4 px-6 text-center ${
+            isDesktop ? 'py-[120px]' : 'min-h-screen'
+          }`}
+        >
           <p className="text-gray-5 text-sm">{DETAIL_LOAD_ERROR_MESSAGE}</p>
           <button
             type="button"
@@ -451,7 +468,15 @@ function BusinessPromotionRegistrationPage() {
           </button>
         </div>
       );
+
+      return isDesktop ? (
+        <DesktopPageShell>{errorView}</DesktopPageShell>
+      ) : (
+        errorView
+      );
     }
+
+    if (isDesktop) return <DesktopLoadingPage />;
 
     return (
       <LoadingSpinner

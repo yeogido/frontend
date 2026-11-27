@@ -16,7 +16,7 @@ interface DesktopStepLayoutProps {
  *
  * 시안에는 뒤로가기가 없지만, 단계는 라우트가 아니라 화면 상태라 브라우저
  * 뒤로가기는 이전 단계가 아니라 플로우 이탈이 된다. 본문 배치를 밀지 않게
- * 제목 왼쪽 바깥에 둔다.
+ * 제목 위 여백에 둔다(왼쪽 바깥은 좁은 창에서 화면 밖으로 잘린다).
  */
 function DesktopStepLayout({
   contentWidth,
@@ -32,7 +32,7 @@ function DesktopStepLayout({
           type="button"
           onClick={onBack}
           aria-label="뒤로가기"
-          className="text-gray-5 absolute top-0 -left-[48px] flex size-[38px] items-center justify-center rounded-full"
+          className="text-gray-5 absolute -top-[44px] -left-[8px] flex size-[38px] items-center justify-center rounded-full"
         >
           <MdChevronLeft aria-hidden="true" className="text-[32px]" />
         </button>

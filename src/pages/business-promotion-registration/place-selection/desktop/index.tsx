@@ -7,9 +7,9 @@ import DesktopResultRow, {
 import DesktopSelectedPanel from '../../../local-recommendation/desktop/DesktopSelectedPanel';
 import DesktopStepLayout from '../../components/DesktopStepLayout';
 
-// Figma 1440 데스크톱 시안(7193:17718) 기준 리터럴 px: 1042 = 608 + 74 + 360
+// Figma 1440 데스크톱 시안(7193:17718) 기준 리터럴 px: 1042 = 608 + 74 + 360.
+// 목록은 남는 폭을 쓴다 — 고정폭이면 1024px 창에서 패널과의 간격이 사라진다.
 const CONTENT_WIDTH = 1042;
-const LIST_WIDTH = 608;
 const PANEL_WIDTH = 360;
 
 interface PlaceSelectionDesktopViewProps {
@@ -39,12 +39,8 @@ function PlaceSelectionDesktopView({
       description="사업자 인증이 완료된 사업장만 표시됩니다"
       onBack={onBack}
     >
-      <div className="mt-[24px] flex items-start justify-between">
-        <section
-          aria-label="내 사업장 목록"
-          className="min-w-0"
-          style={{ width: LIST_WIDTH }}
-        >
+      <div className="mt-[24px] flex items-start gap-[74px]">
+        <section aria-label="내 사업장 목록" className="min-w-0 flex-1">
           {statusMessage ? (
             <p className="text-gray-5 text-[16px]">{statusMessage}</p>
           ) : null}

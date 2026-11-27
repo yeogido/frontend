@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Controller } from 'react-hook-form';
 import { MdCheck } from 'react-icons/md';
 
@@ -5,7 +6,11 @@ import type { BusinessInfoResponse } from '../../../../types/business.type';
 import DesktopStepLayout from '../../components/DesktopStepLayout';
 import TimeRange from '../components/TimeRange';
 import { dayOfWeekOptions } from '../constants/options';
-import type { DayOfWeek, DayTimeEntry } from '../schema';
+import type {
+  DayOfWeek,
+  DayTimeEntry,
+  PromotionInfoFormValues,
+} from '../schema';
 import {
   usePromotionInfoForm,
   type UsePromotionInfoFormParams,
@@ -71,6 +76,8 @@ function PromotionInfoDesktopView({
     isReady,
     isSubmitting,
   } = usePromotionInfoForm(formParams);
+  // 24시간을 잘못 눌러도 끄면 입력해 둔 시간이 돌아오게 보관한다.
+  const timesBeforeAllDayRef = useRef<PromotionInfoFormValues['dayTimes']>({});
 
   const orderedDays = dayOfWeekOptions.filter((option) =>
     openDays.includes(option.value)
@@ -251,9 +258,18 @@ function PromotionInfoDesktopView({
                       checked={isEveryDayAllDay}
                       disabled={openDays.length === 0}
                       onChange={(event) => {
+                        const { checked } = event.target;
+                        if (checked) {
+                          timesBeforeAllDayRef.current = timesField.value;
+                        }
                         const next = { ...timesField.value };
                         openDays.forEach((day) => {
-                          next[day] = event.target.checked ? ALL_DAY : {};
+                          const previous = timesBeforeAllDayRef.current[day];
+                          next[day] = checked
+                            ? ALL_DAY
+                            : previous && !isAllDay(previous)
+                              ? previous
+                              : {};
                         });
                         timesField.onChange(next);
                       }}
