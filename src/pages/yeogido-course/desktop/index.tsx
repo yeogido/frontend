@@ -166,7 +166,7 @@ function YeogidoCourseDesktopPage({
                 resetRegistration();
                 navigate('/admin/course-registration/region-selection');
               }}
-              className="bg-main-5 flex items-center gap-[6px] rounded-[12px] px-[14px] py-[8px] text-[16px] font-semibold text-white"
+              className="bg-main-5 flex h-[37px] shrink-0 items-center gap-[6px] rounded-[12px] px-[14px] text-[18px] font-semibold text-[#f1f1f1]"
             >
               <IoAdd aria-hidden="true" size={20} />
               코스 추가하기

@@ -96,7 +96,7 @@ function AdminCoursePhotoTagPage() {
         <div className="flex flex-col gap-[60px]">
           <div className="flex flex-col gap-[24px]">
             <header className="flex flex-col gap-[6px]">
-              <h1 className="text-[32px] font-semibold text-black">
+              <h1 className="text-[32px] leading-[38px] font-semibold text-black">
                 사진과 키워드를 추가해 주세요
               </h1>
               <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
@@ -117,7 +117,7 @@ function AdminCoursePhotoTagPage() {
             type="button"
             disabled={!isReady}
             onClick={handleSubmit}
-            className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 w-full rounded-[12px] py-[16px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
+            className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 h-[61px] w-full rounded-[12px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
           >
             코스 선택하기
           </button>

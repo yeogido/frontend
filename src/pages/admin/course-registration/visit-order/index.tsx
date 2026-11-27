@@ -61,7 +61,7 @@ function AdminCourseVisitOrderPage() {
         <div className="flex flex-col gap-[60px]">
           <div className="flex flex-col gap-[32px]">
             <header className="flex flex-col gap-[6px]">
-              <h1 className="text-[32px] font-semibold text-black">
+              <h1 className="text-[32px] leading-[38px] font-semibold text-black">
                 방문 순서를 설정해 주세요
               </h1>
               <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
@@ -96,7 +96,7 @@ function AdminCourseVisitOrderPage() {
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || visitEvents.length === 0}
-              className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 w-full rounded-[12px] py-[16px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
+              className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 h-[61px] w-full rounded-[12px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
             >
               {isSubmitting
                 ? '등록 중...'

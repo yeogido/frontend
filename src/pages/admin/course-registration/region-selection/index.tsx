@@ -148,8 +148,9 @@ function AdminCourseRegionSelectionPage() {
     return (
       <DesktopPageShell>
         <div className="flex flex-col gap-[32px]">
-          <header className="flex flex-col gap-[6px]">
-            <h1 className="text-[32px] font-semibold text-black">
+          {/* 시안은 제목-검색창만 24px, 나머지 구역 간격은 32px다. */}
+          <header className="-mb-[8px] flex flex-col gap-[6px]">
+            <h1 className="text-[32px] leading-[38px] font-semibold text-black">
               어디를 다녀오셨나요?
             </h1>
             <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
@@ -179,19 +180,17 @@ function AdminCourseRegionSelectionPage() {
           {searchStatusMessage ? (
             <p role="status">{searchStatusMessage}</p>
           ) : null}
-          {!region && !trimmedSearchQuery ? (
-            <RecentRegionDesktopSection
-              searches={recentRegions.map((item) => item.name)}
-              onClear={clearRecentRegions}
-              onRemove={removeRecentRegion}
-              onSelect={(name) => {
-                const item = recentRegions.find(
-                  (candidate) => candidate.name === name
-                );
-                if (item) handleSelectNeighborhood(item);
-              }}
-            />
-          ) : null}
+          <RecentRegionDesktopSection
+            searches={recentRegions.map((item) => item.name)}
+            onClear={clearRecentRegions}
+            onRemove={removeRecentRegion}
+            onSelect={(name) => {
+              const item = recentRegions.find(
+                (candidate) => candidate.name === name
+              );
+              if (item) handleSelectNeighborhood(item);
+            }}
+          />
           {regionsQuery.isLoading ? (
             <LoadingSpinner label="지역 정보를 불러오는 중" />
           ) : regionsQuery.isError ? (
@@ -219,7 +218,7 @@ function AdminCourseRegionSelectionPage() {
             type="button"
             disabled={!region}
             onClick={() => navigate('/admin/course-registration/basic-info')}
-            className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 w-full rounded-[12px] py-[16px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
+            className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 h-[61px] w-full rounded-[12px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
           >
             기본 정보 입력하기
           </button>
