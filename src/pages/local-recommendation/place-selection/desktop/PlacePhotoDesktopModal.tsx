@@ -184,14 +184,22 @@ function PlacePhotoDesktopModal({
         {fileError ? <p role="alert">{fileError}</p> : null}
         <button
           type="button"
-          disabled={
-            (requirePhoto && !previewUrl) || isProcessing || !!fileError
-          }
+          disabled={!previewUrl || isProcessing || !!fileError}
           onClick={onConfirm}
           className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 mt-[24px] w-full rounded-[12px] py-[16px] text-[20px] font-semibold text-white"
         >
           사진 추가하기
         </button>
+        {!requirePhoto && !previewUrl ? (
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isProcessing}
+            className="text-main-5 mt-[16px] text-[18px] font-semibold"
+          >
+            사진 없이 계속하기
+          </button>
+        ) : null}
       </section>
     </div>
   );

@@ -140,12 +140,16 @@ test('desktop admin starts registration and retains the chosen region and form d
   await expect(
     page.getByRole('heading', { name: '장소에 사진을 추가해 주세요' })
   ).toBeVisible();
-  await page.getByRole('button', { name: '사진 추가하기' }).click();
+  await expect(
+    page.getByRole('button', { name: '사진 추가하기' })
+  ).toBeDisabled();
+  await page.getByRole('button', { name: '사진 없이 계속하기' }).click();
   await page.getByRole('button', { name: '장소 등록하기' }).click();
   await expect(
     page.getByRole('heading', { name: '방문 순서를 설정해 주세요' })
   ).toBeVisible();
   await expect(page.getByText('경포해변')).toBeVisible();
+  await expect(page.locator('img[src*="event-thumbnail"]')).toHaveCount(0);
   await expect(
     page.getByRole('button', { name: '코스 등록하기' })
   ).toBeEnabled();
@@ -162,6 +166,58 @@ test('desktop admin starts registration and retains the chosen region and form d
     )
   ).toBe(true);
   expect(errors).toEqual([]);
+});
+
+test('관리자 검색 결과에서 코스 관리 메뉴를 유지한다', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop');
+  let searchedKeyword = '';
+  await page.route('**/api/v1/courses**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname !== '/api/v1/courses') return route.fallback();
+    searchedKeyword = url.searchParams.get('keyword') ?? '';
+    await route.fulfill({
+      json: {
+        result: {
+          items: searchedKeyword
+            ? [
+                {
+                  courseId: 10,
+                  title: '강릉 여행',
+                  thumbnailUrl: '',
+                  routeImageUrl: '',
+                  durationType: 'DAY_TRIP',
+                  transportType: 'WALK',
+                  companionType: 'SOLO',
+                  tags: [],
+                  isLiked: false,
+                  canManage: true,
+                },
+              ]
+            : [],
+          hasNext: false,
+          cursorId: null,
+          cursorValue: null,
+        },
+      },
+    });
+  });
+  await page.goto('/admin/courses');
+  const search = page.getByRole('textbox', { name: '코스명 또는 지역명 검색' });
+  await search.fill('강릉');
+  await search.press('Enter');
+  await expect(page).toHaveURL(/\/admin\/courses\?keyword=/);
+  await expect.poll(() => searchedKeyword).toBe('강릉');
+  await page.getByRole('button', { name: '강릉 여행 메뉴' }).click();
+  await expect(page.getByRole('menuitem', { name: '수정' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: '삭제' })).toBeVisible();
+  await search.fill('');
+  await search.press('Enter');
+  await expect(page).toHaveURL(/\/admin\/courses$/);
+  await expect(
+    page.getByRole('button', { name: '강릉 여행 메뉴' })
+  ).toHaveCount(0);
 });
 
 test('registration keeps the mobile presentation below the desktop breakpoint', async ({

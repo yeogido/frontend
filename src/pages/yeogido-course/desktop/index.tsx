@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IoAdd, IoSearch } from 'react-icons/io5';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import heartIcon from '../../../assets/icons/heart.svg';
 import likedIcon from '../../../assets/icons/oheart.svg';
@@ -85,7 +85,11 @@ function YeogidoCourseDesktopPage({
   adminMode = false,
 }: YeogidoCourseDesktopPageProps) {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const keyword = adminMode ? (searchParams.get('keyword') ?? '') : '';
+  const [searchState, setSearchState] = useState({ keyword, value: keyword });
+  const searchQuery =
+    searchState.keyword === keyword ? searchState.value : keyword;
   const resetRegistration = useAdminCourseRegistrationStore(
     (state) => state.reset
   );
@@ -119,6 +123,7 @@ function YeogidoCourseDesktopPage({
   } = useCourses(
     {
       courseType: 'OFFICIAL',
+      keyword: keyword || undefined,
       transportType: transportTypeByLabel[selectedFilters.transport],
       durationType: durationTypeByLabel[selectedFilters.duration],
       companionType: companionTypeByLabel[selectedFilters.companion],
@@ -174,10 +179,11 @@ function YeogidoCourseDesktopPage({
             onSubmit={(event) => {
               event.preventDefault();
               const query = searchQuery.trim();
-              if (query)
-                navigate(
-                  `/yeogido-course/search?${new URLSearchParams({ keyword: query })}`
-                );
+              const nextParams = new URLSearchParams(searchParams);
+              if (query) nextParams.set('keyword', query);
+              else nextParams.delete('keyword');
+              setSearchState({ keyword: query, value: query });
+              setSearchParams(nextParams);
             }}
             className="border-gray-2 flex h-[48px] items-center gap-[10px] rounded-[12px] border px-[16px]"
           >
@@ -185,7 +191,9 @@ function YeogidoCourseDesktopPage({
             <input
               aria-label="코스명 또는 지역명 검색"
               value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
+              onChange={(event) =>
+                setSearchState({ keyword, value: event.target.value })
+              }
               placeholder="코스명 또는 지역명을 검색해 주세요"
               className="w-full bg-transparent text-[16px] outline-none"
             />

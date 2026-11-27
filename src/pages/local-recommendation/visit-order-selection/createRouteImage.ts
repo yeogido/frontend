@@ -110,6 +110,10 @@ async function drawImageMarker(
   y: number,
   imageSource: string
 ) {
+  if (!imageSource) {
+    drawFallbackMarker(context, x, y);
+    return;
+  }
   try {
     const image = await loadImage(imageSource);
     const left = x - MARKER_SIZE / 2;
