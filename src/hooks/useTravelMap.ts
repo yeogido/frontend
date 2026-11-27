@@ -1,5 +1,8 @@
-import { useQueries } from '@tanstack/react-query';
-import { getTravelRecordMap } from '../apis/travelRecords.api';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import {
+  getTravelRecordMap,
+  getTravelRecordYears,
+} from '../apis/travelRecords.api';
 import { useAuthStore } from '../store/auth.store';
 import { useAuth } from './useAuth';
 import { useTravelRecordYears } from './useTravelRecords';
@@ -18,9 +21,14 @@ import {
 
 const MAP_RECORDS_PAGE_SIZE = 50;
 
-const getAllTravelMapRecordsInYear = (year: number) =>
+const getAllTravelMapRecordsInYear = (year: number, visibility?: 'PUBLIC') =>
   collectTravelRecords((cursor) =>
-    getTravelRecordMap({ year, size: MAP_RECORDS_PAGE_SIZE, cursor })
+    getTravelRecordMap({
+      year,
+      size: MAP_RECORDS_PAGE_SIZE,
+      cursor,
+      visibility,
+    })
   );
 
 /**
@@ -32,7 +40,10 @@ const getAllTravelMapRecordsInYear = (year: number) =>
  * 홈은 로그인 없이 열리는 화면인데 여행 기록 API는 인증이 필요하다. 로그인
  * 전에는 조회를 시작하지 않는다.
  */
-export function useTravelMap({ enabled = true } = {}) {
+export function useTravelMap({
+  enabled = true,
+  visibility,
+}: { enabled?: boolean; visibility?: 'PUBLIC' } = {}) {
   const { isAuthenticated: hasSession } = useAuth();
   const userId = useAuthStore((state) => state.userId);
   const authGeneration = useAuthStore((state) => state.authGeneration);
@@ -40,14 +51,23 @@ export function useTravelMap({ enabled = true } = {}) {
   const travelRecordYearsQuery = useTravelRecordYears({
     enabled: canFetchMap,
   });
-  const cachedYears = travelRecordYearsQuery.data?.years;
+  const publicYearsQuery = useQuery({
+    queryKey: ['travelRecordYears', userId, authGeneration, 'PUBLIC'],
+    queryFn: () => getTravelRecordYears('PUBLIC'),
+    enabled: canFetchMap && visibility === 'PUBLIC',
+  });
+  const yearsQuery = visibility ? publicYearsQuery : travelRecordYearsQuery;
+  const cachedYears = yearsQuery.data?.years;
   const years = getTravelRecordMapYears(canFetchMap, cachedYears);
 
   const yearQueries = useQueries({
     queries: getTravelRecordMapYearQueries(canFetchMap, years).map(
       ({ year, enabled }) => ({
-        queryKey: getTravelMapQueryKey(userId, authGeneration, { year }),
-        queryFn: () => getAllTravelMapRecordsInYear(year),
+        queryKey: getTravelMapQueryKey(userId, authGeneration, {
+          year,
+          visibility,
+        }),
+        queryFn: () => getAllTravelMapRecordsInYear(year, visibility),
         enabled,
       })
     ),
@@ -55,9 +75,7 @@ export function useTravelMap({ enabled = true } = {}) {
 
   const failedYearQueries = yearQueries.filter((query) => query.isError);
   const records = getTravelRecordMapRecords(
-    canFetchMap &&
-      failedYearQueries.length === 0 &&
-      !travelRecordYearsQuery.isError,
+    canFetchMap && failedYearQueries.length === 0 && !yearsQuery.isError,
     yearQueries.map((query) => query.data ?? [])
   );
   const regionsQuery = useTravelRecordRegionDetailsState(
@@ -67,12 +85,12 @@ export function useTravelMap({ enabled = true } = {}) {
   // 보이지 않도록 인증 여부를 함께 본다.
   const isError =
     canFetchMap &&
-    (travelRecordYearsQuery.isError ||
+    (yearsQuery.isError ||
       failedYearQueries.length > 0 ||
       regionsQuery.isError);
   const isPending =
     canFetchMap &&
-    (travelRecordYearsQuery.isPending ||
+    (yearsQuery.isPending ||
       yearQueries.some((query) => query.isPending) ||
       regionsQuery.isPending);
 
@@ -96,7 +114,7 @@ export function useTravelMap({ enabled = true } = {}) {
       }
 
       // 다른 기기의 추가·삭제도 반영하도록 연도 목록과 지도 페이지를 함께 갱신한다.
-      void travelRecordYearsQuery.refetch();
+      void yearsQuery.refetch();
       yearQueries.forEach((query) => void query.refetch());
       regionsQuery.retry();
     },

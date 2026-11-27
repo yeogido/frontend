@@ -168,7 +168,7 @@ export function useTravelRecordYears({ enabled = true } = {}) {
   const authGeneration = useAuthStore((state) => state.authGeneration);
   return useQuery({
     queryKey: ['travelRecordYears', userId, authGeneration],
-    queryFn: getTravelRecordYears,
+    queryFn: () => getTravelRecordYears(),
     enabled: enabled && userId !== null,
   });
 }
@@ -298,7 +298,11 @@ export function useUpdateTravelRecord() {
       if (
         needsVisibilityChange &&
         (original?.id !== String(travelRecordId) ||
-          !canChangeTravelRecordVisibility(original.ownerId, session.userId, original.hasOtherParticipants) ||
+          !canChangeTravelRecordVisibility(
+            original.ownerId,
+            session.userId,
+            original.hasOtherParticipants
+          ) ||
           original.version !== version ||
           !['PRIVATE', 'FRIENDS', 'PUBLIC'].includes(visibility))
       )
@@ -323,10 +327,7 @@ export function useUpdateTravelRecord() {
       requireCurrentSession();
       let visibilitySaved = false;
       try {
-        if (
-          needsVisibilityChange &&
-          visibility !== undefined
-        ) {
+        if (needsVisibilityChange && visibility !== undefined) {
           const result = await visibilityMutation.mutateAsync({
             travelRecordId,
             visibility,

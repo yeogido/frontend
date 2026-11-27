@@ -15,6 +15,7 @@ interface TravelMapPanelProps {
   viewer?: TravelMapViewer;
   ownerName?: string;
   desktop?: boolean;
+  selectedYear?: number | null;
 }
 
 const mapPanelLabel = '여행 지도';
@@ -26,6 +27,7 @@ function TravelMapPanel({
   viewer = 'owner',
   ownerName = '사용자',
   desktop = false,
+  selectedYear = null,
 }: TravelMapPanelProps) {
   const navigate = useNavigate();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -101,9 +103,7 @@ function TravelMapPanel({
 
       {isShareModalOpen && (
         <TravelMapShareModal
-          regionPhotos={toRegionPhotoMap(
-            getTravelRecordRegionPhotoRecords(folders, 'shared')
-          )}
+          selectedYear={selectedYear}
           onClose={closeShareModal}
         />
       )}

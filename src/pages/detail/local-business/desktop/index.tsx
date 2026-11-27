@@ -1,3 +1,4 @@
+import DesktopLoadingPage from '../../../../components/common/DesktopLoadingPage';
 import { useParams } from 'react-router-dom';
 import {
   MdAccessTimeFilled,
@@ -41,6 +42,8 @@ function LocalBusinessDetailDesktopContent({
     promotionDeleteDialogProps,
     editPromotion,
   } = useLocalBusinessDetail(promotionId);
+
+  if (!errorMessage && !business) return <DesktopLoadingPage />;
 
   if (errorMessage || !business) {
     return (
