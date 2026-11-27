@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { useIsDesktop } from '../../../hooks/useIsDesktop';
+import DesktopLoadingPage from '../../../components/common/DesktopLoadingPage';
 
 import { ResponsivePageShell } from '../../../components/layout/ResponsivePageShell';
 
@@ -15,6 +17,7 @@ export function DetailStateGuard<T>({
   loadingMessage = '불러오는 중...',
   children,
 }: DetailStateGuardProps<T>) {
+  const isDesktop = useIsDesktop();
   if (error) {
     return (
       <ResponsivePageShell mode="main-layout" className="text-red-500">
@@ -29,6 +32,7 @@ export function DetailStateGuard<T>({
   }
 
   if (!data) {
+    if (isDesktop) return <DesktopLoadingPage />;
     return (
       <ResponsivePageShell mode="standalone" className="text-gray-4">
         <div
