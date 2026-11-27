@@ -51,9 +51,10 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
 
   useEffect(() => {
     if (!place) {
-      navigate('/admin', { replace: true });
+      // /admin은 모바일 화면이라 PC에서는 행사 목록으로 보낸다.
+      navigate(desktop ? '/festival' : '/admin', { replace: true });
     }
-  }, [place, navigate]);
+  }, [place, navigate, desktop]);
 
   if (!place) return null;
 
@@ -98,13 +99,18 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
   };
 
   if (desktop) {
+    // Figma 1440 데스크톱 시안(7214:22709) 기준 리터럴 px.
     const fieldClass =
-      'border-gray-2 placeholder:text-gray-4 focus:border-main-5 w-full rounded-[12px] border bg-white p-[20px] text-[16px] outline-none';
+      'border-gray-2 placeholder:text-gray-4 focus:border-main-5 h-[59px] w-full rounded-[12px] border bg-white px-[20px] text-[16px] font-medium outline-none';
+    const labelClass =
+      'flex flex-col gap-[20px] text-[20px] leading-[24px] font-semibold';
     return (
       <DesktopPageShell>
         <header className="flex flex-col gap-[6px]">
-          <h1 className="text-[32px] font-semibold">어떤 행사인가요?</h1>
-          <p className="text-gray-5 text-[20px] leading-[1.5]">
+          <h1 className="text-[32px] leading-[38px] font-semibold">
+            어떤 행사인가요?
+          </h1>
+          <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
             행사의 기본 정보를 입력해주세요
           </p>
         </header>
@@ -116,7 +122,7 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
           }}
         >
           <div className="flex flex-col gap-[40px]">
-            <label className="flex flex-col gap-[20px] text-[20px] font-semibold">
+            <label className={labelClass}>
               행사의 이름을 알려주세요
               <input
                 className={fieldClass}
@@ -130,7 +136,7 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
                 placeholder="예) 양평 수박 축제"
               />
             </label>
-            <label className="flex flex-col gap-[20px] text-[20px] font-semibold">
+            <label className={labelClass}>
               행사를 소개해주세요
               <input
                 className={fieldClass}
@@ -145,7 +151,7 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
               />
             </label>
             <div className="flex flex-col gap-[20px]">
-              <h2 className="text-[20px] font-semibold">
+              <h2 className="text-[20px] leading-[24px] font-semibold">
                 행사 기간을 입력해 주세요
               </h2>
               <EventDateGroup
@@ -172,7 +178,7 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
                 </p>
               )}
             </div>
-            <label className="flex flex-col gap-[20px] text-[20px] font-semibold">
+            <label className={labelClass}>
               연락 가능한 전화번호를 입력해 주세요
               <input
                 type="tel"
@@ -185,12 +191,15 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
                 aria-invalid={!isPhoneValid}
               />
               {!isPhoneValid && (
-                <span className="text-main-5 text-[16px]" role="alert">
+                <span
+                  className="text-main-5 text-[16px] font-medium"
+                  role="alert"
+                >
                   전화번호 형식이 올바르지 않아요. (예: 000-0000-0000)
                 </span>
               )}
             </label>
-            <label className="flex flex-col gap-[20px] text-[20px] font-semibold">
+            <label className={labelClass}>
               공식 홈페이지를 입력해 주세요
               <input
                 className={fieldClass}
@@ -205,7 +214,7 @@ function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
           <button
             type="submit"
             disabled={!isReady}
-            className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 w-full rounded-[12px] py-[16px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
+            className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 h-[61px] w-full rounded-[12px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
           >
             사진 추가하기
           </button>

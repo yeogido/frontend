@@ -1,7 +1,12 @@
+import { MdAdd } from 'react-icons/md';
+import { useNavigate } from 'react-router-dom';
+
 import { FestivalDeleteDialog } from '../../../components/common';
 import DesktopFilterChip from '../../../components/layout/desktop/DesktopFilterChip';
 import DesktopFilterDropdown from '../../../components/layout/desktop/DesktopFilterDropdown';
 import DesktopPageShell from '../../../components/layout/desktop/DesktopPageShell';
+import { useIsAdmin } from '../../../hooks/useMyProfile';
+import { useAdminEventRegistrationStore } from '../../../store/adminEventRegistration.store';
 import { toContentTagIds } from '../../../utils/contentTags';
 import {
   festivalCategoryOptions,
@@ -45,6 +50,11 @@ function FestivalDesktopPage() {
     requestDelete,
     dialogProps,
   } = useFestivalDay();
+  const navigate = useNavigate();
+  const isAdmin = useIsAdmin();
+  const resetRegistration = useAdminEventRegistrationStore(
+    (state) => state.reset
+  );
 
   const hasEmptyResult = !isPending && !isError && festivals.length === 0;
 
@@ -54,13 +64,29 @@ function FestivalDesktopPage() {
         style={{ paddingTop: TITLE_OFFSET_TOP }}
         className="flex flex-col gap-[32px]"
       >
-        <header className="flex flex-col gap-[6px]">
-          <h1 className="text-[32px] leading-[38px] font-semibold text-black">
-            어디로 떠나볼까요?
-          </h1>
-          <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
-            다양한 지역의 행사를 만나보세요
-          </p>
+        <header className="flex items-start justify-between gap-[24px]">
+          <div className="flex flex-col gap-[6px]">
+            <h1 className="text-[32px] leading-[38px] font-semibold text-black">
+              어디로 떠나볼까요?
+            </h1>
+            <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
+              다양한 지역의 행사를 만나보세요
+            </p>
+          </div>
+
+          {isAdmin ? (
+            <button
+              type="button"
+              onClick={() => {
+                resetRegistration();
+                navigate('/admin/event-registration/place-selection');
+              }}
+              className="bg-main-5 flex h-[37px] shrink-0 items-center gap-[6px] rounded-[12px] px-[14px] text-[18px] font-semibold text-[#f1f1f1]"
+            >
+              <MdAdd aria-hidden="true" className="text-[20px]" />
+              행사 추가하기
+            </button>
+          ) : null}
         </header>
 
         <div className="flex flex-col gap-[60px]">

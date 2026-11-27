@@ -4,6 +4,7 @@ import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import Responsive from '../components/layout/Responsive';
+import ResponsiveSameTree from '../components/layout/ResponsiveSameTree';
 import AdminRoute from '../components/auth/AdminRoute';
 import BusinessRoute from '../components/auth/BusinessRoute';
 
@@ -593,27 +594,28 @@ function AppRouter() {
         <Route
           path="/admin/event-registration/place-selection"
           element={
-            <Responsive
-              desktop={<AdminPlaceSelectionPage desktop />}
-              mobile={<AdminPlaceSelectionPage />}
+            <ResponsiveSameTree
+              render={(desktop) => (
+                <AdminPlaceSelectionPage desktop={desktop} />
+              )}
             />
           }
         />
         <Route
           path="/admin/event-registration/basic-info"
           element={
-            <Responsive
-              desktop={<AdminEventBasicInfoPage desktop />}
-              mobile={<AdminEventBasicInfoPage />}
+            <ResponsiveSameTree
+              render={(desktop) => (
+                <AdminEventBasicInfoPage desktop={desktop} />
+              )}
             />
           }
         />
         <Route
           path="/admin/event-registration/photo-tag"
           element={
-            <Responsive
-              desktop={<AdminEventPhotoTagPage desktop />}
-              mobile={<AdminEventPhotoTagPage />}
+            <ResponsiveSameTree
+              render={(desktop) => <AdminEventPhotoTagPage desktop={desktop} />}
             />
           }
         />

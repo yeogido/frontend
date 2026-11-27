@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MdExpandMore } from 'react-icons/md';
 
 import CustomSelect from '../../../../local-recommendation/course-basic-info/components/CustomSelect';
 import { useGlobalScale } from '../../../../../hooks/useGlobalScale';
@@ -80,23 +81,32 @@ function EventDateGroup({
     ];
     return (
       <fieldset>
-        <legend className="text-gray-5 mb-[6px] text-[16px]">{legend}</legend>
+        <legend className="text-gray-5 mb-[6px] text-[16px] leading-[19px]">
+          {legend}
+        </legend>
         <div className="flex gap-[20px]">
           {selections.map((selection) => (
-            <select
-              key={selection.name}
-              aria-label={`${legend} ${selection.name}`}
-              value={selection.value}
-              onChange={(event) => selection.change(event.target.value)}
-              className="border-gray-2 text-gray-5 min-w-0 flex-1 rounded-[12px] border bg-white p-[20px] text-[16px]"
-            >
-              <option value="">{selection.name}</option>
-              {selection.options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <span key={selection.name} className="relative min-w-0 flex-1">
+              <select
+                aria-label={`${legend} ${selection.name}`}
+                value={selection.value}
+                onChange={(event) => selection.change(event.target.value)}
+                className={`border-gray-2 focus:border-main-5 h-[59px] w-full appearance-none rounded-[12px] border bg-white pr-[52px] pl-[20px] text-[16px] font-medium outline-none ${
+                  selection.value ? 'text-black' : 'text-gray-4'
+                }`}
+              >
+                <option value="">{selection.name}</option>
+                {selection.options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <MdExpandMore
+                aria-hidden="true"
+                className="text-gray-4 pointer-events-none absolute top-1/2 right-[20px] -translate-y-1/2 text-[24px]"
+              />
+            </span>
           ))}
         </div>
       </fieldset>

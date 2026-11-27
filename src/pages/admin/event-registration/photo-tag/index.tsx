@@ -118,9 +118,10 @@ function AdminEventPhotoTagPage({ desktop = false }: { desktop?: boolean }) {
 
   useEffect(() => {
     if (!place) {
-      navigate('/admin', { replace: true });
+      // /admin은 모바일 화면이라 PC에서는 행사 목록으로 보낸다.
+      navigate(desktop ? '/festival' : '/admin', { replace: true });
     }
-  }, [place, navigate]);
+  }, [place, navigate, desktop]);
 
   if (!place) return null;
 
@@ -257,10 +258,10 @@ function AdminEventPhotoTagPage({ desktop = false }: { desktop?: boolean }) {
         <div className="flex flex-col gap-[60px]">
           <div className="flex flex-col gap-[24px]">
             <header className="flex flex-col gap-[6px]">
-              <h1 className="text-[32px] font-semibold">
+              <h1 className="text-[32px] leading-[38px] font-semibold">
                 사진과 키워드를 추가해 주세요
               </h1>
-              <p className="text-gray-5 text-[20px] leading-[1.5]">
+              <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
                 행사를 더 매력적으로 소개할 수 있어요!
               </p>
             </header>
@@ -279,7 +280,7 @@ function AdminEventPhotoTagPage({ desktop = false }: { desktop?: boolean }) {
             >
               <h2
                 id="event-category-title"
-                className="text-[20px] font-semibold"
+                className="text-[20px] leading-[24px] font-semibold"
               >
                 카테고리 등록
               </h2>
@@ -290,7 +291,7 @@ function AdminEventPhotoTagPage({ desktop = false }: { desktop?: boolean }) {
                     type="button"
                     aria-pressed={category === option.id}
                     onClick={() => handleCategorySelect(option.id)}
-                    className={`rounded-full border px-[12px] py-[6px] text-[18px] ${category === option.id ? 'border-main-5 bg-main-2 text-main-5' : 'border-gray-3 bg-background text-gray-3'}`}
+                    className={`h-[33px] rounded-full border px-[12px] text-[18px] ${category === option.id ? 'border-main-5 bg-main-2 text-main-5' : 'border-gray-3 bg-background text-gray-3'}`}
                   >
                     {option.label}
                   </button>
@@ -303,7 +304,7 @@ function AdminEventPhotoTagPage({ desktop = false }: { desktop?: boolean }) {
               type="button"
               disabled={!isReady || isSubmitting}
               onClick={handleSubmit}
-              className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 w-full rounded-[12px] py-[16px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
+              className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 h-[61px] w-full rounded-[12px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
             >
               {isSubmitting
                 ? editingContentId
