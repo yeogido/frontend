@@ -8,6 +8,7 @@ import {
 export function FolderFrontFace() {
   return (
     <div
+      data-folder-front
       aria-hidden="true"
       className="pointer-events-none absolute left-0 z-20"
       style={{
