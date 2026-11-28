@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ResponsivePageShell } from '../../components/layout';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 import {
+  BusinessVerificationConfirmDialog,
   BusinessVerificationForm,
   BusinessVerificationSuccessDialog,
 } from './components';
@@ -18,6 +19,7 @@ function BusinessVerificationPage({ desktop = false }: { desktop?: boolean }) {
   const form = useBusinessVerificationForm();
   const { mutate, isPending, error } = useBusinessVerificationSubmit();
   const [isVerified, setIsVerified] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const handleSubmit = () => {
     if (!form.isSubmittable || isPending) return;
@@ -35,6 +37,25 @@ function BusinessVerificationPage({ desktop = false }: { desktop?: boolean }) {
       },
       { onSuccess: () => setIsVerified(true) }
     );
+  };
+
+  const handleSubmitClick = () => {
+    if (!form.isSubmittable || isPending) return;
+
+    setIsConfirmOpen(true);
+  };
+
+  // 닫고 나서 제출한다. 진행 중에는 버튼이 "인증 중..."으로 막히고, 실패하면 오류
+  // 문구가 폼 아래에 보여서 다이얼로그를 붙잡아 둘 필요가 없다(PC와 같다).
+  const handleConfirm = () => {
+    setIsConfirmOpen(false);
+    handleSubmit();
+  };
+
+  // 선택한 장소를 지우고 검색으로 돌아간다.
+  const handleReselect = () => {
+    setIsConfirmOpen(false);
+    form.clearPlace();
   };
 
   const handleSuccessConfirm = () => {
@@ -120,12 +141,21 @@ function BusinessVerificationPage({ desktop = false }: { desktop?: boolean }) {
       <button
         type="button"
         disabled={!form.isSubmittable || isPending}
-        onClick={handleSubmit}
+        onClick={handleSubmitClick}
         className="bg-main-5 mt-auto flex w-full items-center justify-center rounded-xl font-semibold text-[#f9f9f9] disabled:bg-[#e4e4e4] disabled:text-[#7f7f7f]"
         style={{ height: 52 * scale, fontSize: 18 * scale, marginTop: 16 * scale }}
       >
         {isPending ? '인증 중...' : '사업자 인증하기'}
       </button>
+      <BusinessVerificationConfirmDialog
+        isOpen={isConfirmOpen && form.place !== null}
+        scale={scale}
+        placeName={form.place?.title ?? ''}
+        placeAddress={form.businessAddress}
+        onConfirm={handleConfirm}
+        onReselect={handleReselect}
+        onClose={() => setIsConfirmOpen(false)}
+      />
       <BusinessVerificationSuccessDialog
         isOpen={isVerified}
         scale={scale}
