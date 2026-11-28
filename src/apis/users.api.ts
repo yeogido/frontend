@@ -1,4 +1,8 @@
 import { apiClient, normalizeApiError } from './common';
+import {
+  normalizeBusinessInfo,
+  type RawBusinessInfo,
+} from '../utils/businessPromotionStatus';
 
 import type {
   BusinessInfoResponse,
@@ -111,9 +115,9 @@ export async function deleteMyAccount(): Promise<null> {
 export async function getMyBusinesses(): Promise<BusinessInfoResponse[]> {
   try {
     const { data } =
-      await apiClient.get<BusinessInfoResponse[]>('/users/me/businesses');
+      await apiClient.get<RawBusinessInfo[]>('/users/me/businesses');
 
-    return data;
+    return data.map(normalizeBusinessInfo);
   } catch (error) {
     throw normalizeApiError(error);
   }

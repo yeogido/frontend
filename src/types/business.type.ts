@@ -46,4 +46,6 @@ export interface BusinessInfoResponse {
   businessAddress: string;
   representativeName: string;
   verifiedAt: string;
+  /** 이 사업장에 활성 홍보글이 있다. 장소 하나에 활성 홍보글은 하나뿐이라 true면 새로 등록할 수 없다. */
+  hasActivePromotion: boolean;
 }

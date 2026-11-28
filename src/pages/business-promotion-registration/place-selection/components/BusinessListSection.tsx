@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 
 import type { BusinessInfoResponse } from '../../../../types/business.type';
 
+import BusinessResultCard from './BusinessResultCard';
 import SelectionPageLayout from './SelectionPageLayout';
-import SelectionResultCard from './SelectionResultCard';
 
 interface BusinessListSectionProps {
   businesses: BusinessInfoResponse[];
@@ -39,17 +39,11 @@ function BusinessListSection({
       onBack={onBack}
       statusMessage={statusMessage}
       renderItem={(business, isSelected, onItemAdd) => (
-        <SelectionResultCard
+        <BusinessResultCard
           key={business.businessInfoId}
-          item={business}
-          title={business.businessName}
-          description={business.businessAddress}
-          imageSrc={null}
-          imageAlt={`${business.businessName} 사업장 이미지`}
-          visual="marker"
-          action="add"
-          disabled={isSelected}
-          onItemAdd={onItemAdd}
+          business={business}
+          isSelected={isSelected}
+          onAdd={onItemAdd}
         />
       )}
     />
