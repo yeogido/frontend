@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { MdExpandMore } from 'react-icons/md';
 
 import CustomSelect from '../../../../local-recommendation/course-basic-info/components/CustomSelect';
 import { useGlobalScale } from '../../../../../hooks/useGlobalScale';
@@ -14,21 +14,31 @@ const LEGEND_MARGIN_BOTTOM = 8;
 const LEGEND_FONT_SIZE = 14;
 const ROW_GAP = 12;
 
+export interface EventDateDraft {
+  year: string;
+  month: string;
+  day: string;
+}
+
 interface EventDateGroupProps {
   id: string;
   legend: string;
-  value: string;
+  draft: EventDateDraft;
+  onDraftChange: (draft: EventDateDraft) => void;
   onChange: (value: string) => void;
+  desktop?: boolean;
 }
 
-function EventDateGroup({ id, legend, value, onChange }: EventDateGroupProps) {
+function EventDateGroup({
+  id,
+  legend,
+  draft,
+  onDraftChange,
+  onChange,
+  desktop = false,
+}: EventDateGroupProps) {
   const scale = useGlobalScale();
-  const [initialYear = '', initialMonth = '', initialDay = ''] = value
-    ? value.split('-')
-    : [];
-  const [year, setYear] = useState(initialYear);
-  const [month, setMonth] = useState(initialMonth);
-  const [day, setDay] = useState(initialDay);
+  const { year, month, day } = draft;
   const dayOptions = getDayOptions(year, month);
 
   const applyChange = (
@@ -40,15 +50,68 @@ function EventDateGroup({ id, legend, value, onChange }: EventDateGroupProps) {
     const maxDay = getDaysInMonth(nextYear, nextMonth);
     const clampedDay = nextDay && Number(nextDay) > maxDay ? '' : nextDay;
 
-    setYear(nextYear);
-    setMonth(nextMonth);
-    setDay(clampedDay);
+    onDraftChange({ year: nextYear, month: nextMonth, day: clampedDay });
     onChange(
       nextYear && nextMonth && clampedDay
         ? `${nextYear}-${nextMonth}-${clampedDay}`
         : ''
     );
   };
+
+  if (desktop) {
+    const selections = [
+      {
+        name: '연도',
+        value: year,
+        options: yearOptions,
+        change: (v: string) => applyChange(v, month, day),
+      },
+      {
+        name: '월',
+        value: month,
+        options: monthOptions,
+        change: (v: string) => applyChange(year, v, day),
+      },
+      {
+        name: '일',
+        value: day,
+        options: dayOptions,
+        change: (v: string) => applyChange(year, month, v),
+      },
+    ];
+    return (
+      <fieldset>
+        <legend className="text-gray-5 mb-[6px] text-[16px] leading-[19px]">
+          {legend}
+        </legend>
+        <div className="flex gap-[20px]">
+          {selections.map((selection) => (
+            <span key={selection.name} className="relative min-w-0 flex-1">
+              <select
+                aria-label={`${legend} ${selection.name}`}
+                value={selection.value}
+                onChange={(event) => selection.change(event.target.value)}
+                className={`border-gray-2 focus:border-main-5 h-[59px] w-full appearance-none rounded-[12px] border bg-white pr-[52px] pl-[20px] text-[16px] font-medium outline-none ${
+                  selection.value ? 'text-black' : 'text-gray-4'
+                }`}
+              >
+                <option value="">{selection.name}</option>
+                {selection.options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <MdExpandMore
+                aria-hidden="true"
+                className="text-gray-4 pointer-events-none absolute top-1/2 right-[20px] -translate-y-1/2 text-[24px]"
+              />
+            </span>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
 
   return (
     <fieldset>

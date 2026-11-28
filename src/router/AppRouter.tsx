@@ -601,15 +601,31 @@ function AppRouter() {
       <Route element={<AdminRoute />}>
         <Route
           path="/admin/event-registration/place-selection"
-          element={<AdminPlaceSelectionPage />}
+          element={
+            <ResponsiveSameTree
+              render={(desktop) => (
+                <AdminPlaceSelectionPage desktop={desktop} />
+              )}
+            />
+          }
         />
         <Route
           path="/admin/event-registration/basic-info"
-          element={<AdminEventBasicInfoPage />}
+          element={
+            <ResponsiveSameTree
+              render={(desktop) => (
+                <AdminEventBasicInfoPage desktop={desktop} />
+              )}
+            />
+          }
         />
         <Route
           path="/admin/event-registration/photo-tag"
-          element={<AdminEventPhotoTagPage />}
+          element={
+            <ResponsiveSameTree
+              render={(desktop) => <AdminEventPhotoTagPage desktop={desktop} />}
+            />
+          }
         />
 
         {/* 화면이 폭을 스스로 가르므로, 경계를 넘어도 다시 마운트하지 않는다. */}

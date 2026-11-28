@@ -2,13 +2,21 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
+import { DesktopPageShell } from '../../../../components/layout/desktop';
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminEventRegistrationStore } from '../../../../store/adminEventRegistration.store';
 
 import BackButton from '../../../local-recommendation/components/BackButton';
 import FormField from '../../../local-recommendation/course-basic-info/components/FormField';
-import EventDateGroup from './components/EventDateGroup';
+import EventDateGroup, {
+  type EventDateDraft,
+} from './components/EventDateGroup';
+
+function toDateDraft(value: string): EventDateDraft {
+  const [year = '', month = '', day = ''] = value.split('-');
+  return { year, month, day };
+}
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_TOP = 48;
@@ -30,7 +38,7 @@ const SUBMIT_FONT_SIZE = 16;
 
 const PHONE_PATTERN = /^0\d{1,2}-\d{3,4}-\d{4}$/;
 
-function AdminEventBasicInfoPage() {
+function AdminEventBasicInfoPage({ desktop = false }: { desktop?: boolean }) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const place = useAdminEventRegistrationStore((state) => state.place);
@@ -48,11 +56,19 @@ function AdminEventBasicInfoPage() {
     placeName: basicInfo.placeName || place?.title || '',
   }));
 
+  const [startDateDraft, setStartDateDraft] = useState(() =>
+    toDateDraft(basicInfo.startDate)
+  );
+  const [endDateDraft, setEndDateDraft] = useState(() =>
+    toDateDraft(basicInfo.endDate)
+  );
+
   useEffect(() => {
     if (!place) {
-      navigate('/admin', { replace: true });
+      // /admin은 모바일 화면이라 PC에서는 행사 목록으로 보낸다.
+      navigate(desktop ? '/festival' : '/admin', { replace: true });
     }
-  }, [place, navigate]);
+  }, [place, navigate, desktop]);
 
   if (!place) return null;
 
@@ -95,6 +111,133 @@ function AdminEventBasicInfoPage() {
     });
     navigate('/admin/event-registration/photo-tag');
   };
+
+  if (desktop) {
+    // Figma 1440 데스크톱 시안(7214:22709) 기준 리터럴 px.
+    const fieldClass =
+      'border-gray-2 placeholder:text-gray-4 focus:border-main-5 h-[59px] w-full rounded-[12px] border bg-white px-[20px] text-[16px] font-medium outline-none';
+    const labelClass =
+      'flex flex-col gap-[20px] text-[20px] leading-[24px] font-semibold';
+    return (
+      <DesktopPageShell>
+        <header className="flex flex-col gap-[6px]">
+          <h1 className="text-[32px] leading-[38px] font-semibold">
+            어떤 행사인가요?
+          </h1>
+          <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
+            행사의 기본 정보를 입력해주세요
+          </p>
+        </header>
+        <form
+          className="mt-[60px] flex flex-col gap-[60px]"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSubmit();
+          }}
+        >
+          <div className="flex flex-col gap-[40px]">
+            <label className={labelClass}>
+              행사의 이름을 알려주세요
+              <input
+                className={fieldClass}
+                value={form.placeName}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    placeName: event.target.value,
+                  }))
+                }
+                placeholder="예) 양평 수박 축제"
+              />
+            </label>
+            <label className={labelClass}>
+              행사를 소개해주세요
+              <input
+                className={fieldClass}
+                value={form.placeIntro}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    placeIntro: event.target.value,
+                  }))
+                }
+                placeholder="여행자들에게 전하고 싶은 한마디를 적어보세요"
+              />
+            </label>
+            <div className="flex flex-col gap-[20px]">
+              <h2 className="text-[20px] leading-[24px] font-semibold">
+                행사 기간을 입력해 주세요
+              </h2>
+              <EventDateGroup
+                desktop
+                id="desktop-event-start-date"
+                legend="시작 날짜"
+                draft={startDateDraft}
+                onDraftChange={setStartDateDraft}
+                onChange={(value) =>
+                  setForm((prev) => ({ ...prev, startDate: value }))
+                }
+              />
+              <EventDateGroup
+                desktop
+                id="desktop-event-end-date"
+                legend="종료 날짜"
+                draft={endDateDraft}
+                onDraftChange={setEndDateDraft}
+                onChange={(value) =>
+                  setForm((prev) => ({ ...prev, endDate: value }))
+                }
+              />
+              {isEndDateBeforeStart && (
+                <p className="text-main-5" role="alert">
+                  종료 날짜는 시작 날짜보다 빠를 수 없어요.
+                </p>
+              )}
+            </div>
+            <label className={labelClass}>
+              연락 가능한 전화번호를 입력해 주세요
+              <input
+                type="tel"
+                className={fieldClass}
+                value={form.phone}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, phone: event.target.value }))
+                }
+                placeholder="예) 000-0000-0000"
+                aria-invalid={!isPhoneValid}
+              />
+              {!isPhoneValid && (
+                <span
+                  className="text-main-5 text-[16px] font-medium"
+                  role="alert"
+                >
+                  전화번호 형식이 올바르지 않아요. (예: 000-0000-0000)
+                </span>
+              )}
+            </label>
+            <label className={labelClass}>
+              공식 홈페이지를 입력해 주세요
+              <input
+                className={fieldClass}
+                value={form.homepage}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, homepage: event.target.value }))
+                }
+                placeholder="예) http://yeogido.kr"
+              />
+            </label>
+          </div>
+          <button
+            type="submit"
+            disabled={!isReady}
+            className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 h-[61px] w-full rounded-[12px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
+          >
+            사진 추가하기
+          </button>
+        </form>
+      </DesktopPageShell>
+    );
+  }
 
   return (
     <ResponsivePageShell
@@ -173,7 +316,8 @@ function AdminEventBasicInfoPage() {
               <EventDateGroup
                 id="event-start-date"
                 legend="시작 날짜"
-                value={form.startDate}
+                draft={startDateDraft}
+                onDraftChange={setStartDateDraft}
                 onChange={(value) =>
                   setForm((prev) => ({ ...prev, startDate: value }))
                 }
@@ -181,7 +325,8 @@ function AdminEventBasicInfoPage() {
               <EventDateGroup
                 id="event-end-date"
                 legend="종료 날짜"
-                value={form.endDate}
+                draft={endDateDraft}
+                onDraftChange={setEndDateDraft}
                 onChange={(value) =>
                   setForm((prev) => ({ ...prev, endDate: value }))
                 }
