@@ -1,8 +1,12 @@
+import { useEffect } from 'react';
+
 import { useMyBusinesses } from '../../../../hooks/useMyBusinesses';
 import type { BusinessInfoResponse } from '../../../../types/business.type';
 import {
   areAllBusinessesPromoting,
+  checkSelectedBusiness,
   isBusinessPromoting,
+  type BusinessListStatus,
 } from '../../../../utils/businessPromotionStatus';
 
 import PlaceSelectionDesktopView from '../desktop';
@@ -55,15 +59,28 @@ function PlaceSelectionScreen({
     if (isBusinessPromoting(business)) return;
     onSelectedBusinessChange(business);
   };
-  // 고른 뒤에 목록이 다시 와서 그 사업장이 홍보 중이 됐다면 넘어가지 못하게 한다.
-  const latestSelected = selectedBusiness
-    ? businesses.find(
-        (business) =>
-          business.businessInfoId === selectedBusiness.businessInfoId
-      )
-    : undefined;
+
+  // 고른 사업장을 최신 목록과 맞춘다. 목록이 정상일 때 그 사업장이 없거나 홍보
+  // 중이면 선택을 해제해서, 목록에는 "홍보중" 칩이 보이고 시트는 선택 없음 상태가
+  // 된다. 목록이 로딩 중이거나 에러면 해제하지 않고 넘어가지만 못하게 한다
+  // (뒤로 갔다 와서 선택이 남아 있는 경우도 같다).
+  const listStatus: BusinessListStatus = isError
+    ? 'error'
+    : data === undefined
+      ? 'loading'
+      : 'ready';
+  const selectedCheck = checkSelectedBusiness({
+    selectedBusinessId: selectedBusiness?.businessInfoId ?? null,
+    listStatus,
+    businesses,
+  });
+
+  useEffect(() => {
+    if (selectedCheck === 'release') onSelectedBusinessChange(null);
+  }, [selectedCheck, onSelectedBusinessChange]);
+
   const isSubmitBlocked =
-    latestSelected !== undefined && isBusinessPromoting(latestSelected);
+    selectedBusiness !== null && selectedCheck !== 'selectable';
 
   const handleSubmit = () => {
     if (!selectedBusiness || isSubmitBlocked) return;

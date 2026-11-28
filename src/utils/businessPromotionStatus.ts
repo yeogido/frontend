@@ -35,6 +35,50 @@ export function areAllBusinessesPromoting(
   return businesses.length > 0 && businesses.every(isBusinessPromoting);
 }
 
+/** 사업장 목록을 받아 온 상태. 정상이면 'ready'. */
+export type BusinessListStatus = 'loading' | 'error' | 'ready';
+
+/**
+ * 고른 사업장을 지금 목록과 맞춰 본 결과.
+ * - none: 고른 사업장이 없다.
+ * - unverified: 목록이 로딩 중이거나 에러라 최신 상태를 확인하지 못했다. 선택은
+ *   그대로 두되 넘어가지는 못한다.
+ * - selectable: 목록에 있고 홍보 중이 아니라 넘어갈 수 있다.
+ * - release: 목록에 없거나 홍보 중이라 선택을 해제해야 한다.
+ */
+export type SelectedBusinessCheck =
+  'none' | 'unverified' | 'selectable' | 'release';
+
+interface CheckSelectedBusinessParams {
+  readonly selectedBusinessId: number | null;
+  readonly listStatus: BusinessListStatus;
+  readonly businesses: readonly Pick<
+    BusinessInfoResponse,
+    'businessInfoId' | 'hasActivePromotion'
+  >[];
+}
+
+/**
+ * 모바일과 PC가 같은 정책으로 고른 사업장을 다룬다. 목록이 정상일 때만 판단하고,
+ * 로딩 중이거나 에러면 해제하지 않고 "확인 못 함"으로 둔다.
+ */
+export function checkSelectedBusiness({
+  selectedBusinessId,
+  listStatus,
+  businesses,
+}: CheckSelectedBusinessParams): SelectedBusinessCheck {
+  if (selectedBusinessId === null) return 'none';
+  if (listStatus !== 'ready') return 'unverified';
+
+  const latest = businesses.find(
+    (business) => business.businessInfoId === selectedBusinessId
+  );
+
+  return latest !== undefined && isBusinessSelectable(latest)
+    ? 'selectable'
+    : 'release';
+}
+
 /** 선택할 수 있는 사업장. 홍보 중이면 고를 수 없다. */
 export function isBusinessSelectable(
   business: Pick<BusinessInfoResponse, 'hasActivePromotion'>

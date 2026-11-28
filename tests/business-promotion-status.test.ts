@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   areAllBusinessesPromoting,
+  checkSelectedBusiness,
   isBusinessPromoting,
   isBusinessSelectable,
   normalizeBusinessInfo,
@@ -68,4 +69,77 @@ test('normalizing keeps the other fields untouched', () => {
   assert.equal(normalized.businessInfoId, 1);
   assert.equal(normalized.businessName, '웨이브온 커피');
   assert.equal(normalized.verifiedAt, '2026-07-26T15:30:00');
+});
+
+const listed = [
+  { businessInfoId: 1, hasActivePromotion: false },
+  { businessInfoId: 2, hasActivePromotion: true },
+];
+
+test('no selection needs nothing, whatever the list status', () => {
+  for (const listStatus of ['loading', 'error', 'ready'] as const) {
+    assert.equal(
+      checkSelectedBusiness({
+        selectedBusinessId: null,
+        listStatus,
+        businesses: listed,
+      }),
+      'none'
+    );
+  }
+});
+
+test('a selection stays unverified while the list is loading', () => {
+  assert.equal(
+    checkSelectedBusiness({
+      selectedBusinessId: 1,
+      listStatus: 'loading',
+      businesses: [],
+    }),
+    'unverified'
+  );
+});
+
+test('a selection stays unverified when the list failed to load', () => {
+  assert.equal(
+    checkSelectedBusiness({
+      selectedBusinessId: 2,
+      listStatus: 'error',
+      businesses: listed,
+    }),
+    'unverified'
+  );
+});
+
+test('a selection that is on the loaded list and idle can proceed', () => {
+  assert.equal(
+    checkSelectedBusiness({
+      selectedBusinessId: 1,
+      listStatus: 'ready',
+      businesses: listed,
+    }),
+    'selectable'
+  );
+});
+
+test('a selection missing from the loaded list is released', () => {
+  assert.equal(
+    checkSelectedBusiness({
+      selectedBusinessId: 99,
+      listStatus: 'ready',
+      businesses: listed,
+    }),
+    'release'
+  );
+});
+
+test('a selection that became promoting is released', () => {
+  assert.equal(
+    checkSelectedBusiness({
+      selectedBusinessId: 2,
+      listStatus: 'ready',
+      businesses: listed,
+    }),
+    'release'
+  );
 });
