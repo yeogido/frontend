@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+import {
+  HOUR_MINUTE_PATTERN,
+  isValidBusinessHourRange,
+} from '../../../utils/promotionBusinessHours.ts';
+import {
+  SNS_ACCOUNT_ERROR_MESSAGE,
+  isValidSnsAccountInput,
+  normalizeSnsAccount,
+} from './snsAccount.ts';
+
 export const DAY_OF_WEEK_VALUES = [
   'SUNDAY',
   'MONDAY',
@@ -12,7 +22,7 @@ export const DAY_OF_WEEK_VALUES = [
 
 export type DayOfWeek = (typeof DAY_OF_WEEK_VALUES)[number];
 
-export const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const TIME_PATTERN = HOUR_MINUTE_PATTERN;
 
 // openTime/closeTime을 필수(z.string())로 두면, 요일을 고르고 시작 시간만
 // 골랐을 때(종료 시간 미선택) 이 shape 검증이 superRefine보다 먼저 실패해
@@ -45,7 +55,11 @@ export const promotionInfoSchema = z
     // 값으로만 키를 쓰므로 별도 검증 없이 신뢰한다.
     dayTimes: z.record(z.string(), dayTimeEntrySchema),
     phoneNumber: z.string().trim().min(1, '전화번호를 입력해 주세요.'),
-    snsAccount: z.string().trim().optional(),
+    snsAccount: z
+      .string()
+      .trim()
+      .refine(isValidSnsAccountInput, SNS_ACCOUNT_ERROR_MESSAGE)
+      .optional(),
   })
   .superRefine((values, ctx) => {
     // openDays에 없는 요일은 dayTimes에 값이 남아 있어도 절대 검사하지 않는다.
@@ -74,7 +88,19 @@ export const promotionInfoSchema = z
 
       // 마감 시간이 오픈 시간보다 이른 것도 허용한다(예: 18:00~02:00 같은
       // 심야 영업). 자정을 넘겨 영업하는 가게가 있어 오픈/마감 시간의
-      // 선후 관계를 제한하지 않기로 함.
+      // 선후 관계는 제한하지 않는다. 다만 서버는 시작과 종료가 같은 값을
+      // 거절하므로(00:00~00:00 24시간만 예외) 여기서 먼저 막는다.
+      if (
+        isOpenTimeValid &&
+        isCloseTimeValid &&
+        !isValidBusinessHourRange(openTime, closeTime)
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          message: '시작 시간과 종료 시간을 다르게 선택해 주세요.',
+          path: ['dayTimes', day, 'closeTime'],
+        });
+      }
     });
   });
 
@@ -114,6 +140,6 @@ export function toPromotionInfoResult(
       };
     }),
     phoneNumber: values.phoneNumber,
-    snsAccount: values.snsAccount || undefined,
+    snsAccount: normalizeSnsAccount(values.snsAccount ?? ''),
   };
 }

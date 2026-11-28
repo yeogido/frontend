@@ -2,15 +2,19 @@ import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { isValidBusinessHourRange } from '../../../utils/promotionBusinessHours';
 import {
   DAY_OF_WEEK_VALUES,
   promotionInfoSchema,
-  TIME_PATTERN,
   toPromotionInfoResult,
   type DayOfWeek,
   type PromotionInfoFormValues,
   type PromotionInfoResult,
 } from './schema';
+import {
+  SNS_ACCOUNT_ERROR_MESSAGE,
+  isValidSnsAccountInput,
+} from './snsAccount';
 
 export interface UsePromotionInfoFormParams {
   onNext: (values: PromotionInfoResult) => void | Promise<void>;
@@ -92,19 +96,21 @@ export function usePromotionInfoForm({
   // SNS 계정과 선택 안 한 요일의 값은 아예 보지 않는다.
   const isDayHoursReady = openDays.every((day) => {
     const hour = dayTimes[day];
-    return (
-      hour?.openTime &&
-      hour?.closeTime &&
-      TIME_PATTERN.test(hour.openTime) &&
-      TIME_PATTERN.test(hour.closeTime)
-    );
+    return isValidBusinessHourRange(hour?.openTime, hour?.closeTime);
   });
+
+  // SNS는 선택 항목이지만 입력했다면 주소 모양이어야 한다. 입력 중에도 바로 알린다.
+  const isSnsAccountValid = isValidSnsAccountInput(snsAccount ?? '');
+  const snsAccountErrorMessage = isSnsAccountValid
+    ? undefined
+    : SNS_ACCOUNT_ERROR_MESSAGE;
 
   const isReady =
     shortDescription.trim().length > 0 &&
     phoneNumber.trim().length > 0 &&
     openDays.length > 0 &&
-    isDayHoursReady;
+    isDayHoursReady &&
+    isSnsAccountValid;
 
   const handleValid = (values: PromotionInfoFormValues) =>
     onNext(toPromotionInfoResult(values));
@@ -117,6 +123,7 @@ export function usePromotionInfoForm({
     dayTimes,
     shortDescription,
     dayTimeErrorMessageByDay,
+    snsAccountErrorMessage,
     isReady,
     isSubmitting,
   };

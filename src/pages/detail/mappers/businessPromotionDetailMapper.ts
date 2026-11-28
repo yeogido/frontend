@@ -1,5 +1,9 @@
 import { toContentTagId } from '../../../utils/contentTags';
 import type { OperatingDay } from '../../../utils/operatingHours';
+import {
+  isAllDayBusinessHour,
+  normalizeServerBusinessHour,
+} from '../../../utils/promotionBusinessHours';
 import type {
   BusinessPromotionBusinessHour,
   BusinessPromotionDetailResponse,
@@ -56,7 +60,12 @@ function formatBusinessHours(
     );
 
   if (isSameEveryDay) {
-    return `매일 ${businessHours[0].openTime} - ${businessHours[0].closeTime}`;
+    return isAllDayBusinessHour(
+      businessHours[0].openTime,
+      businessHours[0].closeTime
+    )
+      ? '24시간 영업'
+      : `매일 ${businessHours[0].openTime} - ${businessHours[0].closeTime}`;
   }
 
   const sorted = [...businessHours].sort(
@@ -72,7 +81,11 @@ function formatBusinessHours(
   return sorted
     .map(
       (hour) =>
-        `${DAY_OF_WEEK_LABEL[hour.dayOfWeek] ?? hour.dayOfWeek} ${hour.openTime}-${hour.closeTime}`
+        `${DAY_OF_WEEK_LABEL[hour.dayOfWeek] ?? hour.dayOfWeek} ${
+          isAllDayBusinessHour(hour.openTime, hour.closeTime)
+            ? '24시간'
+            : `${hour.openTime}-${hour.closeTime}`
+        }`
     )
     .join(', ');
 }
@@ -85,11 +98,12 @@ function toOperatingDays(
       hour.dayOfWeek as (typeof DAY_OF_WEEK_ORDER)[number]
     )
       ? [
-          {
+          // 서버의 24시간(00:00~00:00)을 operatingHours.ts가 아는 표기로 맞춘다.
+          normalizeServerBusinessHour({
             dayOfWeek: hour.dayOfWeek as OperatingDay['dayOfWeek'],
             openTime: hour.openTime,
             closeTime: hour.closeTime,
-          },
+          }),
         ]
       : []
   );
