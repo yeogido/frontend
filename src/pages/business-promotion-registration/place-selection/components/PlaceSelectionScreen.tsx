@@ -1,5 +1,9 @@
 import { useMyBusinesses } from '../../../../hooks/useMyBusinesses';
 import type { BusinessInfoResponse } from '../../../../types/business.type';
+import {
+  areAllBusinessesPromoting,
+  isBusinessPromoting,
+} from '../../../../utils/businessPromotionStatus';
 
 import PlaceSelectionDesktopView from '../desktop';
 import BusinessListSection from './BusinessListSection';
@@ -44,8 +48,25 @@ function PlaceSelectionScreen({
         ? '사업자 인증이 완료된 사업장이 없어요. 사업자 인증을 먼저 진행해 주세요.'
         : undefined;
 
+  // 인증한 사업장이 전부 홍보 중이면 고를 수 있는 사업장이 없다.
+  const allPromoting = areAllBusinessesPromoting(businesses);
+  // 이미 홍보 중인 사업장은 고르지 않는다(버튼도 막혀 있지만 여기서도 거른다).
+  const handleSelect = (business: BusinessInfoResponse) => {
+    if (isBusinessPromoting(business)) return;
+    onSelectedBusinessChange(business);
+  };
+  // 고른 뒤에 목록이 다시 와서 그 사업장이 홍보 중이 됐다면 넘어가지 못하게 한다.
+  const latestSelected = selectedBusiness
+    ? businesses.find(
+        (business) =>
+          business.businessInfoId === selectedBusiness.businessInfoId
+      )
+    : undefined;
+  const isSubmitBlocked =
+    latestSelected !== undefined && isBusinessPromoting(latestSelected);
+
   const handleSubmit = () => {
-    if (!selectedBusiness) return;
+    if (!selectedBusiness || isSubmitBlocked) return;
     void onNext();
   };
 
@@ -55,7 +76,10 @@ function PlaceSelectionScreen({
         businesses={businesses}
         selectedBusiness={selectedBusiness}
         statusMessage={statusMessage}
+        allPromoting={allPromoting}
+        isSubmitBlocked={isSubmitBlocked}
         onSelectedBusinessChange={onSelectedBusinessChange}
+        onSelect={handleSelect}
         onSubmit={handleSubmit}
         onBack={onBack}
       />
@@ -70,11 +94,13 @@ function PlaceSelectionScreen({
           selectedBusiness ? String(selectedBusiness.businessInfoId) : null
         }
         statusMessage={statusMessage}
-        onItemAdd={onSelectedBusinessChange}
+        onItemAdd={handleSelect}
         onBack={onBack}
       />
       <SelectedBusinessSection
         selectedBusiness={selectedBusiness}
+        allPromoting={allPromoting}
+        isSubmitBlocked={isSubmitBlocked}
         onRemove={() => onSelectedBusinessChange(null)}
         onSubmit={handleSubmit}
       />
