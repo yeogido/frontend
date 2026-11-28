@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import addIcon from '../../../assets/icons/material-symbols_add-2-rounded.svg';
 import locationIcon from '../../../assets/icons/business-location.svg';
 import type { BusinessInfoResponse } from '../../../types/business.type';
+import { isBusinessPromoting } from '../../../utils/businessPromotionStatus';
 import { BUSINESS_VERIFICATION_PATH } from '../utils/profileBusinessSection';
 
 interface MyBusinessesCardProps {
@@ -41,22 +42,30 @@ function MyBusinessesCard({ businesses }: MyBusinessesCardProps) {
         {businesses.map((business) => (
           <li
             key={business.businessInfoId}
-            className="flex items-start gap-[12px] rounded-[12px] bg-[#f9f9f9] px-[12px] pt-[12px] pb-[18px]"
+            className="flex items-start justify-between gap-[12px] rounded-[12px] bg-[#f9f9f9] px-[12px] pt-[12px] pb-[18px]"
           >
-            <img
-              src={locationIcon}
-              alt=""
-              aria-hidden="true"
-              className="size-[24px] shrink-0"
-            />
-            <div className="flex min-w-0 flex-col gap-[6px] pt-[3px] leading-[normal]">
-              <p className="truncate text-[16px] font-semibold text-[#1c1c1c]">
-                {business.businessName}
-              </p>
-              <p className="truncate text-[12px] text-[#505050]">
-                {business.businessAddress}
-              </p>
+            <div className="flex min-w-0 items-start gap-[12px]">
+              <img
+                src={locationIcon}
+                alt=""
+                aria-hidden="true"
+                className="size-[24px] shrink-0"
+              />
+              <div className="flex min-w-0 flex-col gap-[6px] pt-[3px] leading-[normal]">
+                <p className="truncate text-[16px] font-semibold text-[#1c1c1c]">
+                  {business.businessName}
+                </p>
+                <p className="truncate text-[12px] text-[#505050]">
+                  {business.businessAddress}
+                </p>
+              </div>
             </div>
+            {isBusinessPromoting(business) ? (
+              // 장소 선택 목록의 "홍보중" 칩과 같은 모양(BusinessDesktopRow).
+              <span className="bg-gray-2 text-gray-4 shrink-0 rounded-[8px] px-[8px] py-[6px] text-[12px] leading-[normal] font-medium">
+                홍보중
+              </span>
+            ) : null}
           </li>
         ))}
       </ul>
