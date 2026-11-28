@@ -31,6 +31,7 @@ function PromotionInfoForm(props: UsePromotionInfoFormParams) {
     submitForm,
     openDays,
     dayTimeErrorMessageByDay,
+    snsAccountErrorMessage,
     isReady,
     isSubmitting,
   } = usePromotionInfoForm(props);
@@ -121,10 +122,19 @@ function PromotionInfoForm(props: UsePromotionInfoFormParams) {
             {...register('snsAccount')}
             id="promotion-sns-account"
             type="text"
-            placeholder="@"
+            placeholder="instagram.com/아이디"
             className="border-gray-2 placeholder:text-gray-4 focus:border-main-5 w-full border bg-white outline-none"
             style={inputStyle}
           />
+          {snsAccountErrorMessage ? (
+            <p
+              className="text-main-5"
+              style={{ marginTop: 6 * scale, fontSize: 12 * scale }}
+              role="alert"
+            >
+              {snsAccountErrorMessage}
+            </p>
+          ) : null}
         </FormField>
       </div>
 

@@ -3,6 +3,10 @@ import { Controller } from 'react-hook-form';
 import { MdCheck } from 'react-icons/md';
 
 import type { BusinessInfoResponse } from '../../../../types/business.type';
+import {
+  ALL_DAY_BUSINESS_HOUR,
+  isAllDayBusinessHour,
+} from '../../../../utils/promotionBusinessHours';
 import DesktopStepLayout from '../../components/DesktopStepLayout';
 import TimeRange from '../components/TimeRange';
 import { dayOfWeekOptions } from '../constants/options';
@@ -18,8 +22,8 @@ import {
 
 // Figma 1440 데스크톱 시안(7193:17879 / 7193:45352) 기준 리터럴 px
 const DESCRIPTION_MAX_LENGTH = 255;
-// 24시간 영업은 00:00-23:59로 저장한다(utils/operatingHours.ts의 규칙).
-const ALL_DAY = { openTime: '00:00', closeTime: '23:59' } as const;
+// 24시간 영업은 서버 규격대로 00:00~00:00으로 보낸다.
+const ALL_DAY = ALL_DAY_BUSINESS_HOUR;
 
 const FIELD_CLASS = 'flex flex-col gap-[20px]';
 const LABEL_CLASS = 'text-[20px] leading-[24px] font-semibold text-black';
@@ -27,11 +31,9 @@ const SUB_LABEL_CLASS = 'text-gray-5 text-[16px] leading-[19px]';
 const INPUT_CLASS =
   'border-gray-2 placeholder:text-gray-4 focus:border-main-5 h-[59px] w-full rounded-[12px] border bg-white px-[20px] text-[16px] font-medium outline-none';
 
+// 서버 규격(00:00~00:00)과 기존 값(00:00~23:59)을 모두 24시간으로 본다.
 function isAllDay(entry: DayTimeEntry | undefined) {
-  return (
-    entry?.openTime === ALL_DAY.openTime &&
-    entry.closeTime === ALL_DAY.closeTime
-  );
+  return isAllDayBusinessHour(entry?.openTime, entry?.closeTime);
 }
 
 /** 고를 시간이 없는 상태(요일 미선택·24시간)에 보여주는 비활성 시간 줄. */
@@ -73,6 +75,7 @@ function PromotionInfoDesktopView({
     dayTimes,
     shortDescription,
     dayTimeErrorMessageByDay,
+    snsAccountErrorMessage,
     isReady,
     isSubmitting,
   } = usePromotionInfoForm(formParams);
@@ -315,6 +318,11 @@ function PromotionInfoDesktopView({
               placeholder="instagram.com/아이디"
               className={INPUT_CLASS}
             />
+            {snsAccountErrorMessage ? (
+              <p className="text-main-5 -mt-[8px] text-[14px]" role="alert">
+                {snsAccountErrorMessage}
+              </p>
+            ) : null}
           </div>
         </div>
 
