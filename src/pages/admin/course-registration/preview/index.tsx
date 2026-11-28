@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import CourseDetailLayout from '../../../detail/components/CourseDetailLayout';
+import ResponsiveCourseDetailLayout from '../../../detail/components/ResponsiveCourseDetailLayout';
 import { mapCourseDetailDtoToViewModel } from '../../../detail/mappers/courseDetailMapper';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import { buildPreviewCourseDetail } from './buildPreviewCourseDetail';
@@ -54,7 +54,7 @@ function AdminCourseRegistrationPreviewPage() {
   }
 
   return (
-    <CourseDetailLayout
+    <ResponsiveCourseDetailLayout
       course={courseDetail}
       reviewType="yeogido-course"
       onBack={() => navigate('/admin/course-registration/visit-order')}

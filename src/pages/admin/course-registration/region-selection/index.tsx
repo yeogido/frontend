@@ -5,6 +5,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getPopularRegions, searchRegions } from '../../../../apis/regions.api';
 import { LoadingSpinner } from '../../../../components/common';
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
+import { DesktopPageShell } from '../../../../components/layout/desktop';
+import { useIsDesktop } from '../../../../hooks/useIsDesktop';
+import DesktopSearchField from '../../../local-recommendation/desktop/DesktopSearchField';
+import PopularRegionDesktopGrid from '../../../local-recommendation/region-selection/desktop/PopularRegionDesktopGrid';
+import RecentRegionDesktopSection from '../../../local-recommendation/region-selection/desktop/RecentRegionDesktopSection';
+import RegionSelectedDesktopBar from '../../../local-recommendation/region-selection/desktop/RegionSelectedDesktopBar';
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 
@@ -34,11 +40,17 @@ const STATUS_MESSAGE_FONT_SIZE = 14;
 function AdminCourseRegionSelectionPage() {
   const navigate = useNavigate();
   const scale = useGlobalScale();
+  const isDesktop = useIsDesktop();
   const region = useAdminCourseRegistrationStore((state) => state.region);
   const setRegionInStore = useAdminCourseRegistrationStore(
     (state) => state.setRegion
   );
-  const { recentRegions, addRecentRegion } = useRecentCourseRegions();
+  const {
+    recentRegions,
+    addRecentRegion,
+    clearRecentRegions,
+    removeRecentRegion,
+  } = useRecentCourseRegions();
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -122,12 +134,98 @@ function AdminCourseRegionSelectionPage() {
             staleTime: 30_000,
           });
 
-    const matched = results.find((neighborhood) => neighborhood.name === trimmed);
+    const matched = results.find(
+      (neighborhood) => neighborhood.name === trimmed
+    );
 
     if (matched) {
       handleSelectNeighborhood(matched);
     }
   };
+
+  if (isDesktop) {
+    const popular = regionsQuery.data ?? [];
+    return (
+      <DesktopPageShell>
+        <div className="flex flex-col gap-[32px]">
+          {/* 시안은 제목-검색창만 24px, 나머지 구역 간격은 32px다. */}
+          <header className="-mb-[8px] flex flex-col gap-[6px]">
+            <h1 className="text-[32px] leading-[38px] font-semibold text-black">
+              어디를 다녀오셨나요?
+            </h1>
+            <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
+              코스를 등록할 지역을 검색하거나 선택해 주세요
+            </p>
+          </header>
+          {region ? (
+            <RegionSelectedDesktopBar
+              name={region.name}
+              onClear={handleClearSelection}
+            />
+          ) : (
+            <DesktopSearchField
+              placeholder="지역명 또는 도시명을 검색해 주세요"
+              label="지역명 또는 도시명 검색"
+              suggestions={searchSuggestions}
+              filterSuggestions={false}
+              onQueryChange={handleQueryChange}
+              onSuggestionSelect={(name) => {
+                void handleSearch(name);
+              }}
+              onEnter={() => {
+                void handleSearch(searchQuery);
+              }}
+            />
+          )}
+          {searchStatusMessage ? (
+            <p role="status">{searchStatusMessage}</p>
+          ) : null}
+          <RecentRegionDesktopSection
+            searches={recentRegions.map((item) => item.name)}
+            onClear={clearRecentRegions}
+            onRemove={removeRecentRegion}
+            onSelect={(name) => {
+              const item = recentRegions.find(
+                (candidate) => candidate.name === name
+              );
+              if (item) handleSelectNeighborhood(item);
+            }}
+          />
+          {regionsQuery.isLoading ? (
+            <LoadingSpinner label="지역 정보를 불러오는 중" />
+          ) : regionsQuery.isError ? (
+            <button type="button" onClick={() => regionsQuery.refetch()}>
+              지역 정보를 불러오지 못했어요. 다시 시도
+            </button>
+          ) : (
+            <PopularRegionDesktopGrid
+              regions={popular.map((item) => ({
+                id: String(item.regionId),
+                name: item.name,
+                province: fromRegion(item).parentName,
+                imageSrc: item.imageUrl,
+              }))}
+              selectedRegionId={region ? String(region.id) : undefined}
+              onSelect={(item) => {
+                const candidate = popular.find(
+                  (entry) => String(entry.regionId) === item.id
+                );
+                if (candidate) handleSelectNeighborhood(fromRegion(candidate));
+              }}
+            />
+          )}
+          <button
+            type="button"
+            disabled={!region}
+            onClick={() => navigate('/admin/course-registration/basic-info')}
+            className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 h-[61px] w-full rounded-[12px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
+          >
+            기본 정보 입력하기
+          </button>
+        </div>
+      </DesktopPageShell>
+    );
+  }
 
   return (
     <ResponsivePageShell

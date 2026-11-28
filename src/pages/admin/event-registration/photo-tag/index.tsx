@@ -13,6 +13,7 @@ import {
 } from '../../../../apis/files.api';
 import { fetchHashtags } from '../../../../apis/hashtags';
 import { ResponsivePageShell } from '../../../../components/layout/ResponsivePageShell';
+import { DesktopPageShell } from '../../../../components/layout/desktop';
 import { useToast } from '../../../../components/toast';
 import { tagDefinitionMap } from '../../../../constants/tags';
 import { MIN_TOUCH_TARGET } from '../../../../constants/layout';
@@ -28,7 +29,13 @@ import KeywordSelectionSection from '../../../local-recommendation/tag-selection
 import { toggleTag } from '../../../local-recommendation/tag-selection/utils';
 import { mapTagIdsToHashtagIds } from '../../../local-recommendation/tag-selection/hashtagMapping';
 import CategorySelectionSection from './components/CategorySelectionSection';
-import { toContentCategory, type EventCategoryId } from '../types';
+import {
+  eventCategoryOptions,
+  toContentCategory,
+  type EventCategoryId,
+} from '../types';
+import RepresentativePhotoDesktopSection from '../../../local-recommendation/tag-selection/desktop/RepresentativePhotoDesktopSection';
+import KeywordSelectionDesktopSection from '../../../local-recommendation/tag-selection/desktop/KeywordSelectionDesktopSection';
 
 // Figma 390 디자인 기준 리터럴 px
 const PAGE_PADDING_TOP = 48;
@@ -45,7 +52,7 @@ const SUBMIT_ERROR_FONT_SIZE = 12;
 const REGISTER_ERROR_MESSAGE = '행사 등록에 실패했습니다. 다시 시도해 주세요.';
 const UPDATE_ERROR_MESSAGE = '행사 수정에 실패했습니다. 다시 시도해 주세요.';
 
-function AdminEventPhotoTagPage() {
+function AdminEventPhotoTagPage({ desktop = false }: { desktop?: boolean }) {
   const navigate = useNavigate();
   const scale = useGlobalScale();
   const queryClient = useQueryClient();
@@ -111,9 +118,10 @@ function AdminEventPhotoTagPage() {
 
   useEffect(() => {
     if (!place) {
-      navigate('/admin', { replace: true });
+      // /admin은 모바일 화면이라 PC에서는 행사 목록으로 보낸다.
+      navigate(desktop ? '/festival' : '/admin', { replace: true });
     }
-  }, [place, navigate]);
+  }, [place, navigate, desktop]);
 
   if (!place) return null;
 
@@ -243,6 +251,79 @@ function AdminEventPhotoTagPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (desktop) {
+    return (
+      <DesktopPageShell>
+        <div className="flex flex-col gap-[60px]">
+          <div className="flex flex-col gap-[24px]">
+            <header className="flex flex-col gap-[6px]">
+              <h1 className="text-[32px] leading-[38px] font-semibold">
+                사진과 키워드를 추가해 주세요
+              </h1>
+              <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
+                행사를 더 매력적으로 소개할 수 있어요!
+              </p>
+            </header>
+            <RepresentativePhotoDesktopSection
+              photo={photo}
+              onPhotoChange={handlePhotoChange}
+            />
+            <KeywordSelectionDesktopSection
+              selectedTagIds={selectedTagIds}
+              limitMessage={limitMessage}
+              onToggle={handleTagToggle}
+            />
+            <section
+              aria-labelledby="event-category-title"
+              className="flex flex-col gap-[12px]"
+            >
+              <h2
+                id="event-category-title"
+                className="text-[20px] leading-[24px] font-semibold"
+              >
+                카테고리 등록
+              </h2>
+              <div className="flex flex-wrap gap-[16px]">
+                {eventCategoryOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={category === option.id}
+                    onClick={() => handleCategorySelect(option.id)}
+                    className={`h-[33px] rounded-full border px-[12px] text-[18px] ${category === option.id ? 'border-main-5 bg-main-2 text-main-5' : 'border-gray-3 bg-background text-gray-3'}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+          <div>
+            <button
+              type="button"
+              disabled={!isReady || isSubmitting}
+              onClick={handleSubmit}
+              className="bg-main-5 disabled:bg-gray-2 disabled:text-gray-4 h-[61px] w-full rounded-[12px] text-[24px] font-semibold text-white disabled:cursor-not-allowed"
+            >
+              {isSubmitting
+                ? editingContentId
+                  ? '수정 중...'
+                  : '등록 중...'
+                : editingContentId
+                  ? '행사 수정하기'
+                  : '행사 등록하기'}
+            </button>
+            {submitError && (
+              <p className="text-main-5 mt-[8px]" role="alert">
+                {submitError}
+              </p>
+            )}
+          </div>
+        </div>
+      </DesktopPageShell>
+    );
+  }
 
   return (
     <ResponsivePageShell

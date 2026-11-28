@@ -10,6 +10,7 @@ const DIALOG_PADDING = 36;
 const UPLOADER_HEIGHT = 274;
 
 interface PlacePhotoDesktopModalProps {
+  requirePhoto?: boolean;
   placeTitle: string;
   previewUrl: string | null;
   onFileChange: (file: File) => void;
@@ -24,6 +25,7 @@ interface PlacePhotoDesktopModalProps {
  */
 function PlacePhotoDesktopModal({
   placeTitle,
+  requirePhoto = true,
   previewUrl,
   onFileChange,
   onClose,
@@ -188,6 +190,16 @@ function PlacePhotoDesktopModal({
         >
           사진 추가하기
         </button>
+        {!requirePhoto && !previewUrl ? (
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isProcessing}
+            className="text-main-5 mt-[16px] text-[18px] font-semibold"
+          >
+            사진 없이 계속하기
+          </button>
+        ) : null}
       </section>
     </div>
   );

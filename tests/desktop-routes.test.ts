@@ -44,8 +44,16 @@ test('keeps screens without a desktop design on the mobile frame', () => {
     hasDesktopView('/yeogido-course/detail/117/reviews/extra'),
     false
   );
-  assert.equal(hasDesktopView('/admin/courses/detail/117'), false);
   assert.ok(DESKTOP_VIEW_PATHS.length > 0);
+});
+
+test('matches the admin course desktop screens', () => {
+  assert.equal(hasDesktopView('/admin/courses/detail/117'), true);
+  assert.equal(
+    hasDesktopView('/admin/course-registration/region-selection'),
+    true
+  );
+  assert.equal(hasDesktopView('/admin/course-registration/visit-order'), true);
 });
 
 test('matches the business verification screen that has a desktop view', () => {

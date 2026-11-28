@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { ReactNode } from 'react';
+import { IoLocationOutline } from 'react-icons/io5';
 
 import type { VisitEvent } from '../constants';
 
@@ -85,11 +86,17 @@ export function VisitEventDesktopCard({
             className="bg-gray-2 shrink-0 overflow-hidden rounded-[12px]"
             style={{ height: THUMB_SIZE, width: THUMB_SIZE }}
           >
-            <img
-              src={event.imageSrc}
-              alt=""
-              className="size-full object-cover"
-            />
+            {event.imageSrc ? (
+              <img
+                src={event.imageSrc}
+                alt=""
+                className="size-full object-cover"
+              />
+            ) : (
+              <span className="text-gray-4 flex size-full items-center justify-center">
+                <IoLocationOutline aria-hidden="true" className="text-[24px]" />
+              </span>
+            )}
           </div>
           <div className="flex min-w-0 flex-col gap-[8px]">
             <h3 className="truncate text-[20px] font-semibold text-black">

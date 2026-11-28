@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 
-import CourseDetailLayout from '../../../detail/components/CourseDetailLayout';
+import ResponsiveCourseDetailLayout from '../../../detail/components/ResponsiveCourseDetailLayout';
 import { mapCourseDetailDtoToViewModel } from '../../../detail/mappers/courseDetailMapper';
 import { mockCourseDetailsById } from '../constants/mockCourseDetails';
 
@@ -11,14 +11,14 @@ function AdminCourseMockDetailPage() {
 
   if (!dto) {
     return (
-      <p className="p-6 text-center font-medium text-gray-4">
+      <p className="text-gray-4 p-6 text-center font-medium">
         존재하지 않는 코스입니다.
       </p>
     );
   }
 
   return (
-    <CourseDetailLayout
+    <ResponsiveCourseDetailLayout
       course={mapCourseDetailDtoToViewModel(dto)}
       reviewType="yeogido-course"
       onBack={() => navigate('/admin/courses')}

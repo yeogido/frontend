@@ -50,5 +50,14 @@ export function useRecentCourseRegions() {
     );
   };
 
-  return { recentRegions, addRecentRegion };
+  const clearRecentRegions = () => setRecentRegions([]);
+  const removeRecentRegion = (index: number) =>
+    setRecentRegions((current) => current.filter((_, i) => i !== index));
+
+  return {
+    recentRegions,
+    addRecentRegion,
+    clearRecentRegions,
+    removeRecentRegion,
+  };
 }

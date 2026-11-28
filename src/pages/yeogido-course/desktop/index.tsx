@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { IoAdd, IoSearch } from 'react-icons/io5';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import heartIcon from '../../../assets/icons/heart.svg';
 import likedIcon from '../../../assets/icons/oheart.svg';
@@ -15,6 +16,7 @@ import { useCourseDelete, useCourses } from '../../../hooks/useCourses';
 import { useCourseLikeToggle } from '../../../hooks/useCourseLikeToggle';
 import { useDistanceSortCoordinates } from '../../../hooks/useDistanceSortCoordinates';
 import { useEditCourse } from '../../../hooks/useEditCourse';
+import { useAdminCourseRegistrationStore } from '../../../store/adminCourseRegistration.store';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import type {
   CourseCompanionType,
@@ -74,13 +76,23 @@ const filterLabels = {
 interface YeogidoCourseDesktopPageProps {
   /** 인기 추천 코스 경로처럼 정렬 기본값이 추천순이 아닌 화면에서 쓴다. */
   readonly defaultSort?: string;
+  readonly adminMode?: boolean;
 }
 
 /** 데스크톱 여기도 추천 코스 목록 — 필터 3개와 정렬, 3열 카드. */
 function YeogidoCourseDesktopPage({
   defaultSort,
+  adminMode = false,
 }: YeogidoCourseDesktopPageProps) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const keyword = adminMode ? (searchParams.get('keyword') ?? '') : '';
+  const [searchState, setSearchState] = useState({ keyword, value: keyword });
+  const searchQuery =
+    searchState.keyword === keyword ? searchState.value : keyword;
+  const resetRegistration = useAdminCourseRegistrationStore(
+    (state) => state.reset
+  );
   const { getLiked, toggleLike } = useCourseLikeToggle();
   const { editCourse } = useEditCourse();
   const { requestDelete, dialogProps } = useCourseDelete();
@@ -111,6 +123,7 @@ function YeogidoCourseDesktopPage({
   } = useCourses(
     {
       courseType: 'OFFICIAL',
+      keyword: keyword || undefined,
       transportType: transportTypeByLabel[selectedFilters.transport],
       durationType: durationTypeByLabel[selectedFilters.duration],
       companionType: companionTypeByLabel[selectedFilters.companion],
@@ -137,14 +150,55 @@ function YeogidoCourseDesktopPage({
         style={{ marginTop: EXTRA_TOP_SPACE }}
         className="flex flex-col gap-[32px]"
       >
-        <div className="flex flex-col gap-[6px]">
-          <h1 className="text-[32px] leading-[38px] font-semibold text-black">
-            여기도 가볼까?
-          </h1>
-          <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
-            새로운 여행지를 발견해 보세요
-          </p>
+        <div className="flex items-start justify-between gap-[24px]">
+          <div className="flex flex-col gap-[6px]">
+            <h1 className="text-[32px] leading-[38px] font-semibold text-black">
+              여기도 가볼까?
+            </h1>
+            <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
+              새로운 여행지를 발견해 보세요
+            </p>
+          </div>
+          {adminMode ? (
+            <button
+              type="button"
+              onClick={() => {
+                resetRegistration();
+                navigate('/admin/course-registration/region-selection');
+              }}
+              className="bg-main-5 flex h-[37px] shrink-0 items-center gap-[6px] rounded-[12px] px-[14px] text-[18px] font-semibold text-[#f1f1f1]"
+            >
+              <IoAdd aria-hidden="true" size={20} />
+              코스 추가하기
+            </button>
+          ) : null}
         </div>
+        {adminMode ? (
+          <form
+            role="search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const query = searchQuery.trim();
+              const nextParams = new URLSearchParams(searchParams);
+              if (query) nextParams.set('keyword', query);
+              else nextParams.delete('keyword');
+              setSearchState({ keyword: query, value: query });
+              setSearchParams(nextParams);
+            }}
+            className="border-gray-2 flex h-[48px] items-center gap-[10px] rounded-[12px] border px-[16px]"
+          >
+            <IoSearch aria-hidden="true" className="text-gray-4 text-[24px]" />
+            <input
+              aria-label="코스명 또는 지역명 검색"
+              value={searchQuery}
+              onChange={(event) =>
+                setSearchState({ keyword, value: event.target.value })
+              }
+              placeholder="코스명 또는 지역명을 검색해 주세요"
+              className="w-full bg-transparent text-[16px] outline-none"
+            />
+          </form>
+        ) : null}
 
         <div className="flex items-start gap-[16px]">
           {yeogidoCourseFilterGroups.map((group) => (
