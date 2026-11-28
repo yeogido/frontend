@@ -1,32 +1,29 @@
-import { FaGithub } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 
 import logo from '../../assets/icons/logo.svg';
 import {
   FOOTER_CONTACT_EMAIL,
-  FOOTER_GITHUB_URL,
   FOOTER_TERMS_LABEL,
   FOOTER_TERMS_URL,
 } from '../../constants/footer';
 import { useGlobalScale } from '../../hooks/useGlobalScale';
 
-// 모든 수치는 Figma 390 모바일 시안(footer, 390×190) 기준 px
+// 모든 수치는 Figma 390 모바일 시안(footer 6770:38406, 390×162) 기준 px
 const PADDING_TOP = 20;
 const PADDING_BOTTOM = 20;
 const PADDING_X = 24;
 const LOGO_SIZE = 24;
 const CONTACT_MARGIN_TOP = 12;
-const GITHUB_MARGIN_TOP = 8;
-const GITHUB_SIZE = 24;
 const EMAIL_MARGIN_TOP = 8;
-const DIVIDER_MARGIN_TOP = 16;
-const TERMS_MARGIN_TOP = 15;
+const DIVIDER_MARGIN_TOP = 24;
+// 시안은 구분선 위쪽에서 약관까지 12px — 구분선 두께(1px)를 뺀다.
+const TERMS_MARGIN_TOP = 11;
 const TEXT_SIZE = 12;
 const TEXT_LINE_HEIGHT = 14;
 
 /**
- * 모바일 화면 공통 푸터 — 로고, Contact(GitHub·이메일), 구분선 아래
- * 이용약관. 데스크톱 푸터(DesktopFooter)와 같은 내용을 모바일 크기로 그린다.
+ * 모바일 화면 공통 푸터 — 로고, Contact(이메일), 구분선 아래 이용약관.
+ * 데스크톱 푸터(DesktopFooter)와 같은 내용을 모바일 크기로 그린다.
  */
 function Footer() {
   const scale = useGlobalScale();
@@ -57,19 +54,6 @@ function Footer() {
         >
           Contact
         </p>
-        <a
-          href={FOOTER_GITHUB_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="여기도 GitHub (새 탭)"
-          className="text-gray-4 block"
-          style={{ marginTop: GITHUB_MARGIN_TOP * scale }}
-        >
-          <FaGithub
-            aria-hidden="true"
-            style={{ width: GITHUB_SIZE * scale, height: GITHUB_SIZE * scale }}
-          />
-        </a>
         <a
           href={`mailto:${FOOTER_CONTACT_EMAIL}`}
           className="text-gray-4 font-medium"
