@@ -38,7 +38,9 @@ function DesktopSelectionLayout({
   return (
     <DesktopPageShell contentWidth={CONTENT_WIDTH}>
       <header className="flex flex-col gap-[6px]">
-        <h1 className="text-[32px] font-semibold text-black">{title}</h1>
+        <h1 className="text-[32px] leading-[38px] font-semibold text-black">
+          {title}
+        </h1>
         <p className="text-gray-5 text-[20px] leading-[1.5] font-medium">
           {description}
         </p>

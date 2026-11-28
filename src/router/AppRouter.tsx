@@ -4,6 +4,7 @@ import MainLayout from '../components/layout/MainLayout';
 import AuthLayout from '../components/layout/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import Responsive from '../components/layout/Responsive';
+import ResponsiveSameTree from '../components/layout/ResponsiveSameTree';
 import AdminRoute from '../components/auth/AdminRoute';
 import BusinessRoute from '../components/auth/BusinessRoute';
 
@@ -264,7 +265,15 @@ function AppRouter() {
             element={<AdminFestivalsRecentPage />}
           />
 
-          <Route path="/admin/courses" element={<AdminCoursesPage />} />
+          <Route
+            path="/admin/courses"
+            element={
+              <Responsive
+                desktop={<YeogidoCourseDesktopPage adminMode />}
+                mobile={<AdminCoursesPage />}
+              />
+            }
+          />
           <Route
             path="/admin/courses/popular"
             element={<AdminCoursesPopularPage />}
@@ -603,29 +612,48 @@ function AppRouter() {
           element={<AdminEventPhotoTagPage />}
         />
 
+        {/* 화면이 폭을 스스로 가르므로, 경계를 넘어도 다시 마운트하지 않는다. */}
         <Route
           path="/admin/course-registration/region-selection"
-          element={<AdminCourseRegionSelectionPage />}
+          element={
+            <ResponsiveSameTree
+              render={() => <AdminCourseRegionSelectionPage />}
+            />
+          }
         />
         <Route
           path="/admin/course-registration/basic-info"
-          element={<AdminCourseBasicInfoPage />}
+          element={
+            <ResponsiveSameTree render={() => <AdminCourseBasicInfoPage />} />
+          }
         />
         <Route
           path="/admin/course-registration/photo-tag"
-          element={<AdminCoursePhotoTagPage />}
+          element={
+            <ResponsiveSameTree render={() => <AdminCoursePhotoTagPage />} />
+          }
         />
         <Route
           path="/admin/course-registration/event-selection"
-          element={<AdminCourseEventSelectionPage />}
+          element={
+            <ResponsiveSameTree
+              render={() => <AdminCourseEventSelectionPage />}
+            />
+          }
         />
         <Route
           path="/admin/course-registration/place-selection"
-          element={<AdminCoursePlaceSelectionPage />}
+          element={
+            <ResponsiveSameTree
+              render={() => <AdminCoursePlaceSelectionPage />}
+            />
+          }
         />
         <Route
           path="/admin/course-registration/visit-order"
-          element={<AdminCourseVisitOrderPage />}
+          element={
+            <ResponsiveSameTree render={() => <AdminCourseVisitOrderPage />} />
+          }
         />
         <Route
           path="/admin/course-registration/preview"

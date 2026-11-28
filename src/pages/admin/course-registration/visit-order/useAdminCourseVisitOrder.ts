@@ -21,7 +21,6 @@ import { useToast } from '../../../../components/toast';
 import { tagDefinitionMap } from '../../../../constants/tags';
 import { useAdminCourseRegistrationStore } from '../../../../store/adminCourseRegistration.store';
 import { useAuthStore } from '../../../../store/auth.store';
-import eventThumbnail from '../../../local-recommendation/visit-order-selection/assets/event-thumbnail.png';
 import {
   findVisitEventDayIndex,
   parseDayDroppableId,
@@ -84,7 +83,7 @@ export function useAdminCourseVisitOrder() {
     buildAdminVisitEvents(
       selectedPlaces,
       selectedEvents,
-      eventThumbnail,
+      '',
       storedVisitOrder.map((dayEvents) => dayEvents.map((event) => event.id)),
       totalDays
     )
