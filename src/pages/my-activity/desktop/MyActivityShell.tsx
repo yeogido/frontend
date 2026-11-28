@@ -18,6 +18,8 @@ export type MyActivityTab = (typeof TABS)[number]['key'];
 
 interface MyActivityShellProps {
   readonly activeTab: MyActivityTab;
+  /** 프로필 요약과 탭 사이에 끼울 영역(예: 소상공인 인증 배너). */
+  readonly belowProfile?: ReactNode;
   readonly children: ReactNode;
 }
 
@@ -25,7 +27,11 @@ interface MyActivityShellProps {
  * 내 활동 화면(좋아요·등록한 게시물)의 공통 뼈대 — 프로필 요약, 탭, 본문.
  * 탭은 각각 별도 라우트라서 링크로 이동한다.
  */
-function MyActivityShell({ activeTab, children }: MyActivityShellProps) {
+function MyActivityShell({
+  activeTab,
+  belowProfile,
+  children,
+}: MyActivityShellProps) {
   const navigate = useNavigate();
   const { data: profile } = useMyProfile();
 
@@ -78,6 +84,7 @@ function MyActivityShell({ activeTab, children }: MyActivityShellProps) {
         </section>
 
         <div className="flex flex-col gap-[24px]">
+          {belowProfile}
           <nav aria-label="내 활동" className="border-gray-2 flex border-b">
             {TABS.map((tab) => {
               const isActive = tab.key === activeTab;
