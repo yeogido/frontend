@@ -46,7 +46,8 @@ function HomeDesktopPage() {
     <div className="flex min-h-dvh flex-col overflow-x-hidden bg-white">
       <DesktopHeader />
 
-      <main className="flex flex-1 flex-col pt-[48px]">
+      {/* Figma 홈(6762:37504)은 헤더 아래 60px에서 본문이 시작한다. */}
+      <main className="flex flex-1 flex-col pt-[60px]">
         <div
           style={{ width: CONTENT_WIDTH }}
           className="mx-auto flex flex-col gap-[64px] pb-[64px]"
