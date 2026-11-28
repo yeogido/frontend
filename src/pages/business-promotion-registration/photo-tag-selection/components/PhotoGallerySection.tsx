@@ -3,8 +3,7 @@ import { IoAdd, IoImage, IoTrashOutline } from 'react-icons/io5';
 
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import type { PhotoTagSelectionPhoto } from '../types';
-
-export const MAX_PHOTOS = 5;
+import { MAX_PHOTOS, pickPhotoFiles } from '../utils';
 
 // Figma 390 디자인 기준 리터럴 px.
 // local-recommendation/tag-selection/components/RepresentativePhotoSection.tsx를
@@ -55,17 +54,9 @@ function PhotoGallerySection({
     event.target.value = '';
     if (files.length === 0) return;
 
-    if (files.some((file) => !file.type.startsWith('image/'))) {
-      setErrorMessage('이미지 파일만 등록할 수 있어요.');
-      return;
-    }
-
-    setErrorMessage(
-      files.length > remainingSlots
-        ? `대표 사진은 최대 ${MAX_PHOTOS}장까지 등록할 수 있어요.`
-        : ''
-    );
-    onAdd(files.slice(0, remainingSlots));
+    const { accepted, errorMessage } = pickPhotoFiles(files, remainingSlots);
+    setErrorMessage(errorMessage);
+    if (accepted.length > 0) onAdd(accepted);
   };
 
   const handleRemove = (id: string) => {

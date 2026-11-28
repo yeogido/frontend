@@ -66,6 +66,8 @@ export const DESKTOP_VIEW_PATHS = [
   '/admin/event-registration/basic-info',
   '/admin/event-registration/photo-tag',
   '/business-verification',
+  '/business-promotion-registration',
+  '/business-promotion-registration/:promotionId/edit',
   '/local-business',
   '/local-business/detail/:id',
   '/region-info/:region',

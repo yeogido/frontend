@@ -1,10 +1,12 @@
 import { useMyBusinesses } from '../../../../hooks/useMyBusinesses';
 import type { BusinessInfoResponse } from '../../../../types/business.type';
 
+import PlaceSelectionDesktopView from '../desktop';
 import BusinessListSection from './BusinessListSection';
 import SelectedBusinessSection from './SelectedBusinessSection';
 
 interface PlaceSelectionScreenProps {
+  desktop?: boolean;
   /**
    * 선택 상태를 이 컴포넌트가 직접 들고 있지 않고 상위(오케스트레이터)에서
    * 받는다 — 뒤로가기로 이 화면이 언마운트됐다가 다시 마운트돼도 이전에
@@ -17,6 +19,7 @@ interface PlaceSelectionScreenProps {
 }
 
 function PlaceSelectionScreen({
+  desktop = false,
   selectedBusiness,
   onSelectedBusinessChange,
   onNext,
@@ -45,6 +48,19 @@ function PlaceSelectionScreen({
     if (!selectedBusiness) return;
     void onNext();
   };
+
+  if (desktop) {
+    return (
+      <PlaceSelectionDesktopView
+        businesses={businesses}
+        selectedBusiness={selectedBusiness}
+        statusMessage={statusMessage}
+        onSelectedBusinessChange={onSelectedBusinessChange}
+        onSubmit={handleSubmit}
+        onBack={onBack}
+      />
+    );
+  }
 
   return (
     <>

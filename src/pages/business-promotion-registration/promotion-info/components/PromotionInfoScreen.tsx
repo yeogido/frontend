@@ -2,6 +2,7 @@ import { ResponsivePageShell } from '../../../../components/layout/ResponsivePag
 import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 import type { BusinessInfoResponse } from '../../../../types/business.type';
 
+import PromotionInfoDesktopView from '../desktop';
 import type { PromotionInfoFormValues, PromotionInfoResult } from '../schema';
 import BackButton from './BackButton';
 import PromotionInfoForm from './PromotionInfoForm';
@@ -24,6 +25,7 @@ const PLACE_ADDRESS_MARGIN_TOP = 4;
 const PLACE_ADDRESS_SIZE = 13;
 
 interface PromotionInfoScreenProps {
+  desktop?: boolean;
   /**
    * 카드에 이름·주소만 그리므로, 수정 화면에서는 BusinessInfoResponse
    * 전체 대신 홍보글 상세의 place 정보로 채운 이 두 필드만 넘긴다
@@ -37,6 +39,7 @@ interface PromotionInfoScreenProps {
 }
 
 function PromotionInfoScreen({
+  desktop = false,
   business,
   defaultValues,
   onValuesChange,
@@ -44,6 +47,18 @@ function PromotionInfoScreen({
   onBack,
 }: PromotionInfoScreenProps) {
   const scale = useGlobalScale();
+
+  if (desktop) {
+    return (
+      <PromotionInfoDesktopView
+        business={business}
+        defaultValues={defaultValues}
+        onValuesChange={onValuesChange}
+        onNext={onNext}
+        onBack={onBack}
+      />
+    );
+  }
 
   return (
     <ResponsivePageShell
