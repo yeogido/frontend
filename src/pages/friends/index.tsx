@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MdPersonAdd } from 'react-icons/md';
+import personAddIcon from '../../assets/icons/person-add-rounded.svg';
 import requestsNotificationIcon from '../../assets/icons/friend-requests-notification.svg';
 import { useIsFetching } from '@tanstack/react-query';
 
@@ -60,19 +60,56 @@ const DESCRIPTION_SIZE = 14;
 const LIST_GAP = 2;
 const LOAD_MORE_SPACE = 16;
 
+// Figma 데스크톱 친구 목록(6098:36666) — 48px 영역 안에 32px 아이콘.
+const DESKTOP_REQUEST_BUTTON_SIZE = 48;
+const DESKTOP_REQUEST_ICON_SIZE = 32;
+const DESKTOP_REQUEST_ICON_INSET =
+  (DESKTOP_REQUEST_BUTTON_SIZE - DESKTOP_REQUEST_ICON_SIZE) / 2;
+// 알림 점 SVG(25 viewBox)는 기본 아이콘(24 viewBox)과 같은 사람 모양을 한 칸
+// 아래에 그리고 오른쪽 위에 점을 더한 것이다. 같은 비율로 키우고 한 칸만큼
+// 올려야 요청이 생겨도 사람 모양이 같은 자리에 그대로 보인다.
+const NOTIFICATION_ICON_UNIT = DESKTOP_REQUEST_ICON_SIZE / 24;
+
+/**
+ * 데스크톱 친구 목록 오른쪽 위의 친구 요청 바로가기. 받은 요청이 있으면 점이
+ * 달린 아이콘으로 바꾼다. 두 아이콘 모두 +가 오른쪽인 같은 모양이라 요청이
+ * 생겨도 좌우가 뒤집혀 보이지 않는다.
+ */
 function DesktopFriendRequestsLink() {
   const { requests } = useReceivedFriendRequests();
+  const hasRequests = requests.length > 0;
+
   return (
     <Link
       to="/friends/requests"
       aria-label="친구 요청 확인"
-      className="p-2 text-[24px] text-black"
+      className="relative block shrink-0"
+      style={{
+        width: DESKTOP_REQUEST_BUTTON_SIZE,
+        height: DESKTOP_REQUEST_BUTTON_SIZE,
+      }}
     >
-      {requests.length > 0 ? (
-        <img src={requestsNotificationIcon} alt="" />
-      ) : (
-        <MdPersonAdd aria-hidden="true" />
-      )}
+      <img
+        src={hasRequests ? requestsNotificationIcon : personAddIcon}
+        alt=""
+        aria-hidden="true"
+        className="absolute max-w-none"
+        style={
+          hasRequests
+            ? {
+                left: DESKTOP_REQUEST_ICON_INSET,
+                top: DESKTOP_REQUEST_ICON_INSET - NOTIFICATION_ICON_UNIT,
+                width: NOTIFICATION_ICON_UNIT * 25,
+                height: NOTIFICATION_ICON_UNIT * 25,
+              }
+            : {
+                left: DESKTOP_REQUEST_ICON_INSET,
+                top: DESKTOP_REQUEST_ICON_INSET,
+                width: DESKTOP_REQUEST_ICON_SIZE,
+                height: DESKTOP_REQUEST_ICON_SIZE,
+              }
+        }
+      />
     </Link>
   );
 }
