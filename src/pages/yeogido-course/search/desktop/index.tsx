@@ -24,6 +24,9 @@ import useYeogidoCourseFilters from '../../hooks/useYeogidoCourseFilters';
 
 // Figma 1440 데스크톱 시안(6364:46791 자연어 입력 결과) 기준 리터럴 px.
 const CONTENT_WIDTH = 1048;
+// DesktopPageShell 기본 위 여백(60)에 더해 시안의 제목 위치(헤더 아래 120)를
+// 맞춘다. 여기도 추천 코스·행사 목록과 같은 위치다.
+const EXTRA_TOP_SPACE = 60;
 const PAGE_SIZE = 20;
 
 const transportTypeByLabel: Record<string, CourseTransportType | undefined> = {
@@ -208,7 +211,10 @@ function YeogidoCourseSearchDesktopPage() {
 
   return (
     <DesktopPageShell contentWidth={CONTENT_WIDTH}>
-      <div className="flex flex-col gap-[48px]">
+      <div
+        className="flex flex-col gap-[48px]"
+        style={{ marginTop: EXTRA_TOP_SPACE }}
+      >
         <header className="flex flex-col gap-[8px]">
           <h1 className="text-[32px] font-semibold text-black">
             {displayQuery ? `“${displayQuery}” 검색 결과` : '코스 검색 결과'}
