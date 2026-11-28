@@ -12,6 +12,7 @@ import MyActivityListCard, {
   type ActivityInfoItem,
 } from '../../my-activity/desktop/MyActivityListCard';
 import MyActivityShell from '../../my-activity/desktop/MyActivityShell';
+import ProfileBusinessSection from '../../profile/desktop/ProfileBusinessSection';
 import {
   LIKED_CATEGORY_OPTIONS,
   LIKED_SORT_OPTIONS,
@@ -55,7 +56,10 @@ function LikesDesktopPage() {
   } = useLikesPage();
 
   return (
-    <MyActivityShell activeTab="likes">
+    <MyActivityShell
+      activeTab="likes"
+      belowProfile={<ProfileBusinessSection />}
+    >
       <div className="flex flex-col gap-[12px]">
         <div className="flex items-center justify-between">
           <DesktopFilterDropdown
