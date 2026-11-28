@@ -3,12 +3,14 @@ import test from 'node:test';
 
 import {
   applyAllDay,
+  applyDayTimeChange,
   applyDaysChange,
   applySharedTime,
   getHoursEditorMode,
   getSharedEntry,
   getSharedErrorMessage,
   isAllDayForSelectedDays,
+  lockHoursEditorMode,
 } from '../src/pages/business-promotion-registration/promotion-info/businessHoursEditor.ts';
 
 const nine = { openTime: '09:00', closeTime: '18:00' };
@@ -73,6 +75,7 @@ test('a time picked on the line is written to every selected day', () => {
 
 test('a day added later gets the current line value', () => {
   const next = applyDaysChange(
+    'single',
     ['MONDAY', 'TUESDAY'],
     ['MONDAY', 'TUESDAY', 'WEDNESDAY'],
     { MONDAY: nine, TUESDAY: nine, WEDNESDAY: night }
@@ -82,7 +85,7 @@ test('a day added later gets the current line value', () => {
 });
 
 test('adding the first day to an empty line clears a stale value', () => {
-  const next = applyDaysChange([], ['MONDAY'], { MONDAY: nine });
+  const next = applyDaysChange('single', [], ['MONDAY'], { MONDAY: nine });
 
   assert.deepEqual(next.MONDAY, {});
 });
@@ -91,11 +94,16 @@ test('removing a day or keeping the days changes nothing', () => {
   const times = { MONDAY: nine, TUESDAY: nine };
 
   assert.equal(
-    applyDaysChange(['MONDAY', 'TUESDAY'], ['MONDAY'], times),
+    applyDaysChange('single', ['MONDAY', 'TUESDAY'], ['MONDAY'], times),
     times
   );
   assert.equal(
-    applyDaysChange(['MONDAY', 'TUESDAY'], ['MONDAY', 'TUESDAY'], times),
+    applyDaysChange(
+      'single',
+      ['MONDAY', 'TUESDAY'],
+      ['MONDAY', 'TUESDAY'],
+      times
+    ),
     times
   );
 });
@@ -107,6 +115,7 @@ test('a day added in per-day mode keeps its own value', () => {
     WEDNESDAY: { openTime: '10:00', closeTime: '19:00' },
   };
   const next = applyDaysChange(
+    'perDay',
     ['MONDAY', 'TUESDAY'],
     ['MONDAY', 'TUESDAY', 'WEDNESDAY'],
     times
@@ -168,4 +177,114 @@ test('the line shows the first error of the selected days', () => {
     getSharedErrorMessage(['MONDAY'], { TUESDAY: '오류' }),
     undefined
   );
+});
+
+test('the mode stays undecided until a day is selected', () => {
+  assert.equal(lockHoursEditorMode(undefined, [], {}), undefined);
+  // 수정 모드에서 기존 값이 늦게 들어와도, 요일이 없는 동안은 정하지 않는다.
+  assert.equal(lockHoursEditorMode(undefined, [], { MONDAY: nine }), undefined);
+});
+
+test('the mode is decided once from the first selected days', () => {
+  assert.equal(
+    lockHoursEditorMode(undefined, ['MONDAY', 'TUESDAY'], {
+      MONDAY: nine,
+      TUESDAY: night,
+    }),
+    'perDay'
+  );
+  assert.equal(
+    lockHoursEditorMode(undefined, ['MONDAY', 'TUESDAY'], {
+      MONDAY: nine,
+      TUESDAY: nine,
+    }),
+    'single'
+  );
+  assert.equal(lockHoursEditorMode(undefined, ['SUNDAY'], {}), 'single');
+});
+
+test('a decided mode never changes when the values change', () => {
+  const same = { MONDAY: nine, TUESDAY: nine };
+  const different = { MONDAY: nine, TUESDAY: night };
+
+  assert.equal(
+    lockHoursEditorMode('perDay', ['MONDAY', 'TUESDAY'], same),
+    'perDay'
+  );
+  assert.equal(
+    lockHoursEditorMode('single', ['MONDAY', 'TUESDAY'], different),
+    'single'
+  );
+  // 요일을 모두 꺼도 유지한다.
+  assert.equal(lockHoursEditorMode('perDay', [], {}), 'perDay');
+});
+
+test('the data that arrives late decides the mode, not the empty form before it', () => {
+  // 처음 렌더: 비어 있음 → 정하지 않음.
+  let mode = lockHoursEditorMode(undefined, [], {});
+
+  assert.equal(mode, undefined);
+
+  // 기존 값이 들어옴(월·화 시간이 다름) → 이때 정해진다.
+  mode = lockHoursEditorMode(mode, ['MONDAY', 'TUESDAY'], {
+    MONDAY: nine,
+    TUESDAY: { openTime: '10:00', closeTime: '18:00' },
+  });
+
+  assert.equal(mode, 'perDay');
+});
+
+test('editing Tuesday to match Monday does not make Monday follow later edits', () => {
+  // 월 09:00-18:00, 화 10:00-18:00인 글을 수정한다.
+  const days = ['MONDAY', 'TUESDAY'] as const;
+  let times: Record<string, { openTime?: string; closeTime?: string }> = {
+    MONDAY: { openTime: '09:00', closeTime: '18:00' },
+    TUESDAY: { openTime: '10:00', closeTime: '18:00' },
+  };
+  const mode = lockHoursEditorMode(undefined, days, times);
+
+  assert.equal(mode, 'perDay');
+
+  // 화 시작을 09:00으로 바꾸면 값이 월과 같아지지만 모드는 그대로다.
+  times = applyDayTimeChange(times, 'TUESDAY', 'openTime', '09:00');
+  assert.equal(getHoursEditorMode(days, times), 'single');
+  assert.equal(lockHoursEditorMode(mode, days, times), 'perDay');
+
+  // 이어서 화 종료를 19:00으로 바꿔도 월은 그대로다.
+  times = applyDayTimeChange(times, 'TUESDAY', 'closeTime', '19:00');
+
+  assert.deepEqual(times.MONDAY, { openTime: '09:00', closeTime: '18:00' });
+  assert.deepEqual(times.TUESDAY, { openTime: '09:00', closeTime: '19:00' });
+});
+
+test('changing one day in the per-day list leaves the others untouched', () => {
+  const next = applyDayTimeChange(
+    { MONDAY: nine, TUESDAY: night },
+    'TUESDAY',
+    'closeTime',
+    '03:00'
+  );
+
+  assert.deepEqual(next.MONDAY, nine);
+  assert.deepEqual(next.TUESDAY, { openTime: '18:00', closeTime: '03:00' });
+});
+
+test('a single-line start still writes to every selected day', () => {
+  // 처음부터 한 줄인 입력은 지금처럼 전체 요일에 적용된다.
+  const days = ['MONDAY', 'TUESDAY'] as const;
+  const mode = lockHoursEditorMode(undefined, days, {
+    MONDAY: nine,
+    TUESDAY: nine,
+  });
+  const next = applySharedTime(
+    days,
+    { MONDAY: nine, TUESDAY: nine },
+    {
+      closeTime: '19:00',
+    }
+  );
+
+  assert.equal(mode, 'single');
+  assert.deepEqual(next.MONDAY, { openTime: '09:00', closeTime: '19:00' });
+  assert.deepEqual(next.TUESDAY, { openTime: '09:00', closeTime: '19:00' });
 });

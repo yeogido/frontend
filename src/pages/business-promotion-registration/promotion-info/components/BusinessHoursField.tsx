@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useController, type Control } from 'react-hook-form';
 import { MdCheck } from 'react-icons/md';
 
@@ -6,12 +6,14 @@ import { useGlobalScale } from '../../../../hooks/useGlobalScale';
 
 import {
   applyAllDay,
+  applyDayTimeChange,
   applyDaysChange,
   applySharedTime,
-  getHoursEditorMode,
   getSharedEntry,
   getSharedErrorMessage,
   isAllDayForSelectedDays,
+  lockHoursEditorMode,
+  type HoursEditorMode,
 } from '../businessHoursEditor';
 import type {
   DayOfWeek,
@@ -100,10 +102,22 @@ function BusinessHoursField({
   const openDays = daysField.value;
   const dayTimes = timesField.value;
   const hasDays = openDays.length > 0;
-  const mode = getHoursEditorMode(openDays, dayTimes);
+
+  // 모드는 선택한 요일이 처음 생기는 시점(수정 모드는 기존 값이 들어온 시점)에 한 번만
+  // 정하고, 편집 도중 값이 같아져도 바꾸지 않는다. 요일별 목록으로 시작한 글이 두 요일의
+  // 시간이 같아졌다고 한 줄로 바뀌면 이어지는 입력이 건드리지 않은 요일까지 바꾼다.
+  const [lockedMode, setLockedMode] = useState<HoursEditorMode | undefined>(
+    () => lockHoursEditorMode(undefined, openDays, dayTimes)
+  );
+  const nextLockedMode = lockHoursEditorMode(lockedMode, openDays, dayTimes);
+
+  if (nextLockedMode !== lockedMode) setLockedMode(nextLockedMode);
+
+  // 아직 정해지지 않았으면(요일이 없는 새 입력) 한 줄이다.
+  const mode: HoursEditorMode = nextLockedMode ?? 'single';
 
   const handleDaysChange = (nextDays: DayOfWeek[]) => {
-    timesField.onChange(applyDaysChange(openDays, nextDays, dayTimes));
+    timesField.onChange(applyDaysChange(mode, openDays, nextDays, dayTimes));
     daysField.onChange(nextDays);
   };
 
@@ -116,10 +130,9 @@ function BusinessHoursField({
           dayTimes={dayTimes}
           errorMessageByDay={errorMessageByDay}
           onChangeDayTime={(day, timeField, value) =>
-            timesField.onChange({
-              ...dayTimes,
-              [day]: { ...dayTimes[day], [timeField]: value },
-            })
+            timesField.onChange(
+              applyDayTimeChange(dayTimes, day, timeField, value)
+            )
           }
         />
       </>

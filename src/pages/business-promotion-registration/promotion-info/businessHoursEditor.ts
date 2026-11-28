@@ -34,6 +34,24 @@ export function getHoursEditorMode(
   return keys.size <= 1 ? 'single' : 'perDay';
 }
 
+/**
+ * 화면의 영업시간 입력 모드를 처음 한 번만 정한다. 이미 정해졌으면 값이 우연히 같아져도
+ * 바꾸지 않고, 선택한 요일이 아직 없으면(수정 모드에서 기존 값이 늦게 들어오는 경우
+ * 포함) 정하지 않고 undefined를 돌려준다. 요일별 목록으로 시작한 글을 편집하다 두 요일의
+ * 시간이 같아졌다고 한 줄로 바뀌면, 이어지는 한 줄 입력이 건드리지 않은 요일까지
+ * 바꾸기 때문이다.
+ */
+export function lockHoursEditorMode(
+  lockedMode: HoursEditorMode | undefined,
+  openDays: readonly DayOfWeek[],
+  dayTimes: DayTimes
+): HoursEditorMode | undefined {
+  if (lockedMode !== undefined) return lockedMode;
+  if (openDays.length === 0) return undefined;
+
+  return getHoursEditorMode(openDays, dayTimes);
+}
+
 /** 한 줄에 보여 줄 값. 선택한 요일 중 첫 요일의 시간이고, 요일이 없으면 빈 값이다. */
 export function getSharedEntry(
   openDays: readonly DayOfWeek[],
@@ -60,17 +78,28 @@ export function applySharedTime(
   return result;
 }
 
+/** 요일별 목록에서 한 요일의 시작 또는 종료 시간만 바꾼다. 다른 요일은 건드리지 않는다. */
+export function applyDayTimeChange(
+  dayTimes: DayTimes,
+  day: DayOfWeek,
+  field: 'openTime' | 'closeTime',
+  value: string
+): DayTimes {
+  return { ...dayTimes, [day]: { ...dayTimes[day], [field]: value } };
+}
+
 /**
- * 요일을 바꾼 뒤의 시간 값. 한 줄 상태에서 요일을 더하면 지금 한 줄의 값이 새
- * 요일에도 들어간다(이전에 남아 있던 그 요일의 값은 덮어쓴다). 요일별 상태에서는
- * 그대로 둔다.
+ * 요일을 바꾼 뒤의 시간 값. 한 줄 모드에서 요일을 더하면 지금 한 줄의 값이 새
+ * 요일에도 들어간다(이전에 남아 있던 그 요일의 값은 덮어쓴다). 요일별 모드에서는
+ * 그대로 둔다. 모드는 화면이 처음 정한 값(lockHoursEditorMode)을 넘긴다.
  */
 export function applyDaysChange(
+  mode: HoursEditorMode,
   previousDays: readonly DayOfWeek[],
   nextDays: readonly DayOfWeek[],
   dayTimes: DayTimes
 ): DayTimes {
-  if (getHoursEditorMode(previousDays, dayTimes) === 'perDay') return dayTimes;
+  if (mode === 'perDay') return dayTimes;
 
   const added = nextDays.filter((day) => !previousDays.includes(day));
 
